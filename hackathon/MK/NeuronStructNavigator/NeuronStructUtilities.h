@@ -70,8 +70,11 @@ public:
 	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
 
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
+	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
-	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); // Subtract refTree from targetTree.
+
+	// Subtract refTree from targetTree.
+	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
 	/**************************************************************************/
 	
 
@@ -106,7 +109,9 @@ public:
 	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 
 	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
+	
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
+	
 	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
 	/**************************************************************************/
 
@@ -115,6 +120,7 @@ public:
 	/********************* Inter-SWC Comparison/Analysis **********************/
 	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
+	
 	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	/**************************************************************************/
 
@@ -135,7 +141,8 @@ public:
 
 
 
-	/******************** Neuron Struct Clustering Method *********************/
+	/******************** Neuron Struct Clustering Method *********************/ 
+	// Cuurently no one is using this method.
 	static vector<connectedComponent> swc2clusters_distance(const NeuronTree& inputTree, float dist = 30);
 	/**************************************************************************/
 

@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
 	/************************************/
 
 	ImgTester myImgTester;
+	NeuronStructUtil myNeuronStructUtil;
+	NeuronStructExplorer myNeuronStructExplorer;
 	if (!funcName.compare("swcID"))
 	{
 		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
@@ -190,7 +192,7 @@ int main(int argc, char* argv[])
 		writeSWC_file(blobTreeFullNameQ, dendriteTree);
 	}
 	else if (!funcName.compare("polarRadiusShell"))
-	{
+	{	
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
 		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
@@ -205,7 +207,7 @@ int main(int argc, char* argv[])
 				cout << *it2 << " ";
 			cout << endl;
 		}
-		cout << endl;*/
+		cout << endl;
 
 		vector<polarNeuronSWC> tempList;
 		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
@@ -216,13 +218,62 @@ int main(int argc, char* argv[])
 				newPolarNode.type = int(it->first);
 				tempList.push_back(newPolarNode);
 			}
+		}*/
+
+		map<double, NeuronTree> radius2NeuronTreeMap;
+		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
+		{
+			NeuronTree currShellTree;
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(polarNodeList.at(*it2));
+				currShellTree.listNeuron.push_back(newNode);
+			}
+
+			radius2NeuronTreeMap.insert({ it->first, currShellTree });
 		}
 
-		NeuronTree outputTree;
-		NeuronGeoGrapher::polarNodeList2nodeList(tempList, outputTree.listNeuron);
-		cout << outputTree.listNeuron.size() << endl;
-		
-		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
+		map<double, vector<connectedComponent>> radius2ConnMap;
+		NeuronTree finalTree;
+		NeuronTree finalCentroidTree;
+		for (map<double, NeuronTree>::iterator it = radius2NeuronTreeMap.begin(); it != radius2NeuronTreeMap.end(); ++it)
+		{
+			vector<connectedComponent> currConnCompList = myNeuronStructUtil.swc2signal3DBlobs(it->second);
+			radius2ConnMap.insert({ it->first, currConnCompList });
+
+			NeuronTree currBlobTree = NeuronStructUtil::blobs2tree(currConnCompList);
+			finalTree.listNeuron.append(currBlobTree.listNeuron);
+
+			for (vector<connectedComponent>::iterator it2 = currConnCompList.begin(); it2 != currConnCompList.end(); ++it2)
+			{
+				ImgAnalyzer::ChebyshevCenter_connComp(*it2);
+				NeuronSWC newNode;
+				newNode.x = it2->ChebyshevCenter[0];
+				newNode.y = it2->ChebyshevCenter[1];
+				newNode.z = it2->ChebyshevCenter[2];
+				newNode.type = 2;
+				newNode.parent = -1;
+				finalCentroidTree.listNeuron.push_back(newNode);
+			}
+		}
+	
+		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree);
+	}
+	else if (!funcName.compare("MSTrelatedTest"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		NeuronTree inputCentroidTree = readSWC_file(inputSWCFullNameQ);
+		profiledTree profiledMSTtree(inputCentroidTree);
+
+		NeuronTree tiledMSTTree = myNeuronStructExplorer.SWC2MSTtree_tiled(inputCentroidTree, 32, 8);
+
+		//profiledTree MSTdownSampledTree = myNeuronStructExplorer.treeDownSample(profiledMSTtree, 10);
+		//profiledTree MSTdownSampledNoSpikeTree = NeuronStructExplorer::spikeRemove(MSTdownSampledTree);
+		//profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
+
+		//profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5);
+
+		writeSWC_file(QString::fromStdString(paras.at(1)), tiledMSTTree);
 	}
 	else if (!funcName.compare("getCentroidTree"))
 	{

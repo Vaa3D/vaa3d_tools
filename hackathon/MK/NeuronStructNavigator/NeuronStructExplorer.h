@@ -75,6 +75,10 @@ public:
 	
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	
+	// ------------------- segment end clustering ------------------- //	
+	/* Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. */
+	/* If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.*/
+	
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
@@ -86,6 +90,7 @@ public:
 	// This method merge segment end clusters with given distance threshold for the whole input profiledTree.
 	// Note, this method is usually called after this->getTileBasedSegClusters together in this->getSegHeadTailClusters.
 	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	//--------------------------------------------------------------- //
 	/*****************************************************************************************/
 
 
@@ -115,15 +120,15 @@ public:
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	// --------------------------------------- //
-	
-	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
-	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 
 	boost::container::flat_map<int, vector<segPairProfile>> getSegConnPairs_cluster(const profiledTree& inputProfiledTree);
 	profiledTree connectLongNeurite(const profiledTree& inputProfiledTree, float distThreshold = 5);
 	profiledTree itered_connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
 	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ currently DEPRECATED ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
 
@@ -146,6 +151,8 @@ public:
 	profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const int yRange, const int zRange);
 
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
+	
+	
 	/*****************************************************************************************/
 
 
