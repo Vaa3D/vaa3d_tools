@@ -1,12 +1,12 @@
 #ifndef NEURONGEOGRAPHER_H
 #define NEURONGEOGRAPHER_H
 
-#include <vector>
 #include <cmath>
 
 #include <qlist.h>
 
 #include "integratedDataTypes.h"
+#include "ImgAnalyzer.h"
 
 using namespace std;
 using namespace integratedDataTypes;
@@ -70,20 +70,25 @@ public:
 	template<class T> // Converts NeuronSWC to polarNeuronSWC with specified origin.
 	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
 
-	//
+	// Converts polarNeuronSWC to NeuronSWC.
 	static inline NeuronSWC polar2CartesianNode(const polarNeuronSWC& inputPolarNode);
 
 	template<class T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
 	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
 
-	//
+	// 
 	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
 
 	static inline boost::container::flat_map<int, int> polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList);
 
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_ID(const vector<polarNeuronSWC>& inputPolarNodeList);
 
-	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList);
+	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList, double thickness = 1);
+	/***********************************************************************/
+
+
+	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
+	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
 	/***********************************************************************/
 };
 

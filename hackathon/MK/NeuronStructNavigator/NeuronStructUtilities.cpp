@@ -17,7 +17,6 @@
 ********************************************************************************/
 
 #include <iostream>
-#include <string>
 #include <iterator>
 #include <set>
 #include <cmath>

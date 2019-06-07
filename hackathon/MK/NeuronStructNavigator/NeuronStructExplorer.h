@@ -28,14 +28,11 @@
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/container/flat_map.hpp>
-#include <boost/container/flat_set.hpp>
 
 #include <qlist.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
-#include "basic_surf_objs.h"
 #include "v_neuronswc.h"
 #include "NeuronStructUtilities.h"
 #include "NeuronGeoGrapher.h"
@@ -158,6 +155,7 @@ public:
 	/***************** Neuron Struct Refining Method *****************/
 	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 	/*****************************************************************/
+
 
 
 	/* ~~~~~~~~~~~ Distance-based SWC analysis ~~~~~~~~~~~ */

@@ -41,14 +41,16 @@ public:
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
 	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
+	static inline void ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList);
 
 	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]); // Generates 2D mask with input connected component list.
 	myImg1DPtr connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[]); // Generates 3D mask with input connected component list.
 
 private:
-	// This method is called by ImgAnalyzer::findSignalBlobs because its slice-by-slice approach. 
+	// This method is called by ImgAnalyzer::findSignalBlobs because of its slice-by-slice approach. 
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 	/****************************************************************/
+
 
 
 	/***************** Image Analysis *****************/
@@ -61,6 +63,7 @@ private:
 	/**************************************************/
 
 
+
 public:
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
@@ -69,6 +72,7 @@ public:
 	// Locate z location for auto-reaced SWC generated based on MIP image.
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
 	/******************************************************/
+
 
 	
 	/***************** Process Monitoring *****************/
@@ -122,6 +126,12 @@ inline void ImgAnalyzer::ChebyshevCenter_connComp(connectedComponent& inputComp)
 	inputComp.ChebyshevCenter[2] = center[2];
 	
 	//cout << inputComp.ChebyshevCenter[0] << " " << inputComp.ChebyshevCenter[1] << " " << inputComp.ChebyshevCenter[2] << endl;
+}
+
+inline void ImgAnalyzer::ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList)
+{
+	for (vector<connectedComponent>::iterator it = inputCompList.begin(); it != inputCompList.end(); ++it) 
+		ImgAnalyzer::ChebyshevCenter_connComp(*it);
 }
 
 #endif

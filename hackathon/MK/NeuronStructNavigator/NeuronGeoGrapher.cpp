@@ -377,18 +377,18 @@ boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGra
 	return outputShellMap;
 }
 
-boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList)
+boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList, double thickness)
 {
 	boost::container::flat_map<double, boost::container::flat_set<int>> outputShellMap;
 
 	for (vector<polarNeuronSWC>::const_iterator it = inputPolarNodeList.begin(); it != inputPolarNodeList.end(); ++it)
 	{
-		if (outputShellMap.find(round(it->radius)) != outputShellMap.end()) outputShellMap.at(round(it->radius)).insert(int(it - inputPolarNodeList.begin()));
+		if (outputShellMap.find(round(it->radius / thickness) * thickness) != outputShellMap.end()) outputShellMap.at(round(it->radius / thickness) * thickness).insert(int(it - inputPolarNodeList.begin()));
 		else
 		{
 			boost::container::flat_set<int> newSet;
 			newSet.insert(int(it - inputPolarNodeList.begin()));
-			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(round(it->radius), newSet));
+			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(round(it->radius / thickness) * thickness, newSet));
 		}
 	}
 

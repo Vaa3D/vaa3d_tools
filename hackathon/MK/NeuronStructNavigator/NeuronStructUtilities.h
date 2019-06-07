@@ -34,9 +34,8 @@
 #include <qstring.h>
 #include <qstringlist.h>
 
-#include "basic_surf_objs.h"
-#include "ImgAnalyzer.h"
 #include "integratedDataTypes.h"
+#include "ImgAnalyzer.h"
 
 using namespace std;
 
@@ -98,6 +97,9 @@ public:
 
 
 	/******************* Neuron Struct Profiling Methods **********************/
+	// These profiling methods are put to make them available to NeuronTree struct. 
+	// Users don't need to always initialize a integratedFataType::profiledTree to get all these node-tile node-loc maps.
+
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 

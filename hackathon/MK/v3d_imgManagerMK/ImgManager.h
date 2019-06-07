@@ -76,6 +76,7 @@ public:
 	/*******************************************************/
 
 
+
 	/***************** I/O and Image Property Profile *****************/
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgEntry(string caseID, imgFormat format);
@@ -87,7 +88,6 @@ public:
 
 
 	// ~~~~~~~~~~~~~~~~~ The following is not frequently used. Most of them were developed for IVSCC project. May be deprecated in the future. ~~~~~~~~~~~~~~~~~ //
-
 	/***************** Image - SWC Functionalities *****************/
 	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
 	
@@ -111,7 +111,6 @@ public:
 	/********* Dessemble Image/Stack Into Tiles. This Is For Caffe's Memory Leak Issue *********/
 	static void imgSliceDessemble(string imgName, int tileSize);
 	/*******************************************************************************************/
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
 
