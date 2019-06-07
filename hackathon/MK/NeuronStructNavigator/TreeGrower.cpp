@@ -36,3 +36,62 @@ boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::shell
 
 	return outputShell2radiusConnMap;
 }
+
+NeuronTree TreeGrower::SWC2MSTtree_boost(const NeuronTree& inputTree)
+{
+	NeuronTree MSTtrees;
+	undirectedGraph graph(inputTree.listNeuron.size());
+	//cout << "processing nodes: \n -- " << endl;
+	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
+	{
+
+		float x1, y1, z1;
+		x1 = inputTree.listNeuron.at(i).x;
+		y1 = inputTree.listNeuron.at(i).y;
+		z1 = inputTree.listNeuron.at(i).z;
+		for (int j = 0; j < inputTree.listNeuron.size(); ++j)
+		{
+			float x2, y2, z2;
+			x2 = inputTree.listNeuron.at(j).x;
+			y2 = inputTree.listNeuron.at(j).y;
+			z2 = inputTree.listNeuron.at(j).z;
+
+			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + zRATIO * zRATIO * double(z1 - z2) * double(z1 - z2));
+			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
+			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
+		}
+
+		//if (i % 1000 == 0) cout << i << " ";
+	}
+	//cout << endl;
+
+	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
+	boost::prim_minimum_spanning_tree(graph, &p[0]);
+	NeuronTree MSTtree;
+	QList<NeuronSWC> listNeuron;
+	QHash<int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	for (size_t ii = 0; ii != p.size(); ++ii)
+	{
+		int pn;
+		if (p[ii] == ii) pn = -1;
+		else pn = p[ii] + 1;
+
+		NeuronSWC S;
+		S.n = ii + 1;
+		S.type = 7;
+		S.x = inputTree.listNeuron.at(ii).x;
+		S.y = inputTree.listNeuron.at(ii).y;
+		S.z = inputTree.listNeuron.at(ii).z;
+		S.r = 1;
+		S.pn = pn;
+		listNeuron.append(S);
+		hashNeuron.insert(S.n, listNeuron.size() - 1);
+	}
+	MSTtree.listNeuron = listNeuron;
+	MSTtree.hashNeuron = hashNeuron;
+
+	return MSTtree;
+}
