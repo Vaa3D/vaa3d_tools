@@ -10,6 +10,7 @@
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 #include "processManager.h"
+#include "TreeGrower.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #endif
@@ -78,6 +79,7 @@ private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
+	TreeGrower fragTraceTreeGrower;
 	NeuronStructExplorer fragTraceTreeManager;
 	NeuronStructUtil fragTraceTreeUtil;
 

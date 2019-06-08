@@ -157,7 +157,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
 		//writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
 
-		NeuronTree MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
+		NeuronTree MSTbranchBreakTree = TreeGrower::MSTbranchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
 		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 		//QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
@@ -168,7 +168,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
 		// Iterative segment elongation / connection
-		profiledTree newIteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(downSampledProfiledTree, 5);
+		profiledTree newIteredConnectedTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(downSampledProfiledTree, 5);
 
 		if (this->minNodeNum > 0) finalOutputTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 		else finalOutputTree = newIteredConnectedTree.tree;
@@ -181,7 +181,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 10);
 		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
-		profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
+		profiledTree MSTDnNoSpikeBranchBreak = TreeGrower::MSTbranchBreak(MSTdownSampledNoSpikeTree);
 
 		profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5); // ==> Needs to revise since users may use partial volume to trace now.
 		
@@ -485,7 +485,7 @@ bool FragTraceManager::generateTree_MST(workMode mode, profiledTree& objSkeleton
 				}
 				finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
 
-				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
+				NeuronTree MSTtree = TreeGrower::SWC2MSTtree_boost(centroidTree);
 				profiledTree profiledMSTtree(MSTtree);				
 				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
 				objTrees.push_back(profiledMSTtree.tree);
@@ -544,7 +544,7 @@ bool FragTraceManager::generateTree_MST(workMode mode, profiledTree& objSkeleton
 		writeSWC_file(finalCentroidTreeNameQ, centroidTree);
 		cout << endl;
 
-		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
+		NeuronTree MSTtree = TreeGrower::SWC2MSTtree_boost(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
 		objSkeletonProfiledTree = profiledMSTtree;
 		return true;
@@ -597,7 +597,7 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree tmpTree = inputProfiledTree; 
-	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, distThreshold);
+	profiledTree outputProfiledTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(tmpTree, distThreshold);
 	
 	bool typeAssigned = false;
 	int assignedType;

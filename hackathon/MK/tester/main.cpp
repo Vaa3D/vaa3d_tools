@@ -17,6 +17,7 @@
 #include "processMonitoringTester.h"
 #include "FeatureExtractor.h"
 #include "integratedDataTypes.h"
+#include "TreeGrower.h"
 
 #include "C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
 
@@ -111,8 +112,7 @@ int main(int argc, char* argv[])
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		NeuronTree centroidTree = readSWC_file(inputSWCFullNameQ);
-		NeuronStructExplorer myExplorer;
-		NeuronTree MSTtree = myExplorer.SWC2MSTtree(centroidTree);
+		NeuronTree MSTtree = TreeGrower::SWC2MSTtree_boost(centroidTree);
 		QString saveNameQ = QString::fromStdString(paras.at(1));
 		writeSWC_file(saveNameQ, MSTtree);
 	}
@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
 		NeuronTree finalCentroidTree;
 		for (map<double, NeuronTree>::iterator it = radius2NeuronTreeMap.begin(); it != radius2NeuronTreeMap.end(); ++it)
 		{
-			vector<connectedComponent> currConnCompList = myNeuronStructUtil.swc2signal3DBlobs(it->second);
+			vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
 			radius2ConnMap.insert({ it->first, currConnCompList });
 
 			NeuronTree currBlobTree = NeuronStructUtil::blobs2tree(currConnCompList);
@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputCentroidTree = readSWC_file(inputSWCFullNameQ);
 		profiledTree profiledMSTtree(inputCentroidTree);
 
-		NeuronTree tiledMSTTree = myNeuronStructExplorer.SWC2MSTtree_tiled(inputCentroidTree, 32, 8);
+		NeuronTree tiledMSTTree = TreeGrower::SWC2MSTtreeTiled_boost(inputCentroidTree, 32, 8);
 
 		//profiledTree MSTdownSampledTree = myNeuronStructExplorer.treeDownSample(profiledMSTtree, 10);
 		//profiledTree MSTdownSampledNoSpikeTree = NeuronStructExplorer::spikeRemove(MSTdownSampledTree);
@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
 		NeuronStructUtil myUtil;
 		ImgAnalyzer myAnalyzer;
-		vector<connectedComponent> blobsComps = myUtil.swc2signal3DBlobs(inputBlobTree);
+		vector<connectedComponent> blobsComps = NeuronStructUtil::swc2signal3DBlobs(inputBlobTree);
 		NeuronTree finalCentroidTree;
 		for (vector<connectedComponent>::iterator it = blobsComps.begin(); it != blobsComps.end(); ++it)
 		{
@@ -309,11 +309,11 @@ int main(int argc, char* argv[])
 		QString saveNameQ = QString::fromStdString(paras.at(1));
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 
-		NeuronStructExplorer myExplorer;
+		TreeGrower newGrowingTree;
 		profiledTree inputProfiledTree(inputTree);
-		profiledTree testTree = myExplorer.connectLongNeurite(inputProfiledTree, 5);
+		profiledTree testTree = newGrowingTree.connectSegsWithinClusters(inputProfiledTree, 5);
 		//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\connect1.swc", testTree.tree);
-		myExplorer.getSegHeadTailClusters(inputProfiledTree);
+		newGrowingTree.getSegHeadTailClusters(inputProfiledTree);
 		int clusterCount = 1;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)
 		{
@@ -392,7 +392,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCNameQ);
 
 		NeuronStructUtil util;
-		vector<connectedComponent> blobs = util.swc2signal3DBlobs(inputTree);
+		vector<connectedComponent> blobs = NeuronStructUtil::swc2signal3DBlobs(inputTree);
 
 		ImgAnalyzer myAnalyzer;
 		int imgDims[3];
@@ -1205,71 +1205,6 @@ int main(int argc, char* argv[])
 
 		map<string, float> img3DStats = ImgProcessor::getBasicStats_no0_fromHist(hist3Dmap);
 		cout << img3DStats.at("mean") << " " << img3DStats.at("std") << endl;
-	}
-	else if (!funcName.compare("nodeClusterTest"))
-	{
-		NeuronStructExplorer myExplorer;
-		NeuronTree pre_sphereRandNodes = NeuronStructUtil::nodeSpheresGen(3, 1, 7, 7, 60, 30, 30, 120);
-		NeuronTree sphereRandNodes = NeuronStructUtil::swcShift(pre_sphereRandNodes, 8, 5, 5);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
-		profiledTree profiledSphereTree(sphereRandNodes, 10);
-
-		myExplorer.getTileBasedSegClusters(profiledSphereTree, 6);
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator tailClusterIt = profiledSphereTree.segTailClusters.begin(); tailClusterIt != profiledSphereTree.segTailClusters.end(); ++tailClusterIt)
-		{
-			//cout << headClusterIt->first << " ";
-			for (boost::container::flat_set<int>::iterator segIDit = tailClusterIt->second.begin(); segIDit != tailClusterIt->second.end(); ++segIDit)
-			{
-				//cout << profiledRandNodeTree.segs.at(*segIDit).head << " ";
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*segIDit).tails.begin())].type = tailClusterIt->first % 7;
-			}
-		}
-		
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
-
-		int segTileCount = 1;
-		/*cout << profiledSphereTree.segTailClusters.size() << endl;
-		for (map<string, vector<int>>::iterator it = profiledSphereTree.segTailMap.begin(); it != profiledSphereTree.segTailMap.end(); ++it)
-		{
-			//cout << it->first << " " << it->second.size() << endl;
-			//cout << " ";
-			for (vector<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			{
-				//cout << profiledSphereTree.segs.at(*it2).head << " ";
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*it2).tails.begin())].type = segTileCount % 20;
-			}
-			//cout << endl;
-			++segTileCount;
-		}
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);*/
-
-		for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
-		{
-			//cout << it->first << " " << it->second.size() << endl;
-			//cout << " ";
-			for (vector<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			{
-				//cout << profiledSphereTree.segs.at(*it2).head << " ";
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(profiledSphereTree.segs.at(*it2).head)].type = segTileCount % 20;
-			}
-			//cout << endl;
-			++segTileCount;
-		}
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
-
-		myExplorer.mergeTileBasedSegClusters(profiledSphereTree, 6);
-		int clusterCount = 1;
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = profiledSphereTree.segTailClusters.begin(); it != profiledSphereTree.segTailClusters.end(); ++it)
-		{
-			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			{
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*it2).tails.begin())].type = clusterCount;
-			}
-			++clusterCount;
-		}
-
-		
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
 	}
 
 	return 0;

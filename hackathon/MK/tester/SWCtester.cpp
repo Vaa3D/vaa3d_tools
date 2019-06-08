@@ -13,7 +13,7 @@ SWCtester::SWCtester()
 vector<connectedComponent> SWCtester::connComponent2DmergeTest(QString inputSWCfileName)
 {
 	NeuronTree inputTree = readSWC_file(inputSWCfileName);
-	vector<connectedComponent> outputConnCompList = myNeuronStructUtilPtr->swc2signal3DBlobs(inputTree);
+	vector<connectedComponent> outputConnCompList = NeuronStructUtil::swc2signal3DBlobs(inputTree);
 
 	return outputConnCompList;
 }

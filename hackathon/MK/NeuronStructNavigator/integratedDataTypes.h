@@ -146,6 +146,8 @@ namespace integratedDataTypes
 		boost::container::flat_map<int, int> headSeg2ClusterMap;
 		boost::container::flat_map<int, int> tailSeg2ClusterMap;
 
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;
+
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);
 	};
