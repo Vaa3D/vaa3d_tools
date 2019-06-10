@@ -1971,6 +1971,166 @@ profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledT
 
 
 
+/* ============================================== Inter/Intra-SWC Comparison/Analysis ============================================== */
+map<string, float> NeuronStructExplorer::selfNodeDist(const QList<NeuronSWC>& inputNodeList)
+{
+	boost::container::flat_map<string, vector<NeuronSWC>> labeledNodeMap;
+	NeuronStructUtil::nodeTileMapGen(inputNodeList, labeledNodeMap, 30);
+
+	float distSum = 0;
+	vector<float> distVec;
+	for (boost::container::flat_map<string, vector<NeuronSWC>>::iterator it = labeledNodeMap.begin(); it != labeledNodeMap.end(); ++it)
+	{
+		if (it->second.size() == 1)
+		{
+			float dist = 10000;
+			for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+			{
+				if (it->second.begin()->x == nodeIt->x && it->second.begin()->y == nodeIt->y && it->second.begin()->z == nodeIt->z)
+					continue;
+
+				float tempDist = sqrtf((it->second.begin()->x - nodeIt->x) * (it->second.begin()->x - nodeIt->x) +
+					(it->second.begin()->y - nodeIt->y) * (it->second.begin()->y - nodeIt->y) +
+					(it->second.begin()->z - nodeIt->z) * (it->second.begin()->z - nodeIt->z) * zRATIO * zRATIO);
+				if (tempDist < dist) dist = tempDist;
+			}
+			distVec.push_back(dist);
+			distSum = distSum + dist;
+			continue;
+		}
+
+		for (vector<NeuronSWC>::iterator nodeIt1 = it->second.begin(); nodeIt1 != it->second.end(); ++nodeIt1)
+		{
+			float dist = 10000;
+			for (vector<NeuronSWC>::iterator nodeIt2 = it->second.begin(); nodeIt2 != it->second.end(); ++nodeIt2)
+			{
+				if (nodeIt1 == nodeIt2) continue;
+
+				float tempDist = sqrtf((nodeIt1->x - nodeIt2->x) * (nodeIt1->x - nodeIt2->x) +
+					(nodeIt1->y - nodeIt2->y) * (nodeIt1->y - nodeIt2->y) +
+					(nodeIt1->z - nodeIt2->z) * (nodeIt1->z - nodeIt2->z) * zRATIO * zRATIO);
+				if (tempDist < dist) dist = tempDist;
+			}
+			distVec.push_back(dist);
+			distSum = distSum + dist;
+		}
+	}
+
+	float distMean = distSum / float(distVec.size());
+	float distVarSum = 0;
+	for (vector<float>::iterator it = distVec.begin(); it != distVec.end(); ++it) distVarSum = distVarSum + (*it - distMean) * (*it - distMean);
+	float distVar = distVarSum / float(distVec.size());
+	float distStd = sqrtf(distVar);
+	sort(distVec.begin(), distVec.end());
+	float distMedian = float(distVec.at(floor(distVec.size() / 2)));
+
+	map<string, float> outputMap;
+	outputMap.insert(pair<string, float>("mean", distMean));
+	outputMap.insert(pair<string, float>("std", distStd));
+	outputMap.insert(pair<string, float>("var", distVar));
+	outputMap.insert(pair<string, float>("median", distMedian));
+
+	return outputMap;
+}
+
+NeuronTree NeuronStructExplorer::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength)
+{
+	map<string, vector<NeuronSWC>> gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
+	// This can cause complication if the element is a data struct.
+
+	NeuronStructUtil::nodeTileMapGen(refTree, gridSWCmap, nodeTileLength);
+
+	NeuronTree outputTree;
+	NeuronTree refConfinedFilteredTree;
+	for (QList<NeuronSWC>::const_iterator suIt = subjectTree.listNeuron.begin(); suIt != subjectTree.listNeuron.end(); ++suIt)
+	{
+		string xLabel = to_string(int((suIt->x) / (nodeTileLength)));
+		string yLabel = to_string(int((suIt->y) / (nodeTileLength)));
+		string zLabel = to_string(int((suIt->z) / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+
+		if (gridSWCmap.find(keyLabel) != gridSWCmap.end())
+		{
+			bool identified = false;
+			for (vector<NeuronSWC>::iterator nodeIt = gridSWCmap[keyLabel].begin(); nodeIt != gridSWCmap[keyLabel].end(); ++nodeIt)
+			{
+				float dist = sqrt((nodeIt->x - suIt->x) * (nodeIt->x - suIt->x) + (nodeIt->y - suIt->y) * (nodeIt->y - suIt->y) +
+					zRATIO * zRATIO * (nodeIt->z - suIt->z) * (nodeIt->z - suIt->z));
+
+				if (dist <= distThre)
+				{
+					outputTree.listNeuron.push_back(*suIt);
+					(outputTree.listNeuron.end() - 1)->type = 2;
+					identified = true;
+					break;
+				}
+			}
+
+			if (!identified)
+			{
+				outputTree.listNeuron.push_back(*suIt);
+				(outputTree.listNeuron.end() - 1)->type = 3;
+			}
+		}
+		else refConfinedFilteredTree.listNeuron.push_back(*suIt);
+	}
+
+	return outputTree;
+}
+
+NeuronTree NeuronStructExplorer::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
+{
+	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
+	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
+
+	NeuronTree outputTree;
+	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
+	{
+		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
+		{
+			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it)
+				outputTree.listNeuron.push_back(*it);
+		}
+		else
+		{
+			float minDist = 10000;
+			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
+			{
+				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
+				{
+					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
+					if (dist <= minDist) minDist = dist;
+				}
+
+				if (minDist <= distThreshold) continue;
+				else outputTree.listNeuron.push_back(*it1);
+			}
+		}
+	}
+
+	map<string, vector<NeuronSWC>> outputGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
+	boost::container::flat_set<int> nodeIDs;
+	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
+	{
+		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
+	}
+
+	return outputTree;
+}
+/* ================================================================================================================================= */
+
+
+
 /* ====================================== Neuron Struct Refining Method ====================================== */
 profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {

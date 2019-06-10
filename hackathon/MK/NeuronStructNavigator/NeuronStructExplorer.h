@@ -100,6 +100,20 @@ public:
 
 
 
+	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
+	// Computes the distance from every node to its nearest node in the given node lise.
+	// The output is a map of 4 measures: mean, std, var, median.
+	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
+
+	// Identifieis identical signal nodes with a reference NeuronTree. 
+	// The nodes in [subjectTree] within [distThre] range from those in [refTree] are considered the same signal nodes.
+	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
+
+	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
+	/*****************************************************************************************/
+
+
+
 	/********************* Auto-tracing Related Neuron Struct Functions **********************/	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ currently DEPRECATED ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);

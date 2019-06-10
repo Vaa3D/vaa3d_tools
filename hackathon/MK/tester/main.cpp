@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 		QString subjSWCnameQ = QString::fromStdString(subjSWCname);
 		NeuronTree refTree = readSWC_file(refSWCnameQ);
 		NeuronTree subjTree = readSWC_file(subjSWCnameQ);
-		NeuronTree outputTree = NeuronStructUtil::swcIdentityCompare(subjTree, refTree, 50, 20);
+		NeuronTree outputTree = NeuronStructExplorer::swcIdentityCompare(subjTree, refTree, 50, 20);
 		QString outputSWCname = "H:\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
@@ -421,7 +421,7 @@ int main(int argc, char* argv[])
 		QString inputSWCnameQ2 = QString::fromStdString(inputSWCname2);
 		NeuronTree inputTree1 = readSWC_file(inputSWCnameQ1);
 		NeuronTree inputTree2 = readSWC_file(inputSWCnameQ2);
-		map<string, float> swcStats = NeuronStructUtil::selfNodeDist(inputTree1.listNeuron);
+		map<string, float> swcStats = NeuronStructExplorer::selfNodeDist(inputTree1.listNeuron);
 		
 		outputTest << swcStats["mean"] << " " << swcStats["std"] << endl;
 	}
@@ -538,30 +538,6 @@ int main(int argc, char* argv[])
 			string swcName = swcIt->path().filename().string();
 			string swcFullName = inputPathName + "\\" + swcName;
 			NeuronStructUtil::linkerFileGen_forSWC(swcFullName);
-		}
-	}
-	else if (!funcName.compare("somaPointsCluster"))
-	{
-		const char* inputFileNameC = argv[1];
-		string inputFileName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCentroid3D\\472599722.swc";
-		//string inputFileName(inputFileNameC);
-		QString inputFileNameQ = QString::fromStdString(inputFileName);
-		NeuronTree nt = readSWC_file(inputFileNameQ);
-
-		vector<connectedComponent> compList = NeuronStructUtil::swc2clusters_distance(nt, 20);
-		for (vector<connectedComponent>::iterator compIt = compList.begin(); compIt != compList.end(); ++compIt)
-		{
-			cout << "[";
-			ImgAnalyzer::ChebyshevCenter_connComp(*compIt);
-			for (map<int, set<vector<int>>>::iterator it = compIt->coordSets.begin(); it != compIt->coordSets.end(); ++it)
-			{
-				for (set<vector<int>>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-				{
-					cout << it2->at(0) << "_" << it2->at(1) << "_" << it2->at(2) << ", ";
-				}
-			}
-			cout << "] ";
-			cout << compIt->ChebyshevCenter[0] << " " << compIt->ChebyshevCenter[1] << " " << compIt->ChebyshevCenter[2] << endl;
 		}
 	}
 	else if (!funcName.compare("multipleSomaCandidates"))

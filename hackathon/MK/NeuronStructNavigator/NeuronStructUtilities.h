@@ -87,30 +87,17 @@ public:
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
-	// Node tile functions
+	// Returns the corresponding string key with the given node or marker.
 	static inline string getNodeTileKey(const NeuronSWC& inputNode);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
+	
+	// Node - tile profiling functions
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
-
-	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree); // ReOrg - staty?
-	
-	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10); // ReOrg - staty?
-	
-	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList); // ReOrg - explorer
-	/**************************************************************************/
-
-
-
-	/********************* Inter-SWC Comparison/Analysis **********************/   // ReOrg - explorer
-	// Recognize the same nodes with given distance threshold.
-	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
-	
-	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	/**************************************************************************/
 
 
@@ -129,26 +116,24 @@ public:
 
 
 
-	/******************** Neuron Struct Clustering Method *********************/  // ReOrg - delete?
-	// Cuurently no one is using this method.
-	static vector<connectedComponent> swc2clusters_distance(const NeuronTree& inputTree, float dist = 30);
-	/**************************************************************************/
-
-
-
-	/***************************** Miscellaneous ******************************/  // ReOrg - stay
-	static inline void linkerFileGen_forSWC(string swcFullFileName);
-	
+	/***************** Artificial SWC for Developing Purposes *****************/
 	// Generates a cubical root node cluster with specified cube length.
 	static inline NeuronTree randNodes(float cubeLength, float density);
 
 	// Generates a spherical root node cluster with specified origin, radius, and node density.
 	// The total amount of nodes = (4 / 3) * PI * radius^3 * density.
 	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
-	
+
 	// Generates multiple root node clusters with specified origin, radius, and node density.
 	// Each cluster center is separated by stepX, stepY, and stepZ. xRange, yRange, and zRange specify the space range.
 	static NeuronTree nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange);
+	/**************************************************************************
+	
+	
+	/
+	/***************************** Miscellaneous ******************************/  // ReOrg - stay
+	// Generates linker file for swc
+	static inline void linkerFileGen_forSWC(string swcFullFileName);	
 	/**************************************************************************/
 
 
