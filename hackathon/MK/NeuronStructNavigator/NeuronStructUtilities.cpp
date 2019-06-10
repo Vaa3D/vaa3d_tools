@@ -9,7 +9,7 @@
 *  
 *  a. Basic neuron struct operations, such as crop, register, sample, data extraction, etc.
 *  b. Neuron struct profiling methods - node ID to node location, node ID to node child location, node-tile map, etc.
-*  c. 
+*  c. SWC - ImgAnalyzer::connectedComponent converting functions --these are critical functions in image segmentation.
 *  
 *  Most NeuronStructUtil member functions are desinged to take NeuronTree struct as the input and as well output NeuronTree struct.
 *  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
