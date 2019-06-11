@@ -38,6 +38,7 @@
 #include "ImgAnalyzer.h"
 
 using namespace std;
+using namespace integratedDataTypes;
 
 class NeuronStructUtil
 {
@@ -47,7 +48,19 @@ public:
 	/********************************************************************************/
 
 
-	/***************** Basic Neuron Struct Files Operations *******************/
+	/*************************** Segment Operations ***************************/
+	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
+
+	// Generate a new segment that is connected with 2 input segments. Connecting orientation needs to be specified by connOrt.
+	// This method is a generalized method and is normally the final step of segment connecting process.
+	// NOTE, currently it only supports simple unilateral segment. Forked segment connection will result in throwing error message!!
+	static segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	/**************************************************************************/
+
+
+
+	/************************ Neuron Struct Processing ************************/
+	// ----------------- Basic Operations ----------------- //
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
 
 	template<class T>
@@ -58,17 +71,12 @@ public:
 
 	template<class T>
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
-
-	// When using SWC root nodes to represent signals, this method can be used to reduce node density.
-	// -- NOTE, this method can only be used when all nodes are roots. 
-	template<class T>
-	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink);
-	
-	// Align inputTree with refTree.
-	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 	
 	template<class T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
 	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
+
+	// Align inputTree with refTree.
+	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 	
@@ -76,6 +84,27 @@ public:
 
 	// Subtract refTree from targetTree.
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
+	// ---------------------------------------------------- //
+	
+	// ------------- Higher level processing -------------- //
+	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
+	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
+	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
+
+	// When using SWC root nodes to represent signals, this method can be used to reduce node density.
+	// -- NOTE, this method can only be used when all nodes are roots. 
+	template<class T>
+	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink);
+
+	// This method creates interpolated nodes in between each pair of 2 adjacent nodes on the input tree. 
+	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
+
+	// -- This method "down samples" the input tree segment by segment. 
+	// -- A recursive down sampling method [NeuronStructUtil::rc_segDownSample] is called in this function to deal with all possible braching points in each segment.
+	// -- NOTE, this method is essentially used for straightening / smoothing segments when there are too many zigzagging.  
+	static profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
+	static void rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchingNodeID, int interval);
+	// ---------------------------------------------------- //
 	/**************************************************************************/
 	
 
@@ -130,8 +159,8 @@ public:
 	/**************************************************************************
 	
 	
-	/
-	/***************************** Miscellaneous ******************************/  // ReOrg - stay
+	
+	/***************************** Miscellaneous ******************************/ 
 	// Generates linker file for swc
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
 	/**************************************************************************/
@@ -145,6 +174,14 @@ public:
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
 	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
+
+inline connectOrientation NeuronStructUtil::getConnOrientation(connectOrientation orit1, connectOrientation orit2)
+{
+	if (orit1 == head && orit2 == head) return head_head;
+	else if (orit1 == head && orit2 == tail) return head_tail;
+	else if (orit1 == tail && orit2 == head) return tail_head;
+	else if (orit1 == tail && orit2 == tail) return tail_tail;
+}
 
 template<class T>
 inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
@@ -258,6 +295,70 @@ inline NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTr
 		}
 
 		listSize = ptrdiff_t(outputTree.listNeuron.size());
+	}
+
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		//cout << "seg ID:" << segIt->first << " ";
+		if (segIt->second.nodes.size() <= shortSegRemove)
+		{
+			//cout << "not included" << endl;
+			continue;
+		}
+		else
+		{
+			//cout << "included" << endl;
+			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+				outputTree.listNeuron.push_back(*nodeIt);
+		}
+	}
+
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::longConnCut(const profiledTree& inputProfiledTree, double distThre)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			if (nodeIt->parent == -1) outputTree.listNeuron.push_back(*nodeIt);
+			else
+			{
+				NeuronSWC paNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->parent));
+				double dist = sqrt((paNode.x - nodeIt->x) * (paNode.x - nodeIt->x) + (paNode.y - nodeIt->y) * (paNode.y - nodeIt->y) + (paNode.z - nodeIt->z) * (paNode.z - nodeIt->z) * zRATIO * zRATIO);
+				if (dist > distThre)
+				{
+					outputTree.listNeuron.push_back(*nodeIt);
+					(outputTree.listNeuron.end() - 1)->parent = -1;
+				}
+				else outputTree.listNeuron.push_back(*nodeIt);
+			}
+		}
+	}
+
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::segTerminalize(const profiledTree& inputProfiledTree)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		outputTree.listNeuron.push_back(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segIt->second.head)));
+		for (vector<int>::const_iterator tailIt = segIt->second.tails.begin(); tailIt != segIt->second.tails.end(); ++tailIt)
+		{
+			if (*tailIt == segIt->second.head) continue;
+			outputTree.listNeuron.push_back(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*tailIt)));
+			outputTree.listNeuron.back().parent = -1;
+		}
 	}
 
 	return outputTree;

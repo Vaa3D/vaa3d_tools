@@ -544,7 +544,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
 		trees.push_back(scaledBackExistingTree);
 		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
-		NeuronTree newlyTracedPart = NeuronStructExplorer::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 5);
+		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 5);
 		trees.push_back(newlyTracedPart);
 
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));

@@ -5,16 +5,14 @@
 
 /*******************************************************************************
 *
-*  This library provides functionalities for 
-*  
-*  a. Basic neuron struct operations, such as crop, register, sample, data extraction, etc.
-*  b. Neuron struct profiling methods - node ID to node location, node ID to node child location, node-tile map, etc.
-*  c. SWC - ImgAnalyzer::connectedComponent converting functions --these are critical functions in image segmentation.
-*  
-*  Most NeuronStructUtil member functions are desinged to take NeuronTree struct as the input and as well output NeuronTree struct.
-*  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
+*  Most of NeuronStructUtil class methods intend to operate on the whole neuron struct level.
+*  As 'utility' it is called, the functionalities provided in this class include:
+*    a. [Basic neuron struct operations]                   -- cropping SWC, scaling SWC, swc registration, etc.
+*    b. [Tree - subtree operations]                        -- extracting upstream or downstream of a given tree.
+*    c. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc.
+*    d. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
 *
-*  Many NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
+*  Most of NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
 *  A typical function call would need at least three input arguments:
 *
 *		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
@@ -35,7 +33,86 @@
 
 using namespace boost;
 
-/* =============================== Basic Neuron Struct Files Operations =============================== */
+/* ======================================== Segment Operations ========================================= */
+segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
+{
+	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
+		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");
+
+	segUnit newSeg;
+	QList<NeuronSWC> newSegNodes;
+	QList<NeuronSWC> endEditedNodes;
+
+	switch (connOrt)
+	{
+	case head_tail:
+	{
+		int connTailID = *segUnit2.tails.cbegin();
+		endEditedNodes = segUnit1.nodes;
+		endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root.
+		newSegNodes.append(segUnit2.nodes);
+		newSegNodes.append(endEditedNodes);
+		newSeg.nodes = newSegNodes;
+		break;
+	}
+	case tail_head:
+	{
+		int connTailID = *segUnit1.tails.cbegin();
+		endEditedNodes = segUnit2.nodes;
+		endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root. 
+		newSegNodes.append(segUnit1.nodes);
+		newSegNodes.append(endEditedNodes);
+		newSeg.nodes = newSegNodes;
+		break;
+	}
+	case head_head:
+	{
+		int connTailID = segUnit2.head;
+		for (map<int, vector<size_t>>::const_iterator it = segUnit2.seg_childLocMap.cbegin(); it != segUnit2.seg_childLocMap.cend(); ++it)
+		{
+			size_t nodeLoc = segUnit2.seg_nodeLocMap.at(it->first);
+			NeuronSWC newNode = segUnit2.nodes.at(nodeLoc);
+			if (it->second.empty())
+			{
+				//cout << newNode.x << " " << newNode.y << " " << newNode.z << endl;
+				newNode.parent = -1;
+			}
+			else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
+			endEditedNodes.push_back(newNode);
+		}
+		newSegNodes.append(segUnit1.nodes);
+		newSegNodes.begin()->parent = connTailID;
+		newSegNodes.append(endEditedNodes);
+		newSeg.nodes = newSegNodes;
+		break;
+	}
+	case tail_tail:
+	{
+		int connTailID = *segUnit2.tails.cbegin();
+		for (map<int, vector<size_t>>::const_iterator it = segUnit1.seg_childLocMap.cbegin(); it != segUnit1.seg_childLocMap.cend(); ++it)
+		{
+			size_t nodeLoc = segUnit1.seg_nodeLocMap.at(it->first);
+			NeuronSWC newNode = segUnit1.nodes.at(nodeLoc);
+			if (it->second.empty()) newNode.parent = connTailID;
+			else newNode.parent = segUnit1.nodes.at(*(it->second.cbegin())).n;
+			endEditedNodes.push_back(newNode);
+		}
+		newSegNodes.append(segUnit2.nodes);
+		newSegNodes.append(endEditedNodes);
+		newSeg.nodes = newSegNodes;
+		break;
+	}
+	default:
+		break;
+	}
+
+	return newSeg;
+}
+/* ===================================================================================================== */
+
+
+
+/* ===================================== Neuron Struct Processing ====================================== */
 NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
 	double xShift, yShift, zShift;
@@ -213,7 +290,124 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 
 	return outputTree;
 }
-/* =========================== END of [Basic Neuron Struct Files Operations] =========================== */
+
+void NeuronStructUtil::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
+{
+	size_t maxNodeID = 0;
+	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
+		if (it->n > maxNodeID) maxNodeID = it->n;
+
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		QList<NeuronSWC> newSegNodes;
+		map<int, vector<QList<NeuronSWC>>> interpolatedNodeMap;
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end() - 1; ++nodeIt)
+		{
+			vector<size_t> childLocs = segIt->second.seg_childLocMap.at(nodeIt->n);
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				float dist = sqrt((segIt->second.nodes.at(*childLocIt).x - nodeIt->x) * (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) +
+					(segIt->second.nodes.at(*childLocIt).y - nodeIt->y) * (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) +
+					(segIt->second.nodes.at(*childLocIt).z - nodeIt->z) * (segIt->second.nodes.at(*childLocIt).z - nodeIt->z));
+				int intervals = int(dist / intervalLength);
+				float intervalX = (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) / float(intervals);
+				float intervalY = (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) / float(intervals);
+				float intervalZ = (segIt->second.nodes.at(*childLocIt).z - nodeIt->z) / float(intervals);
+
+				QList<NeuronSWC> interpolatedNodes;
+				for (int i = 1; i < intervals; ++i)
+				{
+					NeuronSWC newNode;
+					newNode.x = nodeIt->x + intervalX * float(i);
+					newNode.y = nodeIt->y + intervalY * float(i);
+					newNode.z = nodeIt->z + intervalZ * float(i);
+					newNode.type = nodeIt->type;
+					++maxNodeID;
+					newNode.n = maxNodeID;
+					newNode.parent = maxNodeID - 1;
+					interpolatedNodes.push_back(newNode);
+				}
+				interpolatedNodes.push_back(segIt->second.nodes.at(*childLocIt));
+				if (interpolatedNodes.size() >= 2)
+				{
+					interpolatedNodes.back().parent = (interpolatedNodes.end() - 2)->n;
+					interpolatedNodes.begin()->parent = nodeIt->n;
+				}
+
+				interpolatedNodeMap[nodeIt->n].push_back(interpolatedNodes);
+			}
+		}
+		for (map<int, vector<QList<NeuronSWC>>>::iterator mapIt = interpolatedNodeMap.begin(); mapIt != interpolatedNodeMap.end(); ++mapIt)
+			for (vector<QList<NeuronSWC>>::iterator qlistIt = mapIt->second.begin(); qlistIt != mapIt->second.end(); ++qlistIt) newSegNodes.append(*qlistIt);
+		newSegNodes.push_front(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head)));
+
+		segUnit newSegUnit;
+		newSegUnit.nodes = newSegNodes;
+		outputProfiledTree.segs.insert(pair<int, segUnit>(segIt->first, newSegUnit));
+		outputProfiledTree.tree.listNeuron.append(newSegNodes);
+	}
+}
+
+profiledTree NeuronStructUtil::treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval)
+{
+	// -- This method "down samples" the input tree segment by segment. 
+	// -- A recursive down sampling method [NeuronStructExplorer::rc_segDownSample] is called in this function to deal with all possible braching points in each segment.
+	// -- NOTE, this method is essentially used for straightening / smoothing segments when there are too many zigzagging.  
+
+	NeuronTree outputTree;
+	QList<NeuronSWC> currSegOutputList;
+	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
+	{
+		//if (it->second.seg_childLocMap.empty()) continue; => Using this line is not safe. Can occasionally result in program crash.
+		// The safety of seg_childLocMap needs to be investigated later.
+		if (it->second.nodes.size() <= 3) continue;
+
+		currSegOutputList.clear();
+		currSegOutputList.push_back(*(it->second.nodes.begin()));
+		NeuronStructUtil::rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
+		outputTree.listNeuron.append(currSegOutputList);
+	}
+
+	vector<size_t> delLocs;
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		if (nodeIt->n == nodeIt->parent) delLocs.push_back(size_t(nodeIt - outputTree.listNeuron.begin()));
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
+	profiledTree outputProfiledTree(outputTree);
+
+	return outputProfiledTree;
+}
+
+void NeuronStructUtil::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchigNodeID, int interval)
+{
+	int currNodeID = 0, count = 0;
+	for (vector<size_t>::const_iterator childIt = inputSeg.seg_childLocMap.at(branchigNodeID).begin(); childIt != inputSeg.seg_childLocMap.at(branchigNodeID).end(); ++childIt)
+	{
+		outputNodeList.push_back(inputSeg.nodes.at(*childIt));
+		outputNodeList.last().parent = branchigNodeID;
+		currNodeID = inputSeg.nodes.at(*childIt).n;
+		count = 0;
+		while (inputSeg.seg_childLocMap.at(currNodeID).size() > 0)
+		{
+			if (inputSeg.seg_childLocMap.at(currNodeID).size() >= 2) // branching point found, function recursively called
+			{
+				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
+				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
+				NeuronStructUtil::rc_segDownSample(inputSeg, outputNodeList, currNodeID, interval);
+				break;
+			}
+
+			++count;
+			currNodeID = inputSeg.nodes.at(*(inputSeg.seg_childLocMap.at(currNodeID).begin())).n;
+			if (count % interval == 0 || inputSeg.seg_childLocMap.at(currNodeID).size() == 0) // The tail(s) of the segment needs to stay.
+			{
+				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
+				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
+			}
+		}
+	}
+}
+/* ===================================== END of [Neuron Struct Processing] ===================================== */
 
 
 

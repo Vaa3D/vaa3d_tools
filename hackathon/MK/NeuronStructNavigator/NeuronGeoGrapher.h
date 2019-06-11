@@ -61,7 +61,7 @@ public:
 	// The turning angle is defined as the angle formed by displacement vector of elongating segment and the displacement vector from elongating point to connecting point.
 	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
-	static segUnit segmentStraighten(const segUnit& inputSeg);
+	static segUnit segmentStraighten(const segUnit& inputSeg); // --> May need to be revised later.
 	/***********************************************************************/
 
 
@@ -76,18 +76,22 @@ public:
 	template<class T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
 	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
 
-	// 
+	// Convert polarNeuronSWC list to NeuronSWC list.
 	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
 
+	// polarNeuronSWC ID -> location of the node on [inputPolarNodeList].
 	static inline boost::container::flat_map<int, int> polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList);
 
+	// radius -> IDs of those nodes on inputPolarNodeList that share the same radius.
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_ID(const vector<polarNeuronSWC>& inputPolarNodeList);
 
+	// radius -> locations of those nodes on inputPolarNodeList that share the same radius.
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList, double thickness = 1);
 	/***********************************************************************/
 
 
 	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
+	// Compute and store the ChebyshevCenter for every connected component on the list.
 	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
 	/***********************************************************************/
 };

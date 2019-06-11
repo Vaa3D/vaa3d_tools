@@ -23,10 +23,12 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 class TreeGrower: public NeuronStructExplorer
 {
 public:
+	/********************** Polar Coord System Operations ***********************/
 	static boost::container::flat_map<double, NeuronTree> radiusShellNeuronTreeMap(
 		const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList);
 
 	static boost::container::flat_map<double, vector<connectedComponent>> shell2radiusConnMap(const boost::container::flat_map<double, NeuronTree> inputRadius2NeuronTreeMap);
+	/****************************************************************************/
 
 
 
@@ -38,11 +40,19 @@ public:
 
 
 	/******************************* Tree Forming *******************************/
-	// ----------------- MST related methods ----------------- //
+	// ----------------- MST growing methods ----------------- //
 	static NeuronTree SWC2MSTtree_boost(const NeuronTree& inputTree);
 	static NeuronTree SWC2MSTtreeTiled_boost(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+	// ------------------------------------------------------- //
+
+	// - Dendritic tree forming(polar coord radial approach) - //
+
+	// ------------------------------------------------------- //
+
+	// ------------- Piecing tiled tree together ------------- //
+	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	// ------------------------------------------------------- //
 	/****************************************************************************/
 
@@ -59,6 +69,12 @@ public:
 
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
+	/****************************************************************************/
+
+
+
+	/************************* Tree Trimming / Refining *************************/
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 	/****************************************************************************/
 };
 

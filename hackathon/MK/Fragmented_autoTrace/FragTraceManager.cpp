@@ -163,14 +163,14 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
 		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
 
-		profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 2);
+		profiledTree downSampledProfiledTree = NeuronStructUtil::treeDownSample(objBranchBreakTree, 2);
 		QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
 		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
 		// Iterative segment elongation / connection
 		profiledTree newIteredConnectedTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(downSampledProfiledTree, 5);
 
-		if (this->minNodeNum > 0) finalOutputTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
+		if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 		else finalOutputTree = newIteredConnectedTree.tree;
 	} 
 	else if (this->mode == dendriticTree)
@@ -179,8 +179,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree_MST(dendriticTree, profiledMSTtree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledMSTtree });
 
-		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 10);
-		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
+		profiledTree MSTdownSampledTree = NeuronStructUtil::treeDownSample(profiledMSTtree, 10);
+		profiledTree MSTdownSampledNoSpikeTree = TreeGrower::spikeRemove(MSTdownSampledTree);
 		profiledTree MSTDnNoSpikeBranchBreak = TreeGrower::MSTbranchBreak(MSTdownSampledNoSpikeTree);
 
 		profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5); // ==> Needs to revise since users may use partial volume to trace now.
@@ -194,7 +194,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(somaHollowedTree, 5);
 
 		NeuronTree floatingExcludedTree;
-		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructExplorer::singleDotRemove(somaHollowedTree, this->minNodeNum);
+		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(somaHollowedTree, this->minNodeNum);
 		else floatingExcludedTree = somaHollowedTree.tree;
 
 		denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);

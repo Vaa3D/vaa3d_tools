@@ -122,8 +122,8 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 		NeuronStructExplorer myExplorer;
 		profiledTree testTree(inputTree);
-		profiledTree outputTree = myExplorer.treeDownSample(testTree, 10);
-		profiledTree finalTree = NeuronStructExplorer::spikeRemove(outputTree);
+		profiledTree outputTree = NeuronStructUtil::treeDownSample(testTree, 10);
+		profiledTree finalTree = TreeGrower::spikeRemove(outputTree);
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree.tree);
 	}
 	else if (!funcName.compare("polarTest"))
@@ -258,6 +258,35 @@ int main(int argc, char* argv[])
 		}
 	
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree);
+	}
+	else if (!funcName.compare("centroidShellTest"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
+		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
+		vector<polarNeuronSWC> polarNodeList;
+		vector<int> origin = { 68, 64, 130 };
+		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
+		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
+		map<double, NeuronTree> radius2NeuronTreeMap;
+
+		NeuronTree outputTree;
+		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
+		{
+			NeuronTree currShellTree;
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(polarNodeList.at(*it2));
+				newNode.type = it->first;
+				currShellTree.listNeuron.push_back(newNode);
+
+				outputTree.listNeuron.push_back(newNode);
+			}
+
+			radius2NeuronTreeMap.insert({ it->first, currShellTree });
+		}
+
+		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
@@ -780,7 +809,7 @@ int main(int argc, char* argv[])
 			NeuronTree nt = readSWC_file(inputSWCfullName);
 			profiledTree profiledNt(nt);
 			profiledTree outputProfiledTree;
-			NeuronStructExplorer::treeUpSample(profiledNt, outputProfiledTree);
+			NeuronStructUtil::treeUpSample(profiledNt, outputProfiledTree);
 			writeSWC_file(saveFolderNameQ + "\\" + *it, outputProfiledTree.tree);
 		}
 	}
