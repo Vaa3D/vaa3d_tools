@@ -4,6 +4,7 @@
 #include "TreeGrower.h"
 
 using namespace std;
+using namespace integratedDataTypes;
 
 boost::container::flat_map<double, NeuronTree> TreeGrower::radiusShellNeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList)
 {
@@ -382,7 +383,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 	for (vector<int>::iterator newSegIt = newSegIDs.begin(); newSegIt != newSegIDs.end(); ++newSegIt)
 		outputProfiledTree.tree.listNeuron.append(outputProfiledTree.segs.at(*newSegIt).nodes);
 
-	this->profiledTreeReInit(outputProfiledTree);
+	profiledTreeReInit(outputProfiledTree);
 	return outputProfiledTree;
 }
 
@@ -492,7 +493,7 @@ profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int 
 
 			sort(delLocs.rbegin(), delLocs.rend());
 			for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) processTree.tree.listNeuron.erase(processTree.tree.listNeuron.begin() + ptrdiff_t(*it));
-			myExplorer.profiledTreeReInit(processTree);
+			profiledTreeReInit(processTree);
 			++currNodeNum;
 		}
 	}

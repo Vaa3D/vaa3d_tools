@@ -5,15 +5,15 @@
 
 /*******************************************************************************
 *
-*  This library intends to provide functionalities for neuron struct analysis, including graph and geometry analysis, etc.
-*  Typically NeuronStructExplorer class methods need a profiledTree struct as part of the input arguments. A profiledTree can be assigned when the class is initiated or later.
+*  NeuronStructExplorer class intends to manage Neuron data struct by providing the following functionalities:
 *
-*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information.
-*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
-*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
-*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
-
-*  The class can be initialized with or without a profiledTree being initialized at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
+*    a. [profiledTree] data struct management
+*    b. Essential segment profiling methods, i.e., NeuronStructExplorer::findSegs, NeuronStructExplorer::segTileMap, and NeuronStructExplorer::getSegHeadTailClusters, etc.
+*    c. Inter/intra neuron struct analysis.
+*
+*  This is the base class of other derived class including TreeGrower, etc.
+*  Since segment profiling methods are critical and often are the foundation of higher level algorithms which is mainly included in derived classes,
+*  implementing these methods in the base class grants the derived class direct access to them and makes the development cleaner and more convenient.
 *
 ********************************************************************************/
 
@@ -52,12 +52,6 @@ void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeNam
 		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
 		return;
 	}
-}
-
-void NeuronStructExplorer::profiledTreeReInit(profiledTree& inputProfiledTree)
-{
-	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
-	inputProfiledTree = tempTree;
 }
 
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
@@ -1126,7 +1120,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 	}
 	// --- END of [Remove nodes from segments that have been connected and append nodes from new segments] --- //
 
-	this->profiledTreeReInit(outputProfiledTree);
+	integratedDataTypes::profiledTreeReInit(outputProfiledTree);
 	return outputProfiledTree;
 }
 
@@ -1585,7 +1579,7 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 		outputProfiledTree.tree.listNeuron.append(it->second.nodes);
 	}
 
-	this->profiledTreeReInit(outputProfiledTree);
+	integratedDataTypes::profiledTreeReInit(outputProfiledTree);
 	return outputProfiledTree;
 }
 
@@ -1912,8 +1906,8 @@ void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, Neuron
 
 			if (thisNodeDist < distThreshold)
 			{
-				this->processedTree.listNeuron.push_back(*it);
-				break;
+				//this->processedTree.listNeuron.push_back(*it);
+				//break;
 			}
 
 			++checkIt;

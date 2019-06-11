@@ -5,15 +5,15 @@
 
 /*******************************************************************************
 *
-*  This library intends to provide functionalities for neuron struct analysis, including graph and geometry analysis, etc.
-*  Typically NeuronStructExplorer class methods need a profiledTree struct as part of the input arguments. A profiledTree can be assigned when the class is initiated or later.
+*  NeuronStructExplorer class intends to manage Neuron data struct by providing the following functionalities:
 *  
-*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information of it.
-*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
-*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
-*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
-
-*  The class can be initiated with or without a profiledTree being initiated at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
+*    a. [profiledTree] data struct management
+*    b. Essential segment profiling methods, i.e., NeuronStructExplorer::findSegs, NeuronStructExplorer::segTileMap, and NeuronStructExplorer::getSegHeadTailClusters, etc.
+*    c. Inter/intra neuron struct analysis.
+*    
+*  This is the base class of other derived class including TreeGrower, etc.  
+*  Since segment profiling methods are critical and often are the foundation of higher level algorithms which is mainly included in derived classes,
+*  implementing these methods in the base class grants the derived class direct access to them and makes the development cleaner and more convenient.
 *
 ********************************************************************************/
 
@@ -45,24 +45,28 @@ public:
 	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
 
-	NeuronTree* singleTree_onHoldPtr;
-	NeuronTree singleTree_onHold;
-	NeuronTree processedTree;
-
-	map<string, profiledTree> treeDataBase;
-	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH);
-	static void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
+	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
+	
+	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
+	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
 	
 	V_NeuronSWC_list segmentList;
-	void segmentDecompose(NeuronTree* inputTreePtr);
+
+	void segmentDecompose(NeuronTree* inputTreePtr); // This function is borrowed from Vaa3D code base.
+
+	/* --------------------------- segment profiling --------------------------- */
+	// Identifiy and profile all segments in a NeuronTree. This method is called when initializing a profiledTree with a NeuronTree.
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	
+	// Produce a tile-segment map with a given NeuronTree. The key is the tile label and the value is the IDs of segments that belong to the tile.
+	// -- head == true:  generate segment-head tile map.
+	// -- head == false: generate segment-tail tile map.
+	// This method is called when a profiledTree is initialized.
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	
 	// ------------------- segment-end clustering ------------------- //	
 	/* Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. */
-	/* If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.*/
-	
+	/* If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.*/	
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
@@ -71,14 +75,15 @@ protected:
 	// NOTE, currently only simple unilateral segments are supported.
 	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
 
-	// This method merge segment end clusters with given distance threshold for the whole input profiledTree.
-	// Note, this method is usually called after this->getTileBasedSegClusters together in this->getSegHeadTailClusters.
+	// This method merges segment-end clusters with given distance threshold for the whole input profiledTree.
+	// Note, this method is usually called after this->getTileBasedSegClusters in this->getSegHeadTailClusters.
 	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
 
 public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
 	static void getClusterSegPairs(profiledTree& inputProfiledTree);
 	//--------------------------------------------------------------- //
+	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
 
 
