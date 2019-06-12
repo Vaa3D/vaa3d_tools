@@ -78,7 +78,7 @@ public:
 	// Align inputTree with refTree.
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 
-	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
+	static NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
@@ -274,30 +274,6 @@ inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree
 			it->z = it->z / 2;
 		}
 	}
-}
-
-inline NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTrees)
-{
-	NeuronTree outputTree;
-	ptrdiff_t listSize = 0;
-	int nodeIDmax = 0;
-	for (vector<NeuronTree>::const_iterator it = inputTrees.begin(); it != inputTrees.end(); ++it)
-	{
-		for (QList<NeuronSWC>::iterator outputNodeIt = outputTree.listNeuron.begin(); outputNodeIt != outputTree.listNeuron.end(); ++outputNodeIt)
-			if (outputNodeIt->n > nodeIDmax) nodeIDmax = outputNodeIt->n;
-
-		outputTree.listNeuron.append(it->listNeuron);
-		for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin() + listSize; nodeIt != outputTree.listNeuron.end(); ++nodeIt)
-		{
-			nodeIt->n = nodeIt->n + nodeIDmax;
-			if (nodeIt->parent == -1) continue;
-			else nodeIt->parent = nodeIt->parent + nodeIDmax;
-		}
-
-		listSize = ptrdiff_t(outputTree.listNeuron.size());
-	}
-
-	return outputTree;
 }
 
 inline NeuronTree NeuronStructUtil::singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove)

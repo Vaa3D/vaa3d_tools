@@ -6,6 +6,7 @@
 using namespace std;
 using namespace integratedDataTypes;
 
+/* =========================== Polar Coord System Operations =========================== */
 boost::container::flat_map<double, NeuronTree> TreeGrower::radiusShellNeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList)
 {
 	boost::container::flat_map<double, NeuronTree> outputRadius2NeuronTreeMap;
@@ -36,7 +37,156 @@ boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::shell
 
 	return outputShell2radiusConnMap;
 }
+/* ====================== END of [Polar Coord System Operations] ====================== */
 
+
+
+/* =========================== Segment Forming / Elongation =========================== */
+profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	this->getSegHeadTailClusters(outputProfiledTree, distThreshold);
+	this->getClusterSegPairs(outputProfiledTree);
+
+	vector<int> newSegIDs;
+	set<int> connectedSegIDs;
+	for (boost::container::flat_map<int, vector<segPairProfile>>::iterator it = outputProfiledTree.cluster2segPairMap.begin(); it != outputProfiledTree.cluster2segPairMap.end(); ++it)
+	{
+		if (it->second.size() == 1)
+		{
+			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
+
+			if (it->second.begin()->currConnOrt == head_head)
+			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
+					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
+			}
+			else if (it->second.begin()->currConnOrt == head_tail)
+			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
+					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
+			}
+			else if (it->second.begin()->currConnOrt == tail_tail)
+			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Head, seg1Tail);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
+					((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
+			}
+		}
+	}
+
+	vector<ptrdiff_t> nodeDelLocs;
+	for (set<int>::iterator connectedIt = connectedSegIDs.begin(); connectedIt != connectedSegIDs.end(); ++connectedIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = outputProfiledTree.segs.at(*connectedIt).nodes.begin(); nodeIt != outputProfiledTree.segs.at(*connectedIt).nodes.end(); ++nodeIt)
+			nodeDelLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
+		outputProfiledTree.segs.erase(outputProfiledTree.segs.find(*connectedIt));
+	}
+
+	sort(nodeDelLocs.rbegin(), nodeDelLocs.rend());
+	for (vector<ptrdiff_t>::iterator delNodeIt = nodeDelLocs.begin(); delNodeIt != nodeDelLocs.end(); ++delNodeIt)
+		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + *delNodeIt);
+
+	for (vector<int>::iterator newSegIt = newSegIDs.begin(); newSegIt != newSegIDs.end(); ++newSegIt)
+		outputProfiledTree.tree.listNeuron.append(outputProfiledTree.segs.at(*newSegIt).nodes);
+
+	profiledTreeReInit(outputProfiledTree);
+	return outputProfiledTree;
+}
+
+profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold)
+{
+	cout << "iteration 1 " << endl;
+	int iterCount = 1;
+	profiledTree elongatedTree = this->connectSegsWithinClusters(inputProfiledTree, distThreshold);
+	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
+	{
+		inputProfiledTree = elongatedTree;
+
+		++iterCount;
+		cout << "iteration " << iterCount << " " << endl;
+		elongatedTree = this->connectSegsWithinClusters(inputProfiledTree);
+	}
+	cout << endl;
+
+	return elongatedTree;
+}
+/* ====================== END of [Segment Forming / Elongation] ======================= */
+
+
+
+/* =================================== Tree Forming =================================== */
 NeuronTree TreeGrower::SWC2MSTtree_boost(const NeuronTree& inputTree)
 {
 	NeuronTree MSTtrees;
@@ -209,6 +359,78 @@ NeuronTree TreeGrower::MSTbranchBreak(const profiledTree& inputProfiledTree, dou
 	return outputProfiledTree.tree;
 }
 
+map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap, const vector<polarNeuronSWC>& inputPolarNodeList)
+{
+	map<double, NeuronTree> outputMap;
+	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap.begin(); it != radiusShellMap.end(); ++it)
+	{
+		NeuronTree currShellTree;
+		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
+			currShellTree.listNeuron.push_back(newNode);
+		}
+
+		outputMap.insert({ it->first, currShellTree });
+	}
+
+	return outputMap;
+}
+
+NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
+{
+	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
+	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
+
+	NeuronTree outputTree;
+	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
+	{
+		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
+		{
+			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it)
+				outputTree.listNeuron.push_back(*it);
+		}
+		else
+		{
+			float minDist = 10000;
+			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
+			{
+				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
+				{
+					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
+					if (dist <= minDist) minDist = dist;
+				}
+
+				if (minDist <= distThreshold) continue;
+				else outputTree.listNeuron.push_back(*it1);
+			}
+		}
+	}
+
+	map<string, vector<NeuronSWC>> outputGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
+	boost::container::flat_set<int> nodeIDs;
+	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
+	{
+		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
+	}
+
+	return outputTree;
+}
+/* ============================== END of [Tree Forming] =============================== */
+
+
+
+/* ============================ Tree - Subtree Operations ============================= */
 void TreeGrower::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
 {
 	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
@@ -263,198 +485,11 @@ void TreeGrower::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QLis
 		TreeGrower::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
 	}
 }
+/* ======================== END of [Tree - Subtree Operations] ======================== */
 
-profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
-{
-	profiledTree outputProfiledTree = inputProfiledTree;
-	this->getSegHeadTailClusters(outputProfiledTree, distThreshold);
-	this->getClusterSegPairs(outputProfiledTree);
 
-	vector<int> newSegIDs;
-	set<int> connectedSegIDs;
-	for (boost::container::flat_map<int, vector<segPairProfile>>::iterator it = outputProfiledTree.cluster2segPairMap.begin(); it != outputProfiledTree.cluster2segPairMap.end(); ++it)
-	{
-		if (it->second.size() == 1)
-		{
-			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
 
-			if (it->second.begin()->currConnOrt == head_head)
-			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
-				if (overlapCheck < 0) continue;
-
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
-				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
-				newSegIDs.push_back(outputProfiledTree.segs.size());
-				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
-				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
-				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
-			}
-			else if (it->second.begin()->currConnOrt == head_tail)
-			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
-				if (overlapCheck < 0) continue;
-
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
-				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
-				newSegIDs.push_back(outputProfiledTree.segs.size());
-				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
-				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
-				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
-			}
-			else if (it->second.begin()->currConnOrt == tail_tail)
-			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Head, seg1Tail);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
-				if (overlapCheck < 0) continue;
-
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
-				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
-				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
-				newSegIDs.push_back(outputProfiledTree.segs.size());
-				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
-				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
-				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
-			}
-		}
-	}
-
-	vector<ptrdiff_t> nodeDelLocs;
-	for (set<int>::iterator connectedIt = connectedSegIDs.begin(); connectedIt != connectedSegIDs.end(); ++connectedIt)
-	{
-		for (QList<NeuronSWC>::iterator nodeIt = outputProfiledTree.segs.at(*connectedIt).nodes.begin(); nodeIt != outputProfiledTree.segs.at(*connectedIt).nodes.end(); ++nodeIt)
-			nodeDelLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
-		outputProfiledTree.segs.erase(outputProfiledTree.segs.find(*connectedIt));
-	}
-
-	sort(nodeDelLocs.rbegin(), nodeDelLocs.rend());
-	for (vector<ptrdiff_t>::iterator delNodeIt = nodeDelLocs.begin(); delNodeIt != nodeDelLocs.end(); ++delNodeIt)
-		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + *delNodeIt);
-
-	for (vector<int>::iterator newSegIt = newSegIDs.begin(); newSegIt != newSegIDs.end(); ++newSegIt)
-		outputProfiledTree.tree.listNeuron.append(outputProfiledTree.segs.at(*newSegIt).nodes);
-
-	profiledTreeReInit(outputProfiledTree);
-	return outputProfiledTree;
-}
-
-profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold)
-{
-	cout << "iteration 1 " << endl;
-	int iterCount = 1;
-	profiledTree elongatedTree = this->connectSegsWithinClusters(inputProfiledTree, distThreshold);
-	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
-	{
-		inputProfiledTree = elongatedTree;
-
-		++iterCount;
-		cout << "iteration " << iterCount << " " << endl;
-		elongatedTree = this->connectSegsWithinClusters(inputProfiledTree);
-	}
-	cout << endl;
-
-	return elongatedTree;
-}
-
-NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
-{
-	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
-	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
-
-	NeuronTree outputTree;
-	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
-	{
-		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
-		{
-			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it)
-				outputTree.listNeuron.push_back(*it);
-		}
-		else
-		{
-			float minDist = 10000;
-			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
-			{
-				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
-				{
-					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
-					if (dist <= minDist) minDist = dist;
-				}
-
-				if (minDist <= distThreshold) continue;
-				else outputTree.listNeuron.push_back(*it1);
-			}
-		}
-	}
-
-	map<string, vector<NeuronSWC>> outputGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
-	boost::container::flat_set<int> nodeIDs;
-	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
-	{
-		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
-			nodeIDs.insert(nodeIt->n);
-	}
-
-	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
-	{
-		if (nodeIt->parent == -1) continue;
-		else
-			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
-	}
-
-	return outputTree;
-}
-
+/* ============================= Tree Trimming / Refining ============================= */
 profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
 	profiledTree processTree = inputProfiledTree;
@@ -499,3 +534,4 @@ profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int 
 
 	return processTree;
 }
+/* ======================== END of [Tree Trimming / Refining] ========================= */

@@ -161,6 +161,30 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 	return outputTree;
 }
 
+NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTrees)
+{
+	NeuronTree outputTree;
+	ptrdiff_t listSize = 0;
+	int nodeIDmax = 0;
+	for (vector<NeuronTree>::const_iterator it = inputTrees.begin(); it != inputTrees.end(); ++it)
+	{
+		for (QList<NeuronSWC>::iterator outputNodeIt = outputTree.listNeuron.begin(); outputNodeIt != outputTree.listNeuron.end(); ++outputNodeIt)
+			if (outputNodeIt->n > nodeIDmax) nodeIDmax = outputNodeIt->n;
+
+		outputTree.listNeuron.append(it->listNeuron);
+		for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin() + listSize; nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->n = nodeIt->n + nodeIDmax;
+			if (nodeIt->parent == -1) continue;
+			else nodeIt->parent = nodeIt->parent + nodeIDmax;
+		}
+
+		listSize = ptrdiff_t(outputTree.listNeuron.size());
+	}
+
+	return outputTree;
+}
+
 void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
