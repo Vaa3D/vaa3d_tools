@@ -28,18 +28,6 @@
 #include "NeuronStructExplorer.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
-NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
-{
-	QStringList fileNameParse1 = inputFileName.split(".");
-	if (fileNameParse1.back() == "swc")
-	{
-		NeuronTree inputSWC = readSWC_file(inputFileName);
-		QStringList fileNameParse2 = fileNameParse1.at(0).split("\\");
-		string treeName = fileNameParse2.back().toStdString();
-		this->treeEntry(inputSWC, treeName);
-	}
-}
-
 void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
 {
 	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())

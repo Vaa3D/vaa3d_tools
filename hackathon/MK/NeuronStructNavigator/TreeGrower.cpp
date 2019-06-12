@@ -458,7 +458,6 @@ NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const
 profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
 	profiledTree processTree = inputProfiledTree;
-	NeuronStructExplorer myExplorer;
 	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
 	{
 		int currNodeNum = 1;

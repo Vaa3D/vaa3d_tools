@@ -23,6 +23,12 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 class TreeGrower: public NeuronStructExplorer
 {
 public:
+	/************** Constructors and Basic Data/Function Members ****************/
+	vector<polarNeuronSWC> polarNodeList;
+	/****************************************************************************/
+
+
+
 	/********************** Polar Coord System Operations ***********************/
 	static boost::container::flat_map<double, NeuronTree> radiusShellNeuronTreeMap(
 		const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList);
@@ -48,7 +54,7 @@ public:
 	// ------------------------------------------------------- //
 
 	// - Dendritic tree forming(polar coord radial approach) - //
-
+	static inline map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap, const vector<polarNeuronSWC>& inputPolarNodeList);
 	// ------------------------------------------------------- //
 
 	// ------------- Piecing tiled tree together ------------- //
@@ -138,6 +144,24 @@ inline void TreeGrower::upstreamPath(const QList<NeuronSWC>& inputList, vector<N
 	}
 
 	reverse(tracedList.begin(), tracedList.end());
+}
+
+inline map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap, const vector<polarNeuronSWC>& inputPolarNodeList)
+{
+	map<double, NeuronTree> outputMap;
+	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap.begin(); it != radiusShellMap.end(); ++it)
+	{
+		NeuronTree currShellTree;
+		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
+			currShellTree.listNeuron.push_back(newNode);
+		}
+
+		outputMap.insert({ it->first, currShellTree });
+	}
+
+	return outputMap;
 }
 
 #endif
