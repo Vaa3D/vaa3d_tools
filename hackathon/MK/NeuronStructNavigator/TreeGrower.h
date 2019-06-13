@@ -25,6 +25,9 @@ class TreeGrower: public NeuronStructExplorer
 public:
 	/************** Constructors and Basic Data/Function Members ****************/
 	vector<polarNeuronSWC> polarNodeList;
+	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;
+	boost::container::flat_map<double, NeuronTree> radius2shellTreeMap;
+	boost::container::flat_map<double, vector<connectedComponent>> radius2shellConnCompMap;
 	/****************************************************************************/
 
 
@@ -54,7 +57,9 @@ public:
 	// ------------------------------------------------------- //
 
 	// - Dendritic tree forming(polar coord radial approach) - //
-	static map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap, const vector<polarNeuronSWC>& inputPolarNodeList);
+	static boost::container::flat_map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList);
+	static boost::container::flat_map<double, vector<connectedComponent>> radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap);
+	void dendriticTree_shellCentroid(double distThre = 1);
 	// ------------------------------------------------------- //
 
 	// ------------- Piecing tiled tree together ------------- //

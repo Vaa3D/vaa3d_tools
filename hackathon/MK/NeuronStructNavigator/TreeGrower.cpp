@@ -73,7 +73,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
 				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
@@ -102,7 +102,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
 				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
@@ -131,7 +131,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
 				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
-					((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
+									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
 				if (overlapCheck < 0) continue;
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
@@ -180,6 +180,7 @@ profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputPro
 	}
 	cout << endl;
 
+	this->treeEntry(elongatedTree.tree, "elongatedTree_clusterBased");
 	return elongatedTree;
 }
 /* ====================== END of [Segment Forming / Elongation] ======================= */
@@ -359,10 +360,10 @@ NeuronTree TreeGrower::MSTbranchBreak(const profiledTree& inputProfiledTree, dou
 	return outputProfiledTree.tree;
 }
 
-map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap, const vector<polarNeuronSWC>& inputPolarNodeList)
+boost::container::flat_map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList)
 {
-	map<double, NeuronTree> outputMap;
-	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap.begin(); it != radiusShellMap.end(); ++it)
+	boost::container::flat_map<double, NeuronTree> outputMap;
+	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap_loc.begin(); it != radiusShellMap_loc.end(); ++it)
 	{
 		NeuronTree currShellTree;
 		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -371,10 +372,64 @@ map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container:
 			currShellTree.listNeuron.push_back(newNode);
 		}
 
-		outputMap.insert({ it->first, currShellTree });
+		outputMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
 	}
 
 	return outputMap;
+}
+
+boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap)
+{
+	boost::container::flat_map<double, vector<connectedComponent>> outputMap;
+	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2TreeMap.begin(); it != inputRadius2TreeMap.end(); ++it)
+	{
+		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
+		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
+
+		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
+			ImgAnalyzer::ChebyshevCenter_connComp(*it2);
+	}
+
+	return outputMap;
+}
+
+void TreeGrower::dendriticTree_shellCentroid(double distThre)
+{
+	if (this->radiusShellMap_loc.empty() || this->polarNodeList.empty())
+	{
+		cout << "Either polarNodeList or the map of radius to polarNodeList location is empty. Do nothing and return." << endl;
+		return;
+	}
+
+	this->radius2shellTreeMap = TreeGrower::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
+	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);
+
+	int nodeID = 1;
+	NeuronTree outputTree;
+	boost::container::flat_map<int, connectedComponent&> innerIDconnCompMap;
+	boost::container::flat_map<int, connectedComponent&> outerIDconnCompMap;
+	innerIDconnCompMap.clear(); 
+	outerIDconnCompMap.clear();
+	for (vector<connectedComponent>::iterator coreIt = this->radius2shellConnCompMap.begin()->second.begin(); coreIt != this->radius2shellConnCompMap.end()->second.end(); ++coreIt)
+	{
+		NeuronSWC newNode;
+		newNode.n = ++nodeID;
+		newNode.x = coreIt->ChebyshevCenter[0];
+		newNode.y = coreIt->ChebyshevCenter[1];
+		newNode.z = coreIt->ChebyshevCenter[2];
+		newNode.type = 3;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+		innerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *coreIt));
+	}
+	
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin() + 1; shellIt != this->radius2shellConnCompMap.end() - 1; ++shellIt)
+	{
+		
+		
+
+
+	}
 }
 
 NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
