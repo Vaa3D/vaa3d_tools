@@ -60,7 +60,8 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString image_file=infiles.at(0);
     QString swc_file=infiles.at(1);
-    QString output_dir=outfiles.at(0);
+    QString output_dir_den=outfiles.at(0);
+    QString output_dir_axon=outfiles.at(1);
     QString output_apo;
 
     double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
@@ -69,7 +70,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     QString flag1=list1.first();
 
 
-    XYZ block_size=XYZ(100,100,20);
+    XYZ block_size=XYZ(50,50,50);
 
     if(outfiles.size()>1)
     {
@@ -77,8 +78,12 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     }
     printf("welcome to use get_termial\n");
     NeuronTree nt1 = readSWC_file(swc_file);
-    if(!output_dir.endsWith("/")){
-        output_dir = output_dir+"/";       
+    if(!output_dir_den.endsWith("/")){
+        output_dir_den = output_dir_den+"/";
+    }
+
+    if(!output_dir_axon.endsWith("/")){
+        output_dir_axon = output_dir_axon+"/";
     }
 
 //    QList<NeuronSWC> sort_swc;
@@ -111,22 +116,45 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     output_suffix.append(QString("tif"));
     output_suffix.append(QString("swc"));
     printf("welcome to use get_termial\n");
-    for(int i=0; i<tip_list.size(); i++){
-        int tipnum=i;
+
+    int tipnum_den=1,tipnum_axon=1;
+    for(int i=0; i<tip_list.size(); i++)
+    {
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
         if(node.type > 5){continue;}
         // create a tip-centered block
         block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
         crop_block.name = QString::number(i);
         XYZ tip=XYZ(node.x, node.y, node.z);
-        // crop swc
-        QString num_cnt=QString("%1").arg(i);
-        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-        if(crop_swc_cuboid(nt, output_swc, crop_block))
-        // crop image
-        {QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);}
-        //my_saveANO(output_dir, crop_block.name, output_suffix);
+
+        if(nt.listNeuron.at(tip_list.at(i)).type == 3)
+        {
+            // crop swc
+            QString num_cnt_den=QString("%1").arg(tipnum_den);
+            QString output_swc_den = output_dir_den+flag1+"_"+num_cnt_den+".eswc";
+            if(crop_swc_cuboid(nt, output_swc_den, crop_block))
+            // crop image
+            {
+               QString output_image_den = flag1+"_"+num_cnt_den;
+               crop_img(image_file, crop_block, output_dir_den, callback, output_image_den, output_swc_den,tipnum_den,tip,false);
+            }
+            tipnum_den ++;
+            //my_saveANO(output_dir, crop_block.name, output_suffix);
+        }
+        else if(nt.listNeuron.at(tip_list.at(i)).type == 2)//axon
+        {
+            // crop swc
+            QString num_cnt_axon=QString("%1").arg(tipnum_axon);
+            QString output_swc = output_dir_axon+flag1+"_"+num_cnt_axon+".eswc";
+            if(crop_swc_cuboid(nt, output_swc, crop_block))
+                // crop image
+            {
+                QString output_image = flag1+"_"+num_cnt_axon;
+                crop_img(image_file, crop_block, output_dir_axon, callback, output_image, output_swc,tipnum_axon,tip,false);
+            }
+            tipnum_axon ++;
+            //my_saveANO(output_dir, crop_block.name, output_suffix);
+        }
     }
     return;
     //QString output_newswc = output_dir+"deleted"+".eswc";
@@ -141,11 +169,16 @@ void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & ou
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString image_file=infiles.at(0);
     QString swc_file=infiles.at(1);
-    QString output_dir=outfiles.at(0);
+    QString output_dir_den=outfiles.at(0);
+    QString output_dir_axon=outfiles.at(1);
     QString output_apo;
 
-    if(!output_dir.endsWith("/")){
-        output_dir = output_dir+"/";
+    if(!output_dir_den.endsWith("/")){
+        output_dir_den = output_dir_den+"/";
+    }
+
+    if(!output_dir_axon.endsWith("/")){
+        output_dir_axon = output_dir_axon+"/";
     }
 
     double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
@@ -154,7 +187,7 @@ void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & ou
     QString flag1=list1.first();
 
 
-    XYZ block_size=XYZ(100,100,20);
+    XYZ block_size=XYZ(50,50,50);
 
     if(outfiles.size()>1)
     {
@@ -194,21 +227,44 @@ void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & ou
     output_suffix.append(QString("tif"));
     output_suffix.append(QString("swc"));
     printf("welcome to use get_termial\n");
-    for(int i=0; i<tip_list.size(); i++){
-        int tipnum=i;
+    int tipnum_den=1,tipnum_axon=1;
+    for(int i=0; i<tip_list.size(); i++)
+    {
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
         if(node.type > 5){continue;}
         // create a tip-centered block
         block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
         crop_block.name = QString::number(i);
         XYZ tip=XYZ(node.x, node.y, node.z);
-        // crop swc
-        QString num_cnt=QString("%1").arg(i);
-        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-        if(crop_swc_cuboid(nt, output_swc, crop_block))
-        // crop image
-        {QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,true);}
+
+        if(nt.listNeuron.at(tip_list.at(i)).type == 3)
+        {
+            // crop swc
+            QString num_cnt_den=QString("%1").arg(tipnum_den);
+            QString output_swc_den = output_dir_den+flag1+"_"+num_cnt_den+".eswc";
+            if(crop_swc_cuboid(nt, output_swc_den, crop_block))
+            // crop image
+            {
+               QString output_image_den = flag1+"_"+num_cnt_den;
+               crop_img(image_file, crop_block, output_dir_den, callback, output_image_den, output_swc_den,tipnum_den,tip,false);
+            }
+            tipnum_den ++;
+            //my_saveANO(output_dir, crop_block.name, output_suffix);
+        }
+        else if(nt.listNeuron.at(tip_list.at(i)).type == 2)//axon
+        {
+            // crop swc
+            QString num_cnt_axon=QString("%1").arg(tipnum_axon);
+            QString output_swc = output_dir_axon+flag1+"_"+num_cnt_axon+".eswc";
+            if(crop_swc_cuboid(nt, output_swc, crop_block))
+                // crop image
+            {
+                QString output_image = flag1+"_"+num_cnt_axon;
+                crop_img(image_file, crop_block, output_dir_axon, callback, output_image, output_swc,tipnum_axon,tip,false);
+            }
+            tipnum_axon ++;
+            //my_saveANO(output_dir, crop_block.name, output_suffix);
+        }
     }
     return;
 }
@@ -223,13 +279,31 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     QString image_file=infiles.at(0);
     QString swc_file=infiles.at(1);
     QString output_dir=outfiles.at(0);
+    QString output_dir_axon=outfiles.at(1);
     QString output_apo;
+
+    XYZ block_size=XYZ(100,100,20);
+    int tip_type=1;
+    if (inparas.size() >= 3 )
+    {
+        int tmp1=atoi(inparas.at(0));
+        int tmp2=atoi(inparas.at(1));
+        int tmp3=atoi(inparas.at(2));
+        tip_type=atoi(inparas.at(3));
+        if (tmp1 != 0 && tmp2 != 0 && tmp3 != 0)
+        {
+            block_size=XYZ(tmp1,tmp2,tmp3);
+            printf("block size is set to:[%dx%dx%d]",tmp1,tmp2,tmp3);
+        }
+        else
+            v3d_msg("The parameter of block size is not valid, the program will use default value of [100x100x20]",0);
+    }
 
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1.first();
 
-    XYZ block_size=XYZ(100,100,20);
+//    /XYZ block_size=XYZ(100,100,20);
 
     if(outfiles.size()>1)
     {
@@ -239,6 +313,9 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     NeuronTree nt = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
+    }
+    if(!output_dir_axon.endsWith("/")){
+        output_dir_axon = output_dir_axon+"/";
     }
 
 //    QList<NeuronSWC> sort_swc;
@@ -266,20 +343,49 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     for(int i=0; i<tip_list.size(); i++){
         int tipnum=i;
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
-        if(node.type > 5){continue;}
-        // create a tip-centered block
+        if(node.type > 5) continue;
+
         block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
         crop_block.name = QString::number(i);
         XYZ tip=XYZ(node.x, node.y, node.z);
         // crop swc
         QString num_cnt=QString("%1").arg(i);
         QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
-        QString output_swc = output_dir+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
-        if(crop_swc_cuboid(nt, output_swc, crop_block))
-        // crop image
-        {
-            QString output_image = flag1+"_"+num_cnt+cordinates;
-            crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);}
+
+        // create a tip-centered block
+        if(tip_type == 2){  //get tips from dendrite and axon
+
+            QString output_swc = output_dir+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
+            if(crop_swc_cuboid(nt, output_swc, crop_block))
+                // crop image
+            {
+                QString output_image = flag1+"_"+num_cnt+cordinates;
+                crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
+            }
+        }
+        else if(tip_type = 1 && node.type == 3){  //only get tips from dendrite
+
+
+            QString output_swc = output_dir+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
+            if(crop_swc_cuboid(nt, output_swc, crop_block))
+                // crop image
+            {
+                QString output_image = flag1+"_"+num_cnt+cordinates;
+                crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
+            }
+        }
+        else if(tip_type = 1 && node.type == 2){  //only get tips from axon
+
+
+            QString output_swc = output_dir_axon+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
+            if(crop_swc_cuboid(nt, output_swc, crop_block))
+                // crop image
+            {
+                QString output_image = flag1+"_"+num_cnt+cordinates;
+                crop_img(image_file, crop_block, output_dir_axon, callback, output_image, output_swc,tipnum,tip,false);
+            }
+        }
+
         //my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
@@ -701,13 +807,21 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     QString input_swc=infiles.at(0);
     QString input_image=infiles.at(1);
     QString output_2d_dir=outfiles.at(0);
+    QString output_2d_dir_axon=outfiles.at(1);
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
     }
+    if(!output_2d_dir_axon.endsWith("/")){
+        output_2d_dir_axon = output_2d_dir_axon+"/";
+    }
     int radius=5;
-    if (inparas.size()==1)
+    int relocate_tip_or_not=0;//do not relocate tip position
+    int tip_type=2;//get tip from both dendrite and axon
+    if (inparas.size() >= 2)
     {
         int tmp=atoi(inparas.at(0));
+        relocate_tip_or_not=atoi(inparas.at(1));
+        tip_type=atoi(inparas.at(2));
         if (tmp>1 && tmp<=20)
         {
             radius=tmp;
@@ -728,16 +842,16 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
 
     long mysz[4];
-    mysz[0] = 100;
-    mysz[1] = 100;
-    mysz[2] = 20;
+    mysz[0] = 50;
+    mysz[1] = 50;
+    mysz[2] = 50;
     mysz[3] = 1;
 
     // Find tips
     QList<int> ori_tip_list = get_tips(nt_input, false);
     cout<<"Number_of_tips:\t"<<qPrintable(input_swc)<<"\t"<<ori_tip_list.size()<<endl;
-    XYZ block_size=XYZ(100,100,20);
-    // Crop tip-centered regions one by one
+    XYZ block_size=XYZ(50,50,50);
+    // 2.Crop tip-centered regions one by one
     block zcenter_block; // This is a block centered at (0,0,0)
     zcenter_block.small = 0-block_size/2;
     zcenter_block.large = block_size/2;
@@ -761,7 +875,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
         int croped_swc_tip_index=0;
         NeuronTree croped;
-        if(croped_swc_return(nt_input, output_swc_crop, crop_block,croped_swc,1))
+        if(croped_swc_return(nt_input, output_swc_crop, crop_block,croped_swc,0))
         {
             croped=neuronlist_2_neurontree(croped_swc);
             croped_swc_tip_index=find_tip(croped,mysz[0],mysz[1],mysz[2]);
@@ -769,12 +883,13 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
             if (croped_swc_tip_index==VOID) continue;
             else
             crop_img_not_export(input_image, crop_block, output_2d_dir,callback,data1d_crop,output_image);
+            if (data1d_crop == 0) continue;
 
         }
 
         //unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
         //printf("+++++++++++:%p\n",p4dImage);
-        // 3.Find tip node: and make tip node to the center of tip image signal
+        // 3.Find tip node: move tip node to the center of tip image signal
         int tip_id = ori_tip_list.at(i);
         MyMarker tip,center;
         cout<<"tip id in input swc:"<<tip_id<<endl;
@@ -789,6 +904,9 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         //3.2 return average signal back to nodes in cube
         //int radius=5;
         //4.tip relocation
+
+        //--------------------------------------------------
+        /*
         all_cube_markers=get_in_circle_nodes(tip,radius);//R=5
         cout<<"cube size(number of pixels):"<<all_cube_markers.size()<<endl;
 
@@ -814,7 +932,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         QString saveName = output_2d_dir +num_cnt +".nrrd";
         qDebug("--------------------------nrrd name:%s",qPrintable(saveName));
         //const char* fileName = saveName.toAscii();
-        simple_saveimage_wrapper(callback, saveName.toStdString().c_str(), test_mask , mysz, 1);
+        //simple_saveimage_wrapper(callback, saveName.toStdString().c_str(), test_mask , mysz, 1);
 
         double ave_signal_mask,sdev_block_mask,ave_signal_image_mask;
         mean_and_std(test_mask,mysz[0]*mysz[1]*mysz[2],ave_signal_mask,sdev_block_mask);
@@ -838,8 +956,10 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         output_swc=change_tip_xyz(croped_swc,croped_swc_tip_index,center);
         result_tree=neuronlist_2_neurontree(output_swc);
         QString swc_name = output_2d_dir+flag1+"_"+num_cnt+"."+QString ("tip_reset.swc");
-        writeSWC_file(swc_name,result_tree);
+        //writeSWC_file(swc_name,result_tree);
         qDebug()<<swc_name;
+  */
+        //--------------------------------------------------------------------------------
 
         //5.mean_shift tip location
         LandmarkList marklist_2D;
@@ -876,6 +996,9 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         //signal=get_aver_signal(allmarkers, data1d_crop, data2d,mysz[0], mysz[1], mysz[2], 3);
 
         //7.calculate radius
+
+        //-------------------------------------------------------------------------------
+        /*
         map<int,float> r_and_index;
         QList<NeuronSWC> tip_nodes;
         NeuronSWC S_ori,S_mean,S_re;
@@ -940,7 +1063,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         cout<<"--------------------------------------high intensity:"<<ave_signal_all_mask_high<<endl;
         QString saveName1 = output_2d_dir +num_cnt+"_high" +".nrrd";
         qDebug("--------------------------nrrd name:%s",qPrintable(saveName1));
-        simple_saveimage_wrapper(callback, saveName1.toStdString().c_str(), high_mask , mysz, 1);
+        //simple_saveimage_wrapper(callback, saveName1.toStdString().c_str(), high_mask , mysz, 1);
 
         map<int,float> index_ratio_high=ratio_r(data1d_crop,tip_nodes,5,ave_signal_all_mask_high,mysz);
         printf("ratio_ori_high=================:%f\n ratio_mean_high================:%f\n ratio_re_high========================:%f\n",index_ratio_high[0],index_ratio_high[1],index_ratio_high[2]);
@@ -956,9 +1079,9 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         high_score_re=index_ratio_high[2] / (index_ratio_high[0] + index_ratio_high[1] + index_ratio_high[2]);
 
         double score_result_ori=0,score_result_mean=0,score_result_re=0;
-        score_result_ori=(fore_score_ori+high_score_ori) / 2 * 100;
-        score_result_mean=(fore_score_mean+high_score_mean) / 2 * 100;
-        score_result_re=(fore_score_re+high_score_re) / 2 * 100;
+        score_result_ori=(fore_score_ori*0.4+high_score_ori*0.6) * 100;
+        score_result_mean=(fore_score_mean*0.4+high_score_mean*0.6) * 100;
+        score_result_re=(fore_score_re*0.4+high_score_re*0.6) * 100;
 
         double max_score=0;
         max_score= (score_result_ori >= max_score) ? score_result_ori : max_score;
@@ -1043,7 +1166,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         mean.radius=r_and_index[1];
         imagemarks.push_back(mean);
         cout<<"radius_ori:"<<r_and_index[0]<<"radius_mean:"<<r_and_index[1]<<"radius_re:"<<r_and_index[2]<<endl;
-        writeMarker_file(qs_output,imagemarks);
+        //writeMarker_file(qs_output,imagemarks);
 
 
 //record result:generate and write file
@@ -1081,18 +1204,77 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                    << ","<< QString::number(score_result_mean,'f',2).toStdString().c_str()<< ","<< QString::number(score_result_re,'f',2).toStdString().c_str()<<endl;
 
             file.close();
+        }*/
+
+        if(relocate_tip_or_not)
+        {
+            float shift_x = mass_center[0]+1-25;
+            float shift_y = mass_center[1]+1-25;
+            float shift_z = mass_center[2]+1-25;
+            int tipnum1=i;
+            // create a tip-centered block
+            if(tip_type == 2){   //get tips from dendrite and axon
+
+                block crop_block1;
+                XYZ tip_shift;
+                if(node.type == 2)//shift tip from axon but not from dendrite,cas the shift function perform badly in tips from dendrite
+                {
+                    crop_block1 = offset_block(zcenter_block, XYZ(node.x+shift_x, node.y+shift_y, node.z+shift_z));
+                    crop_block1.name = QString::number(i);
+                    tip_shift=XYZ(node.x+shift_x, node.y+shift_y, node.z+shift_z);
+                }
+                else if(node.type == 3)
+                {
+                    crop_block1 = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+                    crop_block1.name = QString::number(i);
+                    tip_shift=XYZ(node.x, node.y, node.z);
+                }
+                // crop swc
+                QString num_cnt1=QString("%1").arg(i);
+                QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
+                QString output_swc_shift = output_2d_dir+flag1+"_"+num_cnt1+cordinates+"_croped.eswc";
+                if(crop_swc_cuboid(nt_input, output_swc_shift, crop_block1))
+                // crop image
+                {
+                    QString output_image_shift = flag1+"_"+num_cnt1+cordinates;
+                    crop_img(input_image, crop_block1, output_2d_dir, callback, output_image_shift, output_swc_shift,tipnum1,tip_shift,false);
+                }
+            }
+            else if(tip_type = 1 && node.type == 3){  //only get tips only from dendrite and do not shift these tips
+
+                block crop_block1 = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+                crop_block1.name = QString::number(i);
+                XYZ tip_shift=XYZ(node.x, node.y, node.z);
+                // crop swc
+                QString num_cnt1=QString("%1").arg(i);
+                QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
+                QString output_swc_shift = output_2d_dir+flag1+"_"+num_cnt1+cordinates+"_croped.eswc";
+                if(crop_swc_cuboid(nt_input, output_swc_shift, crop_block1))
+                // crop image
+                {
+                    QString output_image_shift = flag1+"_"+num_cnt1+cordinates;
+                    crop_img(input_image, crop_block1, output_2d_dir, callback, output_image_shift, output_swc_shift,tipnum1,tip_shift,false);
+                }
+            }
+            else if(tip_type = 1 && node.type == 2){  //get tips only from axon and do shift these tips
+
+                block crop_block1 = offset_block(zcenter_block, XYZ(node.x+shift_x, node.y+shift_y, node.z+shift_z));
+                crop_block1.name = QString::number(i);
+                XYZ tip_shift=XYZ(node.x+shift_x, node.y+shift_y, node.z+shift_z);
+                // crop swc
+                QString num_cnt1=QString("%1").arg(i);
+                QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
+                QString output_swc_shift = output_2d_dir_axon+flag1+"_"+num_cnt1+cordinates+"_croped.eswc";
+                if(crop_swc_cuboid(nt_input, output_swc_shift, crop_block1))
+                // crop image
+                {
+                    QString output_image_shift = flag1+"_"+num_cnt1+cordinates;
+                    crop_img(input_image, crop_block1, output_2d_dir_axon, callback, output_image_shift, output_swc_shift,tipnum1,tip_shift,false);
+                }
+            }
         }
-
-//        int sShowMarker = (renderer->sShowMarkers==0)?2:0;
-//        setShowMarkers(sShowMarker);
-//        switch(sShowMarker)
-//        {
-//        case 0: _idep->window3D->checkBox_displayMarkers->setCheckState(Qt::Unchecked);break;
-//        case 2: _idep->window3D->checkBox_displayMarkers->setChecked(Qt::Checked);break;
-//        }
-
-        delete []total1dData_mask;
-        delete []test_mask;
+        //delete []total1dData_mask;
+        //delete []test_mask;
     }
 
 
@@ -1106,17 +1288,34 @@ void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_image=infiles.at(0);
     QString input_swc=infiles.at(1);
+
+//    const char* tmp1=QString(inparas.at(0)).toStdString().c_str();
+//    const char* tmp2=QString(inparas.at(1)).toStdString().c_str();
+//    const char* tmp3=QString(inparas.at(2)).toStdString().c_str();
+//    const char* tmp4=QString(inparas.at(3)).toStdString().c_str();
+
+    int tmp1=atoi(inparas.at(0));
+    int tmp2=atoi(inparas.at(1));
+    int tmp3=atoi(inparas.at(2));
+    int tmp4=atoi(inparas.at(3));
+
     QString output_2d_dir=outfiles.at(0);//is a folder,not a file!
     QString output_2d_dir_fake=outfiles.at(0);
 
+    QStringList name_list=input_swc.split("/");
+    QStringList basename_list=name_list.last().split("_");
+    QString flag_num;
+    if(basename_list.at(1).split(".").size()>1)  flag_num=basename_list.at(0)+"_"+basename_list.at(1).split(".").at(0)+"_";
+    else  flag_num=basename_list.at(0)+"_"+basename_list.at(1)+"_";
+
     if(!output_2d_dir.endsWith("/")){
-        output_2d_dir = output_2d_dir+"/"+QString("tempfile")+"/";
-        output_2d_dir_fake = output_2d_dir_fake+"/"+QString("tempfile_fake")+"/";
+        output_2d_dir = output_2d_dir+"/"+flag_num+QString("tempfile")+"/";
+        output_2d_dir_fake = output_2d_dir_fake+"/"+flag_num+QString("tempfile_fake")+"/";
     }
     else {
 
-        output_2d_dir = output_2d_dir+QString("tempfile")+"/";
-        output_2d_dir_fake = output_2d_dir_fake+QString("tempfile_fake")+"/";
+        output_2d_dir = output_2d_dir+flag_num+QString("tempfile")+"/";
+        output_2d_dir_fake = output_2d_dir_fake+flag_num+QString("tempfile_fake")+"/";
     }
 
     QDir dir(output_2d_dir);QDir dir_fake(output_2d_dir_fake);
@@ -1147,9 +1346,9 @@ void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     }
 
 
-    QString get_sample=QString("%1/vaa3d -x ML_get_sample -f get_2D3D_block -i '%2' %3 -o %4").arg(getAppPath().toStdString().c_str())
-            .arg(input_image.toStdString().c_str()).arg(input_swc.toStdString().c_str()).arg(output_2d_dir.toStdString().c_str());
-    QString prediction=QString("/home/braincenter4/anaconda3/envs/python2/bin/python /home/braincenter4/vaa3d_tools/hackathon/ouyang/ML_get_samples/prediction.py %1 %2")
+    QString get_sample=QString("%1/vaa3d -x ML_get_sample -f get_2D3D_block -i '%2' %3 -p %4 %5 %6 %7 -o %8").arg(getAppPath().toStdString().c_str())
+            .arg(input_image.toStdString().c_str()).arg(input_swc.toStdString().c_str()).arg(tmp1).arg(tmp2).arg(tmp3).arg(tmp4).arg(output_2d_dir.toStdString().c_str());
+    QString prediction=QString("/home/braincenter4/anaconda3/envs/python2/bin/python /home/braincenter4/Desktop/ML/prediction/50x50x50_3x3x3.py %1 %2")
             .arg(output_2d_dir.toStdString().c_str()).arg(output_2d_dir_fake.toStdString().c_str());
     //system("/home/braincenter4/anaconda3/envs/python2/bin/python /home/braincenter4/vaa3d_tools/hackathon/ouyang/ML_get_samples/prediction.py");
     system(qPrintable(get_sample));
@@ -1173,9 +1372,17 @@ void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
         {
             vector<double> name_full_cor;name_full_cor.clear();
             QStringList name_cor=namelist.at(i).split("_");
-            double name_x=name_cor.at(3).toDouble();
-            double name_y=name_cor.at(4).toDouble();
-            double name_z=name_cor.at(5).toDouble();
+            double name_x,name_y,name_z;
+            if (name_cor.size()<10){
+                name_x=name_cor.at(3).toDouble();
+                name_y=name_cor.at(4).toDouble();
+                name_z=name_cor.at(5).toDouble();
+            }
+            else {
+                name_x=name_cor.at(12).toDouble();
+                name_y=name_cor.at(13).toDouble();
+                name_z=name_cor.at(14).toDouble();
+            }
             name_full_cor.push_back(name_x);
             name_full_cor.push_back(name_y);
             name_full_cor.push_back(name_z);
@@ -1239,178 +1446,178 @@ QString getAppPath()
     v3dAppPath = testPluginsDir.absolutePath();
     return v3dAppPath;
 }
-/*unsigned char * image_enhancement(V3DPluginCallback2 & callback,unsigned char* data1d,QString inimg_file,char * outimg_file2)
-{
-    cout<<"Welcome to adaptive enhancement filter"<<endl;
-    unsigned int count = 2, c=0, p = 0,q = 1;
-    double ratio = 1.0;
+//unsigned char * image_enhancement(V3DPluginCallback2 & callback,unsigned char* data1d,QString inimg_file,char * outimg_file2)
+//{
+//    cout<<"Welcome to adaptive enhancement filter"<<endl;
+//    unsigned int count = 2, c=0, p = 0,q = 1;
+//    double ratio = 1.0;
 
-    cout<<"scale = "<<count<<endl;
-    cout<<"ch = "<<c<<endl;
-    cout<<"ratio = "<<ratio<<endl;
-    cout<<"soma = "<<p<<endl;
-    cout<<"Gaussian blur = "<<q<<endl;
+//    cout<<"scale = "<<count<<endl;
+//    cout<<"ch = "<<c<<endl;
+//    cout<<"ratio = "<<ratio<<endl;
+//    cout<<"soma = "<<p<<endl;
+//    cout<<"Gaussian blur = "<<q<<endl;
 
 
-//  Image4DSimple *subject = callback.loadImage(inimg_file);
-//    if(!subject || !subject->valid())
+////  Image4DSimple *subject = callback.loadImage(inimg_file);
+////    if(!subject || !subject->valid())
+////    {
+////         v3d_msg("Fail to load the input image.");
+////         if (subject) {delete subject; subject=0;}
+////         return false;
+////    }
+
+//    V3DLONG in_sz[4];
+//    in_sz[0] = 100;
+//    in_sz[1] = 100;
+//    in_sz[2] = 20;
+//    in_sz[3] = 1;
+//    V3DLONG pagesz = 100*100*20;
+//    V3DLONG offsetc = (c-1)*pagesz;
+
+//    int datatype = V3D_UINT8;
+
+//    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
+//    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
+//    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+
+
+//    QString temp_soma = QString(inimg_file) + "_soma.v3draw";
+//    QString temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+//    QString temp_ds = QString(inimg_file) + "_ds.v3draw";
+//    QString temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+
+
+//    unsigned char *EnahancedImage_final=0;
+//    try {EnahancedImage_final = new unsigned char [pagesz];}
+//    catch(...)  {v3d_msg("cannot allocate memory for EnhancedImage_final."); return false;}
+
+
+//    double sigma = 0.3;
+//    for(unsigned int  scale = 0; scale < count; scale++)
 //    {
-//         v3d_msg("Fail to load the input image.");
-//         if (subject) {delete subject; subject=0;}
-//         return false;
-//    }
 
-    V3DLONG in_sz[4];
-    in_sz[0] = 100;
-    in_sz[1] = 100;
-    in_sz[2] = 20;
-    in_sz[3] = 1;
-    V3DLONG pagesz = 100*100*20;
-    V3DLONG offsetc = (c-1)*pagesz;
+//        unsigned char * data1d_gf = 0;
+//        unsigned char * gsdtld = 0;
+//        unsigned char* EnahancedImage = 0;
 
-    int datatype = V3D_UINT8;
-
-    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
-    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
-    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
-    QString temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
-    QString temp_wogf = QString(inimg_file) + "_woGf.v3draw";
-
-
-    QString temp_soma = QString(inimg_file) + "_soma.v3draw";
-    QString temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
-    QString temp_ds = QString(inimg_file) + "_ds.v3draw";
-    QString temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
-
-
-    unsigned char *EnahancedImage_final=0;
-    try {EnahancedImage_final = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for EnhancedImage_final."); return false;}
-
-
-    double sigma = 0.3;
-    for(unsigned int  scale = 0; scale < count; scale++)
-    {
-
-        unsigned char * data1d_gf = 0;
-        unsigned char * gsdtld = 0;
-        unsigned char* EnahancedImage = 0;
-
-        switch (datatype)
-        {
-        case V3D_UINT8:
-            if (scale==0) //do not filter for the scale 0
-            {
-                if(count ==2)
-                    sigma = 0.3;
-
-                data1d_gf = new unsigned char [pagesz];
-                memcpy(data1d_gf, data1d, pagesz);
-            }
-            else
-            {
-                sigma = 1.2;
-//                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
-
-                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
-
-            }
-//            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
-
-            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
-            AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
-            break;
-        default: v3d_msg("Invalid data type. Do nothing."); return false;
-        }
-
-         if (scale==0)
-                memcpy(EnahancedImage_final, EnahancedImage, pagesz);
-         else
-         {
-             for(V3DLONG i = 0; i<pagesz; i++)
-             {
-                 if (EnahancedImage_final[i] < EnahancedImage[i])
-                     EnahancedImage_final[i] = EnahancedImage[i];
-             }
-         }
-
-        if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
-        if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
-        if(gsdtld) {delete []gsdtld; gsdtld =0;}
-    }
-
-    remove(temp_raw.toStdString().c_str());
-
-    unsigned char* Enhancement_soma = 0;
-    //    if(p==1)
-    //    {
-    //        LandmarkList listLandmarks;
-
-    //        enhancementWithsoma(callback,data1d,(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
-    //    }
-    //else
-    //{
-        Enhancement_soma = new unsigned char [pagesz];
-        memcpy(Enhancement_soma, EnahancedImage_final, pagesz);
-    //}
-
-    unsigned char* data1d_uint8 = 0;
-    if(q==1)
-    {
-        simple_saveimage_wrapper(callback,temp_wogf.toStdString().c_str(), (unsigned char *)Enhancement_soma, in_sz, 1);
-        V3DPluginArgItem arg;
-        V3DPluginArgList input_gf;
-        V3DPluginArgList output_gf;
-
-        arg.type = "random";std::vector<char*> args1;
-        char* char_temp_wogf =  new char[temp_wogf.length() + 1];strcpy(char_temp_wogf, temp_wogf.toStdString().c_str());
-        args1.push_back(char_temp_wogf);arg.p = (void *) & args1; input_gf<< arg;
-        arg.type = "random";std::vector<char*> args;
-        args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
-        char* char_temp_gsdt_v2 =  new char[temp_gsdt_v2.length() + 1];strcpy(char_temp_gsdt_v2, temp_gsdt_v2.toStdString().c_str());
-        arg.type = "random";std::vector<char*> args2;args2.push_back(char_temp_gsdt_v2); arg.p = (void *) & args2; output_gf<< arg;
-
-        QString full_plugin_name = "gaussian";
-        QString func_name = "gf";
-
-        callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
-
-//        unsigned char * data1d_float = 0;
-//        V3DLONG in_zz[4];
-//        datatype = 0;
-//        //char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
-//        if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
+//        switch (datatype)
 //        {
-//            cerr<<"load image "<<outimg_file2<<" error!"<<endl;
-//            return false;
+//        case V3D_UINT8:
+//            if (scale==0) //do not filter for the scale 0
+//            {
+//                if(count ==2)
+//                    sigma = 0.3;
+
+//                data1d_gf = new unsigned char [pagesz];
+//                memcpy(data1d_gf, data1d, pagesz);
+//            }
+//            else
+//            {
+//                sigma = 1.2;
+////                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+
+//                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
+
+//            }
+////            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+
+//            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
+//            AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
+//            break;
+//        default: v3d_msg("Invalid data type. Do nothing."); return false;
 //        }
 
-//        remove(temp_wogf.toStdString().c_str());
-//        remove(temp_gsdt_v2.toStdString().c_str());
+//         if (scale==0)
+//                memcpy(EnahancedImage_final, EnahancedImage, pagesz);
+//         else
+//         {
+//             for(V3DLONG i = 0; i<pagesz; i++)
+//             {
+//                 if (EnahancedImage_final[i] < EnahancedImage[i])
+//                     EnahancedImage_final[i] = EnahancedImage[i];
+//             }
+//         }
 
-//        double min,max;
+//        if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+//        if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+//        if(gsdtld) {delete []gsdtld; gsdtld =0;}
+//    }
 
+//    remove(temp_raw.toStdString().c_str());
+
+//    unsigned char* Enhancement_soma = 0;
+//    //    if(p==1)
+//    //    {
+//    //        LandmarkList listLandmarks;
+
+//    //        enhancementWithsoma(callback,data1d,(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
+//    //    }
+//    //else
+//    //{
+//        Enhancement_soma = new unsigned char [pagesz];
+//        memcpy(Enhancement_soma, EnahancedImage_final, pagesz);
+//    //}
+
+//    unsigned char* data1d_uint8 = 0;
+//    if(q==1)
+//    {
+//        simple_saveimage_wrapper(callback,temp_wogf.toStdString().c_str(), (unsigned char *)Enhancement_soma, in_sz, 1);
+//        V3DPluginArgItem arg;
+//        V3DPluginArgList input_gf;
+//        V3DPluginArgList output_gf;
+
+//        arg.type = "random";std::vector<char*> args1;
+//        char* char_temp_wogf =  new char[temp_wogf.length() + 1];strcpy(char_temp_wogf, temp_wogf.toStdString().c_str());
+//        args1.push_back(char_temp_wogf);arg.p = (void *) & args1; input_gf<< arg;
+//        arg.type = "random";std::vector<char*> args;
+//        args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
+//        char* char_temp_gsdt_v2 =  new char[temp_gsdt_v2.length() + 1];strcpy(char_temp_gsdt_v2, temp_gsdt_v2.toStdString().c_str());
+//        arg.type = "random";std::vector<char*> args2;args2.push_back(char_temp_gsdt_v2); arg.p = (void *) & args2; output_gf<< arg;
+
+//        QString full_plugin_name = "gaussian";
+//        QString func_name = "gf";
+
+//        callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
+
+////        unsigned char * data1d_float = 0;
+////        V3DLONG in_zz[4];
+////        datatype = 0;
+////        //char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
+////        if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
+////        {
+////            cerr<<"load image "<<outimg_file2<<" error!"<<endl;
+////            return false;
+////        }
+
+////        remove(temp_wogf.toStdString().c_str());
+////        remove(temp_gsdt_v2.toStdString().c_str());
+
+////        double min,max;
+
+////        data1d_uint8 = new unsigned char [pagesz];
+////        rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+////        if (data1d_float) { delete []data1d_float; data1d_float=0;}
+
+//    }
+//    else
+//    {
 //        data1d_uint8 = new unsigned char [pagesz];
-//        rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
-//        if (data1d_float) { delete []data1d_float; data1d_float=0;}
+//        memcpy(data1d_uint8, Enhancement_soma, pagesz);
+//    }
 
-    }
-    else
-    {
-        data1d_uint8 = new unsigned char [pagesz];
-        memcpy(data1d_uint8, Enhancement_soma, pagesz);
-    }
-
-    //simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d_uint8, in_sz, 1);
+//    //simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d_uint8, in_sz, 1);
 
 
-    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
-    if (EnahancedImage_final) { delete []EnahancedImage_final; EnahancedImage_final=0;}
-    if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
-    return data1d_uint8;
+//    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
+//    if (EnahancedImage_final) { delete []EnahancedImage_final; EnahancedImage_final=0;}
+//    if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
+//    return data1d_uint8;
 
-}
-*/
+//}
+
 
 map<int,float> ratio_r(unsigned char *data1d_crop,QList<NeuronSWC> listswc,float R,float thresh,V3DLONG sz[4]){
 
@@ -1987,7 +2194,7 @@ void crop_img_not_export(QString image, block crop_block, QString outputdir_img,
     QString saveName = outputdir_img + output_format + ".nrrd";
     qDebug("--------------------------nrrd name:%s",qPrintable(saveName));
     //const char* fileName = saveName.toAscii();
-    simple_saveimage_wrapper(callback, saveName.toStdString().c_str(), cropped_image, in_sz, 1);
+    //simple_saveimage_wrapper(callback, saveName.toStdString().c_str(), cropped_image, in_sz, 1);
 
     return;
 }
@@ -2552,7 +2759,8 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-f<func name>:\t\t get_block\n";
     cout<<"-i<file name>:\t\t input .tif file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D3D_block -i <raw image> <swc file> -o <output image> dir.\n";
+    cout<<"-p<4 parameters>:\t\t \n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D3D_block -i <raw image> <swc file> -p <blocksize:xyz> <1(separate axon and dendrite tips) or 2(not separate)> -o <output image> dir.\n";
 
     //4.<get_2D_block>
     cout<<"This fuction for generet 2D images"<<endl;
