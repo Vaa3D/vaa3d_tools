@@ -395,3 +395,9 @@ boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGra
 	return outputShellMap;
 }
 /* ======================== END of [Polar Coordinate System Operations] =========================== */
+
+
+
+/* ======================== SWC - ImgAnalyzer::ConnectedComponent Analysis ======================== */
+
+/* =================== END of [SWC - ImgAnalyzer::ConnectedComponent Analysis] ==================== */

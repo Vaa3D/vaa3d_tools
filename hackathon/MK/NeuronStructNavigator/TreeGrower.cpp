@@ -403,15 +403,15 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 
 	this->radius2shellTreeMap = TreeGrower::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
 	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);
-
-	int nodeID = 1;
+	cout << this->radius2shellTreeMap.size() << " " << this->radius2shellConnCompMap.size() << endl;
+	int nodeID = 0;
 	NeuronTree outputTree;
 	boost::container::flat_map<int, connectedComponent&> innerIDconnCompMap;
-	boost::container::flat_map<int, connectedComponent&> outerIDconnCompMap;
-	innerIDconnCompMap.clear(); 
-	outerIDconnCompMap.clear();
-	for (vector<connectedComponent>::iterator coreIt = this->radius2shellConnCompMap.begin()->second.begin(); coreIt != this->radius2shellConnCompMap.end()->second.end(); ++coreIt)
-	{
+	boost::container::flat_map<int, connectedComponent&> tmpInnerIDconnCompMap;
+	innerIDconnCompMap.clear();
+	for (vector<connectedComponent>::iterator coreIt = this->radius2shellConnCompMap.at(0).begin(); coreIt != this->radius2shellConnCompMap.at(0).end(); ++coreIt)
+	{	
+		cout << coreIt->ChebyshevCenter[0] << " " << coreIt->ChebyshevCenter[1] << " " << coreIt->ChebyshevCenter[2] << endl;
 		NeuronSWC newNode;
 		newNode.n = ++nodeID;
 		newNode.x = coreIt->ChebyshevCenter[0];
@@ -422,14 +422,50 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 		outputTree.listNeuron.push_back(newNode);
 		innerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *coreIt));
 	}
+	cout << innerIDconnCompMap.size() << endl;
+	system("pause");
 	
-	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin() + 1; shellIt != this->radius2shellConnCompMap.end() - 1; ++shellIt)
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin() + 1; shellIt != this->radius2shellConnCompMap.end(); ++shellIt)
 	{
+		cout << "radius " << shellIt->first << ": ";
+		cout << innerIDconnCompMap.size() << endl;
+		for (boost::container::flat_map<int, connectedComponent&>::iterator innerCompIt = innerIDconnCompMap.begin(); innerCompIt != innerIDconnCompMap.end(); ++innerCompIt)
+		{
+			for (vector<connectedComponent>::iterator outerCompIt = shellIt->second.begin(); outerCompIt != shellIt->second.end(); ++outerCompIt)
+			{
+				if (NeuronGeoGrapher::connCompAdjCheck(innerCompIt->second, *outerCompIt))
+				{
+					NeuronSWC newNode;
+					newNode.n = ++nodeID;
+					newNode.x = outerCompIt->ChebyshevCenter[0];
+					newNode.y = outerCompIt->ChebyshevCenter[1];
+					newNode.z = outerCompIt->ChebyshevCenter[2];
+					newNode.type = 3;
+					newNode.parent = innerCompIt->first;
+					outputTree.listNeuron.push_back(newNode);
+					tmpInnerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *outerCompIt));
+				}
+				else
+				{
+					NeuronSWC newNode;
+					newNode.n = ++nodeID;
+					newNode.x = outerCompIt->ChebyshevCenter[0];
+					newNode.y = outerCompIt->ChebyshevCenter[1];
+					newNode.z = outerCompIt->ChebyshevCenter[2];
+					newNode.type = 3;
+					newNode.parent = -1;
+					outputTree.listNeuron.push_back(newNode);
+					tmpInnerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *outerCompIt));
+				}
+			}
+		}
 		
-		
-
-
+		innerIDconnCompMap.clear();
+		innerIDconnCompMap = tmpInnerIDconnCompMap;
+		tmpInnerIDconnCompMap.clear();
 	}
+
+	this->treeEntry(outputTree, "dendriticProfiledTree");
 }
 
 NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)

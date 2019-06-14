@@ -93,6 +93,8 @@ public:
 	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
 	// Compute and store the ChebyshevCenter for every connected component on the list.
 	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
+	
+	static inline bool connCompAdjCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre = 1);
 	/***********************************************************************/
 };
 
@@ -270,6 +272,16 @@ inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap
 		outputMap.insert(pair<int, int>(it->ID, int(it - inputPolarNodeList.begin())));
 
 	return outputMap;
+}
+
+inline bool NeuronGeoGrapher::connCompAdjCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre)
+{
+	cout << comp1.ChebyshevCenter[0] << " " << comp1.ChebyshevCenter[1] << " " << comp1.ChebyshevCenter[2] << endl;
+	cout << comp2.ChebyshevCenter[0] << " " << comp2.ChebyshevCenter[1] << " " << comp2.ChebyshevCenter[2] << endl;
+	if (comp1.xMin > comp2.xMax + distThre || comp1.xMax < comp2.xMin - distThre ||
+		comp1.yMin > comp2.yMax + distThre || comp1.yMax < comp2.yMin - distThre ||
+		comp1.zMin > comp2.zMax + distThre || comp1.zMax < comp2.zMin - distThre) return false;
+	else return true;
 }
 
 #endif

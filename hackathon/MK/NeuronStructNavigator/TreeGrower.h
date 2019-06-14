@@ -23,7 +23,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 class TreeGrower: public NeuronStructExplorer
 {
 public:
-	/************** Constructors and Basic Data/Function Members ****************/
+	/************** Constructors and Basic Data/Function Members ****************/	
 	vector<polarNeuronSWC> polarNodeList;
 	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;
 	boost::container::flat_map<double, NeuronTree> radius2shellTreeMap;

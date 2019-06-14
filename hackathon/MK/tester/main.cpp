@@ -27,8 +27,8 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
 	for (int i = 2; i < argc; ++i)
@@ -38,12 +38,11 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "polarRadiusShell";
+	string funcName = "denTree";
 	/************************************/
 
 	ImgTester myImgTester;
 	NeuronStructUtil myNeuronStructUtil;
-	NeuronStructExplorer myNeuronStructExplorer;
 	if (!funcName.compare("swcID"))
 	{
 		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
@@ -120,7 +119,6 @@ int main(int argc, char* argv[])
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
-		NeuronStructExplorer myExplorer;
 		profiledTree testTree(inputTree);
 		profiledTree outputTree = NeuronStructUtil::treeDownSample(testTree, 10);
 		profiledTree finalTree = TreeGrower::spikeRemove(outputTree);
@@ -287,6 +285,47 @@ int main(int argc, char* argv[])
 		}
 
 		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
+	}
+	else if (!funcName.compare("denTree"))
+	{
+		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
+		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
+		vector<polarNeuronSWC> polarNodeList;
+		vector<int> origin = { 68, 64, 130 };
+		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
+		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
+
+		TreeGrower myTreeGrower;
+		myTreeGrower.polarNodeList = polarNodeList;
+		myTreeGrower.radiusShellMap_loc = shellRadiusMap;
+		myTreeGrower.dendriticTree_shellCentroid();
+		/*NeuronTree shellTree;
+		for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = myTreeGrower.radius2shellConnCompMap.begin(); it != myTreeGrower.radius2shellConnCompMap.end(); ++it)
+		{
+			int type = 0;
+			for (vector<connectedComponent>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				++type;
+				for (map<int, set<vector<int>>>::iterator it3 = it2->coordSets.begin(); it3 != it2->coordSets.end(); ++it3)
+				{
+					for (set<vector<int>>::iterator it4 = it3->second.begin(); it4 != it3->second.end(); ++it4)
+					{
+						NeuronSWC newNode;
+						newNode.x = it4->at(0);
+						newNode.y = it4->at(1);
+						newNode.z = it4->at(2);
+						newNode.type = type;
+						newNode.parent = -1;
+						shellTree.listNeuron.push_back(newNode);
+					}
+				}
+			}
+		}*/
+
+		writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+		//QString saveName = "C:\\Users\\hsienchik\\Desktop\\denTest.swc";
+		//writeSWC_file(saveName, shellTree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{

@@ -41,6 +41,8 @@ class NeuronStructExplorer
 {
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
+	NeuronStructExplorer() {};
+	
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
