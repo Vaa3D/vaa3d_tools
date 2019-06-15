@@ -403,7 +403,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 
 	this->radius2shellTreeMap = TreeGrower::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
 	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);
-	cout << this->radius2shellTreeMap.size() << " " << this->radius2shellConnCompMap.size() << endl;
+	
 	int nodeID = 0;
 	NeuronTree outputTree;
 	boost::container::flat_map<int, connectedComponent&> innerIDconnCompMap;
@@ -423,11 +423,22 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 		innerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *coreIt));
 	}
 	cout << innerIDconnCompMap.size() << endl;
-	system("pause");
 	
+	int countRound = 0;
 	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin() + 1; shellIt != this->radius2shellConnCompMap.end(); ++shellIt)
 	{
-		cout << "radius " << shellIt->first << ": ";
+		if (countRound > 5) break;
+		++countRound;
+		for (boost::container::flat_map<int, connectedComponent&>::iterator innerIt = innerIDconnCompMap.begin(); innerIt != innerIDconnCompMap.end(); ++innerIt)
+		{
+			cout << innerIt->second.xMax << " " << innerIt->second.xMin << " " << innerIt->second.yMax << " " << innerIt->second.yMin << " " << innerIt->second.zMax << " " << innerIt->second.zMin << ": " << endl;
+			for (vector<connectedComponent>::iterator outerIt = shellIt->second.begin(); outerIt != shellIt->second.end(); ++outerIt)
+			{
+				cout << "  -> " << outerIt->xMax << " " << outerIt->xMin << " " << outerIt->yMax << " " << outerIt->yMin << " " << outerIt->zMax << " " << outerIt->zMin << endl;
+			}
+		}
+
+		/*cout << "radius " << shellIt->first << ": ";
 		cout << innerIDconnCompMap.size() << endl;
 		for (boost::container::flat_map<int, connectedComponent&>::iterator innerCompIt = innerIDconnCompMap.begin(); innerCompIt != innerIDconnCompMap.end(); ++innerCompIt)
 		{
@@ -462,7 +473,9 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 		
 		innerIDconnCompMap.clear();
 		innerIDconnCompMap = tmpInnerIDconnCompMap;
-		tmpInnerIDconnCompMap.clear();
+		tmpInnerIDconnCompMap.clear();*/
+
+		innerIDconnCompMap.clear();
 	}
 
 	this->treeEntry(outputTree, "dendriticProfiledTree");

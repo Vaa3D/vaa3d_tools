@@ -278,6 +278,7 @@ inline bool NeuronGeoGrapher::connCompAdjCheck(const connectedComponent& comp1, 
 {
 	cout << comp1.ChebyshevCenter[0] << " " << comp1.ChebyshevCenter[1] << " " << comp1.ChebyshevCenter[2] << endl;
 	cout << comp2.ChebyshevCenter[0] << " " << comp2.ChebyshevCenter[1] << " " << comp2.ChebyshevCenter[2] << endl;
+	
 	if (comp1.xMin > comp2.xMax + distThre || comp1.xMax < comp2.xMin - distThre ||
 		comp1.yMin > comp2.yMax + distThre || comp1.yMax < comp2.yMin - distThre ||
 		comp1.zMin > comp2.zMax + distThre || comp1.zMax < comp2.zMin - distThre) return false;

@@ -300,13 +300,13 @@ int main(int argc, char* argv[])
 		myTreeGrower.polarNodeList = polarNodeList;
 		myTreeGrower.radiusShellMap_loc = shellRadiusMap;
 		myTreeGrower.dendriticTree_shellCentroid();
-		/*NeuronTree shellTree;
-		for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = myTreeGrower.radius2shellConnCompMap.begin(); it != myTreeGrower.radius2shellConnCompMap.end(); ++it)
+		
+		/*for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = myTreeGrower.radius2shellConnCompMap.begin(); it != myTreeGrower.radius2shellConnCompMap.end(); ++it)
 		{
-			int type = 0;
+			NeuronTree outputTree;
+			int connCount = 0;
 			for (vector<connectedComponent>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
-				++type;
 				for (map<int, set<vector<int>>>::iterator it3 = it2->coordSets.begin(); it3 != it2->coordSets.end(); ++it3)
 				{
 					for (set<vector<int>>::iterator it4 = it3->second.begin(); it4 != it3->second.end(); ++it4)
@@ -315,17 +315,24 @@ int main(int argc, char* argv[])
 						newNode.x = it4->at(0);
 						newNode.y = it4->at(1);
 						newNode.z = it4->at(2);
-						newNode.type = type;
+						newNode.type = connCount;
 						newNode.parent = -1;
-						shellTree.listNeuron.push_back(newNode);
+						outputTree.listNeuron.push_back(newNode);
 					}
 				}
+				++connCount;
 			}
+			
+			QString saveName = QString::fromStdString(to_string(it->first)) + ".swc";
+			QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\shell\\" + saveName;
+			writeSWC_file(saveName, outputTree);
+
+			outputTree.listNeuron.clear();
 		}*/
 
-		writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
-		//QString saveName = "C:\\Users\\hsienchik\\Desktop\\denTest.swc";
-		//writeSWC_file(saveName, shellTree);
+		//writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+		QString saveName = "C:\\Users\\hsienchik\\Desktop\\denDebug.swc";
+		writeSWC_file(saveName, myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
