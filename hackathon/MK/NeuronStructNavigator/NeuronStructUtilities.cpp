@@ -672,7 +672,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
 	// Merge any 3D blobs if any of them share the same 2D blob members.
 	cout << "Now merging 3D blobs.." << endl;
-	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << " -- original 3D blobs number: " << b3Dcomps.size() << endl;
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -718,10 +718,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		connectedComponent newComp;
 		newComp.islandNum = newLabel;
 		newComp.size = 0;
-		newComp.xMax = 0; newComp.xMin = 0;
-		newComp.yMax = 0; newComp.yMin = 0;
-		newComp.zMax = 0; newComp.zMin = 0;
-		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		newComp.xMax = 0; newComp.xMin = 1000000;
+		newComp.yMax = 0; newComp.yMin = 1000000;
+		newComp.zMax = 0; newComp.zMin = 1000000;
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) // *it2 = 2D connected component's [islandNum]
 		{
 			// A 3D connected component may contain different 2D components from the same slice.
 			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())

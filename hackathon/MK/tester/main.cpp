@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("denTree"))
 	{
 		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
-		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
+		QString inputSWCFullNameQ = "C:\\Users\\King Mars\\Desktop\\blob_dendrite.swc";
 		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
 		vector<polarNeuronSWC> polarNodeList;
 		vector<int> origin = { 68, 64, 130 };
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
 		}*/
 
 		//writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
-		QString saveName = "C:\\Users\\hsienchik\\Desktop\\denDebug.swc";
+		QString saveName = "C:\\Users\\King Mars\\Desktop\\denDebug.swc";
 		writeSWC_file(saveName, myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
