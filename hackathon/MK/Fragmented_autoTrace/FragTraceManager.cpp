@@ -186,7 +186,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		else floatingExcludedTree = downSampledDenTree.tree;
 
 		denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);
-		finalOutputTree = denScaleBackTree;
+		profiledTree finalDendriticTree(denScaleBackTree);
+		finalOutputTree = finalDendriticTree.tree;
 	}
 
 	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
