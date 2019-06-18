@@ -402,90 +402,124 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 	}
 
 	this->radius2shellTreeMap = TreeGrower::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
-	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);
+	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);	
 	
-	int nodeID = 0;
-	NeuronTree outputTree;
-	boost::container::flat_map<int, connectedComponent&> innerIDconnCompMap;
-	boost::container::flat_map<int, connectedComponent&> tmpInnerIDconnCompMap;
-	innerIDconnCompMap.clear();
-	tmpInnerIDconnCompMap.clear();
-	for (vector<connectedComponent>::iterator coreIt = this->radius2shellConnCompMap.at(0).begin(); coreIt != this->radius2shellConnCompMap.at(0).end(); ++coreIt)
-	{	
-		cout << coreIt->ChebyshevCenter[0] << " " << coreIt->ChebyshevCenter[1] << " " << coreIt->ChebyshevCenter[2] << endl;
-		NeuronSWC newNode;
-		newNode.n = ++nodeID;
-		newNode.x = coreIt->ChebyshevCenter[0];
-		newNode.y = coreIt->ChebyshevCenter[1];
-		newNode.z = coreIt->ChebyshevCenter[2];
-		newNode.type = 3;
-		newNode.parent = -1;
-		outputTree.listNeuron.push_back(newNode);
-		innerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *coreIt));
+	map<double, boost::container::flat_map<int, vector<int>>> shell2shellConnMap; // The map of inner shell's connected components to outer shell's connected components.
+																				  // shell2shellConnMap.second datatype: 
+																				  //   -> the location of the conn. component on the previous shell to the locaions of the conn. components on the current shell.
+	// Pre-allocate shell2shellConnMap to speed up the process later on.
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin(); shellIt != this->radius2shellConnCompMap.end(); ++shellIt)
+	{
+		boost::container::flat_map<int, vector<int>> innerLoc2outerLocMap;
+		shell2shellConnMap.insert(pair<double, boost::container::flat_map<int, vector<int>>>(shellIt->first, innerLoc2outerLocMap));
 	}
 	
-	int countRound = 0;
+	// ------------------- Profiling spacially adjacent connected components between inner and outer shells -------------------
 	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin() + 1; shellIt != this->radius2shellConnCompMap.end(); ++shellIt)
 	{
-		cout << "shell " << shellIt->first << ":" << endl;
-		//if (countRound > 10) break;
-		//++countRound;
-		cout << "    inner shell comp num: " << innerIDconnCompMap.size() << endl;
-		cout << "    outer shell comp num: " << shellIt->second.size() << endl;
-		for (boost::container::flat_map<int, connectedComponent&>::iterator innerIt = innerIDconnCompMap.begin(); innerIt != innerIDconnCompMap.end(); ++innerIt)
+		for (vector<connectedComponent>::iterator innerIt = (shellIt - 1)->second.begin(); innerIt != (shellIt - 1)->second.end(); ++innerIt)
 		{
-			cout << innerIt->second.xMax << " " << innerIt->second.xMin << " " << innerIt->second.yMax << " " << innerIt->second.yMin << " " << innerIt->second.zMax << " " << innerIt->second.zMin << ": " << endl;
+			vector<int> outerConnLocs;
+			outerConnLocs.clear();
 			for (vector<connectedComponent>::iterator outerIt = shellIt->second.begin(); outerIt != shellIt->second.end(); ++outerIt)
 			{
-				tmpInnerIDconnCompMap.insert(pair<int, connectedComponent&>(nodeID, *outerIt));
-				if (NeuronGeoGrapher::connCompAdjCheck(innerIt->second, *outerIt))
+				if (NeuronGeoGrapher::connCompAdjCheck(*innerIt, *outerIt))
 				{
-					cout << "  -> " << outerIt->xMax << " " << outerIt->xMin << " " << outerIt->yMax << " " << outerIt->yMin << " " << outerIt->zMax << " " << outerIt->zMin << endl;
-
-					++nodeID;
-					
+					float dist = sqrtf((innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) * (innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) +
+									   (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) * (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) +
+									   (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]) * (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]));
+					if (dist < 3) outerConnLocs.push_back(int(outerIt - shellIt->second.begin()));
 				}
 			}
+			if (outerConnLocs.empty()) continue;
+
+			shell2shellConnMap.at(shellIt->first).insert(pair<int, vector<int>>(int(innerIt - (shellIt - 1)->second.begin()), outerConnLocs));
+		}
+	}
+	// --------------- END of [Profiling spacially adjacent connected components between inner and outer shells] ---------------
+
+	// ------------------------------------- Building up dendritic tree -------------------------------------
+	NeuronTree outputTree;
+	int nodeID = 1;
+	boost::container::flat_map<int, int> innerLoc2nodeIDmap;
+	boost::container::flat_map<int, int> outerLoc2nodeIDmap;
+	boost::container::flat_set<int> outerLocs;
+	bool emptyShell = true;
+	for (map<double, boost::container::flat_map<int, vector<int>>>::iterator shellIt = shell2shellConnMap.begin(); shellIt != shell2shellConnMap.end(); ++shellIt)
+	{
+		cout << "shell " << shellIt->first << ":" << endl;
+		if (shellIt->second.empty()) emptyShell = true;
+		else emptyShell = false;
+
+		if (emptyShell)
+		{		
+			for (vector<connectedComponent>::iterator rootCompIt = this->radius2shellConnCompMap.at(shellIt->first).begin(); rootCompIt != this->radius2shellConnCompMap.at(shellIt->first).end(); ++rootCompIt)
+			{
+				NeuronSWC newRootNode;
+				newRootNode.n = nodeID;
+				newRootNode.x = rootCompIt->ChebyshevCenter[0];
+				newRootNode.y = rootCompIt->ChebyshevCenter[1];
+				newRootNode.z = rootCompIt->ChebyshevCenter[2];
+				newRootNode.parent = -1;
+				newRootNode.type = 3;
+				outputTree.listNeuron.push_back(newRootNode);
+				innerLoc2nodeIDmap.insert(pair<int, int>(int(rootCompIt - this->radius2shellConnCompMap.at(shellIt->first).begin()), nodeID));
+				++nodeID;
+			}	
+			cout << endl;
+			continue;
+		}
+		else
+		{
+			outerLocs.clear();
+			for (int i = 0; i < this->radius2shellConnCompMap.at(shellIt->first).size(); ++i) outerLocs.insert(i);
+
+			for (boost::container::flat_map<int, vector<int>>::iterator loc2locIt = shellIt->second.begin(); loc2locIt != shellIt->second.end(); ++loc2locIt)
+			{
+				cout << loc2locIt->first << "-> ";			
+				for (vector<int>::iterator outerIt = loc2locIt->second.begin(); outerIt != loc2locIt->second.end(); ++outerIt)
+				{
+					cout << *outerIt << " ";
+					NeuronSWC newNode;
+					newNode.n = nodeID;
+					newNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*outerIt).ChebyshevCenter[0];
+					newNode.y = this->radius2shellConnCompMap.at(shellIt->first).at(*outerIt).ChebyshevCenter[1];
+					newNode.z = this->radius2shellConnCompMap.at(shellIt->first).at(*outerIt).ChebyshevCenter[2];
+					newNode.parent = innerLoc2nodeIDmap.at(loc2locIt->first);
+					newNode.type = 3;
+					outputTree.listNeuron.push_back(newNode);
+					outerLoc2nodeIDmap.insert(pair<int, int>(*outerIt, nodeID));
+					
+					if (outerLocs.find(*outerIt) != outerLocs.end()) outerLocs.erase(outerLocs.find(*outerIt));
+					++nodeID;
+				}
+				cout << endl;
+			}
+
+			cout << "new root: ";
+			for (boost::container::flat_set<int>::iterator remainIt = outerLocs.begin(); remainIt != outerLocs.end(); ++remainIt)
+			{
+				cout << *remainIt << " ";
+				NeuronSWC newRootNode;
+				newRootNode.n = nodeID;
+				newRootNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*remainIt).ChebyshevCenter[0];
+				newRootNode.y = this->radius2shellConnCompMap.at(shellIt->first).at(*remainIt).ChebyshevCenter[1];
+				newRootNode.z = this->radius2shellConnCompMap.at(shellIt->first).at(*remainIt).ChebyshevCenter[2];
+				newRootNode.parent = -1;
+				newRootNode.type = 3;
+				outputTree.listNeuron.push_back(newRootNode);
+				outerLoc2nodeIDmap.insert(pair<int, int>(*remainIt, nodeID));
+				++nodeID;
+			}
+			cout << endl;
 		}
 		cout << endl;
 
-		/*cout << "radius " << shellIt->first << ": ";
-		cout << innerIDconnCompMap.size() << endl;
-		for (boost::container::flat_map<int, connectedComponent&>::iterator innerCompIt = innerIDconnCompMap.begin(); innerCompIt != innerIDconnCompMap.end(); ++innerCompIt)
-		{
-			for (vector<connectedComponent>::iterator outerCompIt = shellIt->second.begin(); outerCompIt != shellIt->second.end(); ++outerCompIt)
-			{
-				if (NeuronGeoGrapher::connCompAdjCheck(innerCompIt->second, *outerCompIt))
-				{
-					NeuronSWC newNode;
-					newNode.n = ++nodeID;
-					newNode.x = outerCompIt->ChebyshevCenter[0];
-					newNode.y = outerCompIt->ChebyshevCenter[1];
-					newNode.z = outerCompIt->ChebyshevCenter[2];
-					newNode.type = 3;
-					newNode.parent = innerCompIt->first;
-					outputTree.listNeuron.push_back(newNode);
-					tmpInnerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *outerCompIt));
-				}
-				else
-				{
-					NeuronSWC newNode;
-					newNode.n = ++nodeID;
-					newNode.x = outerCompIt->ChebyshevCenter[0];
-					newNode.y = outerCompIt->ChebyshevCenter[1];
-					newNode.z = outerCompIt->ChebyshevCenter[2];
-					newNode.type = 3;
-					newNode.parent = -1;
-					outputTree.listNeuron.push_back(newNode);
-					tmpInnerIDconnCompMap.insert(pair<int, connectedComponent&>(newNode.n, *outerCompIt));
-				}
-			}
-		}*/
-		
-		innerIDconnCompMap.clear();
-		innerIDconnCompMap = tmpInnerIDconnCompMap;
-		tmpInnerIDconnCompMap.clear();
+		innerLoc2nodeIDmap.clear();
+		innerLoc2nodeIDmap = outerLoc2nodeIDmap;
+		outerLoc2nodeIDmap.clear();
 	}
+	// -------------------------------- END of [Building up dendritic tree] --------------------------------
 
 	this->treeEntry(outputTree, "dendriticProfiledTree");
 }
