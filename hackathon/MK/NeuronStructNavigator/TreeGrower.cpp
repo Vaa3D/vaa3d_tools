@@ -447,7 +447,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 	bool emptyShell = true;
 	for (map<double, boost::container::flat_map<int, vector<int>>>::iterator shellIt = shell2shellConnMap.begin(); shellIt != shell2shellConnMap.end(); ++shellIt)
 	{
-		cout << "shell " << shellIt->first << ":" << endl;
+		//cout << "shell " << shellIt->first << ":" << endl;
 		if (shellIt->second.empty()) emptyShell = true;
 		else emptyShell = false;
 
@@ -466,7 +466,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 				innerLoc2nodeIDmap.insert(pair<int, int>(int(rootCompIt - this->radius2shellConnCompMap.at(shellIt->first).begin()), nodeID));
 				++nodeID;
 			}	
-			cout << endl;
+			//cout << endl;
 			continue;
 		}
 		else
@@ -476,10 +476,10 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 
 			for (boost::container::flat_map<int, vector<int>>::iterator loc2locIt = shellIt->second.begin(); loc2locIt != shellIt->second.end(); ++loc2locIt)
 			{
-				cout << loc2locIt->first << "-> ";			
+				//cout << loc2locIt->first << "-> ";			
 				for (vector<int>::iterator outerIt = loc2locIt->second.begin(); outerIt != loc2locIt->second.end(); ++outerIt)
 				{
-					cout << *outerIt << " ";
+					//cout << *outerIt << " ";
 					NeuronSWC newNode;
 					newNode.n = nodeID;
 					newNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*outerIt).ChebyshevCenter[0];
@@ -493,13 +493,13 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 					if (outerLocs.find(*outerIt) != outerLocs.end()) outerLocs.erase(outerLocs.find(*outerIt));
 					++nodeID;
 				}
-				cout << endl;
+				//cout << endl;
 			}
 
-			cout << "new root: ";
+			//cout << "new root: ";
 			for (boost::container::flat_set<int>::iterator remainIt = outerLocs.begin(); remainIt != outerLocs.end(); ++remainIt)
 			{
-				cout << *remainIt << " ";
+				//cout << *remainIt << " ";
 				NeuronSWC newRootNode;
 				newRootNode.n = nodeID;
 				newRootNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*remainIt).ChebyshevCenter[0];
@@ -511,9 +511,9 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 				outerLoc2nodeIDmap.insert(pair<int, int>(*remainIt, nodeID));
 				++nodeID;
 			}
-			cout << endl;
+			//cout << endl;
 		}
-		cout << endl;
+		//cout << endl;
 
 		innerLoc2nodeIDmap.clear();
 		innerLoc2nodeIDmap = outerLoc2nodeIDmap;

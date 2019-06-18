@@ -588,7 +588,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it); // collect all connected components from the current slice
 		if (currSliceConnComps.empty())
 		{
-			cout << i << "->0 ";
+			//cout << i << "->0 ";
 			continue;
 		}
 
@@ -665,8 +665,8 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		}
 		cout << increasedSize << ", ";
 	}
-	cout << endl << endl;
-	cout << "Done merging 2D blobs from every 2 slices." << endl << endl;
+	cout << endl;
+	cout << "Done merging 2D blobs from every 2 slices." << endl;
 	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
 
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
@@ -705,6 +705,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		continue;
 	}
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << "    ------------------------------" << endl << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
 	// ------------------------------------- Create 3D connected component data -------------------------------------
