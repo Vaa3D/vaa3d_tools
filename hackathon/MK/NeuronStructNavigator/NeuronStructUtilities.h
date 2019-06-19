@@ -22,12 +22,8 @@
 #ifndef NEURONSTRUCTUTILITIES_H
 #define NEURONSTRUCTUTILITIES_H
 
-#include <vector>
-#include <string>
 #include <fstream>
 
-#include <boost/container/flat_set.hpp>
-#include <boost/container/flat_map.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <qlist.h>

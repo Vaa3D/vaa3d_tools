@@ -1,3 +1,24 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  NeuronGeoGrapher provides functionalities handling geometrical/topological analysis, operations for neuron data structures.
+*
+*  Major functionalities include:
+*
+*    a. Basic vector geometry
+*    b. Neuron segment geometry extended from basic vector geometry methds
+*    c. Polar coordinate system operations for NeuronSWC, i.e., NeuronSwc <-> polarNeuronSWC conversion
+*    d. SWC-based connected component geometrical analysis
+*
+*  NeuronGeoGrapher produces basis information that is essential in other class, eg, TreeGrower, for further development in higher level of neuron data structure processing.
+*  Most methods in this class are static functions since most of them serve as utilities to the need of other classes.
+*
+********************************************************************************/
+
 #ifndef NEURONGEOGRAPHER_H
 #define NEURONGEOGRAPHER_H
 
@@ -275,10 +296,7 @@ inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap
 }
 
 inline bool NeuronGeoGrapher::connCompAdjCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre)
-{
-	//cout << comp1.ChebyshevCenter[0] << " " << comp1.ChebyshevCenter[1] << " " << comp1.ChebyshevCenter[2] << endl;
-	//cout << comp2.ChebyshevCenter[0] << " " << comp2.ChebyshevCenter[1] << " " << comp2.ChebyshevCenter[2] << endl;
-	
+{	
 	if (comp1.xMin > comp2.xMax + distThre || comp1.xMax < comp2.xMin - distThre ||
 		comp1.yMin > comp2.yMax + distThre || comp1.yMax < comp2.yMin - distThre ||
 		comp1.zMin > comp2.zMax + distThre || comp1.zMax < comp2.zMin - distThre) return false;

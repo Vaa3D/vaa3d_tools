@@ -20,19 +20,6 @@
 #ifndef NEURONSTRUCTEXPLORER_H
 #define NEURONSTRUCTEXPLORER_H
 
-#include <vector>
-#include <map>
-#include <string>
-
-#include <boost/config.hpp>
-#include <boost/graph/prim_minimum_spanning_tree.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include <qlist.h>
-#include <qstring.h>
-#include <qstringlist.h>
-
 #include "v_neuronswc.h"
 #include "NeuronStructUtilities.h"
 #include "NeuronGeoGrapher.h"
@@ -41,6 +28,7 @@ class NeuronStructExplorer
 {
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
+	// Needs to provide a default constructor since TreeGrower class doesn't have one. (at at least now)
 	NeuronStructExplorer() {};
 	
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
@@ -65,18 +53,21 @@ public:
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	
 	// ------------------- segment-end clustering ------------------- //	
-	/* Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. */
-	/* If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.*/	
+	// Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. 
+	// If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
 protected:
 	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
+	// NOTE, this method is only the 1st step of constructing seg-end cluster profile. Those information stored in profiledTree::segHeadClusters and profiledTree::segTailClusters are not correct yet
+	//       and need to go through this->mergeTileBasedSegClusters to reach its final form.  
 	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
 
 	// This method merges segment-end clusters with given distance threshold for the whole input profiledTree.
-	// Note, this method is usually called after this->getTileBasedSegClusters in this->getSegHeadTailClusters.
+	// Note, this method is has to be called after this->getTileBasedSegClusters, 
+	//		 where profiledTree::segHeadClusters and profiledTree::segTailClusters are stored with tiled-based seg-end clusters (not the final correct seg-end clusters) by this->getTileBasedSegClusters first.
 	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
 
 public:
@@ -115,21 +106,11 @@ public:
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ currently DEPRECATED ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
-	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
-
-	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
-	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
-
 	// Like NeuronStructUtil::segUnitConnect_executer, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
 
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
-
-	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
-
-	profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const int yRange, const int zRange);
 
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

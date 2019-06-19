@@ -157,7 +157,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
 		//writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
 
-		NeuronTree MSTbranchBreakTree = TreeGrower::MSTbranchBreak(objSkeletonProfiledTree);
+		NeuronTree MSTbranchBreakTree = TreeGrower::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
 		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 		//QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";

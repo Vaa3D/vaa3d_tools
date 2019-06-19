@@ -1,3 +1,25 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  TreeGrower class intends to handle the functionalities needed to form a NeuronTree from segmented image signals (ImgAnalyzer::connectedComponent).
+*  For TreeGrower, NeuronGeoGrapher is an essential class for which many TreeGrower's methods are further development extended from methods in NeuronGeoGrapher class.
+*
+*  Major functionalities include:
+*
+*    a. Basic tree operations, i.e., tree trimming, refining
+*    b. Tree path tracing for tree identification purposes
+*    c. Segment forming / elongating and other operations
+*    d. Dendritic tree and axonal tree forming
+*
+*  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
+*
+********************************************************************************/
+
 #ifndef TREEGROWER_H
 #define TREEGROWER_H
 
@@ -8,7 +30,6 @@
 #include "integratedDataTypes.h"
 #include "NeuronGeoGrapher.h"
 #include "NeuronStructExplorer.h"
-#include "ImgAnalyzer.h"
 
 enum edge_lastvoted_t { edge_lastvoted };
 namespace boost
@@ -25,24 +46,30 @@ class TreeGrower: public NeuronStructExplorer
 public:
 	/************** Constructors and Basic Data/Function Members ****************/	
 	vector<polarNeuronSWC> polarNodeList;
-	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;
-	boost::container::flat_map<double, NeuronTree> radius2shellTreeMap;
-	boost::container::flat_map<double, vector<connectedComponent>> radius2shellConnCompMap;
+	
+	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;  // radius -> polarNeuronSWC's location on [polarNodeList]
+	boost::container::flat_map<double, NeuronTree> radius2shellTreeMap;                      // radius -> all NeuronSWCs on the shell specified by radius (in the form of NeuronTree)
+	boost::container::flat_map<double, vector<connectedComponent>> radius2shellConnCompMap;  // radius -> all connected components on the shell specified by radius
 	/****************************************************************************/
 
 
 
 	/********************** Polar Coord System Operations ***********************/
-	static boost::container::flat_map<double, NeuronTree> radiusShellNeuronTreeMap(
-		const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList);
+	// Returns a map of radius to shell trees. [radiusShellMap_loc] = map of radius to locations of polarNeuronSWC on [inputPolarNodeList].
+	// Note, [radiusShellMap_loc] can be obtained through NeuronGeoGrapher::nodeList2polarNodeList.
+	static boost::container::flat_map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList);
 
-	static boost::container::flat_map<double, vector<connectedComponent>> shell2radiusConnMap(const boost::container::flat_map<double, NeuronTree> inputRadius2NeuronTreeMap);
+	static boost::container::flat_map<double, vector<connectedComponent>> radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap);
 	/****************************************************************************/
 
 
 
 	/********************** Segment Forming / Elongation ************************/
+	// Connects segments that meet the predefined criteria in which their segment ends are in the same cluster with given distance threshold [destThreshold].
+	// NOTE: This is the framework under which segment connection/elongation takes place. The algorithmic requirements of connecting shall be integrated here.
+	//       Since segments can only be connected 1 at a time, therefore, this operation is completed with a iterative process - TreeGrower::itered_connectSegsWithinClusters.
 	profiledTree connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold = 5);
+
 	profiledTree itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 	/****************************************************************************/
 
@@ -50,15 +77,14 @@ public:
 
 	/******************************* Tree Forming *******************************/
 	// ----------------- MST growing methods ----------------- //
+	// Connects nodes/segments in an SWC file using MST algorithn provided by boost library.
 	static NeuronTree SWC2MSTtree_boost(const NeuronTree& inputTree);
-	static NeuronTree SWC2MSTtreeTiled_boost(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
-	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
-	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+
+	// Connects nodes/segments in an SWC file using MST algorithn provided by boost library in each predefined tile. (The tile size is predefined.)
+	static NeuronTree SWC2MSTtreeTiled_boost(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);	
 	// ------------------------------------------------------- //
 
 	// - Dendritic tree forming(polar coord radial approach) - //
-	static boost::container::flat_map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList);
-	static boost::container::flat_map<double, vector<connectedComponent>> radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap);
 	void dendriticTree_shellCentroid(double distThre = 1);
 	// ------------------------------------------------------- //
 
@@ -85,11 +111,19 @@ public:
 
 
 	/************************* Tree Trimming / Refining *************************/
+	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
 	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+
+	// Breaks all branches in [inputProfiledTree].
+	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
+	static NeuronTree branchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
+
+	// Breaks any node-node length that is greater than [distThre].
+	static inline NeuronTree treeCut(NeuronTree& inputTree, double distThre = 10);
 	/****************************************************************************/
 };
 
-inline NeuronTree TreeGrower::MSTtreeCut(NeuronTree& inputTree, double distThre)
+inline NeuronTree TreeGrower::treeCut(NeuronTree& inputTree, double distThre)
 {
 	NeuronTree outputTree;
 	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)

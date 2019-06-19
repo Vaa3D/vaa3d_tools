@@ -1,3 +1,25 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  TreeGrower class intends to handle the functionalities needed to form a NeuronTree from segmented image signals (ImgAnalyzer::connectedComponent).
+*  For TreeGrower, NeuronGeoGrapher is an essential class for which many TreeGrower's methods are further development extended from methods in NeuronGeoGrapher class.
+*
+*  Major functionalities include:
+*
+*    a. Basic tree operations, i.e., tree trimming, refining
+*    b. Tree path tracing for tree identification purposes
+*    c. Segment forming / elongating and other operations
+*    d. Dendritic tree and axonal tree forming
+*
+*  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
+*
+********************************************************************************/
+
 #include <iostream>
 
 #include "NeuronStructUtilities.h"
@@ -7,36 +29,7 @@ using namespace std;
 using namespace integratedDataTypes;
 
 /* =========================== Polar Coord System Operations =========================== */
-boost::container::flat_map<double, NeuronTree> TreeGrower::radiusShellNeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& inputRadiusMap, const vector<polarNeuronSWC>& inputPolarNodeList)
-{
-	boost::container::flat_map<double, NeuronTree> outputRadius2NeuronTreeMap;
-	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = inputRadiusMap.begin(); it != inputRadiusMap.end(); ++it)
-	{
-		NeuronTree currShellTree;
-		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
-			currShellTree.listNeuron.push_back(newNode);
-		}
 
-		outputRadius2NeuronTreeMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
-	}
-
-	return outputRadius2NeuronTreeMap;
-}
-
-boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::shell2radiusConnMap(const boost::container::flat_map<double, NeuronTree> inputRadius2NeuronTreeMap)
-{
-	boost::container::flat_map<double, vector<connectedComponent>> outputShell2radiusConnMap;
-
-	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2NeuronTreeMap.begin(); it != inputRadius2NeuronTreeMap.end(); ++it)
-	{
-		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
-		outputShell2radiusConnMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
-	}
-
-	return outputShell2radiusConnMap;
-}
 /* ====================== END of [Polar Coord System Operations] ====================== */
 
 
@@ -289,11 +282,8 @@ NeuronTree TreeGrower::SWC2MSTtreeTiled_boost(NeuronTree const& inputTree, float
 	return assembledTree;
 }
 
-NeuronTree TreeGrower::MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)
+NeuronTree TreeGrower::branchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)
 {
-	// -- This method breaks all branching points of a MST-connected tree.
-	// -- When the value of spikeRemove is true, it eliminates spikes on a main route without breaking it. The default value is true. 
-
 	profiledTree outputProfiledTree(inputProfiledTree.tree);
 
 	vector<size_t> spikeLocs;
