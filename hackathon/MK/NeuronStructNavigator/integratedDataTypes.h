@@ -89,7 +89,7 @@ namespace integratedDataTypes
 	};
 
 
-	// ********* Segment Unit Data Structure ********* //
+	/********* Segment Unit Data Structure *********/
 	struct segUnit
 	{
 		segUnit() : to_be_deleted(false) {};
@@ -105,9 +105,9 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 	};
-	// *********************************************** //
+	/***********************************************/
 
-
+	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
 	{
 		// This struct has pointer data members. Need to provide copy control constructors later.
@@ -124,7 +124,9 @@ namespace integratedDataTypes
 		void getSegDistance(connectOrientation connOrt = all_ort);
 		void turning12(connectOrientation connOrt);
 	};
+	/************************************************************************/
 
+	/********* Complete Profile Data Structure for NeuronTree *********/
 	struct profiledTree
 	{
 		// With reinitialization function provided, this struct needs copy control constructors. 
@@ -158,6 +160,7 @@ namespace integratedDataTypes
 	};
 
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
+	/******************************************************************/
 }
 
 #endif
