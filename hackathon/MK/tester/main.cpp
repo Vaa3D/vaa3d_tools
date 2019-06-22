@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	string funcName = "denTree";
+	string funcName = "generateBrainRegionSWC";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -458,6 +458,54 @@ int main(int argc, char* argv[])
 			delete[] outputImgPtr;
 			myManager.imgDatabase.clear();
 		}
+	}
+	else if (!funcName.compare("generateBrainRegionSWC"))
+	{
+		string inputFileName = "C:\\Users\\hsienchik\\Desktop\\CCF\\Mouse.txt";
+		ifstream inputFile(inputFileName);
+		if (inputFile.is_open())
+		{
+			cout << "file opened" << endl;
+			string line;
+			int lineCount = 0;
+			while (getline(inputFile, line));
+			{
+				++lineCount;
+				cout << line << endl;
+			}
+			cout << lineCount << endl;
+		}
+		
+
+
+		ImgManager myManager;
+		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25_recolor.tif";
+		myManager.imgEntry("CCFstack", ImgManager::singleCase);
+		cout << myManager.imgDatabase.at("CCFstack").slicePtrs.begin()->first << endl;
+
+		int imgDims[3];
+		imgDims[0] = myManager.imgDatabase.at("CCFstack").dims[0];
+		imgDims[1] = myManager.imgDatabase.at("CCFstack").dims[1];
+		imgDims[2] = myManager.imgDatabase.at("CCFstack").dims[2];
+		cout << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+
+		for (int zi = 1; zi <= imgDims[2]; ++zi)
+		{
+			for (int yi = 1; yi <= imgDims[1]; ++yi)
+			{
+				for (int xi = 1; xi <= imgDims[0]; ++xi)
+				{
+					/*unsigned char value = ImgProcessor::getPixValue(myManager.imgDatabase.at("CCFstack").slicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
+					int intValue = int(value);
+					
+					if (intValue == 0) continue;
+					else cout << intValue << " ";*/
+				}
+			}
+		}
+		cout << endl;
+
+
 	}
 	// ---------------------------------------------------------------------------------------------------------------------------------------- //
 	else if (!funcName.compare("swc2mask"))

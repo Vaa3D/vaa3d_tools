@@ -413,7 +413,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 			outerConnLocs.clear();
 			for (vector<connectedComponent>::iterator outerIt = shellIt->second.begin(); outerIt != shellIt->second.end(); ++outerIt)
 			{
-				if (NeuronGeoGrapher::connCompAdjCheck(*innerIt, *outerIt))
+				if (NeuronGeoGrapher::connCompBoundingRangeCheck(*innerIt, *outerIt))
 				{
 					float dist = sqrtf((innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) * (innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) +
 									   (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) * (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) +

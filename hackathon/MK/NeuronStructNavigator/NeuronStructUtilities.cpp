@@ -727,8 +727,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			// A 3D connected component may contain different 2D components from the same slice.
 			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
 			{
-				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
-					it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
+				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin(); it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
 					newComp.coordSets.at(compsMap.at(*it2).coordSets.begin()->first).insert(*it3);
 				
 				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);

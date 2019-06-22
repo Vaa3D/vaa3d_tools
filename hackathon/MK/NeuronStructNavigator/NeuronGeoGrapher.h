@@ -115,7 +115,9 @@ public:
 	// Compute and store the ChebyshevCenter for every connected component on the list.
 	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
 	
-	static inline bool connCompAdjCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre = 1);
+	// Checks if the bounding boxes of the 2 input connected components overlap. 
+	// Note, this is only an APPROXIMATION inplemented for fast dendritic tree tracing.
+	static inline bool connCompBoundingRangeCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre = 1);
 	/***********************************************************************/
 };
 
@@ -295,7 +297,7 @@ inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap
 	return outputMap;
 }
 
-inline bool NeuronGeoGrapher::connCompAdjCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre)
+inline bool NeuronGeoGrapher::connCompBoundingRangeCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre)
 {	
 	if (comp1.xMin > comp2.xMax + distThre || comp1.xMax < comp2.xMin - distThre ||
 		comp1.yMin > comp2.yMax + distThre || comp1.yMax < comp2.yMin - distThre ||

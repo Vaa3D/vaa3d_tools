@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <deque>
+#include <set>
 #include <map>
 #include <string>
 
@@ -157,6 +158,8 @@ namespace integratedDataTypes
 
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);
+
+		set<string> brainRegions;
 	};
 
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
