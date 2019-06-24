@@ -461,25 +461,33 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("generateBrainRegionSWC"))
 	{
-		string inputFileName = "C:\\Users\\hsienchik\\Desktop\\CCF\\Mouse.txt";
-		ifstream inputFile(inputFileName);
+		string inputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\Mouse.txt";
+		ifstream inputFile("C:\\Users\\King Mars\\Desktop\\CCF\\test.txt");
+		//inputFile.open(inputFileName);
+		string line;
+		string buffer;
+		vector<string> lineSplit;
 		if (inputFile.is_open())
 		{
-			cout << "file opened" << endl;
-			string line;
-			int lineCount = 0;
-			while (getline(inputFile, line));
+			while (getline(inputFile, line))
 			{
-				++lineCount;
 				cout << line << endl;
+				/*stringstream ss(line);
+				while (ss >> buffer) lineSplit.push_back(buffer);
+
+				for (vector<string>::iterator it = lineSplit.begin(); it != lineSplit.end(); ++it)
+					cout << *it << " ";
+				cout << endl;
+
+				lineSplit.clear();*/
 			}
-			cout << lineCount << endl;
+			
 		}
 		
 
 
 		ImgManager myManager;
-		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25_recolor.tif";
+		myManager.inputSingleCaseFullPath = "C:\\Users\\King Mars\\Desktop\\CCF\\annotation_25_recolor.tif";
 		myManager.imgEntry("CCFstack", ImgManager::singleCase);
 		cout << myManager.imgDatabase.at("CCFstack").slicePtrs.begin()->first << endl;
 
