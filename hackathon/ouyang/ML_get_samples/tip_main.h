@@ -56,6 +56,7 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
 NeuronTree get_unfinished_fun(QList<int> tip_list,NeuronTree treeswc,int maximum);
 NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximum);
+NeuronTree get_off_signal_fun(QList<int> tip_list,NeuronTree sort_swc,int range);
 QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
