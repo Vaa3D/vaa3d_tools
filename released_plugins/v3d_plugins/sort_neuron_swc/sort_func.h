@@ -8,6 +8,8 @@
 #include <v3d_interface.h>
 
 void sort_menu(V3DPluginCallback2 &callback, QWidget *parent);
+void sort_batch_menu(V3DPluginCallback2 &callback, QWidget *parent);
+void sort_batch(QString input_dir, QString output_dir, double thres_dist);
 bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output);
 void sort_toolbox(const V3DPluginArgList & input);
 void printHelp(V3DPluginCallback2 &callback, QWidget *parent);

@@ -1,3 +1,24 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  NeuronGeoGrapher provides functionalities handling geometrical/topological analysis, operations for neuron data structures.
+*
+*  Major functionalities include:
+*
+*    a. Basic vector geometry
+*    b. Neuron segment geometry extended from basic vector geometry methds
+*    c. Polar coordinate system operations for NeuronSWC, i.e., NeuronSwc <-> polarNeuronSWC conversion
+*    d. SWC-based connected component geometrical analysis
+*
+*  NeuronGeoGrapher produces basis information that is essential in other class, eg, TreeGrower, for further development in higher level of neuron data structure processing.
+*  Most methods in this class are static functions since most of them serve as utilities to the need of other classes.
+*
+********************************************************************************/
+
 #include <iostream>
 
 #include "NeuronGeoGrapher.h"
@@ -395,3 +416,9 @@ boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGra
 	return outputShellMap;
 }
 /* ======================== END of [Polar Coordinate System Operations] =========================== */
+
+
+
+/* ======================== SWC - ImgAnalyzer::ConnectedComponent Analysis ======================== */
+
+/* =================== END of [SWC - ImgAnalyzer::ConnectedComponent Analysis] ==================== */

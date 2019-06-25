@@ -27,8 +27,8 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
 	for (int i = 2; i < argc; ++i)
@@ -38,12 +38,11 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "polarRadiusShell";
+	string funcName = "generateBrainRegionSWC";
 	/************************************/
 
 	ImgTester myImgTester;
 	NeuronStructUtil myNeuronStructUtil;
-	NeuronStructExplorer myNeuronStructExplorer;
 	if (!funcName.compare("swcID"))
 	{
 		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
@@ -120,10 +119,9 @@ int main(int argc, char* argv[])
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
-		NeuronStructExplorer myExplorer;
 		profiledTree testTree(inputTree);
-		profiledTree outputTree = myExplorer.treeDownSample(testTree, 10);
-		profiledTree finalTree = NeuronStructExplorer::spikeRemove(outputTree);
+		profiledTree outputTree = NeuronStructUtil::treeDownSample(testTree, 10);
+		profiledTree finalTree = TreeGrower::spikeRemove(outputTree);
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree.tree);
 	}
 	else if (!funcName.compare("polarTest"))
@@ -259,6 +257,83 @@ int main(int argc, char* argv[])
 	
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree);
 	}
+	else if (!funcName.compare("centroidShellTest"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
+		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
+		vector<polarNeuronSWC> polarNodeList;
+		vector<int> origin = { 68, 64, 130 };
+		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
+		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
+		map<double, NeuronTree> radius2NeuronTreeMap;
+
+		NeuronTree outputTree;
+		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
+		{
+			NeuronTree currShellTree;
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(polarNodeList.at(*it2));
+				newNode.type = it->first;
+				currShellTree.listNeuron.push_back(newNode);
+
+				outputTree.listNeuron.push_back(newNode);
+			}
+
+			radius2NeuronTreeMap.insert({ it->first, currShellTree });
+		}
+
+		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
+	}
+	else if (!funcName.compare("denTree"))
+	{
+		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
+		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
+		vector<polarNeuronSWC> polarNodeList;
+		vector<int> origin = { 68, 64, 130 };
+		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
+		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
+
+		TreeGrower myTreeGrower;
+		myTreeGrower.polarNodeList = polarNodeList;
+		myTreeGrower.radiusShellMap_loc = shellRadiusMap;
+		myTreeGrower.dendriticTree_shellCentroid();
+		
+		/*for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = myTreeGrower.radius2shellConnCompMap.begin(); it != myTreeGrower.radius2shellConnCompMap.end(); ++it)
+		{
+			NeuronTree outputTree;
+			int connCount = 0;
+			for (vector<connectedComponent>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				for (map<int, set<vector<int>>>::iterator it3 = it2->coordSets.begin(); it3 != it2->coordSets.end(); ++it3)
+				{
+					for (set<vector<int>>::iterator it4 = it3->second.begin(); it4 != it3->second.end(); ++it4)
+					{
+						NeuronSWC newNode;
+						newNode.x = it4->at(0);
+						newNode.y = it4->at(1);
+						newNode.z = it4->at(2);
+						newNode.type = connCount;
+						newNode.parent = -1;
+						outputTree.listNeuron.push_back(newNode);
+					}
+				}
+				++connCount;
+			}
+			
+			QString saveName = QString::fromStdString(to_string(it->first)) + ".swc";
+			QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\shell\\" + saveName;
+			writeSWC_file(saveName, outputTree);
+
+			outputTree.listNeuron.clear();
+		}*/
+
+		//writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+		QString saveName = "C:\\Users\\hsienchik\\Desktop\\denDebug.swc";
+		writeSWC_file(saveName, myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
@@ -382,6 +457,118 @@ int main(int argc, char* argv[])
 
 			delete[] outputImgPtr;
 			myManager.imgDatabase.clear();
+		}
+	}
+	else if (!funcName.compare("generateBrainRegionSWC"))
+	{
+		//QString inputTestName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions\\AV.swc";
+		//NeuronTree testTree = readSWC_file(inputTestName);
+		//vector<connectedComponent> compList = NeuronStructUtil::swc2signal3DBlobs(testTree);
+		//string inputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\Mouse.txt";
+		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\Mouse.txt");
+		//inputFile.open(inputFileName);
+		string line;
+		string buffer;
+		vector<string> lineSplit;
+		map<int, int> idValue2assignedMap;
+		map<int, string> idValue2nameMap;
+		int assignedI = 0;
+		if (inputFile.is_open())
+		{
+			while (getline(inputFile, line))
+			{
+				stringstream ss(line);
+				while (ss >> buffer) lineSplit.push_back(buffer);
+				if (!lineSplit.at(0).compare("InDel"))
+				{
+					lineSplit.clear();
+					continue;
+				}
+				replace(lineSplit.at(1).begin(), lineSplit.at(1).end(), '/', '_');
+				replace(lineSplit.at(1).begin(), lineSplit.at(1).end(), ',', '_');
+				replace(lineSplit.at(1).begin(), lineSplit.at(1).end(), '"', '-');
+				++assignedI;
+				int typeValue = assignedI % 20;
+				idValue2assignedMap.insert({ stoi(lineSplit.at(0)), typeValue });
+				idValue2nameMap.insert({ stoi(lineSplit.at(0)), lineSplit.at(1) });
+				//cout << lineSplit.at(1) << " " << lineSplit.at(2) << " " << lineSplit.at(3) << " " << lineSplit.at(4) << endl;
+
+				lineSplit.clear();
+			}		
+		}
+		
+		map<string, NeuronTree> name2treeMap;
+		for (map<int, string>::iterator it = idValue2nameMap.begin(); it != idValue2nameMap.end(); ++it)
+		{
+			NeuronTree newTree;
+			name2treeMap.insert({ it->second, newTree });
+			cout << it->second << " " << it->first << endl;
+		}
+
+		ImgManager myManager;
+		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25_recolorR.tif";
+		myManager.imgEntry("CCFstackR", ImgManager::singleCase);
+		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25_recolorG.tif";
+		myManager.imgEntry("CCFstackG", ImgManager::singleCase);
+		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25_recolorB.tif";
+		myManager.imgEntry("CCFstackB", ImgManager::singleCase);
+		cout << myManager.imgDatabase.at("CCFstackR").slicePtrs.begin()->first << endl;
+		cout << myManager.imgDatabase.at("CCFstackG").slicePtrs.begin()->first << endl;
+		cout << myManager.imgDatabase.at("CCFstackB").slicePtrs.begin()->first << endl;
+
+		int imgDims[3];
+		imgDims[0] = myManager.imgDatabase.at("CCFstackR").dims[0];
+		imgDims[1] = myManager.imgDatabase.at("CCFstackR").dims[1];
+		imgDims[2] = myManager.imgDatabase.at("CCFstackR").dims[2];
+		cout << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+		imgDims[0] = myManager.imgDatabase.at("CCFstackG").dims[0];
+		imgDims[1] = myManager.imgDatabase.at("CCFstackG").dims[1];
+		imgDims[2] = myManager.imgDatabase.at("CCFstackG").dims[2];
+		cout << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+		imgDims[0] = myManager.imgDatabase.at("CCFstackB").dims[0];
+		imgDims[1] = myManager.imgDatabase.at("CCFstackB").dims[1];
+		imgDims[2] = myManager.imgDatabase.at("CCFstackB").dims[2];
+		cout << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+
+		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25.v3draw";
+		myManager.imgEntry("CCFstack", ImgManager::singleCase);
+		cout << myManager.imgDatabase.at("CCFstack").dataType << endl;
+
+		for (int zi = 1; zi <= imgDims[2]; ++zi)
+		{
+			for (int yi = 1; yi <= imgDims[1]; ++yi)
+			{
+				for (int xi = 1; xi <= imgDims[0]; ++xi)
+				{
+					float value = ImgProcessor::getPixValue(myManager.imgDatabase.at("CCFstack").floatSlicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
+					int intValue = int(value);
+					
+					if (intValue == 0) continue;
+					else
+					{
+						//if (intValue >= 1000) cout << intValue << " ";
+						if (idValue2assignedMap.find(intValue) != idValue2assignedMap.end())
+						{
+							string regionName = idValue2nameMap.at(intValue);
+							NeuronSWC newNode;
+							newNode.x = xi - 1;
+							newNode.y = yi - 1;
+							newNode.z = zi - 1;
+							newNode.parent = -1;
+							newNode.type = idValue2assignedMap.at(intValue);
+							name2treeMap.at(regionName).listNeuron.push_back(newNode);
+						}
+					}
+				}
+			}
+		}
+
+		QString savingRoot = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions\\";
+		for (map<string, NeuronTree>::iterator it = name2treeMap.begin(); it != name2treeMap.end(); ++it)
+		{
+			QString saveFullName = savingRoot + QString::fromStdString(it->first) + ".swc";
+			qDebug() << saveFullName;
+			writeSWC_file(saveFullName, it->second);
 		}
 	}
 	// ---------------------------------------------------------------------------------------------------------------------------------------- //
@@ -780,7 +967,7 @@ int main(int argc, char* argv[])
 			NeuronTree nt = readSWC_file(inputSWCfullName);
 			profiledTree profiledNt(nt);
 			profiledTree outputProfiledTree;
-			NeuronStructExplorer::treeUpSample(profiledNt, outputProfiledTree);
+			NeuronStructUtil::treeUpSample(profiledNt, outputProfiledTree);
 			writeSWC_file(saveFolderNameQ + "\\" + *it, outputProfiledTree.tree);
 		}
 	}

@@ -5,15 +5,15 @@
 
 /*******************************************************************************
 *
-*  This library intends to provide functionalities for neuron struct analysis, including graph and geometry analysis, etc.
-*  Typically NeuronStructExplorer class methods need a profiledTree struct as part of the input arguments. A profiledTree can be assigned when the class is initiated or later.
+*  NeuronStructExplorer class intends to manage Neuron data struct by providing the following functionalities:
 *
-*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information.
-*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
-*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
-*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
-
-*  The class can be initialized with or without a profiledTree being initialized at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
+*    a. [profiledTree] data struct management
+*    b. Essential segment profiling methods, i.e., NeuronStructExplorer::findSegs, NeuronStructExplorer::segTileMap, and NeuronStructExplorer::getSegHeadTailClusters, etc.
+*    c. Inter/intra neuron struct analysis.
+*
+*  This is the base class of other derived class including TreeGrower, etc.
+*  Since segment profiling methods are critical and often are the foundation of higher level algorithms which is mainly included in derived classes,
+*  implementing these methods in the base class grants the derived class direct access to them and makes the development cleaner and more convenient.
 *
 ********************************************************************************/
 
@@ -28,18 +28,6 @@
 #include "NeuronStructExplorer.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
-NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
-{
-	QStringList fileNameParse1 = inputFileName.split(".");
-	if (fileNameParse1.back() == "swc")
-	{
-		NeuronTree inputSWC = readSWC_file(inputFileName);
-		QStringList fileNameParse2 = fileNameParse1.at(0).split("\\");
-		string treeName = fileNameParse2.back().toStdString();
-		this->treeEntry(inputSWC, treeName);
-	}
-}
-
 void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
 {
 	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
@@ -52,12 +40,6 @@ void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeNam
 		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
 		return;
 	}
-}
-
-void NeuronStructExplorer::profiledTreeReInit(profiledTree& inputProfiledTree)
-{
-	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
-	inputProfiledTree = tempTree;
 }
 
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
@@ -221,7 +203,7 @@ void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTre
 
 void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
-	// -- This method merges head/tail clusters across tiles. 
+	// -- This method merges head/tail clusters across tiles and reaches the final form and correctness of [inputProfiledTree]::segHeadClusters and [inputProfiledTree]::segTailClusters.
 	// -- Strategy: 1. Copy mergeable head clusters from source clusters to destined clusters. Their tail cluster counterparts are also copied over correspondingly.
 	//              2. Merge head and tail clusters that have segments in common.
 	//              3. Assign those tails from the tiles where no head exists by searching connectable heads in their neighboring tiles.
@@ -232,7 +214,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	//              4. Merge tail clusters that have segments in common.
 	//                 -> This step is required because there is a tail cluster step after 1. and 2. Consequently, there could be duplicated clusters.
 	//
-	// -- This method has been intensively tested. Apart from the menioned minor issue that could cause insignificant errors, overall it's running correctly. 
+	// -- This method has been intensively tested. Apart from the mentioned minor issue that could cause insignificant errors, overall it's running correctly. 
 	// -- Any necessary modification should be contrained in the current framework to avoid complications.
 
 	boost::container::flat_set<string> processedHeadTiles;
@@ -519,8 +501,9 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 
 void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
-	// -- This method clusters segment heads and tails tile by tile.
-	// NOTE: Nodes are confined within their own tiles. Therefore, cluster merging correctness is irrelevant to it.
+	// -- This method clusters segment heads and tails tile by tile -> clusters in 1 tile are independent of those in neighboring tiles.
+	// NOTE: Nodes are confined within their own tiles. Therefore, cluster merging correctness is irrelevant in this method and doesn't provide any information for that matter.
+	// Therefore, the information stored in [inputProfiledTree::segHeadClusters] and [inputProfiledTree::segTailClusters] are not in their final form and not correct.
 
 	inputProfiledTree.segHeadClusters.clear(); 
 	inputProfiledTree.segTailClusters.clear(); 
@@ -904,374 +887,7 @@ void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
 
 
 
-/* ================================== Neuron Struct Processing Functions ================================== */
-void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
-{
-	// -- This method creates interpolated nodes in between each pair of 2 adjacent nodes on the input tree. 
-
-	size_t maxNodeID = 0;
-	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
-		if (it->n > maxNodeID) maxNodeID = it->n;
-	
-	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
-	{
-		QList<NeuronSWC> newSegNodes;
-		map<int, vector<QList<NeuronSWC>>> interpolatedNodeMap;
-		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end() - 1; ++nodeIt)
-		{
-			vector<size_t> childLocs = segIt->second.seg_childLocMap.at(nodeIt->n);
-			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
-			{
-				float dist = sqrt((segIt->second.nodes.at(*childLocIt).x - nodeIt->x) * (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) +
-								  (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) * (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) +
-								  (segIt->second.nodes.at(*childLocIt).z - nodeIt->z) * (segIt->second.nodes.at(*childLocIt).z - nodeIt->z));
-				int intervals = int(dist / intervalLength);
-				float intervalX = (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) / float(intervals);
-				float intervalY = (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) / float(intervals);
-				float intervalZ = (segIt->second.nodes.at(*childLocIt).z - nodeIt->z) / float(intervals);
-
-				QList<NeuronSWC> interpolatedNodes;
-				for (int i = 1; i < intervals; ++i)
-				{
-					NeuronSWC newNode;
-					newNode.x = nodeIt->x + intervalX * float(i);
-					newNode.y = nodeIt->y + intervalY * float(i);
-					newNode.z = nodeIt->z + intervalZ * float(i);
-					newNode.type = nodeIt->type;
-					++maxNodeID;
-					newNode.n = maxNodeID;
-					newNode.parent = maxNodeID - 1;
-					interpolatedNodes.push_back(newNode);
-				}
-				interpolatedNodes.push_back(segIt->second.nodes.at(*childLocIt));
-				if (interpolatedNodes.size() >= 2)
-				{
-					interpolatedNodes.back().parent = (interpolatedNodes.end() - 2)->n;
-					interpolatedNodes.begin()->parent = nodeIt->n;
-				}
-
-				interpolatedNodeMap[nodeIt->n].push_back(interpolatedNodes);
-			}	
-		}
-		for (map<int, vector<QList<NeuronSWC>>>::iterator mapIt = interpolatedNodeMap.begin(); mapIt != interpolatedNodeMap.end(); ++mapIt)
-			for (vector<QList<NeuronSWC>>::iterator qlistIt = mapIt->second.begin(); qlistIt != mapIt->second.end(); ++qlistIt) newSegNodes.append(*qlistIt);
-		newSegNodes.push_front(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head)));
-
-		segUnit newSegUnit;
-		newSegUnit.nodes = newSegNodes;
-		outputProfiledTree.segs.insert(pair<int, segUnit>(segIt->first, newSegUnit));
-		outputProfiledTree.tree.listNeuron.append(newSegNodes);
-	}
-}
-
-profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval)
-{
-	// -- This method "down samples" the input tree segment by segment. 
-	// -- A recursive down sampling method [NeuronStructExplorer::rc_segDownSample] is called in this function to deal with all possible braching points in each segment.
-	// -- NOTE, this method is essentially used for straightening / smoothing segments when there are too many zigzagging.  
-
-	NeuronTree outputTree;
-	QList<NeuronSWC> currSegOutputList;
-	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
-	{
-		//if (it->second.seg_childLocMap.empty()) continue; => Using this line is not safe. Can occasionally result in program crash.
-															// The safety of seg_childLocMap needs to be investigated later.
-		if (it->second.nodes.size() <= 3) continue;
-
-		currSegOutputList.clear();
-		currSegOutputList.push_back(*(it->second.nodes.begin()));
-		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
-		outputTree.listNeuron.append(currSegOutputList);
-	}
-
-	vector<size_t> delLocs;
-	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
-		if (nodeIt->n == nodeIt->parent) delLocs.push_back(size_t(nodeIt - outputTree.listNeuron.begin()));
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
-	profiledTree outputProfiledTree(outputTree);
-	
-	return outputProfiledTree;
-}
-
-void NeuronStructExplorer::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchigNodeID, int interval)
-{
-	int currNodeID = 0, count = 0;
-	for (vector<size_t>::const_iterator childIt = inputSeg.seg_childLocMap.at(branchigNodeID).begin(); childIt != inputSeg.seg_childLocMap.at(branchigNodeID).end(); ++childIt)
-	{
-		outputNodeList.push_back(inputSeg.nodes.at(*childIt));
-		outputNodeList.last().parent = branchigNodeID;
-		currNodeID = inputSeg.nodes.at(*childIt).n;
-		count = 0;
-		while (inputSeg.seg_childLocMap.at(currNodeID).size() > 0)
-		{
-			if (inputSeg.seg_childLocMap.at(currNodeID).size() >= 2) // branching point found, function recursively called
-			{
-				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
-				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
-				rc_segDownSample(inputSeg, outputNodeList, currNodeID, interval);
-				break;
-			}
-			
-			++count;
-			currNodeID = inputSeg.nodes.at(*(inputSeg.seg_childLocMap.at(currNodeID).begin())).n;
-			if (count % interval == 0 || inputSeg.seg_childLocMap.at(currNodeID).size() == 0) // The tail(s) of the segment needs to stay.
-			{
-				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
-				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
-			}
-		}
-	}
-}
-/* ================================== END of [Neuron Struct Processing Functions] ================================== */
-
-
-
 /* ========================================= Auto-tracing Related Neuron Struct Functions ========================================= */
-profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& inputProfiledTree)
-{
-	// -- This method looks segments to connect within each segment end cluster. 
-	// -- NOTE, any connected segment will be excluded from the rest of the process in order to avoid erroneous repeated connection.
-	// -- To finish connecting fragments in the whole tree, NeuronStrucExplorer::itered_segElongate_cluster is called to run through this method iteratively.
-
-	profiledTree outputProfiledTree = inputProfiledTree;
-	this->getSegHeadTailClusters(outputProfiledTree);
-
-	// -- The following block is for debugging purpose: segment ends clustering correctness
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = outputProfiledTree.segHeadClusters.begin(); it != outputProfiledTree.segHeadClusters.end(); ++it)
-	{
-		for (boost::container::flat_set<int>::iterator segIt = it->second.begin(); segIt != it->second.end(); ++segIt)
-			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*segIt).head)].type = it->first % 9;
-			
-		for (boost::container::flat_set<int>::iterator tailSegIt = outputProfiledTree.segTailClusters.at(it->first).begin(); tailSegIt != outputProfiledTree.segTailClusters.at(it->first).end(); ++tailSegIt)
-			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*outputProfiledTree.segs.at(*tailSegIt).tails.begin())].type = it->first % 9;
-	}
-	//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);
-	
-	map<int, segUnit> allNewSegs;
-	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
-	boost::container::flat_set<int> headSegs;
-	boost::container::flat_set<int> tailSegs;
-	vector<segPairProfile> segPairs;
-
-	// --------- For every cluster, identify and connect the pair of segments that is qualified to be connected --------- //
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator clusterIt = outputProfiledTree.segHeadClusters.begin(); clusterIt != outputProfiledTree.segHeadClusters.end(); ++clusterIt)
-	{
-		headSegs.clear();
-		tailSegs.clear();
-		segPairs.clear();
-
-		headSegs = clusterIt->second;
-		tailSegs = outputProfiledTree.segTailClusters.at(clusterIt->first);
-
-		/*cout << endl << clusterIt->first << ": ";
-		for (boost::container::flat_set<int>::iterator it1 = headSegs.begin(); it1 != headSegs.end(); ++it1) cout << *it1 << " ";
-		cout << "|| ";
-		for (boost::container::flat_set<int>::iterator it1 = tailSegs.begin(); it1 != tailSegs.end(); ++it1) cout << *it1 << " ";
-		cout << endl;*/
-
-		for (boost::container::flat_set<int>::iterator headIt = headSegs.begin(); headIt != headSegs.end(); ++headIt)
-		{
-			for (boost::container::flat_set<int>::iterator tailIt = tailSegs.begin(); tailIt != tailSegs.end(); ++tailIt)
-			{
-				if (*tailIt == *headIt) continue;
-
-				segPairProfile newSegPair(outputProfiledTree.segs.at(*headIt), outputProfiledTree.segs.at(*tailIt), head_tail);
-				if (newSegPair.turningAngle == -1) continue;
-				segPairs.push_back(newSegPair);
-			}
-		}
-		if (headSegs.size() > 1)
-		{
-			for (boost::container::flat_set<int>::iterator headIt1 = headSegs.begin(); headIt1 != headSegs.end() - 1; ++headIt1)
-			{
-				for (boost::container::flat_set<int>::iterator headIt2 = headSegs.begin() + 1; headIt2 != headSegs.end(); ++headIt2)
-				{
-					segPairProfile newSegPair(outputProfiledTree.segs.at(*headIt1), outputProfiledTree.segs.at(*headIt2), head_head);
-					if (newSegPair.turningAngle == -1) continue;
-					segPairs.push_back(newSegPair);
-				}
-			}
-		}
-		if (tailSegs.size() > 1)
-		{
-			for (boost::container::flat_set<int>::iterator tailIt1 = tailSegs.begin(); tailIt1 != tailSegs.end() - 1; ++tailIt1)
-			{
-				for (boost::container::flat_set<int>::iterator tailIt2 = tailSegs.begin() + 1; tailIt2 != tailSegs.end(); ++tailIt2)
-				{
-					segPairProfile newSegPair(outputProfiledTree.segs.at(*tailIt1), outputProfiledTree.segs.at(*tailIt2), tail_tail);
-					if (newSegPair.turningAngle == -1) continue;
-					segPairs.push_back(newSegPair);
-				}
-			}
-		}
-
-		double minTurningAngle = 10000;
-		segPairProfile chosenPair;
-		//cout << "segPairs num: " << segPairs.size() << endl;
-		if (segPairs.size() > 1)
-		{
-			for (vector<segPairProfile>::iterator pairIt = segPairs.begin(); pairIt != segPairs.end(); ++pairIt)
-			{
-				//cout << pairIt->seg1Ptr->segID << " " << pairIt->seg2Ptr->segID << " ";
-				if (pairIt->turningAngle < minTurningAngle)
-				{
-					minTurningAngle = pairIt->turningAngle;
-					chosenPair = *pairIt;
-					//cout << minTurningAngle;
-				}
-				//cout << endl;
-			}
-			//cout << " ==> " << chosenPair.seg1Ptr->segID << " " << chosenPair.seg2Ptr->segID << " " << minTurningAngle << endl;
-		}
-		else continue;
-
-		if (minTurningAngle > PI * 0.75) continue;
-		else
-		{
-			outputProfiledTree.segs.at(chosenPair.seg1Ptr->segID).to_be_deleted = true;
-			outputProfiledTree.segs.at(chosenPair.seg2Ptr->segID).to_be_deleted = true;
-			if (chosenPair.currConnOrt == head_head)
-			{
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(chosenPair.seg1Ptr->head)].type = 7;
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(chosenPair.seg2Ptr->head)].type = 7;
-			}
-			else if (chosenPair.currConnOrt == head_tail)
-			{
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(chosenPair.seg1Ptr->head)].type = 7;
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*chosenPair.seg2Ptr->tails.begin())].type = 7;
-			}
-			else if (chosenPair.currConnOrt == tail_tail)
-			{
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*chosenPair.seg1Ptr->tails.begin())].type = 7;
-				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*chosenPair.seg2Ptr->tails.begin())].type = 7;
-			}
-			segUnit newSeg = this->segUnitConnect_executer(*chosenPair.seg1Ptr, *chosenPair.seg2Ptr, chosenPair.currConnOrt);
-			allNewSegs.insert({ ++maxInputSegID, newSeg });
-
-			if (chosenPair.currConnOrt == head_head)
-			{
-				int head1TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
-				int head2TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
-				
-				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
-				{
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg2Ptr->segID));
-					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
-					if (head2TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head2TailCluster).erase(outputProfiledTree.segTailClusters.at(head2TailCluster).find(chosenPair.seg2Ptr->segID));
-				}
-				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
-				{
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg2Ptr->segID));
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
-					if (head2TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head2TailCluster).erase(outputProfiledTree.segTailClusters.at(head2TailCluster).find(chosenPair.seg2Ptr->segID));
-					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
-				}
-			}
-			else if (chosenPair.currConnOrt == head_tail)
-			{
-				int head1TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
-				int tail2HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
-
-				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
-				{
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
-					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
-					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
-				}
-				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
-				{
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
-					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
-					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
-					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
-				}
-			}
-			else if (chosenPair.currConnOrt == tail_tail)
-			{
-				int tail1HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
-				int tail2HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
-
-				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
-				{
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg1Ptr->segID);
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
-					if (tail1HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail1HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail1HeadCluster).find(chosenPair.seg1Ptr->segID));
-					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
-				}
-				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
-				{
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
-					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg1Ptr->segID);
-					
-					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
-					if (tail1HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail1HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail1HeadCluster).find(chosenPair.seg1Ptr->segID));
-				}
-			}
-		}
-	}
-	// ----- END of [For every cluster, identify and connect the pair of segments that is qualified to be connected] ----- //
-
-	// ------- Remove nodes from segments that have been connected and append nodes from new segments ------- //
-	vector<size_t> nodeDeleteLocs;
-	bool segDeleted = true;
-	while (segDeleted)
-	{
-		for (map<int, segUnit>::iterator it = outputProfiledTree.segs.begin(); it != outputProfiledTree.segs.end(); ++it)
-		{
-			if (it->second.to_be_deleted)
-			{
-				//cout << it->first << ": " << it->second.nodes.size() << endl;
-				for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
-					nodeDeleteLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
-				outputProfiledTree.segs.erase(it); // Here it avoids the same segment being connected multiple times.
-
-				goto SEG_DELETED;
-			}
-		}
-		segDeleted = false;
-
-	SEG_DELETED:
-		continue;
-	}
-
-	sort(nodeDeleteLocs.rbegin(), nodeDeleteLocs.rend());
-	for (vector<size_t>::iterator it = nodeDeleteLocs.begin(); it != nodeDeleteLocs.end(); ++it)
-		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*it));
-
-	//cout << endl << "NEW SEGMENTS ------------- " << endl;
-	for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it)
-	{
-		//cout << it->first << ": " << it->second.nodes.size() << endl;
-		outputProfiledTree.tree.listNeuron.append(it->second.nodes);
-	}
-	// --- END of [Remove nodes from segments that have been connected and append nodes from new segments] --- //
-
-	this->profiledTreeReInit(outputProfiledTree);
-	return outputProfiledTree;
-}
-
-profiledTree NeuronStructExplorer::itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold)
-{
-	cout << "iteration 1 " << endl;
-	int iterCount = 1;
-	profiledTree elongatedTree = this->segElongate_cluster(inputProfiledTree);
-	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
-	{
-		inputProfiledTree = elongatedTree;
-
-		++iterCount;
-		cout << "iteration " << iterCount << " " << endl;
-		this->getSegHeadTailClusters(inputProfiledTree, distThreshold);
-		elongatedTree = this->segElongate_cluster(inputProfiledTree);
-	}
-	cout << endl;
-
-	return elongatedTree;
-}
-
 map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold)
 {
 	int maxInputSegID = currProfiledTree.segs.rbegin()->first;
@@ -1386,7 +1002,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = this->segUnitConnect_executer(segUnit1, segUnit2, head_head);
+				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, head_head);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(2))).to_be_deleted = true;
@@ -1409,7 +1025,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = this->segUnitConnect_executer(segUnit1, segUnit2, head_tail);
+				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, head_tail);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(2))).to_be_deleted = true;
@@ -1432,7 +1048,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = this->segUnitConnect_executer(segUnit1, segUnit2, tail_tail);
+				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, tail_tail);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(3))).to_be_deleted = true;
@@ -1483,7 +1099,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
+		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1522,7 +1138,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
+		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1561,7 +1177,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
+		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1600,7 +1216,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
+		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1612,293 +1228,6 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	//__________________________________________________________________________________________________________________________
 
 	return newSegs;
-}
-
-profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTree, double angleThre)
-{
-	// -- This method connects segments tile by tile based on distance and angle threshold. 
-	// -- It is usually called by NeuronStructExplorer::itered_segElongate to iteratively complete the process process for the whole tree.
-	// ---- This method is currently used in IVSCC auto-recon.
-
-	//cout << inputProfiledTree.segHeadMap.size() << " " << inputProfiledTree.segTailMap.size() << endl;
-
-	profiledTree outputProfiledTree = inputProfiledTree;
-	QList<NeuronSWC> newNodeList = inputProfiledTree.tree.listNeuron;
-	map<int, segUnit> allNewSegs;
-	
-	set<string> allTileKeys;
-	for (map<string, vector<int>>::const_iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
-		allTileKeys.insert(headTileIt->first);
-	for (map<string, vector<int>>::const_iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
-		allTileKeys.insert(tailTileIt->first);
-	
-	vector<int> currTileHeadSegIDs;
-	vector<int> currTileTailSegIDs;
-	set<int> connectedSegs;
-	for (set<string>::iterator keyIt = allTileKeys.begin(); keyIt != allTileKeys.end(); ++keyIt)
-	{
-		//cout << "TILE " << *keyIt << " =======" << endl;
-		//cout << " - Heads: ";
-		if (inputProfiledTree.segHeadMap.find(*keyIt) != inputProfiledTree.segHeadMap.end())
-		{
-			for (vector<int>::const_iterator headIt = inputProfiledTree.segHeadMap.at(*keyIt).begin(); headIt != inputProfiledTree.segHeadMap.at(*keyIt).end(); ++headIt)
-			{
-				//cout << *headIt << " ";
-				currTileHeadSegIDs.push_back(*headIt);
-			}
-		}
-		//cout << endl;
-		//cout << " - Tails: ";
-		if (inputProfiledTree.segTailMap.find(*keyIt) != inputProfiledTree.segTailMap.end())
-		{
-			for (vector<int>::const_iterator tailIt = inputProfiledTree.segTailMap.at(*keyIt).begin(); tailIt != inputProfiledTree.segTailMap.at(*keyIt).end(); ++tailIt)
-			{
-				//cout << *tailIt << " ";
-				currTileTailSegIDs.push_back(*tailIt);
-			}
-		}
-		//cout << endl;
-		if (currTileHeadSegIDs.size() + currTileTailSegIDs.size() <= 1) // If there is <= 1 head or tail (only 1 terminal) in the tile, no further process is needed.
-		{
-			currTileHeadSegIDs.clear();
-			currTileTailSegIDs.clear();
-			//cout << endl;
-			continue;
-		}
-
-		map<int, segUnit> newSegs = this->segRegionConnector_angle(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree, angleThre);
-		for (map<int, segUnit>::iterator newSegIt = newSegs.begin(); newSegIt != newSegs.end(); ++newSegIt) 
-			allNewSegs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));
-
-		currTileHeadSegIDs.clear();
-		currTileTailSegIDs.clear();
-	}
-
-	vector<size_t> nodeDeleteLocs;
-	bool segDeleted = true;
-	while (segDeleted)
-	{
-		for (map<int, segUnit>::iterator it = outputProfiledTree.segs.begin(); it != outputProfiledTree.segs.end(); ++it)
-		{
-			if (it->second.to_be_deleted)
-			{
-				//cout << it->first << ": " << it->second.nodes.size() << endl;
-				for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
-					nodeDeleteLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
-				outputProfiledTree.segs.erase(it);
-
-				goto SEG_DELETED;
-			}
-		}
-		segDeleted = false;
-
-	SEG_DELETED:
-		continue;
-	}
-	//cout << endl;
-
-	sort(nodeDeleteLocs.rbegin(), nodeDeleteLocs.rend());
-	for (vector<size_t>::iterator it = nodeDeleteLocs.begin(); it != nodeDeleteLocs.end(); ++it) 
-		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*it));
-
-	//cout << endl << "NEW SEGMENTS ------------- " << endl;
-	for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it)
-	{
-		//cout << it->first << ": " << it->second.nodes.size() << endl;
-		outputProfiledTree.tree.listNeuron.append(it->second.nodes);
-	}
-
-	this->profiledTreeReInit(outputProfiledTree);
-	return outputProfiledTree;
-}
-
-profiledTree NeuronStructExplorer::itered_segElongate(profiledTree& inputProfiledTree, double angleThre)
-{
-	cout << "iteration 1 ";
-	int iterCount = 1;
-	profiledTree elongatedTree = this->segElongate(inputProfiledTree, angleThre);
-	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
-	{
-		++iterCount;
-		cout << "iterator " << iterCount << " " << endl;
-		inputProfiledTree = elongatedTree;
-		elongatedTree = this->segElongate(inputProfiledTree, angleThre);
-	}
-	cout << endl;
-
-	return elongatedTree;
-}
-
-segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
-{
-	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
-		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");
-
-	segUnit newSeg;
-	QList<NeuronSWC> newSegNodes;
-	QList<NeuronSWC> endEditedNodes;
-
-	switch (connOrt)
-	{
-	case head_tail:
-	{
-		int connTailID = *segUnit2.tails.cbegin();
-		endEditedNodes = segUnit1.nodes;
-		endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root.
-		newSegNodes.append(segUnit2.nodes);
-		newSegNodes.append(endEditedNodes);
-		newSeg.nodes = newSegNodes;
-		break;
-	}
-	case tail_head:
-	{
-		int connTailID = *segUnit1.tails.cbegin();
-		endEditedNodes = segUnit2.nodes;
-		endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root. 
-		newSegNodes.append(segUnit1.nodes);
-		newSegNodes.append(endEditedNodes);
-		newSeg.nodes = newSegNodes;
-		break;
-	}
-	case head_head:
-	{
-		int connTailID = segUnit2.head;
-		for (map<int, vector<size_t>>::const_iterator it = segUnit2.seg_childLocMap.cbegin(); it != segUnit2.seg_childLocMap.cend(); ++it)
-		{
-			size_t nodeLoc = segUnit2.seg_nodeLocMap.at(it->first);
-			NeuronSWC newNode = segUnit2.nodes.at(nodeLoc);
-			if (it->second.empty())
-			{
-				//cout << newNode.x << " " << newNode.y << " " << newNode.z << endl;
-				newNode.parent = -1;
-			}
-			else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
-			endEditedNodes.push_back(newNode);
-		}
-		newSegNodes.append(segUnit1.nodes);
-		newSegNodes.begin()->parent = connTailID;
-		newSegNodes.append(endEditedNodes);
-		newSeg.nodes = newSegNodes;
-		break;
-	}
-	case tail_tail:
-	{
-		int connTailID = *segUnit2.tails.cbegin();
-		for (map<int, vector<size_t>>::const_iterator it = segUnit1.seg_childLocMap.cbegin(); it != segUnit1.seg_childLocMap.cend(); ++it)
-		{
-			size_t nodeLoc = segUnit1.seg_nodeLocMap.at(it->first);
-			NeuronSWC newNode = segUnit1.nodes.at(nodeLoc);
-			if (it->second.empty()) newNode.parent = connTailID;
-			else newNode.parent = segUnit1.nodes.at(*(it->second.cbegin())).n;
-			endEditedNodes.push_back(newNode);
-		}
-		newSegNodes.append(segUnit2.nodes);
-		newSegNodes.append(endEditedNodes);
-		newSeg.nodes = newSegNodes;
-		break;
-	}
-	default:
-		break;
-	}
-
-	return newSeg;
-}
-
-profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree)
-{
-	set<int> connectedSegs;
-	profiledTree outputProfiledTree = baseTree;
-
-	for (map<int, segUnit>::const_iterator segIt = expandingPart.segs.begin(); segIt != expandingPart.segs.end(); ++segIt)
-	{
-		NeuronSWC headNode = *segIt->second.nodes.begin();
-		string xLabel = to_string(int(headNode.x / SEGtileXY_LENGTH));
-		string yLabel = to_string(int(headNode.y / SEGtileXY_LENGTH));
-		string zLabel = to_string(int(headNode.z / (SEGtileXY_LENGTH / zRATIO)));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		//cout << keyLabel << ": ";
-
-		vector<int> baseSegHeads;
-		vector<int> baseSegTails;
-		vector<int> baseSegs;
-		if (baseTree.segHeadMap.find(keyLabel) != baseTree.segHeadMap.end()) baseSegHeads = baseTree.segHeadMap.at(keyLabel);
-		if (baseTree.segTailMap.find(keyLabel) != baseTree.segTailMap.end()) baseSegTails = baseTree.segTailMap.at(keyLabel);
-		baseSegs = baseSegHeads;
-		for (vector<int>::iterator tileSegIt = baseSegTails.begin(); tileSegIt != baseSegTails.end(); ++tileSegIt)
-		{
-			if (find(baseSegHeads.begin(), baseSegHeads.end(), *tileSegIt) == baseSegs.end())
-				baseSegs.push_back(*tileSegIt);
-		}
-		//for (vector<int>::iterator checkSegIt = baseSegs.begin(); checkSegIt != baseSegs.end(); ++checkSegIt) cout << *checkSegIt << " ";
-		//cout << endl;
-
-		boost::container::flat_map<int, connectOrientation> connRoutingMap;
-		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
-		{
-			for (vector<int>::iterator baseSegIt = baseSegs.begin(); baseSegIt != baseSegs.end(); ++baseSegIt)
-			{
-				NeuronSWC baseSegHeadNode = *baseTree.segs.at(*baseSegIt).nodes.begin();
-				if (nodeIt->x == baseSegHeadNode.x && nodeIt->y == baseSegHeadNode.y && nodeIt->z == baseSegHeadNode.z)
-				{
-					connRoutingMap.insert(pair<int, connectOrientation>(*baseSegIt, head));
-					goto SEGMENT_CONFIRMED;
-				}
-
-				for (vector<int>::const_iterator tailIt = baseTree.segs.at(*baseSegIt).tails.begin(); tailIt != baseTree.segs.at(*baseSegIt).tails.end(); ++tailIt)
-				{
-					NeuronSWC baseSegTailNode = baseTree.segs.at(*baseSegIt).nodes.at(baseTree.segs.at(*baseSegIt).seg_nodeLocMap.at(*tailIt));
-					if (nodeIt->x == baseSegTailNode.x && nodeIt->y == baseSegTailNode.y && nodeIt->z == baseSegTailNode.z)
-					{
-						connRoutingMap.insert(pair<int, connectOrientation>(*baseSegIt, tail));
-						goto SEGMENT_CONFIRMED;
-					}
-				}
-			}
-
-		SEGMENT_CONFIRMED:
-			continue;
-		}
-
-		if (connRoutingMap.size() == 0) continue;
-
-		int segID1 = baseTree.segs.at(connRoutingMap.begin()->first).segID;
-		connectOrientation ort1 = connRoutingMap.begin()->second;
-		for (boost::container::flat_map<int, connectOrientation>::iterator connIt = connRoutingMap.begin() + 1; connIt != connRoutingMap.end(); ++connIt)
-		{
-			int segID2 = connIt->first;
-			connectOrientation ort2 = connIt->second;
-			if (segID1 == segID2)
-			{
-				segID1 = segID2;
-				ort1 = ort2;
-				continue;
-			}
-
-			if (ort1 == head && ort2 == head)
-			{
-				int nodeID1 = outputProfiledTree.segs.at(segID1).head;
-				int nodeID2 = outputProfiledTree.segs.at(segID2).head;
-				size_t nodeLoc1 = outputProfiledTree.node2LocMap.at(nodeID1);
-				outputProfiledTree.tree.listNeuron[nodeLoc1].parent = nodeID2;
-			}
-			else if (ort1 == head && ort2 == tail)
-			{
-				int nodeID1 = outputProfiledTree.segs.at(segID1).head;
-				int nodeID2 = *outputProfiledTree.segs.at(segID2).tails.begin();
-				size_t nodeLoc1 = outputProfiledTree.node2LocMap.at(nodeID1);
-				outputProfiledTree.tree.listNeuron[nodeLoc1].parent = nodeID2;
-			}
-			else if (ort1 == tail && ort2 == head)
-			{
-				int nodeID1 = *outputProfiledTree.segs.at(segID1).tails.begin();
-				int nodeID2 = outputProfiledTree.segs.at(segID2).head;
-				size_t nodeLoc2 = outputProfiledTree.node2LocMap.at(nodeID2);
-				outputProfiledTree.tree.listNeuron[nodeLoc2].parent = nodeID1;
-			}
-		}
-	}
-
-	return outputProfiledTree;
 }
 
 profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius)
@@ -2077,107 +1406,8 @@ NeuronTree NeuronStructExplorer::swcIdentityCompare(const NeuronTree& subjectTre
 
 	return outputTree;
 }
-
-NeuronTree NeuronStructExplorer::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
-{
-	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
-	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
-
-	NeuronTree outputTree;
-	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
-	{
-		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
-		{
-			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it)
-				outputTree.listNeuron.push_back(*it);
-		}
-		else
-		{
-			float minDist = 10000;
-			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
-			{
-				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
-				{
-					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
-					if (dist <= minDist) minDist = dist;
-				}
-
-				if (minDist <= distThreshold) continue;
-				else outputTree.listNeuron.push_back(*it1);
-			}
-		}
-	}
-
-	map<string, vector<NeuronSWC>> outputGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
-	boost::container::flat_set<int> nodeIDs;
-	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
-	{
-		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
-			nodeIDs.insert(nodeIt->n);
-	}
-
-	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
-	{
-		if (nodeIt->parent == -1) continue;
-		else
-			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
-	}
-
-	return outputTree;
-}
 /* ================================================================================================================================= */
 
-
-
-/* ====================================== Neuron Struct Refining Method ====================================== */
-profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
-{
-	profiledTree processTree = inputProfiledTree;
-	NeuronStructExplorer myExplorer;
-	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
-	{
-		int currNodeNum = 1;
-		while (currNodeNum <= currNodeNumThre)
-		{		
-			vector<size_t> delLocs;
-			vector<size_t> delLocsCandidates;
-			for (QList<NeuronSWC>::iterator it = processTree.tree.listNeuron.begin(); it != processTree.tree.listNeuron.end(); ++it)
-			{
-				if (processTree.node2childLocMap.find(it->n) == processTree.node2childLocMap.end()) // tip point
-				{
-					int currID = it->n;
-					delLocsCandidates.clear();
-					while (1)
-					{
-						int currPaID = processTree.tree.listNeuron.at(processTree.node2LocMap.at(currID)).parent;
-						if (processTree.node2childLocMap.at(currPaID).size() >= 2 && delLocsCandidates.size() <= currNodeNum)
-						{
-							delLocs.push_back(processTree.node2LocMap.at(currID));
-							delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
-							break;
-						}
-						else if (processTree.node2childLocMap.at(currPaID).size() == 1 && delLocsCandidates.size() <= currNodeNum)
-						{
-							delLocsCandidates.push_back(processTree.node2LocMap.at(currID));
-							currID = currPaID;
-						}
-						else if (delLocsCandidates.size() > currNodeNum) break;
-					}
-				}
-			}
-
-			sort(delLocs.rbegin(), delLocs.rend());
-			for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) processTree.tree.listNeuron.erase(processTree.tree.listNeuron.begin() + ptrdiff_t(*it));
-			myExplorer.profiledTreeReInit(processTree);
-			++currNodeNum;
-		}
-	}
-
-	return processTree;
-}
-/* ================================== END of [Neuron Struct Refining Method] ================================== */
 
 
 
@@ -2209,8 +1439,8 @@ void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, Neuron
 
 			if (thisNodeDist < distThreshold)
 			{
-				this->processedTree.listNeuron.push_back(*it);
-				break;
+				//this->processedTree.listNeuron.push_back(*it);
+				//break;
 			}
 
 			++checkIt;

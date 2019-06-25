@@ -13,7 +13,8 @@ QStringList NeuronFactorTreePlugin::menulist() const
 	return QStringList()
 		<< tr("generate_neuron_factor_tree")
 		<< tr("serializate_neuron_factor_tree")
-		<< tr("collect_nfss_in_folder")
+		<< tr("assemble_neuron_tree")
+		//<< tr("collect_nfss_in_folder")
 		<< tr("about");
 }
 
@@ -21,7 +22,7 @@ QStringList NeuronFactorTreePlugin::funclist() const
 {
 	return QStringList()
 		<< tr("nfss_product_pipeline")
-		<< tr("nfss_collect_pipeline")
+		//<< tr("nfss_collect_pipeline")
 		<< tr("help");
 }
 
@@ -35,13 +36,22 @@ void NeuronFactorTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2
 	{
 		serializate_neuron_factor_tree();
 	}
-	else if (menu_name == tr("collect_nfss_in_folder"))
+	else if (menu_name == tr("assemble_neuron_tree"))
+	{
+		assemble_neuron_tree();
+	}
+	/*else if (menu_name == tr("collect_nfss_in_folder"))
 	{
 		collect_nfss_in_folder();
-	}
+	}*/
 	else if (menu_name == tr("about"))
 	{
-		v3d_msg(tr("V3D Plugin NeuronFactor Tree by Longfei Li!"));
+		v3d_msg(tr("V3D Plugin NeuronFactor Tree by Longfei Li!\n"
+				   "Menu items:\n"
+		           "    generate_neuron_factor_tree : transform a neuron swc to neuronFactor tree.\n"
+			       "        input:neuron.swc, output:neuron.nft.\n"
+		           "    serializate_neuron_factor_tree : transform a neuronFactor tree to enuronFactor sequences.\n"
+		           "        input:neuron_factor_tree.nft, output:neuron_factor_tree.nfss.\n"));
 	}
 }
 
@@ -57,10 +67,10 @@ bool NeuronFactorTreePlugin::dofunc(const QString & func_name, const V3DPluginAr
 	{
 		return nfss_product_pipeline(input, output);
 	}
-	else if (func_name == tr("nfss_collect_pipeline"))
+	/*else if (func_name == tr("nfss_collect_pipeline"))
 	{
 		return nfss_collect_pipeline(input, output);
-	}
+	}*/
 	else
 	{
 		print_help();
@@ -83,20 +93,18 @@ void generate_neuron_factor_tree()
 		return;
 	}
 
-	if(filenames.size()!=1)
+	for (int i = 0; i < filenames.size(); i++)
 	{
-		v3d_msg("You've select too much swc files!");
-		return;
+		NeuronTree neuron = readSWC_file((filenames[i]));
+		V3DLONG neuron_siz = neuron.listNeuron.size();
+
+		NeuronFactorTree nft = create_neuron_factor_tree(neuron);//create a neuron factor tree;
+
+		QString neuron_path = neuron.file;
+		QString nft_output_path = neuron_path.mid(0, neuron_path.lastIndexOf(".")) + ".nft";
+		save_neuron_factor_tree(nft, nft_output_path);//save it;
 	}
-
-	NeuronTree neuron = readSWC_file((filenames[0]));
-	V3DLONG neuron_siz = neuron.listNeuron.size();
-
-	NeuronFactorTree nft = create_neuron_factor_tree(neuron);//create a neuron factor tree;
-
-	QString neuron_path = neuron.file;
-	QString nft_output_path = neuron_path.mid(0, neuron_path.lastIndexOf("."))+".nft";
-	save_neuron_factor_tree(nft, nft_output_path);//save it;
+	
 
 	//QString nft_swc_output_path = neuron_path+"nft.swc";//for visulation;
 	//save_neuron_factor_tree(nft, nft_swc_output_path);
@@ -111,30 +119,47 @@ void serializate_neuron_factor_tree()
 
 	if (filenames.isEmpty())
 	{
-		v3d_msg("You don't open any SWC file!");
+		v3d_msg("You don't open any .swc file!");
 		return;
 	}
 
-	if(filenames.size()!=1)
+	for (int i = 0; i < filenames.size(); i++)
 	{
-		v3d_msg("You've select too much swc files!");
-		return;
+		NeuronFactorTree nft;
+		nft = read_neuron_factor_tree(filenames[i]);
+
+		NeuronFactorSequences nfseqs = serialization(nft);
+
+		NeuronFactorSequences nfseqs_n;
+		//neuron_factor_sequences_normalization(nfseqs, nfseqs_n);
+
+		QString output_path = filenames[i].mid(0, filenames[i].lastIndexOf(".")) + ".nfss";
+		save_neuron_factor_sequences(nfseqs, nft.neuron_path, output_path);
 	}
-
-	NeuronFactorTree nft;
-	nft = read_neuron_factor_tree(filenames[0]);
-
-	NeuronFactorSequences nfseqs = serialization(nft);
-
-	NeuronFactorSequences nfseqs_n;
-	//neuron_factor_sequences_normalization(nfseqs, nfseqs_n);
-
-	QString output_path = filenames[0].mid(0, filenames[0].lastIndexOf(".")) + ".nfss";
-	save_neuron_factor_sequences(nfseqs, output_path);
 
 	v3d_msg("Serializating NeuronFactor Tree finish.");
 }
 
+//from a .gen file assemble a new neuron tree in swc format.
+void assemble_neuron_tree()
+{
+	QStringList filenames = QFileDialog::getOpenFileNames(0, 0, TESTDIR, "Supported file (*.gen)" ";;Generated squences file(*.gen)", 0, 0);
+	if (filenames.isEmpty())
+	{
+		v3d_msg("You don't open any .gen file!");
+		return;
+	}
+
+	for each(auto gen_file in filenames)
+	{
+		assemble_neuron_tree_from(gen_file);
+	}
+	//QString gen_file = filenames[0];
+}
+
+/* USELESS FUNC collect_nfss_in_folder
+ * Handled by python code
+ */ 
 //combine files by their classes under a base dir : base_dir/classes/class_n/.nfss -> base_dir/collected_features.txt;
 void collect_nfss_in_folder()
 {
@@ -204,11 +229,14 @@ bool nfss_product_pipeline(const V3DPluginArgList & input, V3DPluginArgList & ou
 	NeuronTree nt = readSWC_file(swc_path);
 	NeuronFactorTree nft = create_neuron_factor_tree(nt);
 	NeuronFactorSequences nfss = serialization(nft);
-	save_neuron_factor_sequences(nfss, nfss_path);
+	save_neuron_factor_sequences(nfss, nft.neuron_path, nfss_path);
 
 	cout << "==================nfss product pipeline finishes============================" << endl;
 }
 
+/* USELESS FUNC collect_nfss_in_folder
+ * Handled by python code
+ */
 //pipeline to collect all the *.nfss under a folder;
 bool nfss_collect_pipeline(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -252,6 +280,6 @@ void print_help()
 {
 	cout << "================NeuronFactor Tree plugin help=====================\n" 
 			"Usage : \n"
-		    "vaa3d.exe /x neuron_factor_tree /f nfss_product_pipeline /i input.swc : from a swc create a nfss file in the same dir with original swc file.\n"
-		    "vaa3d.exe /x neuron_factor_tree /f nfss_product_pipeline /p input.nfss : collect a nfss file to the file [path(input.nfss)../../collected_features.txt]. \n"<< endl;
+		    "vaa3d.exe /x neuron_factor_tree /f nfss_product_pipeline /i input.swc : from a swc create a nfss file in the same dir with original swc file.\n" << endl;
+		    //"vaa3d.exe /x neuron_factor_tree /f nfss_product_pipeline /p input.nfss : collect a nfss file to the file [path(input.nfss)../../collected_features.txt]. \n"<< endl;
 }

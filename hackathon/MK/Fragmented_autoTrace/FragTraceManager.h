@@ -94,7 +94,7 @@ private:
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 
-	bool generateTree_MST(workMode mode, profiledTree& objSkeletonProfiledTree);
+	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])

@@ -124,8 +124,6 @@ positive_path = "/home/braincenter4/Desktop/pos_released/"
 #negative_path_over = "/home/braincenter4/Desktop/over1_after_thre/"
 #negative_path_under = "/home/braincenter4/Desktop/under1_after_thre/"
 
-
-#############11111111111111
 positive_nrrd,num_input = get_sample_list(sys.argv[1])
 #print("===========11111=============="+sys.argv[1])
 #print("============================",num_input)
@@ -157,37 +155,27 @@ for i in range(len(metadata)):
     print("------------------:"+metadata.path.iloc[i] + metadata.nrrd.iloc[i])
     img = sitk.ReadImage(metadata.path.iloc[i] + metadata.nrrd.iloc[i])
     img_array = np.array(sitk.GetArrayFromImage(img), dtype='int32')
-    if img_array.shape[0]!=20:
-        img_array=img_array[:20,:,:]
-    if img_array.shape[1]!=100:
-        img_array=img_array[:,0:100,:]
-    if img_array.shape[2]!=100:
-        img_array=img_array[:,:,0:100]
+    if img_array.shape[0]!=50:
+        img_array=img_array[:50,:,:]
+    if img_array.shape[1]!=50:
+        img_array=img_array[:,0:50,:]
+    if img_array.shape[2]!=50:
+        img_array=img_array[:,:,0:50]
     img_array_reshape = img_array.reshape(img_array.shape[0], img_array.shape[1], img_array.shape[2], 1)
     X.append(img_array_reshape)
-    if ((i+1) % 1000)==0:
+    if ((i+1) % 100)==0:
         print(len(X))
 #print(img_array_reshape)
 # Deal with dimensions
 #print(X)
 X = np.array(X)
-# print(X.shape)
-# print(X.shape[1:])
-# print(X.shape[2:])
 
-# n_train = np.int(len(X)*0.9)
-# print(n_train)
-# x_train = X[:n_train,:,:,:,:]
-
-# metadata_train = metadata.iloc[:n_train, :]
-# print(metadata)
-#print(x_train.shape[1:])
-
-
+X = X.astype('float32')
+X /= 255 
 # In[37]:
 
 
-model1=keras.models.load_model('/home/braincenter4/Desktop/ML/20000_L2_CNN.model')
+model1=keras.models.load_model('/home/braincenter4/Desktop/ML/80x40000_50x50x50_nore_CNN_aa_axon.model')
 prediction=model1.predict(X)
 #ohl=keras.utils.to_categorical([1,1],2)
 
@@ -217,7 +205,10 @@ for i in range(len(prediction)):
         out.append(i)
         print(metadata.path.iloc[i] + metadata.nrrd.iloc[i])
         #shutil.copy(metadata.path.iloc[i] + metadata.nrrd.iloc[i],sys.argv[2])
-        str1=metadata.nrrd.iloc[i].split('_')[0:6]
+        if len(metadata.nrrd.iloc[i].split('_'))>10:
+            str1=metadata.nrrd.iloc[i].split('_')[0:15]
+        else:
+            str1=metadata.nrrd.iloc[i].split('_')[0:6]
         str2="_"
         str3=(str2.join( str1 )) 
         #shutil.copy(metadata.path.iloc[i] + metadata.nrrd.iloc[i],sys.argv[2])

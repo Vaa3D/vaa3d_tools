@@ -8,7 +8,12 @@
 *  [integratedDataTypes] is part of the NeuronStructNavigator library. 
 *  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
 *  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make developing neuron structure operations and algorithms more convenient.
-*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of including headers.
+*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
+* 
+*  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
+*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
+*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
+*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
 *
 ********************************************************************************/
 
@@ -17,6 +22,7 @@
 
 #include <vector>
 #include <deque>
+#include <set>
 #include <map>
 #include <string>
 
@@ -84,7 +90,7 @@ namespace integratedDataTypes
 	};
 
 
-	// ********* Segment Unit Data Structure ********* //
+	/********* Segment Unit Data Structure *********/
 	struct segUnit
 	{
 		segUnit() : to_be_deleted(false) {};
@@ -100,9 +106,9 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 	};
-	// *********************************************** //
+	/***********************************************/
 
-
+	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
 	{
 		// This struct has pointer data members. Need to provide copy control constructors later.
@@ -119,7 +125,9 @@ namespace integratedDataTypes
 		void getSegDistance(connectOrientation connOrt = all_ort);
 		void turning12(connectOrientation connOrt);
 	};
+	/************************************************************************/
 
+	/********* Complete Profile Data Structure for NeuronTree *********/
 	struct profiledTree
 	{
 		// With reinitialization function provided, this struct needs copy control constructors. 
@@ -150,8 +158,12 @@ namespace integratedDataTypes
 
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);
+
+		set<string> brainRegions;
 	};
 
+	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
+	/******************************************************************/
 }
 
 #endif

@@ -1,3 +1,24 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  NeuronGeoGrapher provides functionalities handling geometrical/topological analysis, operations for neuron data structures.
+*
+*  Major functionalities include:
+*
+*    a. Basic vector geometry
+*    b. Neuron segment geometry extended from basic vector geometry methds
+*    c. Polar coordinate system operations for NeuronSWC, i.e., NeuronSwc <-> polarNeuronSWC conversion
+*    d. SWC-based connected component geometrical analysis
+*
+*  NeuronGeoGrapher produces basis information that is essential in other class, eg, TreeGrower, for further development in higher level of neuron data structure processing.
+*  Most methods in this class are static functions since most of them serve as utilities to the need of other classes.
+*
+********************************************************************************/
+
 #ifndef NEURONGEOGRAPHER_H
 #define NEURONGEOGRAPHER_H
 
@@ -61,7 +82,7 @@ public:
 	// The turning angle is defined as the angle formed by displacement vector of elongating segment and the displacement vector from elongating point to connecting point.
 	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
-	static segUnit segmentStraighten(const segUnit& inputSeg);
+	static segUnit segmentStraighten(const segUnit& inputSeg); // --> May need to be revised later.
 	/***********************************************************************/
 
 
@@ -76,19 +97,27 @@ public:
 	template<class T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
 	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
 
-	// 
+	// Convert polarNeuronSWC list to NeuronSWC list.
 	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
 
+	// polarNeuronSWC ID -> location of the node on [inputPolarNodeList].
 	static inline boost::container::flat_map<int, int> polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList);
 
+	// radius -> IDs of those nodes on inputPolarNodeList that share the same radius.
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_ID(const vector<polarNeuronSWC>& inputPolarNodeList);
 
+	// radius -> locations of those nodes on inputPolarNodeList that share the same radius.
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList, double thickness = 1);
 	/***********************************************************************/
 
 
 	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
+	// Compute and store the ChebyshevCenter for every connected component on the list.
 	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
+	
+	// Checks if the bounding boxes of the 2 input connected components overlap. 
+	// Note, this is only an APPROXIMATION inplemented for fast dendritic tree tracing.
+	static inline bool connCompBoundingRangeCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre = 1);
 	/***********************************************************************/
 };
 
@@ -266,6 +295,14 @@ inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap
 		outputMap.insert(pair<int, int>(it->ID, int(it - inputPolarNodeList.begin())));
 
 	return outputMap;
+}
+
+inline bool NeuronGeoGrapher::connCompBoundingRangeCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre)
+{	
+	if (comp1.xMin > comp2.xMax + distThre || comp1.xMax < comp2.xMin - distThre ||
+		comp1.yMin > comp2.yMax + distThre || comp1.yMax < comp2.yMin - distThre ||
+		comp1.zMin > comp2.zMax + distThre || comp1.zMax < comp2.zMin - distThre) return false;
+	else return true;
 }
 
 #endif

@@ -168,6 +168,8 @@ void  snapShots3Dviewer_tiled_groups(V3DPluginCallback2 & v3d, QWidget * parent)
 
 
     V3dR_MainWindow * surface_win = v3d.createEmpty3DViewer();
+
+//    V3dR_MainWindow * surface_win = v3d.getListAll3DViewers()[0];   //use the first 3D viewer for screenshot by Z.Zhou 06132019
     if (!surface_win)
     {
         v3d_msg(QString("Failed to open an empty window!"));
