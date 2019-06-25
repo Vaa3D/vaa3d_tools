@@ -199,9 +199,11 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			const char* sliceFullNameC = sliceFullName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(sliceFullNameC);
+			currImgCase.dataType = slicePtr->getDatatype();
 			currImgCase.dims[0] = int(slicePtr->getXDim());
 			currImgCase.dims[1] = int(slicePtr->getYDim());
 			currImgCase.dims[2] = 1;
+			currImgCase.dims[3] = int(slicePtr->getCDim());
 			int totalbyteSlice = slicePtr->getTotalBytes();
 			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
@@ -226,13 +228,26 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		const char* sliceFullNameC = imgFullName.c_str();
 		Image4DSimple* slicePtr = new Image4DSimple;
 		slicePtr->loadImage(sliceFullNameC);
+		currImgCase.dataType = slicePtr->getDatatype();
 		currImgCase.dims[0] = int(slicePtr->getXDim());
 		currImgCase.dims[1] = int(slicePtr->getYDim());
 		currImgCase.dims[2] = int(slicePtr->getZDim());
+		currImgCase.dims[3] = int(slicePtr->getCDim());
 		int totalbyteSlice = slicePtr->getTotalBytes();
-		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
-		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-		currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
+		int totalVoxNum = totalbyteSlice / currImgCase.dataType; 
+		
+		if (currImgCase.dataType == 1)
+		{
+			myImg1DPtr slice1D(new unsigned char[totalVoxNum]);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalVoxNum);
+			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
+		}
+		else if (currImgCase.dataType == 4)
+		{
+			myImg1DfloatPtr slice1D(new float[totalVoxNum]);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalVoxNum);
+			currImgCase.floatSlicePtrs.insert({ sliceFileName, slice1D });
+		}		
 
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);
