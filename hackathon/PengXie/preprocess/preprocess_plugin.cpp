@@ -32,6 +32,8 @@ QStringList neuron_analysis::menulist() const
 QStringList neuron_analysis::funclist() const
 {
 	return QStringList()
+        <<tr("auto_soma_correction")
+        <<tr("auto_soma_correction_batch")
         <<tr("preprocess")
         <<tr("preprocess_batch")
         <<tr("split_neuron")
@@ -98,6 +100,14 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 	{
         return (pre_processing_dofunc(input, output));
 	}
+    if (func_name == tr("auto_soma_correction_batch"))
+    {
+        return (auto_soma_correction_batch_dofunc(input, output, callback));
+    }
+    if (func_name == tr("auto_soma_correction"))
+    {
+        return (auto_soma_correction_dofunc(input, output, callback));
+    }
     if (func_name == tr("split_neuron"))
     {
         return (split_neuron_dofunc(input, output));
