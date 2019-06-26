@@ -10,6 +10,7 @@
 #include <fstream>
 #include "test000_plugin.h"
 #include "some_function.h"
+#include  "neuron_sim_scores.h"
 
 #include <v3d_interface.h>
 #include <basic_surf_objs.h>
@@ -65,18 +66,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     else if (menu_name == tr("cut_block"))
 	{
         //读分块信息
-        struct coordinate{
-            float x;
-            float y;
-            float z;
-        };
-        struct block{
-            coordinate a;
-            string path;
-            int dx;
-            int dy;
-            int dz;
-        };
+
         vector<block> blockvector;
         //const char* scanData_file="D://shucai//051_x_6788.89_y_6160.88_z_2670.09.marker_tmp_APP2//scanData.txt";
         QString scanData_file0=QFileDialog::getOpenFileName(parent,QString(QObject::tr("Please choose the scanData_file")));
@@ -127,6 +117,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     nt.listNeuron[j].y-=blockvector[i].a.y;
                     nt.listNeuron[j].z-=blockvector[i].a.z;
                     nttmp.listNeuron.push_back(nt.listNeuron[j]);
+                    nt.listNeuron[j].x+=blockvector[i].a.x;
+                    nt.listNeuron[j].y+=blockvector[i].a.y;
+                    nt.listNeuron[j].z+=blockvector[i].a.z;
                 }
 
             }
@@ -246,7 +239,6 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }
     else
     {
-
         /*NeuronTree nt0,nt1;
         QString file0,file1;
         file0=QFileDialog::getOpenFileName(parent,QString(QObject::tr("Choose the manual file:")));
@@ -420,9 +412,198 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("cut_block"))
 	{
-		v3d_msg("To be implemented.");
+        QString scan_file=infiles[0];
+        const char * scandata_file=scan_file.toStdString().c_str();
+
+        ifstream in;
+        in.open(scandata_file,ios::in);
+        if(! in.is_open())
+        {
+            fprintf(stderr,"cannot open scandata.txt");
+         }
+
+        vector<block> blockvector;
+        while(!in.eof())
+        {
+            block tmp;
+            in>>tmp.a.x;
+            in>>tmp.a.y;
+            in>>tmp.a.z;
+            in>>tmp.path;
+            in>>tmp.dx;
+            in>>tmp.dy;
+            in>>tmp.dz;
+            blockvector.push_back(tmp);
+        }
+
+        QString eswcfile_manual= infiles[1]; // manual result
+        NeuronTree nt=readSWC_file(eswcfile_manual);
+        int size=nt.listNeuron.size();
+
+        int sf= atoi(inparas[0]);
+        printf("the scaling factor is %d.", sf);
+        for(int k=0; k<nt.listNeuron.size();k++)
+        {
+            nt.listNeuron[k].x/=sf;
+            nt.listNeuron[k].y/=sf;
+            nt.listNeuron[k].z/=sf;
+
+        }
+
+        QString swcfile_auto= infiles[2];
+        NeuronTree nt2= readSWC_file(swcfile_auto);
+
+        int bs=blockvector.size();
+
+        QString path= outfiles[0];
+        QString prefix= eswcfile_manual.section(QRegExp("[/.]"),-2,-2).trimmed();
+        //cout <<"prefix="<<prefix.toStdString()<<endl;
+        QString txtfile=path +"/distance.txt";
+//        if (QFileInfo(txtfile).exists())
+//        {
+//            system(qPrintable(QString("rm -rf %1").arg(txtfile.toStdString().c_str())));
+//            system(qPrintable(QString("touch %1").arg(txtfile.toStdString().c_str())));
+//        }
+//        else{
+//            system(qPrintable(QString("touch %1").arg(txtfile.toStdString().c_str())));
+//        }
+        QByteArray txt_ba=txtfile.toLatin1();
+        char * txt_file=txt_ba.data();
+        //const char * txt_file=txtfile.toStdString().c_str();
+        cout<<"txt_file"<<txt_file<<endl;
+
+        NeuronTree nttmp;
+        NeuronTree nttmp2;
+        bool crop_img=true;
+
+        cout<<"block vector sz="<<bs<<endl;
+        for(int i=0;i<bs-1;++i)
+        {
+            //crop the manual result by block
+            nttmp.listNeuron.clear();
+            for(int j=0;j<size;++j)
+            {
+                if(nt.listNeuron[j].x>blockvector[i].a.x&&nt.listNeuron[j].x<=(blockvector[i].a.x+blockvector[i].dx)
+                        &&nt.listNeuron[j].y>blockvector[i].a.y&&nt.listNeuron[j].y<=(blockvector[i].a.y+blockvector[i].dy)
+                        &&nt.listNeuron[j].z>blockvector[i].a.z&&nt.listNeuron[j].z<=(blockvector[i].a.z+blockvector[i].dz))
+                {
+                    nt.listNeuron[j].x-=blockvector[i].a.x;
+                    nt.listNeuron[j].y-=blockvector[i].a.y;
+                    nt.listNeuron[j].z-=blockvector[i].a.z;
+                    nttmp.listNeuron.push_back(nt.listNeuron[j]);
+                    nt.listNeuron[j].x+=blockvector[i].a.x;
+                    nt.listNeuron[j].y+=blockvector[i].a.y;
+                    nt.listNeuron[j].z+=blockvector[i].a.z;
+                }
+
+            }
+            const QString s=path+"/"+prefix+"_x_"+QString::number((int)blockvector[i].a.x,10)+"_y_"+QString::number((int)blockvector[i].a.y,10)+"_z_"+
+                    QString::number((int)blockvector[i].a.z,10)+".eswc";
+             writeESWC_file1(s,nttmp);
+
+            //crop the auto result by block
+
+                 nttmp2.listNeuron.clear();
+                 for(int j=0;j<nt2.listNeuron.size();++j)
+                 {
+                     if(nt2.listNeuron[j].x>blockvector[i].a.x&&nt2.listNeuron[j].x<=(blockvector[i].a.x+blockvector[i].dx)
+                             &&nt2.listNeuron[j].y>blockvector[i].a.y&&nt2.listNeuron[j].y<=(blockvector[i].a.y+blockvector[i].dy)
+                             &&nt2.listNeuron[j].z>blockvector[i].a.z&&nt2.listNeuron[j].z<=(blockvector[i].a.z+blockvector[i].dz))
+                     {
+                         nt2.listNeuron[j].x-=blockvector[i].a.x;
+                         nt2.listNeuron[j].y-=blockvector[i].a.y;
+                         nt2.listNeuron[j].z-=blockvector[i].a.z;
+                         nttmp2.listNeuron.push_back(nt2.listNeuron[j]);
+                         nt2.listNeuron[j].x+=blockvector[i].a.x;
+                         nt2.listNeuron[j].y+=blockvector[i].a.y;
+                         nt2.listNeuron[j].z+=blockvector[i].a.z;
+                     }
+
+                 }
+
+                 if(crop_img)
+                 {
+                     //QString swcpath=QString::fromStdString(blockvector[i].path);
+
+                     QString dirpath=scan_file.section("scan",0,0);
+                     cout<<"dirpath"<<dirpath.toStdString().c_str()<<endl;
+                     QString xyz_suffix="x_"+QString::number((int)blockvector[i].a.x,10)+"_y_"+QString::number((int)blockvector[i].a.y,10)+"_z_"+
+                             QString::number((int)blockvector[i].a.z,10)+".v3draw";
+                     QString imgpath=dirpath+xyz_suffix;
+                     QString imgsavepath= path+"/"+prefix+"_x_"+QString::number((int)blockvector[i].a.x,10)+"_y_"+QString::number((int)blockvector[i].a.y,10)+"_z_"+
+                             QString::number((int)blockvector[i].a.z,10)+".v3draw";
+                     system(qPrintable(QString("cp %1 %2").arg(imgpath.toStdString().c_str()).arg(imgsavepath.toStdString().c_str())));
+
+                 }
+
+
+                 if(nttmp2.listNeuron.size()>0 && nttmp.listNeuron.size()>0)
+                 {
+                     const QString s2=path+"/"+prefix+"_x_"+QString::number((int)blockvector[i].a.x,10)+"_y_"+QString::number((int)blockvector[i].a.y,10)+"_z_"+
+                             QString::number((int)blockvector[i].a.z,10)+"_auto.swc";
+                     writeESWC_file1(s2,nttmp2);
+
+
+
+
+                     // now calculate distance between nttmp and nttmp2
+                     NeuronDistSimple tmp_score=neuron_score_rounding_nearest_neighbor(&nttmp,&nttmp2,0,2);
+                     cout<<"\nDistance between neuron 1 "<<qPrintable(s)<<" and neuron 2 "<<qPrintable(s2)<<" is: "<<endl;
+                     cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
+                     cout<<"entire-structure-average (from neuron 2 to 1)= "<<tmp_score.dist_21_allnodes <<endl;
+                     cout<<"average of bi-directional entire-structure-averages = "<<tmp_score.dist_allnodes <<endl;
+                     cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
+                     cout<<"percent of different-structure (from neuron 1 to 2) = "<<tmp_score.percent_12_apartnodes<<"%"<<endl<<endl;
+                     cout<<"percent of different-structure (from neuron 2 to 1) = "<<tmp_score.percent_21_apartnodes<<"%"<<endl<<endl;
+                     cout<<"percent of different-structure (average) = "<<tmp_score.percent_apartnodes<<"%"<<endl<<endl;
+
+                     ofstream myfile;
+                     cout<<"\n txt_file="<<txt_file<<endl;
+                     myfile.open (txt_file, ios::out|ios::app);
+                     myfile << "input1 = ";
+                     myfile << s.toStdString().c_str();
+                     myfile << "\ninput2 = ";
+                     myfile << s2.toStdString().c_str();
+                     myfile << "\nentire-structure-average (from neuron 1 to 2) = ";
+                     myfile << tmp_score.dist_12_allnodes;
+                     myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
+                     myfile << tmp_score.dist_21_allnodes;
+                     myfile << "\naverage of bi-directional entire-structure-averages = ";
+                     myfile << tmp_score.dist_allnodes;
+                     myfile << "\ndifferen-structure-average = ";
+                     myfile << tmp_score.dist_apartnodes;
+                     myfile << "\npercent of different-structure (from neuron 1 to 2) = ";
+                     myfile << tmp_score.percent_12_apartnodes;
+                     myfile << "\npercent of different-structure (from neuron 2 to 1) = ";
+                     myfile << tmp_score.percent_21_apartnodes;
+                     myfile << "\npercent of different-structure (average)= ";
+                     myfile << tmp_score.percent_apartnodes;
+                     myfile << "\n \n";
+
+                     myfile.close();
+
+
+
+                 }
+
+
+
+
+
+
+        }
+
+
+
+        return true;
+
+
+
+
+
+
 	}
 	else if (func_name == tr("func2"))
 	{
