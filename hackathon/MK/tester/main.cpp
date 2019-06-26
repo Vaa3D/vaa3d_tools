@@ -622,7 +622,7 @@ int main(int argc, char* argv[])
 		//vector<connectedComponent> compList = NeuronStructUtil::swc2signal3DBlobs(testTree);
 		//string inputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\Mouse.txt";
 		//ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\Mouse.txt");
-		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\idValue2regionName.txt");
+		ifstream inputFile("C:\\Users\\King Mars\\Desktop\\CCF\\idValue2regionName.txt");
 		//inputFile.open(inputFileName);
 		string line;
 		string buffer;
@@ -662,7 +662,7 @@ int main(int argc, char* argv[])
 
 		ImgManager myManager;
 		int imgDims[3];
-		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25.v3draw";
+		myManager.inputSingleCaseFullPath = "C:\\Users\\King Mars\\Desktop\\CCF\\annotation_25.v3draw";
 		myManager.imgEntry("CCFstack", ImgManager::singleCase);
 		cout << myManager.imgDatabase.at("CCFstack").dataType << endl;
 		imgDims[0] = myManager.imgDatabase.at("CCFstack").dims[0];
@@ -673,10 +673,12 @@ int main(int argc, char* argv[])
 		boost::container::flat_set<float> nonRecogValues;
 		map<float, NeuronTree> nonRecogValueTrees;
 		map<float, int> nonRecogValue2typeMap;
+		map<int, int> slice0map;
 		int nonRecgType = 0;
 		for (int zi = 1; zi <= imgDims[2]; ++zi)
 		{
 			cout << zi << " ";
+			slice0map.insert({ zi, 0 });
 			for (int yi = 1; yi <= imgDims[1]; ++yi)
 			{
 				for (int xi = 1; xi <= imgDims[0]; ++xi)
@@ -684,7 +686,10 @@ int main(int argc, char* argv[])
 					float value = ImgProcessor::getPixValue(myManager.imgDatabase.at("CCFstack").floatSlicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
 					//int intValue = int(floor(value));
 
-					if (value == 0) continue;
+					if (value == 0)
+					{
+						slice0map.at(zi) += 1;
+					}
 					else
 					{
 						/*if (valueSet.find(value) == valueSet.end())
@@ -733,7 +738,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		QString savingRoot = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions\\";
+		QString savingRoot = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regions\\";
 		for (map<string, NeuronTree>::iterator it = name2treeMap.begin(); it != name2treeMap.end(); ++it)
 		{
 		QString saveFullName = savingRoot + QString::fromStdString(it->first) + "-" + QString::fromStdString(to_string(name2idValueMap.at(it->first))) + ".swc";
@@ -752,6 +757,10 @@ int main(int argc, char* argv[])
 			qDebug() << saveFullName;
 			writeSWC_file(saveFullName, it->second);
 		}
+
+		for (map<int, int>::iterator it = slice0map.begin(); it != slice0map.end(); ++it)
+			cout << it->first << " " << it->second << endl;
+		cout << endl;
 	}
 	// ---------------------------------------------------------------------------------------------------------------------------------------- //
 	else if (!funcName.compare("swc2mask"))

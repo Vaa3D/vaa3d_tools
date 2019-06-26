@@ -245,7 +245,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		else if (currImgCase.dataType == 4)
 		{
 			myImg1DfloatPtr slice1D(new float[totalVoxNum]);
-			memcpy(slice1D.get(), slicePtr->getRawData(), totalVoxNum);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
 			currImgCase.floatSlicePtrs.insert({ sliceFileName, slice1D });
 		}		
 
