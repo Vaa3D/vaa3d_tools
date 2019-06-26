@@ -29,9 +29,7 @@ void Node_type_correction::domenu(const QString &menu_name, V3DPluginCallback2 &
     if (menu_name == tr("Node_type_correction"))
 	{
         // Interface to be implemented
-        node_type_correction(QString("D:/Vaa3D_SRC/vaa3d_tools/hackathon/PengXie/Node_type_correction/testing_data/17545_00126_MZ_YLL_LLJ_stamp_2019_06_20_21_57.ano.soma_reassigned.eswc_sorted.eswc"),
-                             QString("D:/Vaa3D_SRC/vaa3d_tools/hackathon/PengXie/Node_type_correction/testing_data/output.swc")
-                             );
+        node_type_correction(callback, parent);
 	}
 	else
 	{
