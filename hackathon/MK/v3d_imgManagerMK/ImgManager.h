@@ -35,29 +35,10 @@
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
-#include "v3d_basicdatatype.h"
 
-typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
-													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
-typedef boost::shared_array<float> myImg1DfloatPtr;
+#include "integratedDataStructures.h"
 
-struct registeredImg
-{
-	string imgAlias;
-	QString imgCaseRootQ;
-
-	void createBlankImg(const int imgDims[]);
-	map<string, myImg1DPtr> slicePtrs;
-	map<string, myImg1DfloatPtr> floatSlicePtrs;
-
-	map<int, size_t> histMap;
-	map<int, double> histMap_log10;
-	void getHistMap_no0();
-	void getHistMap_no0_log10();
-	
-	int dims[4];
-	ImagePixelType dataType;
-};
+using namespace integratedDataStructures;
 
 class ImgManager
 {
