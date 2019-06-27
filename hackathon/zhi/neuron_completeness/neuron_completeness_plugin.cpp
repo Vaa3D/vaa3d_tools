@@ -80,7 +80,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            if(it.key()==1)
+            if(it.key()==1 || it.key()==0 || it.key()>=5)
                 info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
             else
                 info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
@@ -143,6 +143,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
             if(cur_win)
                 callback.setHandleLandmarkList_Any3DViewer(cur_win,markerlist);
+
         }
 
     }else if (menu_name == tr("batch_eval"))
