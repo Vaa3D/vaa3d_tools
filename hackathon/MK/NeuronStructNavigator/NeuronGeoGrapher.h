@@ -27,10 +27,11 @@
 #include <qlist.h>
 
 #include "integratedDataTypes.h"
-#include "ImgAnalyzer.h"
+#include "integratedDataStructures.h"
 
 using namespace std;
 using namespace integratedDataTypes;
+using namespace integratedDataStructures;
 
 class NeuronGeoGrapher
 {
@@ -113,7 +114,7 @@ public:
 
 	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
 	// Compute and store the ChebyshevCenter for every connected component on the list.
-	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ImgAnalyzer::ChebyshevCenter_connCompList(inputCompList); }
+	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ChebyshevCenter_connCompList(inputCompList); }
 	
 	// Checks if the bounding boxes of the 2 input connected components overlap. 
 	// Note, this is only an APPROXIMATION inplemented for fast dendritic tree tracing.

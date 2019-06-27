@@ -517,7 +517,7 @@ vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree&
 
 	vector<float> center(3);
 	for (vector<connectedComponent>::iterator it = connComps2D.begin(); it != connComps2D.end(); ++it)
-		ImgAnalyzer::ChebyshevCenter_connComp(*it);
+		ChebyshevCenter_connComp(*it);
 
 	return connComps2D;
 }

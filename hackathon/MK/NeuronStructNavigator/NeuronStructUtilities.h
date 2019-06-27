@@ -31,10 +31,11 @@
 #include <qstringlist.h>
 
 #include "integratedDataTypes.h"
-#include "ImgAnalyzer.h"
+#include "integratedDataStructures.h"
 
 using namespace std;
 using namespace integratedDataTypes;
+using namespace integratedDataStructures;
 
 class NeuronStructUtil
 {

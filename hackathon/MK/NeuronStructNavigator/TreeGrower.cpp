@@ -377,7 +377,7 @@ boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::radiu
 		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
 
 		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
-			ImgAnalyzer::ChebyshevCenter_connComp(*it2);
+			ChebyshevCenter_connComp(*it2);
 	}
 
 	return outputMap;

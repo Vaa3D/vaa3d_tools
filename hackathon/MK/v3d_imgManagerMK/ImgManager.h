@@ -21,17 +21,13 @@
 #define IMGMANAGER_H
 
 #include <string>
-#include <vector>
 #include <deque>
-#include <map>
 
 #include <boost/filesystem.hpp>
-#include <boost/shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
 
-#include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"

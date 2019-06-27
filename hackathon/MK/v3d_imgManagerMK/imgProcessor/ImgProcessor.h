@@ -19,40 +19,17 @@
 #ifndef IMGPROCESSOR_H
 #define IMGPROCESSOR_H
 
-#include <iostream>
 #include <string>
-#include <vector>
-#include <map>
-#include <set>
 #include <cmath>
 #include <algorithm>
 
+#include "integratedDataStructures.h"
+
 using namespace std;
+using namespace integratedDataStructures;
 
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 #define getMin(a, b) ((a) <= (b)? (a):(b))
-
-/***************** Structuering Element for 2D Morphological Operations *****************/
-struct morphStructElement2D
-{
-	// The default constructor sets disk shape with both axes length = 5.
-	// The constructor also takes different lengths for the 2 axes if oval or rectangular structuring element is desired.
-
-	enum shape { disk };
-
-	morphStructElement2D(shape structEleShape = morphStructElement2D::disk, int length = 5);
-	morphStructElement2D(string shape, int length = 5);
-	morphStructElement2D(string shape, int xLength, int yLength);
-	~morphStructElement2D();
-
-	string eleShape;
-	shape structEleShape;
-	int xLength, yLength, radius;
-
-	unsigned char* structElePtr;
-	inline void printOutStructEle(); // Prints out the element row by row.
-};
-/****************************************************************************************/
 
 class ImgProcessor 
 {
@@ -186,18 +163,6 @@ public:
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 	/***************************************************/
 };
-
-
-inline void morphStructElement2D::printOutStructEle()
-{
-	for (int j = 0; j < this->radius * 2 + 1; ++j)
-	{
-		for (int i = 0; i < this->radius * 2 + 1; ++i)
-			cout << int(this->structElePtr[(this->radius * 2 + 1)*j + i]) << " ";
-		cout << endl;
-	}
-}
-
 
 // ========================================= BASIC IMAGE OPERATION =========================================
 template<class T>
