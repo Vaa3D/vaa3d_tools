@@ -31,7 +31,6 @@
 
 using namespace std;
 using namespace integratedDataTypes;
-using namespace integratedDataStructures;
 
 class NeuronGeoGrapher
 {

@@ -111,6 +111,31 @@ void integratedDataStructures::connectedComponent::getConnCompSurface()
 	}
 }
 
+void integratedDataStructures::connectedComponent::getXYZprojections()
+{
+	for (boost::container::flat_map<int, boost::container::flat_set<vector<int>>>::iterator it = this->surfaceCoordSets.begin(); it != this->surfaceCoordSets.end(); ++it)
+	{
+		for (boost::container::flat_set<vector<int>>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			vector<int> projectX(2);
+			projectX[0] = it2->at(1);
+			projectX[1] = it2->at(2);
+			
+			vector<int> projectY(2);
+			projectX[0] = it2->at(0);
+			projectX[1] = it2->at(2);
+
+			vector<int> projectZ(2);
+			projectX[0] = it2->at(0);
+			projectX[1] = it2->at(1);
+
+			this->yzProjection.insert(projectX);
+			this->xzProjection.insert(projectY);
+			this->xyProjection.insert(projectZ);
+		}
+	}
+}
+
 void integratedDataStructures::registeredImg::createBlankImg(const int imgDims[])
 {
 	myImg1DPtr blank1D(new unsigned char[imgDims[0] * imgDims[2] * imgDims[2]]);

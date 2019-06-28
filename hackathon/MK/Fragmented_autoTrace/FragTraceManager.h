@@ -124,7 +124,7 @@ inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> sign
 	NeuronTree centerTree;
 	for (vector<connectedComponent>::iterator it = signalBlobs.begin(); it != signalBlobs.end(); ++it)
 	{
-		ImgAnalyzer::ChebyshevCenter_connComp(*it);
+		ChebyshevCenter_connComp(*it);
 		NeuronSWC centerNode;
 		centerNode.n = it->islandNum;
 		centerNode.x = it->ChebyshevCenter[0];

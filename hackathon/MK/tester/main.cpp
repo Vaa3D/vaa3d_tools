@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	string funcName = "swcSurfs";
+	string funcName = "regionReadTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
 
 			for (vector<connectedComponent>::iterator it2 = currConnCompList.begin(); it2 != currConnCompList.end(); ++it2)
 			{
-				ImgAnalyzer::ChebyshevCenter_connComp(*it2);
+				ChebyshevCenter_connComp(*it2);
 				NeuronSWC newNode;
 				newNode.x = it2->ChebyshevCenter[0];
 				newNode.y = it2->ChebyshevCenter[1];
@@ -601,6 +601,109 @@ int main(int argc, char* argv[])
 			qDebug() << outputFullName;
 			writeSWC_file(outputFullName, outputTree);
 		}
+	}
+	else if (!funcName.compare("surfReadTest"))
+	{
+		clock_t startTime = clock();
+		string inputFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces";
+		QString saveFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
+		//string destFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\empty_brain_regions\\";
+		ofstream outputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
+		for (filesystem::directory_iterator fileIt(inputFolderName); fileIt != filesystem::directory_iterator(); ++fileIt)
+		{
+			string fileName = fileIt->path().string();
+			string swcName = fileIt->path().filename().string();
+			cout << fileName << " " << swcName << endl;
+			QString fileNameQ = QString::fromStdString(fileName);
+			NeuronTree nt = readSWC_file(fileNameQ);
+			vector<string> inputs;
+			boost::split(inputs, swcName, boost::is_any_of("."));
+
+			brainRegion thisRegion;
+			thisRegion.name = inputs.at(0);
+			thisRegion.regionBodies = NeuronStructUtil::swc2signal3DBlobs(nt);
+
+			outputFile << thisRegion.name << "\t";
+			for (vector<connectedComponent>::iterator it = thisRegion.regionBodies.begin(); it != thisRegion.regionBodies.end(); ++it)
+				outputFile << it->xMin << "\t" << it->xMax << "\t" << it->yMin << "\t" << it->yMax << "\t" << it->zMin << "\t" << it->zMax << "\t";
+			outputFile << endl;
+		}
+		double duration = (clock() - startTime) / double(CLOCKS_PER_SEC);
+		cout << "time elapsed: " << duration << " sec" << endl;
+	}
+	else if (!funcName.compare("regionReadTest"))
+	{
+		clock_t startTime = clock();
+		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
+
+		QString inputSWCName = "C:\\Users\\hsienchik\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
+		NeuronTree inputTree = readSWC_file(inputSWCName);
+		vector<int> swcBounds = NeuronStructUtil::getSWCboundary<int>(inputTree);
+		string line;
+		string buffer;
+		vector<string> lineSplit;
+		map<string, vector<vector<int>>> regionBoundsMap;
+		if (inputFile.is_open())
+		{
+			while (getline(inputFile, line))
+			{
+				stringstream ss(line);
+				while (ss >> buffer) lineSplit.push_back(buffer);
+
+				string name = lineSplit.at(0);
+				vector<vector<int>> boundaries;
+				int count = 0;
+				vector<int> currBounds;
+				for (vector<string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); ++it)
+				{
+					currBounds.push_back(stoi(*it));
+					++count;
+					if (count % 6 == 0)
+					{
+						boundaries.push_back(currBounds);
+						count = 0;
+						currBounds.clear();
+					}
+				}
+
+				for (vector<int>::iterator it1 = swcBounds.begin(); it1 != swcBounds.end(); ++it1) cout << *it1 << " ";
+				cout << endl;
+				cout << lineSplit.at(0) << ": ";
+				for (vector<vector<int>>::iterator it = boundaries.begin(); it != boundaries.end(); ++it)
+				{
+					cout << it->at(0) << " " << it->at(1) << " " << it->at(2) << " " << it->at(3) << " " << it->at(4) << " " << it->at(5) << endl;
+
+					if (swcBounds.at(0) < it->at(1) && swcBounds.at(1) > it->at(0) &&
+						swcBounds.at(2) < it->at(3) && swcBounds.at(3) > it->at(2) &&
+						swcBounds.at(4) < it->at(5) && swcBounds.at(5) > it->at(4))
+					{
+						regionBoundsMap.insert({ lineSplit.at(0), boundaries });
+						break;
+					}
+					else continue;
+				}
+				cout << endl;
+				//for (vector<string>::iterator it = lineSplit.begin(); it != lineSplit.end(); ++it) cout << *it << " ";
+				//cout << endl;
+				lineSplit.clear();
+				boundaries.clear();
+			}
+		}
+
+		vector<string> outputRegions;
+		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it)
+		{
+			cout << it->first << " ";
+			for (QList<NeuronSWC>::iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); nodeIt = nodeIt + 10)
+			{
+
+			}
+		}
+		cout << endl;
+		cout << regionBoundsMap.size() << endl;
+
+		double duration = (clock() - startTime) / double(CLOCKS_PER_SEC);
+		cout << "time elapsed: " << duration << " sec" << endl;
 	}
 	else if (!funcName.compare("surfTest"))
 	{

@@ -20,18 +20,14 @@
 #ifndef INTEGRATEDDATATYPES_H
 #define INTEGRATEDDATATYPES_H
 
-#include <vector>
 #include <deque>
-#include <set>
-#include <map>
 #include <string>
 
-#include <boost/container/flat_map.hpp>
-#include <boost/container/flat_set.hpp>
-
 #include "basic_surf_objs.h"
+#include "integratedDataStructures.h"
 
 using namespace std;
+using namespace integratedDataStructures;
 
 #ifndef PI
 #define PI 3.1415926
@@ -164,6 +160,8 @@ namespace integratedDataTypes
 
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	/******************************************************************/
+
+	
 }
 
 #endif

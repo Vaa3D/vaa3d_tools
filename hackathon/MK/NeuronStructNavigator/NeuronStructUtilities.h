@@ -26,16 +26,13 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <qlist.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
 #include "integratedDataTypes.h"
-#include "integratedDataStructures.h"
 
 using namespace std;
 using namespace integratedDataTypes;
-using namespace integratedDataStructures;
 
 class NeuronStructUtil
 {

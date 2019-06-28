@@ -62,9 +62,15 @@ namespace integratedDataStructures
 		void getXYZprojections();
 	};
 
-	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
-	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
-	static inline void ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList);
+	inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
+	inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
+	inline void ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList);
+
+	struct brainRegion
+	{
+		string name;
+		vector<connectedComponent> regionBodies;
+	};
 
 	struct registeredImg
 	{
