@@ -27,8 +27,8 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
 	for (int i = 2; i < argc; ++i)
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "rename";
+	string funcName = "regionReadTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -566,8 +566,8 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("swcSurfs"))
 	{
-		string inputFolderName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regions";
-		QString saveFolderName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\";
+		string inputFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions";
+		QString saveFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
 		//string destFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\empty_brain_regions\\";
 		for (filesystem::directory_iterator fileIt(inputFolderName); fileIt != filesystem::directory_iterator(); ++fileIt)
 		{
@@ -604,7 +604,7 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("rename"))
 	{
-		string inputFolderName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\";
+		string inputFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
 		//string destFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\empty_brain_regions\\";
 		for (filesystem::directory_iterator fileIt(inputFolderName); fileIt != filesystem::directory_iterator(); ++fileIt)
 		{
@@ -613,20 +613,27 @@ int main(int argc, char* argv[])
 			vector<string> inputs;
 			boost::split(inputs, swcName, boost::is_any_of("-"));
 			string newFileName;
-			for (vector<string>::iterator it = inputs.begin(); it != inputs.end() - 1; ++it) newFileName = newFileName + *it;
+
+			if (inputs.size() == 2) newFileName = inputs.at(0);
+			else
+			{
+				for (vector<string>::iterator it = inputs.begin(); it != inputs.end() - 2; ++it) newFileName = *it + "-";
+				newFileName = newFileName + *(inputs.end() - 2);
+			}
 			newFileName = newFileName + ".swc";
-			string destName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\";
+			string destName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
 			destName = destName + newFileName;
+			cout << destName << endl;
 			filesystem::rename(fileName, destName);
 		}
 	}
 	else if (!funcName.compare("surfReadTest"))
 	{
 		clock_t startTime = clock();
-		string inputFolderName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces";
-		QString saveFolderName = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\";
+		string inputFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces";
+		QString saveFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
 		//string destFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\empty_brain_regions\\";
-		ofstream outputFile("C:\\Users\\King Mars\\Desktop\\CCF\\regionBoundaries.txt");
+		ofstream outputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
 		for (filesystem::directory_iterator fileIt(inputFolderName); fileIt != filesystem::directory_iterator(); ++fileIt)
 		{
 			string fileName = fileIt->path().string();
@@ -652,9 +659,9 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("regionReadTest"))
 	{
 		clock_t startTime = clock();
-		ifstream inputFile("C:\\Users\\King Mars\\Desktop\\CCF\\regionBoundaries.txt");
+		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
 
-		QString inputSWCName = "C:\\Users\\King Mars\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
+		QString inputSWCName = "C:\\Users\\hsienchik\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
 		NeuronTree inputTree = readSWC_file(inputSWCName);
 		vector<int> swcBounds = NeuronStructUtil::getSWCboundary<int>(inputTree);
 		string line;
@@ -707,29 +714,41 @@ int main(int argc, char* argv[])
 				boundaries.clear();
 			}
 		}
+		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it) cout << it->first << " ";
+		cout << endl;
+
+		std::system("pause");
 
 		set<string> regions;
 		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it)
 		{
-			QString inputSWCname = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\" + QString::fromStdString(it->first) + ".swc";
+			QString inputSWCname = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\" + QString::fromStdString(it->first) + ".swc";
+			qDebug() << inputSWCname;
 			NeuronTree regionTree = readSWC_file(inputSWCname);
 			vector<connectedComponent> regionCompList = NeuronStructUtil::swc2signal3DBlobs(regionTree);
 			for (vector<connectedComponent>::iterator compIt = regionCompList.begin(); compIt != regionCompList.end(); ++compIt)
 			{
+				cout << compIt->xMax << " " << compIt->xMin << " " << compIt->yMax << " " << compIt->yMin << " " << compIt->zMax << " " << compIt->zMin << endl;
 				compIt->getConnCompSurface();
 				compIt->getXYZprojections();
 
-				for (QList<NeuronSWC>::iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); nodeIt = nodeIt + 10)
+				for (QList<NeuronSWC>::iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); nodeIt = nodeIt + 20)
 				{
-					vector<int> xyVec = { int(nodeIt->x), int(nodeIt->y) };
-					vector<int> xzVec = { int(nodeIt->x), int(nodeIt->z) };
-					vector<int> yzVec = { int(nodeIt->y), int(nodeIt->z) };
-					if (compIt->xyProjection.find(xyVec) != compIt->xyProjection.end() &&
-						compIt->xzProjection.find(xzVec) != compIt->xzProjection.end() &&
-						compIt->yzProjection.find(yzVec) != compIt->yzProjection.end())
+					int nodeX = int(nodeIt->x);
+					int nodeY = int(nodeIt->y);
+					int nodeZ = int(nodeIt->z);
+					cout << nodeX << " " << nodeY << " " << nodeZ << endl;
+					if (int(nodeIt->x) > compIt->xMin && int(nodeIt->x) < compIt->xMax && int(nodeIt->y) > compIt->yMin && int(nodeIt->y) < compIt->yMax && int(nodeIt->z) > compIt->zMin && int(nodeIt->z) < compIt->zMax)
 					{
-						regions.insert(it->first);
-						goto REGION_FOUND;
+						vector<int> xyVec = { int(nodeIt->x), int(nodeIt->y) };
+						vector<int> xzVec = { int(nodeIt->x), int(nodeIt->z) };
+						vector<int> yzVec = { int(nodeIt->y), int(nodeIt->z) };
+						
+						if (compIt->xyProjection.find(xyVec) != compIt->xyProjection.end() && compIt->xzProjection.find(xzVec) != compIt->xzProjection.end() && compIt->yzProjection.find(yzVec) != compIt->yzProjection.end())
+						{
+							regions.insert(it->first);
+							goto REGION_FOUND;
+						}
 					}
 				}
 			}

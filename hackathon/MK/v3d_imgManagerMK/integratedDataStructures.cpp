@@ -122,12 +122,12 @@ void integratedDataStructures::connectedComponent::getXYZprojections()
 			projectX[1] = it2->at(2);
 			
 			vector<int> projectY(2);
-			projectX[0] = it2->at(0);
-			projectX[1] = it2->at(2);
+			projectY[0] = it2->at(0);
+			projectY[1] = it2->at(2);
 
 			vector<int> projectZ(2);
-			projectX[0] = it2->at(0);
-			projectX[1] = it2->at(1);
+			projectZ[0] = it2->at(0);
+			projectZ[1] = it2->at(1);
 
 			this->yzProjection.insert(projectX);
 			this->xzProjection.insert(projectY);
