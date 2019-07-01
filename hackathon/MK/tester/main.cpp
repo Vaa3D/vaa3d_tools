@@ -659,9 +659,9 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("regionReadTest"))
 	{
 		clock_t startTime = clock();
-		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
+		ifstream inputFile("C:\\Users\\King Mars\\Desktop\\CCF\\regionBoundaries.txt");
 
-		QString inputSWCName = "C:\\Users\\hsienchik\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
+		QString inputSWCName = "C:\\Users\\King Mars\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
 		NeuronTree inputTree = readSWC_file(inputSWCName);
 		vector<int> swcBounds = NeuronStructUtil::getSWCboundary<int>(inputTree);
 		string line;
@@ -716,29 +716,32 @@ int main(int argc, char* argv[])
 		}
 		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it) cout << it->first << " ";
 		cout << endl;
-
+		cout << "candidate regions number: " << regionBoundsMap.size() << endl;
 		std::system("pause");
 
 		set<string> regions;
+		string inputRegionFolder = "C:\\Users\\King Mars\\Desktop\\CCF\\brgs\\";
 		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it)
 		{
-			QString inputSWCname = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\" + QString::fromStdString(it->first) + ".swc";
-			qDebug() << inputSWCname;
-			NeuronTree regionTree = readSWC_file(inputSWCname);
-			vector<connectedComponent> regionCompList = NeuronStructUtil::swc2signal3DBlobs(regionTree);
-			for (vector<connectedComponent>::iterator compIt = regionCompList.begin(); compIt != regionCompList.end(); ++compIt)
+			string inputRegionFullName = inputRegionFolder + it->first + ".brg";
+			cout << it->first << endl;
+			brainRegion region;
+			region.name = it->first;
+			region.readBrainRegion_file(inputRegionFullName);
+			for (vector<connectedComponent>::iterator compIt = region.regionBodies.begin(); compIt != region.regionBodies.end(); ++compIt)
 			{
-				cout << compIt->xMax << " " << compIt->xMin << " " << compIt->yMax << " " << compIt->yMin << " " << compIt->zMax << " " << compIt->zMin << endl;
-				compIt->getConnCompSurface();
-				compIt->getXYZprojections();
+				//cout << compIt->xMax << " " << compIt->xMin << " " << compIt->yMax << " " << compIt->yMin << " " << compIt->zMax << " " << compIt->zMin << endl;
+				//std::system("pause");
 
-				for (QList<NeuronSWC>::iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); nodeIt = nodeIt + 20)
+				for (QList<NeuronSWC>::iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); nodeIt = nodeIt + 10)
 				{
 					int nodeX = int(nodeIt->x);
 					int nodeY = int(nodeIt->y);
 					int nodeZ = int(nodeIt->z);
-					cout << nodeX << " " << nodeY << " " << nodeZ << endl;
-					if (int(nodeIt->x) > compIt->xMin && int(nodeIt->x) < compIt->xMax && int(nodeIt->y) > compIt->yMin && int(nodeIt->y) < compIt->yMax && int(nodeIt->z) > compIt->zMin && int(nodeIt->z) < compIt->zMax)
+					//cout << nodeX << " " << nodeY << " " << nodeZ << endl;
+					if (nodeX > compIt->xMin && nodeX < compIt->xMax && 
+						nodeY > compIt->yMin && nodeY < compIt->yMax &&
+						nodeZ > compIt->zMin && nodeZ < compIt->zMax)
 					{
 						vector<int> xyVec = { int(nodeIt->x), int(nodeIt->y) };
 						vector<int> xzVec = { int(nodeIt->x), int(nodeIt->z) };
@@ -762,6 +765,47 @@ int main(int argc, char* argv[])
 
 		double duration = (clock() - startTime) / double(CLOCKS_PER_SEC);
 		cout << "time elapsed: " << duration << " sec" << endl;
+	}
+	else if (!funcName.compare("brgFileTest"))
+	{
+		QString inputFile = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\GPe.swc";
+		NeuronTree nt = readSWC_file(inputFile);
+		vector<connectedComponent> regionCompList = NeuronStructUtil::swc2signal3DBlobs(nt);
+		brainRegion GPe;
+		GPe.name = "GPe";
+		GPe.regionBodies = regionCompList;
+		
+		string outputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\GPe.brg";
+		GPe.writeBrainRegion_file(outputFileName);
+	}
+	else if (!funcName.compare("brgFileReadTest"))
+	{
+		string inputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\GPe.brg";
+		brainRegion GPe;
+		GPe.readBrainRegion_file(inputFileName);
+		cout << GPe.name << endl;
+		cout << GPe.regionBodies.size() << " " << GPe.regionBodies.at(0).surfaceCoordSets.size() << " " << GPe.regionBodies.at(1).surfaceCoordSets.size() << endl;
+	}
+	else if (!funcName.compare("brgs"))
+	{
+		string inputFolder = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces";
+		string saveFolder = "C:\\Users\\King Mars\\Desktop\\CCF\\brgs\\";
+		for (filesystem::directory_iterator it(inputFolder); it != filesystem::directory_iterator(); ++it)
+		{
+			string fileFullName = it->path().string();
+			string fileName = it->path().filename().string();
+			vector<string> nameSplit;
+			boost::split(nameSplit, fileName, boost::is_any_of("."));
+			string regionName = nameSplit.at(0);
+			QString inputSWCName = QString::fromStdString(fileFullName);
+			string saveFullName = saveFolder + regionName + ".brg";
+
+			NeuronTree inputTree = readSWC_file(inputSWCName);
+			brainRegion thisRegion;
+			thisRegion.name = regionName;
+			thisRegion.regionBodies = NeuronStructUtil::swc2signal3DBlobs(inputTree);
+			thisRegion.writeBrainRegion_file(saveFullName);
+		}
 	}
 	else if (!funcName.compare("surfTest"))
 	{

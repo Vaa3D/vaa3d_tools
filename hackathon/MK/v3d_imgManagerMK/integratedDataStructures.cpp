@@ -1,4 +1,7 @@
-#include <iostream>
+#include <fstream>
+#include <sstream>
+
+#include <boost/algorithm/string.hpp>
 
 #include "ImgProcessor.h"
 #include "integratedDataStructures.h"
@@ -134,6 +137,119 @@ void integratedDataStructures::connectedComponent::getXYZprojections()
 			this->xyProjection.insert(projectZ);
 		}
 	}
+}
+
+void integratedDataStructures::brainRegion::writeBrainRegion_file(string saveFileName)
+{
+	if (this->regionBodies.empty())
+	{
+		cout << "No connected components found. Do nothing and return." << endl;
+		return;
+	}
+
+	ofstream outputFile(saveFileName);
+	vector<string> splittedString;
+	boost::algorithm::split(splittedString, saveFileName, boost::is_any_of("."));
+	if (splittedString.back().compare("brg"))
+	{
+		cout << "Not supported file extension. Do nothing and return." << endl;
+		return;
+	}
+	outputFile << "# " << this->name << endl;
+	
+	for (vector<connectedComponent>::iterator it = this->regionBodies.begin(); it != this->regionBodies.end(); ++it)
+	{
+		if (it->coordSets.empty())
+		{
+			cout << "No data stored in this connected componenet. Move to the next one." << endl;
+			continue;
+		}
+
+		if (it->surfaceCoordSets.empty())
+		{
+			it->getConnCompSurface();
+			it->getXYZprojections();
+		}
+		
+		outputFile << "# Group " << int(it - this->regionBodies.begin()) + 1 << endl;
+		for (boost::container::flat_map<int, boost::container::flat_set<vector<int>>>::iterator sliceIt = it->surfaceCoordSets.begin(); sliceIt != it->surfaceCoordSets.end(); ++sliceIt)
+		{
+			outputFile << sliceIt->first << " ";
+			for (boost::container::flat_set<vector<int>>::iterator nodeIt = sliceIt->second.begin(); nodeIt != sliceIt->second.end(); ++nodeIt)
+				outputFile << nodeIt->at(0) << " " << nodeIt->at(1) << " ";
+			outputFile << endl;
+		}
+		outputFile << "---" << endl;
+	}
+}
+
+void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFileName)
+{
+	ifstream inputFile(inputFileName);
+	if (!inputFile.good())
+	{
+		cout << "Cannot open the file " << inputFileName << ". The file either doesn't exist or is corrupted." << endl;
+		return;
+	}
+
+	vector<string> splittedinputName1;
+	boost::algorithm::split(splittedinputName1, inputFileName, boost::is_any_of("."));
+	if (splittedinputName1.back().compare("brg"))
+	{
+		cout << "Not supported file extension. Do nothing and return." << endl;
+		return;
+	}
+	vector<string> splittedinputName2;
+	boost::algorithm::split(splittedinputName2, *splittedinputName1.begin(), boost::is_any_of("\\"));
+	this->name = splittedinputName2.back();
+
+	if (inputFile.is_open())
+	{
+		string line;
+		string buffer;
+		vector<string> splittedLine;
+		while (getline(inputFile, line))
+		{
+			splittedLine.clear();
+			stringstream ss(line);
+			while (ss >> buffer) splittedLine.push_back(buffer);
+
+			if (!splittedLine.begin()->compare("#") || !splittedLine.begin()->compare("---"))
+			{
+				if (!(splittedLine.begin() + 1)->compare("Group"))
+				{
+					connectedComponent newComponent;
+					newComponent.islandNum = stoi(*(splittedLine.begin() + 2));
+					this->regionBodies.push_back(newComponent);
+					continue;
+				}
+				continue;
+			}
+
+			int xMin = 100000, yMin = 100000;
+			int xMax = 0, yMax = 0;
+			boost::container::flat_set<vector<int>> currSliceNodeSet;
+			for (vector<string>::iterator it = splittedLine.begin() + 1; it != splittedLine.end(); it = it + 2)
+			{
+				vector<int> nodeVec = { stoi(*it), stoi(*(it + 1)), stoi(*splittedLine.begin()) };
+				currSliceNodeSet.insert(nodeVec);
+				if (nodeVec.at(0) > xMax) xMax = nodeVec.at(0);
+				if (nodeVec.at(0) < xMin) xMin = nodeVec.at(0);
+				if (nodeVec.at(1) > yMax) yMax = nodeVec.at(1);
+				if (nodeVec.at(1) < yMin) yMin = nodeVec.at(1);
+			}
+			this->regionBodies.back().surfaceCoordSets.insert(pair<int, boost::container::flat_set<vector<int>>>(stoi(*splittedLine.begin()), currSliceNodeSet));
+			this->regionBodies.back().xMax = xMax;
+			this->regionBodies.back().xMin = xMin;
+			this->regionBodies.back().yMax = yMax;
+			this->regionBodies.back().yMin = yMin;
+			this->regionBodies.back().zMax = (this->regionBodies.back().surfaceCoordSets.end() - 1)->first;
+			this->regionBodies.back().zMin = this->regionBodies.back().surfaceCoordSets.begin()->first;
+		}
+	}
+
+	for (vector<connectedComponent>::iterator it = this->regionBodies.begin(); it != this->regionBodies.end(); ++it)
+		it->getXYZprojections();
 }
 
 void integratedDataStructures::registeredImg::createBlankImg(const int imgDims[])

@@ -70,6 +70,9 @@ namespace integratedDataStructures
 	{
 		string name;
 		vector<connectedComponent> regionBodies;
+
+		void writeBrainRegion_file(string saveFileName);
+		void readBrainRegion_file(string inputFileName);
 	};
 
 	struct registeredImg
