@@ -657,12 +657,27 @@ int main(int argc, char* argv[])
 		double duration = (clock() - startTime) / double(CLOCKS_PER_SEC);
 		cout << "time elapsed: " << duration << " sec" << endl;
 	}
+	else if (!funcName.compare("allBrgsReadingTime"))
+	{
+		string inputPath = "C:\\Users\\King Mars\\Desktop\\CCF\\brgs";
+		clock_t start = clock();
+		for (filesystem::directory_iterator it(inputPath); it != filesystem::directory_iterator(); ++it)
+		{
+			string fileFullName = it->path().string();
+			cout << fileFullName << endl;
+			brainRegion region;
+			region.readBrainRegion_file(fileFullName);
+		}
+		double duration = (clock() - start) / double(CLOCKS_PER_SEC);
+		cout << duration << " secs" << endl;
+		cout << double(13) / double(18) * duration << endl;
+	}
 	else if (!funcName.compare("regionReadTest"))
 	{
 		clock_t startTime = clock();
-		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\regionBoundaries.txt");
+		ifstream inputFile("C:\\Users\\King Mars\\Desktop\\CCF\\regionBoundaries.txt");
 
-		QString inputSWCName = "C:\\Users\\hsienchik\\Desktop\\CCF\\17302_00001_s_affine_jba.swc";
+		QString inputSWCName = "C:\\Users\\King Mars\\Desktop\\CCF\\17302_00110_s_affine_jba.swc";
 		NeuronTree inputTree = readSWC_file(inputSWCName);
 		vector<int> swcBounds = NeuronStructUtil::getSWCboundary<int>(inputTree);
 		string line;
@@ -722,7 +737,7 @@ int main(int argc, char* argv[])
 
 		set<string> regions;
 		vector<brainRegion> regionList;
-		string inputRegionFolder = "C:\\Users\\hsienchik\\Desktop\\CCF\\brgs\\";
+		string inputRegionFolder = "C:\\Users\\King Mars\\Desktop\\CCF\\brgs\\";
 
 		for (map<string, vector<vector<int>>>::iterator it = regionBoundsMap.begin(); it != regionBoundsMap.end(); ++it)
 		{

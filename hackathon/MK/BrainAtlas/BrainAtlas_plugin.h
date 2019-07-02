@@ -9,7 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-class BrainAtlas : public QObject, public V3DPluginInterface2_1
+class BrainAtlasApp : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);

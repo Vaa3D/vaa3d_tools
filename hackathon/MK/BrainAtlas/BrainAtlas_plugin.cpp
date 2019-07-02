@@ -3,23 +3,26 @@
  * 2019-7-1 : by MK
  */
  
-#include "v3d_message.h"
 #include <vector>
+
+#include "v3d_message.h"
+
 #include "BrainAtlas_plugin.h"
+#include "BrainAtlasManager.h"
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(BrainAtlas, BrainAtlas);
+Q_EXPORT_PLUGIN2(BrainAtlas, BrainAtlasApp);
  
-QStringList BrainAtlas::menulist() const
+QStringList BrainAtlasApp::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+		<<tr("Start_Brain_Atlas")
 		<<tr("menu2")
 		<<tr("about");
 }
 
-QStringList BrainAtlas::funclist() const
+QStringList BrainAtlasApp::funclist() const
 {
 	return QStringList()
 		<<tr("func1")
@@ -27,11 +30,11 @@ QStringList BrainAtlas::funclist() const
 		<<tr("help");
 }
 
-void BrainAtlas::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void BrainAtlasApp::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("Start_Brain_Atlas"))
 	{
-		v3d_msg("To be implemented.");
+		BrainAtlasManaer* managerPtr = new BrainAtlasManaer(parent, &callback);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -44,7 +47,7 @@ void BrainAtlas::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 }
 
-bool BrainAtlas::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool BrainAtlasApp::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
