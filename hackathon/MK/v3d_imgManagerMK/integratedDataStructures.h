@@ -65,6 +65,7 @@ namespace integratedDataStructures
 	inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
 	inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
 	inline void ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList);
+	inline vector<int> getSliceBoundaries(boost::container::flat_set<vector<int>> inputSliceCoordSet);
 
 	struct brainRegion
 	{
@@ -151,6 +152,22 @@ inline void integratedDataStructures::ChebyshevCenter_connCompList(vector<connec
 {
 	for (vector<connectedComponent>::iterator it = inputCompList.begin(); it != inputCompList.end(); ++it)
 		integratedDataStructures::ChebyshevCenter_connComp(*it);
+}
+
+inline vector<int> integratedDataStructures::getSliceBoundaries(boost::container::flat_set<vector<int>> inputSliceCoordSet)
+{
+	int xMax = 0, yMax = 0;
+	int xMin = 100000, yMin = 100000;
+	for (boost::container::flat_set<vector<int>>::iterator it = inputSliceCoordSet.begin(); it != inputSliceCoordSet.end(); ++it)
+	{
+		if (it->at(0) > xMax) xMax = it->at(0);
+		if (it->at(0) < xMin) xMin = it->at(0);
+		if (it->at(1) > yMax) yMax = it->at(1);
+		if (it->at(1) < yMin) yMin = it->at(1);
+	}
+
+	vector<int> outputVec = { xMin, xMax, yMin, yMax };
+	return outputVec;
 }
 
 #endif

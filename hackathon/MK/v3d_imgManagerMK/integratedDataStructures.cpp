@@ -208,13 +208,26 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 		string line;
 		string buffer;
 		vector<string> splittedLine;
+		int xMin = 100000, yMin = 100000;
+		int xMax = 0, yMax = 0;
 		while (getline(inputFile, line))
 		{
 			splittedLine.clear();
 			stringstream ss(line);
 			while (ss >> buffer) splittedLine.push_back(buffer);
 
-			if (!splittedLine.begin()->compare("#") || !splittedLine.begin()->compare("---"))
+			if (!splittedLine.begin()->compare("---"))
+			{
+				this->regionBodies.back().xMax = xMax;
+				this->regionBodies.back().xMin = xMin;
+				this->regionBodies.back().yMax = yMax;
+				this->regionBodies.back().yMin = yMin;
+				this->regionBodies.back().zMax = (this->regionBodies.back().surfaceCoordSets.end() - 1)->first;
+				this->regionBodies.back().zMin = this->regionBodies.back().surfaceCoordSets.begin()->first;
+				continue;
+			}
+
+			if (!splittedLine.begin()->compare("#"))
 			{
 				if (!(splittedLine.begin() + 1)->compare("Group"))
 				{
@@ -226,8 +239,6 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 				continue;
 			}
 
-			int xMin = 100000, yMin = 100000;
-			int xMax = 0, yMax = 0;
 			boost::container::flat_set<vector<int>> currSliceNodeSet;
 			for (vector<string>::iterator it = splittedLine.begin() + 1; it != splittedLine.end(); it = it + 2)
 			{
@@ -239,12 +250,6 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 				if (nodeVec.at(1) < yMin) yMin = nodeVec.at(1);
 			}
 			this->regionBodies.back().surfaceCoordSets.insert(pair<int, boost::container::flat_set<vector<int>>>(stoi(*splittedLine.begin()), currSliceNodeSet));
-			this->regionBodies.back().xMax = xMax;
-			this->regionBodies.back().xMin = xMin;
-			this->regionBodies.back().yMax = yMax;
-			this->regionBodies.back().yMin = yMin;
-			this->regionBodies.back().zMax = (this->regionBodies.back().surfaceCoordSets.end() - 1)->first;
-			this->regionBodies.back().zMin = this->regionBodies.back().surfaceCoordSets.begin()->first;
 		}
 	}
 
