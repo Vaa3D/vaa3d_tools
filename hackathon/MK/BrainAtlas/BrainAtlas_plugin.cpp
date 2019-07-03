@@ -35,6 +35,7 @@ void BrainAtlasApp::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	if (menu_name == tr("Start_Brain_Atlas"))
 	{
 		BrainAtlasManaer* managerPtr = new BrainAtlasManaer(parent, &callback);
+		managerPtr->exec();
 	}
 	else if (menu_name == tr("menu2"))
 	{

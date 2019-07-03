@@ -28,6 +28,7 @@ win32: {
     LIBS += -L../NeuronStructNavigator -lNeuronStructNavigator
 }
 
+FORMS += brainRegionListTest.ui
 FORMS += brainAtlasTest.ui
 
 HEADERS	+= BrainAtlas_plugin.h

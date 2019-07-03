@@ -5,6 +5,8 @@
 
 #include "integratedDataStructures.h"
 
+#include "ui_brainRegionListTest.h"
+
 using namespace integratedDataStructures;
 
 class BrainAtlasManaer : public QDialog
@@ -15,6 +17,18 @@ public:
 	BrainAtlasManaer(QWidget* parent, V3DPluginCallback2* callback);
 
 	boost::container::flat_map<string, brainRegion> regionMap;
+	boost::container::flat_map<string, NeuronTree> regionTreeMap;
+
+	Ui::Dialog* regionListUI;
+	//bool eventFilter(QObject* obj, QMouseEvent* mouseEvent);
+	
+	v3dhandle curWin;
+
+public slots:
+	void scanCheckBoxes_list();
+
+public slots:
+	//void displayRegion();
 
 private: 
 	V3DPluginCallback2* thisCallback;

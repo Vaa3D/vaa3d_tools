@@ -200,9 +200,9 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 		return;
 	}
 	vector<string> splittedinputName2;
-	boost::algorithm::split(splittedinputName2, *splittedinputName1.begin(), boost::is_any_of("\\"));
+	boost::algorithm::split(splittedinputName2, *(splittedinputName1.end() - 2), boost::is_any_of("/"));
 	this->name = splittedinputName2.back();
-
+	
 	if (inputFile.is_open())
 	{
 		string line;
