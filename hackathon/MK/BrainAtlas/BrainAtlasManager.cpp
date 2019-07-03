@@ -64,6 +64,9 @@ BrainAtlasManaer::BrainAtlasManaer(QWidget* parent, V3DPluginCallback2* callback
 	}
 
 	this->curWin = this->thisCallback->currentImageWindow();
+	this->cur3DViewer = this->thisCallback->find3DViewerByName(this->thisCallback->getImageName(this->curWin));
+	
+	qDebug() << this->thisCallback->getImageName(this->curWin);
 
 	this->show();
 	this->scanCheckBoxes_list();
@@ -72,25 +75,18 @@ BrainAtlasManaer::BrainAtlasManaer(QWidget* parent, V3DPluginCallback2* callback
 
 void BrainAtlasManaer::scanCheckBoxes_list()
 {
-	
 	for (int i = 0; i < regionListUI->tableWidget->rowCount(); ++i)
 	{
 		if (regionListUI->tableWidget->item(i, 0)->checkState() == Qt::Checked)
 		{
 			string regionName = regionListUI->tableWidget->item(i, 1)->text().toStdString();
-			if (this->regionTreeMap.find(regionName) != this->regionTreeMap.end()) break;
-
-			QString NeuronTreeName = "../../vaa3d_tools/hackathon/MK/BrainAtlas/brain_regionSurfaces/" + QString::fromStdString(regionName) + ".swc";
-			NeuronTree thisRegionTree = readSWC_file(NeuronTreeName);
-			this->regionTreeMap.insert(pair<string, NeuronTree>(regionName, thisRegionTree));
-			this->thisCallback->setSWC(this->curWin, this->regionTreeMap.at(regionName));
-
-			this->thisCallback->update_NeuronBoundingBox(this->thisCallback->find3DViewerByName(this->thisCallback->getImageName(this->curWin)));
+			if (this->loadedRegions.find(regionName) != this->loadedRegions.end()) continue;
+			this->loadedRegions.insert(regionName);
+			QString swcPathQ = "../../vaa3d_tools/hackathon/MK/BrainAtlas/brain_regionSurfaces/" + QString::fromStdString(regionName) + ".swc";
+			string swcPath = swcPathQ.toStdString();
+			const char* swcPathC = swcPath.c_str();
+			this->thisCallback->setSWC_noDecompose(this->cur3DViewer, swcPathC);
 		}
-
-		//cout << regionListUI->tableWidget->item(i, 1)->text().toStdString() << endl;
-		//cout << regionListUI->tableWidget->item(i, 1)->text().toStdString() << endl;
 	}
-
 	QTimer::singleShot(500, this, SLOT(scanCheckBoxes_list()));
 }

@@ -18,11 +18,13 @@ public:
 
 	boost::container::flat_map<string, brainRegion> regionMap;
 	boost::container::flat_map<string, NeuronTree> regionTreeMap;
+	set<string> loadedRegions;
 
 	Ui::Dialog* regionListUI;
 	//bool eventFilter(QObject* obj, QMouseEvent* mouseEvent);
 	
 	v3dhandle curWin;
+	V3dR_MainWindow* cur3DViewer;
 
 public slots:
 	void scanCheckBoxes_list();
