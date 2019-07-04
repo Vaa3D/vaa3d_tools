@@ -30,11 +30,16 @@ public slots:
     bool setTree(const QString & file);
 };
 
+bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName);
+NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
+bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres);
 void computeFeature(const NeuronTree & nt, double * features);
 void computeLinear(const NeuronTree & nt);
 void computeTree(const NeuronTree & nt);
 double computeHausdorff(const NeuronTree & nt);
+bool split_neuron(QString qs_input, QString qs_outdir);
+void Analysis(QString indir,vector<char*> outfiles, bool hasOutput);
 void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback);
-
+QList<int> get_subtree(NeuronTree nt, int id);
 
 #endif // FEATURE_ANALYSIS_H

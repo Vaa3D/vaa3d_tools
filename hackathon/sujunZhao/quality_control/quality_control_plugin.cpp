@@ -12,7 +12,7 @@ Q_EXPORT_PLUGIN2(quality_control, TestPlugin);
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+		<<tr("quality control")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -27,7 +27,7 @@ QStringList TestPlugin::funclist() const
 
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("quality control"))
 	{
 		v3d_msg("To be implemented.");
 	}
@@ -53,9 +53,25 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         Process(input,output,callback);
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("test"))
 	{
-		v3d_msg("To be implemented.");
+        vector<char*> in, inparas, outfiles;
+        if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+        if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+        bool hasOutput;
+        if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);hasOutput=true;}
+        else{hasOutput=false;}
+        QString swc_file = in.at(0);
+        NeuronTree nt_unsorted = readSWC_file(swc_file);
+        QList<int> result;
+        result=get_subtree(nt_unsorted, 1);
+        NeuronTree out;
+        QString filename = "/home/penglab/Desktop/test2/1/test2.swc";
+        for (int i=0;i<result.size();i++){
+            NeuronSWC node = nt_unsorted.listNeuron.at(result.at(i));
+            out.listNeuron.append(node);
+        }
+        writeSWC_file(filename, out);
 	}
 	else if (func_name == tr("help"))
 	{
