@@ -644,8 +644,35 @@
      <column/>
     </widget>
    </item>
+   <item>
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>Check neuron-involved regions</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>neuronInvolvedRegionClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>361</x>
+     <y>709</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>439</x>
+     <y>456</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>neuronInvolvedRegionClicked()</slot>
+ </slots>
 </ui>

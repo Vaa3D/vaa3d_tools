@@ -9,16 +9,18 @@
 
 using namespace integratedDataStructures;
 
-class BrainAtlasManaer : public QDialog
+class BrainAtlasManager : public QDialog
 {
 	Q_OBJECT
 
 public:
-	BrainAtlasManaer(QWidget* parent, V3DPluginCallback2* callback);
+	BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callback);
 
 	boost::container::flat_map<string, brainRegion> regionMap;
 	boost::container::flat_map<string, NeuronTree> regionTreeMap;
 	set<string> loadedRegions;
+	map<string, int> surface2indexMap;
+	map<string, bool> surfaceStatus;
 
 	Ui::Dialog* regionListUI;
 	//bool eventFilter(QObject* obj, QMouseEvent* mouseEvent);
@@ -26,8 +28,11 @@ public:
 	v3dhandle curWin;
 	V3dR_MainWindow* cur3DViewer;
 
+	vector<NeuronTree> loadedTree;
+
 public slots:
 	void scanCheckBoxes_list();
+	void neuronInvolvedRegionClicked();
 
 public slots:
 	//void displayRegion();
