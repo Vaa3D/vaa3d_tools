@@ -78,7 +78,42 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	}
 	else if (func_name == tr("func2"))
 	{
-		v3d_msg("To be implemented.");
+        const char* file=(infiles.size()>=1)?infiles[0]:"";
+        unsigned char* pdata=0;
+        V3DLONG sz[4]={0,0,0,0};
+        int datatype=0;
+        simple_loadimage_wrapper(callback,file,pdata,sz,datatype);
+        cout<<"put image..."<<endl;
+        ImageCtrl c(pdata,sz);
+
+        vector<vector<vector<unsigned char>>> image;
+        c.Data1d_to_3d(image);
+
+        double thres=(inparas.size()>=1)?atof(inparas[0]):30;
+
+        sv_tracer s;
+        vector<superpoint> v_superpoints;
+        s.init_superpoints(v_superpoints,image,sz,thres);
+        vector<superpoint> v_realpoints;
+        s.init_real_points(v_superpoints,v_realpoints,image,sz,thres);
+
+        cout<<"real points:"<<v_realpoints.size()<<endl;
+
+        for(int i=0;i<v_realpoints.size();++i)
+        {
+            cout<<i<<" : "<<"rx  "<<v_realpoints[i].rx<<"  ry  "<<v_realpoints[i].ry<<"  rz  "<<v_realpoints[i].rz<<endl;
+        }
+
+        QString eswcfile=(outfiles.size()>=1)?outfiles[0]:"";
+
+        //s.writeSuperpoints(markerfile,v_realpoints);
+
+        NeuronTree nt;
+        s.sv_trace(v_realpoints,image,nt,sz);
+
+        writeESWC_file(eswcfile,nt);
+
+
 	}
 	else if (func_name == tr("help"))
 	{
