@@ -120,7 +120,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        cout<<"v3d -x compare_swc -f func2 -i [file_manual_swc] [file_auto_swc] [brain_path] -o [manual_more_folder] [auto_more_folder]"<<endl;
+
 	}
 	else return false;
 

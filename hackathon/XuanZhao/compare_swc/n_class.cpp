@@ -1649,10 +1649,15 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
             auto_branch_index=par_branch_index;
         }
 
-        reverse(auto_branchs.begin(),auto_branchs.end());
+        if(auto_branchs.size()>0)
+        {
+            reverse(auto_branchs.begin(),auto_branchs.end());
 
 
-        t.get_points_of_branchs(auto_branchs,auto_points,t.nt);
+            t.get_points_of_branchs(auto_branchs,auto_points,t.nt);
+        }
+
+
 
 
 
