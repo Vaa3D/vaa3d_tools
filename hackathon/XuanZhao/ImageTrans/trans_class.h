@@ -94,6 +94,25 @@ struct direction
         z=d.z;
         return *this;
     }
+    direction operator -(direction &other)
+    {
+        direction t;
+        t.x=this->x-other.x;
+        t.y=this->y-other.y;
+        t.z=this->z-other.z;
+        return t;
+    }
+    double operator *(const direction &other) const
+    {
+        return (x*other.x+y*other.y+z*other.z);
+    }
+    inline direction& negative()
+    {
+        x=-x;
+        y=-y;
+        z=-z;
+        return *this;
+    }
 };
 
 

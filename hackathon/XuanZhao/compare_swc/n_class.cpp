@@ -588,6 +588,15 @@ bool SwcTree::get_points_of_branchs(vector<Branch> &b,vector<NeuronSWC> &points,
     return true;
 }
 
+int SwcTree::get_max_level()
+{
+    int max_level;
+    for(int i=0;i<branchs.size();++i)
+    {
+        max_level=(max_level>branchs[i].level)?max_level:branchs[i].level;
+    }
+    return max_level;
+}
 
 
 
@@ -800,7 +809,7 @@ int Swc_Compare::get_corresponding_branch(Branch &a,vector<int> &b_index,SwcTree
         return -1;
 }
 
-bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, vector<int> &b_false,vector<int> &a_more,vector<int> &b_more,NeuronTree &nta,NeuronTree &ntb)
+bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, vector<int> &b_false, vector<int> &a_more, vector<int> &b_more, NeuronTree &nta, NeuronTree &ntb, QString dir_a , QString dir_b , QString braindir, V3DPluginCallback2 &callback)
 {
 
 
@@ -838,14 +847,16 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
 
     cout<<"end children..."<<endl;
 
-    vector<int> a_level0_index,b_level0_index,a_level1_index,b_level1_index;
+    vector<int> a_level0_index,b_level0_index;//,a_level1_index,b_level1_index;
     a.get_level_index(a_level0_index,0);
     b.get_level_index(b_level0_index,0);
-    a.get_level_index(a_level1_index,1);
-    b.get_level_index(b_level1_index,1);
+//    a.get_level_index(a_level1_index,1);
+//    b.get_level_index(b_level1_index,1);
 
-    vector<bool> flag_b=vector<bool>(b_branch_size,false);
-    vector<bool> flag_a=vector<bool>(a_branch_size,false);
+//    vector<bool> flag_b=vector<bool>(b_branch_size,false);
+//    vector<bool> flag_a=vector<bool>(a_branch_size,false);
+
+    map<int,int> map_b_a,map_a_b;
 
     vector<int> queue;
 
@@ -855,7 +866,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
         int b_branch_index=b_level0_index[i];
         cout<<"b_branch_index: "<<b_branch_index<<endl;
         cout<<"start corresponding..."<<i<<endl;
-        double d=this->get_distance_for_manual(b.branchs[b_branch_index],nta,ntb);
+        //double d=this->get_distance_for_manual(b.branchs[b_branch_index],nta,ntb);
+
+        double d=this->get_distance_branchs_to_branch(a.branchs,b.branchs[b_branch_index],nta,ntb,map_b,map_b_a);
+
         if(d<20||b.branchs[b_branch_index].length<15)
         {
             for(int j=0;j<children_b[b_branch_index].size();++j)
@@ -880,7 +894,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
         int b_branch_index=queue.front();
         queue.erase(queue.begin());
         //cout<<"start corresponding..."<<i<<endl;
-        double d=this->get_distance_for_manual(b.branchs[b_branch_index],nta,ntb);
+        //double d=this->get_distance_for_manual(b.branchs[b_branch_index],nta,ntb);
+
+        double d=this->get_distance_branchs_to_branch(a.branchs,b.branchs[b_branch_index],nta,ntb,map_b,map_b_a);
+
         if(d<20||b.branchs[b_branch_index].length<15)
         {
             for(int j=0;j<children_b[b_branch_index].size();++j)
@@ -903,7 +920,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
     {
         int a_branch_index=a_level0_index[i];
         cout<<"start corresponding..."<<i<<endl;
-        double d=this->get_distance_for_manual(a.branchs[a_branch_index],ntb,nta);
+        //double d=this->get_distance_for_manual(a.branchs[a_branch_index],ntb,nta);
+
+        double d=this->get_distance_branchs_to_branch(b.branchs,a.branchs[a_branch_index],ntb,nta,map_a,map_a_b);
+
         if(d<5||a.branchs[a_branch_index].length<10)
         {
             for(int j=0;j<children_a[a_branch_index].size();++j)
@@ -922,7 +942,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
     {
         int a_branch_index=queue.front();
         queue.erase(queue.begin());
-        double d=this->get_distance_for_manual(a.branchs[a_branch_index],ntb,nta);
+        //double d=this->get_distance_for_manual(a.branchs[a_branch_index],ntb,nta);
+
+        double d=this->get_distance_branchs_to_branch(b.branchs,a.branchs[a_branch_index],ntb,nta,map_a,map_a_b);
+
         if(d<5||a.branchs[a_branch_index].length<10)
         {
             for(int j=0;j<children_a[a_branch_index].size();++j)
@@ -936,6 +959,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
             a_more.push_back(a_branch_index);
         }
     }
+    int mode=1;
+    this->get_sub_image(dir_a,a_more,a,b,braindir,callback,mode,map_a_b);
+    mode=2;
+    this->get_sub_image(dir_b,b_more,b,a,braindir,callback,mode,map_b_a);
 
 
 
@@ -1381,11 +1408,11 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_trunk, 
     return true;
 }
 
-bool Swc_Compare::_get_sub_image(QString filename, vector<NeuronSWC> manual_points, vector<NeuronSWC> auto_points, QString braindir, V3DPluginCallback2 &callback)
+bool Swc_Compare::_get_sub_image(QString filename, vector<NeuronSWC> manual_points, vector<NeuronSWC> auto_points, vector<NeuronSWC> false_points , QString braindir, V3DPluginCallback2 &callback)
 {
     cout<<"in sub image"<<endl;
 
-    NeuronTree manual_tree,auto_tree;
+    NeuronTree manual_tree,auto_tree,false_tree;
     size_t x0=IN,x1=0,y0=IN,y1=0,z0=IN,z1=0;
     for(int i=0;i<manual_points.size();++i)
     {
@@ -1421,6 +1448,22 @@ bool Swc_Compare::_get_sub_image(QString filename, vector<NeuronSWC> manual_poin
 
     }
 
+    for(int i=0;i<false_points.size();++i)
+    {
+        false_points[i].type=4;
+
+        size_t tmpx=(size_t)false_points[i].x;
+        size_t tmpy=(size_t)false_points[i].y;
+        size_t tmpz=(size_t)false_points[i].z;
+
+        x0=(tmpx>x0)?x0:tmpx;
+        x1=(tmpx>x1)?tmpx:x1;
+        y0=(tmpy>y0)?y0:tmpy;
+        y1=(tmpy>y1)?tmpy:y1;
+        z0=(tmpz>z0)?z0:tmpz;
+        z1=(tmpz>z1)?tmpz:z1;
+    }
+
     x0-=30;
     x1+=30;
     y0-=30;
@@ -1446,6 +1489,14 @@ bool Swc_Compare::_get_sub_image(QString filename, vector<NeuronSWC> manual_poin
         auto_tree.listNeuron.push_back(auto_points[i]);
     }
 
+    for(int i=0;i<false_points.size();++i)
+    {
+        false_points[i].x-=x0;
+        false_points[i].y-=y0;
+        false_points[i].z-=z0;
+        false_tree.listNeuron.push_back(false_points[i]);
+    }
+
     cout<<"finish tree..."<<endl;
 
     unsigned char* pdata=0;
@@ -1454,12 +1505,14 @@ bool Swc_Compare::_get_sub_image(QString filename, vector<NeuronSWC> manual_poin
     V3DLONG sz[4]={(x1-x0),(y1-y0),(z1-z0),1};
     int datatype=1;
     QString tif_filename=filename+".tif";
-    QString manual_eswc_filename=filename+"false.eswc";
-    QString auto_eswc_filename=filename+".eswc";
+    QString manual_eswc_filename=filename+"manual.eswc";
+    QString auto_eswc_filename=filename+"auto.eswc";
+    QString false_eswc_filename=filename+"false.eswc";
 
     simple_saveimage_wrapper(callback,tif_filename.toStdString().c_str(),pdata,sz,datatype);
     writeESWC_file(manual_eswc_filename,manual_tree);
     writeESWC_file(auto_eswc_filename,auto_tree);
+    writeESWC_file(false_eswc_filename,false_tree);
 
     cout<<"finish...."<<endl;
 
@@ -1530,7 +1583,7 @@ bool Swc_Compare::get_sub_false_trunk_image(QString dir, vector<int> &manual_fal
 
         reverse(auto_branchs.begin(),auto_branchs.end());
 
-        vector<NeuronSWC> manual_points,auto_points;
+        vector<NeuronSWC> manual_points,auto_points,false_points;
         manual_t.get_points_of_branchs(manual_branchs,manual_points,manual_t.nt);
         auto_t.get_points_of_branchs(auto_branchs,auto_points,auto_t.nt);
 
@@ -1557,7 +1610,7 @@ bool Swc_Compare::get_sub_false_trunk_image(QString dir, vector<int> &manual_fal
         auto_points.insert(auto_points.end(),auto_child_points.begin(),auto_child_points.end());
 
         QString filename=dir+"/_"+QString::number(i,10)+"_false_trunk_";
-        this->_get_sub_image(filename,manual_points,auto_points,braindir,callback);
+        this->_get_sub_image(filename,manual_points,auto_points,false_points,braindir,callback);
 
     }
 
@@ -1590,22 +1643,27 @@ double Swc_Compare::get_distance_for_manual(Branch &auto_branch, NeuronTree &nta
     return (d_btotree/auto_points.size());
 }
 
-bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t,QString braindir,V3DPluginCallback2 &callback,int mode)
+bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t,SwcTree &t0,QString braindir,V3DPluginCallback2 &callback,int mode,map<int,int> &map_branch)
 {
 
     int auto_size=false_index.size();
 
     cout<<"in get image..."<<endl;
 
-    map<Branch,int> map_auto;
+    map<Branch,int> map_auto,map_manual;
     for(int i=0;i<t.branchs.size();++i)
     {
         map_auto[t.branchs[i]]=i;
+    }
+    for(int i=0;i<t0.branchs.size();++i)
+    {
+        map_manual[t0.branchs[i]]=i;
     }
 
     cout<<"end map............"<<endl;
 
     vector<vector<int>> children_auto=vector<vector<int>>(t.branchs.size(),vector<int>());
+    vector<vector<int>> children_manual=vector<vector<int>>(t0.branchs.size(),vector<int>());
 
 
     for(int i=0;i<t.branchs.size();++i)
@@ -1613,6 +1671,12 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
         if(t.branchs[i].parent==0) continue;
         children_auto[map_auto[*(t.branchs[i].parent)]].push_back(i);
     }
+    for(int i=0;i<t0.branchs.size();++i)
+    {
+        if(t0.branchs[i].parent==0) continue;
+        children_manual[map_manual[*(t0.branchs[i].parent)]].push_back(i);
+    }
+
 
     for(int i=0;i<auto_size;++i)
     {
@@ -1621,13 +1685,54 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
         int auto_branch_index=false_index[i];
 
         vector<NeuronSWC> auto_child_points;
-        vector<NeuronSWC> auto_points,manual_points;
+        vector<NeuronSWC> auto_points,manual_points,false_points;
 
-        t.branchs[auto_branch_index].get_points_of_branch(manual_points,t.nt);
-        auto_points.clear();
+
         //QString filename=dir+"/_"+QString::number(i,10)+"_false_auto_";
 
 
+        if(t.branchs[auto_branch_index].parent!=0)
+        {
+            int up_index=map_auto[*(t.branchs[auto_branch_index].parent)];
+            int manual_branch_index=map_branch[up_index];
+
+            for(int j=0;j<children_manual[manual_branch_index].size();++j)
+            {
+                vector<NeuronSWC> tmp;
+                int child_index=children_manual[manual_branch_index].at(j);
+                t0.branchs[child_index].get_points_of_branch(tmp,t0.nt);
+                tmp.erase(tmp.begin());
+                auto_child_points.insert(auto_child_points.end(),tmp.begin(),tmp.end());
+            }
+            vector<Branch> manual_branch;
+            double length=0;
+
+            manual_branch.push_back(t0.branchs[manual_branch_index]);
+
+            while(t0.branchs[manual_branch_index].parent!=0&&length<150)
+            {
+                length+=t.branchs[manual_branch_index].length;
+
+                int par_branch_index=map_manual[*(t0.branchs[manual_branch_index].parent)];
+                manual_branch.push_back(t0.branchs[par_branch_index]);
+                manual_branch_index=par_branch_index;
+            }
+
+            if(manual_branch.size()>0)
+            {
+                reverse(manual_branch.begin(),manual_branch.end());
+                t0.get_points_of_branchs(manual_branch,manual_points,t0.nt);
+            }
+
+            manual_points.insert(manual_points.end(),auto_child_points.begin(),auto_child_points.end());
+
+        }
+
+
+//        auto_points.clear();
+//        manual_points.clear();
+        auto_child_points.clear();
+        t.branchs[auto_branch_index].get_points_of_branch(false_points,t.nt);
 
 
         for(int j=0;j<children_auto[auto_branch_index].size();++j)
@@ -1642,8 +1747,13 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
         vector<Branch> auto_branchs;
 
         //auto_branchs.push_back(t.branchs[auto_branch_index]);
-        while(t.branchs[auto_branch_index].parent!=0)
+
+        double length=0;
+
+        while(t.branchs[auto_branch_index].parent!=0&&length<200)
         {
+            length+=t.branchs[auto_branch_index].length;
+
             int par_branch_index=map_auto[*(t.branchs[auto_branch_index].parent)];
             auto_branchs.push_back(t.branchs[par_branch_index]);
             auto_branch_index=par_branch_index;
@@ -1666,20 +1776,74 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
 
 
 
-        QString filename;
+        QString filename=dir+"/_"+QString::number(i,10)+"_";
         if(mode==1)
         {
-            filename=dir+"/_"+QString::number(i,10)+"_auto_more_";
+            //filename=dir+"/_"+QString::number(i,10)+"_auto_more_";
+            this->_get_sub_image(filename,auto_points,manual_points,false_points,braindir,callback);
         }
         if(mode==2)
         {
-            filename=dir+"/_"+QString::number(i,10)+"_manual_more_";
+            this->_get_sub_image(filename,manual_points,auto_points,false_points,braindir,callback);
+            //filename=dir+"/_"+QString::number(i,10)+"_manual_more_";
         }
-        this->_get_sub_image(filename,manual_points,auto_points,braindir,callback);
+
 
     }
 
     return true;
+}
+
+
+double Swc_Compare::get_distance_branchs_to_branch(vector<Branch> &a, Branch &b, NeuronTree &nta, NeuronTree &ntb,map<Branch,int> map_b,map<int,int> &map_b_a)
+{
+    vector<NeuronSWC> b_points;
+    b.get_points_of_branch(b_points,ntb);
+    double d_b_to_branchs=0;
+
+    vector<int> min_branch_index=vector<int>(a.size(),0);
+
+    for(int i=0;i<b_points.size();++i)
+    {
+        vector<NeuronSWC> a_points_j;
+        double min_d=IN;
+        int min_j,min_k;
+        for(int j=0;j<a.size();++j)
+        {
+            a_points_j.clear();
+            a[j].get_points_of_branch(a_points_j,nta);
+            for(int k=0;k<a_points_j.size()-1;++k)
+            {
+                double tmp_d=p_to_line<NeuronSWC,Angle>(b_points[i],a_points_j[k],a_points_j[k+1]);
+                if(tmp_d<min_d)
+                {
+                    min_j=j;
+                    min_k=k;
+                    min_d=tmp_d;
+                }
+            }
+        }
+
+        min_branch_index[min_j]++;
+
+        a_points_j.clear();
+        a[min_j].get_points_of_branch(a_points_j,nta);
+        d_b_to_branchs+=p_to_line<NeuronSWC,Angle>(b_points[i],a_points_j[min_k],a_points_j[min_k+1]);
+    }
+
+    vector<int>::iterator it=max_element(min_branch_index.begin(),min_branch_index.end());
+    int branch_index_a=distance(min_branch_index.begin(),it);
+
+    d_b_to_branchs/=b_points.size();
+
+    if(d_b_to_branchs<20)
+    {
+        int branch_index_b=map_b[b];
+        map_b_a[branch_index_b]=branch_index_a;
+    }
+
+
+    return d_b_to_branchs;
 }
 
 

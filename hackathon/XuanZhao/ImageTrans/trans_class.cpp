@@ -973,9 +973,9 @@ bool sv_tracer::init_superpoints(vector<superpoint> &superpoints,unsigned char* 
 double superpoint::get_distance(superpoint &other)
 {
     double d=0;
-    double d_d=this->direc.x*other.direc.x+this->direc.y*other.direc.y+this->direc.z*other.direc.z;
+    double d_d=this->direc*other.direc;
     d_d=exp(-d_d);
-    double d_e=sqrt((this->x-other.x)*(this->x-other.x)+(this->y-other.y)*(this->y-other.y)+(this->z-other.z)*(this->z-other.z));
+    double d_e=sqrt((this->x-other.x)*(this->x-other.x)+(this->y-other.y)*(this->y-other.y)+(this->z*5-other.z*5)*(this->z*5-other.z*5));
 
     double d_h=exp(-this->intensity);
     d=d_d*d_e*d_h;
@@ -1178,16 +1178,17 @@ bool sv_tracer::trace(vector<superpoint> &realpoints, vector<int> &plist, vector
 
         while(it!=r_map.rend())
         {
-            cout<<"??????"<<endl;
+            //cout<<"??????"<<endl;
             superpoint tmp=it->second;
-            if(flag[smap[tmp]]==0)
+            int p_index=smap[tmp];
+            if(flag[p_index]==0)
             {
-                plist[smap[tmp]]=-1;
-                flag[smap[tmp]]=2;
-                pi[smap[tmp]]=0;
+                plist[p_index]=-1;
+                flag[p_index]=2;
+                pi[p_index]=0;
                 //v_points.push_back(tmp);
 
-                pimap.insert(pair<double,superpoint>(pi[smap[tmp]],tmp));
+                pimap.insert(pair<double,superpoint>(pi[p_index],tmp));
                 break;
             }
             it++;
@@ -1200,19 +1201,46 @@ bool sv_tracer::trace(vector<superpoint> &realpoints, vector<int> &plist, vector
         while(!pimap.empty())
         {
             superpoint p=pimap.begin()->second;
+
+            int p_index=smap[p];
             //v_points.erase(v_points.begin());
             pimap.erase(pimap.begin());
-            flag[smap[p]]=2;
+            flag[p_index]=2;
+
+            if(plist[p_index]!=-1)
+            {
+                int par_index=plist[p_index];
+                direction par_p=realpoints[p_index].direc-realpoints[par_index].direc;
+                if(par_p*realpoints[p_index].direc<0)
+                {
+                    //realpoints[p_index].direc.negative();
+                    realpoints[p_index].direc=par_p;
+                }
+            }
+
             vector<int> indexs;
             p.get_nb_points_index(realpoints,indexs);
             cout<<"index size:"<<indexs.size()<<endl;
             for(int i=0;i<indexs.size();++i)
             {
+
+
+//                direction p_t=realpoints[indexs[i]].direc-p.direc;
+//                if(p_t*realpoints[indexs[i]].direc<0)
+//                {
+//                    realpoints[indexs[i]].direc.negative();
+//                }
+
                 superpoint t=realpoints[indexs[i]];
+
+                //if(t.direc*p.direc==0) continue;
                 double dist=t.get_distance(p);
+
+                cout<<"p_index "<<indexs[i]<<" dist: "<<dist<<endl;
                 if(flag[indexs[i]]==0)
                 {
                     cout<<"======0"<<endl;
+
                     pi[indexs[i]]=dist;
                     flag[indexs[i]]=1;
                     plist[indexs[i]]=smap[p];
@@ -1227,7 +1255,6 @@ bool sv_tracer::trace(vector<superpoint> &realpoints, vector<int> &plist, vector
                         for(;it_a!=pimap.end();)
                         {
                             superpoint s=it_a->second;
-                            //cout<<"smap[s]:"<<smap[s]<<endl;
                             //cout<<"indexs[i]"<<indexs[i]<<endl;
                             if(smap[s]==indexs[i])
                                 break;

@@ -7,6 +7,7 @@
 #include <vector>
 #include "compare_swc_plugin.h"
 #include "n_class.h"
+#include <fstream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(compare_swc, TestPlugin);
@@ -91,36 +92,43 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         //b.display();
         Swc_Compare c;
         vector<int> a_false,b_false,a_more,b_more;
-        int mode=0;
-        c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2);
+//        int mode=0;
 
-        cout<<"manual swc:"<<endl;
-        for(int i=0;i<a_false.size();++i)
-            cout<<a_false[i]<<endl;
-        cout<<"auto swc:"<<endl;
-        for(int i=0;i<b_false.size();++i)
-            cout<<b_false[i]<<endl;
-        cout<<"manual more swc:"<<endl;
-        for(int i=0;i<a_more.size();++i)
-            cout<<a_more[i]<<endl;
-        cout<<"auto more swc:"<<endl;
-        for(int i=0;i<b_more.size();++i)
-            cout<<b_more[i]<<endl;
-        mode=2;
         QString dir_a=(outfiles.size()>=1)?outfiles[0]:"";
         QString dir_b=(outfiles.size()>=2)?outfiles[1]:"";
-        QString dir=(outfiles.size()>=3)?outfiles[2]:"";
+        QString file=(outfiles.size()>=3)?outfiles[2]:"";
         QString braindir=(infiles.size()>=3)?infiles[2]:"";
-        c.get_sub_image(dir_a,a_more,a,braindir,callback,mode);
-        mode=1;
-        c.get_sub_image(dir_b,b_more,b,braindir,callback,mode);
-        c.get_sub_false_trunk_image(dir,a_false,b_false,a,b,braindir,callback);
+
+        ofstream out;
+        out.open(outfiles[2],ios::app);
+
+        c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2,dir_a,dir_b,braindir,callback);
+
+        out<<"manual_more:"<<endl;
+        out<<"manual_max_level: "<<a.get_max_level()<<endl;
+        out<<"index"<<" branch_index"<<" level"<<" length"<<endl;
+
+        for(int i=0;i<a_more.size();++i)
+            out<<i<<" "<<a_more[i]<<" "<<a.branchs[a_more[i]].level<<" "<<a.branchs[a_more[i]].length<<endl;
+
+        out<<"auto_more:"<<endl;
+        out<<"auto_max_level: "<<b.get_max_level()<<endl;
+        out<<"index"<<" branch_index"<<" level"<<" length"<<endl;
+        for(int i=0;i<b_more.size();++i)
+            out<<i<<" "<<b_more[i]<<" "<<b.branchs[b_more[i]].level<<" "<<b.branchs[b_more[i]].length<<endl;
+//        mode=2;
+
+//        c.get_sub_image(dir_a,a_more,a,b,braindir,callback,mode,);
+//        mode=1;
+//        c.get_sub_image(dir_b,b_more,b,braindir,callback,mode);
+//        c.get_sub_false_trunk_image(dir,a_false,b_false,a,b,braindir,callback);
 
 
 	}
 	else if (func_name == tr("help"))
 	{
-        cout<<"v3d -x compare_swc -f func2 -i [file_manual_swc] [file_auto_swc] [brain_path] -o [manual_more_folder] [auto_more_folder]"<<endl;
+        cout<<"usage:"<<endl;
+        cout<<"v3d -x compare_swc -f func2 -i [file_manual_swc] [file_auto_swc] [brain_path] -o [manual_more_folder] [auto_more_folder] [txt_file]"<<endl;
 
 	}
 	else return false;

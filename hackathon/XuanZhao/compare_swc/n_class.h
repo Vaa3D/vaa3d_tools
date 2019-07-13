@@ -175,6 +175,7 @@ struct SwcTree{
     bool find_big_turn();
     bool get_level_index(vector<int> &level_index,int level);
     bool get_points_of_branchs(vector<Branch> &b, vector<NeuronSWC> &points, NeuronTree &ntb);
+    int get_max_level();
 };
 
 class Swc_Compare{
@@ -184,16 +185,19 @@ public:
 
     double get_distance_two_branchs(vector<Branch> &a,vector<Branch> &b,NeuronTree &nta, NeuronTree &ntb);
 
+    double get_distance_branchs_to_branch(vector<Branch> &a, Branch &b, NeuronTree &nta, NeuronTree &ntb, map<Branch,int> map_b, map<int, int> &map_b_a);
+
     double get_distance_for_manual(Branch &auto_branch,NeuronTree &nta, NeuronTree &ntb);
 
-    bool compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, vector<int> &b_false,vector<int> &a_more,vector<int> &b_more, NeuronTree &nta, NeuronTree &ntb);
+    bool compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, vector<int> &b_false, vector<int> &a_more, vector<int> &b_more, NeuronTree &nta, NeuronTree &ntb, QString dir_a , QString dir_b, QString braindir , V3DPluginCallback2 &callback);
 
     bool compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_trunk, vector<int> &b_trunk, vector<int> &a_more, vector<int> &b_more, NeuronTree &nta, NeuronTree &ntb,int mode);
 
-    bool get_sub_image(QString dir,vector<int> &false_index,SwcTree &t,QString braindir,V3DPluginCallback2 &callback,int mode);
+    bool get_sub_image(QString dir, vector<int> &false_index, SwcTree &t, SwcTree &t0, QString braindir, V3DPluginCallback2 &callback, int mode, map<int, int> &map_branch);
+
     bool get_sub_image(QString dir,vector<int> &a_false,vector<int> &b_false,SwcTree &a,SwcTree &b,QString braindir,V3DPluginCallback2 &callback);
 
-    bool _get_sub_image(QString filename,vector<NeuronSWC> manual_points,vector<NeuronSWC> auto_points,QString braindir,V3DPluginCallback2 &callback);
+    bool _get_sub_image(QString filename, vector<NeuronSWC> manual_points, vector<NeuronSWC> auto_points, vector<NeuronSWC> false_points, QString braindir, V3DPluginCallback2 &callback);
 
     bool get_sub_false_trunk_image(QString dir,vector<int> &manual_false,vector<int> auto_false,SwcTree &manual_t,SwcTree &auto_t,QString braindir,V3DPluginCallback2 &callback);
 
