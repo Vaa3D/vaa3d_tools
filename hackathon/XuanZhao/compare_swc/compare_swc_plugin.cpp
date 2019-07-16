@@ -97,12 +97,77 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString dir_a=(outfiles.size()>=1)?outfiles[0]:"";
         QString dir_b=(outfiles.size()>=2)?outfiles[1]:"";
         QString file=(outfiles.size()>=3)?outfiles[2]:"";
+
+        QString apofile=dir_a+"/mmm.apo";
         QString braindir=(infiles.size()>=3)?infiles[2]:"";
 
         ofstream out;
         out.open(outfiles[2],ios::app);
 
         c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2,dir_a,dir_b,braindir,callback);
+
+        // added 15 Jul
+        c.get_false_point_image(dir_a,a_more,a,b,callback,braindir,true);
+        c.get_false_point_image(dir_b,b_more,b,a,callback,braindir,false);
+
+        cout<<"1111111111"<<endl;
+        a.branchs_to_nt(a_more);
+        b.branchs_to_nt(b_more);
+
+        cout<<"2222222222"<<endl;
+
+        QString a_swc=dir_a+"/manual.eswc";
+        QString b_swc=dir_b+"/auto.eswc";
+
+        for(V3DLONG i=0;i<a.nt.listNeuron.size();++i)
+        {
+
+            if(a.nt.listNeuron[i].type!=5)
+            {
+                a.nt.listNeuron[i].type=3;
+            }
+            else
+            {
+                a.nt.listNeuron[i].type=6;
+            }
+
+        }
+
+        writeSWC_file(a_swc,a.nt);
+        writeSWC_file(b_swc,b.nt);
+
+        cout<<"33333333333"<<endl;
+
+        QList<CellAPO> markers;
+        for(int i=0;i<a_more.size();++i)
+        {
+            NeuronSWC tmp=a.branchs[a_more[i]].head_point;
+            CellAPO marker;
+            marker.x=tmp.x;
+            marker.y=tmp.y;
+            marker.z=tmp.z;
+            marker.color.r=255;
+            marker.color.g=0;
+            marker.color.b=0;
+            marker.volsize=5;
+            markers.push_back(marker);
+        }
+        for(int i=0;i<b_more.size();++i)
+        {
+            NeuronSWC tmp=b.branchs[b_more[i]].head_point;
+            CellAPO marker;
+            marker.x=tmp.x;
+            marker.y=tmp.y;
+            marker.z=tmp.z;
+            marker.color.r=0;
+            marker.color.g=255;
+            marker.color.b=0;
+            marker.volsize=5;
+            markers.push_back(marker);
+        }
+        cout<<"44444444444"<<endl;
+
+        writeAPO_file(apofile,markers);
 
         out<<"manual_more:"<<endl;
         out<<"manual_max_level: "<<a.get_max_level()<<endl;

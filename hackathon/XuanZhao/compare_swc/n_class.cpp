@@ -43,7 +43,7 @@ bool SwcTree::initialize(NeuronTree t)
     NeuronSWC ori;
 
     V3DLONG num_p=nt.listNeuron.size();
-    vector<vector<V3DLONG>> children=vector<vector<V3DLONG>>(num_p,vector<V3DLONG>());
+    vector<vector<V3DLONG> > children=vector<vector<V3DLONG> >(num_p,vector<V3DLONG>());
     for(V3DLONG i=0;i<num_p;++i)
     {
         V3DLONG par=nt.listNeuron[i].parent;
@@ -218,7 +218,7 @@ bool SwcTree::initialize(NeuronTree t)
     }
 
 
-    vector<vector<int>> children_b=vector<vector<int>>(size,vector<int>());
+    vector<vector<int> > children_b=vector<vector<int> >(size,vector<int>());
 
     for(int i=0;i<size;++i)
     {
@@ -331,7 +331,7 @@ bool SwcTree::initialize(NeuronTree t)
     return true;
 }
 
-bool SwcTree::branchs_to_nt()
+bool SwcTree::branchs_to_nt(vector<int> more)
 {
     NeuronTree nt_tmp;
     NeuronSWC tmp;
@@ -344,15 +344,35 @@ bool SwcTree::branchs_to_nt()
         }
     }
     nt_tmp.listNeuron.push_back(tmp);
+    cout<<"branch_size: "<<branchs.size()<<endl;
     for(int i=0;i<branchs.size();++i)
     {
         vector<NeuronSWC> points;
         points.clear();
         branchs[i].get_points_of_branch(points,nt);
-        for(int j=1;j<points.size();++j)
+        bool flag=false;
+        for(int j=0;j<more.size();++j)
         {
-            nt_tmp.listNeuron.push_back(points[j]);
+            if(i==more[j])
+                flag=true;
         }
+
+        if(flag==true)
+        {
+            for(int j=1;j<points.size();++j)
+            {
+                points[j].type=5;
+                nt_tmp.listNeuron.push_back(points[j]);
+            }
+        }else
+        {
+            for(int j=1;j<points.size();++j)
+            {
+                points[j].type=2;
+                nt_tmp.listNeuron.push_back(points[j]);
+            }
+        }
+
     }
     nt.deepCopy(nt_tmp);
     nt_tmp.listNeuron.clear();
@@ -362,7 +382,7 @@ bool SwcTree::branchs_to_nt()
 bool SwcTree::cut_cross()
 {
     V3DLONG num_p=nt.listNeuron.size();
-    vector<vector<V3DLONG>> children=vector<vector<V3DLONG>>(num_p,vector<V3DLONG>());
+    vector<vector<V3DLONG> > children=vector<vector<V3DLONG> >(num_p,vector<V3DLONG>());
     for(V3DLONG i=0;i<num_p;++i)
     {
         V3DLONG par=nt.listNeuron[i].parent;
@@ -831,8 +851,8 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
 
     cout<<"end map..."<<endl;
 
-    vector<vector<int>> children_a=vector<vector<int>>(a_branch_size,vector<int>());
-    vector<vector<int>> children_b=vector<vector<int>>(b_branch_size,vector<int>());
+    vector<vector<int> > children_a=vector<vector<int> >(a_branch_size,vector<int>());
+    vector<vector<int> > children_b=vector<vector<int> >(b_branch_size,vector<int>());
 
     for(int i=0;i<a_branch_size;++i)
     {
@@ -959,10 +979,10 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
             a_more.push_back(a_branch_index);
         }
     }
-    int mode=1;
-    this->get_sub_image(dir_a,a_more,a,b,braindir,callback,mode,map_a_b);
-    mode=2;
-    this->get_sub_image(dir_b,b_more,b,a,braindir,callback,mode,map_b_a);
+//    int mode=1;
+//    this->get_sub_image(dir_a,a_more,a,b,braindir,callback,mode,map_a_b);
+//    mode=2;
+//    this->get_sub_image(dir_b,b_more,b,a,braindir,callback,mode,map_b_a);
 
 
 
@@ -984,8 +1004,8 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_false, 
 
 //    cout<<"end map..."<<endl;
 
-//    vector<vector<int>> children_a=vector<vector<int>>(a_size,vector<int>());
-//    vector<vector<int>> children_b=vector<vector<int>>(b_size,vector<int>());
+//    vector<vector<int> > children_a=vector<vector<int> >(a_size,vector<int>());
+//    vector<vector<int> > children_b=vector<vector<int> >(b_size,vector<int>());
 
 //    for(int i=0;i<a_size;++i)
 //    {
@@ -1149,8 +1169,8 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_trunk, 
 
     cout<<"end map..."<<endl;
 
-    vector<vector<int>> children_a=vector<vector<int>>(a_size,vector<int>());
-    vector<vector<int>> children_b=vector<vector<int>>(b_size,vector<int>());
+    vector<vector<int> > children_a=vector<vector<int> >(a_size,vector<int>());
+    vector<vector<int> > children_b=vector<vector<int> >(b_size,vector<int>());
 
     for(int i=0;i<a_size;++i)
     {
@@ -1208,8 +1228,8 @@ bool Swc_Compare::compare_two_swc(SwcTree &a, SwcTree &b, vector<int> &a_trunk, 
     int a_trunk_size=a.trunks.size();
     int b_trunk_size=b.trunks.size();
 
-    vector<vector<int>> children_trunk_a=vector<vector<int>>(a_trunk_size,vector<int>());
-    vector<vector<int>> children_trunk_b=vector<vector<int>>(b_trunk_size,vector<int>());
+    vector<vector<int> > children_trunk_a=vector<vector<int> >(a_trunk_size,vector<int>());
+    vector<vector<int> > children_trunk_b=vector<vector<int> >(b_trunk_size,vector<int>());
 
     for(int i=0;i<a_trunk_size;++i)
     {
@@ -1541,8 +1561,8 @@ bool Swc_Compare::get_sub_false_trunk_image(QString dir, vector<int> &manual_fal
 
     cout<<"end map............"<<endl;
 
-    vector<vector<int>> children_manual=vector<vector<int>>(manual_t.branchs.size(),vector<int>());
-    vector<vector<int>> children_auto=vector<vector<int>>(auto_t.branchs.size(),vector<int>());
+    vector<vector<int> > children_manual=vector<vector<int> >(manual_t.branchs.size(),vector<int>());
+    vector<vector<int> > children_auto=vector<vector<int> >(auto_t.branchs.size(),vector<int>());
 
     for(int i=0;i<manual_t.branchs.size();++i)
     {
@@ -1662,8 +1682,8 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
 
     cout<<"end map............"<<endl;
 
-    vector<vector<int>> children_auto=vector<vector<int>>(t.branchs.size(),vector<int>());
-    vector<vector<int>> children_manual=vector<vector<int>>(t0.branchs.size(),vector<int>());
+    vector<vector<int> > children_auto=vector<vector<int> >(t.branchs.size(),vector<int>());
+    vector<vector<int> > children_manual=vector<vector<int> >(t0.branchs.size(),vector<int>());
 
 
     for(int i=0;i<t.branchs.size();++i)
@@ -1709,7 +1729,7 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
 
             manual_branch.push_back(t0.branchs[manual_branch_index]);
 
-            while(t0.branchs[manual_branch_index].parent!=0&&length<150)
+            while(t0.branchs[manual_branch_index].parent!=0&&length<100)
             {
                 length+=t.branchs[manual_branch_index].length;
 
@@ -1750,7 +1770,7 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &false_index,SwcTree &t
 
         double length=0;
 
-        while(t.branchs[auto_branch_index].parent!=0&&length<200)
+        while(t.branchs[auto_branch_index].parent!=0&&length<100)
         {
             length+=t.branchs[auto_branch_index].length;
 
@@ -1846,7 +1866,88 @@ double Swc_Compare::get_distance_branchs_to_branch(vector<Branch> &a, Branch &b,
     return d_b_to_branchs;
 }
 
+bool Swc_Compare::get_false_point_image(QString dir, vector<int> & more, SwcTree & a_tree, SwcTree & b_tree, V3DPluginCallback2 &callback, QString braindir, bool manual)
+{
+    for (int i=0; i<more.size();++i)
+    {   // crop the first point
+        vector<NeuronSWC> seg_points;
+        a_tree.branchs[more[i]].get_points_of_branch(seg_points,a_tree.nt);
+        V3DLONG block_size=64;
+        size_t x0= seg_points[0].x-block_size/2;
+        size_t x1= seg_points[0].x+block_size/2;
+        size_t y0= seg_points[0].y-block_size/2;
+        size_t y1= seg_points[0].y+block_size/2;
+        size_t z0= seg_points[0].z-block_size/2;
+        size_t z1= seg_points[0].z+block_size/2;
 
+
+        QList<ImageMarker> falsep_list;
+        ImageMarker falsep;
+        falsep.x=block_size/2;
+        falsep.y=block_size/2;
+        falsep.z=block_size/2;
+        falsep.color.r=255;
+        falsep.color.g=0;
+        falsep.color.b=0;
+        falsep.radius=1;
+        falsep_list.push_back(falsep);
+        QString markerfilename=dir+"/"+QString::number(i)+".marker";
+        writeMarker_file(markerfilename,falsep_list);
+
+        unsigned char* data1d=callback.getSubVolumeTeraFly(braindir.toStdString(),x0,x1,y0,y1,z0,z1);
+        int datatype=1;
+        V3DLONG sz[4]={block_size,block_size,block_size,datatype};
+        QString filename=dir+"/"+QString::number(i)+".v3draw";
+        simple_saveimage_wrapper(callback,filename.toStdString().c_str(),data1d,sz,datatype);
+        //crop swc
+        NeuronTree nt_out_manual;
+        NeuronTree nt_out_auto;
+
+        if (manual==true)
+        {
+            crop_swc(a_tree.nt,nt_out_manual,2,x0,x1,y0,y1,z0,z1);
+            crop_swc(b_tree.nt,nt_out_auto,3,x0,x1,y0,y1,z0,z1);
+        } else
+        {
+            crop_swc(a_tree.nt,nt_out_auto,3,x0,x1,y0,y1,z0,z1);
+            crop_swc(b_tree.nt,nt_out_manual,2,x0,x1,y0,y1,z0,z1);
+        }
+
+        QString autoswcfilename=dir+"/"+QString::number(i)+"_auto.swc";
+        QString manualswcfilename=dir+"/"+QString::number(i)+"_manual.swc";
+        writeSWC_file(autoswcfilename,nt_out_auto);
+        writeSWC_file(manualswcfilename,nt_out_manual);
+
+        //crop the point with the largest distance
+        for(int j=0; j<seg_points.size();++j)
+        {
+
+        }
+
+
+
+    }
+
+}
+
+bool Swc_Compare::crop_swc(NeuronTree &nt_in, NeuronTree &nt_out, int type, size_t x0, size_t x1, size_t y0, size_t y1, size_t z0, size_t z1)
+{
+    QList<NeuronSWC> list=nt_in.listNeuron;
+
+    for(int i=0; i<list.size();++i)
+    {
+        NeuronSWC s=list.at(i);
+        if(s.x>=x0 && s.x <=x1 && s.y>=y0 && s.y<=y1 && s.z>= z0 && s.z<= z1 )
+        {
+            s.x -=x0;
+            s.y -=y0;
+            s.z -=z0;
+            s.type=type;
+            nt_out.listNeuron.push_back(s);
+        }
+    }
+    return true;
+}
 
 
 

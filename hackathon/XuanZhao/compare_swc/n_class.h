@@ -170,7 +170,7 @@ struct SwcTree{
              <<" "<<trunks[i].end_angle.y<<" "<<trunks[i].end_angle.z<<endl;
         }
     }
-    bool branchs_to_nt();
+    bool branchs_to_nt(vector<int> more);
     bool cut_cross();
     bool find_big_turn();
     bool get_level_index(vector<int> &level_index,int level);
@@ -200,6 +200,10 @@ public:
     bool _get_sub_image(QString filename, vector<NeuronSWC> manual_points, vector<NeuronSWC> auto_points, vector<NeuronSWC> false_points, QString braindir, V3DPluginCallback2 &callback);
 
     bool get_sub_false_trunk_image(QString dir,vector<int> &manual_false,vector<int> auto_false,SwcTree &manual_t,SwcTree &auto_t,QString braindir,V3DPluginCallback2 &callback);
+
+    bool get_false_point_image(QString dir, vector<int> & more, SwcTree & a_tree, SwcTree & b_tree, V3DPluginCallback2 &callback, QString braindir, bool manual);
+
+    bool crop_swc(NeuronTree &nt_in, NeuronTree &nt_out, int type, size_t x0, size_t x1, size_t y0, size_t y1, size_t z0, size_t z1);
 
 };
 
