@@ -574,7 +574,7 @@ double superpoint::get_Intensity(unsigned char* pdata,V3DLONG* sz)
     return intensity/indexs.size();
 }
 
-double superpoint::get_Intensity(vector<vector<vector<unsigned char> > > &image)
+double superpoint::get_Intensity(vector<vector<vector<unsigned char> > > &image,V3DLONG* sz)
 {
     double intensity=0;
     int c=0;
@@ -582,13 +582,35 @@ double superpoint::get_Intensity(vector<vector<vector<unsigned char> > > &image)
         for(V3DLONG j=-ry;j<=ry;++j)
             for(V3DLONG k=-rx;k<=rx;++k)
             {
-                double tmpx=x+rx;
-                double tmpy=y+ry;
-                double tmpz=z+rz;
+                double tmpx=x+i;
+                double tmpy=y+j;
+                double tmpz=z+k;
+                if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                    continue;
                 intensity+=(double)image[tmpx].at(tmpy).at(tmpz);
                 c++;
             }
     return intensity/c;
+}
+
+double superpoint::get_BackIntensity(vector<vector<vector<unsigned char> > > &image,V3DLONG* sz)
+{
+    double back_intensity=0;
+    int c=0;
+    int d=1;
+    for(V3DLONG i=-rz-d;i<=rz+d;++i)
+        for(V3DLONG j=-ry-d;j<=ry+d;++j)
+            for(V3DLONG k=-rx-d;k<=rx+d;++k)
+            {
+                double tmpx=x+i;
+                double tmpy=y+j;
+                double tmpz=z+k;
+                if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                    continue;
+                back_intensity+=(double)image[tmpx].at(tmpy).at(tmpz);
+                c++;
+            }
+    return back_intensity/c;
 }
 
 bool superpoint:: get_Radius(unsigned char* pdata,V3DLONG* sz,double thres)
@@ -624,7 +646,7 @@ bool superpoint::get_Radius(vector<vector<vector<unsigned char> > > &image,V3DLO
         int dy=this->ry+i;
         int dz=this->rz+i/z_s;
         superpoint tmp(this->x,this->y,this->z,dx,dy,dz);
-        tmp.intensity=tmp.get_Intensity(image);
+        tmp.intensity=tmp.get_Intensity(image,sz);
         if(tmp.intensity<thres||tmp.x+tmp.rx>=sz[0]-1||tmp.y+tmp.ry>=sz[1]-1||tmp.z+tmp.rz>=sz[2]-1||tmp.x-tmp.rx<=0||tmp.y-tmp.ry<=0||tmp.z-tmp.rz<=0)
         {
             this->rx=tmp.rx;
@@ -693,14 +715,18 @@ bool superpoint::get_Radius_2(vector<vector<vector<unsigned char> > > &image,V3D
                         count_b++;
                     }
                 }
+
         if((double)count_b/count_f>0.01||this->x+dx>=sz[0]-1||this->y+dy>=sz[1]-1||this->z+dz>=sz[2]-1||this->x-dx<=0||this->y-dy<=0||this->z-dz<=0)
         {
             this->rx=dx;
             this->ry=dy;
             this->rz=dz;
-            this->intensity=this->get_Intensity(image);
+//            cout<<"x: "<<this->x+dx<<" "<<this->x-dx<<"y: "<<this->y+dy<<" "<<this->y-dy<<"z: "<<this->z+dz<<" "<<this->z-dz<<endl;
+            this->intensity=this->get_Intensity(image,sz);
+//            cout<<"222222222222222222222"<<endl;
             break;
         }
+
     }
     return true;
 }
@@ -992,7 +1018,11 @@ bool sv_tracer::init_superpoints(vector<superpoint> &superpoints, vector<vector<
                 double x=k,y=j,z=i;
                 int rx=1,ry=1,rz=1;
                 superpoint tmp(x,y,z,rx,ry,rz);
-                tmp.intensity=tmp.get_Intensity(image);
+                tmp.intensity=tmp.get_Intensity(image,sz);
+
+                tmp.back_intensity=tmp.get_BackIntensity(image,sz);
+//                cout<<"intensity: "<<tmp.intensity<<"  back_intensity: "<<tmp.back_intensity<<endl;
+                tmp.rate=tmp.intensity/tmp.back_intensity;
                 //cout<<"...intensity:"<<tmp.intensity<<endl;
                 if(tmp.intensity>thres)
                 {
@@ -1020,7 +1050,7 @@ bool sv_tracer::init_real_points(vector<superpoint> &old,vector<superpoint> &rea
 
     while(it!=super_map.rend())
     {
-        //cout<<"the>>"<<count<<"..."<<endl;
+//        cout<<"the>>"<<count<<"..."<<endl;
         vector<V3DLONG> indexs;
         superpoint tmp=it->second;
         cout<<tmp.x<<" "<<tmp.y<<" "<<tmp.z<<endl;
@@ -1061,7 +1091,8 @@ bool sv_tracer::init_real_points(vector<superpoint> &old, vector<superpoint> &re
     cout<<"old_size:"<<old.size()<<endl;
     for(V3DLONG i=0;i<old.size();++i)
     {
-        super_map.insert(pair<double,superpoint>(old[i].intensity,old[i]));
+        //super_map.insert(pair<double,superpoint>(old[i].intensity,old[i]));
+        super_map.insert(pair<double,superpoint>(old[i].rate,old[i]));
     }
     multimap<double,superpoint>::reverse_iterator it=super_map.rbegin();
 
@@ -1071,12 +1102,13 @@ bool sv_tracer::init_real_points(vector<superpoint> &old, vector<superpoint> &re
 
     while(it!=super_map.rend())
     {
-        //cout<<"the>>"<<count<<"..."<<endl;
+//        cout<<"the>>"<<count<<"..."<<endl;
         //vector<V3DLONG> indexs;
         superpoint tmp=it->second;
         //cout<<tmp.x<<" "<<tmp.y<<" "<<tmp.z<<endl;
-        tmp.get_Radius_2(image,sz,thres);
+//        tmp.get_Radius_2(image,sz,thres);
         //tmp.getIndexs(indexs,sz);
+//        cout<<"!!!!!!!!!!!!!!!"<<endl;
 
         int b_mask=0,size=0;
 //        for(int i=0;i<indexs.size();++i)
@@ -1128,9 +1160,9 @@ bool sv_tracer::writeSuperpoints(const QString markerfile, vector<superpoint> &s
     for(int i=0;i<superpoints.size();++i)
     {
         ImageMarker m;
-        m.x=superpoints[i].x+0.5;
-        m.y=superpoints[i].y+0.5;
-        m.z=superpoints[i].z+0.5;
+        m.x=superpoints[i].x+1.5;
+        m.y=superpoints[i].y+1.5;
+        m.z=superpoints[i].z+1.5;
         m.color.r=255;
         m.color.g=0;
         m.color.b=0;
@@ -1337,6 +1369,383 @@ bool sv_tracer::sv_trace(vector<superpoint> &realpoints, vector<vector<vector<un
 
 }
 
+
+bool sv_tracer::find_tips(vector<superpoint> &superpoints, vector<superpoint> &tips, vector<vector<vector<unsigned char> > > &image, long long *sz)
+{
+    int s_size=superpoints.size();
+
+    vector<vector<double>> intens=vector<vector<double>>(s_size,vector<double>(26,0));
+
+//    for(int i=0;i<s_size;++i)
+//    {
+//        superpoints[i].get_Direction(image,sz);
+//    }
+
+    direction dire[13]={direction(1,0,0),direction(0,1,0),direction(0,0,1),direction(1,1,0),direction(1,0,1),direction(0,1,1),direction(1,-1,0),direction(1,0,-1),direction(0,1,-1),direction(1,1,1),direction(-1,1,1),direction(1,-1,1),direction(1,1,-1)};
+
+    for(int i=0;i<s_size;++i)
+    {
+//        if(superpoints[i].direc.x==A1||superpoints[i].direc.y==A1||superpoints[i].direc.z==A1)
+//        {
+//            direction d(superpoints[i].direc.x*2,superpoints[i].direc.y*2,superpoints[i].direc.z*2);
+//            superpoints[i].direc.d_xyz(d);
+//            superpoints[i].direc.round_xyz();
+//        }
+//        if(superpoints[i].direc.x==A2||superpoints[i].direc.y==A2||superpoints[i].direc.z==A2)
+//        {
+//            direction d(superpoints[i].direc.x*3,superpoints[i].direc.y*3,superpoints[i].direc.z*3);
+//            superpoints[i].direc.d_xyz(d);
+//            superpoints[i].direc.round_xyz();
+//        }
+
+        int d=10;
+        int count=0;
+
+        for(int j=0;j<13;++j)
+        {
+            for(int k=0;k<d;++k)
+            {
+                double tmpx=superpoints[i].x+k*dire[j].x;
+                double tmpy=superpoints[i].y+k*dire[j].y;
+                double tmpz=superpoints[i].z+k*dire[j].z;
+                if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                    continue;
+                count++;
+                intens[i].at(j*2+0)+=image[tmpx].at(tmpy).at(tmpz);
+            }
+            intens[i].at(j*2+0)/=count;
+            count=0;
+            for(int k=0;k<d;++k)
+            {
+                dire[j].negative();
+                double tmpx=superpoints[i].x+k*dire[j].x;
+                double tmpy=superpoints[i].y+k*dire[j].y;
+                double tmpz=superpoints[i].z+k*dire[j].z;
+                if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                    continue;
+                count++;
+                intens[i].at(j*2+1)+=image[tmpx].at(tmpy).at(tmpz);
+            }
+            intens[i].at(j*2+1)/=count;
+        }
+
+    }
+
+    for(int i=0;i<s_size;++i)
+    {
+        double max,min;
+
+        bool flag=true;
+
+        flag=false;
+        for(int j=0;j<13;++j)
+        {
+            if(intens[i].at(j*2+0)>intens[i].at(j*2+1))
+            {
+                max=intens[i].at(j*2+0);
+                min=intens[i].at(j*2+1);
+            }
+            else
+            {
+                max=intens[i].at(j*2+1);
+                min=intens[i].at(j*2+0);
+            }
+
+            cout<<"FOR "<<i<<": "<<dire[j].x<<" "<<dire[j].y<<" "<<dire[j].z<<" "<<"max: "<<max<<" min: "<<min<<endl;
+//            cout<<"direction: "<<superpoints[i].direc.x<<" "<<superpoints[i].direc.y<<" "<<superpoints[i].direc.z<<endl;
+
+            if(max>15)
+            {
+                flag=true;
+            }
+        }
+
+        if(flag==true)
+            tips.push_back(superpoints[i]);
+
+    }
+
+    return true;
+}
+
+
+bool simplePoint::getNbSimplePoint(vector<simplePoint> &nbsimplepoints, int mode)
+{
+    for(int i=-1;i<=1;++i)
+        for(int j=-1;j<=1;++j)
+            for(int k=-1;k<=1;++k)
+            {
+                int dvalue=abs(i)+abs(j)+abs(z);
+                V3DLONG tmpx=x+i;
+                V3DLONG tmpy=y+j;
+                V3DLONG tmpz=z+k;
+                if(mode==1)
+                {
+                    if(dvalue==1)
+                    {
+                        simplePoint tmp_p(tmpx,tmpy,tmpz);
+                        nbsimplepoints.push_back(tmp_p);
+                    }
+                }
+                else
+                {
+                    if(dvalue!=0)
+                    {
+                        simplePoint tmp_p(tmpx,tmpy,tmpz);
+                        nbsimplepoints.push_back(tmp_p);
+                    }
+                }
+
+            }
+    return true;
+}
+
+double assemblePoint::getIntensity(vector<vector<vector<unsigned char> > > &image)
+{
+    if(size==0)
+        return 0;
+    double intensity=0;
+    for(int i=0;i<sps.size();++i)
+    {
+        intensity+=(double)image[sps[i].x].at(sps[i].y).at(sps[i].z);
+    }
+    return intensity/size;
+}
+
+double assemblePoint::getBackIntensity(vector<vector<vector<unsigned char> > > &image, long long *sz)
+{
+    int d=1;
+    double back_intensity=0;
+    int c=0;
+    for(int i=-dx0-d;i<=dx0+d;++i)
+        for(int j=-dy0-d;j<=dy0+d;++j)
+            for(int k=-dz0-d;k<=dz0+d;++k)
+            {
+                double tmpx=x+i;
+                double tmpy=y+j;
+                double tmpz=z+k;
+                if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                    continue;
+                back_intensity+=(double)image[tmpx].at(tmpy).at(tmpz);
+                c++;
+            }
+    return back_intensity/c;
+}
+
+bool assemblePoint::assemble(vector<vector<vector<unsigned char> > > &image, vector<vector<vector<int> > > &mask, long long *sz)
+{
+    int mode=2;
+
+    int max_x,max_y,max_z;
+    max_x=max_y=10;
+    max_z=5;
+    V3DLONG b_x0=x-max_x;
+    V3DLONG b_x1=x+max_x;
+    V3DLONG b_y0=y-max_y;
+    V3DLONG b_y1=y+max_y;
+    V3DLONG b_z0=z-max_z;
+    V3DLONG b_z1=z+max_z;
+
+    vector<simplePoint> queue;
+    queue.push_back(this->sps[0]);
+
+    while(!queue.empty())
+    {
+        simplePoint tmp_p=queue.front();
+        queue.erase(queue.begin());
+
+        vector<simplePoint> nbsimplepoints;
+        tmp_p.getNbSimplePoint(nbsimplepoints,mode);
+        for(int i=0;i<nbsimplepoints.size();++i)
+        {
+            V3DLONG x=nbsimplepoints[i].x;
+            V3DLONG y=nbsimplepoints[i].y;
+            V3DLONG z=nbsimplepoints[i].z;
+            if(x>=b_x0&&x<=b_x1&&y>=b_y0&&y<=b_y1&&z>=b_z0&&z<=b_z1
+                    &&x>=0&&x<=sz[0]-1&&y>=0&&y<=sz[1]-1&&z>=0&&z<=sz[2]-1
+                &&(mask[x].at(y).at(z)==0))
+            {
+                queue.push_back(nbsimplepoints[i]);
+                this->sps.push_back(nbsimplepoints[i]);
+                this->size++;
+                double dx=this->x-x;
+                double dy=this->y-y;
+                double dz=this->z-z;
+                if(dx>0)
+                    this->dx1=(this->dx1>abs(dx))?this->dx1:abs(dx);
+                else
+                    this->dx0=(this->dx0>abs(dx))?this->dx0:abs(dx);
+                if(dy>0)
+                    this->dy1=(this->dy1>abs(dy))?this->dy1:abs(dy);
+                else
+                    this->dy0=(this->dy0>abs(dy))?this->dy0:abs(dy);
+                if(dx>0)
+                    this->dz1=(this->dz1>abs(dz))?this->dz1:abs(dz);
+                else
+                    this->dz0=(this->dz0>abs(dz))?this->dz0:abs(dz);
+                mask[x].at(y).at(z)=1;
+            }
+        }
+    }
+    return true;
+}
+
+bool assemblePoint::renewXYZ(vector<vector<vector<unsigned char> > > &image)
+{
+    double x_new,y_new,z_new;
+
+    double average_m=0;
+    double sum_m=0;
+    double m=0;
+
+
+    for(int i=0;i<this->sps.size();++i)
+    {
+        average_m+=(double)image[this->sps[i].x].at(this->sps[i].y).at(this->sps[i].z);
+    }
+    average_m/=this->size;
+
+    cout<<"average: "<<average_m<<endl;
+
+    for(int i=0;i<this->sps.size();++i)
+    {
+        m=(double)image[this->sps[i].x].at(this->sps[i].y).at(this->sps[i].z);//-average_m;
+        sum_m+=m;
+        x_new+=m*this->sps[i].x;
+        y_new+=m*this->sps[i].y;
+        z_new+=m*this->sps[i].z;
+    }
+
+    cout<<"sum: "<<sum_m<<endl;
+
+    if(size>0)
+    {
+        x_new/=sum_m;
+        y_new/=sum_m;
+        z_new/=sum_m;
+    }
+    else
+    {
+        x_new=this->x;
+        y_new=this->y;
+        z_new=this->z;
+    }
+
+    double d_x=this->x-x_new;
+    double d_y=this->y-y_new;
+    double d_z=this->z-z_new;
+
+    this->dx0+=d_x;
+    this->dx1-=d_x;
+    this->dy0+=d_y;
+    this->dy1-=d_y;
+    this->dz0+=d_z;
+    this->dz1-=d_z;
+
+    this->x=x_new;
+    this->y=y_new;
+    this->z=z_new;
+
+    cout<<"x: "<<x_new<<" y: "<<y_new<<" z: "<<z_new<<endl;
+
+    return true;
+}
+
+bool apTracer::initialAsseblePoint(vector<assemblePoint> &assemblepoints, vector<vector<vector<unsigned char> > > &image, long long *sz, double thres)
+{
+    vector<vector<vector<int> > > mask=vector<vector<vector<int> > >(sz[0],vector<vector<int> >(sz[1],vector<int>(sz[2],0)));
+
+    for(V3DLONG i=0;i<sz[0];++i)
+        for(V3DLONG j=0;j<sz[1];++j)
+            for(V3DLONG k=0;k<sz[2];++k)
+            {
+                if(image[i].at(j).at(k)<thres)
+                    mask[i].at(j).at(k)=1;
+            }
+
+    vector<assemblePoint> iniassemblpoints;
+
+    cout<<"first..."<<endl;
+
+    for(V3DLONG i=0;i<sz[0];++i)
+        for(V3DLONG j=0;j<sz[1];++j)
+            for(V3DLONG k=0;k<sz[2];++k)
+            {
+                if(mask[i].at(j).at(k)==0)
+                {
+                    simplePoint p(i,j,k);
+                    assemblePoint a_p;
+                    a_p.x=i;
+                    a_p.y=j;
+                    a_p.z=k;
+                    a_p.sps.push_back(p);
+                    a_p.size=1;
+                    a_p.intensity=a_p.getIntensity(image);
+                    a_p.back_intensity=a_p.getBackIntensity(image,sz);
+                    a_p.rate=a_p.intensity/a_p.back_intensity;
+                    iniassemblpoints.push_back(a_p);
+                }
+            }
+
+    cout<<"end first..."<<endl;
+
+    multimap<double,assemblePoint> ratemaps;
+    for(int i=0;i<iniassemblpoints.size();++i)
+    {
+        ratemaps.insert(pair<double,assemblePoint>(iniassemblpoints[i].rate,iniassemblpoints[i]));
+    }
+
+    cout<<"end map..."<<endl;
+
+    multimap<double,assemblePoint>::reverse_iterator it=ratemaps.rbegin();
+
+    int count=0;
+
+    while(it!=ratemaps.rend())
+    {
+
+        cout<<"count: "<<count<<endl;
+        count++;
+        assemblePoint tmp=it->second;
+
+        if(mask[tmp.x].at(tmp.y).at(tmp.z)==1)
+        {
+            it++;
+            continue;
+        }
+        cout<<"end if..."<<endl;
+        tmp.assemble(image,mask,sz);
+        assemblepoints.push_back(tmp);
+        it++;
+    }
+
+    for(int i=0;i<assemblepoints.size();++i)
+    {
+        assemblepoints[i].renewXYZ(image);
+        cout<<i<<" size: "<<assemblepoints[i].size<<endl;
+    }
+
+    return true;
+}
+
+bool apTracer::writeAsseblePoints(const QString markerfile, vector<assemblePoint> &assemblepoints)
+{
+    QList<ImageMarker> markers;
+    for(int i=0;i<assemblepoints.size();++i)
+    {
+        ImageMarker m;
+        m.x=assemblepoints[i].x+1.5;
+        m.y=assemblepoints[i].y+1.5;
+        m.z=assemblepoints[i].z+1.5;
+        m.color.r=255;
+        m.color.g=0;
+        m.color.b=0;
+        m.radius=1;
+        markers.push_front(m);
+    }
+    writeMarker_file(markerfile,markers);
+    return true;
+}
 
 
 

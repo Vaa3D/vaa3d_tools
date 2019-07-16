@@ -87,7 +87,7 @@ struct direction
         y=_y;
         z=_z;
     }
-    direction operator =(direction &d)
+    inline direction& operator =(direction &d)
     {
         x=d.x;
         y=d.y;
@@ -113,6 +113,21 @@ struct direction
         z=-z;
         return *this;
     }
+
+    inline void round_xyz()
+    {
+        x=round(x);
+        y=round(y);
+        z=round(z);
+    }
+
+    inline direction& d_xyz(direction &other)
+    {
+        x=x*other.x;
+        y=y*other.y;
+        z=z*other.z;
+        return *this;
+    }
 };
 
 
@@ -122,11 +137,13 @@ struct superpoint{
     double z;
     int rx, ry, rz;
     double intensity;
+    double back_intensity;
+    double rate;
     //enum{UD=0,LR=1,FB=2,UD_1=3,UD_2=4,LR_1=5,LR_2=6,FB_1=7,FB_2=8,UK=9};
     direction direc;
-    superpoint():x(0),y(0),z(0),rx(0),ry(0),rz(0),direc(),intensity(0)
+    superpoint():x(0),y(0),z(0),rx(0),ry(0),rz(0),direc(),intensity(0),back_intensity(0),rate(0)
     {}
-    superpoint(double x,double y,double z,int rx=0,int ry=0,int rz=0,direction direc=direction(),double intensity=0)
+    superpoint(double x,double y,double z,int rx=0,int ry=0,int rz=0,direction direc=direction(),double intensity=0,double back_intensity=0,double rate=0)
     {
         this->x=x;
         this->y=y;
@@ -136,6 +153,8 @@ struct superpoint{
         this->rz=rz;
         this->direc=direc;
         this->intensity=intensity;
+        this->back_intensity=back_intensity;
+        this->rate=rate;
     }
 
     inline V3DLONG getIndex(V3DLONG* sz)
@@ -158,7 +177,9 @@ struct superpoint{
 
     double get_Intensity(unsigned char* pdata,V3DLONG* sz);
 
-    double get_Intensity(vector<vector<vector<unsigned char>>> &image);
+    double get_Intensity(vector<vector<vector<unsigned char>>> &image, long long *sz);
+
+    double get_BackIntensity(vector<vector<vector<unsigned char>>> &image, long long *sz);
 
     bool get_Radius(unsigned char* pdata,V3DLONG* sz,double thres);
 
@@ -189,15 +210,109 @@ public:
 
     bool init_real_points(vector<superpoint> &old, vector<superpoint> &realpoints, vector<vector<vector<unsigned char>>> &image, long long *sz, double thres);
 
-    bool writeSuperpoints(QString markerfile,vector<superpoint> &superpoints);
+    bool writeSuperpoints(const QString markerfile,vector<superpoint> &superpoints);
 
-    bool trace(vector<superpoint> &realpoints, vector<int> &plist, vector<vector<vector<unsigned char>>> &image, V3DLONG *sz);
+    bool trace(vector<superpoint> &realpoints, vector<int> &plist, vector<vector<vector<unsigned char>>> &image, V3DLONG* sz);
 
-    bool sv_trace(vector<superpoint> &realpoints,vector<vector<vector<unsigned char>>> &image,NeuronTree &nt,V3DLONG *sz);
+    bool sv_trace(vector<superpoint> &realpoints,vector<vector<vector<unsigned char>>> &image,NeuronTree &nt,V3DLONG* sz);
+
+    bool find_tips(vector<superpoint> &superpoints,vector<superpoint> &tips,vector<vector<vector<unsigned char>>> &image,V3DLONG* sz);
 
 
 };
 
+struct simplePoint
+{
+    V3DLONG x,y,z;
+    simplePoint():x(0),y(0),z(0)
+    {}
+    simplePoint(V3DLONG x,V3DLONG y,V3DLONG z)
+    {
+        this->x=x;
+        this->y=y;
+        this->z=z;
+    }
+    bool getNbSimplePoint(vector<simplePoint> &nbsimplepoints,int mode);
+};
+
+struct assemblePoint
+{
+    vector<simplePoint> sps;
+    int size;
+    double x,y,z;
+    double dx0,dx1,dy0,dy1,dz0,dz1;
+    double intensity;
+    double back_intensity;
+    double rate;
+
+    direction direc1,direc2;
+
+    assemblePoint():size(0),x(0),y(0),z(0),dx0(0),dx1(0),dy0(0),dy1(0),dz0(0),dz1(0),direc1(),direc2(),intensity(0),back_intensity(0),rate(0)
+    {
+        sps.clear();
+    }
+
+    assemblePoint& init(assemblePoint &other)
+    {
+        assemblePoint p;
+        p.x=other.x;
+        p.y=other.y;
+        p.z=other.z;
+        p.dx0=other.dx0;
+        p.dx1=other.dx1;
+        p.dy0=other.dy0;
+        p.dy1=other.dy1;
+        p.dz0=other.dz0;
+        p.dz1=other.dz1;
+        p.direc1=other.direc1;
+        p.direc2=other.direc2;
+        p.intensity=other.intensity;
+        p.back_intensity=other.back_intensity;
+        p.rate=other.rate;
+        p.size=other.size;
+        for(int i=0;i<other.sps.size();++i)
+        {
+            p.sps.push_back(other.sps[i]);
+        }
+        return p;
+    }
+
+    assemblePoint& operator =(assemblePoint &other)
+    {
+        assemblePoint p;
+        p=this->init(other);
+        return p;
+    }
+
+//    assemblePoint(assemblePoint &other)
+//    {
+//        *this->i
+//    }
+
+    ~assemblePoint()
+    {
+        this->sps.clear();
+    }
+
+    double getIntensity(vector<vector<vector<unsigned char> > > &image);
+
+    double getBackIntensity(vector<vector<vector<unsigned char> > > &image,V3DLONG* sz);
+
+    bool assemble(vector<vector<vector<unsigned char> > > &image, vector<vector<vector<int> > > &mask, V3DLONG* sz);
+
+    bool getDirection(vector<vector<vector<unsigned char> > > &image,V3DLONG* sz);
+
+    bool renewXYZ(vector<vector<vector<unsigned char> > > &image);
+
+};
+
+class apTracer
+{
+public:
+    bool initialAsseblePoint(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,V3DLONG* sz,double thres);
+
+    bool writeAsseblePoints(const QString markerfile,vector<assemblePoint> &assemblepoints);
+};
 
 
 

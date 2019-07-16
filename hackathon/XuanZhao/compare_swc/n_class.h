@@ -205,6 +205,8 @@ public:
 
     bool crop_swc(NeuronTree &nt_in, NeuronTree &nt_out, int type, size_t x0, size_t x1, size_t y0, size_t y1, size_t z0, size_t z1);
 
+    double get_distance_branchs_to_point(vector<Branch> &a,NeuronSWC &b,NeuronTree &nta);
+
 };
 
 

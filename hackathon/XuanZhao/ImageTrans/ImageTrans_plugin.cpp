@@ -65,16 +65,26 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         c.Data1d_to_3d(image);
         //c.display(image);
 
-        vector<vector<vector<unsigned char>>> image_new;
-        cout<<"prepare draw..."<<endl;
-        int times=(inparas.size()>=1)?atoi(inparas[0]):5;
-        int mode=(inparas.size()>=2)?atoi(inparas[1]):0;
-        c.Draw_S(image_new,times,mode);
-        cout<<"draw end..."<<endl;
-        c.Data3d_to_1d(image_new);
-        cout<<"start save..."<<endl;
-        QString outfile(outfiles[0]);
-        c.SaveImage(outfile,callback);
+
+        double thres=(inparas.size()>=1)?atoi(inparas[0]):30;
+        QString markerfile=(outfiles.size()>=1)?outfiles[0]:"";
+        apTracer ap;
+        vector<assemblePoint> assemblepoints;
+        cout<<"initial..."<<endl;
+        ap.initialAsseblePoint(assemblepoints,image,sz,thres);
+        cout<<"end..."<<endl;
+        ap.writeAsseblePoints(markerfile,assemblepoints);
+
+//        vector<vector<vector<unsigned char>>> image_new;
+//        cout<<"prepare draw..."<<endl;
+//        int times=(inparas.size()>=1)?atoi(inparas[0]):5;
+//        int mode=(inparas.size()>=2)?atoi(inparas[1]):0;
+//        c.Draw_S(image_new,times,mode);
+//        cout<<"draw end..."<<endl;
+//        c.Data3d_to_1d(image_new);
+//        cout<<"start save..."<<endl;
+//        QString outfile(outfiles[0]);
+//        c.SaveImage(outfile,callback);
 	}
 	else if (func_name == tr("func2"))
 	{
@@ -104,14 +114,36 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             cout<<i<<" : "<<"rx  "<<v_realpoints[i].rx<<"  ry  "<<v_realpoints[i].ry<<"  rz  "<<v_realpoints[i].rz<<endl;
         }
 
-        QString eswcfile=(outfiles.size()>=1)?outfiles[0]:"";
+        vector<superpoint> tips;
 
-        //s.writeSuperpoints(markerfile,v_realpoints);
+//        s.find_tips(v_realpoints,tips,image,sz);
 
-        NeuronTree nt;
-        s.sv_trace(v_realpoints,image,nt,sz);
+        tips.clear();
+        for(int i=0;i<v_realpoints.size();++i)
+        {
+            cout<<i<<" intensity: "<<v_realpoints[i].intensity<<" rate: "<<v_realpoints[i].rate<<endl;
+            if(v_realpoints[i].rate>1.3)
+            {
+                tips.push_back(v_realpoints[i]);
 
-        writeESWC_file(eswcfile,nt);
+            }
+
+        }
+        QString markerfile=(outfiles.size()>=1)?outfiles[0]:"";
+
+//        superpoint p(0,0,0,1);
+//        tips.push_back(p);
+
+        s.writeSuperpoints(markerfile,tips);
+//        NeuronSWC p;
+//        p.x=0.5;p.y=0.5;p.z=0.5;p.r=1;p.type=2;p.parent=-1;
+//        NeuronTree nt;
+//        nt.listNeuron.push_back(p);
+
+//        NeuronTree nt;
+//        s.sv_trace(v_realpoints,image,nt,sz);
+
+//        writeESWC_file(markerfile,nt);
 
 
 	}

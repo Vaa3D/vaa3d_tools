@@ -1869,23 +1869,63 @@ double Swc_Compare::get_distance_branchs_to_branch(vector<Branch> &a, Branch &b,
 bool Swc_Compare::get_false_point_image(QString dir, vector<int> & more, SwcTree & a_tree, SwcTree & b_tree, V3DPluginCallback2 &callback, QString braindir, bool manual)
 {
     for (int i=0; i<more.size();++i)
-    {   // crop the first point
+    {   // crop the point
         vector<NeuronSWC> seg_points;
-        a_tree.branchs[more[i]].get_points_of_branch(seg_points,a_tree.nt);
-        V3DLONG block_size=64;
-        size_t x0= seg_points[0].x-block_size/2;
-        size_t x1= seg_points[0].x+block_size/2;
-        size_t y0= seg_points[0].y-block_size/2;
-        size_t y1= seg_points[0].y+block_size/2;
-        size_t z0= seg_points[0].z-block_size/2;
-        size_t z1= seg_points[0].z+block_size/2;
+
+        map<Branch,int> amap;
+        for(int i=0;i<a_tree.branchs.size();++i)
+        {
+            amap[a_tree.branchs[i]]=i;
+        }
+
+        int a_branch_index=more[i];
+        while(a_tree.branchs[a_branch_index].parent!=0)
+        {
+            a_tree.branchs[a_branch_index].get_r_points_of_branch(seg_points,a_tree.nt);
+            seg_points.pop_back();
+            a_branch_index=amap[*(a_tree.branchs[a_branch_index].parent)];
+        }
+
+
+        double d=IN;
+        int count=0;
+        int segpoints_index=seg_points.size()-1;
+
+        for(int i=0;i<seg_points.size();++i)
+        {
+            d=this->get_distance_branchs_to_point(b_tree.branchs,seg_points[i],b_tree.nt);
+            if(d<5)
+            {
+                count++;
+            }else
+            {
+                if(count>0)
+                {
+                    count--;
+                }
+            }
+            if(count>=10)
+            {
+                segpoints_index=i-9;
+                break;
+            }
+        }
+
+
+        V3DLONG block_size=128;
+        size_t x0= seg_points[segpoints_index].x-block_size/2;
+        size_t x1= seg_points[segpoints_index].x+block_size/2;
+        size_t y0= seg_points[segpoints_index].y-block_size/2;
+        size_t y1= seg_points[segpoints_index].y+block_size/2;
+        size_t z0= seg_points[segpoints_index].z-block_size/2;
+        size_t z1= seg_points[segpoints_index].z+block_size/2;
 
 
         QList<ImageMarker> falsep_list;
         ImageMarker falsep;
-        falsep.x=block_size/2;
-        falsep.y=block_size/2;
-        falsep.z=block_size/2;
+        falsep.x=block_size/2+1;
+        falsep.y=block_size/2+1;
+        falsep.z=block_size/2+1;
         falsep.color.r=255;
         falsep.color.g=0;
         falsep.color.b=0;
@@ -1919,27 +1959,80 @@ bool Swc_Compare::get_false_point_image(QString dir, vector<int> & more, SwcTree
         writeSWC_file(manualswcfilename,nt_out_manual);
 
         //crop the point with the largest distance
-        QList<NeuronSWC> list_b=b_tree.nt.listNeuron;
-        vector <double> dis_vec;
-        vector <V3DLONG> index_vec;
-        dis_vec.clear();
-        for(V3DLONG j=0; j<seg_points.size();++j)
-        {
-            for(V3DLONG k=0;k<list_b.size();++k)
-            {
-                V3DLONG index=0;
-                double mindis=100000.0;
-                double ds=distance_two_point(seg_points[j],list_b.at(k));
-                if(ds<mindis)
-                {
-                    mindis=ds;
-                    index=k;
-                }
-                dis_vec.push_back(mindis);
-                index_vec.push_back(index);
 
-            }
-        }
+//        double d_fore,d_back=IN;
+//        double dd=0;
+//        int seg_index=seg_points.size()-1;
+
+////        d_fore=this->get_distance_branchs_to_point(b_tree.branchs,seg_points[0],b_tree.nt);
+//        for(int i=0;i<seg_points.size();++i)
+//        {
+//            d_back=this->get_distance_branchs_to_point(b_tree.branchs,seg_points[i],b_tree.nt);
+////            dd=abs(d_back-d_fore);
+//            if(d_back<2)
+//            {
+//                seg_index=i;
+//            }
+////            d_fore=d_back;
+//        }
+
+//        if(data1d) delete[] data1d;
+
+//        x0= seg_points[seg_index].x-block_size/2;
+//        x1= seg_points[seg_index].x+block_size/2;
+//        y0= seg_points[seg_index].y-block_size/2;
+//        y1= seg_points[seg_index].y+block_size/2;
+//        z0= seg_points[seg_index].z-block_size/2;
+//        z1= seg_points[seg_index].z+block_size/2;
+
+//        data1d=callback.getSubVolumeTeraFly(braindir.toStdString(),x0,x1,y0,y1,z0,z1);
+
+//        QString filename2=dir+"/"+QString::number(i)+"_last.v3draw";
+//        simple_saveimage_wrapper(callback,filename2.toStdString().c_str(),data1d,sz,datatype);
+
+//        nt_out_manual.listNeuron.clear();
+//        nt_out_auto.listNeuron.clear();
+
+//        if (manual==true)
+//        {
+//            crop_swc(a_tree.nt,nt_out_manual,2,x0,x1,y0,y1,z0,z1);
+//            crop_swc(b_tree.nt,nt_out_auto,3,x0,x1,y0,y1,z0,z1);
+//        } else
+//        {
+//            crop_swc(a_tree.nt,nt_out_auto,3,x0,x1,y0,y1,z0,z1);
+//            crop_swc(b_tree.nt,nt_out_manual,2,x0,x1,y0,y1,z0,z1);
+//        }
+
+//        QString autoswcfilename2=dir+"/"+QString::number(i)+"_last_auto.swc";
+//        QString manualswcfilename2=dir+"/"+QString::number(i)+"_last_manual.swc";
+//        writeSWC_file(autoswcfilename2,nt_out_auto);
+//        writeSWC_file(manualswcfilename2,nt_out_manual);
+
+
+
+
+
+//        QList<NeuronSWC> list_b=b_tree.nt.listNeuron;
+//        vector <double> dis_vec;
+//        vector <V3DLONG> index_vec;
+//        dis_vec.clear();
+//        for(V3DLONG j=0; j<seg_points.size();++j)
+//        {
+//            for(V3DLONG k=0;k<list_b.size();++k)
+//            {
+//                V3DLONG index=0;
+//                double mindis=100000.0;
+//                double ds=distance_two_point(seg_points[j],list_b.at(k));
+//                if(ds<mindis)
+//                {
+//                    mindis=ds;
+//                    index=k;
+//                }
+//                dis_vec.push_back(mindis);
+//                index_vec.push_back(index);
+
+//            }
+//        }
 
 //        for(int j=0; j<dis_vec.size()-1;++j)
 //        {
@@ -1951,6 +2044,8 @@ bool Swc_Compare::get_false_point_image(QString dir, vector<int> & more, SwcTree
 
 
     }
+
+    return true;
 
 }
 
@@ -1971,6 +2066,25 @@ bool Swc_Compare::crop_swc(NeuronTree &nt_in, NeuronTree &nt_out, int type, size
         }
     }
     return true;
+}
+
+
+double Swc_Compare::get_distance_branchs_to_point(vector<Branch> &a, NeuronSWC &b,NeuronTree &nta)
+{
+    double min_d=IN;
+    vector<NeuronSWC> a_points_i;
+    for(int i=0;i<a.size();++i)
+    {
+        a_points_i.clear();
+        a[i].get_points_of_branch(a_points_i,nta);
+        for(int j=0;j<a_points_i.size()-1;++j)
+        {
+            double tmp_d=p_to_line<NeuronSWC,Angle>(b,a_points_i[j],a_points_i[j+1]);
+            if(tmp_d<min_d)
+                min_d=tmp_d;
+        }
+    }
+    return min_d;
 }
 
 
