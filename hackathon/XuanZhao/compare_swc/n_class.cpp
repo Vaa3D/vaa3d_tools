@@ -1919,11 +1919,35 @@ bool Swc_Compare::get_false_point_image(QString dir, vector<int> & more, SwcTree
         writeSWC_file(manualswcfilename,nt_out_manual);
 
         //crop the point with the largest distance
-        for(int j=0; j<seg_points.size();++j)
+        QList<NeuronSWC> list_b=b_tree.nt.listNeuron;
+        vector <double> dis_vec;
+        vector <V3DLONG> index_vec;
+        dis_vec.clear();
+        for(V3DLONG j=0; j<seg_points.size();++j)
         {
+            for(V3DLONG k=0;k<list_b.size();++k)
+            {
+                V3DLONG index=0;
+                double mindis=100000.0;
+                double ds=distance_two_point(seg_points[j],list_b.at(k));
+                if(ds<mindis)
+                {
+                    mindis=ds;
+                    index=k;
+                }
+                dis_vec.push_back(mindis);
+                index_vec.push_back(index);
 
+            }
         }
 
+//        for(int j=0; j<dis_vec.size()-1;++j)
+//        {
+//            double mingrad=0;
+//            double grad= (dis_vec[j+1]-dis_vec[j])/dis_vec[j];
+//            if (grad>mingrad) ;
+
+//        }
 
 
     }
