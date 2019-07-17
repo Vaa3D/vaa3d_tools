@@ -190,6 +190,23 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 
 	}
+    else if (func_name== tr("globalcompare"))
+    {
+        NeuronTree nt0= readSWC_file(infiles[0]);//auto
+        NeuronTree nt1= readSWC_file(infiles[1]);//manual
+        QString braindir=inparas[0];
+        QString outdir=outfiles[0];
+
+        //qDebug()<<"reach here";
+        Swc_Compare c;
+        SwcTree a,b;
+        a.initialize(nt0);
+        b.initialize(nt1);
+        c.global_compare(a,b,braindir,outdir,callback);
+
+
+
+    }
 	else if (func_name == tr("help"))
 	{
         cout<<"usage:"<<endl;

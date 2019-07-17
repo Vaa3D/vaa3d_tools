@@ -1,6 +1,7 @@
 #include "n_class.h"
 #include <algorithm>
 #include <map>
+#include <fstream>
 
 #define PI 3.14159266
 
@@ -2085,6 +2086,94 @@ double Swc_Compare::get_distance_branchs_to_point(vector<Branch> &a, NeuronSWC &
         }
     }
     return min_d;
+}
+
+bool Swc_Compare::global_compare(SwcTree & a_tree, SwcTree & b_tree, QString braindir, QString outdir, V3DPluginCallback2 &callback)
+{
+    //nt0: auto
+    //qDebug()<<"reach here1";
+    int x0_nt0=100000,x1_nt0=0,y0_nt0=100000,y1_nt0=0,z0_nt0=100000,z1_nt0=0;
+    NeuronTree nt0;
+    nt0.deepCopy(a_tree.nt);
+    for(V3DLONG i=0; i<nt0.listNeuron.size();++i)
+    {
+        NeuronSWC s=nt0.listNeuron.at(i);
+        if(s.x<x0_nt0) x0_nt0=s.x;
+        if(s.x>x1_nt0) x1_nt0=s.x;
+        if(s.y<y0_nt0) y0_nt0=s.y;
+        if(s.y>y1_nt0) y1_nt0=s.y;
+        if(s.z<z0_nt0) z0_nt0=s.z;
+        if(s.z>z1_nt0) z1_nt0=s.z;
+    }
+
+    int x0_nt1=100000,x1_nt1=0,y0_nt1=100000,y1_nt1=0,z0_nt1=100000,z1_nt1=0;
+
+    NeuronTree nt1;
+    nt1.deepCopy(b_tree.nt);
+    for(V3DLONG i=0; i<nt1.listNeuron.size();++i)
+    {
+        NeuronSWC s=nt1.listNeuron.at(i);
+        if(s.x<x0_nt1) x0_nt1=s.x;
+        if(s.x>x1_nt1) x1_nt1=s.x;
+        if(s.y<y0_nt1) y0_nt1=s.y;
+        if(s.y>y1_nt1) y1_nt1=s.y;
+        if(s.z<z0_nt1) z0_nt1=s.z;
+        if(s.z>z1_nt1) z1_nt1=s.z;
+    }
+
+    int x0,x1,y0,y1,z0,z1;
+    x0=MAX(x0_nt0,x0_nt1);
+    x1=MIN(x1_nt0,x1_nt1);
+    y0=MAX(y0_nt0,y0_nt1);
+    y1=MIN(y1_nt0,y1_nt1);
+    z0=MAX(z0_nt0,z0_nt1);
+    z1=MIN(z1_nt0,z1_nt1);
+
+    qDebug()<<x0<<x1<<y0<<y1<<z0<<z1;
+
+    //crop the swc and count
+    //nt0: auto
+    //qDebug()<<"reach here2";
+    int consensus_count=0;
+    int false_count=0;
+    for(V3DLONG i=0; i< nt0.listNeuron.size();++i)
+    {
+        NeuronSWC s=nt0.listNeuron.at(i);
+
+        if(s.x>=x0 && s.x <=x1 && s.y>=y0 && s.y<=y1 && s.z>= z0 && s.z<= z1 )
+        {
+            consensus_count++;
+            double mindis= this->get_distance_branchs_to_point(b_tree.branchs,s,nt1);
+
+            if(mindis>10) false_count++;
+
+        } else continue;
+   }
+
+    ofstream out;
+    QString recordfile=outdir+"/record.txt";
+    out.open(recordfile.toStdString().c_str(),ios::app);
+    out<<"Automatic swc node number="<<nt0.listNeuron.size()<<endl;
+    out<<"consensus area node number="<<consensus_count<<endl;
+    out<<"false nodes in the consensus area number="<<false_count<<endl;
+    out<<"percentage of false nodes in the consensus area="<< (double(false_count)/double(consensus_count))*100<<"%"<<endl;
+    false_count+=(nt0.listNeuron.size()-consensus_count);
+    out<<"false nodes in all area number="<<false_count<<endl;
+    out<<"percentage of false nodes in all area="<< (double(false_count)/double(nt0.listNeuron.size()))*100<<"% \n"<<endl;
+    out.close();
+
+    false_count-= (nt0.listNeuron.size()-consensus_count);
+    QString recordfile1=outdir+"/record_number.txt";
+    out.open(recordfile1.toStdString().c_str(),ios::app);
+    out<<nt0.listNeuron.size()<<" ";
+    out<<consensus_count<<" ";
+    out<<false_count<<" ";
+    out<< (double(false_count)/double(consensus_count))*100<<"%"<<" ";
+    false_count+=(nt0.listNeuron.size()-consensus_count);
+    out<<false_count<<" ";
+    out<<(double(false_count)/double(nt0.listNeuron.size()))*100<<"%"<<" "<<endl;
+    out.close();
+
 }
 
 
