@@ -76,6 +76,13 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 			return false;
 		}
 	}
+	else if (func_name == tr("getMIP")) segPipePtr->makeMIPimgs();
+	else if (func_name == tr("makeDescentSkeletons"))
+	{
+		if (outfiles[1])
+			segPipePtr->outputRootPath2 = outfiles[1];
+		segPipePtr->makeDescentSkeletons();
+	}
 	else if (func_name == tr("gammaCorrect2D")) segPipePtr->sliceGammaCorrect();
 	else if (func_name == tr("threshold2D"))
 	{
@@ -84,6 +91,20 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 			QString percentileQ = inparas[0];
 			float percentile = percentileQ.toFloat();
 			segPipePtr->sliceThre(percentile);
+		}
+		else
+		{
+			cerr << "Invalid parameter. Do nothing and return." << endl;
+			return false;
+		}
+	}
+	else if (func_name == tr("threshold3D"))
+	{
+		if (inparas[0])
+		{
+			QString percentileQ = inparas[0];
+			float percentile = percentileQ.toFloat();
+			segPipePtr->threshold3D(percentile);
 		}
 		else
 		{
@@ -102,6 +123,44 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 			segPipePtr->outputSWCRootPath = output2;
 		}
 		segPipePtr->swc_imgCrop();
+	}
+	else if (func_name == tr("findSoma")) segPipePtr->findSomaMass();
+	else if (func_name == tr("findSomaCandidates"))
+	{
+		QString distThreQ = inparas[0];
+		float distThre = distThreQ.toFloat();
+		segPipePtr->getSomaCandidates(distThre);
+	}
+	else if (func_name == tr("somaDendriteDetect"))
+	{
+		if (infiles[1]) segPipePtr->inputSWCRootPath = infiles[1];
+		if (outfiles[0]) segPipePtr->outputRootPath = outfiles[0];
+
+		segPipePtr->somaDendriteMask();
+	}
+	else if (func_name == tr("getSomaBlended"))
+	{
+		if (infiles[1])	segPipePtr->inputCaseRootPath2 = infiles[1];
+		segPipePtr->getSomaBlendedImgs();
+	}
+	else if (func_name == tr("threStep"))
+	{
+		if (infiles[1]) segPipePtr->inputCaseRootPath2 = infiles[1];
+		if (outfiles[0]) segPipePtr->outputRootPath = outfiles[0];
+		if (outfiles[1]) segPipePtr->outputRootPath2 = outfiles[1];
+
+		segPipePtr->skeletonThreFiltered();
+	}
+	else if (func_name == tr("swcMapBack"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		if (infiles[1])
+		{
+			segPipePtr->inputSWCRootPath.clear();
+			segPipePtr->inputSWCRootPath = infiles[1];
+		}
+		if (outfiles[0]) segPipePtr->outputSWCRootPath = outfiles[0];
+		segPipePtr->swcMapBack();
 	}
 	else if (func_name == tr("signalBlob")) segPipePtr->findSignalBlobs2D();
 	else if (func_name == tr("centroid")) segPipePtr->getChebyshevCenters(output2);
@@ -159,8 +218,37 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString outputRoot2 = outfiles[1];
 		segPipePtr->swcSeparate(outputRoot2);
 	}
+	else if (func_name == tr("swcTypeSeparate"))
+	{
+		QString typeQ = inparas[0];
+		int type = typeQ.toInt();
+		segPipePtr->swcTypeSeparate(type);
+	}
+	else if (func_name == tr("swcSubtraction"))
+	{
+		QString typeQ = inparas[0];
+		int type = typeQ.toInt();
+		if (infiles[1])
+		{
+			QString path2 = infiles[1];
+			qDebug() << path2;
+			segPipePtr->inputSWCRootPath2.clear();
+			segPipePtr->inputSWCRootPath2 = path2;
+		}
+		segPipePtr->swcSubtraction(type);
+	}
+	else if (func_name == tr("swcUpSample")) segPipePtr->swcUpSample();
 	else if (func_name == tr("cleanUp2DcentroidZ")) segPipePtr->cleanUpzFor2Dcentroids();
 	else if (func_name == tr("segElongation")) segPipePtr->segElongation();
+	else if (func_name == tr("segTerminalize")) segPipePtr->segTerminalize();
+	else if (func_name == tr("removeDots")) segPipePtr->dotRemove();
+	else if (func_name == tr("longConnCut")) segPipePtr->longConnCut();
+	else if (func_name == tr("treeUnion"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		segPipePtr->treeUnion();
+	}
+	else if (func_name == tr("treeWithinDist")) segPipePtr->treeWithinDist();
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

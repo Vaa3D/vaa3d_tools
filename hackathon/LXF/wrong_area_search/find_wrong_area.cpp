@@ -83,13 +83,13 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
         if(!type)
         {
-            //PARA.filename1 = "/home/penglab/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
-            //PARA.filename2 = "/home/penglab/Data/xuefeng/023 final.ano.swc";
-            //PARA.filename3 = "/run/media/penglab/WS5/mouseID_321237-17302/RES(54600x34412x9847)";
+            PARA.filename1 = "/home/yong/Desktop/yong/DP/121_Auto.swc";
+            PARA.filename2 = "/home/yong/Desktop/yong/DP/121_Manual.swc";
+            PARA.filename3 = "/media/yong/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
 
-            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
-            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023 final.ano.swc";
-            PARA.filename3 = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
+            //PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
+            //PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023 final.ano.swc";
+            //PARA.filename3 = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
         }
         else
         {
@@ -283,8 +283,6 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
         /********************************choose point  ***********************************/
 
-
-
         cout<<"this is model "<<model<<endl;
 
         QList<NeuronSWC> choose_rec1,choose_rec2,choose_gold1,choose_gold2,output_result1,output_result2;
@@ -292,7 +290,6 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
         choose_rec2 = choose_point(result,result_2,7,10000,model);
         choose_gold1 = choose_point(result_2,result,0,7,model);
         choose_gold2 = choose_point(result_2,result,7,10000,model);
-
 
 
 
@@ -472,9 +469,6 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
         cout<<"neuron_m_size = "<<neuron_m.size()<<endl;
         cout<<"neuron_gold_size = "<<neuron_gold.size()<<endl;
-
-
-
 
 
 
@@ -738,6 +732,7 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
         cout<<"please input correct model number"<<endl;
     }
 
+
      cout<<"**************************img part********************"<<endl;
 
      vector<string> v,v_rec;
@@ -762,6 +757,7 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
      cout<<image.toStdString()<<endl;
      if(type)
      {
+         v3d_msg("111111111111111111111111111111111111");
          //QString image =QString::fromStdString(v[6]);
          cout<<"v3dpbd"<<endl;
          if(!simple_loadimage_wrapper(callback,(char *)img.c_str(), data1d, in_sz, datatype))  {cout<<"load img wrong"<<endl;  return false;}
@@ -795,6 +791,7 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
      }
      else
      {
+         v3d_msg("22222222222222222222222222222222222222");
          cout<<"terafly"<<endl;
          if(PARA.model3 == 0)
          {

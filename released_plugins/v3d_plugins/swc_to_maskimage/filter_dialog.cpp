@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-
+using namespace std;
 // lroundf() is gcc-specific --CMB
 #ifdef _MSC_VER
 inline long lroundf(float num) { return static_cast<long>(num > 0 ? num + 0.5f : ceilf(num - 0.5f)); }
@@ -165,7 +165,8 @@ void filter_dialog::swc_filter_image()
     V3DLONG stacksz = sx*sy*sz;
     pImMask = new unsigned char [stacksz];
     memset(pImMask,0,stacksz*sizeof(unsigned char));
-    ComputemaskImage(neuron, pImMask, sx, sy, sz, 0);
+    QList<int> mark_others;
+    ComputemaskImage(neuron, pImMask, sx, sy, sz,0,mark_others,false);
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
     memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
 
@@ -247,7 +248,7 @@ void BoundNeuronCoordinates(NeuronTree & neuron, double & output_xmin,double & o
     return;
 }
 
-void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz, double margin)
+void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,double margin, QList<int> mark_other_nodes,bool mark_other_nodes_or_not)//mark other node(s) with different markers,added by OYQ 2019.3.23.
 {
     NeuronSWC *p_cur = 0;
     //create a LUT
@@ -282,7 +283,138 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
         if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
 
+        //mark all voxels close to the others swc node(s) with different markers
+        if(mark_other_nodes_or_not && ii==mark_other_nodes.at(0)){ //in this case only mark the first node(tip node),added by OYQ 2019.3.23.
+        for (k = ballz0; k <= ballz1; k++){
+            for (j = bally0; j <= bally1; j++){
+                for (i = ballx0; i <= ballx1; i++){
+                    V3DLONG ind = (k)*pagesz + (j)*sx + i;
+                    if (pImMask[ind]>0) continue;
+                    double norms10 = (xs-i)*(xs-i) + (ys-j)*(ys-j) + (zs-k)*(zs-k);
+                    double dt = sqrt(norms10);
+                    if(dt <=rs || dt<=1) pImMask[ind] = 254;
+                }
+            }
+          }
+
+        //find previous node
+        if (p_cur->pn < 0) continue;//then it is root node already
+        //get the parent info
+        const NeuronSWC & pp  = neurons.listNeuron.at(neuron_id_table.value(p_cur->pn));
+        xe = pp.x;
+        ye = pp.y;
+        ze = pp.z;
+        re = pp.r;
+
+        //judge if two points overlap, if yes, then do nothing as the sphere has already been drawn
+        if (xe==xs && ye==ys && ze==zs)
+        {
+            v3d_msg(QString("Detect overlapping coordinates of node\n"), 0);
+            continue;
+        }
+
+        double l =sqrt((xe-xs)*(xe-xs)+(ye-ys)*(ye-ys)+(ze-zs)*(ze-zs));
+        double dx = (xe - xs);
+        double dy = (ye - ys);
+        double dz = (ze - zs);
+        double x = xs;
+        double y = ys;
+        double z = zs;
+
+        int steps = lroundf(l);
+        steps = (steps < fabs(dx))? fabs(dx):steps;
+        steps = (steps < fabs(dy))? fabs(dy):steps;
+        steps = (steps < fabs(dz))? fabs(dz):steps;
+        if (steps<1) steps =1;
+
+        double xIncrement = double(dx) / (steps*2);
+        double yIncrement = double(dy) / (steps*2);
+        double zIncrement = double(dz) / (steps*2);
+
+        V3DLONG idex1=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+        if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+         pImMask[idex1] = 254;
+
+        for (int i = 0; i <= steps; i++)
+        {
+            x += xIncrement;
+            y += yIncrement;
+            z += zIncrement;
+
+            x = ( x > sx )? sx : x;
+            y = ( y > sy )? sy : y;
+            z = ( z > sz )? sz : z;
+
+            V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+            if (pImMask[idex]>0) continue;
+            if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+            pImMask[idex] = 254;
+        }
+
+        //finding the envelope of the current line segment
+
+        double rbox = (rs>re) ? rs : re;
+        double x_down = (xs < xe) ? xs : xe; x_down -= rbox; x_down = V3DLONG(x_down); if (x_down<0) x_down=0; if (x_down>=sx-1) x_down = sx-1;
+        double x_top  = (xs > xe) ? xs : xe; x_top  += rbox; x_top  = V3DLONG(x_top ); if (x_top<0)  x_top=0;  if (x_top>=sx-1)  x_top  = sx-1;
+        double y_down = (ys < ye) ? ys : ye; y_down -= rbox; y_down = V3DLONG(y_down); if (y_down<0) y_down=0; if (y_down>=sy-1) y_down = sy-1;
+        double y_top  = (ys > ye) ? ys : ye; y_top  += rbox; y_top  = V3DLONG(y_top ); if (y_top<0)  y_top=0;  if (y_top>=sy-1)  y_top = sy-1;
+        double z_down = (zs < ze) ? zs : ze; z_down -= rbox; z_down = V3DLONG(z_down); if (z_down<0) z_down=0; if (z_down>=sz-1) z_down = sz-1;
+        double z_top  = (zs > ze) ? zs : ze; z_top  += rbox; z_top  = V3DLONG(z_top ); if (z_top<0)  z_top=0;  if (z_top>=sz-1)  z_top = sz-1;
+
+        //compute cylinder and flag mask
+
+        for (k=z_down; k<=z_top; k++)
+        {
+            for (j=y_down; j<=y_top; j++)
+            {
+                for (i=x_down; i<=x_top; i++)
+                {
+                    double rr = 0;
+                    double countxsi = (xs-i);
+                    double countysj = (ys-j);
+                    double countzsk = (zs-k);
+                    double countxes = (xe-xs);
+                    double countyes = (ye-ys);
+                    double countzes = (ze-zs);
+                    double norms10 = countxsi * countxsi + countysj * countysj + countzsk * countzsk;
+                    double norms21 = countxes * countxes + countyes * countyes + countzes * countzes;
+                    double dots1021 = countxsi * countxes + countysj * countyes + countzsk * countzes;
+                    double dist = sqrt( norms10 - (dots1021*dots1021)/(norms21) );
+                    double t1 = -dots1021/norms21;
+                    if(t1<0) dist = sqrt(norms10);
+                    else if(t1>1)
+                        dist = sqrt((xe-i)*(xe-i) + (ye-j)*(ye-j) + (ze-k)*(ze-k));
+                    //compute rr
+                    if (rs==re) rr =rs;
+                    else
+                    {
+                        // compute point of intersection
+                        double v1 = xe - xs;
+                        double v2 = ye - ys;
+                        double v3 = ze - zs;
+                        double vpt = v1*v1 + v2*v2 +v3*v3;
+                        double t = (double(i-xs)*v1 +double(j-ys)*v2 + double(k-zs)*v3)/vpt;
+                        double xc = xs + v1*t;
+                        double yc = ys + v2*t;
+                        double zc = zs + v3*t;
+                        double normssc = sqrt((xs-xc)*(xs-xc)+(ys-yc)*(ys-yc)+(zs-zc)*(zs-zc));
+                        double normsce = sqrt((xe-xc)*(xe-xc)+(ye-yc)*(ye-yc)+(ze-zc)*(ze-zc));
+                        rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
+                    }
+                    V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
+                    if (pImMask[ind1]>0) continue;
+                    if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+                    if (dist <= rr || dist<=1)
+                    {
+                        pImMask[ind1] = 254;
+                    }
+                }
+            }
+        }
+
+      }
         //mark all voxels close to the swc node(s)
+       else{
         for (k = ballz0; k <= ballz1; k++){
             for (j = bally0; j <= bally1; j++){
                 for (i = ballx0; i <= ballx1; i++){
@@ -409,7 +541,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 }
             }
         }
-
+      }
     }
 
 }

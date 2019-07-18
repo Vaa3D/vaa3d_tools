@@ -86,6 +86,7 @@ SOURCES += $$VAA3DPATH/basic_c_fun/mg_utilities.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/autoseed.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculate_cover_scores.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.cpp \
+    $$VAA3DPATH/neuron_editing/global_feature_compute.cpp
 
 TARGET	= $$qtLibraryTarget(neurontracing_mst)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/MST_tracing/

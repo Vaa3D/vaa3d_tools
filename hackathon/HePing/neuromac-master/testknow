@@ -1,0 +1,8 @@
+front.py add like:
+sys.path.insert(0,'D:/gen_vir_experiment_code/neuromac-master/examples/random_walk')
+
+helper_generate_movie.py add ffmpeg path
+plt.rcParams['animation.ffmpeg_path'] = 'C:/FFmpeg/bin/ffmpeg'
+
+then can run  name.sh
+windows:  python2 ../Admin.py 2(progress is set by xa*ya*za)   name.cfg

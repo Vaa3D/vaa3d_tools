@@ -7,11 +7,21 @@ INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 
-
+macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+#    CONFIG += x86_64
+}
 unix:!macx {
     #LIBS += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
     LIBS += -L$$V3DMAINPATH/common_lib/lib -ltiff
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+}
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff
+    } else {
+    LIBS     += -L$$VAA3DPATH/common_lib/winlib -llibtiff
+    }
 }
 
 INCLUDEPATH += main

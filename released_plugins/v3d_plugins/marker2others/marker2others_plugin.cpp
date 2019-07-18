@@ -7,6 +7,10 @@
  
 #include "v3d_message.h"
 #include "marker2others_plugin.h"
+#include <vector>
+#include <iostream>
+
+using namespace std;
 
 Q_EXPORT_PLUGIN2(marker2others, Marker2OthersPlugin);
  
@@ -53,10 +57,80 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
 	return;
 }
 
-bool marker2others(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool marker2apo(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    v3d_msg("Not implemented yet.");
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if(infiles.empty())
+    {
+        cerr<<"Need input marker file"<<endl;
+        return false;
+    }
+
+    if(outfiles.empty())
+    {
+        cerr<<"Need output apo file"<<endl;
+        return false;
+    }
+
+    QString  inmarker_file =  infiles[0];
+    QString  outapo_file =  outfiles[0];
+
+    int k=0;
+    double scale;
+    if (input.size()>=2)
+    {
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        scale = paras.empty() ? 1.0 : atof(paras[k]);
+    }
+
+    QList <ImageMarker> listLandmarks = readMarker_file(inmarker_file);
+    QList<CellAPO> file_inmarkers;
+    for(int i=0; i<listLandmarks.size();i++)
+    {
+        CellAPO t;
+        t.x = listLandmarks[i].x*scale;
+        t.y = listLandmarks[i].y*scale;
+        t.z = listLandmarks[i].z*scale;
+        t.color.r = 255;
+        t.color.g = 0;
+        t.color.b = 0;
+
+        file_inmarkers.push_back(t);
+    }
+
+    writeAPO_file(outapo_file,file_inmarkers);
     return true;
+}
+
+bool marker2apo(QString markerFileName)
+{
+	QList <ImageMarker> listLandmarks = readMarker_file(markerFileName);
+	QList<CellAPO> file_inmarkers;
+	for (int i = 0; i<listLandmarks.size(); i++)
+	{
+		CellAPO t;
+		t.x = listLandmarks[i].x;
+		t.y = listLandmarks[i].y;
+		t.z = listLandmarks[i].z;
+		t.color.r = 255;
+		t.color.g = 0;
+		t.color.b = 0;
+		t.volsize = 314.159;
+
+		file_inmarkers.push_back(t);
+	}
+
+	QString saveName = markerFileName + ".apo";
+	writeAPO_file(saveName, file_inmarkers);
+
+	QString FinishMsg = QString("An apo file [") + saveName + QString("] has been generated.");
+	v3d_msg(FinishMsg);
+	
+	return true;
 }
 
 void printHelp(V3DPluginCallback2 &callback, QWidget *parent)
@@ -76,14 +150,15 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 QStringList Marker2OthersPlugin::menulist() const
 {
 	return QStringList()
-		<<tr("Save markers to SWC format")
+		<< tr("Save markers to SWC format")
+		<< tr("Save markers to apo format")
 		<<tr("about");
 }
 
 QStringList Marker2OthersPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("marker2others")
+        <<tr("marker2apo")
 		<<tr("help");
 }
 
@@ -92,6 +167,12 @@ void Marker2OthersPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	if (menu_name == tr("Save markers to SWC format"))
 	{
 		marker2others(callback,parent);
+	}
+	else if (menu_name == tr("Save markers to apo format"))
+	{
+		QString markerFileName = QFileDialog::getOpenFileName(0, QObject::tr("Select marker file"), "",
+			QObject::tr("Supported file extension (*.marker)"));
+		marker2apo(markerFileName);
 	}
 	else if (menu_name == tr("help"))
 	{
@@ -105,9 +186,9 @@ void Marker2OthersPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
 bool Marker2OthersPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("marker2others"))
+    if (func_name == tr("marker2apo"))
 	{
-		marker2others(input, output);
+        marker2apo(input, output);
         return true;
 	}
 	else if (func_name == tr("help"))

@@ -1,0 +1,2400 @@
+2019-05-20 22:01:14.434021
+epoch:0, batch:0, After 5 iterations
+discriminator loss: 1.1662883758544922
+epoch:0, batch:0, generator loss: 3.421092987060547
+2019-05-20 22:02:38.647609
+epoch:0, batch:1, After 5 iterations
+discriminator loss: 1.0700186491012573
+epoch:0, batch:1, generator loss: 3.9246349334716797
+2019-05-20 22:02:57.223576
+epoch:0, batch:2, After 5 iterations
+discriminator loss: 0.9076066017150879
+epoch:0, batch:2, generator loss: 4.190315246582031
+2019-05-20 22:03:14.723767
+epoch:0, batch:3, After 5 iterations
+discriminator loss: 0.7273219227790833
+epoch:0, batch:3, generator loss: 4.546648979187012
+2019-05-20 22:03:32.631373
+epoch:0, batch:4, After 5 iterations
+discriminator loss: 0.6270012855529785
+epoch:0, batch:4, generator loss: 3.968096971511841
+2019-05-20 22:03:50.449890
+epoch:0, batch:5, After 5 iterations
+discriminator loss: 0.37179577350616455
+epoch:0, batch:5, generator loss: 3.919837713241577
+2019-05-20 22:04:08.062554
+epoch:0, batch:6, After 5 iterations
+discriminator loss: 0.04870520532131195
+epoch:0, batch:6, generator loss: 3.6902718544006348
+2019-05-20 22:04:26.339691
+epoch:0, batch:7, After 5 iterations
+discriminator loss: 0.03820767626166344
+epoch:0, batch:7, generator loss: 3.1585121154785156
+2019-05-20 22:04:45.736492
+epoch:0, batch:8, After 5 iterations
+discriminator loss: 0.034232694655656815
+epoch:0, batch:8, generator loss: 4.183204650878906
+2019-05-20 22:05:04.671861
+epoch:0, batch:9, After 5 iterations
+discriminator loss: 0.0343940444290638
+epoch:0, batch:9, generator loss: 2.709132671356201
+2019-05-20 22:05:23.124272
+epoch:0, batch:10, After 5 iterations
+discriminator loss: 0.03313740715384483
+epoch:0, batch:10, generator loss: 2.1440937519073486
+2019-05-20 22:05:41.577389
+epoch:0, batch:11, After 5 iterations
+discriminator loss: 0.029021888971328735
+epoch:0, batch:11, generator loss: 2.3205063343048096
+2019-05-20 22:06:00.965471
+epoch:1, batch:0, After 5 iterations
+discriminator loss: 0.02743108943104744
+epoch:1, batch:0, generator loss: 1.365775465965271
+2019-05-20 22:06:20.058695
+epoch:1, batch:1, After 5 iterations
+discriminator loss: 0.026801593601703644
+epoch:1, batch:1, generator loss: 0.8573077321052551
+2019-05-20 22:06:37.770820
+epoch:1, batch:2, After 5 iterations
+discriminator loss: 0.02641017735004425
+epoch:1, batch:2, generator loss: 0.6223830580711365
+2019-05-20 22:06:55.258027
+epoch:1, batch:3, After 5 iterations
+discriminator loss: 0.02562650293111801
+epoch:1, batch:3, generator loss: 0.4961889684200287
+2019-05-20 22:07:12.603174
+epoch:1, batch:4, After 5 iterations
+discriminator loss: 0.024926159530878067
+epoch:1, batch:4, generator loss: 0.40979820489883423
+2019-05-20 22:07:32.374961
+epoch:1, batch:5, After 5 iterations
+discriminator loss: 0.02513435110449791
+epoch:1, batch:5, generator loss: 0.4200712740421295
+2019-05-20 22:07:50.641382
+epoch:1, batch:6, After 5 iterations
+discriminator loss: 0.024229325354099274
+epoch:1, batch:6, generator loss: 0.39237573742866516
+2019-05-20 22:08:07.947132
+epoch:1, batch:7, After 5 iterations
+discriminator loss: 0.023665281012654305
+epoch:1, batch:7, generator loss: 0.36505162715911865
+2019-05-20 22:08:26.019998
+epoch:1, batch:8, After 5 iterations
+discriminator loss: 0.02323220856487751
+epoch:1, batch:8, generator loss: 0.35258182883262634
+2019-05-20 22:08:44.124570
+epoch:1, batch:9, After 5 iterations
+discriminator loss: 0.023110993206501007
+epoch:1, batch:9, generator loss: 0.37802600860595703
+2019-05-20 22:09:02.034784
+epoch:1, batch:10, After 5 iterations
+discriminator loss: 0.02245154045522213
+epoch:1, batch:10, generator loss: 0.3829837441444397
+2019-05-20 22:09:18.957548
+epoch:1, batch:11, After 5 iterations
+discriminator loss: 0.02241872437298298
+epoch:1, batch:11, generator loss: 0.4021231532096863
+2019-05-20 22:09:36.969915
+epoch:2, batch:0, After 5 iterations
+discriminator loss: 0.02141444757580757
+epoch:2, batch:0, generator loss: 0.3659248948097229
+2019-05-20 22:09:55.003196
+epoch:2, batch:1, After 5 iterations
+discriminator loss: 0.02124522626399994
+epoch:2, batch:1, generator loss: 0.3370703160762787
+2019-05-20 22:10:11.945478
+epoch:2, batch:2, After 5 iterations
+discriminator loss: 0.021041665226221085
+epoch:2, batch:2, generator loss: 0.4263983368873596
+2019-05-20 22:10:29.137322
+epoch:2, batch:3, After 5 iterations
+discriminator loss: 0.020493561401963234
+epoch:2, batch:3, generator loss: 1.4768394231796265
+2019-05-20 22:10:46.334728
+epoch:2, batch:4, After 5 iterations
+discriminator loss: 0.019490297883749008
+epoch:2, batch:4, generator loss: 3.083650588989258
+2019-05-20 22:11:04.742756
+epoch:2, batch:5, After 5 iterations
+discriminator loss: 0.02041836455464363
+epoch:2, batch:5, generator loss: 2.132289409637451
+2019-05-20 22:11:22.215310
+epoch:2, batch:6, After 5 iterations
+discriminator loss: 0.01990782842040062
+epoch:2, batch:6, generator loss: 3.101128339767456
+2019-05-20 22:11:39.823707
+epoch:2, batch:7, After 5 iterations
+discriminator loss: 0.019542992115020752
+epoch:2, batch:7, generator loss: 2.6648128032684326
+2019-05-20 22:11:58.041471
+epoch:2, batch:8, After 5 iterations
+discriminator loss: 0.018985016271471977
+epoch:2, batch:8, generator loss: 2.4231810569763184
+2019-05-20 22:12:15.677666
+epoch:2, batch:9, After 5 iterations
+discriminator loss: 0.01971428655087948
+epoch:2, batch:9, generator loss: 0.7145538926124573
+2019-05-20 22:12:34.900596
+epoch:2, batch:10, After 5 iterations
+discriminator loss: 0.018255073577165604
+epoch:2, batch:10, generator loss: 3.046412944793701
+2019-05-20 22:12:52.504100
+epoch:2, batch:11, After 5 iterations
+discriminator loss: 0.01865004375576973
+epoch:2, batch:11, generator loss: 3.0364267826080322
+2019-05-20 22:13:10.127930
+epoch:3, batch:0, After 5 iterations
+discriminator loss: 0.017930347472429276
+epoch:3, batch:0, generator loss: 3.067960739135742
+2019-05-20 22:13:28.523714
+epoch:3, batch:1, After 5 iterations
+discriminator loss: 0.01806863211095333
+epoch:3, batch:1, generator loss: 3.1239724159240723
+2019-05-20 22:13:47.640492
+epoch:3, batch:2, After 5 iterations
+discriminator loss: 0.01705915294587612
+epoch:3, batch:2, generator loss: 3.390385389328003
+2019-05-20 22:14:05.314189
+epoch:3, batch:3, After 5 iterations
+discriminator loss: 0.018000315874814987
+epoch:3, batch:3, generator loss: 2.5180583000183105
+2019-05-20 22:14:23.080714
+epoch:3, batch:4, After 5 iterations
+discriminator loss: 0.015737634152173996
+epoch:3, batch:4, generator loss: 3.623277425765991
+2019-05-20 22:14:39.709733
+epoch:3, batch:5, After 5 iterations
+discriminator loss: 0.016149012371897697
+epoch:3, batch:5, generator loss: 1.4233897924423218
+2019-05-20 22:14:56.825764
+epoch:3, batch:6, After 5 iterations
+discriminator loss: 0.01628846861422062
+epoch:3, batch:6, generator loss: 1.375929594039917
+2019-05-20 22:15:14.328898
+epoch:3, batch:7, After 5 iterations
+discriminator loss: 0.01613239385187626
+epoch:3, batch:7, generator loss: 0.2515695095062256
+2019-05-20 22:15:31.766338
+epoch:3, batch:8, After 5 iterations
+discriminator loss: 0.015820397064089775
+epoch:3, batch:8, generator loss: 0.1056571900844574
+2019-05-20 22:15:50.199767
+epoch:3, batch:9, After 5 iterations
+discriminator loss: 0.01601993665099144
+epoch:3, batch:9, generator loss: 0.06840308755636215
+2019-05-20 22:16:08.023949
+epoch:3, batch:10, After 5 iterations
+discriminator loss: 0.015073333866894245
+epoch:3, batch:10, generator loss: 0.060033299028873444
+2019-05-20 22:16:25.579959
+epoch:3, batch:11, After 5 iterations
+discriminator loss: 0.014632713049650192
+epoch:3, batch:11, generator loss: 0.05426414683461189
+2019-05-20 22:16:43.806229
+epoch:4, batch:0, After 5 iterations
+discriminator loss: 0.014528071507811546
+epoch:4, batch:0, generator loss: 0.051134198904037476
+2019-05-20 22:17:01.260567
+epoch:4, batch:1, After 5 iterations
+discriminator loss: 0.01444163452833891
+epoch:4, batch:1, generator loss: 0.04927733540534973
+2019-05-20 22:17:17.768839
+epoch:4, batch:2, After 5 iterations
+discriminator loss: 0.014022357761859894
+epoch:4, batch:2, generator loss: 0.04738186299800873
+2019-05-20 22:17:34.687573
+epoch:4, batch:3, After 5 iterations
+discriminator loss: 0.01389766950160265
+epoch:4, batch:3, generator loss: 0.04567167907953262
+2019-05-20 22:17:52.283289
+epoch:4, batch:4, After 5 iterations
+discriminator loss: 0.013812136836349964
+epoch:4, batch:4, generator loss: 0.04400254786014557
+2019-05-20 22:18:09.643956
+epoch:4, batch:5, After 5 iterations
+discriminator loss: 0.013666674494743347
+epoch:4, batch:5, generator loss: 0.04249187186360359
+2019-05-20 22:18:25.730624
+epoch:4, batch:6, After 5 iterations
+discriminator loss: 0.013403086923062801
+epoch:4, batch:6, generator loss: 0.040514588356018066
+2019-05-20 22:18:43.411551
+epoch:4, batch:7, After 5 iterations
+discriminator loss: 0.013280868530273438
+epoch:4, batch:7, generator loss: 0.037897706031799316
+2019-05-20 22:19:00.835327
+epoch:4, batch:8, After 5 iterations
+discriminator loss: 0.013165414333343506
+epoch:4, batch:8, generator loss: 0.036576297134160995
+2019-05-20 22:19:17.606284
+epoch:4, batch:9, After 5 iterations
+discriminator loss: 0.013089851476252079
+epoch:4, batch:9, generator loss: 0.03572278842329979
+2019-05-20 22:19:34.695565
+epoch:4, batch:10, After 5 iterations
+discriminator loss: 0.012814757414162159
+epoch:4, batch:10, generator loss: 0.03499021753668785
+2019-05-20 22:19:51.552499
+epoch:4, batch:11, After 5 iterations
+discriminator loss: 0.012833972461521626
+epoch:4, batch:11, generator loss: 0.03435210511088371
+2019-05-20 22:20:09.659701
+epoch:5, batch:0, After 5 iterations
+discriminator loss: 0.012667440809309483
+epoch:5, batch:0, generator loss: 0.03376756235957146
+2019-05-20 22:20:27.844278
+epoch:5, batch:1, After 5 iterations
+discriminator loss: 0.012438874691724777
+epoch:5, batch:1, generator loss: 0.03317815437912941
+2019-05-20 22:20:44.762891
+epoch:5, batch:2, After 5 iterations
+discriminator loss: 0.012247308157384396
+epoch:5, batch:2, generator loss: 0.03258378803730011
+2019-05-20 22:21:00.607182
+epoch:5, batch:3, After 5 iterations
+discriminator loss: 0.012185173109173775
+epoch:5, batch:3, generator loss: 0.032057564705610275
+2019-05-20 22:21:18.820420
+epoch:5, batch:4, After 5 iterations
+discriminator loss: 0.012414791621267796
+epoch:5, batch:4, generator loss: 0.031697578728199005
+2019-05-20 22:21:36.625223
+epoch:5, batch:5, After 5 iterations
+discriminator loss: 0.011902021244168282
+epoch:5, batch:5, generator loss: 0.03120552934706211
+2019-05-20 22:21:53.324603
+epoch:5, batch:6, After 5 iterations
+discriminator loss: 0.01176381390541792
+epoch:5, batch:6, generator loss: 0.030715005472302437
+2019-05-20 22:22:10.434454
+epoch:5, batch:7, After 5 iterations
+discriminator loss: 0.011855444870889187
+epoch:5, batch:7, generator loss: 0.030292363837361336
+2019-05-20 22:22:27.722377
+epoch:5, batch:8, After 5 iterations
+discriminator loss: 0.01153757143765688
+epoch:5, batch:8, generator loss: 0.02972313016653061
+2019-05-20 22:22:44.131027
+epoch:5, batch:9, After 5 iterations
+discriminator loss: 0.011534412391483784
+epoch:5, batch:9, generator loss: 0.02925233170390129
+2019-05-20 22:23:00.799555
+epoch:5, batch:10, After 5 iterations
+discriminator loss: 0.011350208893418312
+epoch:5, batch:10, generator loss: 0.0287936944514513
+2019-05-20 22:23:17.331301
+epoch:5, batch:11, After 5 iterations
+discriminator loss: 0.01117158867418766
+epoch:5, batch:11, generator loss: 0.02841494046151638
+2019-05-20 22:23:35.680406
+epoch:6, batch:0, After 5 iterations
+discriminator loss: 0.011136259883642197
+epoch:6, batch:0, generator loss: 0.02803504467010498
+2019-05-20 22:23:53.043170
+epoch:6, batch:1, After 5 iterations
+discriminator loss: 0.011040513403713703
+epoch:6, batch:1, generator loss: 0.027695033699274063
+2019-05-20 22:24:09.288574
+epoch:6, batch:2, After 5 iterations
+discriminator loss: 0.010890945792198181
+epoch:6, batch:2, generator loss: 0.027369270101189613
+2019-05-20 22:24:25.323251
+epoch:6, batch:3, After 5 iterations
+discriminator loss: 0.010809503495693207
+epoch:6, batch:3, generator loss: 0.02703629434108734
+2019-05-20 22:24:41.224273
+epoch:6, batch:4, After 5 iterations
+discriminator loss: 0.010966543108224869
+epoch:6, batch:4, generator loss: 0.026768479496240616
+2019-05-20 22:24:56.972211
+epoch:6, batch:5, After 5 iterations
+discriminator loss: 0.010624014772474766
+epoch:6, batch:5, generator loss: 0.026482868939638138
+2019-05-20 22:25:13.513141
+epoch:6, batch:6, After 5 iterations
+discriminator loss: 0.010525400750339031
+epoch:6, batch:6, generator loss: 0.026196666061878204
+2019-05-20 22:25:30.644672
+epoch:6, batch:7, After 5 iterations
+discriminator loss: 0.010405278764665127
+epoch:6, batch:7, generator loss: 0.025901978835463524
+2019-05-20 22:25:47.402799
+epoch:6, batch:8, After 5 iterations
+discriminator loss: 0.010302788577973843
+epoch:6, batch:8, generator loss: 0.025617267936468124
+2019-05-20 22:26:05.711575
+epoch:6, batch:9, After 5 iterations
+discriminator loss: 0.010251009836792946
+epoch:6, batch:9, generator loss: 0.02534015104174614
+2019-05-20 22:26:23.080844
+epoch:6, batch:10, After 5 iterations
+discriminator loss: 0.010140655562281609
+epoch:6, batch:10, generator loss: 0.0250686202198267
+2019-05-20 22:26:38.852762
+epoch:6, batch:11, After 5 iterations
+discriminator loss: 0.010034032166004181
+epoch:6, batch:11, generator loss: 0.02479204162955284
+2019-05-20 22:26:56.114709
+epoch:7, batch:0, After 5 iterations
+discriminator loss: 0.010017703287303448
+epoch:7, batch:0, generator loss: 0.0245509073138237
+2019-05-20 22:27:13.341550
+epoch:7, batch:1, After 5 iterations
+discriminator loss: 0.009893715381622314
+epoch:7, batch:1, generator loss: 0.024304645135998726
+2019-05-20 22:27:29.570512
+epoch:7, batch:2, After 5 iterations
+discriminator loss: 0.009827435947954655
+epoch:7, batch:2, generator loss: 0.02401689998805523
+2019-05-20 22:27:47.695404
+epoch:7, batch:3, After 5 iterations
+discriminator loss: 0.009784900583326817
+epoch:7, batch:3, generator loss: 0.02374870888888836
+2019-05-20 22:28:03.609368
+epoch:7, batch:4, After 5 iterations
+discriminator loss: 0.009696976281702518
+epoch:7, batch:4, generator loss: 0.023528724908828735
+2019-05-20 22:28:20.404947
+epoch:7, batch:5, After 5 iterations
+discriminator loss: 0.009572547860443592
+epoch:7, batch:5, generator loss: 0.023305686190724373
+2019-05-20 22:28:37.506190
+epoch:7, batch:6, After 5 iterations
+discriminator loss: 0.009512221440672874
+epoch:7, batch:6, generator loss: 0.023088913410902023
+2019-05-20 22:28:53.971058
+epoch:7, batch:7, After 5 iterations
+discriminator loss: 0.00952169019728899
+epoch:7, batch:7, generator loss: 0.022883562371134758
+2019-05-20 22:29:09.952897
+epoch:7, batch:8, After 5 iterations
+discriminator loss: 0.009360212832689285
+epoch:7, batch:8, generator loss: 0.022662946954369545
+2019-05-20 22:29:26.368948
+epoch:7, batch:9, After 5 iterations
+discriminator loss: 0.0092824911698699
+epoch:7, batch:9, generator loss: 0.022421259433031082
+2019-05-20 22:29:43.299678
+epoch:7, batch:10, After 5 iterations
+discriminator loss: 0.009207908064126968
+epoch:7, batch:10, generator loss: 0.0221870094537735
+2019-05-20 22:29:58.939806
+epoch:7, batch:11, After 5 iterations
+discriminator loss: 0.009134928695857525
+epoch:7, batch:11, generator loss: 0.021962188184261322
+2019-05-20 22:30:15.648635
+epoch:8, batch:0, After 5 iterations
+discriminator loss: 0.00911120604723692
+epoch:8, batch:0, generator loss: 0.021751437336206436
+2019-05-20 22:30:33.482232
+epoch:8, batch:1, After 5 iterations
+discriminator loss: 0.008982519619166851
+epoch:8, batch:1, generator loss: 0.021534105762839317
+2019-05-20 22:30:49.699663
+epoch:8, batch:2, After 5 iterations
+discriminator loss: 0.009013672359287739
+epoch:8, batch:2, generator loss: 0.02134941704571247
+2019-05-20 22:31:05.559268
+epoch:8, batch:3, After 5 iterations
+discriminator loss: 0.008883285336196423
+epoch:8, batch:3, generator loss: 0.021148568019270897
+2019-05-20 22:31:22.332430
+epoch:8, batch:4, After 5 iterations
+discriminator loss: 0.008850730955600739
+epoch:8, batch:4, generator loss: 0.020923160016536713
+2019-05-20 22:31:39.609296
+epoch:8, batch:5, After 5 iterations
+discriminator loss: 0.008787392638623714
+epoch:8, batch:5, generator loss: 0.020640891045331955
+2019-05-20 22:31:56.506501
+epoch:8, batch:6, After 5 iterations
+discriminator loss: 0.008687506429851055
+epoch:8, batch:6, generator loss: 0.020436812192201614
+2019-05-20 22:32:12.724261
+epoch:8, batch:7, After 5 iterations
+discriminator loss: 0.008605045266449451
+epoch:8, batch:7, generator loss: 0.020265379920601845
+2019-05-20 22:32:28.527117
+epoch:8, batch:8, After 5 iterations
+discriminator loss: 0.008565947413444519
+epoch:8, batch:8, generator loss: 0.020108573138713837
+2019-05-20 22:32:44.942843
+epoch:8, batch:9, After 5 iterations
+discriminator loss: 0.008499359712004662
+epoch:8, batch:9, generator loss: 0.019947050139307976
+2019-05-20 22:33:02.481382
+epoch:8, batch:10, After 5 iterations
+discriminator loss: 0.008417711593210697
+epoch:8, batch:10, generator loss: 0.01978561282157898
+2019-05-20 22:33:19.941389
+epoch:8, batch:11, After 5 iterations
+discriminator loss: 0.008353803306818008
+epoch:8, batch:11, generator loss: 0.019622869789600372
+2019-05-20 22:33:36.362169
+epoch:9, batch:0, After 5 iterations
+discriminator loss: 0.008332696743309498
+epoch:9, batch:0, generator loss: 0.019474079832434654
+2019-05-20 22:33:53.729387
+epoch:9, batch:1, After 5 iterations
+discriminator loss: 0.008247598074376583
+epoch:9, batch:1, generator loss: 0.0193179901689291
+2019-05-20 22:34:09.959000
+epoch:9, batch:2, After 5 iterations
+discriminator loss: 0.008209096267819405
+epoch:9, batch:2, generator loss: 0.019169088453054428
+2019-05-20 22:34:27.212401
+epoch:9, batch:3, After 5 iterations
+discriminator loss: 0.008149043656885624
+epoch:9, batch:3, generator loss: 0.019022157415747643
+2019-05-20 22:34:43.620506
+epoch:9, batch:4, After 5 iterations
+discriminator loss: 0.008087575435638428
+epoch:9, batch:4, generator loss: 0.018877781927585602
+2019-05-20 22:34:59.845137
+epoch:9, batch:5, After 5 iterations
+discriminator loss: 0.008065218105912209
+epoch:9, batch:5, generator loss: 0.018746841698884964
+2019-05-20 22:35:16.442283
+epoch:9, batch:6, After 5 iterations
+discriminator loss: 0.007983425632119179
+epoch:9, batch:6, generator loss: 0.018608639016747475
+2019-05-20 22:35:32.901743
+epoch:9, batch:7, After 5 iterations
+discriminator loss: 0.007949396967887878
+epoch:9, batch:7, generator loss: 0.018484074622392654
+2019-05-20 22:35:50.010938
+epoch:9, batch:8, After 5 iterations
+discriminator loss: 0.007885346189141273
+epoch:9, batch:8, generator loss: 0.018353987485170364
+2019-05-20 22:36:07.260830
+epoch:9, batch:9, After 5 iterations
+discriminator loss: 0.007816013880074024
+epoch:9, batch:9, generator loss: 0.01821994222700596
+2019-05-20 22:36:23.880368
+epoch:9, batch:10, After 5 iterations
+discriminator loss: 0.00777667248621583
+epoch:9, batch:10, generator loss: 0.01809179037809372
+2019-05-20 22:36:40.491253
+epoch:9, batch:11, After 5 iterations
+discriminator loss: 0.007738797459751368
+epoch:9, batch:11, generator loss: 0.017969490960240364
+2019-05-20 22:36:56.496084
+epoch:10, batch:0, After 5 iterations
+discriminator loss: 0.007680149748921394
+epoch:10, batch:0, generator loss: 0.017842169851064682
+2019-05-20 22:37:13.286126
+epoch:10, batch:1, After 5 iterations
+discriminator loss: 0.007629096042364836
+epoch:10, batch:1, generator loss: 0.017720559611916542
+2019-05-20 22:37:30.476338
+epoch:10, batch:2, After 5 iterations
+discriminator loss: 0.007641267031431198
+epoch:10, batch:2, generator loss: 0.01760493591427803
+2019-05-20 22:37:46.942836
+epoch:10, batch:3, After 5 iterations
+discriminator loss: 0.007535943295806646
+epoch:10, batch:3, generator loss: 0.017483871430158615
+2019-05-20 22:38:03.093710
+epoch:10, batch:4, After 5 iterations
+discriminator loss: 0.00750740384683013
+epoch:10, batch:4, generator loss: 0.017369195818901062
+2019-05-20 22:38:22.047067
+epoch:10, batch:5, After 5 iterations
+discriminator loss: 0.00744209298864007
+epoch:10, batch:5, generator loss: 0.017255336046218872
+2019-05-20 22:38:38.644656
+epoch:10, batch:6, After 5 iterations
+discriminator loss: 0.0074347080662846565
+epoch:10, batch:6, generator loss: 0.017138727009296417
+2019-05-20 22:38:55.486540
+epoch:10, batch:7, After 5 iterations
+discriminator loss: 0.007343465927988291
+epoch:10, batch:7, generator loss: 0.017023203894495964
+2019-05-20 22:39:12.179587
+epoch:10, batch:8, After 5 iterations
+discriminator loss: 0.007309389300644398
+epoch:10, batch:8, generator loss: 0.016911009326577187
+2019-05-20 22:39:28.038202
+epoch:10, batch:9, After 5 iterations
+discriminator loss: 0.0072864568792283535
+epoch:10, batch:9, generator loss: 0.016810690984129906
+2019-05-20 22:39:45.888178
+epoch:10, batch:10, After 5 iterations
+discriminator loss: 0.007216873113065958
+epoch:10, batch:10, generator loss: 0.016702642664313316
+2019-05-20 22:40:01.844060
+epoch:10, batch:11, After 5 iterations
+discriminator loss: 0.007172814570367336
+epoch:10, batch:11, generator loss: 0.016592515632510185
+2019-05-20 22:40:17.675220
+epoch:11, batch:0, After 5 iterations
+discriminator loss: 0.007192475721240044
+epoch:11, batch:0, generator loss: 0.01649688370525837
+2019-05-20 22:40:34.501622
+epoch:11, batch:1, After 5 iterations
+discriminator loss: 0.007102246396243572
+epoch:11, batch:1, generator loss: 0.016395485028624535
+2019-05-20 22:40:52.034080
+epoch:11, batch:2, After 5 iterations
+discriminator loss: 0.007049264386296272
+epoch:11, batch:2, generator loss: 0.016292819753289223
+2019-05-20 22:41:08.348008
+epoch:11, batch:3, After 5 iterations
+discriminator loss: 0.007016744464635849
+epoch:11, batch:3, generator loss: 0.016193941235542297
+2019-05-20 22:41:24.320838
+epoch:11, batch:4, After 5 iterations
+discriminator loss: 0.006975360680371523
+epoch:11, batch:4, generator loss: 0.016090312972664833
+2019-05-20 22:41:41.038184
+epoch:11, batch:5, After 5 iterations
+discriminator loss: 0.0069601209834218025
+epoch:11, batch:5, generator loss: 0.01599292643368244
+2019-05-20 22:41:57.473652
+epoch:11, batch:6, After 5 iterations
+discriminator loss: 0.006880258210003376
+epoch:11, batch:6, generator loss: 0.015891948714852333
+2019-05-20 22:42:14.271267
+epoch:11, batch:7, After 5 iterations
+discriminator loss: 0.006858532782644033
+epoch:11, batch:7, generator loss: 0.01579480804502964
+2019-05-20 22:42:30.921080
+epoch:11, batch:8, After 5 iterations
+discriminator loss: 0.006818125490099192
+epoch:11, batch:8, generator loss: 0.015700748190283775
+2019-05-20 22:42:48.466166
+epoch:11, batch:9, After 5 iterations
+discriminator loss: 0.006775694899260998
+epoch:11, batch:9, generator loss: 0.015606041066348553
+2019-05-20 22:43:06.246596
+epoch:11, batch:10, After 5 iterations
+discriminator loss: 0.006747532170265913
+epoch:11, batch:10, generator loss: 0.015515639446675777
+2019-05-20 22:43:22.618844
+epoch:11, batch:11, After 5 iterations
+discriminator loss: 0.006697101518511772
+epoch:11, batch:11, generator loss: 0.015422428958117962
+2019-05-20 22:43:40.814262
+epoch:12, batch:0, After 5 iterations
+discriminator loss: 0.006659883540123701
+epoch:12, batch:0, generator loss: 0.015330448746681213
+2019-05-20 22:43:57.038148
+epoch:12, batch:1, After 5 iterations
+discriminator loss: 0.006653155665844679
+epoch:12, batch:1, generator loss: 0.01524291466921568
+2019-05-20 22:44:13.129510
+epoch:12, batch:2, After 5 iterations
+discriminator loss: 0.006605520378798246
+epoch:12, batch:2, generator loss: 0.015156278386712074
+2019-05-20 22:44:29.540145
+epoch:12, batch:3, After 5 iterations
+discriminator loss: 0.00656932732090354
+epoch:12, batch:3, generator loss: 0.015070930123329163
+2019-05-20 22:44:45.789162
+epoch:12, batch:4, After 5 iterations
+discriminator loss: 0.00652696518227458
+epoch:12, batch:4, generator loss: 0.014984305948019028
+2019-05-20 22:45:03.598060
+epoch:12, batch:5, After 5 iterations
+discriminator loss: 0.0064804041758179665
+epoch:12, batch:5, generator loss: 0.014896979555487633
+2019-05-20 22:45:20.011142
+epoch:12, batch:6, After 5 iterations
+discriminator loss: 0.006457148585468531
+epoch:12, batch:6, generator loss: 0.014812753535807133
+2019-05-20 22:45:36.703517
+epoch:12, batch:7, After 5 iterations
+discriminator loss: 0.006430729292333126
+epoch:12, batch:7, generator loss: 0.014730269089341164
+2019-05-20 22:45:54.090031
+epoch:12, batch:8, After 5 iterations
+discriminator loss: 0.006383848842233419
+epoch:12, batch:8, generator loss: 0.014648638665676117
+2019-05-20 22:46:11.439783
+epoch:12, batch:9, After 5 iterations
+discriminator loss: 0.006354266777634621
+epoch:12, batch:9, generator loss: 0.014566624537110329
+2019-05-20 22:46:28.739385
+epoch:12, batch:10, After 5 iterations
+discriminator loss: 0.006327715702354908
+epoch:12, batch:10, generator loss: 0.01448829285800457
+2019-05-20 22:46:45.098629
+epoch:12, batch:11, After 5 iterations
+discriminator loss: 0.006289737764745951
+epoch:12, batch:11, generator loss: 0.014409252442419529
+2019-05-20 22:47:03.316753
+epoch:13, batch:0, After 5 iterations
+discriminator loss: 0.006253022700548172
+epoch:13, batch:0, generator loss: 0.01432929839938879
+2019-05-20 22:47:20.048962
+epoch:13, batch:1, After 5 iterations
+discriminator loss: 0.00622129812836647
+epoch:13, batch:1, generator loss: 0.014248388819396496
+2019-05-20 22:47:36.471057
+epoch:13, batch:2, After 5 iterations
+discriminator loss: 0.006200398318469524
+epoch:13, batch:2, generator loss: 0.014173365198075771
+2019-05-20 22:47:53.274135
+epoch:13, batch:3, After 5 iterations
+discriminator loss: 0.006169408094137907
+epoch:13, batch:3, generator loss: 0.01409741211682558
+2019-05-20 22:48:11.564895
+epoch:13, batch:4, After 5 iterations
+discriminator loss: 0.006127348635345697
+epoch:13, batch:4, generator loss: 0.014022029004991055
+2019-05-20 22:48:27.866283
+epoch:13, batch:5, After 5 iterations
+discriminator loss: 0.006110018119215965
+epoch:13, batch:5, generator loss: 0.013945870101451874
+2019-05-20 22:48:45.898921
+epoch:13, batch:6, After 5 iterations
+discriminator loss: 0.0060628182254731655
+epoch:13, batch:6, generator loss: 0.013871990144252777
+2019-05-20 22:49:02.384349
+epoch:13, batch:7, After 5 iterations
+discriminator loss: 0.006058010738343
+epoch:13, batch:7, generator loss: 0.013800974935293198
+2019-05-20 22:49:18.941537
+epoch:13, batch:8, After 5 iterations
+discriminator loss: 0.006006481125950813
+epoch:13, batch:8, generator loss: 0.01372900977730751
+2019-05-20 22:49:35.938904
+epoch:13, batch:9, After 5 iterations
+discriminator loss: 0.005970293655991554
+epoch:13, batch:9, generator loss: 0.01365512702614069
+2019-05-20 22:49:51.683390
+epoch:13, batch:10, After 5 iterations
+discriminator loss: 0.005955514498054981
+epoch:13, batch:10, generator loss: 0.01358617004007101
+2019-05-20 22:50:08.616689
+epoch:13, batch:11, After 5 iterations
+discriminator loss: 0.0059230332262814045
+epoch:13, batch:11, generator loss: 0.013515557162463665
+2019-05-20 22:50:25.161031
+epoch:14, batch:0, After 5 iterations
+discriminator loss: 0.005917421542108059
+epoch:14, batch:0, generator loss: 0.013449355028569698
+2019-05-20 22:50:42.694120
+epoch:14, batch:1, After 5 iterations
+discriminator loss: 0.005864743608981371
+epoch:14, batch:1, generator loss: 0.013379626907408237
+2019-05-20 22:50:59.156048
+epoch:14, batch:2, After 5 iterations
+discriminator loss: 0.0058415415696799755
+epoch:14, batch:2, generator loss: 0.013309613801538944
+2019-05-20 22:51:15.513947
+epoch:14, batch:3, After 5 iterations
+discriminator loss: 0.005808126647025347
+epoch:14, batch:3, generator loss: 0.013243135064840317
+2019-05-20 22:51:32.932117
+epoch:14, batch:4, After 5 iterations
+discriminator loss: 0.005779229570180178
+epoch:14, batch:4, generator loss: 0.01317459437996149
+2019-05-20 22:51:49.551396
+epoch:14, batch:5, After 5 iterations
+discriminator loss: 0.005758192390203476
+epoch:14, batch:5, generator loss: 0.013108358718454838
+2019-05-20 22:52:07.614105
+epoch:14, batch:6, After 5 iterations
+discriminator loss: 0.005729239899665117
+epoch:14, batch:6, generator loss: 0.0130398478358984
+2019-05-20 22:52:23.881584
+epoch:14, batch:7, After 5 iterations
+discriminator loss: 0.005698244087398052
+epoch:14, batch:7, generator loss: 0.012971560470759869
+2019-05-20 22:52:40.008947
+epoch:14, batch:8, After 5 iterations
+discriminator loss: 0.00566888926550746
+epoch:14, batch:8, generator loss: 0.012903016060590744
+2019-05-20 22:52:57.289066
+epoch:14, batch:9, After 5 iterations
+discriminator loss: 0.005641969386488199
+epoch:14, batch:9, generator loss: 0.01283717155456543
+2019-05-20 22:53:14.044209
+epoch:14, batch:10, After 5 iterations
+discriminator loss: 0.005618453491479158
+epoch:14, batch:10, generator loss: 0.012772339396178722
+2019-05-20 22:53:31.328966
+epoch:14, batch:11, After 5 iterations
+discriminator loss: 0.0055935620330274105
+epoch:14, batch:11, generator loss: 0.012708947993814945
+2019-05-20 22:53:47.829083
+epoch:15, batch:0, After 5 iterations
+discriminator loss: 0.005597271490842104
+epoch:15, batch:0, generator loss: 0.012649601325392723
+2019-05-20 22:54:03.754709
+epoch:15, batch:1, After 5 iterations
+discriminator loss: 0.005641442257910967
+epoch:15, batch:1, generator loss: 0.012587681412696838
+2019-05-20 22:54:20.281489
+epoch:15, batch:2, After 5 iterations
+discriminator loss: 0.005520473700016737
+epoch:15, batch:2, generator loss: 0.012529523111879826
+2019-05-20 22:54:37.315750
+epoch:15, batch:3, After 5 iterations
+discriminator loss: 0.005496356636285782
+epoch:15, batch:3, generator loss: 0.012470383197069168
+2019-05-20 22:54:54.630029
+epoch:15, batch:4, After 5 iterations
+discriminator loss: 0.005463629495352507
+epoch:15, batch:4, generator loss: 0.012410134077072144
+2019-05-20 22:55:12.940722
+epoch:15, batch:5, After 5 iterations
+discriminator loss: 0.005441071465611458
+epoch:15, batch:5, generator loss: 0.01235349103808403
+2019-05-20 22:55:29.794162
+epoch:15, batch:6, After 5 iterations
+discriminator loss: 0.005417684558779001
+epoch:15, batch:6, generator loss: 0.012294731102883816
+2019-05-20 22:55:46.191348
+epoch:15, batch:7, After 5 iterations
+discriminator loss: 0.00539925554767251
+epoch:15, batch:7, generator loss: 0.012237587943673134
+2019-05-20 22:56:02.204562
+epoch:15, batch:8, After 5 iterations
+discriminator loss: 0.005379480309784412
+epoch:15, batch:8, generator loss: 0.012181573547422886
+2019-05-20 22:56:18.359543
+epoch:15, batch:9, After 5 iterations
+discriminator loss: 0.005349111743271351
+epoch:15, batch:9, generator loss: 0.012124810367822647
+2019-05-20 22:56:35.068163
+epoch:15, batch:10, After 5 iterations
+discriminator loss: 0.005324713420122862
+epoch:15, batch:10, generator loss: 0.012068824842572212
+2019-05-20 22:56:52.559994
+epoch:15, batch:11, After 5 iterations
+discriminator loss: 0.005312140099704266
+epoch:15, batch:11, generator loss: 0.012015951797366142
+2019-05-20 22:57:09.083827
+epoch:16, batch:0, After 5 iterations
+discriminator loss: 0.005276947747915983
+epoch:16, batch:0, generator loss: 0.011960378848016262
+2019-05-20 22:57:26.897196
+epoch:16, batch:1, After 5 iterations
+discriminator loss: 0.005267063621431589
+epoch:16, batch:1, generator loss: 0.01190620381385088
+2019-05-20 22:57:43.961143
+epoch:16, batch:2, After 5 iterations
+discriminator loss: 0.005232285708189011
+epoch:16, batch:2, generator loss: 0.011852458119392395
+2019-05-20 22:58:01.465853
+epoch:16, batch:3, After 5 iterations
+discriminator loss: 0.005207465961575508
+epoch:16, batch:3, generator loss: 0.01179801020771265
+2019-05-20 22:58:17.998585
+epoch:16, batch:4, After 5 iterations
+discriminator loss: 0.005193702410906553
+epoch:16, batch:4, generator loss: 0.01174772996455431
+2019-05-20 22:58:35.753239
+epoch:16, batch:5, After 5 iterations
+discriminator loss: 0.005170331336557865
+epoch:16, batch:5, generator loss: 0.011694952845573425
+2019-05-20 22:58:52.281645
+epoch:16, batch:6, After 5 iterations
+discriminator loss: 0.005152922123670578
+epoch:16, batch:6, generator loss: 0.011643065139651299
+2019-05-20 22:59:09.467639
+epoch:16, batch:7, After 5 iterations
+discriminator loss: 0.005129961296916008
+epoch:16, batch:7, generator loss: 0.011591127142310143
+2019-05-20 22:59:25.964279
+epoch:16, batch:8, After 5 iterations
+discriminator loss: 0.005103213246911764
+epoch:16, batch:8, generator loss: 0.011540778912603855
+2019-05-20 22:59:42.923769
+epoch:16, batch:9, After 5 iterations
+discriminator loss: 0.005084131844341755
+epoch:16, batch:9, generator loss: 0.011488608084619045
+2019-05-20 22:59:59.510892
+epoch:16, batch:10, After 5 iterations
+discriminator loss: 0.005062590818852186
+epoch:16, batch:10, generator loss: 0.011437450535595417
+2019-05-20 23:00:16.199120
+epoch:16, batch:11, After 5 iterations
+discriminator loss: 0.005060671363025904
+epoch:16, batch:11, generator loss: 0.011385655961930752
+2019-05-20 23:00:32.054543
+epoch:17, batch:0, After 5 iterations
+discriminator loss: 0.005018319468945265
+epoch:17, batch:0, generator loss: 0.011334536597132683
+2019-05-20 23:00:49.153801
+epoch:17, batch:1, After 5 iterations
+discriminator loss: 0.0050064753741025925
+epoch:17, batch:1, generator loss: 0.011285372078418732
+2019-05-20 23:01:05.768875
+epoch:17, batch:2, After 5 iterations
+discriminator loss: 0.004989839158952236
+epoch:17, batch:2, generator loss: 0.011237050406634808
+2019-05-20 23:01:22.465205
+epoch:17, batch:3, After 5 iterations
+discriminator loss: 0.00496069248765707
+epoch:17, batch:3, generator loss: 0.011187352240085602
+2019-05-20 23:01:38.630028
+epoch:17, batch:4, After 5 iterations
+discriminator loss: 0.004935605451464653
+epoch:17, batch:4, generator loss: 0.011139536276459694
+2019-05-20 23:01:55.840286
+epoch:17, batch:5, After 5 iterations
+discriminator loss: 0.004929434973746538
+epoch:17, batch:5, generator loss: 0.011092058382928371
+2019-05-20 23:02:12.289852
+epoch:17, batch:6, After 5 iterations
+discriminator loss: 0.0049004643224179745
+epoch:17, batch:6, generator loss: 0.011044499464333057
+2019-05-20 23:02:28.003785
+epoch:17, batch:7, After 5 iterations
+discriminator loss: 0.004878937732428312
+epoch:17, batch:7, generator loss: 0.010996622033417225
+2019-05-20 23:02:45.042723
+epoch:17, batch:8, After 5 iterations
+discriminator loss: 0.004872646648436785
+epoch:17, batch:8, generator loss: 0.01095266081392765
+2019-05-20 23:03:02.842429
+epoch:17, batch:9, After 5 iterations
+discriminator loss: 0.004837530665099621
+epoch:17, batch:9, generator loss: 0.010902845300734043
+2019-05-20 23:03:19.198740
+epoch:17, batch:10, After 5 iterations
+discriminator loss: 0.004823536146432161
+epoch:17, batch:10, generator loss: 0.010853935033082962
+2019-05-20 23:03:35.027907
+epoch:17, batch:11, After 5 iterations
+discriminator loss: 0.004803117830306292
+epoch:17, batch:11, generator loss: 0.010803107172250748
+2019-05-20 23:03:52.347506
+epoch:18, batch:0, After 5 iterations
+discriminator loss: 0.00477599399164319
+epoch:18, batch:0, generator loss: 0.010751747526228428
+2019-05-20 23:04:08.530230
+epoch:18, batch:1, After 5 iterations
+discriminator loss: 0.004769917577505112
+epoch:18, batch:1, generator loss: 0.010702992789447308
+2019-05-20 23:04:25.961208
+epoch:18, batch:2, After 5 iterations
+discriminator loss: 0.004750635474920273
+epoch:18, batch:2, generator loss: 0.010656098835170269
+2019-05-20 23:04:42.504075
+epoch:18, batch:3, After 5 iterations
+discriminator loss: 0.00473197503015399
+epoch:18, batch:3, generator loss: 0.010612491518259048
+2019-05-20 23:04:59.584386
+epoch:18, batch:4, After 5 iterations
+discriminator loss: 0.004709503147751093
+epoch:18, batch:4, generator loss: 0.010566412471234798
+2019-05-20 23:05:15.859917
+epoch:18, batch:5, After 5 iterations
+discriminator loss: 0.004698928911238909
+epoch:18, batch:5, generator loss: 0.010522662661969662
+2019-05-20 23:05:31.642275
+epoch:18, batch:6, After 5 iterations
+discriminator loss: 0.004675630480051041
+epoch:18, batch:6, generator loss: 0.010479738004505634
+2019-05-20 23:05:48.453841
+epoch:18, batch:7, After 5 iterations
+discriminator loss: 0.004658859223127365
+epoch:18, batch:7, generator loss: 0.010438370518386364
+2019-05-20 23:06:04.517869
+epoch:18, batch:8, After 5 iterations
+discriminator loss: 0.004641398321837187
+epoch:18, batch:8, generator loss: 0.01039627380669117
+2019-05-20 23:06:22.317780
+epoch:18, batch:9, After 5 iterations
+discriminator loss: 0.0046304138377308846
+epoch:18, batch:9, generator loss: 0.010355684906244278
+2019-05-20 23:06:39.652401
+epoch:18, batch:10, After 5 iterations
+discriminator loss: 0.004608019255101681
+epoch:18, batch:10, generator loss: 0.010314635001122952
+2019-05-20 23:06:56.995003
+epoch:18, batch:11, After 5 iterations
+discriminator loss: 0.0045852093026041985
+epoch:18, batch:11, generator loss: 0.01027282327413559
+2019-05-20 23:07:13.507764
+epoch:19, batch:0, After 5 iterations
+discriminator loss: 0.004570326302200556
+epoch:19, batch:0, generator loss: 0.010230997577309608
+2019-05-20 23:07:30.884823
+epoch:19, batch:1, After 5 iterations
+discriminator loss: 0.00455176318064332
+epoch:19, batch:1, generator loss: 0.01018922682851553
+2019-05-20 23:07:48.491738
+epoch:19, batch:2, After 5 iterations
+discriminator loss: 0.004537609405815601
+epoch:19, batch:2, generator loss: 0.010148555971682072
+2019-05-20 23:08:04.959257
+epoch:19, batch:3, After 5 iterations
+discriminator loss: 0.00451586814597249
+epoch:19, batch:3, generator loss: 0.010106264613568783
+2019-05-20 23:08:22.445476
+epoch:19, batch:4, After 5 iterations
+discriminator loss: 0.004499790258705616
+epoch:19, batch:4, generator loss: 0.01006525382399559
+2019-05-20 23:08:40.312679
+epoch:19, batch:5, After 5 iterations
+discriminator loss: 0.0044817798770964146
+epoch:19, batch:5, generator loss: 0.01002389658242464
+2019-05-20 23:08:56.807548
+epoch:19, batch:6, After 5 iterations
+discriminator loss: 0.004473618231713772
+epoch:19, batch:6, generator loss: 0.009984188713133335
+2019-05-20 23:09:13.753219
+epoch:19, batch:7, After 5 iterations
+discriminator loss: 0.0044532278552651405
+epoch:19, batch:7, generator loss: 0.009946486912667751
+2019-05-20 23:09:31.264009
+epoch:19, batch:8, After 5 iterations
+discriminator loss: 0.004435626324266195
+epoch:19, batch:8, generator loss: 0.009907681494951248
+2019-05-20 23:09:47.207602
+epoch:19, batch:9, After 5 iterations
+discriminator loss: 0.004426117520779371
+epoch:19, batch:9, generator loss: 0.00986978318542242
+2019-05-20 23:10:04.061510
+epoch:19, batch:10, After 5 iterations
+discriminator loss: 0.004407481290400028
+epoch:19, batch:10, generator loss: 0.009833093732595444
+2019-05-20 23:10:19.963041
+epoch:19, batch:11, After 5 iterations
+discriminator loss: 0.004386109299957752
+epoch:19, batch:11, generator loss: 0.009795703925192356
+2019-05-20 23:10:36.653990
+epoch:20, batch:0, After 5 iterations
+discriminator loss: 0.004376798402518034
+epoch:20, batch:0, generator loss: 0.009760240092873573
+2019-05-20 23:10:53.627639
+epoch:20, batch:1, After 5 iterations
+discriminator loss: 0.004354571923613548
+epoch:20, batch:1, generator loss: 0.009723683819174767
+2019-05-20 23:11:10.007816
+epoch:20, batch:2, After 5 iterations
+discriminator loss: 0.0043394495733082294
+epoch:20, batch:2, generator loss: 0.009687613695859909
+2019-05-20 23:11:27.319032
+epoch:20, batch:3, After 5 iterations
+discriminator loss: 0.004328809212893248
+epoch:20, batch:3, generator loss: 0.009652992710471153
+2019-05-20 23:11:43.928651
+epoch:20, batch:4, After 5 iterations
+discriminator loss: 0.004318931605666876
+epoch:20, batch:4, generator loss: 0.009618319571018219
+2019-05-20 23:12:01.048210
+epoch:20, batch:5, After 5 iterations
+discriminator loss: 0.004303363151848316
+epoch:20, batch:5, generator loss: 0.009585450403392315
+2019-05-20 23:12:18.263690
+epoch:20, batch:6, After 5 iterations
+discriminator loss: 0.004282536916434765
+epoch:20, batch:6, generator loss: 0.009550279937684536
+2019-05-20 23:12:34.926619
+epoch:20, batch:7, After 5 iterations
+discriminator loss: 0.004265794064849615
+epoch:20, batch:7, generator loss: 0.009516367688775063
+2019-05-20 23:12:51.430313
+epoch:20, batch:8, After 5 iterations
+discriminator loss: 0.004271251615136862
+epoch:20, batch:8, generator loss: 0.009482660330832005
+2019-05-20 23:13:08.465735
+epoch:20, batch:9, After 5 iterations
+discriminator loss: 0.0042387801222503185
+epoch:20, batch:9, generator loss: 0.009448831900954247
+2019-05-20 23:13:25.917663
+epoch:20, batch:10, After 5 iterations
+discriminator loss: 0.004224314354360104
+epoch:20, batch:10, generator loss: 0.009414809755980968
+2019-05-20 23:13:42.070480
+epoch:20, batch:11, After 5 iterations
+discriminator loss: 0.004214807413518429
+epoch:20, batch:11, generator loss: 0.00938177015632391
+2019-05-20 23:13:58.983294
+epoch:21, batch:0, After 5 iterations
+discriminator loss: 0.004196865949779749
+epoch:21, batch:0, generator loss: 0.009348930791020393
+2019-05-20 23:14:15.350482
+epoch:21, batch:1, After 5 iterations
+discriminator loss: 0.004193626809865236
+epoch:21, batch:1, generator loss: 0.009318341501057148
+2019-05-20 23:14:32.191991
+epoch:21, batch:2, After 5 iterations
+discriminator loss: 0.0041646515019237995
+epoch:21, batch:2, generator loss: 0.00928625650703907
+2019-05-20 23:14:48.973962
+epoch:21, batch:3, After 5 iterations
+discriminator loss: 0.0041574048809707165
+epoch:21, batch:3, generator loss: 0.00925389863550663
+2019-05-20 23:15:05.683781
+epoch:21, batch:4, After 5 iterations
+discriminator loss: 0.004139875061810017
+epoch:21, batch:4, generator loss: 0.009221424348652363
+2019-05-20 23:15:22.438469
+epoch:21, batch:5, After 5 iterations
+discriminator loss: 0.004121596924960613
+epoch:21, batch:5, generator loss: 0.009189301170408726
+2019-05-20 23:15:40.381470
+epoch:21, batch:6, After 5 iterations
+discriminator loss: 0.004106993321329355
+epoch:21, batch:6, generator loss: 0.009157810360193253
+2019-05-20 23:15:56.437027
+epoch:21, batch:7, After 5 iterations
+discriminator loss: 0.004104957915842533
+epoch:21, batch:7, generator loss: 0.009127351455390453
+2019-05-20 23:16:13.892349
+epoch:21, batch:8, After 5 iterations
+discriminator loss: 0.0040831719525158405
+epoch:21, batch:8, generator loss: 0.00909657683223486
+2019-05-20 23:16:30.525431
+epoch:21, batch:9, After 5 iterations
+discriminator loss: 0.0040682717226445675
+epoch:21, batch:9, generator loss: 0.009065359830856323
+2019-05-20 23:16:47.454741
+epoch:21, batch:10, After 5 iterations
+discriminator loss: 0.004056336358189583
+epoch:21, batch:10, generator loss: 0.009034906513988972
+2019-05-20 23:17:04.029397
+epoch:21, batch:11, After 5 iterations
+discriminator loss: 0.0040410892106592655
+epoch:21, batch:11, generator loss: 0.00900351069867611
+2019-05-20 23:17:20.361718
+epoch:22, batch:0, After 5 iterations
+discriminator loss: 0.004031778313219547
+epoch:22, batch:0, generator loss: 0.008973266929388046
+2019-05-20 23:17:37.209769
+epoch:22, batch:1, After 5 iterations
+discriminator loss: 0.004017554223537445
+epoch:22, batch:1, generator loss: 0.008943929336965084
+2019-05-20 23:17:54.721932
+epoch:22, batch:2, After 5 iterations
+discriminator loss: 0.0040086135268211365
+epoch:22, batch:2, generator loss: 0.008914753794670105
+2019-05-20 23:18:10.624382
+epoch:22, batch:3, After 5 iterations
+discriminator loss: 0.0039893812499940395
+epoch:22, batch:3, generator loss: 0.008885004557669163
+2019-05-20 23:18:26.531397
+epoch:22, batch:4, After 5 iterations
+discriminator loss: 0.00397912971675396
+epoch:22, batch:4, generator loss: 0.008855380117893219
+2019-05-20 23:18:43.904494
+epoch:22, batch:5, After 5 iterations
+discriminator loss: 0.00396394357085228
+epoch:22, batch:5, generator loss: 0.008825501427054405
+2019-05-20 23:19:01.101045
+epoch:22, batch:6, After 5 iterations
+discriminator loss: 0.003951200749725103
+epoch:22, batch:6, generator loss: 0.00879613496363163
+2019-05-20 23:19:18.856447
+epoch:22, batch:7, After 5 iterations
+discriminator loss: 0.0039373054169118404
+epoch:22, batch:7, generator loss: 0.00876686628907919
+2019-05-20 23:19:35.902815
+epoch:22, batch:8, After 5 iterations
+discriminator loss: 0.003942006733268499
+epoch:22, batch:8, generator loss: 0.008740345947444439
+2019-05-20 23:19:52.496962
+epoch:22, batch:9, After 5 iterations
+discriminator loss: 0.003914947155863047
+epoch:22, batch:9, generator loss: 0.008710743859410286
+2019-05-20 23:20:10.296331
+epoch:22, batch:10, After 5 iterations
+discriminator loss: 0.0039021691773086786
+epoch:22, batch:10, generator loss: 0.008682184852659702
+2019-05-20 23:20:26.572822
+epoch:22, batch:11, After 5 iterations
+discriminator loss: 0.0038920787628740072
+epoch:22, batch:11, generator loss: 0.00865386612713337
+2019-05-20 23:20:42.608448
+epoch:23, batch:0, After 5 iterations
+discriminator loss: 0.003879919648170471
+epoch:23, batch:0, generator loss: 0.008625196292996407
+2019-05-20 23:20:59.244908
+epoch:23, batch:1, After 5 iterations
+discriminator loss: 0.0038647125475108624
+epoch:23, batch:1, generator loss: 0.008596879430115223
+2019-05-20 23:21:15.894864
+epoch:23, batch:2, After 5 iterations
+discriminator loss: 0.003849111730232835
+epoch:23, batch:2, generator loss: 0.008569089695811272
+2019-05-20 23:21:33.183565
+epoch:23, batch:3, After 5 iterations
+discriminator loss: 0.0038445009849965572
+epoch:23, batch:3, generator loss: 0.008541037328541279
+2019-05-20 23:21:49.140874
+epoch:23, batch:4, After 5 iterations
+discriminator loss: 0.0038325090426951647
+epoch:23, batch:4, generator loss: 0.008513989858329296
+2019-05-20 23:22:06.429619
+epoch:23, batch:5, After 5 iterations
+discriminator loss: 0.003817279590293765
+epoch:23, batch:5, generator loss: 0.008487577550113201
+2019-05-20 23:22:22.919503
+epoch:23, batch:6, After 5 iterations
+discriminator loss: 0.0038066557608544827
+epoch:23, batch:6, generator loss: 0.008459779433906078
+2019-05-20 23:22:39.316207
+epoch:23, batch:7, After 5 iterations
+discriminator loss: 0.003792654722929001
+epoch:23, batch:7, generator loss: 0.008433244191110134
+2019-05-20 23:22:56.071407
+epoch:23, batch:8, After 5 iterations
+discriminator loss: 0.0037804623134434223
+epoch:23, batch:8, generator loss: 0.008406135253608227
+2019-05-20 23:23:12.664987
+epoch:23, batch:9, After 5 iterations
+discriminator loss: 0.0037687839940190315
+epoch:23, batch:9, generator loss: 0.008379489183425903
+2019-05-20 23:23:30.796505
+epoch:23, batch:10, After 5 iterations
+discriminator loss: 0.00375800090841949
+epoch:23, batch:10, generator loss: 0.00835349690169096
+2019-05-20 23:23:47.742168
+epoch:23, batch:11, After 5 iterations
+discriminator loss: 0.003752585267648101
+epoch:23, batch:11, generator loss: 0.008328731171786785
+2019-05-20 23:24:03.771140
+epoch:24, batch:0, After 5 iterations
+discriminator loss: 0.0037346885073930025
+epoch:24, batch:0, generator loss: 0.008303048089146614
+2019-05-20 23:24:20.519372
+epoch:24, batch:1, After 5 iterations
+discriminator loss: 0.0037238288205116987
+epoch:24, batch:1, generator loss: 0.008276822045445442
+2019-05-20 23:24:37.069078
+epoch:24, batch:2, After 5 iterations
+discriminator loss: 0.0037212108727544546
+epoch:24, batch:2, generator loss: 0.008252391591668129
+2019-05-20 23:24:54.670029
+epoch:24, batch:3, After 5 iterations
+discriminator loss: 0.003702545538544655
+epoch:24, batch:3, generator loss: 0.008226068690419197
+2019-05-20 23:25:10.619350
+epoch:24, batch:4, After 5 iterations
+discriminator loss: 0.0036889351904392242
+epoch:24, batch:4, generator loss: 0.008200730197131634
+2019-05-20 23:25:27.387077
+epoch:24, batch:5, After 5 iterations
+discriminator loss: 0.0036781346425414085
+epoch:24, batch:5, generator loss: 0.008175761438906193
+2019-05-20 23:25:43.117991
+epoch:24, batch:6, After 5 iterations
+discriminator loss: 0.0036646397784352303
+epoch:24, batch:6, generator loss: 0.00815051794052124
+2019-05-20 23:25:59.655745
+epoch:24, batch:7, After 5 iterations
+discriminator loss: 0.0036607696674764156
+epoch:24, batch:7, generator loss: 0.008125921711325645
+2019-05-20 23:26:15.764208
+epoch:24, batch:8, After 5 iterations
+discriminator loss: 0.0036490638740360737
+epoch:24, batch:8, generator loss: 0.008102002553641796
+2019-05-20 23:26:32.125770
+epoch:24, batch:9, After 5 iterations
+discriminator loss: 0.0036408796440809965
+epoch:24, batch:9, generator loss: 0.008077752776443958
+2019-05-20 23:26:51.123078
+epoch:24, batch:10, After 5 iterations
+discriminator loss: 0.0036291922442615032
+epoch:24, batch:10, generator loss: 0.008054010570049286
+2019-05-20 23:27:07.569582
+epoch:24, batch:11, After 5 iterations
+discriminator loss: 0.0036141599994152784
+epoch:24, batch:11, generator loss: 0.008030002936720848
+2019-05-20 23:27:25.506593
+epoch:25, batch:0, After 5 iterations
+discriminator loss: 0.0036022739950567484
+epoch:25, batch:0, generator loss: 0.008006040006875992
+2019-05-20 23:27:41.969381
+epoch:25, batch:1, After 5 iterations
+discriminator loss: 0.0035967084113508463
+epoch:25, batch:1, generator loss: 0.007983021438121796
+2019-05-20 23:27:59.181306
+epoch:25, batch:2, After 5 iterations
+discriminator loss: 0.0035799311008304358
+epoch:25, batch:2, generator loss: 0.007958774454891682
+2019-05-20 23:28:15.639190
+epoch:25, batch:3, After 5 iterations
+discriminator loss: 0.0035770570393651724
+epoch:25, batch:3, generator loss: 0.007935076020658016
+2019-05-20 23:28:34.697176
+epoch:25, batch:4, After 5 iterations
+discriminator loss: 0.003563817124813795
+epoch:25, batch:4, generator loss: 0.007912704721093178
+2019-05-20 23:28:51.166694
+epoch:25, batch:5, After 5 iterations
+discriminator loss: 0.003552737645804882
+epoch:25, batch:5, generator loss: 0.007889499887824059
+2019-05-20 23:29:07.984676
+epoch:25, batch:6, After 5 iterations
+discriminator loss: 0.0035388944670557976
+epoch:25, batch:6, generator loss: 0.007866738364100456
+2019-05-20 23:29:24.343912
+epoch:25, batch:7, After 5 iterations
+discriminator loss: 0.0035337205044925213
+epoch:25, batch:7, generator loss: 0.007844142615795135
+2019-05-20 23:29:40.396963
+epoch:25, batch:8, After 5 iterations
+discriminator loss: 0.0035259800497442484
+epoch:25, batch:8, generator loss: 0.007820822298526764
+2019-05-20 23:29:57.148152
+epoch:25, batch:9, After 5 iterations
+discriminator loss: 0.0035172211937606335
+epoch:25, batch:9, generator loss: 0.007800071965903044
+2019-05-20 23:30:14.692463
+epoch:25, batch:10, After 5 iterations
+discriminator loss: 0.0034988573752343655
+epoch:25, batch:10, generator loss: 0.007776997052133083
+2019-05-20 23:30:31.552385
+epoch:25, batch:11, After 5 iterations
+discriminator loss: 0.0034940578043460846
+epoch:25, batch:11, generator loss: 0.007755631115287542
+2019-05-20 23:30:49.053538
+epoch:26, batch:0, After 5 iterations
+discriminator loss: 0.003483832348138094
+epoch:26, batch:0, generator loss: 0.00773318437859416
+2019-05-20 23:31:05.367225
+epoch:26, batch:1, After 5 iterations
+discriminator loss: 0.0034739619586616755
+epoch:26, batch:1, generator loss: 0.007711522746831179
+2019-05-20 23:31:22.383700
+epoch:26, batch:2, After 5 iterations
+discriminator loss: 0.0034668068401515484
+epoch:26, batch:2, generator loss: 0.007689895574003458
+2019-05-20 23:31:39.327329
+epoch:26, batch:3, After 5 iterations
+discriminator loss: 0.0034643819089978933
+epoch:26, batch:3, generator loss: 0.007671058177947998
+2019-05-20 23:31:55.708073
+epoch:26, batch:4, After 5 iterations
+discriminator loss: 0.0034404194448143244
+epoch:26, batch:4, generator loss: 0.007648290600627661
+2019-05-20 23:32:12.779100
+epoch:26, batch:5, After 5 iterations
+discriminator loss: 0.0034337013494223356
+epoch:26, batch:5, generator loss: 0.007626510690897703
+2019-05-20 23:32:29.978590
+epoch:26, batch:6, After 5 iterations
+discriminator loss: 0.0034255124628543854
+epoch:26, batch:6, generator loss: 0.007605647202581167
+2019-05-20 23:32:46.875384
+epoch:26, batch:7, After 5 iterations
+discriminator loss: 0.003414517268538475
+epoch:26, batch:7, generator loss: 0.007583564147353172
+2019-05-20 23:33:04.820624
+epoch:26, batch:8, After 5 iterations
+discriminator loss: 0.0034030163660645485
+epoch:26, batch:8, generator loss: 0.007562022190541029
+2019-05-20 23:33:20.920582
+epoch:26, batch:9, After 5 iterations
+discriminator loss: 0.0033953506499528885
+epoch:26, batch:9, generator loss: 0.007540784776210785
+2019-05-20 23:33:37.130884
+epoch:26, batch:10, After 5 iterations
+discriminator loss: 0.003386119846254587
+epoch:26, batch:10, generator loss: 0.007519243750721216
+2019-05-20 23:33:53.523053
+epoch:26, batch:11, After 5 iterations
+discriminator loss: 0.0033742317464202642
+epoch:26, batch:11, generator loss: 0.007497785612940788
+2019-05-20 23:34:11.501265
+epoch:27, batch:0, After 5 iterations
+discriminator loss: 0.003370952093973756
+epoch:27, batch:0, generator loss: 0.007476662285625935
+2019-05-20 23:34:28.270425
+epoch:27, batch:1, After 5 iterations
+discriminator loss: 0.003360991133376956
+epoch:27, batch:1, generator loss: 0.00745483348146081
+2019-05-20 23:34:44.301048
+epoch:27, batch:2, After 5 iterations
+discriminator loss: 0.003346859011799097
+epoch:27, batch:2, generator loss: 0.007432389538735151
+2019-05-20 23:35:01.372886
+epoch:27, batch:3, After 5 iterations
+discriminator loss: 0.003335947170853615
+epoch:27, batch:3, generator loss: 0.007410907186567783
+2019-05-20 23:35:17.970612
+epoch:27, batch:4, After 5 iterations
+discriminator loss: 0.0033308048732578754
+epoch:27, batch:4, generator loss: 0.007389279082417488
+2019-05-20 23:35:34.966616
+epoch:27, batch:5, After 5 iterations
+discriminator loss: 0.003324635326862335
+epoch:27, batch:5, generator loss: 0.007368454243987799
+2019-05-20 23:35:52.720086
+epoch:27, batch:6, After 5 iterations
+discriminator loss: 0.003316183341667056
+epoch:27, batch:6, generator loss: 0.00734821567311883
+2019-05-20 23:36:09.036471
+epoch:27, batch:7, After 5 iterations
+discriminator loss: 0.0033052063081413507
+epoch:27, batch:7, generator loss: 0.007327297702431679
+2019-05-20 23:36:24.741454
+epoch:27, batch:8, After 5 iterations
+discriminator loss: 0.0032967524603009224
+epoch:27, batch:8, generator loss: 0.007307904306799173
+2019-05-20 23:36:41.980335
+epoch:27, batch:9, After 5 iterations
+discriminator loss: 0.003290210384875536
+epoch:27, batch:9, generator loss: 0.0072883605025708675
+2019-05-20 23:37:00.227219
+epoch:27, batch:10, After 5 iterations
+discriminator loss: 0.0032826964743435383
+epoch:27, batch:10, generator loss: 0.0072702099569141865
+2019-05-20 23:37:16.724228
+epoch:27, batch:11, After 5 iterations
+discriminator loss: 0.0032700642477720976
+epoch:27, batch:11, generator loss: 0.0072500440292060375
+2019-05-20 23:37:33.008239
+epoch:28, batch:0, After 5 iterations
+discriminator loss: 0.003260919824242592
+epoch:28, batch:0, generator loss: 0.0072310385294258595
+2019-05-20 23:37:49.205452
+epoch:28, batch:1, After 5 iterations
+discriminator loss: 0.00325199612416327
+epoch:28, batch:1, generator loss: 0.007211894262582064
+2019-05-20 23:38:06.029578
+epoch:28, batch:2, After 5 iterations
+discriminator loss: 0.0032424782402813435
+epoch:28, batch:2, generator loss: 0.007192709017544985
+2019-05-20 23:38:22.824686
+epoch:28, batch:3, After 5 iterations
+discriminator loss: 0.003237916622310877
+epoch:28, batch:3, generator loss: 0.007173584308475256
+2019-05-20 23:38:40.046570
+epoch:28, batch:4, After 5 iterations
+discriminator loss: 0.003228801768273115
+epoch:28, batch:4, generator loss: 0.007155041676014662
+2019-05-20 23:38:56.300087
+epoch:28, batch:5, After 5 iterations
+discriminator loss: 0.0032150268089026213
+epoch:28, batch:5, generator loss: 0.007136285305023193
+2019-05-20 23:39:14.353982
+epoch:28, batch:6, After 5 iterations
+discriminator loss: 0.0032091597095131874
+epoch:28, batch:6, generator loss: 0.007117297034710646
+2019-05-20 23:39:31.337602
+epoch:28, batch:7, After 5 iterations
+discriminator loss: 0.0031984003726392984
+epoch:28, batch:7, generator loss: 0.00709861284121871
+2019-05-20 23:39:47.656975
+epoch:28, batch:8, After 5 iterations
+discriminator loss: 0.0031951870769262314
+epoch:28, batch:8, generator loss: 0.007080495357513428
+2019-05-20 23:40:05.911128
+epoch:28, batch:9, After 5 iterations
+discriminator loss: 0.0031852643005549908
+epoch:28, batch:9, generator loss: 0.00706231826916337
+2019-05-20 23:40:22.813942
+epoch:28, batch:10, After 5 iterations
+discriminator loss: 0.0031764039304107428
+epoch:28, batch:10, generator loss: 0.007043514866381884
+2019-05-20 23:40:40.717588
+epoch:28, batch:11, After 5 iterations
+discriminator loss: 0.0031685475260019302
+epoch:28, batch:11, generator loss: 0.007025758735835552
+2019-05-20 23:40:57.042919
+epoch:29, batch:0, After 5 iterations
+discriminator loss: 0.003161502303555608
+epoch:29, batch:0, generator loss: 0.007007698528468609
+2019-05-20 23:41:14.882152
+epoch:29, batch:1, After 5 iterations
+discriminator loss: 0.0031548819970339537
+epoch:29, batch:1, generator loss: 0.006990821100771427
+2019-05-20 23:41:30.705509
+epoch:29, batch:2, After 5 iterations
+discriminator loss: 0.003142585512250662
+epoch:29, batch:2, generator loss: 0.006972393952310085
+2019-05-20 23:41:48.715212
+epoch:29, batch:3, After 5 iterations
+discriminator loss: 0.003137298859655857
+epoch:29, batch:3, generator loss: 0.006954995449632406
+2019-05-20 23:42:04.828098
+epoch:29, batch:4, After 5 iterations
+discriminator loss: 0.0031301407143473625
+epoch:29, batch:4, generator loss: 0.006937619764357805
+2019-05-20 23:42:22.461045
+epoch:29, batch:5, After 5 iterations
+discriminator loss: 0.0031203238759189844
+epoch:29, batch:5, generator loss: 0.006920218002051115
+2019-05-20 23:42:38.782425
+epoch:29, batch:6, After 5 iterations
+discriminator loss: 0.003110847668722272
+epoch:29, batch:6, generator loss: 0.006902857683598995
+2019-05-20 23:42:55.406541
+epoch:29, batch:7, After 5 iterations
+discriminator loss: 0.0031054066494107246
+epoch:29, batch:7, generator loss: 0.006885801441967487
+2019-05-20 23:43:11.602324
+epoch:29, batch:8, After 5 iterations
+discriminator loss: 0.0030977956485003233
+epoch:29, batch:8, generator loss: 0.006868505850434303
+2019-05-20 23:43:28.713850
+epoch:29, batch:9, After 5 iterations
+discriminator loss: 0.0030895245727151632
+epoch:29, batch:9, generator loss: 0.0068509699776768684
+2019-05-20 23:43:46.031592
+epoch:29, batch:10, After 5 iterations
+discriminator loss: 0.00308037456125021
+epoch:29, batch:10, generator loss: 0.006833581253886223
+2019-05-20 23:44:02.670104
+epoch:29, batch:11, After 5 iterations
+discriminator loss: 0.003077559871599078
+epoch:29, batch:11, generator loss: 0.006816650275141001
+2019-05-20 23:44:19.725023
+epoch:30, batch:0, After 5 iterations
+discriminator loss: 0.0030650501139461994
+epoch:30, batch:0, generator loss: 0.006799696478992701
+2019-05-20 23:44:35.486822
+epoch:30, batch:1, After 5 iterations
+discriminator loss: 0.003056502668187022
+epoch:30, batch:1, generator loss: 0.006782451178878546
+2019-05-20 23:44:51.253151
+epoch:30, batch:2, After 5 iterations
+discriminator loss: 0.0030511091463267803
+epoch:30, batch:2, generator loss: 0.006765858270227909
+2019-05-20 23:45:08.351462
+epoch:30, batch:3, After 5 iterations
+discriminator loss: 0.003042047843337059
+epoch:30, batch:3, generator loss: 0.006749412044882774
+2019-05-20 23:45:26.080061
+epoch:30, batch:4, After 5 iterations
+discriminator loss: 0.003034768858924508
+epoch:30, batch:4, generator loss: 0.006732388865202665
+2019-05-20 23:45:42.598001
+epoch:30, batch:5, After 5 iterations
+discriminator loss: 0.0030339988879859447
+epoch:30, batch:5, generator loss: 0.006715680472552776
+2019-05-20 23:45:59.719701
+epoch:30, batch:6, After 5 iterations
+discriminator loss: 0.003019176423549652
+epoch:30, batch:6, generator loss: 0.0066992915235459805
+2019-05-20 23:46:16.008277
+epoch:30, batch:7, After 5 iterations
+discriminator loss: 0.0030119118746370077
+epoch:30, batch:7, generator loss: 0.0066826362162828445
+2019-05-20 23:46:32.149696
+epoch:30, batch:8, After 5 iterations
+discriminator loss: 0.003007924882695079
+epoch:30, batch:8, generator loss: 0.0066666267812252045
+2019-05-20 23:46:48.065135
+epoch:30, batch:9, After 5 iterations
+discriminator loss: 0.0029997993260622025
+epoch:30, batch:9, generator loss: 0.006650523282587528
+2019-05-20 23:47:05.418707
+epoch:30, batch:10, After 5 iterations
+discriminator loss: 0.002993728267028928
+epoch:30, batch:10, generator loss: 0.006635068915784359
+2019-05-20 23:47:22.678531
+epoch:30, batch:11, After 5 iterations
+discriminator loss: 0.002985297003760934
+epoch:30, batch:11, generator loss: 0.006619123741984367
+2019-05-20 23:47:39.491555
+epoch:31, batch:0, After 5 iterations
+discriminator loss: 0.0029811374843120575
+epoch:31, batch:0, generator loss: 0.0066040861420333385
+2019-05-20 23:47:55.755851
+epoch:31, batch:1, After 5 iterations
+discriminator loss: 0.0029686044435948133
+epoch:31, batch:1, generator loss: 0.006587938871234655
+2019-05-20 23:48:12.250734
+epoch:31, batch:2, After 5 iterations
+discriminator loss: 0.0029647154733538628
+epoch:31, batch:2, generator loss: 0.006572376936674118
+2019-05-20 23:48:28.652852
+epoch:31, batch:3, After 5 iterations
+discriminator loss: 0.0029535486828535795
+epoch:31, batch:3, generator loss: 0.006556950509548187
+2019-05-20 23:48:45.257950
+epoch:31, batch:4, After 5 iterations
+discriminator loss: 0.0029506676364690065
+epoch:31, batch:4, generator loss: 0.0065415725111961365
+2019-05-20 23:49:02.437758
+epoch:31, batch:5, After 5 iterations
+discriminator loss: 0.002943337196484208
+epoch:31, batch:5, generator loss: 0.006525456439703703
+2019-05-20 23:49:19.047381
+epoch:31, batch:6, After 5 iterations
+discriminator loss: 0.00293276971206069
+epoch:31, batch:6, generator loss: 0.006510191597044468
+2019-05-20 23:49:35.416588
+epoch:31, batch:7, After 5 iterations
+discriminator loss: 0.0029311608523130417
+epoch:31, batch:7, generator loss: 0.006494761910289526
+2019-05-20 23:49:53.733649
+epoch:31, batch:8, After 5 iterations
+discriminator loss: 0.002919792430475354
+epoch:31, batch:8, generator loss: 0.006479459814727306
+2019-05-20 23:50:10.244742
+epoch:31, batch:9, After 5 iterations
+discriminator loss: 0.0029126291628926992
+epoch:31, batch:9, generator loss: 0.006464173551648855
+2019-05-20 23:50:27.093881
+epoch:31, batch:10, After 5 iterations
+discriminator loss: 0.002905038418248296
+epoch:31, batch:10, generator loss: 0.006449423264712095
+2019-05-20 23:50:43.697796
+epoch:31, batch:11, After 5 iterations
+discriminator loss: 0.0028973405715078115
+epoch:31, batch:11, generator loss: 0.006433439441025257
+2019-05-20 23:51:00.738232
+epoch:32, batch:0, After 5 iterations
+discriminator loss: 0.00289553334005177
+epoch:32, batch:0, generator loss: 0.0064184051007032394
+2019-05-20 23:51:16.917597
+epoch:32, batch:1, After 5 iterations
+discriminator loss: 0.0028878296725451946
+epoch:32, batch:1, generator loss: 0.006403779145330191
+2019-05-20 23:51:33.807566
+epoch:32, batch:2, After 5 iterations
+discriminator loss: 0.0028806678019464016
+epoch:32, batch:2, generator loss: 0.006388692185282707
+2019-05-20 23:51:50.557293
+epoch:32, batch:3, After 5 iterations
+discriminator loss: 0.0028744013980031013
+epoch:32, batch:3, generator loss: 0.006373976822942495
+2019-05-20 23:52:07.369290
+epoch:32, batch:4, After 5 iterations
+discriminator loss: 0.002864403650164604
+epoch:32, batch:4, generator loss: 0.006359149236232042
+2019-05-20 23:52:23.617330
+epoch:32, batch:5, After 5 iterations
+discriminator loss: 0.0028571661096066236
+epoch:32, batch:5, generator loss: 0.006344291847199202
+2019-05-20 23:52:41.219826
+epoch:32, batch:6, After 5 iterations
+discriminator loss: 0.0028528464026749134
+epoch:32, batch:6, generator loss: 0.0063292658887803555
+2019-05-20 23:52:58.095715
+epoch:32, batch:7, After 5 iterations
+discriminator loss: 0.0028515730518847704
+epoch:32, batch:7, generator loss: 0.006315488833934069
+2019-05-20 23:53:14.309337
+epoch:32, batch:8, After 5 iterations
+discriminator loss: 0.0028389988001435995
+epoch:32, batch:8, generator loss: 0.0063007972203195095
+2019-05-20 23:53:30.719434
+epoch:32, batch:9, After 5 iterations
+discriminator loss: 0.0028369082137942314
+epoch:32, batch:9, generator loss: 0.006287177558988333
+2019-05-20 23:53:47.660115
+epoch:32, batch:10, After 5 iterations
+discriminator loss: 0.0028266049921512604
+epoch:32, batch:10, generator loss: 0.006272920873016119
+2019-05-20 23:54:04.759387
+epoch:32, batch:11, After 5 iterations
+discriminator loss: 0.0028170228470116854
+epoch:32, batch:11, generator loss: 0.006258102133870125
+2019-05-20 23:54:20.430467
+epoch:33, batch:0, After 5 iterations
+discriminator loss: 0.002813328756019473
+epoch:33, batch:0, generator loss: 0.006244239863008261
+2019-05-20 23:54:36.886440
+epoch:33, batch:1, After 5 iterations
+discriminator loss: 0.002807506825774908
+epoch:33, batch:1, generator loss: 0.006229504011571407
+2019-05-20 23:54:53.353064
+epoch:33, batch:2, After 5 iterations
+discriminator loss: 0.0028008611407130957
+epoch:33, batch:2, generator loss: 0.006215626839548349
+2019-05-20 23:55:09.684880
+epoch:33, batch:3, After 5 iterations
+discriminator loss: 0.0027920189313590527
+epoch:33, batch:3, generator loss: 0.006201217882335186
+2019-05-20 23:55:25.414797
+epoch:33, batch:4, After 5 iterations
+discriminator loss: 0.0027905702590942383
+epoch:33, batch:4, generator loss: 0.006187599617987871
+2019-05-20 23:55:43.115441
+epoch:33, batch:5, After 5 iterations
+discriminator loss: 0.002783243777230382
+epoch:33, batch:5, generator loss: 0.006174135487526655
+2019-05-20 23:55:59.941989
+epoch:33, batch:6, After 5 iterations
+discriminator loss: 0.0027772937901318073
+epoch:33, batch:6, generator loss: 0.006160049233585596
+2019-05-20 23:56:15.975099
+epoch:33, batch:7, After 5 iterations
+discriminator loss: 0.0027711866423487663
+epoch:33, batch:7, generator loss: 0.006146825384348631
+2019-05-20 23:56:32.740271
+epoch:33, batch:8, After 5 iterations
+discriminator loss: 0.0027617744635790586
+epoch:33, batch:8, generator loss: 0.0061328518204391
+2019-05-20 23:56:50.922602
+epoch:33, batch:9, After 5 iterations
+discriminator loss: 0.0027583083137869835
+epoch:33, batch:9, generator loss: 0.006119508296251297
+2019-05-20 23:57:08.706797
+epoch:33, batch:10, After 5 iterations
+discriminator loss: 0.0027562042232602835
+epoch:33, batch:10, generator loss: 0.006106528453528881
+2019-05-20 23:57:25.166043
+epoch:33, batch:11, After 5 iterations
+discriminator loss: 0.0027432728093117476
+epoch:33, batch:11, generator loss: 0.006092975381761789
+2019-05-20 23:57:40.991703
+epoch:34, batch:0, After 5 iterations
+discriminator loss: 0.002738280687481165
+epoch:34, batch:0, generator loss: 0.006079576443880796
+2019-05-20 23:57:57.726930
+epoch:34, batch:1, After 5 iterations
+discriminator loss: 0.0027310485020279884
+epoch:34, batch:1, generator loss: 0.0060656373389065266
+2019-05-20 23:58:14.353448
+epoch:34, batch:2, After 5 iterations
+discriminator loss: 0.002729781437665224
+epoch:34, batch:2, generator loss: 0.006052673328667879
+2019-05-20 23:58:31.413675
+epoch:34, batch:3, After 5 iterations
+discriminator loss: 0.002721303841099143
+epoch:34, batch:3, generator loss: 0.006038941442966461
+2019-05-20 23:58:48.379911
+epoch:34, batch:4, After 5 iterations
+discriminator loss: 0.002716790186241269
+epoch:34, batch:4, generator loss: 0.006025651469826698
+2019-05-20 23:59:04.255909
+epoch:34, batch:5, After 5 iterations
+discriminator loss: 0.002710155211389065
+epoch:34, batch:5, generator loss: 0.006012084428220987
+2019-05-20 23:59:20.504463
+epoch:34, batch:6, After 5 iterations
+discriminator loss: 0.0027035041712224483
+epoch:34, batch:6, generator loss: 0.005997172091156244
+2019-05-20 23:59:37.480612
+epoch:34, batch:7, After 5 iterations
+discriminator loss: 0.002698644995689392
+epoch:34, batch:7, generator loss: 0.005981743335723877
+2019-05-20 23:59:53.429940
+epoch:34, batch:8, After 5 iterations
+discriminator loss: 0.0026939287781715393
+epoch:34, batch:8, generator loss: 0.0059653399512171745
+2019-05-21 00:00:10.708725
+epoch:34, batch:9, After 5 iterations
+discriminator loss: 0.0026832253206521273
+epoch:34, batch:9, generator loss: 0.00595091562718153
+2019-05-21 00:00:27.314507
+epoch:34, batch:10, After 5 iterations
+discriminator loss: 0.002680658595636487
+epoch:34, batch:10, generator loss: 0.00593717722222209
+2019-05-21 00:00:45.299531
+epoch:34, batch:11, After 5 iterations
+discriminator loss: 0.0026726294308900833
+epoch:34, batch:11, generator loss: 0.005924016237258911
+2019-05-21 00:01:02.121500
+epoch:35, batch:0, After 5 iterations
+discriminator loss: 0.002667884109541774
+epoch:35, batch:0, generator loss: 0.005910832900553942
+2019-05-21 00:01:20.191194
+epoch:35, batch:1, After 5 iterations
+discriminator loss: 0.0026673898100852966
+epoch:35, batch:1, generator loss: 0.005898024421185255
+2019-05-21 00:01:35.995915
+epoch:35, batch:2, After 5 iterations
+discriminator loss: 0.002656665863469243
+epoch:35, batch:2, generator loss: 0.005885388236492872
+2019-05-21 00:01:52.492737
+epoch:35, batch:3, After 5 iterations
+discriminator loss: 0.0026497473008930683
+epoch:35, batch:3, generator loss: 0.005872557871043682
+2019-05-21 00:02:08.866703
+epoch:35, batch:4, After 5 iterations
+discriminator loss: 0.002643042244017124
+epoch:35, batch:4, generator loss: 0.005859749857336283
+2019-05-21 00:02:25.867879
+epoch:35, batch:5, After 5 iterations
+discriminator loss: 0.002641023602336645
+epoch:35, batch:5, generator loss: 0.005847238004207611
+2019-05-21 00:02:42.940242
+epoch:35, batch:6, After 5 iterations
+discriminator loss: 0.002632082672789693
+epoch:35, batch:6, generator loss: 0.005834688898175955
+2019-05-21 00:02:59.536608
+epoch:35, batch:7, After 5 iterations
+discriminator loss: 0.0026267273351550102
+epoch:35, batch:7, generator loss: 0.005822320003062487
+2019-05-21 00:03:15.836029
+epoch:35, batch:8, After 5 iterations
+discriminator loss: 0.002621623920276761
+epoch:35, batch:8, generator loss: 0.0058097937144339085
+2019-05-21 00:03:32.301975
+epoch:35, batch:9, After 5 iterations
+discriminator loss: 0.00261614634655416
+epoch:35, batch:9, generator loss: 0.005797683261334896
+2019-05-21 00:03:49.905906
+epoch:35, batch:10, After 5 iterations
+discriminator loss: 0.0026092862244695425
+epoch:35, batch:10, generator loss: 0.005785483401268721
+2019-05-21 00:04:06.068357
+epoch:35, batch:11, After 5 iterations
+discriminator loss: 0.00260878331027925
+epoch:35, batch:11, generator loss: 0.005773916840553284
+2019-05-21 00:04:21.934939
+epoch:36, batch:0, After 5 iterations
+discriminator loss: 0.0025984798558056355
+epoch:36, batch:0, generator loss: 0.005761462263762951
+2019-05-21 00:04:39.180945
+epoch:36, batch:1, After 5 iterations
+discriminator loss: 0.0025949515402317047
+epoch:36, batch:1, generator loss: 0.005749554838985205
+2019-05-21 00:04:55.996562
+epoch:36, batch:2, After 5 iterations
+discriminator loss: 0.002587918657809496
+epoch:36, batch:2, generator loss: 0.005737340543419123
+2019-05-21 00:05:13.464994
+epoch:36, batch:3, After 5 iterations
+discriminator loss: 0.0025840720627456903
+epoch:36, batch:3, generator loss: 0.00572580099105835
+2019-05-21 00:05:29.384398
+epoch:36, batch:4, After 5 iterations
+discriminator loss: 0.002582683227956295
+epoch:36, batch:4, generator loss: 0.005715130362659693
+2019-05-21 00:05:46.598314
+epoch:36, batch:5, After 5 iterations
+discriminator loss: 0.0025723797734826803
+epoch:36, batch:5, generator loss: 0.005702414084225893
+2019-05-21 00:06:02.930213
+epoch:36, batch:6, After 5 iterations
+discriminator loss: 0.002566499635577202
+epoch:36, batch:6, generator loss: 0.005690638907253742
+2019-05-21 00:06:19.064073
+epoch:36, batch:7, After 5 iterations
+discriminator loss: 0.0025619359221309423
+epoch:36, batch:7, generator loss: 0.00567932054400444
+2019-05-21 00:06:35.646994
+epoch:36, batch:8, After 5 iterations
+discriminator loss: 0.0025547989644110203
+epoch:36, batch:8, generator loss: 0.005667155608534813
+2019-05-21 00:06:52.471035
+epoch:36, batch:9, After 5 iterations
+discriminator loss: 0.002554558450356126
+epoch:36, batch:9, generator loss: 0.005655702669173479
+2019-05-21 00:07:08.515141
+epoch:36, batch:10, After 5 iterations
+discriminator loss: 0.0025474054273217916
+epoch:36, batch:10, generator loss: 0.0056443288922309875
+2019-05-21 00:07:25.094784
+epoch:36, batch:11, After 5 iterations
+discriminator loss: 0.0025443416088819504
+epoch:36, batch:11, generator loss: 0.005633014719933271
+2019-05-21 00:07:43.080355
+epoch:37, batch:0, After 5 iterations
+discriminator loss: 0.002535821869969368
+epoch:37, batch:0, generator loss: 0.005621685646474361
+2019-05-21 00:08:00.681292
+epoch:37, batch:1, After 5 iterations
+discriminator loss: 0.0025299196131527424
+epoch:37, batch:1, generator loss: 0.005609915126115084
+2019-05-21 00:08:19.747257
+epoch:37, batch:2, After 5 iterations
+discriminator loss: 0.002524325856938958
+epoch:37, batch:2, generator loss: 0.005598215386271477
+2019-05-21 00:08:37.276360
+epoch:37, batch:3, After 5 iterations
+discriminator loss: 0.00252123037353158
+epoch:37, batch:3, generator loss: 0.005586984567344189
+2019-05-21 00:08:55.418502
+epoch:37, batch:4, After 5 iterations
+discriminator loss: 0.002514156512916088
+epoch:37, batch:4, generator loss: 0.005575738847255707
+2019-05-21 00:09:12.570183
+epoch:37, batch:5, After 5 iterations
+discriminator loss: 0.002509536687284708
+epoch:37, batch:5, generator loss: 0.0055641294457018375
+2019-05-21 00:09:28.327038
+epoch:37, batch:6, After 5 iterations
+discriminator loss: 0.0025071408599615097
+epoch:37, batch:6, generator loss: 0.005553636699914932
+2019-05-21 00:09:45.737453
+epoch:37, batch:7, After 5 iterations
+discriminator loss: 0.0025001196190714836
+epoch:37, batch:7, generator loss: 0.005542177706956863
+2019-05-21 00:10:03.201730
+epoch:37, batch:8, After 5 iterations
+discriminator loss: 0.002494092797860503
+epoch:37, batch:8, generator loss: 0.005531130824238062
+2019-05-21 00:10:20.598169
+epoch:37, batch:9, After 5 iterations
+discriminator loss: 0.002491014776751399
+epoch:37, batch:9, generator loss: 0.00552015146240592
+2019-05-21 00:10:36.934247
+epoch:37, batch:10, After 5 iterations
+discriminator loss: 0.002486366778612137
+epoch:37, batch:10, generator loss: 0.005509239621460438
+2019-05-21 00:10:53.100943
+epoch:37, batch:11, After 5 iterations
+discriminator loss: 0.002484874799847603
+epoch:37, batch:11, generator loss: 0.00549878878518939
+2019-05-21 00:11:09.018358
+epoch:38, batch:0, After 5 iterations
+discriminator loss: 0.0024763664696365595
+epoch:38, batch:0, generator loss: 0.005488128401339054
+2019-05-21 00:11:25.629049
+epoch:38, batch:1, After 5 iterations
+discriminator loss: 0.002469038823619485
+epoch:38, batch:1, generator loss: 0.005477010738104582
+2019-05-21 00:11:41.626752
+epoch:38, batch:2, After 5 iterations
+discriminator loss: 0.0024645188823342323
+epoch:38, batch:2, generator loss: 0.005466223228722811
+2019-05-21 00:11:58.926434
+epoch:38, batch:3, After 5 iterations
+discriminator loss: 0.0024601807817816734
+epoch:38, batch:3, generator loss: 0.005455188453197479
+2019-05-21 00:12:15.658214
+epoch:38, batch:4, After 5 iterations
+discriminator loss: 0.0024562636390328407
+epoch:38, batch:4, generator loss: 0.005444247275590897
+2019-05-21 00:12:32.002487
+epoch:38, batch:5, After 5 iterations
+discriminator loss: 0.002450271276757121
+epoch:38, batch:5, generator loss: 0.0054333885200321674
+2019-05-21 00:12:48.247623
+epoch:38, batch:6, After 5 iterations
+discriminator loss: 0.002446576254442334
+epoch:38, batch:6, generator loss: 0.005423350725322962
+2019-05-21 00:13:05.027729
+epoch:38, batch:7, After 5 iterations
+discriminator loss: 0.0024396954104304314
+epoch:38, batch:7, generator loss: 0.005412627011537552
+2019-05-21 00:13:21.624327
+epoch:38, batch:8, After 5 iterations
+discriminator loss: 0.0024363796692341566
+epoch:38, batch:8, generator loss: 0.00540178781375289
+2019-05-21 00:13:38.268800
+epoch:38, batch:9, After 5 iterations
+discriminator loss: 0.0024323067627847195
+epoch:38, batch:9, generator loss: 0.00539142033085227
+2019-05-21 00:13:55.860756
+epoch:38, batch:10, After 5 iterations
+discriminator loss: 0.002424543024972081
+epoch:38, batch:10, generator loss: 0.0053807832300662994
+2019-05-21 00:14:11.917827
+epoch:38, batch:11, After 5 iterations
+discriminator loss: 0.00242124916985631
+epoch:38, batch:11, generator loss: 0.005370438564568758
+2019-05-21 00:14:28.675557
+epoch:39, batch:0, After 5 iterations
+discriminator loss: 0.002419166499748826
+epoch:39, batch:0, generator loss: 0.005360427312552929
+2019-05-21 00:14:45.054745
+epoch:39, batch:1, After 5 iterations
+discriminator loss: 0.002410253742709756
+epoch:39, batch:1, generator loss: 0.005349989514797926
+2019-05-21 00:15:01.013077
+epoch:39, batch:2, After 5 iterations
+discriminator loss: 0.0024070923682302237
+epoch:39, batch:2, generator loss: 0.0053395177237689495
+2019-05-21 00:15:17.493493
+epoch:39, batch:3, After 5 iterations
+discriminator loss: 0.002403016434982419
+epoch:39, batch:3, generator loss: 0.005329192150384188
+2019-05-21 00:15:34.169479
+epoch:39, batch:4, After 5 iterations
+discriminator loss: 0.0023999344557523727
+epoch:39, batch:4, generator loss: 0.005318937823176384
+2019-05-21 00:15:51.419717
+epoch:39, batch:5, After 5 iterations
+discriminator loss: 0.0023933995980769396
+epoch:39, batch:5, generator loss: 0.005308645777404308
+2019-05-21 00:16:08.172688
+epoch:39, batch:6, After 5 iterations
+discriminator loss: 0.002390107372775674
+epoch:39, batch:6, generator loss: 0.005298762582242489
+2019-05-21 00:16:25.587103
+epoch:39, batch:7, After 5 iterations
+discriminator loss: 0.002383221173658967
+epoch:39, batch:7, generator loss: 0.005288459826260805
+2019-05-21 00:16:42.463167
+epoch:39, batch:8, After 5 iterations
+discriminator loss: 0.002378672594204545
+epoch:39, batch:8, generator loss: 0.005278146360069513
+2019-05-21 00:17:00.629131
+epoch:39, batch:9, After 5 iterations
+discriminator loss: 0.0023750481195747852
+epoch:39, batch:9, generator loss: 0.0052682519890367985
+2019-05-21 00:17:17.421385
+epoch:39, batch:10, After 5 iterations
+discriminator loss: 0.002369873458519578
+epoch:39, batch:10, generator loss: 0.005258241668343544
+2019-05-21 00:17:33.397642
+epoch:39, batch:11, After 5 iterations
+discriminator loss: 0.0023669961374253035
+epoch:39, batch:11, generator loss: 0.005248325411230326
+2019-05-21 00:17:50.129892
+epoch:40, batch:0, After 5 iterations
+discriminator loss: 0.002360132522881031
+epoch:40, batch:0, generator loss: 0.005238547455519438
+2019-05-21 00:18:06.123418
+epoch:40, batch:1, After 5 iterations
+discriminator loss: 0.0023580051492899656
+epoch:40, batch:1, generator loss: 0.005228492431342602
+2019-05-21 00:18:23.476534
+epoch:40, batch:2, After 5 iterations
+discriminator loss: 0.002352106384932995
+epoch:40, batch:2, generator loss: 0.0052184974774718285
+2019-05-21 00:18:41.150476
+epoch:40, batch:3, After 5 iterations
+discriminator loss: 0.0023498365189880133
+epoch:40, batch:3, generator loss: 0.0052088284865021706
+2019-05-21 00:18:58.224832
+epoch:40, batch:4, After 5 iterations
+discriminator loss: 0.002344858832657337
+epoch:40, batch:4, generator loss: 0.005198905244469643
+2019-05-21 00:19:14.257597
+epoch:40, batch:5, After 5 iterations
+discriminator loss: 0.002336996141821146
+epoch:40, batch:5, generator loss: 0.005189176183193922
+2019-05-21 00:19:30.145091
+epoch:40, batch:6, After 5 iterations
+discriminator loss: 0.002335208933800459
+epoch:40, batch:6, generator loss: 0.005179436411708593
+2019-05-21 00:19:46.757650
+epoch:40, batch:7, After 5 iterations
+discriminator loss: 0.0023302326444536448
+epoch:40, batch:7, generator loss: 0.005169588141143322
+2019-05-21 00:20:03.132347
+epoch:40, batch:8, After 5 iterations
+discriminator loss: 0.0023267739452421665
+epoch:40, batch:8, generator loss: 0.005160331726074219
+2019-05-21 00:20:19.441328
+epoch:40, batch:9, After 5 iterations
+discriminator loss: 0.0023235331755131483
+epoch:40, batch:9, generator loss: 0.005150992888957262
+2019-05-21 00:20:35.795548
+epoch:40, batch:10, After 5 iterations
+discriminator loss: 0.0023180008865892887
+epoch:40, batch:10, generator loss: 0.0051417360082268715
+2019-05-21 00:20:52.289431
+epoch:40, batch:11, After 5 iterations
+discriminator loss: 0.0023145312443375587
+epoch:40, batch:11, generator loss: 0.00513174943625927
+2019-05-21 00:21:08.961829
+epoch:41, batch:0, After 5 iterations
+discriminator loss: 0.0023092643823474646
+epoch:41, batch:0, generator loss: 0.005122557282447815
+2019-05-21 00:21:25.524149
+epoch:41, batch:1, After 5 iterations
+discriminator loss: 0.0023038354702293873
+epoch:41, batch:1, generator loss: 0.005113057792186737
+2019-05-21 00:21:41.309592
+epoch:41, batch:2, After 5 iterations
+discriminator loss: 0.002297112485393882
+epoch:41, batch:2, generator loss: 0.005103520583361387
+2019-05-21 00:21:58.331053
+epoch:41, batch:3, After 5 iterations
+discriminator loss: 0.0022954780142754316
+epoch:41, batch:3, generator loss: 0.005094227381050587
+2019-05-21 00:22:15.196932
+epoch:41, batch:4, After 5 iterations
+discriminator loss: 0.002292598830536008
+epoch:41, batch:4, generator loss: 0.005084862932562828
+2019-05-21 00:22:31.457437
+epoch:41, batch:5, After 5 iterations
+discriminator loss: 0.002286782953888178
+epoch:41, batch:5, generator loss: 0.005075876601040363
+2019-05-21 00:22:49.317552
+epoch:41, batch:6, After 5 iterations
+discriminator loss: 0.0022830411326140165
+epoch:41, batch:6, generator loss: 0.0050665573216974735
+2019-05-21 00:23:04.856985
+epoch:41, batch:7, After 5 iterations
+discriminator loss: 0.002280455781146884
+epoch:41, batch:7, generator loss: 0.005056765861809254
+2019-05-21 00:23:23.175975
+epoch:41, batch:8, After 5 iterations
+discriminator loss: 0.00227387179620564
+epoch:41, batch:8, generator loss: 0.00504786241799593
+2019-05-21 00:23:39.579705
+epoch:41, batch:9, After 5 iterations
+discriminator loss: 0.002271148143336177
+epoch:41, batch:9, generator loss: 0.005038707982748747
+2019-05-21 00:23:56.297487
+epoch:41, batch:10, After 5 iterations
+discriminator loss: 0.002265427727252245
+epoch:41, batch:10, generator loss: 0.005029280669987202
+2019-05-21 00:24:12.706640
+epoch:41, batch:11, After 5 iterations
+discriminator loss: 0.0022614193148911
+epoch:41, batch:11, generator loss: 0.005020021460950375
+2019-05-21 00:24:30.752925
+epoch:42, batch:0, After 5 iterations
+discriminator loss: 0.002258461667224765
+epoch:42, batch:0, generator loss: 0.005011091940104961
+2019-05-21 00:24:47.408517
+epoch:42, batch:1, After 5 iterations
+discriminator loss: 0.0022515186574310064
+epoch:42, batch:1, generator loss: 0.005001930519938469
+2019-05-21 00:25:03.375787
+epoch:42, batch:2, After 5 iterations
+discriminator loss: 0.0022507456596940756
+epoch:42, batch:2, generator loss: 0.004993248265236616
+2019-05-21 00:25:19.477683
+epoch:42, batch:3, After 5 iterations
+discriminator loss: 0.0022435938008129597
+epoch:42, batch:3, generator loss: 0.004983873106539249
+2019-05-21 00:25:36.136171
+epoch:42, batch:4, After 5 iterations
+discriminator loss: 0.0022413094993680716
+epoch:42, batch:4, generator loss: 0.004974917974323034
+2019-05-21 00:25:53.284635
+epoch:42, batch:5, After 5 iterations
+discriminator loss: 0.0022375115659087896
+epoch:42, batch:5, generator loss: 0.0049661314114928246
+2019-05-21 00:26:09.031192
+epoch:42, batch:6, After 5 iterations
+discriminator loss: 0.0022319373674690723
+epoch:42, batch:6, generator loss: 0.00495695136487484
+2019-05-21 00:26:25.910670
+epoch:42, batch:7, After 5 iterations
+discriminator loss: 0.002230448881164193
+epoch:42, batch:7, generator loss: 0.004948722664266825
+2019-05-21 00:26:41.812688
+epoch:42, batch:8, After 5 iterations
+discriminator loss: 0.00222549750469625
+epoch:42, batch:8, generator loss: 0.004939740989357233
+2019-05-21 00:27:00.191524
+epoch:42, batch:9, After 5 iterations
+discriminator loss: 0.0022218425292521715
+epoch:42, batch:9, generator loss: 0.004930790048092604
+2019-05-21 00:27:18.142620
+epoch:42, batch:10, After 5 iterations
+discriminator loss: 0.0022148399148136377
+epoch:42, batch:10, generator loss: 0.004921928513795137
+2019-05-21 00:27:35.484783
+epoch:42, batch:11, After 5 iterations
+discriminator loss: 0.0022121842484921217
+epoch:42, batch:11, generator loss: 0.004913149867206812
+2019-05-21 00:27:51.768244
+epoch:43, batch:0, After 5 iterations
+discriminator loss: 0.0022082014475017786
+epoch:43, batch:0, generator loss: 0.004903947934508324
+2019-05-21 00:28:07.646834
+epoch:43, batch:1, After 5 iterations
+discriminator loss: 0.0022040316835045815
+epoch:43, batch:1, generator loss: 0.0048951879143714905
+2019-05-21 00:28:23.802199
+epoch:43, batch:2, After 5 iterations
+discriminator loss: 0.00220041093416512
+epoch:43, batch:2, generator loss: 0.0048866188153624535
+2019-05-21 00:28:39.962960
+epoch:43, batch:3, After 5 iterations
+discriminator loss: 0.002196846529841423
+epoch:43, batch:3, generator loss: 0.004877795465290546
+2019-05-21 00:28:56.139707
+epoch:43, batch:4, After 5 iterations
+discriminator loss: 0.002195383422076702
+epoch:43, batch:4, generator loss: 0.00486947363242507
+2019-05-21 00:29:15.045739
+epoch:43, batch:5, After 5 iterations
+discriminator loss: 0.0021901289001107216
+epoch:43, batch:5, generator loss: 0.0048609571531414986
+2019-05-21 00:29:30.893123
+epoch:43, batch:6, After 5 iterations
+discriminator loss: 0.00218587345443666
+epoch:43, batch:6, generator loss: 0.004852340091019869
+2019-05-21 00:29:48.460726
+epoch:43, batch:7, After 5 iterations
+discriminator loss: 0.002183283446356654
+epoch:43, batch:7, generator loss: 0.004843887407332659
+2019-05-21 00:30:04.715608
+epoch:43, batch:8, After 5 iterations
+discriminator loss: 0.0021779430098831654
+epoch:43, batch:8, generator loss: 0.0048352512530982494
+2019-05-21 00:30:23.324830
+epoch:43, batch:9, After 5 iterations
+discriminator loss: 0.0021752165630459785
+epoch:43, batch:9, generator loss: 0.004826967604458332
+2019-05-21 00:30:39.346964
+epoch:43, batch:10, After 5 iterations
+discriminator loss: 0.0021693953312933445
+epoch:43, batch:10, generator loss: 0.004818335175514221
+2019-05-21 00:30:55.444445
+epoch:43, batch:11, After 5 iterations
+discriminator loss: 0.002165645593777299
+epoch:43, batch:11, generator loss: 0.0048095425590872765
+2019-05-21 00:31:11.726488
+epoch:44, batch:0, After 5 iterations
+discriminator loss: 0.002162439748644829
+epoch:44, batch:0, generator loss: 0.004801374860107899
+2019-05-21 00:31:28.173072
+epoch:44, batch:1, After 5 iterations
+discriminator loss: 0.0021607172675430775
+epoch:44, batch:1, generator loss: 0.00479318480938673
+2019-05-21 00:31:44.743734
+epoch:44, batch:2, After 5 iterations
+discriminator loss: 0.0021545053459703922
+epoch:44, batch:2, generator loss: 0.004784552846103907
+2019-05-21 00:32:02.233978
+epoch:44, batch:3, After 5 iterations
+discriminator loss: 0.002150770043954253
+epoch:44, batch:3, generator loss: 0.004775861278176308
+2019-05-21 00:32:18.965742
+epoch:44, batch:4, After 5 iterations
+discriminator loss: 0.0021468307822942734
+epoch:44, batch:4, generator loss: 0.00476768659427762
+2019-05-21 00:32:35.508833
+epoch:44, batch:5, After 5 iterations
+discriminator loss: 0.002144124126061797
+epoch:44, batch:5, generator loss: 0.004758893977850676
+2019-05-21 00:32:52.208757
+epoch:44, batch:6, After 5 iterations
+discriminator loss: 0.002141122007742524
+epoch:44, batch:6, generator loss: 0.004750153981149197
+2019-05-21 00:33:09.049646
+epoch:44, batch:7, After 5 iterations
+discriminator loss: 0.0021360924001783133
+epoch:44, batch:7, generator loss: 0.004741724580526352
+2019-05-21 00:33:24.674842
+epoch:44, batch:8, After 5 iterations
+discriminator loss: 0.0021309801377356052
+epoch:44, batch:8, generator loss: 0.0047333440743386745
+2019-05-21 00:33:41.729799
+epoch:44, batch:9, After 5 iterations
+discriminator loss: 0.002127491170540452
+epoch:44, batch:9, generator loss: 0.004724794998764992
+2019-05-21 00:33:58.744894
+epoch:44, batch:10, After 5 iterations
+discriminator loss: 0.0021244415547698736
+epoch:44, batch:10, generator loss: 0.004716209135949612
+2019-05-21 00:34:15.055523
+epoch:44, batch:11, After 5 iterations
+discriminator loss: 0.0021219863556325436
+epoch:44, batch:11, generator loss: 0.004707720130681992
+2019-05-21 00:34:32.501391
+epoch:45, batch:0, After 5 iterations
+discriminator loss: 0.0021172170527279377
+epoch:45, batch:0, generator loss: 0.004699077922850847
+2019-05-21 00:34:49.718307
+epoch:45, batch:1, After 5 iterations
+discriminator loss: 0.0021149476524442434
+epoch:45, batch:1, generator loss: 0.004691120702773333
+2019-05-21 00:35:06.567256
+epoch:45, batch:2, After 5 iterations
+discriminator loss: 0.0021101715974509716
+epoch:45, batch:2, generator loss: 0.004682639613747597
+2019-05-21 00:35:22.754948
+epoch:45, batch:3, After 5 iterations
+discriminator loss: 0.002107699867337942
+epoch:45, batch:3, generator loss: 0.004674783442169428
+2019-05-21 00:35:39.809358
+epoch:45, batch:4, After 5 iterations
+discriminator loss: 0.002103991573676467
+epoch:45, batch:4, generator loss: 0.004666111432015896
+2019-05-21 00:35:57.012547
+epoch:45, batch:5, After 5 iterations
+discriminator loss: 0.00210014171898365
+epoch:45, batch:5, generator loss: 0.004658345133066177
+2019-05-21 00:36:12.551974
+epoch:45, batch:6, After 5 iterations
+discriminator loss: 0.002096659503877163
+epoch:45, batch:6, generator loss: 0.004650040529668331
+2019-05-21 00:36:29.255287
+epoch:45, batch:7, After 5 iterations
+discriminator loss: 0.00209069368429482
+epoch:45, batch:7, generator loss: 0.004641817882657051
+2019-05-21 00:36:44.920402
+epoch:45, batch:8, After 5 iterations
+discriminator loss: 0.0020888126455247402
+epoch:45, batch:8, generator loss: 0.004633494187146425
+2019-05-21 00:37:03.009060
+epoch:45, batch:9, After 5 iterations
+discriminator loss: 0.00208662124350667
+epoch:45, batch:9, generator loss: 0.004625717177987099
+2019-05-21 00:37:19.348346
+epoch:45, batch:10, After 5 iterations
+discriminator loss: 0.0020876138005405664
+epoch:45, batch:10, generator loss: 0.004618737380951643
+2019-05-21 00:37:36.560852
+epoch:45, batch:11, After 5 iterations
+discriminator loss: 0.0020799210760742426
+epoch:45, batch:11, generator loss: 0.004610526375472546
+2019-05-21 00:37:53.300612
+epoch:46, batch:0, After 5 iterations
+discriminator loss: 0.0020760362967848778
+epoch:46, batch:0, generator loss: 0.0046026031486690044
+2019-05-21 00:38:10.507095
+epoch:46, batch:1, After 5 iterations
+discriminator loss: 0.002072256989777088
+epoch:46, batch:1, generator loss: 0.004594676662236452
+2019-05-21 00:38:27.764910
+epoch:46, batch:2, After 5 iterations
+discriminator loss: 0.0020694625563919544
+epoch:46, batch:2, generator loss: 0.004587210714817047
+2019-05-21 00:38:44.174579
+epoch:46, batch:3, After 5 iterations
+discriminator loss: 0.002066040877252817
+epoch:46, batch:3, generator loss: 0.004579482600092888
+2019-05-21 00:38:59.803282
+epoch:46, batch:4, After 5 iterations
+discriminator loss: 0.002061982871964574
+epoch:46, batch:4, generator loss: 0.004572099074721336
+2019-05-21 00:39:16.680880
+epoch:46, batch:5, After 5 iterations
+discriminator loss: 0.0020626995246857405
+epoch:46, batch:5, generator loss: 0.004564614035189152
+2019-05-21 00:39:33.156085
+epoch:46, batch:6, After 5 iterations
+discriminator loss: 0.0020571937784552574
+epoch:46, batch:6, generator loss: 0.004557148087769747
+2019-05-21 00:39:50.428842
+epoch:46, batch:7, After 5 iterations
+discriminator loss: 0.00205375743098557
+epoch:46, batch:7, generator loss: 0.004549828357994556
+2019-05-21 00:40:07.188573
+epoch:46, batch:8, After 5 iterations
+discriminator loss: 0.0020492535550147295
+epoch:46, batch:8, generator loss: 0.00454236613586545
+2019-05-21 00:40:25.583188
+epoch:46, batch:9, After 5 iterations
+discriminator loss: 0.002044909168034792
+epoch:46, batch:9, generator loss: 0.004535035230219364
+2019-05-21 00:40:41.827760
+epoch:46, batch:10, After 5 iterations
+discriminator loss: 0.0020409654825925827
+epoch:46, batch:10, generator loss: 0.004527524579316378
+2019-05-21 00:40:58.413897
+epoch:46, batch:11, After 5 iterations
+discriminator loss: 0.0020386434625834227
+epoch:46, batch:11, generator loss: 0.004520167596638203
+2019-05-21 00:41:14.018722
+epoch:47, batch:0, After 5 iterations
+discriminator loss: 0.002034346107393503
+epoch:47, batch:0, generator loss: 0.004512447398155928
+2019-05-21 00:41:30.247564
+epoch:47, batch:1, After 5 iterations
+discriminator loss: 0.002032283693552017
+epoch:47, batch:1, generator loss: 0.004505371209233999
+2019-05-21 00:41:46.547440
+epoch:47, batch:2, After 5 iterations
+discriminator loss: 0.0020290729589760303
+epoch:47, batch:2, generator loss: 0.0044981674291193485
+2019-05-21 00:42:02.743084
+epoch:47, batch:3, After 5 iterations
+discriminator loss: 0.00202506803907454
+epoch:47, batch:3, generator loss: 0.004491008818149567
+2019-05-21 00:42:19.154346
+epoch:47, batch:4, After 5 iterations
+discriminator loss: 0.0020229597575962543
+epoch:47, batch:4, generator loss: 0.004483719356358051
+2019-05-21 00:42:36.983188
+epoch:47, batch:5, After 5 iterations
+discriminator loss: 0.0020173639059066772
+epoch:47, batch:5, generator loss: 0.004476643167436123
+2019-05-21 00:42:52.803863
+epoch:47, batch:6, After 5 iterations
+discriminator loss: 0.002014395548030734
+epoch:47, batch:6, generator loss: 0.004469829145818949
+2019-05-21 00:43:09.497203
+epoch:47, batch:7, After 5 iterations
+discriminator loss: 0.0020132805220782757
+epoch:47, batch:7, generator loss: 0.004462745506316423
+2019-05-21 00:43:26.389520
+epoch:47, batch:8, After 5 iterations
+discriminator loss: 0.0020071216858923435
+epoch:47, batch:8, generator loss: 0.00445528794080019
+2019-05-21 00:43:42.549909
+epoch:47, batch:9, After 5 iterations
+discriminator loss: 0.0020059181842952967
+epoch:47, batch:9, generator loss: 0.004448133520781994
+2019-05-21 00:44:00.657573
+epoch:47, batch:10, After 5 iterations
+discriminator loss: 0.0020017318893224
+epoch:47, batch:10, generator loss: 0.004440881311893463
+2019-05-21 00:44:16.417379
+epoch:47, batch:11, After 5 iterations
+discriminator loss: 0.0020013167522847652
+epoch:47, batch:11, generator loss: 0.004434078931808472
+2019-05-21 00:44:33.074850
+epoch:48, batch:0, After 5 iterations
+discriminator loss: 0.001997551182284951
+epoch:48, batch:0, generator loss: 0.004427354782819748
+2019-05-21 00:44:50.563457
+epoch:48, batch:1, After 5 iterations
+discriminator loss: 0.001991469645872712
+epoch:48, batch:1, generator loss: 0.004420368932187557
+2019-05-21 00:45:06.882825
+epoch:48, batch:2, After 5 iterations
+discriminator loss: 0.0019888386595994234
+epoch:48, batch:2, generator loss: 0.004413368180394173
+2019-05-21 00:45:22.921646
+epoch:48, batch:3, After 5 iterations
+discriminator loss: 0.0019890745170414448
+epoch:48, batch:3, generator loss: 0.004406337160617113
+2019-05-21 00:45:39.604015
+epoch:48, batch:4, After 5 iterations
+discriminator loss: 0.001983640482649207
+epoch:48, batch:4, generator loss: 0.004399545956403017
+2019-05-21 00:45:55.868463
+epoch:48, batch:5, After 5 iterations
+discriminator loss: 0.0019793366082012653
+epoch:48, batch:5, generator loss: 0.004392455331981182
+2019-05-21 00:46:12.490048
+epoch:48, batch:6, After 5 iterations
+discriminator loss: 0.0019773845560848713
+epoch:48, batch:6, generator loss: 0.004385686945170164
+2019-05-21 00:46:28.610502
+epoch:48, batch:7, After 5 iterations
+discriminator loss: 0.0019716147799044847
+epoch:48, batch:7, generator loss: 0.004378551617264748
+2019-05-21 00:46:45.328748
+epoch:48, batch:8, After 5 iterations
+discriminator loss: 0.001969741890206933
+epoch:48, batch:8, generator loss: 0.004371708258986473
+2019-05-21 00:47:01.704935
+epoch:48, batch:9, After 5 iterations
+discriminator loss: 0.001967240357771516
+epoch:48, batch:9, generator loss: 0.00436495803296566
+2019-05-21 00:47:18.498113
+epoch:48, batch:10, After 5 iterations
+discriminator loss: 0.0019658575765788555
+epoch:48, batch:10, generator loss: 0.004358350764960051
+2019-05-21 00:47:36.556280
+epoch:48, batch:11, After 5 iterations
+discriminator loss: 0.001960689201951027
+epoch:48, batch:11, generator loss: 0.004351485054939985
+2019-05-21 00:47:52.864050
+epoch:49, batch:0, After 5 iterations
+discriminator loss: 0.0019584596157073975
+epoch:49, batch:0, generator loss: 0.0043447124771773815
+2019-05-21 00:48:09.196361
+epoch:49, batch:1, After 5 iterations
+discriminator loss: 0.0019571827724575996
+epoch:49, batch:1, generator loss: 0.004338299855589867
+2019-05-21 00:48:26.563469
+epoch:49, batch:2, After 5 iterations
+discriminator loss: 0.0019530241843312979
+epoch:49, batch:2, generator loss: 0.0043319654650986195
+2019-05-21 00:48:43.626296
+epoch:49, batch:3, After 5 iterations
+discriminator loss: 0.0019497891189530492
+epoch:49, batch:3, generator loss: 0.0043249838054180145
+2019-05-21 00:49:00.745072
+epoch:49, batch:4, After 5 iterations
+discriminator loss: 0.0019460145849734545
+epoch:49, batch:4, generator loss: 0.0043185073882341385
+2019-05-21 00:49:16.325390
+epoch:49, batch:5, After 5 iterations
+discriminator loss: 0.0019457952585071325
+epoch:49, batch:5, generator loss: 0.0043122367933392525
+2019-05-21 00:49:32.689637
+epoch:49, batch:6, After 5 iterations
+discriminator loss: 0.001939503476023674
+epoch:49, batch:6, generator loss: 0.004305229056626558
+2019-05-21 00:49:48.373161
+epoch:49, batch:7, After 5 iterations
+discriminator loss: 0.001935150707140565
+epoch:49, batch:7, generator loss: 0.004298745654523373
+2019-05-21 00:50:05.631558
+epoch:49, batch:8, After 5 iterations
+discriminator loss: 0.0019327353220432997
+epoch:49, batch:8, generator loss: 0.004291827790439129
+2019-05-21 00:50:21.664601
+epoch:49, batch:9, After 5 iterations
+discriminator loss: 0.0019296040991321206
+epoch:49, batch:9, generator loss: 0.004285568371415138
+2019-05-21 00:50:38.886501
+epoch:49, batch:10, After 5 iterations
+discriminator loss: 0.0019268932519480586
+epoch:49, batch:10, generator loss: 0.00427886052057147
+2019-05-21 00:50:55.072568
+epoch:49, batch:11, After 5 iterations
+discriminator loss: 0.0019235087092965841
+epoch:49, batch:11, generator loss: 0.004272215999662876

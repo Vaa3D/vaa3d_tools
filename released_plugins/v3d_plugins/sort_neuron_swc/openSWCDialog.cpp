@@ -29,8 +29,8 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
 
 	//page open from file
 	QFileDialog * fileDlg = new QFileDialog(tabWidget, tr("Open File"), "",
-				QObject::tr("Supported file (*.swc)"
-					";;Neuron structure	(*.swc)"
+                QObject::tr("Supported file (*swc)"
+                    ";;Neuron structure	(*swc)"
 	//				";;Linker file (*.ano)"
 					));
 	fileDlg->setOption(QFileDialog::DontUseNativeDialog, true);

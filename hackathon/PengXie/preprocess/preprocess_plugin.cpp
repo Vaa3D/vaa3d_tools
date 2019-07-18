@@ -9,6 +9,10 @@
 #include "split_neuron_main.h"
 #include "neurite_analysis_main.h"
 #include "crop_swc_main.h"
+#include "crop_swc_cuboid_main.h"
+#include "check_connection.h"
+#include "auto_soma_correction.h"
+#include "preprocess_batch_main.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
@@ -16,7 +20,11 @@ Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
 QStringList neuron_analysis::menulist() const
 {
     return QStringList()
+            <<tr("auto_soma_correction")
+            <<tr("auto_soma_correction_batch")
             <<tr("preprocess")
+            <<tr("preprocess_batch")
+            <<tr("split_neuron")
             <<tr("help")
             <<tr("about");
 }
@@ -24,12 +32,15 @@ QStringList neuron_analysis::menulist() const
 QStringList neuron_analysis::funclist() const
 {
 	return QStringList()
+        <<tr("auto_soma_correction")
+        <<tr("auto_soma_correction_batch")
         <<tr("preprocess")
         <<tr("preprocess_batch")
         <<tr("split_neuron")
         <<tr("qc")
-        <<tr("get_main_component")
         <<tr("crop_swc")
+        <<tr("crop_swc_cuboid")
+        <<tr("check_connection")
         <<tr("help");
 }
 
@@ -38,6 +49,22 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if(menu_name == tr("preprocess"))
     {
         pre_processing_domenu(callback, parent);
+    }
+    if(menu_name == tr("preprocess_batch"))
+    {
+        preprocess_batch_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction"))
+    {
+        auto_soma_correction_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction_batch"))
+    {
+        auto_soma_correction_batch_domenu(callback, parent);
+    }
+    if(menu_name == tr("split_neuron"))
+    {
+        split_neuron_domenu(callback, parent);
     }
     if (menu_name == tr("help"))
     {
@@ -67,12 +94,20 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 
     if (func_name == tr("preprocess_batch"))
     {
-        return (preprocess_batch_dofunc(input, output));
+        return (preprocess_batch_dofunc(callback, parent));
     }
     if (func_name == tr("preprocess"))
 	{
         return (pre_processing_dofunc(input, output));
 	}
+    if (func_name == tr("auto_soma_correction_batch"))
+    {
+        return (auto_soma_correction_batch_dofunc(input, output, callback));
+    }
+    if (func_name == tr("auto_soma_correction"))
+    {
+        return (auto_soma_correction_dofunc(input, output, callback));
+    }
     if (func_name == tr("split_neuron"))
     {
         return (split_neuron_dofunc(input, output));
@@ -88,6 +123,13 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
     if (func_name == "crop_swc")
     {
         return (crop_swc_dofunc(input, output));
+    }
+    if (func_name == "crop_swc_cuboid")
+    {
+        return (crop_swc_cuboid_dofunc(input, output));
+    }
+    if (func_name == "check_connection"){
+        return (check_connection_dofunc(input, output, callback));
     }
 	else if (func_name == tr("help"))
 	{

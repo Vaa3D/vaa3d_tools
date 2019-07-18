@@ -136,7 +136,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgAnalyzer;C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\boostLibs\boost_1_61_0;C:\opencv-3.4.0\VS2013_build\install\include;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgAnalyzer;C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\boostLibs\boost_1_61_0;C:\opencv-3.4.0\VS2013_build\install\include;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -144,15 +144,22 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\boostLibs\boost_1_61_0\lib64-msvc-12.0;C:\opencv-3.4.0\VS2013_build\install\x64\vc12\lib;C:\Qt\4.8.6\lib;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgProcessorMK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>NeuronStructNavigator.lib;v3d_imgAnalyzerMK.lib;v3d_imgManagerMK.lib;QtCore4.lib;QtGui4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;C:\boostLibs\boost_1_61_0\lib64-msvc-12.0;C:\opencv-3.4.0\VS2013_build\install\x64\vc12\lib;C:\Qt\4.8.6\lib;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgProcessorMK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>StatsLearner.lib;NeuronStructNavigator.lib;v3d_imgManagerMK.lib;QtCore4.lib;QtGui4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>
+      </StackReserveSize>
+      <StackCommitSize>
+      </StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="imgTester.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SWCtester.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="imgTester.h" />
+    <ClInclude Include="processMonitoringTester.h" />
     <ClInclude Include="SWCtester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

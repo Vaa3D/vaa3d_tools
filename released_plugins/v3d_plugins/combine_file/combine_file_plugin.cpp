@@ -9,8 +9,12 @@
 #include "basic_surf_objs.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
+
 #include "../sort_neuron_swc/openSWCDialog.h"
 #include <algorithm>
+
+#include <set>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(combine_file, combine_file);
@@ -50,10 +54,12 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
 
 QStringList combine_file::menulist() const
 {
-	return QStringList() 
-        << tr("combine all SWC or ESWC files under a directory")
-        << tr("combine all marker files under a directory")
-        << tr("separate a SWC file by type");
+	return QStringList()
+		<< tr("combine all SWC or ESWC files under a directory")
+		<< tr("combine all marker files under a directory")
+		<< tr("separate a SWC file by type")
+		<< tr("separate a SWC file by type (without sorting)");
+	
     //    << tr("separate all neuron trees from a single SWC file");
     //	<<tr("about");
 }
@@ -93,17 +99,62 @@ void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         {
             multi_neurons[nt.listNeuron[i].type].append(nt.listNeuron[i]);
         }
+		
         for (map<int, QList<NeuronSWC> >::iterator it=multi_neurons.begin(); it!=multi_neurons.end(); ++it)
         {
             NeuronTree nt_trees;
             nt_trees.listNeuron = it->second;
             QString fileSaveName = fileOpenName + QString("_type_%1.swc").arg(it->first);
-            writeSWC_file(fileSaveName,nt_trees);
+
+            NeuronTree nt_sorted;
+            SortSWC(nt_trees.listNeuron,nt_sorted.listNeuron,VOID,0);
+            writeSWC_file(fileSaveName,nt_sorted);
             nt_trees.listNeuron.clear();
+            nt_sorted.listNeuron.clear();
+
         }
         v3d_msg("Done with SWC separation!");
 
     }
+	else if (menu_name == tr("separate a SWC file by type (without sorting)"))
+	{
+		// added by MK, 2018 Oct
+		QString fileOpenName;
+		OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+		if (!openDlg->exec())
+			return;
+		fileOpenName = openDlg->file_name;
+		NeuronTree nt;
+		if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+		{
+			nt = openDlg->nt;
+		}
+
+		map<int, QList<NeuronSWC> > multi_neurons;
+		map<int, set<V3DLONG> > typeNodeSetMap;
+		for (V3DLONG i = 0; i<nt.listNeuron.size(); i++)
+		{
+			multi_neurons[nt.listNeuron[i].type].append(nt.listNeuron[i]);
+			typeNodeSetMap[nt.listNeuron[i].type].insert(nt.listNeuron[i].n);
+		}
+
+		for (map<int, QList<NeuronSWC> >::iterator it = multi_neurons.begin(); it != multi_neurons.end(); ++it)
+		{
+			NeuronTree nt_trees;
+			nt_trees.listNeuron = it->second;
+			for (QList<NeuronSWC>::iterator nodeIt = nt_trees.listNeuron.begin(); nodeIt != nt_trees.listNeuron.end(); ++nodeIt)
+			{
+				if (typeNodeSetMap.at(it->first).find(nodeIt->parent) == typeNodeSetMap.at(it->first).end()) nodeIt->parent = -1;
+			}
+
+			QString fileSaveName = fileOpenName + QString("_type_%1.swc").arg(it->first);
+			writeSWC_file(fileSaveName, nt_trees);
+			nt_trees.listNeuron.clear();
+
+		}
+		v3d_msg("Done with SWC separation!");
+	}
+
 
 //    else if (menu_name == tr("separate all neuron trees from a single SWC file"))
 //    {

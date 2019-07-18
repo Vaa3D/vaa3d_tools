@@ -15,15 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="SWCtester.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SWCtester.cpp">
+    <ClCompile Include="imgTester.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SWCtester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgTester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="processMonitoringTester.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

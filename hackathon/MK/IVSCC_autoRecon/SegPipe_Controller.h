@@ -20,7 +20,7 @@
 
 using namespace std;
 
-enum folderStruct {singleCase, multipleCase};
+enum folderStruct { singleCase_slices, singleCase_singleSlice, multipleCases_slices, multipleCases_singleSlice };
 enum task {downsample2D, threshold2D, bkgThreshold2D, gammaCorrect2D};
 
 class SegPipe_Controller
@@ -31,9 +31,12 @@ public:
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
+	QString inputCaseRootPath2;
 	QString inputSWCRootPath;
+	QString inputSWCRootPath2;
 	QString refSWCRootPath;
 	QString outputRootPath;
+	QString outputRootPath2;
 	QString outputSWCRootPath;
 	QStringList caseList;
 	QStringList swcList;
@@ -50,9 +53,12 @@ public:
 
 	void sliceDownSample2D(int downFactor, string method = "");
 	void sliceGammaCorrect();
-	void sliceThre(float threshold);
+	void sliceThre(float threPercentile);
+	void threshold3D(float threPercentile);
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
+	void makeMIPimgs();
+	void makeDescentSkeletons();
 	
 	void histQuickList();
 
@@ -61,10 +67,12 @@ public:
 	void findSignalBlobs2D();
 	void swc2DsignalBlobsCenter();
 	void swcSignalBlob3Dcenter();
-	void findSomaMass();
+	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
-
-	void somaNeighborhoodThin();
+	void getSomaCandidates(float distThre);
+	void getSomaBlendedImgs();
+	void skeletonThreFiltered();
+	void somaDendriteMask();
 
 	void swc_imgCrop();
 	
@@ -72,15 +80,24 @@ public:
 	void getMST_2Dslices();
 	void swcScale(float xScale, float yScale, float zScale);
 	void swcRegister();
+	void swcMapBack();
 	void correctSWC();
 	void getTiledMST();
 	void cutMST();
 	void MSTtrim();
 	void breakMSTbranch();
 	void segElongation();
+	void segTerminalize();
+	void dotRemove();
+	void longConnCut();
+	void treeUnion();
+	void treeWithinDist();
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);
+	void swcTypeSeparate(int type);
+	void swcSubtraction(int type);
+	void swcUpSample();
 	void cleanUpzFor2Dcentroids();
 
 private:

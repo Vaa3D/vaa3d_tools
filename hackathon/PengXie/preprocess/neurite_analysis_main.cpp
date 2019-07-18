@@ -36,7 +36,9 @@ NeuronTree return_axon(NeuronTree nt, int soma){
     printf("Welcome to use return_axon.\n");
     // 1. Get axon subtrees starting from soma
     // 1.1 extract axon nodes
-    NeuronTree new_tree = get_subtree_by_type(nt, 2);
+    QList<int> type;
+    type<<2;
+    NeuronTree new_tree = get_subtree_by_type(nt, type);
     QList<int> name_list;
     for(int i=0; i<nt.listNeuron.size();i++){
         NeuronSWC node = nt.listNeuron.at(i);
@@ -49,7 +51,7 @@ NeuronTree return_axon(NeuronTree nt, int soma){
         NeuronSWC node = nt.listNeuron.at(i);
         int pn_ind = name_list.indexOf(node.pn);
         if(pn_ind<0){continue;}
-        if((nt.listNeuron.at(pn_ind).type==3) && (node.type==2)){
+        if(((nt.listNeuron.at(pn_ind).type==3) || (nt.listNeuron.at(pn_ind).type==4)) && (node.type==2)){
             a2d_ind.append(i);
             printf("Node %d is connected to dendrite.\n", i);
         }
@@ -63,7 +65,7 @@ NeuronTree return_axon(NeuronTree nt, int soma){
             while(node.pn != -1){
                 int pn_ind = name_list.indexOf(node.pn);
                 node = nt.listNeuron.at(pn_ind);
-                if(node.type==3){new_tree.listNeuron.append(node);}
+                if((node.type==3) || (node.type==4)){new_tree.listNeuron.append(node);}
                 if(node.type==1){soma_reached==1;}
             }
             if(!soma_reached){
@@ -77,7 +79,10 @@ NeuronTree return_axon(NeuronTree nt, int soma){
 
 }
 NeuronTree return_dendrite(NeuronTree nt, int soma){
-    nt = get_subtree_by_type(nt, 3);
+    printf("welcome to use return_dendrite\n");
+    QList<int> type;
+    type<<3<<4;
+    nt = get_subtree_by_type(nt, type);
     nt = single_tree(nt, soma);
     return nt;
 }
@@ -85,6 +90,9 @@ NeuronTree return_dendrite(NeuronTree nt, int soma){
 bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
 
     printf("welcome to use neurite_analysis\n");
+    if(!fexists(qs_input)){
+        return 0;
+    }
 
     // 1. Load data
     NeuronTree nt;
@@ -112,6 +120,8 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     if(soma<0){return 0;}
     if(nt.listNeuron.at(soma).pn != (-1)){
         printf("Exit: soma is not root!\n");
+//        nt = my_SortSWC(nt, soma, 0);
+//        writeSWC_file(qs_input+".sorted.swc", nt);
         return 0;
     }
 
@@ -122,6 +132,8 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     }
     if(extract_type == "l"){
         nt = return_long_axon(nt, soma, false);
+        qDebug()<<"Now sort long axon";
+//        export_listNeuron_2swc(nt.listNeuron, "test.swc");
     }
     if(extract_type == "d"){nt=return_dendrite(nt, soma);}
     nt = my_SortSWC(nt, 1, 0);
