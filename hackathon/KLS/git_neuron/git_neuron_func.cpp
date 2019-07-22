@@ -1,4 +1,3 @@
-
 #include "v3d_message.h"
 #include <vector>
 #include <map>
@@ -229,6 +228,7 @@ void neuron_merge_test(NeuronTree* nt,NeuronTree* nt2,NeuronTree* nt3, QString f
 	for(int i = 0; i < size_1; i ++)
 	{
 		NeuronSWC node_1 = nt->listNeuron[i];
+		nt->listNeuron[i].level = 1;
 		hash_nt1[node_1.pn]++;
 		int pt_1 = nt->hashNeuron.value(node_1.pn);	
 		if(pt_1 != -1)
@@ -242,6 +242,7 @@ void neuron_merge_test(NeuronTree* nt,NeuronTree* nt2,NeuronTree* nt3, QString f
 	for(int i = 0; i < size_2; i ++)
 	{
 		NeuronSWC node_2 = nt2->listNeuron[i];
+		nt2->listNeuron[i].level = 1;
 		hash_nt2[node_2.pn]++;
 		int pt_2 = nt2->hashNeuron.value(node_2.pn);
 		if(pt_2 != -1)
@@ -255,6 +256,7 @@ void neuron_merge_test(NeuronTree* nt,NeuronTree* nt2,NeuronTree* nt3, QString f
 	for(int i = 0; i < size_3; i ++)
 	{
 		NeuronSWC node_3 = nt3->listNeuron[i];
+		nt3->listNeuron[i].level = 1;
 		hash_nt3[node_3.pn]++;
 		int pt_3 = nt3->hashNeuron.value(node_3.pn);
 		if(pt_3 != -1)
@@ -315,7 +317,62 @@ void neuron_merge_test(NeuronTree* nt,NeuronTree* nt2,NeuronTree* nt3, QString f
 			nt2_nodes[Node(node_3.x , node_3.y , node_3.z , parent_3.x , parent_3.y , parent_3.z)]++;
 		}
 	}
-	//冲突检测
+	//冲突检测：1将删减的和修改的部分赋予黄色
+	for(int i = 0 ; i < size_1 ; i++)
+	{
+		NeuronSWC node = nt->listNeuron[i];
+		if(node.pn = -1)
+		{
+			Node n(node.x , node.y , node.z , 0.0 , 0.0 , 0.0);
+			if(nodes[n] == 1)
+				nt->listNeuron[i].level = 6;
+		}
+		else
+		{
+			int pt = nt->hashNeuron.value(node.pn);
+			NeuronSWC parent = nt->listNeuron[pt];
+			Node n(node.x , node.y , node.z , parent.x , parent.y , parent.z);
+			if(nodes[n] == 1)
+				nt->listNeuron[i].level = 6;
+		}
+	}
+
+	//删除的部分修改为红色
+	for(int i = 0; i < size_1; i ++)
+	{
+		NeuronSWC node_1 = nt->listNeuron[i];
+		if(node_1.pn != -1)
+		{
+			int pt_1 = nt->hashNeuron.value(node_1.pn);
+			NeuronSWC parent_1 = nt->listNeuron[pt_1];
+			if(node_1.level == 6 && hash_nt1[node_1.n] == 0) 
+			{
+				nt->listNeuron[i].level = 8;
+				//visit_1[i] = false;
+				while(nt->listNeuron[pt_1].level == 6)
+				{
+					nt->listNeuron[pt_1].level = 8;
+					pt_1 = nt->hashNeuron.value(nt->listNeuron[pt_1].pn);
+				}
+			}
+		}
+		
+	}
+	//碰撞检测
+	for(int i = 0 ; i < size_1 ; i ++)
+	{
+		NeuronSWC node = nt->listNeuron[i];
+		if(node.pn != -1)
+		{
+			int pt = nt->hashNeuron.value(node.pn);
+			NeuronSWC parent = nt->listNeuron[pt];
+			if(node.level == 6)
+			{
+				cout<<"detect conflict"<<endl;
+				return;
+			}
+		}
+	}
 
 	//合并
 	for(int i = nt3->listNeuron.size()-1; i >= 0; i --)
