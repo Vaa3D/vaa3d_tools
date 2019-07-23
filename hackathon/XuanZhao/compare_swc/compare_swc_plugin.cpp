@@ -106,6 +106,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2,dir_a,dir_b,braindir,callback);
 
+        cout<<"finish compare_two_swc"<<endl;
+
         // added 15 Jul
         c.get_false_point_image(dir_a,a_more,a,b,callback,braindir,true);
         c.get_false_point_image(dir_b,b_more,b,a,callback,braindir,false);
@@ -203,12 +205,48 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         a.initialize(nt0);
         b.initialize(nt1);
         c.global_compare(a,b,braindir,outdir,callback);
+    }
+    else if(func_name==tr("func3"))
+    {
+        if (infiles.size()!=3) fprintf(stderr,"please specify three inputs swc1 swc2 brainfolder");
+        QString swc1= infiles[0];
+        QString swc2= infiles[1];
+        QString braindir=infiles[2];
+        NeuronTree nt1=readSWC_file(swc1);
+        NeuronTree nt2=readSWC_file(swc2);
+        SwcTree a,b;// e.g. a for manual swc, b for auto swc
+        a.initialize(nt1);
+        b.initialize(nt2);
+
+        Swc_Compare c;
+
+        if( outfiles.size()!=3) fprintf(stderr, "please specify three outputs folder1 folder2 txtfile");
+        QString dir_a=outfiles[0];
+        QString dir_b=outfiles[1];
+        QString txtfile=outfiles[2];
+
+        vector<int> a_false, b_false,a_more,b_more;
+        c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2,dir_a,dir_b,braindir,callback);
+
+        c.get_accurate_false_point_image(dir_a,a_false,a,b,callback,braindir,true);
+        c.get_accurate_false_point_image(dir_b,b_false,b,a,callback,braindir,false);
+    }
+    else if(func_name==tr("refine"))
+    {
+        NeuronTree nt1=readSWC_file(infiles[0]);
+        QString braindir= infiles[1];
+        SwcTree a;
+        a.initialize(nt1);
+        NeuronTree refined_swc=a.refine_swc(braindir,100,callback);
+        QString swcfilename=outfiles[0];
+        writeSWC_file(swcfilename,refined_swc);
 
 
 
     }
-	else if (func_name == tr("help"))
-	{
+
+    else if (func_name == tr("help"))
+    {
         cout<<"usage:"<<endl;
         cout<<"v3d -x compare_swc -f func2 -i [file_manual_swc] [file_auto_swc] [brain_path] -o [manual_more_folder] [auto_more_folder] [txt_file]"<<endl;
 

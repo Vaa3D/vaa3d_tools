@@ -139,6 +139,7 @@ struct Branch{
 
     bool get_points_of_branch(vector<NeuronSWC> &points,NeuronTree &nt);
     bool get_r_points_of_branch(vector<NeuronSWC> &r_points,NeuronTree &nt);
+
 };
 
 struct SwcTree{
@@ -148,6 +149,7 @@ struct SwcTree{
     SwcTree():nt()
     {
         branchs.clear();
+        trunks.clear();
     }
     bool initialize(NeuronTree t);
     void inline display()
@@ -176,6 +178,9 @@ struct SwcTree{
     bool get_level_index(vector<int> &level_index,int level);
     bool get_points_of_branchs(vector<Branch> &b, vector<NeuronSWC> &points, NeuronTree &ntb);
     int get_max_level();
+    // added by DZC 19 Jul 2019
+    NeuronTree refine_swc(QString braindir, double thresh, V3DPluginCallback2 &callback);
+    bool gd_on_nt(NeuronTree &branch_nt, NeuronTree & tree_out,QString braindir,V3DPluginCallback2 &callback);
 };
 
 class Swc_Compare{
@@ -206,7 +211,10 @@ public:
     bool crop_swc(NeuronTree &nt_in, NeuronTree &nt_out, int type, size_t x0, size_t x1, size_t y0, size_t y1, size_t z0, size_t z1);
 
     double get_distance_branchs_to_point(vector<Branch> &a,NeuronSWC &b,NeuronTree &nta);
+
     bool global_compare(SwcTree & a_tree, SwcTree & b_tree, QString braindir, QString outdir, V3DPluginCallback2 &callback);
+
+    bool get_accurate_false_point_image(QString dir, vector<int> & false_branches, SwcTree &a_tree, SwcTree &b_tree, V3DPluginCallback2 &callback, QString braindir, bool manual);
 
 };
 
