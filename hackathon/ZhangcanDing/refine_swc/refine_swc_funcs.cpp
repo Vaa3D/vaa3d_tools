@@ -142,10 +142,10 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         unsigned char* total1dData_mask = 0;
         total1dData_mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
         memset(total1dData_mask,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
-        QList<int> empty_markers;
+        //QList<int> empty_markers;
         double margin;
         margin = (seg->at(0)->level == 20)?10:5;
-        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2],empty_markers, false, margin);
+        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2], margin);
         for(V3DLONG j=0;j<mysz[0]*mysz[1]*mysz[2];++j)
             total1dData[j] = (total1dData_mask[j] ==0)?0:total1dData[j];
 

@@ -212,7 +212,7 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         V_NeuronSWC_list nt3_decomposed = NeuronTree__2__V_NeuronSWC_list(nt3_broken);
         NeuronTree nt3_new = V_NeuronSWC_list__2__NeuronTree(nt3_decomposed);
         NeuronTree nt3_refined = refineSWCTerafly(callback,infiles[0],nt3_new);
-        NeuronTree nt3_sorted = SortSWC_pipeline(nt3_refined.listNeuron,VOID, 0);
+        NeuronTree nt3_sorted = SortSWC_pipeline(nt3_refined.listNeuron,VOID, 20);
         writeESWC_file(QString(outfiles[0]),nt3_sorted);
 
    }

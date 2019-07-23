@@ -11,6 +11,11 @@ INCLUDEPATH     += $$VAA3DPATH/cellseg
 
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
+unix {
+LIBS += -L$$VAA3DPATH/jba/c++
+LIBS += -lv3dnewmat
+}
+
 
 HEADERS	+= refine_swc_plugin.h
 HEADERS	+= refine_swc_funcs.h
@@ -37,7 +42,7 @@ HEADERS	+= ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.
 SOURCES	+= ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 
 TARGET	= $$qtLibraryTarget(refine_swc)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/refine_swc/
-#DESTDIR	= /home/penglab/PBserver/tmp/ding/vaa3d/plugins/neuron_utilities/refine_swc
+#DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/refine_swc/
+DESTDIR	= /home/penglab/PBserver/tmp/ding/vaa3d/plugins/neuron_utilities/refine_swc
 
 QMAKE_CXXFLAGS +=-std=c++0x
