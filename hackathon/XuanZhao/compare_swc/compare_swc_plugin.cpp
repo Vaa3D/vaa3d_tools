@@ -220,16 +220,19 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         Swc_Compare c;
 
-        if( outfiles.size()!=3) fprintf(stderr, "please specify three outputs folder1 folder2 txtfile");
+        if( outfiles.size()!=3) fprintf(stderr, "please specify three outputs folder1 folder2 folder3");
         QString dir_a=outfiles[0];
         QString dir_b=outfiles[1];
-        QString txtfile=outfiles[2];
+        QString dir_ab=outfiles[2];
+        //QString txtfile=outfiles[3];
 
         vector<int> a_false, b_false,a_more,b_more;
         c.compare_two_swc(a,b,a_false,b_false,a_more,b_more,nt1,nt2,dir_a,dir_b,braindir,callback);
 
-        c.get_accurate_false_point_image(dir_a,a_false,a,b,callback,braindir,true);
-        c.get_accurate_false_point_image(dir_b,b_false,b,a,callback,braindir,false);
+        //c.get_accurate_false_point_image(dir_a,a_false,a,b,callback,braindir,true);
+        c.get_false_point_image(dir_a,a_more,a,b,callback,braindir,true);
+        c.get_false_point_image(dir_b,b_more,b,a,callback,braindir,false);
+        c.get_accurate_false_point_image(dir_ab,b_false,b,a,callback,braindir,false);
     }
     else if(func_name==tr("refine"))
     {
