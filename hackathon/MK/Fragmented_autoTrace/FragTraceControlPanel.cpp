@@ -179,6 +179,9 @@ FragTraceControlPanel::~FragTraceControlPanel()
 	delete uiPtr;
 }
 
+
+
+/* =========================== User Interface Configuration Buttons =========================== */
 void FragTraceControlPanel::imgFmtChecked(bool checked)
 {
 	QObject* signalSender = sender();
@@ -446,7 +449,11 @@ void FragTraceControlPanel::saveSettingsClicked()
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
+/* ====================== END of [User Interface Configuration Buttons] ======================= */
 
+
+
+/* ============================== TRACING INITIALIZING FUNCTION =============================== */
 void FragTraceControlPanel::traceButtonClicked()
 {
 	QSettings currSettings("SEU-Allen", "Fragment tracing");
@@ -556,6 +563,10 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
 }
+/* ============================================================================================ */
+
+
+
 
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {

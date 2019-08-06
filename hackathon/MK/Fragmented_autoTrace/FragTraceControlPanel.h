@@ -16,7 +16,7 @@ class FragTraceControlPanel : public QDialog
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
-	~FragTraceControlPanel();
+	~FragTraceControlPanel(); // not sure if this is needed => [delete] can only be used witn array pointer.
 
 	QString saveSWCFullName;
 	QString adaSaveRoot;
@@ -31,16 +31,19 @@ public:
 	map<string, float> paramsFromUI;
 
 signals:
-	void switchOnSegPipe();
+	void switchOnSegPipe(); // currently not in action
 
 public slots:
+/***************** User Interface Configuration Buttons *****************/
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
 	void saveSegStepsResultChecked(bool checked);
 	void saveSettingsClicked();
-	void traceButtonClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
+/************ END of [User Interface Configuration Buttons] *************/
+
+	void traceButtonClicked();
 
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
