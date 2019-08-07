@@ -479,19 +479,21 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked()) // terafly format
 			{				
-				this->teraflyTracePrep(axon);        // terafly image block preparation
+				this->teraflyTracePrep(axon);	   	  // terafly image block preparation
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
-				this->imgEnhancement();                         // image enhancement				
-				this->maskGeneration();                         // mask generation
-				this->objFilter();                              // object filter
-				this->objBasedMST();                            // object-based MST node connecting
-				this->postElongation();                         // post elongation set up
+				// ------------------- collect parameters ------------------- //
+				this->pa_imgEnhancement();                         // image enhancement				
+				this->pa_maskGeneration();                         // mask generation
+				this->pa_objFilter();                              // object filter
+				this->pa_objBasedMST();                            // object-based MST node connecting
+				this->pa_postElongation();                         // post elongation set up
+				// ---------------------------------------------------------- //
 			}
 		}
 		else if (!uiPtr->radioButton->isChecked() && uiPtr->radioButton_2->isChecked()) // DENDRITE TRACING
 		{
-			cout << " dendritic tree tracing, acquiring image information.." << endl;
+			cout << " --> dendritic tree tracing, acquiring image information.." << endl;
 			QString rootQ = "";
 			if (uiPtr->lineEdit->text() != "") // final result save place
 			{
@@ -499,15 +501,17 @@ void FragTraceControlPanel::traceButtonClicked()
 				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
 			}
 
-			if (uiPtr->checkBox->isChecked())
+			if (uiPtr->checkBox->isChecked()) // terafly format
 			{
-				this->teraflyTracePrep(dendriticTree);           // terafly image block preparation
+				this->teraflyTracePrep(dendriticTree); // terafly image block preparation
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
-				this->imgEnhancement();                          // image enhancement
-				this->objFilter();                               // object filter
-				this->objBasedMST();                             // object-based MST node connecting 
-				this->postElongation();                          // post elongation set up
+				// ------------------- collect parameters ------------------- //
+				this->pa_imgEnhancement();                          // image enhancement
+				this->pa_objFilter();                               // object filter
+				this->pa_objBasedMST();                             // object-based MST node connecting 
+				this->pa_postElongation();                          // post elongation set up
+				// ---------------------------------------------------------- //
 			}
 		}
 
@@ -567,7 +571,7 @@ void FragTraceControlPanel::traceButtonClicked()
 
 
 
-
+/* =========================== TRACING VOLUME PREPARATION =========================== */
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
@@ -623,8 +627,12 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
 	}
 }
+/* ================================================================================== */
 
-void FragTraceControlPanel::imgEnhancement()
+
+
+/*************************** Parameter Collecting Functions ***************************/
+void FragTraceControlPanel::pa_imgEnhancement()
 {
 	if (uiPtr->groupBox_3->isChecked())
 	{
@@ -648,7 +656,7 @@ void FragTraceControlPanel::imgEnhancement()
 	else this->traceManagerPtr->gammaCorrection = false;
 }
 
-void FragTraceControlPanel::maskGeneration()
+void FragTraceControlPanel::pa_maskGeneration()
 {
 	if (uiPtr->groupBox_6->isChecked())
 	{
@@ -667,7 +675,7 @@ void FragTraceControlPanel::maskGeneration()
 	else this->traceManagerPtr->histThre = false;
 }
 
-void FragTraceControlPanel::objFilter()
+void FragTraceControlPanel::pa_objFilter()
 {
 	if (uiPtr->groupBox_13->isChecked())
 	{
@@ -685,7 +693,7 @@ void FragTraceControlPanel::objFilter()
 	}
 }
 
-void FragTraceControlPanel::objBasedMST()
+void FragTraceControlPanel::pa_objBasedMST()
 {
 	if (uiPtr->groupBox_8->isChecked())
 	{
@@ -699,37 +707,18 @@ void FragTraceControlPanel::objBasedMST()
 	}
 }
 
-void FragTraceControlPanel::postElongation()
+void FragTraceControlPanel::pa_postElongation()
 {
 	if (uiPtr->groupBox_5->isChecked())
 		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
 	else
 		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
 }
+/********************** END of [Parameter Collecting Functions] ***********************/
 
-void FragTraceControlPanel::blankArea()
-{
-	if (this->listViewBlankAreas->rowCount() != 0)
-	{
-		this->traceManagerPtr->blankArea = true;
-		for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
-		{
-			QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
-			QString thisAreaQString = thisArea->text();
-			QStringList spaceSplits = thisAreaQString.split(" ");
-			this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
-			QStringList rightParanSplits = thisAreaQString.split(")");
-			QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
-			this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
-			rightParanBlankSplits[0].replace("(", "");
-			rightParanBlankSplits[0].replace(",", "");
-			rightParanBlankSplits[1].replace(",", "");
-			this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
-			this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
-		}
-	}
-}
 
+
+/***************** Result and Scaling Functions *****************/
 void FragTraceControlPanel::scaleTracedTree()
 {	
 	float imgDims[3];
@@ -775,10 +764,39 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	return shiftScaleBackTree;
 }
+/************ END of [Result and Scaling Functions] *************/
+
+
+
 
 void FragTraceControlPanel::fillUpParamsForm()
 {
 	this->thisCallback->getParamsFromFragTraceUI("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()));
 	this->thisCallback->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
 	this->thisCallback->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
+}
+
+
+
+void FragTraceControlPanel::blankArea()
+{
+	if (this->listViewBlankAreas->rowCount() != 0)
+	{
+		this->traceManagerPtr->blankArea = true;
+		for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
+		{
+			QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
+			QString thisAreaQString = thisArea->text();
+			QStringList spaceSplits = thisAreaQString.split(" ");
+			this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
+			QStringList rightParanSplits = thisAreaQString.split(")");
+			QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
+			this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
+			rightParanBlankSplits[0].replace("(", "");
+			rightParanBlankSplits[0].replace(",", "");
+			rightParanBlankSplits[1].replace(",", "");
+			this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
+			this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
+		}
+	}
 }

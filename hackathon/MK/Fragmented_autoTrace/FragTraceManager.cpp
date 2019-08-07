@@ -37,7 +37,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 		ImgProcessor::imgDownSampleMax(img1Dptr, dendrite1Dptr, dims, downFacs);
 		delete[] img1Dptr;
 		img1Dptr = dendrite1Dptr;
-		dendrite1Dptr = nullptr;
+		dendrite1Dptr = nullptr; // [dendrite1Dptr]'s memory block is passed to [img1Dptr] and cannot be freed. 
+								 // Therefore, we cannot "delete[] dendrite1Dptr". But we can use nullptr to nullify dendrite1Dptr to ensure the safety.
 
 		dims[0] = dims[0] / 2;
 		dims[1] = dims[1] / 2;
@@ -90,6 +91,10 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	// *************************************************************************************************************** //
 }
 
+
+
+
+// ***************** TRACING PROCESS CONTROLING FUNCTION ***************** //
 bool FragTraceManager::imgProcPipe_wholeBlock()
 {
 	cout << "number of slices: " << this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size() << endl;
@@ -203,7 +208,11 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 	emit emitTracedTree(finalOutputTree);
 }
+// *********************************************************************** //
 
+
+
+/*************************** Image Enhancement ***************************/
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
 	registeredImg adaSlices;
@@ -287,7 +296,11 @@ void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[]
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }
+/********************** END of [Image Enhancement] ***********************/
 
+
+
+/*************************** Image Segmentation ***************************/
 void FragTraceManager::histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
 	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
@@ -368,6 +381,10 @@ void FragTraceManager::histThreImg3D(const string inputRegImgName, V3DLONG dims[
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }
+/*********************** END of [Image Segmentation] **********************/
+
+
+
 
 bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
 {
