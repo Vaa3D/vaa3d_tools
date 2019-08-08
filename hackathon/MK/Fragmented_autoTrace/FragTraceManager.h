@@ -76,10 +76,10 @@ public:
 
 
 
-	// ------- Crucial Intermediate Result ------- //
+	// ======= Crucial Intermediate Result ======= //
 	vector<connectedComponent> signalBlobs;   // All segmented blobs are stored here.
 	vector<connectedComponent> signalBlobs2D; // not used
-	// ------------------------------------------- //
+	// =========================================== //
 
 	// =============================================================================================== //
 	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
@@ -93,18 +93,18 @@ signals:
 	void emitTracedTree(NeuronTree tracedTree);
 
 public slots:
-	bool blobProcessMonitor(ProcessManager& blobMonitor);
+	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
 
 private:
-	int numProcs;
-	QProgressDialog* progressBarDiagPtr;
-
-	vector<vector<unsigned char>> imgSlices;
+	// ------- FragTraceManager Fascilities ------- //
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
 	TreeGrower fragTraceTreeGrower;
 	NeuronStructExplorer fragTraceTreeManager;
-	NeuronStructUtil fragTraceTreeUtil;
+	// -------------------------------------------- //
+
+	int numProcs;
+	QProgressDialog* progressBarDiagPtr;
 
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	
@@ -121,13 +121,22 @@ private:
 	// ******************* Image Segmentation ******************* //
 	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	// ********************************************************** //
+	
+	// ------- Object Classification ------- //
+	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
+	// ------------------------------------- //
 
 	bool mask2swc(const string inputImgName, string outputTreeName);
-	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
+	
+	// -- Each signal blob is represented by its centroid
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
+	// ********************************************************** //
 
+	
+
+	// ******************* Final Traced Tree Generation ******************* //
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
+	// ******************************************************************** //
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
