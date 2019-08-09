@@ -27,8 +27,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
 		
-	if (mode == dendriticTree)
-	{
+	//if (mode == dendriticTree)
+	//{
 		/*unsigned char* dendrite1Dptr = new unsigned char[(dims[0] / 2) * (dims[1] / 2) * dims[2]];
 		int downFacs[3];
 		downFacs[0] = 2;
@@ -42,7 +42,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 		dims[0] = dims[0] / 2;
 		dims[1] = dims[1] / 2;*/
-	}
+	//}
 	
 	vector<vector<unsigned char>> imgSlices;
 	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);
@@ -187,7 +187,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
-		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 4);
+		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 1); // reduce zig-zagging
 
 		NeuronTree floatingExcludedTree;
 		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
@@ -548,7 +548,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
 		// ----------------------------------------------------------------- //
 		vector<int> origin = { 128, 128, 128 };
-		NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
+		NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
 		this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
 		this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
 

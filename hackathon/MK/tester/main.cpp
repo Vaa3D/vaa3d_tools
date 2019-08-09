@@ -196,28 +196,9 @@ int main(int argc, char* argv[])
 		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
 		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
 		vector<polarNeuronSWC> polarNodeList;
-		vector<int> origin = { 68, 64, 130 };
+		vector<int> origin = { 128, 128, 128 };
 		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
 		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
-		/*for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
-		{
-			cout << it->first << ": ";
-			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-				cout << *it2 << " ";
-			cout << endl;
-		}
-		cout << endl;
-
-		vector<polarNeuronSWC> tempList;
-		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
-		{
-			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			{
-				polarNeuronSWC newPolarNode = polarNodeList.at(*it2);
-				newPolarNode.type = int(it->first);
-				tempList.push_back(newPolarNode);
-			}
-		}*/
 
 		map<double, NeuronTree> radius2NeuronTreeMap;
 		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
@@ -241,6 +222,7 @@ int main(int argc, char* argv[])
 			radius2ConnMap.insert({ it->first, currConnCompList });
 
 			NeuronTree currBlobTree = NeuronStructUtil::blobs2tree(currConnCompList);
+			for (QList<NeuronSWC>::iterator it3 = currBlobTree.listNeuron.begin(); it3 != currBlobTree.listNeuron.end(); ++it3) it3->type = int(it->first);
 			finalTree.listNeuron.append(currBlobTree.listNeuron);
 
 			for (vector<connectedComponent>::iterator it2 = currConnCompList.begin(); it2 != currConnCompList.end(); ++it2)
@@ -250,13 +232,13 @@ int main(int argc, char* argv[])
 				newNode.x = it2->ChebyshevCenter[0];
 				newNode.y = it2->ChebyshevCenter[1];
 				newNode.z = it2->ChebyshevCenter[2];
-				newNode.type = 2;
+				newNode.type = int(it->first);
 				newNode.parent = -1;
 				finalCentroidTree.listNeuron.push_back(newNode);
 			}
 		}
 	
-		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree);
+		writeSWC_file(QString::fromStdString(paras.at(1)), finalCentroidTree);
 	}
 	else if (!funcName.compare("centroidShellTest"))
 	{

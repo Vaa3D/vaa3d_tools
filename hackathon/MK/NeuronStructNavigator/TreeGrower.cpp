@@ -395,8 +395,8 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);	
 	
 	map<double, boost::container::flat_map<int, vector<int>>> shell2shellConnMap; // The map of inner shell's connected components to outer shell's connected components.
-																				  // shell2shellConnMap.second datatype: 
-																				  //   -> the location of the conn. component on the previous shell to the locaions of the conn. components on the current shell.
+																				  // shell2shellConnMap: the location of the conn. component on the previous shell to the locaions of the conn. components on the current shell.
+																				  //   -> 'location' means the location on the vector<connectedComponent> of radius2connCompsShell.second.
 	// Pre-allocate shell2shellConnMap to speed up the process later on.
 	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator shellIt = this->radius2shellConnCompMap.begin(); shellIt != this->radius2shellConnCompMap.end(); ++shellIt)
 	{
@@ -418,7 +418,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 					float dist = sqrtf((innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) * (innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) +
 									   (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) * (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) +
 									   (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]) * (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]));
-					if (dist < 3) outerConnLocs.push_back(int(outerIt - shellIt->second.begin()));
+					if (dist < 3) outerConnLocs.push_back(int(outerIt - shellIt->second.begin()));  // This is the criterion determining if 2 conn. components from 2 consecutive layers are adjacent to each other.
 				}
 			}
 			if (outerConnLocs.empty()) continue;
