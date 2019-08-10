@@ -418,7 +418,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 					float dist = sqrtf((innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) * (innerIt->ChebyshevCenter[0] - outerIt->ChebyshevCenter[0]) +
 									   (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) * (innerIt->ChebyshevCenter[1] - outerIt->ChebyshevCenter[1]) +
 									   (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]) * (innerIt->ChebyshevCenter[2] - outerIt->ChebyshevCenter[2]));
-					if (dist < 2) outerConnLocs.push_back(int(outerIt - shellIt->second.begin()));  // This is the criterion determining if 2 conn. components from 2 consecutive layers are adjacent to each other.
+					if (dist < 3) outerConnLocs.push_back(int(outerIt - shellIt->second.begin()));  // This is the criterion determining if 2 conn. components from 2 consecutive layers are adjacent to each other.
 				}
 			}
 			if (outerConnLocs.empty()) continue;
