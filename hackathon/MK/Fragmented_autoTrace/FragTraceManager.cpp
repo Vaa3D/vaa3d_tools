@@ -187,7 +187,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
-		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 1); // reduce zig-zagging
+		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2); // reduce zig-zagging
 
 		NeuronTree floatingExcludedTree;
 		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
