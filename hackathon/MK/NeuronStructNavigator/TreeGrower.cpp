@@ -627,7 +627,24 @@ void TreeGrower::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QLis
 
 
 /* ============================= Tree Trimming / Refining ============================= */
-profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
+profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum)
+{
+	profiledTree processingProfiledTree = inputProfiledTree;
+	vector<int> branchIDs;
+	for (QList<NeuronSWC>::iterator branchIt = processingProfiledTree.tree.listNeuron.begin(); branchIt != processingProfiledTree.tree.listNeuron.end(); ++branchIt)
+	{
+		if (processingProfiledTree.node2childLocMap.find(branchIt->n) != processingProfiledTree.node2childLocMap.end())
+		{
+			if (processingProfiledTree.node2childLocMap.at(branchIt->n).size() > 1) branchIDs.push_back(branchIt->n);
+		}
+	}
+	
+	
+	
+	return processingProfiledTree;
+}
+
+profiledTree TreeGrower::spikeRemove1(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
 	profiledTree processTree = inputProfiledTree;
 	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
@@ -649,7 +666,7 @@ profiledTree TreeGrower::spikeRemove(const profiledTree& inputProfiledTree, int 
 						if (processTree.node2childLocMap.at(currPaID).size() >= 2 && delLocsCandidates.size() <= currNodeNum)
 						{
 							delLocs.push_back(processTree.node2LocMap.at(currID));
-							delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
+							if (!delLocsCandidates.empty()) delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
 							break;
 						}
 						else if (processTree.node2childLocMap.at(currPaID).size() == 1 && delLocsCandidates.size() <= currNodeNum)

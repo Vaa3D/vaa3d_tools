@@ -112,7 +112,8 @@ public:
 
 	/************************* Tree Trimming / Refining *************************/
 	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
-	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+	static profiledTree spikeRemove1(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 
 	// Breaks all branches in [inputProfiledTree].
 	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
