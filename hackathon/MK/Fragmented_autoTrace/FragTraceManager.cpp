@@ -200,7 +200,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//profiledTree finalDendriticTree(denScaleBackTree);
 		//finalOutputTree = finalDendriticTree.tree;
 
-		finalOutputTree = spikeRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
+		finalOutputTree = dnSampledProfiledTree.tree;
+		//finalOutputTree = spikeRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
 													     // without downsampling, tracing result's inacurracy is remedied.
 	}
 

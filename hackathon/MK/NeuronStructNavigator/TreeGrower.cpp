@@ -630,17 +630,47 @@ void TreeGrower::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QLis
 profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
 	profiledTree processingProfiledTree = inputProfiledTree;
-	vector<int> branchIDs;
-	for (QList<NeuronSWC>::iterator branchIt = processingProfiledTree.tree.listNeuron.begin(); branchIt != processingProfiledTree.tree.listNeuron.end(); ++branchIt)
+	vector<size_t> tipLocs;
+	for (QList<NeuronSWC>::iterator it = processingProfiledTree.tree.listNeuron.begin(); it != processingProfiledTree.tree.listNeuron.end(); ++it)
 	{
-		if (processingProfiledTree.node2childLocMap.find(branchIt->n) != processingProfiledTree.node2childLocMap.end())
+		if (processingProfiledTree.node2childLocMap.find(it->n) == processingProfiledTree.node2childLocMap.end())
+			tipLocs.push_back(it - processingProfiledTree.tree.listNeuron.begin());
+	}
+	//cout << tipLocs.size() << endl;
+	
+	vector<size_t> delLocs;
+	vector<size_t> tipBranchNodeLocs;
+	for (vector<size_t>::iterator tipLocIt = tipLocs.begin(); tipLocIt != tipLocs.end(); ++tipLocIt)
+	{
+		int nodeCount = 1;
+		int currPaID = processingProfiledTree.tree.listNeuron.at(*tipLocIt).parent;
+		tipBranchNodeLocs.push_back(*tipLocIt);
+		while (processingProfiledTree.node2childLocMap.at(currPaID).size() == 1)
 		{
-			if (processingProfiledTree.node2childLocMap.at(branchIt->n).size() > 1) branchIDs.push_back(branchIt->n);
+			size_t currPaLoc = processingProfiledTree.node2LocMap.at(currPaID);
+			tipBranchNodeLocs.push_back(currPaLoc);
+			currPaID = processingProfiledTree.tree.listNeuron.at(currPaLoc).parent;
+			++nodeCount;
+
+			if (nodeCount > spikeNodeNum)
+			{
+				tipBranchNodeLocs.clear();
+				break;
+			}
+		}
+
+		if (!tipBranchNodeLocs.empty())
+		{
+			delLocs.insert(delLocs.end(), tipBranchNodeLocs.begin(), tipBranchNodeLocs.end());
+			tipBranchNodeLocs.clear();
 		}
 	}
-	
-	
-	
+
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+		processingProfiledTree.tree.listNeuron.erase(processingProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
+	profiledTreeReInit(processingProfiledTree);
+
 	return processingProfiledTree;
 }
 
