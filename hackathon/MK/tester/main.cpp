@@ -28,8 +28,8 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
 	for (int i = 2; i < argc; ++i)
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "brgs";
+	string funcName = "spikeRemoveTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -108,6 +108,17 @@ int main(int argc, char* argv[])
 		myImgTester.outputString = paras.at(1);
 		myImgTester.thre_stats();
 	}
+	else if (!funcName.compare("spikeRemoveTest"))
+	{
+		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\somaTestCase2\\beforeSpikeRemove.swc";
+		NeuronTree beforeSpikeRemoveTree = readSWC_file(inputSWCFullNameQ);
+		profiledTree spikedProfiledTree(beforeSpikeRemoveTree);
+		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(spikedProfiledTree);
+		//QString outputSWCfullName = QString::fromStdString(paras.at(1));
+		QString outputSWCfullName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\somaTestCase2\\afterSpikeRemove.swc";
+		writeSWC_file(outputSWCfullName, spikeRemovedProfiledTree.tree);
+	}
 	else if (!funcName.compare("centroidTree2MST"))
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
@@ -122,7 +133,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 		profiledTree testTree(inputTree);
 		profiledTree outputTree = NeuronStructUtil::treeDownSample(testTree, 10);
-		profiledTree finalTree = TreeGrower::spikeRemove(outputTree);
+		profiledTree finalTree = TreeGrower::spikeRemoval(outputTree);
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree.tree);
 	}
 	else if (!funcName.compare("polarTest"))

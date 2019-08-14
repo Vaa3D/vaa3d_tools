@@ -194,15 +194,15 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		else floatingExcludedTree = downSampledDenTree.tree;
 
 		profiledTree dnSampledProfiledTree(floatingExcludedTree);
-		profiledTree spikeRemovedProfiledTree = TreeGrower::spikeRemoval(dnSampledProfiledTree, 2);
+		//QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\beforeSpikeRemove.swc";
+		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
+		float angleThre = (float(2) / float(3)) * PI;
+		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
 
-		//denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);
-		//profiledTree finalDendriticTree(denScaleBackTree);
-		//finalOutputTree = finalDendriticTree.tree;
-
-		finalOutputTree = dnSampledProfiledTree.tree;
-		//finalOutputTree = spikeRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
-													     // without downsampling, tracing result's inacurracy is remedied.
+		//finalOutputTree = dnSampledProfiledTree.tree;
+		finalOutputTree = hookRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
+													    // without downsampling, tracing result's inacurracy is remedied.
 	}
 
 	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)

@@ -652,7 +652,7 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 			currPaID = processingProfiledTree.tree.listNeuron.at(currPaLoc).parent;
 			++nodeCount;
 
-			if (nodeCount > spikeNodeNum)
+			if (nodeCount > spikeNodeNum || currPaID == -1)
 			{
 				tipBranchNodeLocs.clear();
 				break;
@@ -674,48 +674,69 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 	return processingProfiledTree;
 }
 
-profiledTree TreeGrower::spikeRemove1(const profiledTree& inputProfiledTree, int spikeNodeNum)
+profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum)
 {
-	profiledTree processTree = inputProfiledTree;
-	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
+	cout << "removing spikes.." << endl << "  iteration 1 " << endl;
+	int iterCount = 1;
+	profiledTree cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
+	while (cleanedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
 	{
-		int currNodeNum = 1;
-		while (currNodeNum <= currNodeNumThre)
-		{
-			vector<size_t> delLocs;
-			vector<size_t> delLocsCandidates;
-			for (QList<NeuronSWC>::iterator it = processTree.tree.listNeuron.begin(); it != processTree.tree.listNeuron.end(); ++it)
-			{
-				if (processTree.node2childLocMap.find(it->n) == processTree.node2childLocMap.end()) // tip point
-				{
-					int currID = it->n;
-					delLocsCandidates.clear();
-					while (1)
-					{
-						int currPaID = processTree.tree.listNeuron.at(processTree.node2LocMap.at(currID)).parent;
-						if (processTree.node2childLocMap.at(currPaID).size() >= 2 && delLocsCandidates.size() <= currNodeNum)
-						{
-							delLocs.push_back(processTree.node2LocMap.at(currID));
-							if (!delLocsCandidates.empty()) delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
-							break;
-						}
-						else if (processTree.node2childLocMap.at(currPaID).size() == 1 && delLocsCandidates.size() <= currNodeNum)
-						{
-							delLocsCandidates.push_back(processTree.node2LocMap.at(currID));
-							currID = currPaID;
-						}
-						else if (delLocsCandidates.size() > currNodeNum) break;
-					}
-				}
-			}
+		inputProfiledTree = cleanedTree;
 
-			sort(delLocs.rbegin(), delLocs.rend());
-			for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) processTree.tree.listNeuron.erase(processTree.tree.listNeuron.begin() + ptrdiff_t(*it));
-			profiledTreeReInit(processTree);
-			++currNodeNum;
+		++iterCount;
+		cout << "  iteration " << iterCount << " " << endl;
+		cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
+	}
+	cout << endl;
+
+	return cleanedTree;
+}
+
+profiledTree TreeGrower::removeHookingHeadTail(const profiledTree& inputProfiledTree, float radAngleThre)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	vector<size_t> delLocs;
+
+	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
+	{
+		if (segIt->second.nodes.size() <= 3) continue;
+		if (segIt->second.seg_childLocMap.at(segIt->second.head).size() > 1) continue;
+		int headChildID = segIt->second.nodes.at(*(segIt->second.seg_childLocMap.at(segIt->second.head).begin())).n;
+		if (segIt->second.seg_childLocMap.at(headChildID).size() > 1) continue;
+		
+		NeuronSWC headPivotNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(headChildID));
+		NeuronSWC headNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head));
+		int headPivotChildID = segIt->second.nodes.at(*(segIt->second.seg_childLocMap.at(headPivotNode.n).begin())).n;
+		NeuronSWC headPivotChildNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(headPivotChildID));
+		vector<float> vec1(3);
+		vector<float> vec2(3);
+		vec1 = NeuronGeoGrapher::getVector_NeuronSWC<float>(headNode, headPivotNode);
+		vec2 = NeuronGeoGrapher::getVector_NeuronSWC<float>(headPivotChildNode, headPivotNode);
+		float headTurnAngle = NeuronGeoGrapher::getRadAngle(vec1, vec2);		
+		if (headTurnAngle < radAngleThre) delLocs.push_back(outputProfiledTree.node2LocMap.at(headNode.n));
+
+		for (vector<int>::iterator tailIt = segIt->second.tails.begin(); tailIt != segIt->second.tails.end(); ++tailIt)
+		{
+			int tailID = *tailIt;
+			int tailPivotID = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(tailID)).parent;
+			int tailPivotPaID = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(tailPivotID)).parent;
+			NeuronSWC tailNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(tailID));
+			NeuronSWC tailPivotNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(tailPivotID));
+			NeuronSWC tailPivotPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(tailPivotPaID));
+			vector<float> tailVec1(3);
+			vector<float> tailVec2(3);
+			tailVec1 = NeuronGeoGrapher::getVector_NeuronSWC<float>(tailNode, tailPivotNode);
+			tailVec2 = NeuronGeoGrapher::getVector_NeuronSWC<float>(tailPivotPaNode, tailPivotNode);
+			float tailTurnAngle = NeuronGeoGrapher::getRadAngle(tailVec1, tailVec2);
+			if (tailTurnAngle < radAngleThre) delLocs.push_back(outputProfiledTree.node2LocMap.at(tailNode.n));
 		}
 	}
 
-	return processTree;
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
+	profiledTreeReInit(outputProfiledTree);
+
+	return outputProfiledTree;
 }
 /* ======================== END of [Tree Trimming / Refining] ========================= */
