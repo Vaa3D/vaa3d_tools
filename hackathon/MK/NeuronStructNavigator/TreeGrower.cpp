@@ -636,7 +636,6 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 		if (processingProfiledTree.node2childLocMap.find(it->n) == processingProfiledTree.node2childLocMap.end())
 			tipLocs.push_back(it - processingProfiledTree.tree.listNeuron.begin());
 	}
-	//cout << tipLocs.size() << endl;
 	
 	vector<size_t> delLocs;
 	vector<size_t> tipBranchNodeLocs;
