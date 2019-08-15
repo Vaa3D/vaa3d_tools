@@ -1,4 +1,5 @@
 #include "trans_class.h"
+#include <fstream>
 
 void GaussElimination(vector<vector<double> > &A)
 {
@@ -1517,13 +1518,13 @@ double assemblePoint::getBackIntensity(vector<vector<vector<unsigned char> > > &
     int d=1;
     double back_intensity=0;
     int c=0;
-    for(int i=-dx0-d;i<=dx0+d;++i)
-        for(int j=-dy0-d;j<=dy0+d;++j)
-            for(int k=-dz0-d;k<=dz0+d;++k)
+    for(int i=floor(-dx0-d);i<=ceil(dx0+d);++i)
+        for(int j=floor(-dy0-d);j<=ceil(dy0+d);++j)
+            for(int k=floor(-dz0-d);k<=ceil(dz0+d);++k)
             {
-                double tmpx=x+i;
-                double tmpy=y+j;
-                double tmpz=z+k;
+                double tmpx=round(x)+i;
+                double tmpy=round(y)+j;
+                double tmpz=round(z)+k;
                 if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
                     continue;
                 back_intensity+=(double)image[tmpx].at(tmpy).at(tmpz);
@@ -1547,7 +1548,10 @@ bool assemblePoint::assemble(vector<vector<vector<unsigned char> > > &image, vec
     V3DLONG b_z1=z+max_z;
 
     vector<simplePoint> queue;
-    queue.push_back(this->sps[0]);
+    for(int i=0;i<this->sps.size();++i)
+    {
+        queue.push_back(this->sps[i]);
+    }
 
     while(!queue.empty())
     {
@@ -1587,6 +1591,11 @@ bool assemblePoint::assemble(vector<vector<vector<unsigned char> > > &image, vec
             }
         }
     }
+
+    this->intensity=this->getIntensity(image);
+    this->back_intensity=this->getBackIntensity(image,sz);
+    this->rate=this->intensity/this->back_intensity;
+
     return true;
 }
 
@@ -1653,6 +1662,7 @@ bool assemblePoint::renewXYZ(vector<vector<vector<unsigned char> > > &image)
 
 bool apTracer::initialAsseblePoint(vector<assemblePoint> &assemblepoints, vector<vector<vector<unsigned char> > > &image, long long *sz, double thres)
 {
+    int mode=2;
     vector<vector<vector<int> > > mask=vector<vector<vector<int> > >(sz[0],vector<vector<int> >(sz[1],vector<int>(sz[2],0)));
 
     for(V3DLONG i=0;i<sz[0];++i)
@@ -1667,19 +1677,26 @@ bool apTracer::initialAsseblePoint(vector<assemblePoint> &assemblepoints, vector
 
     cout<<"first..."<<endl;
 
-    for(V3DLONG i=0;i<sz[0];++i)
-        for(V3DLONG j=0;j<sz[1];++j)
-            for(V3DLONG k=0;k<sz[2];++k)
+    for(V3DLONG i=1;i<sz[0]-1;++i)
+        for(V3DLONG j=1;j<sz[1]-1;++j)
+            for(V3DLONG k=1;k<sz[2]-1;++k)
             {
                 if(mask[i].at(j).at(k)==0)
                 {
                     simplePoint p(i,j,k);
                     assemblePoint a_p;
+                    a_p.sps.push_back(p);
+                    p.getNbSimplePoint(a_p.sps,mode);
                     a_p.x=i;
                     a_p.y=j;
                     a_p.z=k;
-                    a_p.sps.push_back(p);
-                    a_p.size=1;
+                    a_p.size=27;
+                    a_p.dx0=1;
+                    a_p.dx1=1;
+                    a_p.dy0=1;
+                    a_p.dy1=1;
+                    a_p.dz0=1;
+                    a_p.dz1=1;
                     a_p.intensity=a_p.getIntensity(image);
                     a_p.back_intensity=a_p.getBackIntensity(image,sz);
                     a_p.rate=a_p.intensity/a_p.back_intensity;
@@ -1704,25 +1721,54 @@ bool apTracer::initialAsseblePoint(vector<assemblePoint> &assemblepoints, vector
     while(it!=ratemaps.rend())
     {
 
-        cout<<"count: "<<count<<endl;
+//        cout<<"count: "<<count<<endl;
         count++;
         assemblePoint tmp=it->second;
 
-        if(mask[tmp.x].at(tmp.y).at(tmp.z)==1)
+        bool e=false;
+//        for(int i=0;i<tmp.sps.size();++i)
+//        {
+//            if(mask[tmp.sps[i].x].at(tmp.sps[i].y).at(tmp.sps[i].z)==1)
+//                e=true;
+//        }
+        if(mask[tmp.x].at(tmp.y).at(tmp.z))
+            e=true;
+
+        if(e==true)
         {
             it++;
             continue;
         }
+
+        for(int i=0;i<tmp.sps.size();++i)
+        {
+            mask[tmp.sps[i].x].at(tmp.sps[i].y).at(tmp.sps[i].z)=1;
+        }
+
         cout<<"end if..."<<endl;
         tmp.assemble(image,mask,sz);
-        assemblepoints.push_back(tmp);
+
+
+        if(tmp.intensity>30)
+        {
+            assemblepoints.push_back(tmp);
+        }
+
+
+
+
+
         it++;
     }
 
     for(int i=0;i<assemblepoints.size();++i)
     {
         assemblepoints[i].renewXYZ(image);
-        cout<<i<<" size: "<<assemblepoints[i].size<<endl;
+        cout<<i<<" size: "<<assemblepoints[i].size<<" intensity: "<<assemblepoints[i].intensity<<" back_intensity: "<<assemblepoints[i].back_intensity<<" rate: "<<assemblepoints[i].rate<<endl;
+    }
+    for(int i=0;i<assemblepoints.size();++i)
+    {
+        assemblepoints[i].getDirection(image,sz);
     }
 
     return true;
@@ -1747,6 +1793,166 @@ bool apTracer::writeAsseblePoints(const QString markerfile, vector<assemblePoint
     return true;
 }
 
+bool assemblePoint::getDirection(vector<vector<vector<unsigned char> > > &image, long long *sz)
+{
+    V3DLONG ox = round(this->x);
+    V3DLONG oy = round(this->y);
+    V3DLONG oz = round(this->z);
+    vector<double> intens=vector<double>(26,0);
+    direction dire[26] = {direction(1,0,0),direction(0,1,0),direction(0,0,1),direction(1,1,0),direction(1,0,1),direction(0,1,1),direction(1,-1,0),direction(1,0,-1),direction(0,1,-1),direction(1,1,1),direction(-1,1,1),direction(1,-1,1),direction(1,1,-1)
+                       ,direction(-1,0,0),direction(0,-1,0),direction(0,0,-1),direction(-1,-1,0),direction(-1,0,-1),direction(0,-1,-1),direction(-1,1,0),direction(-1,0,1),direction(0,-1,1),direction(-1,-1,-1),direction(1,-1,-1),direction(-1,1,-1),direction(-1,-1,1)};
+    direction realdire[26] = {direction(1,0,0),direction(0,1,0),direction(0,0,1),direction(A1,A1,0),direction(A1,0,A1),direction(0,A1,A1),direction(A1,-A1,0),direction(A1,0,-A1),direction(0,A1,-A1),direction(A2,A2,A2),direction(-A2,A2,A2),direction(A2,-A2,A2),direction(A2,A2,-A2)
+                       ,direction(-1,0,0),direction(0,-1,0),direction(0,0,-1),direction(-A1,-A1,0),direction(-A1,0,-A1),direction(0,-A1,-A1),direction(-A1,A1,0),direction(-A1,0,A1),direction(0,-A1,A1),direction(-A2,-A2,-A2),direction(A2,-A2,-A2),direction(-A2,A2,-A2),direction(-A2,-A2,A2)};
+
+    int d = 20,count = 0;
+
+    for(int i = 0; i<26; ++i)
+    {
+        for(int j = 0; j<d; ++j)
+        {
+            V3DLONG tmpx = ox + j*dire[i].x;
+            V3DLONG tmpy = oy + j*dire[i].y;
+            V3DLONG tmpz = oz + j*dire[i].z;
+            if(tmpx>sz[0]-1||tmpx<0||tmpy>sz[1]-1||tmpy<0||tmpz>sz[2]-1||tmpz<0)
+                continue;
+            count++;
+            intens.at(i)+=image[tmpx].at(tmpy).at(tmpz);
+        }
+        intens.at(i)/=count;
+        count=0;
+    }
+    ofstream out;
+
+    for(int i = 0; i<26; ++i)
+    {
+        cout<<i<<" : "<<intens[i]<<" ";
+    }
+    cout<<endl;
+    return true;
+
+}
+
+bool apTracer::aptrace(vector<assemblePoint> &assemblePoints, vector<vector<vector<unsigned char> > > &image, NeuronTree &nt, long long *sz)
+{
+    for(int i=0;i<assemblePoints.size();++i)
+    {
+        qDebug()<<"----------------------------------------------------"<<endl;
+        qDebug()<<i<<" : "<<endl;
+        map<double,int> dismap;
+        vector<double> mean_intens = vector<double>(assemblePoints.size(),0);
+        for(int j=0;j<assemblePoints.size();++j)
+        {
+            assemblePoint& ori = assemblePoints[i];
+            assemblePoint& chi = assemblePoints[j];
+            if(i!=j)
+            {
+                qDebug()<<j<<" : "<<endl;
+                double d = distance_two_point(ori,chi);
+                qDebug()<<"distance: "<<d<<endl;
+                dismap[d] = j;
+                int midx1 = static_cast<int>(ori.x+(chi.x-ori.x)/4);
+                int midy1 = static_cast<int>(ori.y+(chi.y-ori.y)/4);
+                int midz1 = static_cast<int>(ori.z+(chi.z-ori.z)/4);
+                simplePoint p1(midx1,midy1,midz1);
+                assemblePoint a_p1;
+                a_p1.sps.push_back(p1);
+//                p1.getNbSimplePoint(a_p1.sps,2);
+                a_p1.x = midx1;
+                a_p1.y = midy1;
+                a_p1.z = midz1;
+                a_p1.size = 1;
+                a_p1.intensity = a_p1.getIntensity(image);
+
+                int midx2 = static_cast<int>(ori.x+((chi.x-ori.x)/4)*2);
+                int midy2 = static_cast<int>(ori.y+((chi.y-ori.y)/4)*2);
+                int midz2 = static_cast<int>(ori.z+((chi.z-ori.z)/4)*2);
+                simplePoint p2(midx2,midy2,midz2);
+                assemblePoint a_p2;
+                a_p2.sps.push_back(p2);
+//                p2.getNbSimplePoint(a_p2.sps,2);
+                a_p2.x = midx2;
+                a_p2.y = midy2;
+                a_p2.z = midz2;
+                a_p2.size = 1;
+                a_p2.intensity = a_p2.getIntensity(image);
+
+                int midx3 = static_cast<int>(ori.x+((chi.x-ori.x)/4)*3);
+                int midy3 = static_cast<int>(ori.y+((chi.y-ori.y)/4)*3);
+                int midz3 = static_cast<int>(ori.z+((chi.z-ori.z)/4)*3);
+                simplePoint p3(midx3,midy3,midz3);
+                assemblePoint a_p3;
+                a_p3.sps.push_back(p3);
+//                p3.getNbSimplePoint(a_p3.sps,2);
+                a_p3.x = midx3;
+                a_p3.y = midy3;
+                a_p3.z = midz3;
+                a_p3.size = 1;
+                a_p3.intensity = a_p3.getIntensity(image);
+
+                qDebug()<<"origin intensity: "<<ori.intensity
+                       <<"mid1 intensity: "<<a_p1.intensity
+                      <<"mid2 intensity: "<<a_p2.intensity
+                     <<"mid3 intensity: "<<a_p3.intensity
+                    <<"child intensity: "<<chi.intensity<<endl;
+                double intensity_mean =(ori.intensity+a_p1.intensity+a_p2.intensity+a_p3.intensity+chi.intensity)/5;
+                mean_intens[j] =intensity_mean;
+            }
+        }
+
+        map<double,int>::iterator it = dismap.begin();
+        int count = 0;
+        while(it!=dismap.end())
+        {
+            qDebug()<<"------------------------------------------------"<<endl;
+            qDebug()<<"distance: "<<it->first<<endl;
+            int index = it->second;
+            assemblePoint& ori = assemblePoints[i];
+            assemblePoint& chi = assemblePoints[index];
+            double thres_intensity = (ori.intensity+chi.intensity)/2.1;
+            if(mean_intens[index]<thres_intensity)
+                it++;
+            else
+            {
+                count++;
+                if(count==1)
+                {
+                    qDebug()<<"count: "<<count<<endl;
+                    qDebug()<<"mean: "<<mean_intens[index]<<" ori intensity: "<<ori.intensity<<" chi intensity: "<<chi.intensity<<endl;
+                    NeuronSWC par,child;
+                    par.n = i*3;
+                    par.x = ori.x;
+                    par.y = ori.y;
+                    par.z = ori.z;
+                    par.parent = -1;
+                    child.n = i*3+1;
+                    child.x = chi.x;
+                    child.y = chi.y;
+                    child.z = chi.z;
+                    child.parent = par.n;
+                    nt.listNeuron.push_back(par);
+                    nt.listNeuron.push_back(child);
+                    it++;
+                    break;
+                }
+//                else if(count==2)
+//                {
+//                    qDebug()<<"count: "<<count<<endl;
+//                    qDebug()<<"mean: "<<mean_intens[index]<<" ori intensity: "<<ori.intensity<<" chi intensity: "<<chi.intensity<<endl;
+//                    NeuronSWC child2;
+//                    child2.n = i*3+2;
+//                    child2.x = chi.x;
+//                    child2.y = chi.y;
+//                    child2.z = chi.z;
+//                    child2.parent = i*3;
+//                    nt.listNeuron.push_back(child2);
+//                    break;
+//                }
+             }
+        }
+
+    }
+    return true;
+}
 
 
 

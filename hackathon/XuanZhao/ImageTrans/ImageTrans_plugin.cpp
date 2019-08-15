@@ -74,6 +74,11 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         ap.initialAsseblePoint(assemblepoints,image,sz,thres);
         cout<<"end..."<<endl;
         ap.writeAsseblePoints(markerfile,assemblepoints);
+        NeuronTree nt;
+        ap.aptrace(assemblepoints,image,nt,sz);
+
+        QString eswcfile=(outfiles.size()>=2)?outfiles[1]:"";
+        writeESWC_file(eswcfile,nt);
 
 //        vector<vector<vector<unsigned char>>> image_new;
 //        cout<<"prepare draw..."<<endl;

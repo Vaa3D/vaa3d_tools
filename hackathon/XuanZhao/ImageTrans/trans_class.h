@@ -14,6 +14,70 @@
 
 using namespace std;
 
+#define IN 1000000000
+
+template<class T>
+inline double norm_v(T &vector0)
+{
+    return sqrt(vector0.x*vector0.x+vector0.y*vector0.y+vector0.z*vector0.z);
+}
+
+template<class T>
+inline double dot_vv(T &vector1,T &vector2)
+{
+    return (vector1.x*vector2.x+vector1.y*vector2.y+vector1.z*vector2.z);
+}
+
+template<class T1,class T2>
+inline double p_to_line(T1 &point1,T1 &point2,T1 &point3)
+{
+    T2 a,c;
+    a.x=point1.x-point2.x;
+    a.y=point1.y-point2.y;
+    a.z=point1.z-point2.z;
+
+    c.x=point3.x-point2.x;
+    c.y=point3.y-point2.y;
+    c.z=point3.z-point2.z;
+
+    double a_norm=norm_v(a);
+    double c_norm=norm_v(c);
+
+    double angle_ac=angle_three_point(point2,point1,point3);
+
+    double sin_ac=sin(angle_ac);
+    double cos_ac=cos(angle_ac);
+
+    if(a_norm*cos_ac>c_norm||cos_ac<0)
+    {
+        double d1=distance_two_point(point1,point2);
+        double d2=distance_two_point(point1,point3);
+        return (d1>d2)?d1:d2;
+    }
+
+    return a_norm*sin_ac;
+}
+
+template<class T>
+inline double distance_two_point(T &point1,T &point2)
+{
+    return sqrt(((double)point1.x-(double)point2.x)*((double)point1.x-(double)point2.x)+((double)point1.y-(double)point2.y)*((double)point1.y-(double)point2.y)+((double)point1.z-(double)point2.z)*((double)point1.z-point2.z));
+}
+
+template<class T>
+inline double angle_three_point(T &point1,T &point2,T &point3)
+{
+    double x1=point2.x-point1.x;
+    double y1=point2.y-point1.y;
+    double z1=point2.z-point1.z;
+
+    double x2=point3.x-point1.x;
+    double y2=point3.y-point1.y;
+    double z2=point3.z-point1.z;
+
+    return acos((x1*x2+y1*y2+z1*z2)/(distance_two_point(point1,point2)*distance_two_point(point1,point3)));
+}
+
 void GaussElimination(vector<vector<double>> &A);
 
 void DecodeMatrix(vector<vector<double>> &A, vector<double> &AN);
@@ -312,6 +376,8 @@ public:
     bool initialAsseblePoint(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,V3DLONG* sz,double thres);
 
     bool writeAsseblePoints(const QString markerfile,vector<assemblePoint> &assemblepoints);
+
+    bool aptrace(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,NeuronTree &nt,V3DLONG* sz);
 };
 
 
