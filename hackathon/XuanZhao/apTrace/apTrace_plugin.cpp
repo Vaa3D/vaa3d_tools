@@ -10,6 +10,7 @@
 #include "apTrace_plugin.h"
 
 #include "mysurface.h"
+#include "imagectrl.h"
 
 //#include "pca.h"
 
@@ -36,6 +37,7 @@ QStringList TestPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("tracing_func")
+        <<tr("segment")
 		<<tr("help");
 }
 
@@ -75,6 +77,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         vector<vector<vector<unsigned char>>> image;
         c.Data1d_to_3d(image);
+        unsigned char*** data3d = c.get3ddata();
 
 //        c.corrode(image);
 //        c.corrode(image);
@@ -86,21 +89,17 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         apTracer ap;
         vector<assemblePoint> assemblepoints;
 
-        double thres = c.getMeanIntensity();
+        double thres = c.getMode();
 
-        ap.initialAsseblePoint(assemblepoints,image,sz,thres);
-        ap.writeAsseblePoints(markerfile,assemblepoints);
+        ap.initialAssemblePoint(assemblepoints,image,data3d,sz,thres);
+        ap.writeAssemblePoints(markerfile,assemblepoints);
 
         QList<ImageMarker> listMarker;
         for(int i=0; i<assemblepoints.size() ;++i)
         {
-
             qDebug()<<"cor: "<<assemblepoints[i].x<<" "<<assemblepoints[i].y<<" "<<assemblepoints[i].z<<endl;
-            assemblepoints[i].getDirection(pdata,sz);
+            assemblepoints[i].getDirection(data3d,sz);
             assemblepoints[i].dire.norm_dir();
-
-
-
             assemblepoints[i].showDirection(listMarker);
         }
 
@@ -109,13 +108,65 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         writeMarker_file(directionfile,listMarker);
 
         NeuronTree nt;
-        ap.direc_trace(assemblepoints,image,nt,sz);
+        vector<segment> segments;
+//        ap.direc_trace(assemblepoints,image,segments,sz);
+//        ap.connectPointandSegment(assemblepoints,segments);
+        ap.trace(assemblepoints,image,data3d,nt,sz);
 
-        if(pdata) delete[] pdata;
+//        for(int i=0; i<segments.size(); ++i)
+//        {
+//            for(int j=0; j<segments[i].points.size(); ++j)
+//            {
+//                nt.listNeuron.push_back(segments[i].points[j]);
+//            }
+//        }
+
+
 
         QString eswcfile=(outfiles.size()>=2)?outfiles[1]:"";
         writeESWC_file(eswcfile,nt);
+
+        c.getSegImage(assemblepoints);
+
+        unsigned char* segdata = c.getdata();
+
+        QString tiffile = (outfiles.size()>=4)?outfiles[3]:"";
+        simple_saveimage_wrapper(callback,tiffile.toStdString().c_str(),segdata,sz,datatype);
+
+        if(pdata) delete[] pdata;
+        if(segdata) delete[] segdata;
+
+        for(int i=0; i<sz[2]; ++i)
+        {
+            for(int j=0; j<sz[1]; ++j)
+            {
+                delete[] data3d[i][j];
+            }
+            delete[] data3d[i];
+        }
+        delete[] data3d;
 	}
+    else if (func_name == tr("segment"))
+    {
+        const char* file=(infiles.size()>=1)?infiles[0]:"";
+        unsigned char* pdata=0;
+        V3DLONG sz[4]={0,0,0,0};
+        int datatype=0;
+        simple_loadimage_wrapper(callback,file,pdata,sz,datatype);
+        qDebug()<<"put image..."<<endl;
+        ImageCtrl c(pdata,sz);
+
+        vector<vector<vector<unsigned char>>> image;
+        c.histogram();
+        c.Data1d_to_3d(image);
+//        c.corrode(image,2);
+        unsigned char* segdata = c.getdata();
+        QString tiffile = (outfiles.size()>=1)?outfiles[0]:"";
+        simple_saveimage_wrapper(callback,tiffile.toStdString().c_str(),segdata,sz,datatype);
+
+        if(pdata) delete[] pdata;
+        if(segdata) delete segdata;
+    }
     else if (func_name == tr("help"))
     {
 

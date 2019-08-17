@@ -53,6 +53,12 @@ public:
     unsigned char* getdata();
 
     unsigned char*** get3ddata();
+
+    bool getSegImage(vector<assemblePoint> &assemblePoints);
+
+    bool histogram();
+
+    double getMode();
 };
 
 #endif // IMAGECTRL_H

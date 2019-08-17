@@ -938,24 +938,26 @@ template <class T> bool compute_rgn_stat_new(LocationSimple & pt, T ***indata3d,
         }
     }
 
-    cout << pt.ev_pc1 << "," << pt.ev_pc2 << "," << pt.ev_pc3 << endl;
     sigma1 = pt.ev_pc1;
     sigma2 = pt.ev_pc2;
     sigma3 = pt.ev_pc3;
 
+//    cout << pt.ev_pc1 << "," << pt.ev_pc2 << "," << pt.ev_pc3 << endl;
 
-    for (int i = 0; i < 3; i++){
-    cout << vec1[i] << ",";
-    }
-    cout << endl;
-    for (int i = 0; i < 3; i++){
-    cout << vec2[i] << ",";
-    }
-    cout << endl;
-    for (int i = 0; i < 3; i++){
-    cout << vec3[i] << ",";
-    }
-    cout << endl;
+
+
+//    for (int i = 0; i < 3; i++){
+//    cout << vec1[i] << ",";
+//    }
+//    cout << endl;
+//    for (int i = 0; i < 3; i++){
+//    cout << vec2[i] << ",";
+//    }
+//    cout << endl;
+//    for (int i = 0; i < 3; i++){
+//    cout << vec3[i] << ",";
+//    }
+//    cout << endl;
 
 
 

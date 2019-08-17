@@ -104,7 +104,7 @@ bool ImageCtrl::corrode(vector<vector<vector<unsigned char> > > &image,int mode)
 
     qDebug()<<"---------------------------------------";
 
-    double thres =  this->getMeanIntensity();
+    double thres =  65;//this->getMeanIntensity();
     vector<vector<vector<int> > > mask=vector<vector<vector<int> > >(sz0,vector<vector<int> >(sz1,vector<int>(sz2,0)));
     for(V3DLONG i=0;i<sz0;++i)
         for(V3DLONG j=0;j<sz1;++j)
@@ -218,4 +218,77 @@ unsigned char*** ImageCtrl::get3ddata()
                 indata3d[z][y][x] = data1d[z*sz1*sz0+y*sz0+x];
             }
     return indata3d;
+}
+
+bool ImageCtrl::getSegImage(vector<assemblePoint> &assemblePoints)
+{
+    V3DLONG sz_num = sz0*sz1*sz2;
+    vector<int> flag = vector<int>(sz_num,0);
+    for(int i=0; i<assemblePoints.size(); ++i)
+    {
+        for(int j=0; j<assemblePoints[i].sps.size(); ++j)
+        {
+            V3DLONG index;
+            this->Cor_to_Index(assemblePoints[i].sps[j].x,assemblePoints[i].sps[j].y,assemblePoints[i].sps[j].z,index);
+            data1d[index] = 100;
+            flag[index] = 1;
+        }
+    }
+    for(V3DLONG i=0; i<sz_num; ++i)
+    {
+        if(flag[i]==0)
+            data1d[i] = 0;
+    }
+
+    return true;
+}
+
+bool ImageCtrl::histogram()
+{
+    V3DLONG sz_num = sz0*sz1*sz2;
+    vector<int> count = vector<int>(256,0);
+
+    map<int,int> countmap;
+
+    for(int i=0; i<sz_num; ++i)
+    {
+        count[data1d[i]]++;
+    }
+    for(int i=0; i<count.size(); ++i)
+    {
+        if(count[i]!=0)
+        {
+            qDebug()<<i<<" count: "<<count[i]<<endl;
+        }
+        countmap[count[i]] = i;
+    }
+
+    for(int i=0; i<sz_num; ++i)
+    {
+        if(data1d[i]<=countmap.rbegin()->second)
+        {
+            data1d[i] = 0;
+        }
+    }
+
+    return true;
+}
+
+double ImageCtrl::getMode()
+{
+    V3DLONG sz_num = sz0*sz1*sz2;
+    vector<int> count = vector<int>(256,0);
+
+    map<int,int> countmap;
+
+    for(int i=0; i<sz_num; ++i)
+    {
+        count[data1d[i]]++;
+    }
+    for(int i=0; i<count.size(); ++i)
+    {
+        countmap[count[i]] = i;
+    }
+
+    return (double)(countmap.rbegin()->second+0.5);
 }

@@ -4,10 +4,11 @@
 #include <map>
 #include <math.h>
 #include "basic_surf_objs.h"
-#include "imagectrl.h"
+//#include "imagectrl.h"
 #include "pca.h"
 
 #define IN 100000000000
+#define PI 3.1415926535898
 
 using namespace std;
 
@@ -53,8 +54,29 @@ inline double p_to_line(T1 &point1,T1 &point2,T1 &point3)
     return a_norm*sin_ac;
 }
 
-template<class T>
-inline double distance_two_point(T &point1,T &point2)
+template<class T1,class T2>
+inline double p_to_line_2(T1 &point1,T1 &point2,T1 &point3)
+{
+    T2 a,c;
+    a.x=point1.x-point2.x;
+    a.y=point1.y-point2.y;
+    a.z=point1.z-point2.z;
+
+    c.x=point3.x-point2.x;
+    c.y=point3.y-point2.y;
+    c.z=point3.z-point2.z;
+
+    double a_norm=norm_v(a);
+
+    double angle_ac=angle_three_point(point2,point1,point3);
+
+    double sin_ac=sin(angle_ac);
+
+    return a_norm*sin_ac;
+}
+
+template<class T1,class T2>
+inline double distance_two_point(T1 &point1,T2 &point2)
 {
     return sqrt(((double)point1.x-(double)point2.x)*((double)point1.x-(double)point2.x)+((double)point1.y-(double)point2.y)*((double)point1.y-(double)point2.y)+((double)point1.z-(double)point2.z)*((double)point1.z-point2.z));
 }
@@ -138,7 +160,8 @@ struct direction
 struct simplePoint
 {
     V3DLONG x,y,z;
-    simplePoint():x(0),y(0),z(0)
+    direction dire;
+    simplePoint():x(0),y(0),z(0),dire()
     {}
     simplePoint(V3DLONG x,V3DLONG y,V3DLONG z)
     {
@@ -146,6 +169,7 @@ struct simplePoint
         this->y=y;
         this->z=z;
     }
+    direction getDirection(unsigned char ***data3d, V3DLONG *sz);
     bool getNbSimplePoint(vector<simplePoint> &nbsimplepoints,int mode);
 };
 
@@ -216,7 +240,7 @@ struct assemblePoint
 
     double getIntensity(vector<vector<vector<unsigned char> > > &image);
 
-    bool assemble(vector<vector<vector<unsigned char> > > &image, vector<vector<vector<int> > > &mask, V3DLONG* sz);
+    bool assemble(vector<vector<vector<unsigned char> > > &image, unsigned char ***data3d, vector<vector<vector<int> > > &mask, V3DLONG* sz);
 
     bool renewXYZ(vector<vector<vector<unsigned char> > > &image);
 
@@ -226,10 +250,27 @@ struct assemblePoint
 
     double getDistance(assemblePoint & other);
 
-    bool getDirection(unsigned char *data1d, V3DLONG *sz);
+    bool getDirection(unsigned char*** data3d, V3DLONG *sz);
 
     bool showDirection(QList<ImageMarker> &markers);
 
+    bool meanShift(vector<vector<vector<unsigned char> > > &image, double r, long long *sz);
+
+};
+
+struct segment
+{
+    vector<NeuronSWC> points;
+    NeuronSWC headpoint,tailpoint;
+    direction headangle,tailangle;
+    double length;
+
+    NeuronSWC getHeadPoint();
+    NeuronSWC getTailPoint();
+    direction getHeadAngle();
+    direction getTailAngle();
+    double getLength();
+    bool getSegMeanStdIntensity(vector<vector<vector<unsigned char> > > &image,double &mean,double &std);
 };
 
 class apTracer
@@ -237,18 +278,24 @@ class apTracer
 public:
     apTracer() {}
 
-    bool initialAsseblePoint(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,V3DLONG* sz,double thres);
+    bool initialAssemblePoint(vector<assemblePoint> &assemblePoints, vector<vector<vector<unsigned char> > > &image, unsigned char ***data3d, V3DLONG* sz, double thres);
 
-    bool writeAsseblePoints(const QString markerfile,vector<assemblePoint> &assemblepoints);
+    bool writeAssemblePoints(const QString markerfile,vector<assemblePoint> &assemblepoints);
 
     bool aptrace(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,NeuronTree &nt,V3DLONG* sz);
 
-    bool trace(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,NeuronTree &nt,V3DLONG* sz);
+    bool trace(vector<assemblePoint> &assemblePoints, vector<vector<vector<unsigned char> > > &image, unsigned char ***data3d, NeuronTree &nt, V3DLONG* sz);
 
     bool findTips(vector<assemblePoint> &apoints, vector<int> &tipsindex, vector<vector<vector<unsigned char> > > &image, long long *sz);
 
-    bool direc_trace(vector<assemblePoint> &assemblePoints,vector<vector<vector<unsigned char> > > &image,NeuronTree &nt,V3DLONG* sz);
+    bool direc_trace(vector<assemblePoint> &assemblePoints, vector<vector<vector<unsigned char> > > &image, vector<segment> &v_segment, V3DLONG* sz);
+
+    bool connectPointandSegment(vector<assemblePoint> &assemblePoints, vector<segment> &v_segment);
+
+    bool connectSegment(vector<segment> &v_segment);
 };
+
+
 
 
 #endif // MYSURFACE_H
