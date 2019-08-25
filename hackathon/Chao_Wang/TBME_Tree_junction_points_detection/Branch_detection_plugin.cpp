@@ -15,7 +15,6 @@
 #include <algorithm>
 #include"ClusterAnalysis.h"
 #include"branch_detection_model.h"
-
 using namespace std;
 struct delete_piont
 {
@@ -628,6 +627,7 @@ int rotate_2D_display_point(V3DPluginCallback2 &callback,QWidget *parent)
          vector<float> dis_x_loc; // background point
          vector<float> dis_y_loc;
          vector<float> Pixe;
+         int change=0;
 
          //create a new mip
          int block_radiu=radiu+double(T0/10)*radiu+block_size;
