@@ -27,6 +27,8 @@ struct TRACE_LS_PARA
     int tracing_comb;
     int grid_trace;
     int global_name;
+    int soma;
+    int resume;
 
     V3DLONG in_sz[3];
 
@@ -39,7 +41,7 @@ struct TRACE_LS_PARA
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
-    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd;
+    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd,output_folder;
 };
 
 
@@ -89,6 +91,7 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
 
 vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt);
 NeuronTree smartPrune(NeuronTree nt, double length);
+void smartFuse(V3DPluginCallback2 &callback,QString inputFolder, QString outputFile);
 
 #endif
 

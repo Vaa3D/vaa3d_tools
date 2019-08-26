@@ -15,7 +15,6 @@ Q_EXPORT_PLUGIN2(detect_type, type);
 QStringList type::menulist() const
 {
 	return QStringList() 
-        <<tr("detect_type_distance")
         <<tr("detect_type")
 		<<tr("about");
 }
@@ -23,18 +22,18 @@ QStringList type::menulist() const
 QStringList type::funclist() const
 {
 	return QStringList()
-        <<tr("detect_type_distance")
+        <<tr("detection_type")
 		<<tr("func2")
 		<<tr("help");
 }
 
 void type::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("detect_type_distance"))
-	{
-        detect_type_distance(callback,parent);
-	}
-    else if (menu_name == tr("detect_type"))
+    //if (menu_name == tr("detect_type_distance"))
+    //{
+    //    detect_type_distance(callback,parent);
+    //}
+    if (menu_name == tr("detect_type"))
     {
         detect_type(callback,parent);
     }
@@ -52,9 +51,9 @@ bool type::dofunc(const QString & func_name, const V3DPluginArgList & input, V3D
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("detection_type"))
 	{
-		v3d_msg("To be implemented.");
+        detect_type_func(input,output,callback);
 	}
 	else if (func_name == tr("func2"))
 	{

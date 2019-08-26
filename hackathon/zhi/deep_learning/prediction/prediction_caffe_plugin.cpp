@@ -1256,7 +1256,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                             V3DLONG offsetj = iiy*N;
                             for(V3DLONG iix = xb; iix <= xe; iix++)
                             {
-                                int tmp_score = (outputs[j]>0.05)? 1:-1;  //0.01 for testing on ultratracer
+                                int tmp_score = (outputs[j]>0.005)? 1:-1;  //0.01 for testing on ultratracer
                                 im_label[offsetk + offsetj + iix] += tmp_score;
                                 j++;
                             }
@@ -1288,8 +1288,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }
         }
 
-        float* outimg = 0;
-        gaussian_filter(im_seg, in_sz, 7, 7, 1, 1, 3, outimg);
+//        float* outimg = 0;
+//        gaussian_filter(im_seg, in_sz, 7, 7, 1, 1, 3, outimg);
 
         for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
         {
@@ -1300,7 +1300,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
                 {
-                    im_seg[offsetk + offsetj + ix]=(outimg[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                    im_seg[offsetk + offsetj + ix]=(im_seg[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
                 }
             }
         }
@@ -1312,7 +1312,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         if(im_label) {delete []im_label;im_label=0;}
         if(data1d) {delete []data1d; data1d = 0;}
         if(im_seg) {delete []im_seg; im_seg = 0;}
-        if(outimg) {delete []outimg; outimg = 0;}
+//        if(outimg) {delete []outimg; outimg = 0;}
 
         return true;
     }else if (func_name == tr("Segmentation_3D_combine"))

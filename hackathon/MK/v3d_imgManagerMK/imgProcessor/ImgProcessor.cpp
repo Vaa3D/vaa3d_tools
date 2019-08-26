@@ -1,13 +1,126 @@
-#include <iostream>
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
 
-#include <boost\container\flat_set.hpp>
+/*******************************************************************************
+*
+*  This library intends to fascilitate Vaa3D image operations in the lowest level.
+*  ImgProcessor class only takes array pointers as the input and as well outputs array pointers.
+*  It does not involve in any image I/O and only operates arrays in the memory.
+*
+*  Most ImgProcessor class methods are implemented as static template functions.
+*  A typical function call would need at least three input arguments:
+*
+*		ImgProcessor::func(unsigned char[] inputImgArray, unsigned char[] outputImgArray, int[] inputImgDimensions, other input arguments);
+*
+********************************************************************************/
 
 #include "ImgProcessor.h"
 
 using namespace std;
 
-void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[])
+map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& inputHistList)
 {
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = float(it->first);
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
+}
+
+
+map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_t>& inputHistList)
+{
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	}
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = float(it->first);
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
+}
+
+
+
+// ========================================= Image Processing/Filtering ========================================= //
+void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
+{
+	// This method performs 2D skeletonization on 2D gray scale image with white-pixel address book approach.
+
 	unsigned char** inputImg2Dptr = new unsigned char*[imgDims[1] + 2]; // imputImg2DPtr -> enlarged 2D binaray image. (1 v 0)
 	for (int j = 1; j <= imgDims[1]; ++j)
 	{
@@ -343,3 +456,166 @@ void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputI
 		}
 	}
 }
+
+void ImgProcessor::erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+			
+			int minValue = 1000;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
+			}
+			outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
+		}
+	}
+
+	delete[] roiPtr;
+}
+
+void ImgProcessor::dilate2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+
+			int maxValue = 0;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) > maxValue) maxValue = int(roiPtr[maski]);
+			}
+			outputImgPtr[imgDims[0] * j + i] = (unsigned char)(maxValue);
+		}
+	}
+
+	delete[] roiPtr;
+}
+
+void ImgProcessor::imgClose2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* finalOutputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+	ImgProcessor::dilate2D(inputImgPtr, outputImgPtr, imgDims, structEle);
+	ImgProcessor::erode2D(outputImgPtr, finalOutputImgPtr, imgDims, structEle);
+	
+	memcpy(outputImgPtr, finalOutputImgPtr, imgDims[0] * imgDims[1]);
+}
+
+void ImgProcessor::imgOpen2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* finalOutputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+	ImgProcessor::erode2D(inputImgPtr, outputImgPtr, imgDims, structEle);
+	ImgProcessor::dilate2D(outputImgPtr, finalOutputImgPtr, imgDims, structEle);
+
+	memcpy(outputImgPtr, finalOutputImgPtr, imgDims[0] * imgDims[1]);
+}
+
+void ImgProcessor::imgClose3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	vector<vector<unsigned char>> slices;
+	imgStackSlicer(inputImgPtr, slices, imgDims);
+
+	long int outi = 0;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		unsigned char* thisSlicePtr = new unsigned char[slices.at(k).size()];
+		unsigned char* sliceClosedPtr = new unsigned char[slices.at(k).size()];
+		for (vector<unsigned char>::iterator it = slices.at(k).begin(); it != slices.at(k).end(); ++it)
+			thisSlicePtr[size_t(it - slices.at(k).begin())] = *it;
+		ImgProcessor::imgClose2D(thisSlicePtr, sliceClosedPtr, imgDims, structEle);
+
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				outputImgPtr[outi] = sliceClosedPtr[imgDims[0] * j + i];
+				++outi;
+			}
+		}
+
+		delete[] thisSlicePtr;
+		delete[] sliceClosedPtr;
+	}
+}
+
+void ImgProcessor::imgOpen3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	vector<vector<unsigned char>> slices;
+	imgStackSlicer(inputImgPtr, slices, imgDims);
+
+	long int outi = 0;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		unsigned char* thisSlicePtr = new unsigned char[slices.at(k).size()];
+		unsigned char* sliceOpenedPtr = new unsigned char[slices.at(k).size()];
+		for (vector<unsigned char>::iterator it = slices.at(k).begin(); it != slices.at(k).end(); ++it)
+			thisSlicePtr[size_t(it - slices.at(k).begin())] = *it;
+		ImgProcessor::imgOpen2D(thisSlicePtr, sliceOpenedPtr, imgDims, structEle);
+
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				outputImgPtr[outi] = sliceOpenedPtr[imgDims[0] * j + i];
+				++outi;
+			}
+		}
+
+		delete[] thisSlicePtr;
+		delete[] sliceOpenedPtr;
+	}
+}
+
+void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			if (int(inputImgPtr[imgDims[0] * j + i]) > threshold)
+			{
+				outputImgPtr[imgDims[0] * j + i] = inputImgPtr[imgDims[0] * j + i];
+				continue;
+			}
+
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+
+			int minValue = 1000;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
+			}
+			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
+		}
+	}
+}
+// ==================================== END of [Image Processing/Filtering] ==================================== //

@@ -131,15 +131,12 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		float distThre = distThreQ.toFloat();
 		segPipePtr->getSomaCandidates(distThre);
 	}
-	else if (func_name == tr("getDenSkeletonStart"))
+	else if (func_name == tr("somaDendriteDetect"))
 	{
-		if (infiles[1])
-		{
-			segPipePtr->inputSWCRootPath.clear();
-			segPipePtr->inputSWCRootPath = infiles[1];
-		}
-		if (outfiles[0]) segPipePtr->outputSWCRootPath = outfiles[0];
-		segPipePtr->getDendriteSkeletonStart();
+		if (infiles[1]) segPipePtr->inputSWCRootPath = infiles[1];
+		if (outfiles[0]) segPipePtr->outputRootPath = outfiles[0];
+
+		segPipePtr->somaDendriteMask();
 	}
 	else if (func_name == tr("getSomaBlended"))
 	{
@@ -221,6 +218,26 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString outputRoot2 = outfiles[1];
 		segPipePtr->swcSeparate(outputRoot2);
 	}
+	else if (func_name == tr("swcTypeSeparate"))
+	{
+		QString typeQ = inparas[0];
+		int type = typeQ.toInt();
+		segPipePtr->swcTypeSeparate(type);
+	}
+	else if (func_name == tr("swcSubtraction"))
+	{
+		QString typeQ = inparas[0];
+		int type = typeQ.toInt();
+		if (infiles[1])
+		{
+			QString path2 = infiles[1];
+			qDebug() << path2;
+			segPipePtr->inputSWCRootPath2.clear();
+			segPipePtr->inputSWCRootPath2 = path2;
+		}
+		segPipePtr->swcSubtraction(type);
+	}
+	else if (func_name == tr("swcUpSample")) segPipePtr->swcUpSample();
 	else if (func_name == tr("cleanUp2DcentroidZ")) segPipePtr->cleanUpzFor2Dcentroids();
 	else if (func_name == tr("segElongation")) segPipePtr->segElongation();
 	else if (func_name == tr("segTerminalize")) segPipePtr->segTerminalize();

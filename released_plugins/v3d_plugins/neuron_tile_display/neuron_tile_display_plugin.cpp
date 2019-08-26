@@ -218,13 +218,13 @@ int anchorParaSize=0;
     }
 
 //sleep
-void sleep(unsigned int minute)
-{
-    double stopmsec=minute*1000*60;
-    QTime reachTime=QTime::currentTime().addMSecs(stopmsec);
-    while(QTime::currentTime()<reachTime)
-        QCoreApplication::processEvents(QEventLoop::AllEvents,100);
-}
+//void sleep(unsigned int minute)
+//{
+//    double stopmsec=minute*1000*60;
+//    QTime reachTime=QTime::currentTime().addMSecs(stopmsec);
+//    while(QTime::currentTime()<reachTime)
+//        QCoreApplication::processEvents(QEventLoop::AllEvents,100);
+//}
 
 QStringList neuron_tile_display::menulist() const
 {
@@ -235,16 +235,16 @@ QStringList neuron_tile_display::menulist() const
         <<tr("tile_multi_windows (swc and image files selected)")
         <<tr("tile_multi_windows (swc and image files under one folder)")
         <<tr("set configuration (tile_multi_windows options only)")
-       <<tr("BigScreen Display")
-      <<tr("BigScreen Display Update")
+//       <<tr("BigScreen Display")
+//      <<tr("BigScreen Display Update")
         <<tr("about");
 }
 
 QStringList neuron_tile_display::funclist() const
 {
 	return QStringList()
-            <<tr("BigScreenDisplay")
-           <<tr("BigScreenDisplayUpdate")
+//            <<tr("BigScreenDisplay")
+//           <<tr("BigScreenDisplayUpdate")
 		<<tr("help");
 }
 
@@ -603,22 +603,22 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
              v3d_msg("Configuration Done!");
     }
-    else if(menu_name==tr("BigScreen Display"))
-    {
-        unsigned int updateInterval=30;
-        bool ok=true;
-        updateInterval = QInputDialog::getInteger(parent, "",
-                                      "#update interval time (minutes) :",
-                                      30, 0, 10000, 1, &ok);
-        if(ok)
-            MethodForBigScreenDisplay(callback,parent,updateInterval);
-        else
-            return;
-    }
-    else if(menu_name==tr("BigScreen Display Update"))
-    {
-        MethodForUpdateSWCDispaly(callback,parent);
-    }
+//    else if(menu_name==tr("BigScreen Display"))
+//    {
+//        unsigned int updateInterval=30;
+//        bool ok=true;
+//        updateInterval = QInputDialog::getInteger(parent, "",
+//                                      "#update interval time (minutes) :",
+//                                      30, 0, 10000, 1, &ok);
+//        if(ok)
+//            MethodForBigScreenDisplay(callback,parent,updateInterval);
+//        else
+//            return;
+//    }
+//    else if(menu_name==tr("BigScreen Display Update"))
+//    {
+//        MethodForUpdateSWCDispaly(callback,parent);
+//    }
     else
 	{
 		v3d_msg(tr("This Plugin will tile neuron to display. "
@@ -1381,20 +1381,20 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
 	}
     else if(func_name==tr("BigScreenDisplay"))
     {
-        MethodFunForBigScreenDisplay(callback,parent,input);
-        int updateCount=0;
+//        MethodFunForBigScreenDisplay(callback,parent,input);
+//        int updateCount=0;
 
-        while(true)
-        {
-            //sleep(updateInterval);
-            if(updateCount==updateInterval)
-            {
-                MethodFunForUpdateSWCDispaly(callback,parent,input);
-                updateCount=0;
-            }
-            ZmovieMaker(callback,parent,input);
-            updateCount++;
-        }
+//        while(true)
+//        {
+//            //sleep(updateInterval);
+//            if(updateCount==updateInterval)
+//            {
+//                MethodFunForUpdateSWCDispaly(callback,parent,input);
+//                updateCount=0;
+//            }
+//            ZmovieMaker(callback,parent,input);
+//            updateCount++;
+//        }
 
     }
     else if(func_name==tr("BigScreenDisplayUpdate"))

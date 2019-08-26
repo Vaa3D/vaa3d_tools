@@ -1,0 +1,311 @@
+﻿@{
+    ViewData["Title"] = "pc";
+}
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/tiff.js"></script>
+<script src="https://unpkg.com/vue"></script>
+<script src="/statics/UTIF.js"></script>
+<script src="~/statics/Three.js"></script>
+<script src="/statics/OrbitControls.js"></script>
+<script src="/statics/FirstPersonControls.js"></script>
+<script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
+<!--
+<script src="~/js/VirtualPyramid.js"></script>  -->
+<!-- <script src="~/js/SingleFile.js"></script> -->
+
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+
+<link rel="stylesheet" type="text/css" href="~/css/pc.css" />
+<link rel="stylesheet" href="~/layui-v2.4.5/layui/css/layui.css" />
+<script src="~/hotcss-master/src/hotcss.js"></script>
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+<script src="~/js/volumeRendering.js"></script>
+<script src="~/js/VolumeShader.js"></script>
+<script src="~/js/WebGL.js"></script>
+<script src="~/js/Lut.js"></script>
+<script src="~/js/progressbar.js"></script>
+<script src="~/js/VirtualPyramid5.js"></script>
+<script src="~/js/SingleFile5.js"></script>
+<script src="~/js/imagefunction.js"></script>
+<script src="https://unpkg.com/current-device/umd/current-device.min.js"></script>
+<script src="~/js/css3-mediaqueries.js"></script>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<body>
+    <div id="content" class="container-fluid">
+
+        <div class="row">
+
+            <div class="col-xs-7 col-md-7 col-lg-8" id="left-content">
+                <div id="view">
+                    <div id="progress_bar">
+                        <div class="percent">0%</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="show-panel" onmouseover="show_panel()" class="col-sm-1 col-md-1 "></div>
+
+
+            <div class=" col-xs-5 col-md-5 col-lg-4" id="right-content">
+
+                <div id="menu">
+                    <ul id="nave" class="layui-nav layui-bg-cyan">
+                        <li id="File" class="show layui-nav-item" data-content="openfile">
+                            <a href="javascript:;"><i class="fa fa-file "></i><small>File</small></a>
+                            <dl id="openfile" class="layui-nav-child ">
+                                <dd id="openfiles">
+                                    <a href="javascript:;"> <i class="fa fa-folder-open fa-fw"></i><small>open...</small> </a>
+                                    <dl class="thrid-nave">
+                                        <dd id="open-local"><a href="#"><i class="fa fa-desktop fa-fw"></i>&nbsp;<small>open from local</small><input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="readlocalfile()" /></a></dd>
+                                        <dd id="open-server" onclick="getPictures()"><a href="#"><i class="fa  fa-server fa-fw"></i>&nbsp;<small>open from server</small></a></dd> <!--待完善-->
+                                        <dd id="open-url"><a href="#"><i class="fa fa-globe fa-fw "></i>&nbsp;<small>open by URL</small></a></dd>
+                                    </dl>
+                                </dd>
+
+                                <dd id="save">
+                                    <a href="javascript:;"><i class="fa fa-save fa-fw "></i><small>save...</small></a>
+                                    <dl class="thrid-nave">
+                                        <dd><a href="#"><i class="fa fa-save fa-fw"></i><small>save</small></a></dd>
+                                        <dd><a href="#"><i class="fa fa-folder fa-fw"></i><small>save as</small></a></dd>
+                                    </dl>
+                                </dd>
+                            </dl>
+                        </li>
+
+
+                        <li id="Edit" class="show layui-nav-item">
+                            <a href="javascript:;"><i class="fa  fa-edit fa-fw"></i>&nbsp;<small>Edit</small></a>
+                            <dl class=" layui-nav-child">
+                                <dd onclick="draw()"><a href="javascript:;"><i class="fa fa-pencil fa-fw "></i>&nbsp;<small>draw</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-trash fa-fw "></i>&nbsp;<small>delete</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-undo fa-fw "></i>&nbsp;<small>undo</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-repeat fa-fw "></i>&nbsp;<small>redo</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;<small>select all</small></a></dd>
+                            </dl>
+                        </li>
+                        <li id="Tools" class="show layui-nav-item">
+                            <a href="javascript:;"><i class="fa  fa-wrench fa-fw"></i>&nbsp;<small>Tools</small></a>
+                            <dl id="second-nave-tools" class=" layui-nav-child">
+                                <dd><a href="javascript:;"><i class="fa  fa-camera fa-fw"></i>&nbsp;<small>screen shot</small></a></dd>
+                            </dl>
+                        </li>
+
+                        <li id="help" class="layui-nav-item"><a href="#"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;<small>Help</small></a></li>
+                        <li id="about" class="layui-nav-item"><a href="#"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;<small>About</small></a></li>
+                    </ul>
+                </div>
+                <div class="panel" id="Vaa3Dweb-panel">
+                    <div class="panel-body">
+                        <div class="panel-group1 row" id="Waa3Dweb-panelgroup-img">
+                            <div id="title1" class="row"><p style="text-align:center;font-size:1.8em">Img</p></div><br />
+                            <div class="contrast row">
+                                <span class="row"> Contrast</span><br /><br />
+                                <input class="row" type="range" min="0" max="10" id="contrast" name="point1" style="" />
+
+
+                            </div>
+                            <input class="row" id="fullscreen" type="button" value="full screen" />
+                            <br /><br />
+                        </div>
+
+
+                        <div class="panel-group2 row" id="Waa3Dweb-panelgroup-draw">
+                            <div id="title2" class="row"><p style="text-align:center;font-size:1.8em">Draw</p></div><br />
+                            <div>
+                                <span>Line Size</span>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <select id="line-size-select">
+                                    <option label="1pt" value="1pt" selected>1pt</option>
+                                    <option label="2pt" value="2pt">2pt</option>
+                                    <option label="3pt" value="3pt">3pt</option>
+                                </select>
+                            </div><br />
+
+                            <div class="color row">
+                                <span>Line Color</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="color" id="color" />
+                            </div>
+                            <br />
+                            <div><input class="row" type="button" id="close" value="close" />  </div>
+                            <br /><br />
+                        </div>
+
+
+
+
+
+                    </div>
+                </div>
+
+
+
+
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="~/layui-v2.4.5/layui/layui.all.js" charset="utf-8"></script>
+<script type="text/javascript">
+    ; !function () {
+        //无需再执行layui.use()方法加载模块，直接使用即可
+        var form = layui.form
+            , layer = layui.layer;
+
+        //…
+    }();
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+
+    });
+    //根据设备的不同选择不同的样式表，主要针对移动设备和pc端
+
+    //显示文件读取进度
+    document.getElementById('vaa3dweb-input-open-local').addEventListener('change', handleFileSelect, false);
+    $('.show').on('click', function () {//单击隐藏或显示下拉菜单
+        var code = $(this).data('content');
+        if ($('#' + code).css('display') == 'none') {
+            $('#' + code).show();
+        }
+        else {
+            $('#' + code).hide();
+        }
+
+
+
+    });
+    $('.show').on('blur', function () {//失去光标隐藏下拉菜单
+        var code = $(this).data('content');
+        $('#' + code).hide();
+        console.log("blur====");
+    });
+
+
+    $('#open-local').on('click', function () {//打开本地文件夹
+        $('#vaa3dweb-input-open-local').click();
+
+    });
+    $('#fullscreen').on('click', function () {//全屏并隐藏控制面板
+        $('#right-content').hide();
+        full_screen();//全屏
+        $('#left-content').css('width', '99%');
+        renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        //renderer.render(scene, camera);
+        $('#show-panel').show();//显示打开控制面板按钮
+    });
+
+    $('#help').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content: 'help information',
+            title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
+            offset: ['5%', '70%'],
+        });
+
+
+    });
+
+    $('#about').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content: 'introduce information',
+            title: false,//不显示标题
+            offset: ['5%', '70%'],
+        });
+
+    });
+
+
+    //        页面加载状态改变时的事件，未实现-------------------
+    // document.onreadystatechange = function () {
+    //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
+    //        $("#loading").fadeOut();
+    //   }
+    //  }
+
+    function show_panel() {//淡入显示面板-----------待改善
+        $('#right-content').fadeIn("slow");
+        $('#show-panel').hide();
+        $('#left-content').css('width', '70%');
+        if (document.webkitIsFullScreen) {
+        }
+        else {//不是全屏状态时重新render一下，恢复到原来状态
+            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        }
+
+
+    }
+
+
+
+
+    //隐藏面板
+    $('#view').on("click", function () {
+        if (document.webkitIsFullScreen) {//全屏是自动隐藏控制面板  ****************存在全屏时，全屏退出过后如果不提前打开菜单栏会出现菜单栏无法显示
+
+
+            $('#right-content').hide();
+            $('#left-content').css('width', '99%');
+            $('#show-panel').show();//
+        }
+
+    });
+
+
+
+    //document.addEventListener("webkitfullscreenchange", show_panel());
+
+
+  //  if (document.webkitIsFullScreen) {
+  //      alert("sdsafdfd");
+  //      $('#left-content').on('mouseover', function () {//********************移除鼠标后应该隐藏
+  ////          $('#right-content').hide();
+  //          $('#left-content').css('width', '99%');
+  //          $('#show-panel').show();
+  //      });
+  //
+ //   }
+ //   $('#open-url').on('click', function () {
+
+
+      //  window.open("openurl.html", "Input URL to open", "height=80, width=300,top=20px,left=50%, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no")
+
+        //找不到页面？路径不对？
+
+//
+    //});
+   // $(document).ready(function () {
+    //    var target = "#app";
+    ///    $('#show3d').html(target);
+
+   // });
+
+   // function menu_show(str) {
+
+  //      var sub_menu = document.getElementById(str);
+
+    //    if (sub_menu.style.display == "none")
+    //        sub_menu.style.display = "block";
+     //   else
+     //       sub_menu.style.display = "none";
+
+   // }
+
+  //  $(document).ready(function () {
+    //   $("#File").click(function () {
+      //     $("#second-nave-open").show();
+     //  });
+   // });
+</script>
+

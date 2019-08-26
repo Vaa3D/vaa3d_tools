@@ -21,69 +21,60 @@
 #define IMGMANAGER_H
 
 #include <string>
-#include <vector>
 #include <deque>
-#include <map>
 
-#include <boost\filesystem.hpp>
-#include <boost\shared_array.hpp>
+#include <boost/filesystem.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
 
-#include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
 
-typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
-													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
+#include "integratedDataStructures.h"
 
-struct registeredImg
-{
-	QString imgAlias;
-	QString imgCaseRootQ;
-
-	//shared_ptr<unsigned char*> imgData1D;
-	//shared_ptr<unsigned char**> imgData2D;
-	//shared_ptr<unsigned char***> imgData3D;
-
-	map<string, myImg1DPtr> slicePtrs;
-	
-	int dims[3];
-};
+using namespace integratedDataStructures;
 
 class ImgManager
 {
 public: 
 	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
-	ImgManager(string wholeImgName);
+	ImgManager(QString inputPath);
 
 	QString inputCaseRootPath;
-	QString inputSWCPath;
+	QString inputSWCRootPath;
 	QString outputRootPath;
+	
 	QStringList caseList;
-	string inputSingleCaseSingleSliceFullPath;
-	string outputSingleCaseSingleSliceFullPath;
-	multimap<string, string> inputMultiCasesSliceFullPaths;
+	string inputSingleCaseFullPath;
+	string outputSingleCaseFullPath;
+	multimap<string, string> inputMultiCasesFullPaths;       // Single or multiple, all cases and slices are stored in this multimap indexed with its case/slice name.
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 
-	enum imgFormat { cube, slices, singleCase_singleSlice };
+	enum imgFormat { multicaseCubes, slices, singleCase};
 	/*******************************************************/
 
-	/***************** I/O *****************/
-	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
-	void imgEntry(QString caseID, imgFormat format);
 
-	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
+
+	/***************** I/O and Image Property Profile *****************/
+	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
+	void imgEntry(string caseID, imgFormat format);
+
+	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata,  V3DLONG sz[], int datatype);
 	
 	static inline void imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[]);
-	/***************************************/
+	/******************************************************************/
 
+
+	// ~~~~~~~~~~~~~~~~~ The following is not frequently used. Most of them were developed for IVSCC project. May be deprecated in the future. ~~~~~~~~~~~~~~~~~ //
 	/***************** Image - SWC Functionalities *****************/
 	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
+	
+	static NeuronTree imgSignal2SWC(const registeredImg& sourceImg, int type = 2);
 	/***************************************************************/
+
 
 	/********* Methods for Generating Binary Masks from SWC Files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
@@ -92,13 +83,16 @@ public:
 	void detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D);
 	/**********************************************************************/
 
+
 	/********* Assemble All SWC Masks Together as An "SWC Mip Mask." *********/
 	void MaskMIPfrom2Dseries(string path);                       
 	/*************************************************************************/
 
+
 	/********* Dessemble Image/Stack Into Tiles. This Is For Caffe's Memory Leak Issue *********/
 	static void imgSliceDessemble(string imgName, int tileSize);
 	/*******************************************************************************************/
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
 
 inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[], int datatype)

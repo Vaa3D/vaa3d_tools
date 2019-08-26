@@ -62,3 +62,4 @@ D:\github\vaa3d_tools\hackathon\WebVaa3D\WebVaa3d\obj\Debug\netcoreapp2.1\WebVaa
 D:\github\vaa3d_tools\hackathon\WebVaa3D\WebVaa3d\obj\Debug\netcoreapp2.1\WebVaa3d.dll
 D:\github\vaa3d_tools\hackathon\WebVaa3D\WebVaa3d\obj\Debug\netcoreapp2.1\WebVaa3d.pdb
 D:\github\vaa3d_tools\hackathon\WebVaa3D\WebVaa3d\obj\Debug\netcoreapp2.1\WebVaa3d.csproj.CopyComplete
+D:\github\vaa3d_tools\hackathon\WebVaa3D\WebVaa3d\obj\Debug\netcoreapp2.1\Razor\Views\Home\index2.g.cshtml.cs

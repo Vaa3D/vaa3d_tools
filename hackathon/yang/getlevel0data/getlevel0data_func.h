@@ -13,7 +13,6 @@
 #include "v3d_message.h"
 #include <iostream>
 #include "basic_4dimage.h"
-#include "algorithm"
 #include <map>
 #include <cmath>
 #include <climits>
@@ -21,6 +20,7 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <cstring>
 #include <tuple>
 #include <stack>
 #include <fstream>
@@ -30,9 +30,16 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+// #include "tiffio.h"
+
 using namespace std;
 
+#define COMPPRESSION_METHOD COMPRESSION_LZW
+
 enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0 };
+
+//
+// char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
 
 // cube
 class Cube
@@ -69,6 +76,8 @@ public:
     string yDirPath; // ourdir/RESXXxXXxXX/000000/000000_000000
 
     unsigned int height, width; // 256x256
+    bool toBeCopied;
+    unsigned int ncubes; // adaptive for keep only a few cubes
 
     map<int,Cube> cubes;
 };
@@ -108,6 +117,7 @@ typedef vector<Point> PointCloud;
 class Block
 {
 public:
+    Block();
     Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz);
     ~Block();
 
@@ -115,24 +125,34 @@ public:
     string filepath;
     long offset_x, offset_y, offset_z;
     long size_x, size_y, size_z;
+    bool visited;
 };
 
 typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
+typedef vector<long> OffsetType;
+typedef map<long, string> ZeroBlock;
 
 //
 class QueryAndCopy
 {
 public:
     QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio);
+    QueryAndCopy(string inputdir);
     ~QueryAndCopy();
 public:
     int readSWC(string filename, float ratio);
-    int readMetaData(string filename);
+    int readMetaData(string filename, bool mDataDebug=false);
 
-    int copyblock(string filepath, string outputdir);
+    int copyblock(QString srcFile, QString dstFile);
     int makeDir(string dirname);
 
-    int query(long x, long y, long z);
+    int query(float x, float y, float z);
+    vector<string> splitFilePath(string filepath);
+    string getDirName(string filepath);
+    int createDir(string prePath, string dirName);
+    int label(long index);
+    long findClosest(OffsetType offsets, long idx);
+    long findOffset(OffsetType offsets, long idx);
 
 public:
     OneScaleTree tree;
@@ -145,7 +165,11 @@ public:
     float mdata_version; // 2
 
     unsigned int color, bytesPerVoxel; //
-    unsigned int cubex, cubey, cubez;
+    long cubex, cubey, cubez;
+    long sx, sy, sz;
+
+    OffsetType xoff, yoff, zoff;
+    ZeroBlock zeroblocks;
 
     Layer layer;
 };

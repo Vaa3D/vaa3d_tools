@@ -30,6 +30,8 @@ This is equavelent to using [TeraConverter][] [2] as:
 
     % teraconverter -s="<path_dir_input_images>" -d="<path_dir_output>" --sfmt="TIFF (series, 2D)" --dfmt="TIFF (tiled, 3D)" --rescale=4 --resolutions=01234 --width=256 --height=256 --depth=256 --halve=max --libtiff_rowsperstrip=-1
     
+To generate the compact portable tree please check https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/yang/getlevel0data.
+
 ## image file formats
 
 [TIFF][]: tiff file format

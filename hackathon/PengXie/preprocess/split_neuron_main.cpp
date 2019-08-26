@@ -6,12 +6,18 @@
 
 #include "split_neuron_main.h"
 
-bool split_neuron(QString qs_input){
+bool split_neuron(QString qs_input, QString qs_outdir){
     // Split neurons into different components
     QString qs_tag;
     if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_tag = qs_input.left(qs_input.length()-4);}
     if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_tag = qs_input.left(qs_input.length()-5);}
 
+    if(qs_outdir.size()>0){
+        if(!qs_outdir.endsWith("/")){qs_outdir=qs_outdir+"/";}
+        qs_tag = qs_tag.right(qs_tag.size()-qs_tag.lastIndexOf(("/"))-1);
+        qs_tag = qs_outdir+qs_tag;
+    }
+    qDebug()<<qs_tag;
     // Report 1: axon.
     neurite_analysis(qs_input, qs_tag+".axon.swc", "a");
     // Report 2: long axon only.
@@ -23,6 +29,23 @@ bool split_neuron(QString qs_input){
     // Report 4: dendrite
     neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d");
 
+    return 1;
+}
+
+bool split_neuron_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //choose a directory that contain swc files
+    QString qs_input;
+    qs_input=QFileDialog::getOpenFileName(
+                parent,
+                "Please select input file (*.swc)\n",
+                QDir::currentPath(),
+                "All files (*.*)" ";; swc files (*.swc *.eswc)"
+                );
+    QString qs_output_dir("");
+
+    // Split neuron
+    split_neuron(qs_input, qs_output_dir);
     return 1;
 }
 
@@ -106,6 +129,7 @@ bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outp
                     return 1;
                 }
                 dfile_result = optarg;
+                cout << "Output dir:\t" << dfile_result <<endl;
                 break;
             case '?':
                 fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
@@ -118,7 +142,7 @@ bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outp
     QString qs_output = QString(dfile_result);
     // Split neuron
     qs_input = QString(qPrintable(qs_input));
-    split_neuron(qs_input);
+    split_neuron(qs_input, qs_output);
 
     return 1;
 }

@@ -18,6 +18,7 @@ QStringList SORTPlugin::menulist() const
 {
 	return QStringList()
 		<<tr("sort_swc")
+        <<tr("sort_swc_batch")  // Sort all swc files under a folder
 		<<tr("about");
 }
 
@@ -34,6 +35,10 @@ void SORTPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	{
 		sort_menu(callback,parent);
 	}
+    if (menu_name == tr("sort_swc_batch"))
+    {
+        sort_batch_menu(callback,parent);
+    }
 	else if (menu_name == tr("help"))
 	{
 		printHelp(callback,parent);

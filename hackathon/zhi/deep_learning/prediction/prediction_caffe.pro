@@ -83,3 +83,5 @@ SOURCES	+= ../../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_su
 
 TARGET	= $$qtLibraryTarget(prediction_caffe)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/prediction_caffe/
+
+QMAKE_POST_LINK = cp -r ../3D_unet/start_vaa3d.sh ../3D_unet/unet_files $$VAA3DPATH/../bin/

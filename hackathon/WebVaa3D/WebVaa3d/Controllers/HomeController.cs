@@ -33,7 +33,12 @@ namespace WebVaa3d.Controllers
         {
             return View();
         }
+        public IActionResult pc()
+        {
+            ViewData["Message"] = "Your pc html";
 
+            return View();
+        }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
