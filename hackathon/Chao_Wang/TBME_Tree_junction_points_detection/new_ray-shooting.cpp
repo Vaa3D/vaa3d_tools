@@ -402,7 +402,7 @@ void mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char *
         for(V3DLONG ix = 0; ix < nx; ix++)
         {
             int max_mip = 0;
-            for(V3DLONG iz = nz-layer; iz < nz+layer; iz++)
+            for(V3DLONG iz = nz-layer; iz < nz+2; iz++)
             {
                 V3DLONG offsetk = iz*nx*ny;
                 if(datald[offsetk + offsetj + ix] >= max_mip)
@@ -981,6 +981,7 @@ bool find_neighborhood_maximum(V3DLONG source_point_x,V3DLONG source_point_y, fl
 template<class T> double markerRadius_hanchuan_XY(T* &inimg1d, V3DLONG nx, V3DLONG ny, V3DLONG x,V3DLONG y, double thresh)
 {
     //printf("markerRadius_hanchuan   XY 2D\n");
+    int radius_prec=1; // the precision of the estimated radius
 
     long sz0 = nx;
     double max_r = nx/2;
@@ -988,18 +989,20 @@ template<class T> double markerRadius_hanchuan_XY(T* &inimg1d, V3DLONG nx, V3DLO
 
     double total_num, background_num;
     double ir;
-    for (ir=1; ir<=max_r; ir=ir+0.1)
+    for (ir=1; ir<=max_r; ir=ir+radius_prec)
     {
         total_num = background_num = 0;
 
-        double dz, dy, dx;
-        double zlower = 0, zupper = 0;
-        for (dz= zlower; dz <= zupper; ++dz)
-            for (dy= -ir; dy <= +ir; dy=dy+0.1)
-                for (dx= -ir; dx <= +ir; dx=dx+0.1)
+        //double dz, dy, dx;
+        double dx,dy;
+        //double zlower = 0, zupper = 0;
+        //for (dz= zlower; dz <= zupper; ++dz)
+            for (dy= -ir; dy <= +ir; dy=dy+radius_prec)
+                for (dx= -ir; dx <= +ir; dx=dx+radius_prec)
                 {
                     total_num++;
-                    double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    //double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    double r = sqrt(dx*dx + dy*dy);
                     if (r>ir-1 && r<=ir)
                     {
                         V3DLONG i = x+dx;   if (i<0 || i>=nx) goto end1;

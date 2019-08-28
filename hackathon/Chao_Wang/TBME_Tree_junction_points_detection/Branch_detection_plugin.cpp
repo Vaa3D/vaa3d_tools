@@ -15,6 +15,14 @@
 #include <algorithm>
 #include"ClusterAnalysis.h"
 #include"branch_detection_model.h"
+template <class T> void gaussian_filter(T* data1d,
+                     V3DLONG nx, V3DLONG ny,V3DLONG nz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
+                     unsigned int c,
+                     double sigma,
+                     float* &outimg);
 using namespace std;
 struct delete_piont
 {
@@ -922,10 +930,10 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
         }
         cout<<"the all candidate points have detected"<<endl;
         /* create the ratate matrix */
-        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(1000)), ray_y(ray_numbers_2d,vector<float>(1000));
+        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(100)), ray_y(ray_numbers_2d,vector<float>(100));
         float ang = 2*PI/ray_numbers_2d;
         float x_dis, y_dis;
-        int max_length=200; // if the rorate crash , please check the max_length;
+        int max_length=100; // if the rorate crash , please check the max_length;
         for(int i = 0; i < ray_numbers_2d; i++)
         {
            x_dis = cos(ang*(i+1));
@@ -1637,8 +1645,12 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                       cout<<"delete dialog"<<endl;
               }
 
+                unsigned char* datald_cope=0;
+                datald_cope=p4DImage->getRawData();
+
                 unsigned char* datald=0;
-                datald=p4DImage->getRawData();
+                datald=datald_cope;
+
 
                 unsigned char *image_mip;
                 unsigned char *image_binary;
@@ -1652,7 +1664,57 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 unsigned char *image_binary_xz;
                 unsigned char *old_image_binary_xz;
 
+                try{image_mip=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
 
+                try{image_binary=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of xy plane is successful"<<endl;
+
+
+                try{image_mip_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+
+                try{image_binary_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of yz plane is successful"<<endl;
+
+                try{image_mip_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+
+                try{image_binary_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of xz plane is successful"<<endl;
+                //gaussianfilter
+                float* outimg = 0;
+                gaussian_filter(datald,
+                                nx, ny, nz,
+                                7,7,7,3,1,outimg);
+                for(V3DLONG num;num<nx*ny;num++)
+                {
+                    if(outimg[num]>thres_2d)
+                        {
+                         datald[num]=255;
+
+                    }
+                  else
+                        {
+                        datald[num]=0;
+                    }
+
+                }
 
                 vector<V3DLONG> X_coor;
                 vector<V3DLONG> Y_coor;
@@ -1711,6 +1773,10 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
                 cout<<"allocate the memory of xz plane is successful"<<endl;
+                cout<<"start to calculat the times"<<endl;
+                qint64 etime1;
+                QElapsedTimer timer1;
+                timer1.start();
 
                 LandmarkList curlist, curlist_yz, curlist_xz;
                 LocationSimple s , s_yz, s_xz;
@@ -2049,7 +2115,8 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               if(case1)
                {
                 cout<<"begin to detect juntion point of each xy project"<<endl;
-                for(int size_z=num_layer;size_z<nz-num_layer;size_z+=MAX(1,num_layer/2))
+                //for(int size_z=num_layer;size_z<nz-num_layer;size_z+=MAX(1,num_layer/2))
+                for(int size_z=num_layer;size_z<nz-num_layer;size_z+=num_layer)
                 {
 
                     /* detect the 2D branch points in each MIP */
@@ -2221,6 +2288,10 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                     }
                 }
 
+                etime1 = timer1.elapsed();
+                cout<<"the elapsed time is :"<<etime1<<endl;
+                v3d_msg(QString("the detecting take %1 milliseconds").arg(etime1));
+
                 int p;
                 if(QMessageBox::Yes == QMessageBox::question (0, "", QString(" yes: delete the soma neiborhood junction; no : NULL"), QMessageBox::Yes, QMessageBox::No))    p = 1;
                 if(p==1)
@@ -2254,7 +2325,6 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                   curlist.append(curlist_xz[i]);
               }
               cout<<"new curlist_xy.size:"<<curlist.size()<<endl;
-
               bool flag_while = true;
               while(flag_while)
               {
@@ -2289,4 +2359,360 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 delete []old_image_binary_xz;
                 return 1;
 
+}
+
+template <class T> void gaussian_filter(T* data1d,
+                     V3DLONG nx, V3DLONG ny,V3DLONG nz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
+                     unsigned int c,
+                     double sigma,
+                     float* &outimg)
+{
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
+
+     // for filter kernel
+     double sigma_s2 = 0.5/(sigma*sigma); // 1/(2*sigma*sigma)
+     double pi_sigma = 1.0/(sqrt(2*3.1415926)*sigma); // 1.0/(sqrt(2*pi)*sigma)
+
+     float min_val = INF, max_val = 0;
+
+     V3DLONG N = nx;
+     V3DLONG M = ny;
+     V3DLONG P = nz;
+     V3DLONG pagesz = N*M*P;
+
+     //filtering
+     V3DLONG offset_init = (c-1)*pagesz;
+
+     //declare temporary pointer
+     float *pImage = new float [pagesz];
+     if (!pImage)
+     {
+          printf("Fail to allocate memory.\n");
+          return;
+     }
+     else
+     {
+          for(V3DLONG i=0; i<pagesz; i++)
+               pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
+     }
+       //Filtering
+     //
+     //   Filtering along x
+     if(N<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsX = 0;
+          WeightsX = new float [Wx];
+          if (!WeightsX)
+               return;
+
+          float Half = (float)(Wx-1)/2.0;
+
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+       //   for (unsigned int Weight = 0; Weight < Half; ++Weight)
+       //   {
+       //        const float  x = Half* float (Weight) / float (Half);
+      //         WeightsX[(int)Half - Weight] = WeightsX[(int)Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); // Corresponding symmetric WeightsX
+      //    }
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  x = float(Weight)-Half;
+              WeightsX[Weight] = WeightsX[Wx-Weight-1] = pi_sigma * exp(-(x * x *sigma_s2)); // Corresponding symmetric WeightsX
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               k += WeightsX[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               WeightsX[Weight] /= k;
+
+         printf("\n x dierction");
+
+         for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+             printf("/n%f",WeightsX[Weight]);
+
+          //   Allocate 1-D extension array
+          float  *extension_bufferX = 0;
+          extension_bufferX = new float [N + (Wx<<1)];
+
+          unsigned int offset = Wx>>1;
+
+          //	along x
+          const float  *extStop = extension_bufferX + N + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG iy = 0; iy < M; iy++)
+               {
+                    float  *extIter = extension_bufferX + Wx;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferX - 1;
+                    float  *extLeft = extension_bufferX + Wx - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + N + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferX + offset;
+
+                    float  *resIter = &(pImage[iz*M*N + iy*N]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsX;
+                         const float  *const End = WeightsX + Wx;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *(resIter++) = sum;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+
+                    }
+
+               }
+          }
+          //de-alloc
+           if (WeightsX) {delete []WeightsX; WeightsX=0;}
+           if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
+
+     }
+
+     //   Filtering along y
+     if(M<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsY = 0;
+          WeightsY = new float [Wy];
+          if (!WeightsY)
+               return;
+
+          float Half = (float)(Wy-1)/2.0;
+
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+         /* for (unsigned int Weight = 0; Weight < Half; ++Weight)
+          {
+               const float  y = Half* float (Weight) / float (Half);
+               WeightsY[(int)Half - Weight] = WeightsY[(int)Half + Weight] = pi_sigma * exp(-y * y *sigma_s2); // Corresponding symmetric WeightsY
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  y = float(Weight)-Half;
+              WeightsY[Weight] = WeightsY[Wy-Weight-1] = pi_sigma * exp(-(y * y *sigma_s2)); // Corresponding symmetric WeightsY
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               k += WeightsY[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               WeightsY[Weight] /= k;
+
+          //	along y
+          float  *extension_bufferY = 0;
+          extension_bufferY = new float [M + (Wy<<1)];
+
+          unsigned int offset = Wy>>1;
+          const float *extStop = extension_bufferY + M + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+                    float  *extIter = extension_bufferY + Wy;
+                    for(V3DLONG iy = 0; iy < M; iy++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferY - 1;
+                    float  *extLeft = extension_bufferY + Wy - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + M + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferY + offset;
+
+                    float  *resIter = &(pImage[iz*M*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsY;
+                         const float  *const End = WeightsY + Wy;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+
+                    }
+
+               }
+          }
+
+          //de-alloc
+          if (WeightsY) {delete []WeightsY; WeightsY=0;}
+          if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
+
+
+     }
+
+     //  Filtering  along z
+     if(P<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsZ = 0;
+          WeightsZ = new float [Wz];
+          if (!WeightsZ)
+               return;
+
+          float Half = (float)(Wz-1)/2.0;
+
+         /* for (unsigned int Weight = 1; Weight < Half; ++Weight)
+          {
+               const float  z = Half * float (Weight) / Half;
+               WeightsZ[(int)Half - Weight] = WeightsZ[(int)Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; // Corresponding symmetric WeightsZ
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  z = float(Weight)-Half;
+              WeightsZ[Weight] = WeightsZ[Wz-Weight-1] = pi_sigma * exp(-(z * z *sigma_s2)); // Corresponding symmetric WeightsZ
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               k += WeightsZ[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               WeightsZ[Weight] /= k;
+
+          //	along z
+          float  *extension_bufferZ = 0;
+          extension_bufferZ = new float [P + (Wz<<1)];
+
+          unsigned int offset = Wz>>1;
+          const float *extStop = extension_bufferZ + P + offset;
+
+          for(V3DLONG iy = 0; iy < M; iy++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+
+                    float  *extIter = extension_bufferZ + Wz;
+                    for(V3DLONG iz = 0; iz < P; iz++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferZ - 1;
+                    float  *extLeft = extension_bufferZ + Wz - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + P + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferZ + offset;
+
+                    float  *resIter = &(pImage[iy*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsZ;
+                         const float  *const End = WeightsZ + Wz;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += M*N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+                    }
+
+               }
+          }
+
+          //de-alloc
+          if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
+          if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
+
+
+     }
+
+    outimg = pImage;
+
+
+    return;
 }
