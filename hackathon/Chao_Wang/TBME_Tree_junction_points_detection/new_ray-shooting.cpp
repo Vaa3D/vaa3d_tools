@@ -317,21 +317,6 @@ float project_interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG s
         result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
         return result;
     }
-//    else if((abs(point_x-old_x)==1)||(abs(point_x-old_x)==2)||(abs(point_x-old_x)==3)||(abs(point_x-old_x)==4)||(abs(point_x-old_x)==5)||(abs(point_x-old_x)==6)||(abs(point_x-old_x)==7)||(abs(point_x-old_x)==8)||
-//            (abs(point_y-old_y)==1)||(abs(point_y-old_y)==2)||(abs(point_y-old_y)==3)||(abs(point_y-old_y)==4)||(abs(point_y-old_y)==5)||(abs(point_y-old_y)==6)||(abs(point_y-old_y)==7)||(abs(point_y-old_y)==8)||
-//            (abs(point_x-old_x)==9)||(abs(point_x-old_x)==10)||(abs(point_x-old_x)==11)||(abs(point_x-old_x)==12)||(abs(point_x-old_x)==13)||(abs(point_x-old_x)==14)||(abs(point_x-old_x)==15)||(abs(point_x-old_x)==16)||
-//            (abs(point_y-old_y)==9)||(abs(point_y-old_y)==10)||(abs(point_y-old_y)==11)||(abs(point_y-old_y)==12)||(abs(point_y-old_y)==13)||(abs(point_y-old_y)==14)||(abs(point_y-old_y)==15)||(abs(point_y-old_y)==16))
-//    {
-//        result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
-//        return result;
-//    }
-
-//    else if((point_x-int(point_x)==0)||(point_y-int(point_y)==0)) // fixed this bug by chaowang 2019/5/23
-//    {
-//        result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
-//        return result;
-//    }
-
     else if(((int(point_x)%(int(point_x)))==0)||((int(point_y)%(int(point_y)))==0)) // fixed this bug by chaowang 2019/6/10
     {
         result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
@@ -344,11 +329,6 @@ float project_interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG s
         int b = get_2D_ValueUINT8(floor(point_y), ceil(point_x),PP, sz0,sz1); // for examaple floor(1.2)=1;
         int c = get_2D_ValueUINT8(ceil(point_y), floor(point_x),PP, sz0,sz1);
         int a = get_2D_ValueUINT8(floor(point_y), floor(point_x),PP, sz0,sz1);
-
-
-//        result = a*(point_x-floor(point_x))*(point_y-floor(point_y))+x1*(ceil(point_x)-point_x)*(point_y-floor(point_y))
-//            +y0*(point_x-floor(point_x))*(ceil(point_y)-point_y)+y1*(ceil(point_x)-point_x)*(ceil(point_y)-point_y);
-//        return result;
         result=a*(ceil(point_x)-point_x)*(ceil(point_y)-point_y)+b*(ceil(point_y)-point_y)*(point_x-floor(point_x))+c*(ceil(point_x)-point_x)*(point_y-floor(point_y))+d*(point_x-floor(point_x))*(point_y-floor(point_y));
         return result;
     }
