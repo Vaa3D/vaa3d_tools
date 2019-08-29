@@ -1904,11 +1904,11 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               if(case2)
               {
                 cout<<"begin to detect juntion point of each yz project"<<endl;
-                for(int size_x=num_layer;size_x<nx-num_layer;size_x+=MAX(1,num_layer/2))
+                for(int size_x=num_layer;size_x<nx-num_layer;size_x+=num_layer)
                 {
 
                     /* detect the 2D branch points in each MIP */
-                    if((size_x+num_layer)<nx)
+                    if((size_x+num_layer)<(nx-2))
                     {
                        mip_layer_yz(nx,ny,nz,size_x,datald,image_mip_yz,num_layer);
                        thres_segment(ny*nz,image_mip_yz,image_binary_yz,thres_2d);
@@ -1960,21 +1960,22 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((Y_candidate.at(k)+block_radiu)>(ny-1))||((Y_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-                               V3DLONG new_ny=ny+block_radiu;
-                               V3DLONG new_nz=nz+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nz*new_ny];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-                               {
-                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-                                 {
-                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_ny=ny+block_radiu;
+//                               V3DLONG new_nz=nz+block_radiu;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nz*new_ny];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+//                               {
+//                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+//                                 {
+//                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
 
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Z_candidate.at(k)-block_radiu;b<=Z_candidate.at(k)+block_radiu;b++)
@@ -2052,7 +2053,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                                }
                                             s_yz.x = loc_x;
                                             s_yz.radius = 1;
-                                            s_yz.color = blue;
+                                            s_yz.color = red;
                                             curlist_yz<<s_yz;
                            }
 
@@ -2065,9 +2066,9 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               {
                 cout<<"begin to detect juntion point of each yz project"<<endl;
 
-                for(int size_y=num_layer;size_y<ny-num_layer;size_y+=MAX(1,num_layer/2))
+                for(int size_y=num_layer;size_y<ny-num_layer;size_y+=num_layer)
                 {
-                    if((size_y+num_layer)<ny)
+                    if((size_y+num_layer)<(ny-2))
                     {
                        mip_layer_xz(nx,ny,nz,size_y,datald,image_mip_xz,num_layer);
                        thres_segment(nx*nz,image_mip_xz,image_binary_xz,thres_2d);
@@ -2120,20 +2121,21 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-                               V3DLONG new_nx=nx+block_radiu;
-                               V3DLONG new_nz=nz+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nz*new_nx];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-                               {
-                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
-                                 {
-                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_nx=nx+block_radiu;
+//                               V3DLONG new_nz=nz+block_radiu;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nz*new_nx];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+//                               {
+//                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
+//                                 {
+//                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Z_candidate.at(k)-block_radiu;b<=Z_candidate.at(k)+block_radiu;b++)
@@ -2211,7 +2213,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                                }
                                             s_xz.y = loc_y;
                                             s_xz.radius = 1;
-                                            s_xz.color = green;
+                                            s_xz.color = red;
                                             curlist_xz<<s_xz;
                            }
 
@@ -2223,12 +2225,11 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               if(case1)
                {
                 cout<<"begin to detect juntion point of each xy project"<<endl;
-                //for(int size_z=num_layer;size_z<nz-num_layer;size_z+=MAX(1,num_layer/2))
-                for(int size_z=num_layer;size_z<nz-num_layer;size_z+=num_layer)
+                for(int size_z=num_layer;size_z<nz;size_z+=num_layer)
                 {
-
                     /* detect the 2D branch points in each MIP */
-                    if((size_z+num_layer)<nz)
+                    cout<<"the index of layer is "<<size_z<<endl;
+                    if((size_z+num_layer)<(nz-2))
                     {
                        mip(nx,ny,size_z,datald,image_mip,num_layer);
                        thres_segment(nx*ny,image_mip,image_binary,thres_2d);
@@ -2285,7 +2286,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            vector<float> x_loc;
                            vector<float> y_loc;
                            //create a new block_mip to detect the 2D branch points
-                           int block_radiu=Max_value.at(k)+based_distance+ray_length+2;
+                           int block_radiu=Max_value.at(k)+based_distance+ray_length+1;
                            int block_length=block_radiu*2+1;
                            unsigned char *block=0;
                            try{block=new unsigned char [block_length*block_length*block_length];}
@@ -2293,23 +2294,24 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
                            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
                            {
+                               cout<<"must enlarge the original images"<<endl;
                                //enlagre the original
-                               V3DLONG new_nx=nx+block_radiu;
-                               V3DLONG new_ny=ny+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nx*new_ny];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-                               {
-                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
-                                 {
-                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_nx=nx+2*block_radiu+1;
+//                               V3DLONG new_ny=ny+2*block_radiu+1;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nx*new_ny];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+//                               {
+//                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
+//                                 {
+//                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
 
-                              // continue;
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
@@ -2375,18 +2377,22 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                             int loc_z;
                                                for(int kk=size_z;kk<size_z+num_layer;kk++)
                                                {
-                                                   unsigned char sum_pixe;
-                                                   sum_pixe=datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]+1]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]-1]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]+1]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]+1];
-                                                   if(sum_pixe>max_z)
+                                                   if(kk<nz)
                                                    {
-                                                       max_z=sum_pixe;
-                                                       loc_z=kk;
+                                                       unsigned char sum_pixe;
+                                                       sum_pixe=datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]+1]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]-1]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]+1]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]+1];
+                                                       if(sum_pixe>max_z)
+                                                       {
+                                                           max_z=sum_pixe;
+                                                           loc_z=kk;
+                                                       }
                                                    }
                                                }
                                             s.z = loc_z;
+                                            s.z=size_z;
                                             s.radius = 1;
                                             s.color = red;
                                             curlist<<s;
@@ -2394,7 +2400,12 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
 
                        }
                     }
+                    else {
+                        break;
+                    }
                 }
+
+                cout<<"finish xy project detection"<<endl;
 
                 etime1 = timer1.elapsed();
                 cout<<"the elapsed time is :"<<etime1<<endl;
@@ -2446,7 +2457,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                               curlist[i].x=(curlist[j].x+curlist[i].x)/2;
                               curlist[i].y=(curlist[j].y+curlist[i].y)/2;
                               curlist[i].z=(curlist[j].z+curlist[i].z)/2;
-                              curlist[i].color=blue;
+                             // curlist[i].color=blue;
                               curlist.removeAt(j);
                               j=j-1;
                               endwhile = false;
