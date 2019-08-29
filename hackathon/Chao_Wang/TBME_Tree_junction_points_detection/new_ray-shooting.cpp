@@ -463,7 +463,7 @@ void mip_layer_xz(V3DLONG nx,V3DLONG ny,V3DLONG nz,V3DLONG y_sliceloc,unsigned c
             for(V3DLONG ix = 0; ix < nx; ix++)
             {
                 int max_mip = 0;
-                for(V3DLONG iy = y_sliceloc-layer; iy <= y_sliceloc+2; iy++)
+                for(V3DLONG iy = y_sliceloc-layer; iy <= y_sliceloc+layer; iy++)
                 {
                     V3DLONG offsetj = iy*nx;
                     if(datald[offsetk + offsetj + ix] >= max_mip)
