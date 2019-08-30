@@ -9,7 +9,7 @@
 #include "swc_convert.h"
 #include "vn_imgpreprocess.h"
 #include "volimg_proc.h"
-#include "mean_shift_fun.h"
+#include "../mean_shift_center/mean_shift_fun.h"
 //add by wp 20181206
 bool prunThinBranch(vector<MyMarker*> &outmarkers,float thresh);
 template <class T1, class T2> bool otsu(T1 *data, V3DLONG n, T2 & thres){
@@ -1083,6 +1083,8 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 	//            p.bkg_thresh = imgAve; //+0.5*imgStd ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5;
 				double td= (imgStd<10)? 10: imgStd;
 				p.bkg_thresh = imgAve +0.5*td ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5; //20170523, PHC
+                //p.bkg_thresh=1;//add by wp20190520
+
 			
 			
 			}
@@ -1204,11 +1206,15 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 			}
 			else
 			{
+//                int indexOfSoma=0;
 				switch(datatype)
 				{
+
 					case V3D_UINT8:
 						v3d_msg("8bit", 0);
-						fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+                        cout << "in" << endl;
+                        fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+//                        fastmarching_tree_wp(inmarkers,indata1d, indexOfSoma,outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type,p.bkg_thresh,p.is_break_accept);//wp
 						break;
 					case V3D_UINT16: //this is no longer needed, as the data type has been converted above
 						v3d_msg("16bit", 0);
@@ -1243,7 +1249,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 			}
 			else
 			{
-				int indexOfSoma=0;//wp
+                int indexOfSoma=0;//wp
 				switch(datatype)
 				{
 					case V3D_UINT8:

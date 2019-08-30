@@ -4,8 +4,9 @@
 #include"ray_shooting.h"
 #include"neuron_tools.h"
 
-class TipDetector
+class TipDetector:public QObject
 {
+    Q_OBJECT
 private:
     Image4DSimple * p4DImage;
     V3DLONG sz[4];
@@ -32,7 +33,9 @@ private:
     //deal swc
 //    QList<NeuronTree> * mTreeList;
     bool isSavingTime;
-
+    V3DPluginCallback2* cb;
+public slots:
+    void ClearTempData();
 
 
 public:

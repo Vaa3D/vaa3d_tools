@@ -27,9 +27,9 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
 		
-	if (mode == dendriticTree)
-	{
-		unsigned char* dendrite1Dptr = new unsigned char[(dims[0] / 2) * (dims[1] / 2) * dims[2]];
+	//if (mode == dendriticTree)
+	//{
+		/*unsigned char* dendrite1Dptr = new unsigned char[(dims[0] / 2) * (dims[1] / 2) * dims[2]];
 		int downFacs[3];
 		downFacs[0] = 2;
 		downFacs[1] = 2;
@@ -37,23 +37,24 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 		ImgProcessor::imgDownSampleMax(img1Dptr, dendrite1Dptr, dims, downFacs);
 		delete[] img1Dptr;
 		img1Dptr = dendrite1Dptr;
-		dendrite1Dptr = nullptr;
+		dendrite1Dptr = nullptr; // [dendrite1Dptr]'s memory block is passed to [img1Dptr] and cannot be freed. 
+								 // Therefore, we cannot "delete[] dendrite1Dptr". But we can use nullptr to nullify dendrite1Dptr to ensure the safety.
 
 		dims[0] = dims[0] / 2;
-		dims[1] = dims[1] / 2;
-	}
+		dims[1] = dims[1] / 2;*/
+	//}
 	
-	this->imgSlices.clear();
-	ImgProcessor::imgStackSlicer(img1Dptr, this->imgSlices, dims);
+	vector<vector<unsigned char>> imgSlices;
+	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);
 	registeredImg inputRegisteredImg;
-	inputRegisteredImg.imgAlias = "currBlockSlices";
+	inputRegisteredImg.imgAlias = "currBlockSlices"; // This is the original images.
 	inputRegisteredImg.dims[0] = dims[0];
 	inputRegisteredImg.dims[1] = dims[1];
 	inputRegisteredImg.dims[2] = dims[2];
 	delete[] img1Dptr;
 
 	int sliceNum = 0;
-	for (vector<vector<unsigned char>>::iterator sliceIt = this->imgSlices.begin(); sliceIt != this->imgSlices.end(); ++sliceIt)
+	for (vector<vector<unsigned char>>::iterator sliceIt = imgSlices.begin(); sliceIt != imgSlices.end(); ++sliceIt)
 	{
 		++sliceNum;
 		string sliceName;
@@ -68,7 +69,10 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 		memcpy(my1Dslice.get(), slicePtr, sliceIt->size());
 		inputRegisteredImg.slicePtrs.insert({ sliceName, my1Dslice });
 		delete[] slicePtr;
+
+		sliceIt->clear();
 	}
+	imgSlices.clear();
 
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
@@ -90,6 +94,10 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	// *************************************************************************************************************** //
 }
 
+
+
+
+// ***************** TRACING PROCESS CONTROLING FUNCTION ***************** //
 bool FragTraceManager::imgProcPipe_wholeBlock()
 {
 	cout << "number of slices: " << this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size() << endl;
@@ -109,10 +117,11 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	if (this->cutoffIntensity != 0)
 	{
 		this->simpleThre(this->adaImgName, dims, "ada_cutoff");
+		
 		if (this->gammaCorrection)
 		{
 			this->gammaCorrect("ada_cutoff", dims, "gammaCorrected");
-			this->histThreImg3D("gammaCorrected", dims, this->histThreImgName);
+			this->histThreImg3D("gammaCorrected", dims, this->histThreImgName);   // -> still needs this with gamma?
 			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 		}
 		else 
@@ -148,149 +157,52 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	}
 
 	NeuronTree denScaleBackTree, finalOutputTree;
-	if (this->mode == wholeBlock_axon)
+	if (this->mode == axon)
 	{
-		cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
-		vector<NeuronTree> objTrees;
-		NeuronTree objSkeletonTree;
-		NeuronTree finalCentroidTree;
-
-// ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
-		{
-			if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-			this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
-			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
-			{			
-				qApp->processEvents();
-				if (this->progressBarDiagPtr->wasCanceled())
-				{
-					this->progressBarDiagPtr->setLabelText("Process aborted.");
-					return false;
-				}
-
-				if (it->size < voxelCount) continue;
-				if (int(it - this->signalBlobs.begin()) % 500 == 0)
-				{
-					double progressBarValue = (double(it - this->signalBlobs.begin()) / this->signalBlobs.size()) * 100;
-					int progressBarValueInt = ceil(progressBarValue);
-					this->progressBarDiagPtr->setValue(progressBarValueInt);
-					cout << int(it - this->signalBlobs.begin()) << " ";
-				}
-
-				NeuronTree centroidTree;
-				boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
-				for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
-				{
-					NeuronSWC newNode;
-					newNode.x = nodeIt->at(0);
-					newNode.y = nodeIt->at(1);
-					newNode.z = nodeIt->at(2);
-					newNode.type = 2;
-					newNode.parent = -1;
-					centroidTree.listNeuron.push_back(newNode);
-				}
-				finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
-				
-				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
-				profiledTree profiledMSTtree(MSTtree);
-				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
-				objTrees.push_back(profiledMSTtree.tree);
-			}
-		}
-// ------------------------------------------------------------- //
-
-		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
-		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
-		cout << endl;
-
-		objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
-		profiledTree objSkeletonProfiledTree(objSkeletonTree);
+		profiledTree objSkeletonProfiledTree;
+		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
-		QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
-		writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
+		//QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
+		//writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
 
-		NeuronTree MSTbranchBreakTree;
-		MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
+		NeuronTree MSTbranchBreakTree = TreeGrower::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
 		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
-		QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
+		//QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
 		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
 
-		profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 2);
+		profiledTree downSampledProfiledTree = NeuronStructUtil::treeDownSample(objBranchBreakTree, 2);
 		QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
 		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
-		profiledTree newIteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(downSampledProfiledTree, 5);
+		// Iterative segment elongation / connection
+		profiledTree newIteredConnectedTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(downSampledProfiledTree, 5);
 
-		if (this->minNodeNum > 0) finalOutputTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
+		if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 		else finalOutputTree = newIteredConnectedTree.tree;
 	} 
-// ===============================================================================================================================================================//
 	else if (this->mode == dendriticTree)
 	{
-		connectedComponent dendriteComponent = *this->signalBlobs.begin();
-		for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin() + 1; compIt != this->signalBlobs.end(); ++compIt)
-			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
+		profiledTree profiledDenTree;
+		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
+		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
-		NeuronTree centroidTree;
-// ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
-		{
-			if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-			this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
-			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
-			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
-			{
-				qApp->processEvents();
-				if (this->progressBarDiagPtr->wasCanceled())
-				{
-					this->progressBarDiagPtr->setLabelText("Process aborted.");			
-					return false;
-				}
-
-				if (int(nodeIt - sectionalCentroids.begin()) % 500 == 0)
-				{
-					double progressBarValue = (double(nodeIt - sectionalCentroids.begin()) / sectionalCentroids.size()) * 100;
-					int progressBarValueInt = ceil(progressBarValue);
-					this->progressBarDiagPtr->setValue(progressBarValueInt);
-				}
-
-				NeuronSWC newNode;
-				newNode.x = nodeIt->at(0);
-				newNode.y = nodeIt->at(1);
-				newNode.z = nodeIt->at(2);
-				newNode.type = 2;
-				newNode.parent = -1;
-				centroidTree.listNeuron.push_back(newNode);
-			}
-		}
-// ------------------------------------------------------------- //
-
-		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
-		writeSWC_file(finalCentroidTreeNameQ, centroidTree);
-		cout << endl;
-
-		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
-		profiledTree profiledMSTtree(MSTtree);
-		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 10);
-		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
-		profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
-		profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5);
-		for (int hollowi = 0; hollowi < this->blankXs.size(); ++hollowi)
-		{
-			cout << this->blankXs[hollowi] << " " << this->blankYs[hollowi] << " " << this->blankZs[hollowi] << " " << this->blankRadius[hollowi] << endl;
-			profiledTree customHollowedTree = NeuronStructExplorer::treeHollow(somaHollowedTree, this->blankXs.at(hollowi), this->blankYs.at(hollowi), this->blankZs.at(hollowi), this->blankRadius.at(hollowi));
-			somaHollowedTree = customHollowedTree;
-		}
-		//profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(somaHollowedTree, 5);
+		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2); // reduce zig-zagging
 
 		NeuronTree floatingExcludedTree;
-		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructExplorer::singleDotRemove(somaHollowedTree, this->minNodeNum);
-		else floatingExcludedTree = somaHollowedTree.tree;
+		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
+		else floatingExcludedTree = downSampledDenTree.tree;
 
-		denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);
-		finalOutputTree = denScaleBackTree;
+		profiledTree dnSampledProfiledTree(floatingExcludedTree);
+		//QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\beforeSpikeRemove.swc";
+		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
+		float angleThre = (float(2) / float(3)) * PI;
+		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
+
+		//finalOutputTree = dnSampledProfiledTree.tree;
+		finalOutputTree = hookRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
+													    // without downsampling, tracing result's inacurracy is remedied.
 	}
 
 	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
@@ -306,7 +218,11 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 	emit emitTracedTree(finalOutputTree);
 }
+// *********************************************************************** //
 
+
+
+/*************************** Image Enhancement ***************************/
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
 	registeredImg adaSlices;
@@ -390,7 +306,11 @@ void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[]
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }
+/********************** END of [Image Enhancement] ***********************/
 
+
+
+/*************************** Image Segmentation ***************************/
 void FragTraceManager::histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
 	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
@@ -531,30 +451,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	// ------- END of [Releasing memory] ------- //
 }
 
-bool FragTraceManager::blobProcessMonitor(ProcessManager& blobMonitor)
-{
-	cout << "test" << endl;
-	system("pause");
-	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
-	qApp->processEvents();
-	
-	int progressBarValueInt = blobMonitor.readingFromClient;
-	while (progressBarValueInt <= 100)
-	{
-		if (this->progressBarDiagPtr->wasCanceled())
-		{
-			this->progressBarDiagPtr->setLabelText("Process aborted.");
-			v3d_msg("The process has been terminated.");
-			return false;
-		}
-
-		this->progressBarDiagPtr->setValue(progressBarValueInt);
-	}
-	
-	return true;
-}
-
+// ----------------- Object Classification ----------------- //
 void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)
 {
 	if (signalBlobs.empty())
@@ -568,16 +465,108 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 	vector<ptrdiff_t> delLocs;
 	for (vector<connectedComponent>::iterator compIt = signalBlobs.begin(); compIt != signalBlobs.end(); ++compIt)
 		if (compIt->size <= sizeThre) delLocs.push_back(compIt - signalBlobs.begin());
-	
+
 	sort(delLocs.rbegin(), delLocs.rend());
 	for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
 		signalBlobs.erase(signalBlobs.begin() + *delIt);
+}
+// ------------ END of [Object Classification] ------------- //
+/*********************** END of [Image Segmentation] **********************/
+
+
+
+/*************************** Final Traced Tree Generation ***************************/
+bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProfiledTree)
+{
+	cout << endl << "Finishing up processing objects.." << endl;
+
+	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+	this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
+
+	if (mode == axon)
+	{		
+		vector<NeuronTree> objTrees;
+		NeuronTree finalCentroidTree;
+		// ------- using omp to speed up skeletonization process ------- //
+#pragma omp parallel num_threads(this->numProcs)
+		{
+			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
+			{
+				qApp->processEvents();
+				if (this->progressBarDiagPtr->wasCanceled())
+				{
+					this->progressBarDiagPtr->setLabelText("Process aborted.");
+					return false;
+				}
+
+				if (it->size < voxelCount) continue;
+				if (int(it - this->signalBlobs.begin()) % 500 == 0)
+				{
+					double progressBarValue = (double(it - this->signalBlobs.begin()) / this->signalBlobs.size()) * 100;
+					int progressBarValueInt = ceil(progressBarValue);
+					this->progressBarDiagPtr->setValue(progressBarValueInt);
+					cout << int(it - this->signalBlobs.begin()) << " ";
+				}
+
+				NeuronTree centroidTree;
+				boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
+				for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+				{
+					NeuronSWC newNode;
+					newNode.x = nodeIt->at(0);
+					newNode.y = nodeIt->at(1);
+					newNode.z = nodeIt->at(2);
+					newNode.type = 2;
+					newNode.parent = -1;
+					centroidTree.listNeuron.push_back(newNode);
+				}
+				finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
+
+				NeuronTree MSTtree = TreeGrower::SWC2MSTtree_boost(centroidTree);
+				profiledTree profiledMSTtree(MSTtree);				
+				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
+				objTrees.push_back(profiledMSTtree.tree);
+			}
+
+			QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
+			writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
+			cout << endl;
+		}
+
+		NeuronTree objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
+		profiledTree outputProfiledTree(objSkeletonTree);
+		objSkeletonProfiledTree = outputProfiledTree;
+		return true;
+		// ------------------------------------------------------------- //
+	}
+	else if (mode == dendriticTree)
+	{
+		connectedComponent dendriteComponent = *this->signalBlobs.begin();
+		for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin() + 1; compIt != this->signalBlobs.end(); ++compIt)
+			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
+
+		vector<connectedComponent> denComp = { dendriteComponent };
+		NeuronTree denBlobTree = NeuronStructUtil::blobs2tree(denComp);
+		// ------------------------ FOR DEBUG ------------------------------ //
+		QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob.swc"; //
+		writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
+		// ----------------------------------------------------------------- //
+		vector<int> origin = { 128, 128, 128 };
+		NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
+		this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
+		this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+
+		//QString denSaveName = this->finalSaveRootQ + "\\newDenTest.swc";
+		//writeSWC_file(denSaveName, this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+		objSkeletonProfiledTree = this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree");
+		return true;
+	}
 }
 
 profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree tmpTree = inputProfiledTree; 
-	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, distThreshold);
+	profiledTree outputProfiledTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(tmpTree, distThreshold);
 	
 	bool typeAssigned = false;
 	int assignedType;
@@ -627,4 +616,31 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 	writeSWC_file(combinedTreeFullName, outputProfiledTree.tree);
 
 	return outputProfiledTree;
+}
+/********************** END of [Final Traced Tree Generation] ***********************/
+
+
+
+bool FragTraceManager::blobProcessMonitor(ProcessManager& blobMonitor)
+{
+	cout << "test" << endl;
+	system("pause");
+	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
+	qApp->processEvents();
+
+	int progressBarValueInt = blobMonitor.readingFromClient;
+	while (progressBarValueInt <= 100)
+	{
+		if (this->progressBarDiagPtr->wasCanceled())
+		{
+			this->progressBarDiagPtr->setLabelText("Process aborted.");
+			v3d_msg("The process has been terminated.");
+			return false;
+		}
+
+		this->progressBarDiagPtr->setValue(progressBarValueInt);
+	}
+
+	return true;
 }

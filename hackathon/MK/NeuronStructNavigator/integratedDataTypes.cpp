@@ -1,6 +1,26 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  [integratedDataTypes] is part of the NeuronStructNavigator library.
+*  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
+*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make developing neuron structure operations and algorithms more convenient.
+*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
+*
+*  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
+*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
+*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
+*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
+
+********************************************************************************/
+
 #include <iostream>
 
 #include "integratedDataTypes.h"
+#include "NeuronGeoGrapher.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 
@@ -58,10 +78,10 @@ void integratedDataTypes::segPairProfile::getSegDistance(connectOrientation conn
 
 void integratedDataTypes::segPairProfile::turning12(connectOrientation connOrt)
 {
-	if (connOrt == head_head) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == head_tail) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == tail_head) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == tail_tail) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	if (connOrt == head_head) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == head_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == tail_head) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == tail_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
 }
 
 integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
@@ -140,4 +160,10 @@ void integratedDataTypes::profiledTree::addTopoUnit(int nodeID)
 	}
 
 	this->topoList.insert(pair<int, topoCharacter>(nodeID, topoUnit));
+}
+
+void integratedDataTypes::profiledTreeReInit(profiledTree& inputProfiledTree)
+{
+	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
+	inputProfiledTree = tempTree;
 }

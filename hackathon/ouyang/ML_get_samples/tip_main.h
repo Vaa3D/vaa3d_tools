@@ -56,6 +56,7 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
 NeuronTree get_unfinished_fun(QList<int> tip_list,NeuronTree treeswc,int maximum);
 NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximum);
+NeuronTree get_off_signal_fun(QList<int> tip_list,NeuronTree sort_swc,int range);
 QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
@@ -68,4 +69,6 @@ bool q_imagewarp_affine(const unsigned char *p_img_sub,const long *sz_img_sub,
         unsigned char *&p_img_affine,Matrix affinematrix,double* trans);
 NeuronTree align_axis(NeuronTree input,double *& PC,double* & trans);
 void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+unsigned char * image_enhancement(V3DPluginCallback2 & callback,unsigned char* data1d,QString inimg_file,char * outimg_file2);
+QString getAppPath();
 #endif // GET_TIP_BLOCK_H

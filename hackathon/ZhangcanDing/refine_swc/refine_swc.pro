@@ -11,6 +11,11 @@ INCLUDEPATH     += $$VAA3DPATH/cellseg
 
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
+unix {
+LIBS += -L$$VAA3DPATH/jba/c++
+LIBS += -lv3dnewmat
+}
+
 
 HEADERS	+= refine_swc_plugin.h
 HEADERS	+= refine_swc_funcs.h

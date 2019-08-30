@@ -244,6 +244,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
                                          double bkg_thresh = 20,
                                          bool is_break_accept = false)
 {
+    cout << "wp20190521_3" << endl;
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
@@ -368,7 +369,8 @@ template<class T> bool fastmarching_tree(MyMarker root,
 
 					if(state[index] != ALIVE)
 					{
-						double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+//                        double new_dist = phi[min_ind] + abs((GI(index) - GI(min_ind))*factor*0.5);//by wp
 						long prev_ind = min_ind;
 
 						if(state[index] == FAR)
@@ -627,6 +629,7 @@ template<class T> bool fastmarching_tree_old(MyMarker root, T * inimg1d, vector<
 
 template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target, T * inimg1d, vector<MyMarker*> &outtree, long sz0, long sz1, long sz2, int cnn_type = 3)
 {
+//    cout << "wp20190521_1" << endl;
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
@@ -710,6 +713,7 @@ template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target
 	// loop
 	int time_counter = 1;
 	double process1 = 0;
+//    cout << "wp20190521" << endl;
 	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*100000.0/tol_sz;
@@ -754,7 +758,7 @@ template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target
 
 					if(state[index] != ALIVE)
 					{
-						double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
 						long prev_ind = min_ind;
 
 						if(state[index] == FAR)
@@ -1247,6 +1251,7 @@ template<class T> void phi_parent_state(
 		int j = (min_ind/sz0) % sz1; 
 		int k = (min_ind/sz01) % sz2;
 
+        cout << "wp20190521" << endl;
 		int w, h, d;
 		for(int kk = -1; kk <= 1; kk++)
 		{
@@ -1278,7 +1283,9 @@ template<class T> void phi_parent_state(
 
 					if(state[index] != ALIVE&&label[index]==label[root_ind])
 					{
-						double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5; //change by wp
+//                        double new_dist = phi[min_ind] + abs((GI(index) - GI(min_ind))*factor*0.5); //change by wp
+
 						long prev_ind = min_ind;
 
 						if(state[index] == FAR)
@@ -1307,6 +1314,151 @@ template<class T> void phi_parent_state(
 	}
 }
 
+template<class T> bool fastmarching_tree_wp_shieldSoma(
+        vector<MyMarker> roots,
+        T * inimg1d,
+        int indexOfSoma,
+        vector<MyMarker*> &outtree,
+        long sz0,
+        long sz1,
+        long sz2,
+        int cnn_type = 3,
+        double bkg_thresh = 20,
+        bool is_break_accept = false)
+{
+    for(int i=0;i<roots.size();i++){
+        cout << roots[i].x << endl;
+    }
+
+    if(roots.size()<2){
+        cout << "marker size is at least 2" << endl;
+        return false;
+    }
+
+    enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+
+    long tol_sz = sz0 * sz1 * sz2;
+    long sz01 = sz0 * sz1;
+    //int cnn_type = 3;  // ?
+
+    float **phi=new float*[roots.size()];
+    long **parent=new long*[roots.size()];
+    char **state=new char*[roots.size()];
+    for(int i=0;i<roots.size();i++){
+        try
+        {
+            phi[i] = new float[tol_sz];
+            parent[i] = new long[tol_sz];
+            state[i] = new char[tol_sz];
+            for(int j = 0; j < tol_sz; j++)
+            {
+                phi[i][j] = INF;
+                parent[i][j] = j;  // each pixel point to itself at the         statements beginning
+                state[i][j] = FAR;
+            }
+        }
+        catch (...)
+        {
+            cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+            if (phi[i]) {delete []phi[i]; phi[i]=0;}
+            if (parent[i]) {delete []parent[i]; parent[i]=0;}
+            if (state[i]) {delete []state[i]; state[i]=0;}
+            return false;
+        }
+        phi_parent_state(roots[i],inimg1d,sz0,sz1,sz2,phi[i],parent[i],state[i],cnn_type,bkg_thresh,is_break_accept);
+    }
+
+    for(int j=0;j<roots.size();j++){
+        cout << "j: " << j << endl;
+        for(int i=0;i<roots.size();i++){
+            long rootx = roots[i].x + 0.5;
+            long rooty = roots[i].y + 0.5;
+            long rootz = roots[i].z + 0.5;
+            long root_ind = rootz*sz01 + rooty*sz0 + rootx;
+            cout << "phi[j][root_ind]: " << j << " " << i << ": " << phi[j][root_ind] << endl;
+
+        }
+    }
+
+
+    int *label=new int[tol_sz];
+    int count=0;
+    int count1=0;
+    int countNotZero=0;
+    for(int j=0;j<tol_sz;j++){
+        label[j]=-1;
+    }
+
+    cout << "new_new_tree" << endl;
+    //freopen("D:\soamdata\7\test\log.txt","w",stdout);
+    int countTmp[4];
+    countTmp[0]=0;countTmp[1]=0;countTmp[2]=0,countTmp[3]=0;
+    for(int j=0;j<tol_sz;j++){
+        int indexMin=0;
+        for(int i=1;i<roots.size();i++){
+            //if(phi[i][j]==phi[indexMin][j]){
+            //	indexMin=-1;
+            //	break;
+            //}
+            if(phi[i][j]<phi[indexMin][j]){
+                indexMin=i;
+            }
+        }
+        label[j]=indexMin;
+        //cout << indexMax << endl;
+        //countTmp[indexMin+1]++;
+    }
+    //cout << "\ncountTmp:" << endl;
+    /*for(int i=1;i<4;i++){
+        cout << countTmp[i] << endl;
+    }*/
+    //freopen("CON","w",stdout);
+
+
+
+
+
+    //\CA\E4\B3\F6\B5\DAһ\B8\F6
+    for(int j=0;j<tol_sz;j++){
+        phi[0][j] = INF;
+        parent[0][j] = j;  // each pixel point to itself at the         statements beginning
+        state[0][j] = FAR;
+
+    }
+
+    phi_parent_state(roots[0],inimg1d,sz0,sz1,sz2,phi[0],parent[0],state[0],label,cnn_type,bkg_thresh,is_break_accept);
+
+    // save current swc tree
+    if(1)
+    {
+        int i = -1, j = -1, k = -1;
+        map<long, MyMarker*> tmp_map;
+        for(long ind = 0; ind < tol_sz; ind++)
+        {
+            i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
+            if(state[0][ind] != ALIVE) continue;
+            MyMarker * marker = new MyMarker(i,j,k);
+            tmp_map[ind] = marker;
+            outtree.push_back(marker);
+        }
+        i=-1; j = -1; k = -1;
+        for(long ind = 0; ind < tol_sz; ind++)
+        {
+            i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
+            if(state[0][ind] != ALIVE) continue;
+            long ind2 = parent[0][ind];
+            MyMarker * marker1 = tmp_map[ind];
+            MyMarker * marker2 = tmp_map[ind2];
+            if(marker1 == marker2) marker1->parent = 0;
+            else marker1->parent = marker2;
+            //tmp_map[ind]->parent = tmp_map[ind2];
+        }
+    }
+    delete phi;
+    delete parent;
+    delete state;
+    delete label;
+}
 template<class T> bool fastmarching_tree_wp(
 	vector<MyMarker> roots,
 	T * inimg1d, 
@@ -1319,6 +1471,7 @@ template<class T> bool fastmarching_tree_wp(
 	double bkg_thresh = 20,
 	bool is_break_accept = false)
 {//wp
+    cout << "wp20190521" << endl;
 	for(int i=0;i<roots.size();i++){
 		cout << roots[i].x << endl;
 	}
@@ -1393,7 +1546,11 @@ template<class T> bool fastmarching_tree_wp(
 			//	indexMin=-1;
 			//	break;
 			//}
-			if(phi[i][j]<phi[indexMin][j]){
+//            if(phi[i][j]<phi[indexMin][j]){
+//				indexMin=i;
+//			}
+//            cout << "20190520" << endl;
+            if(phi[i][j]<phi[0][j]){
 				indexMin=i;
 			}
 		}

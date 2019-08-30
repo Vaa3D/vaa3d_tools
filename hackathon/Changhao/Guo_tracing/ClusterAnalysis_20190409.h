@@ -604,7 +604,7 @@ LocationSimple ClusterAnalysis::find_CenterPoint_of_MaxPointSet(LocationSimple p
     }
     printf("max_ind:%d   and   max number:%d\n",max_ind,max);
 
-    LocationSimple p, temp;
+//    LocationSimple p, temp;
 
     float sum_x = 0;
     float sum_y = 0;

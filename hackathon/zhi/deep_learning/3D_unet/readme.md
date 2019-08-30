@@ -7,6 +7,9 @@ git checkout 3D-Caffe
 
 2. replace all files from "include" and "src" folders to fils in 3D-Caffe (same locations)
 
-3. training: run "sh ./start_train_weighted.sh"
+3. Install deep learning framework Caffe using the instruction (http://caffe.berkeleyvision.org/installation.html)
+
+
+4. training: run "sh ./start_train_weighted.sh"
   
   

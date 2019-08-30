@@ -9,6 +9,8 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "vn.h"
+#include "vn_app1.h"
+#include "vn_app2.h"
 
 class Guo_tracingPlugin : public QObject, public V3DPluginInterface2_1
 {
@@ -197,6 +199,9 @@ int LinkOnePointToSoma(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA);
 int tipTracingAddingBranch(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA);
 int missedTipsTracing(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &p);
+int getMaskImg(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA);
+int maskImgTracing(V3DPluginCallback2 &callback, QWidget *parent, PARA_APP2 &p);
+int gray_scale_stretching(V3DPluginCallback2 &callback, QWidget *parent);
 int test(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA);
 
 

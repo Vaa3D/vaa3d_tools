@@ -19,7 +19,7 @@ const QString title = QObject::tr("genVirture");
 void generate_virture();
 void configure();
 bool generate_virture1(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output, QWidget *parent);//暂时不用这个，命令行运行时使用的函数
-const QString filename1 = "D:/test1.swc";
+const QString filename1 = "D:/gen_vir_experiment_code";
 const QString filename2 = "D:/test.swc";
 const QStringList *infostring;
 QStringList genVirturePlugin::menulist() const{//菜单
@@ -57,16 +57,27 @@ bool genVirturePlugin::dofunc(const QString &func_name,const V3DPluginArgList &i
 
 void generate_virture(){//调用生成虚拟神经元的函数	
 	QStringList filenames = QFileDialog::getOpenFileNames(0, 0, "", "support file(*.swc)", 0, 0);
+	vector<NeuronTree> ntrees;
 	QList <NeuronSWC> new_listNeuron_denr;
 	QList <NeuronSWC> new_listNeuron_axon;
 	if (filenames.isEmpty()){
 		v3d_msg("You don't chose any swc file!");
 		return;
 	}
-	if (filenames.size() != 1){
-		v3d_msg("You chose too many swc file!");//目前只选择一个swc文件产生虚拟神经元
-		return;
+	for (int j = 0; j < filenames.size(); j++){
+		NeuronTree ntree = readSWC_file(filenames[j]);
+		V3DLONG neuron_size = ntree.listNeuron.size();
+		vector <V3DLONG> nodes = vector<V3DLONG>(neuron_size, 0);
+		//将轴突和树突分开，保存节点的孩子节点数量
+		calculate_nodes(ntree, nodes);
+		QList <NeuronSWC> new_listNeuron;
+		save_point_nodes(ntree, nodes, new_listNeuron);
+		ntree.listNeuron = new_listNeuron;
+		QString file = filename1 + "/" + j + ".swc";
+		writeSWC_file(file, ntree, infostring);
+		cout << "write a swc file" << endl;
 	}
+	return;
 	NeuronTree ntree = readSWC_file(filenames[0]);
 	V3DLONG neuron_size = ntree.listNeuron.size();
 	vector <V3DLONG> nodes=vector<V3DLONG>(neuron_size,0);
@@ -78,24 +89,29 @@ void generate_virture(){//调用生成虚拟神经元的函数
 	//将轴突和树突分开，保存节点的孩子节点数量
 	calculate_nodes(ntree, nodes);
 	//将树突的关键节点保存下来,将轴突的关键节点保存下来
-    save_import_nodes(ntree,nodes,new_listNeuron_denr,new_listNeuron_axon);
+	//save_import_nodes(ntree,nodes,new_listNeuron_denr,new_listNeuron_axon);
+	QList <NeuronSWC> new_listNeuron;
+	save_point_nodes(ntree, nodes, new_listNeuron);
 	cout << "save  finish!" << endl;
-	cout << new_listNeuron_axon.size() <<"--------" <<new_listNeuron_denr.size() << endl;
+//	cout << new_listNeuron_axon.size() <<"--------" <<new_listNeuron_denr.size() << endl;
 	cout << "--------------------------" << endl;
 	//最小生成树算法prim，种子点的编号还是1
-	min_tree_prim(new_listNeuron_denr);
-	min_tree_prim(new_listNeuron_axon);
-	ntree.listNeuron = new_listNeuron_denr;//hashNeuron不知道要不要修改
+//	min_tree_prim(new_listNeuron_denr);
+//	min_tree_prim(new_listNeuron_axon);
+	//ntree.listNeuron = new_listNeuron_denr;
+	ntree.listNeuron = new_listNeuron;
 	cout << "wirte swc--------------------" << endl;
 	
 	if (writeSWC_file(filename1, ntree, infostring)){
-		v3d_msg("finish it");
+		v3d_msg("finish it gendenrite");
 	}
 	else{
 		cout << "write error!!!!" << endl;
 	}
+	cout << "start random algorithm!" << endl;
 
-	ntree.listNeuron = new_listNeuron_axon;//hashNeuron不知道要不要修改
+//	gen_axon(new_listNeuron_denr);
+	ntree.listNeuron = new_listNeuron_axon;
 	if (writeSWC_file(filename2, ntree, infostring)){
 		v3d_msg("finish it");
 	}

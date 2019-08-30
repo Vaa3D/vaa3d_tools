@@ -2,18 +2,20 @@
 #include<iostream>
 using namespace std;
 #include<QFileDialog>
-
+#include"renderer_gl1.h"
 ScoreInput::ScoreInput(QWidget *parent) : QMainWindow(parent)
 {
     this->setWindowTitle("SWC Post Score Control");
-    this->resize(800, 650);
+    this->resize(1200, 650);
     centralWidget = new QWidget(parent);
 //    cout<<423<<endl;
 
     vertical_layout_widget=new QWidget(centralWidget);
     vertical_layout=new QVBoxLayout(vertical_layout_widget);
     vertical_layout->setSpacing(5);
-    vertical_layout_widget->resize(800,600);
+    vertical_layout_widget->resize(1100,600);
+//    vertical_layout->on
+
 //    cout<<424<<endl;
     horizental_layout_widget=new QWidget(centralWidget);
     horizental_layout=new QHBoxLayout(horizental_layout_widget);
@@ -117,6 +119,16 @@ ScoreInput::ScoreInput(QWidget *parent) : QMainWindow(parent)
     connect(score_slider, SIGNAL(valueChanged(int)), this, SLOT(sliderValueChanger(int)));
     connect(changeWeight, SIGNAL(clicked()), this, SLOT(changeWeights()));
 //cout<<6<<endl;
+
+//    this->getNeuronTree();
+    score_slider_num->setFixedWidth(5*10);
+
+
+    no_other_swc_score=NULL;
+    condidence_score=NULL;
+    match_score=NULL;
+    result=NULL;
+    final_score=NULL;
 }
 void ScoreInput::changeWeights()
 {
@@ -131,6 +143,8 @@ void ScoreInput::sliderValueChanger(int value)
     score_slider_num->setText(QString::number(score_slider->value()/100.0));
 //    cout<<"sliderValueChanger "<<score_slider->value()<<endl;
    this->calFinalScore();
+//    callback->
+    emit signal_slider_valueChanged();
 }
 
 void ScoreInput::save()
@@ -174,13 +188,13 @@ void ScoreInput::compare()
         (*mTreeList)[deal_tree_num]=dealedTree;
     }
 //    this->hide();
+    cout<<"it is ok22 "<<__LINE__<<endl;
     this->setWindowState(Qt::WindowMinimized);
+    (*mTreeList)[0].on=false;
     emit signal_compare();
 
 
 
-
-//    callback->
 
 }
 
@@ -193,6 +207,7 @@ void ScoreInput::setV3DPluginCallback2(V3DPluginCallback2 *callback2)
     callback=callback2;
     //get neurontree
     cout<<"catch callback success"<<endl;
+//    this->getNeuronTree();
 }
 bool ScoreInput::getNeuronTree()
 {
@@ -203,7 +218,7 @@ bool ScoreInput::getNeuronTree()
         v3d_msg("Please open  a SWC file from the main menu first! list_3dviewer");
         return false;
     }
-    V3dR_MainWindow *surface_win = list_3dviewer[0];
+    /*V3dR_MainWindow *  */surface_win = list_3dviewer[0];
     if (!surface_win){
         v3d_msg("Please open up a SWC file from the main menu first!");
         return false;
@@ -244,12 +259,26 @@ void ScoreInput::calFinalScore()
 {
     if(problemsString.size()<number_data)
     {cout<<"error problems_before.size()<number_data"<<endl;}
+    if(1)
+    {
+        for(int i=0;i<table_widget->rowCount();i++)
+        {
+            for(int j=0;j<table_widget->columnCount();j++)
+            {
+                delete table_widget->itemAt(i,j);
+            }
+
+
+        }
+    }
+
 
     if(number_data>0)
     {
        table_widget->setRowCount(number_data);
     }
     else{table_widget->setRowCount(1);return ;}
+
 
     float sum_weight=weight_confidence_score+weight_match_score+weight_swc_score;
     if(sum_weight==0){sum_weight=0.001;}
@@ -260,13 +289,35 @@ void ScoreInput::calFinalScore()
                 weight_swc_score*no_other_swc_score[i]
                 ;
         final_score[i]=final_score[i]/sum_weight;
+        QTableWidgetItem* item_number = new QTableWidgetItem();
+        item_number->setData(Qt::DisplayRole, i+1);//plus one
+        table_widget->setItem(i,0,item_number);
+//        table_widget->setItem(i,0,new QTableWidgetItem(QString::number(i+1)));//plus one
 
-        table_widget->setItem(i,0,new QTableWidgetItem(QString::number(i)));
         table_widget->setItem(i,1,new QTableWidgetItem(problemsString.at(i)));
-        table_widget->setItem(i,2,new QTableWidgetItem(QString::number(no_other_swc_score[i])));
-        table_widget->setItem(i,3,new QTableWidgetItem(QString::number(condidence_score[i])));
-        table_widget->setItem(i,4,new QTableWidgetItem(QString::number(match_score[i])));
-        table_widget->setItem(i,5,new QTableWidgetItem(QString::number(final_score[i])));
+
+        QTableWidgetItem* item_swc_score = new QTableWidgetItem();
+        item_swc_score->setData(Qt::DisplayRole, no_other_swc_score[i]);
+        table_widget->setItem(i,2,item_swc_score);
+        QTableWidgetItem* item_match_score = new QTableWidgetItem();
+        item_match_score->setData(Qt::DisplayRole, match_score[i]);
+        table_widget->setItem(i,3,item_match_score);
+
+        QTableWidgetItem* item_confidence_score = new QTableWidgetItem();
+        item_confidence_score->setData(Qt::DisplayRole, condidence_score[i]);
+//        cout<<"set in widget i:"<<i<<" item_confidence_score :"<<condidence_score[i]<<endl;
+        table_widget->setItem(i,4,item_confidence_score);
+
+        QTableWidgetItem* item_final_score = new QTableWidgetItem();
+        item_final_score->setData(Qt::DisplayRole, final_score[i]);
+        table_widget->setItem(i,5,item_final_score);
+
+
+
+//        table_widget->setItem(i,2,new QTableWidgetItem(QString::number(no_other_swc_score[i])));
+//        table_widget->setItem(i,3,new QTableWidgetItem(QString::number(condidence_score[i])));
+//        table_widget->setItem(i,4,new QTableWidgetItem(QString::number(match_score[i])));
+//        table_widget->setItem(i,5,new QTableWidgetItem(QString::number(final_score[i])));
         if(final_score[i]*100>score_slider->value())
         {table_widget->setItem(i,6,new QTableWidgetItem("reserve"));
         result[i]=1;}
@@ -284,26 +335,35 @@ void ScoreInput::calFinalScore()
 
 void ScoreInput::setData(int numbers,QStringList problem,float * score_swc,float * score_confidence,float * score_match)
 {
-    if(problem.size()<numbers)
+    cout<<"begin to setData"<<endl;
+    if(problem.size()!=numbers)
     {cout<<"error problem.size()<numbers"<<endl;}
+
     try{final_score=new float [numbers];}//result
     catch(...) {v3d_msg("cannot allocate memory for final_score."); return ;}
+
     if(result){delete[] result;result=0;}
+
     try{result=new float [numbers];}
     catch(...) {v3d_msg("cannot allocate memory for result."); return ;}
-    try{no_other_swc_score=new float [numbers];}
-    catch(...) {v3d_msg("cannot allocate memory for no_other_swc_score."); return ;}
-    try{condidence_score=new float [numbers];}
-    catch(...) {v3d_msg("cannot allocate memory for condidence_score."); return ;}
-    try{match_score=new float [numbers];}
-    catch(...) {v3d_msg("cannot allocate memory for match_score."); return ;}
+//    try{no_other_swc_score=new float [numbers];}
+//    catch(...) {v3d_msg("cannot allocate memory for no_other_swc_score."); return ;}
+//    try{condidence_score=new float [numbers];}
+//    catch(...) {v3d_msg("cannot allocate memory for condidence_score."); return ;}
+//    try{match_score=new float [numbers];}
+//    catch(...) {v3d_msg("cannot allocate memory for match_score."); return ;}
 
-    for(int i=0;i<numbers;i++)
-    {
-        no_other_swc_score[i]=score_swc[i];
-        condidence_score[i]=score_confidence[i];
-        match_score[i]=score_match[i];
-    }
+//    for(int i=0;i<numbers;i++)
+//    {
+//        no_other_swc_score[i]=score_swc[i];
+//        condidence_score[i]=score_confidence[i];
+//        match_score[i]=score_match[i];
+//    }
+    cout<<"begin to set date"<<endl;
+    no_other_swc_score=score_swc;
+    condidence_score=score_confidence;
+    match_score=score_match;
+    cout<<"success in set date"<<endl;
 
     number_data=numbers;
     problemsString=problem;

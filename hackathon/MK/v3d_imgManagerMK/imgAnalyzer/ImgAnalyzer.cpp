@@ -231,7 +231,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 			b3Dcomps[sliceBlobCount] = comps;
 		}
 	}
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 
 	// ------------------------------------------- Merge 2D blobs from 2 adjacent slices -------------------------------------------
 	vector<connectedComponent> currSliceConnComps;
@@ -731,7 +731,7 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 		
 		for (vector<connectedComponent>::iterator it = currSliceConnCompList.begin(); it != currSliceConnCompList.end(); ++it)
 		{
-			ImgAnalyzer::ChebyshevCenter_connComp(*it);
+			ChebyshevCenter_connComp(*it);
 			deque<float> newCentroid;
 			newCentroid.push_back(it->ChebyshevCenter[0]);
 			newCentroid.push_back(it->ChebyshevCenter[1]);

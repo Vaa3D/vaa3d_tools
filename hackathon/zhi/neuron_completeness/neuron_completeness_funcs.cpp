@@ -4,6 +4,7 @@
  */
  
 #include <omp.h>
+#include <sstream>
 
 #include "v3d_message.h"
 #include <algorithm>
@@ -158,22 +159,35 @@ void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList&
             first = i;
 
         }
-        if(sorted_neuron.at(i).type==1)
+        if(sorted_neuron.at(i).type==0 || sorted_neuron.at(i).type==1 || sorted_neuron.at(i).type==5)
+        {
+            map_type[sorted_neuron.at(i).type]++;
+            if(sorted_neuron.at(i).type==0)
+            {
+                LocationSimple t;
+                t.x = sorted_neuron.at(i).x;
+                t.y = sorted_neuron.at(i).y;
+                t.z = sorted_neuron.at(i).z;
+                t.color.r = 255;t.color.g = 255; t.color.b = 255;
+                markerlist.push_back(t);
+            }
+        }
+        else if(sorted_neuron.at(i).type >= 6) //others
         {
             map_type[sorted_neuron.at(i).type]++;
         }
         else if(!map_type.count(sorted_neuron.at(i).type))
         {
             map_type[sorted_neuron.at(i).type] = 1;
-//            if(sorted_neuron.at(i).type!=1 && sorted_neuron.at(i).type!=2 && sorted_neuron.at(i).type!=3)
-//            {
-//                LocationSimple t;
-//                t.x = sorted_neuron.at(i).x;
-//                t.y = sorted_neuron.at(i).y;
-//                t.z = sorted_neuron.at(i).z;
-//                t.color.r = 255;t.color.g = 0; t.color.b = 0;
-//                markerlist.push_back(t);
-//            }
+            if(sorted_neuron.at(i).type == 1)
+            {
+                LocationSimple t;
+                t.x = sorted_neuron.at(i).x;
+                t.y = sorted_neuron.at(i).y;
+                t.z = sorted_neuron.at(i).z;
+                t.color.r = 255;t.color.g = 0; t.color.b = 0;
+                markerlist.push_back(t);
+            }
         }/*else
         {
             if(sorted_neuron.at(i).type!=1 && sorted_neuron.at(i).type!=2 && sorted_neuron.at(i).type!=3 && sorted_neuron.at(i).type !=cur_type)
@@ -643,8 +657,19 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 				set<size_t> thisLoop = *loopIt;
 				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
 				{
-					string headLabel = to_string((segList.seg[*it].row.end() - 1)->x) + " " + to_string((segList.seg[*it].row.end() - 1)->y) + " " + to_string((segList.seg[*it].row.end() - 1)->z);
-					string tailLabel = to_string(segList.seg[*it].row.begin()->x) + " " + to_string(segList.seg[*it].row.begin()->y) + " " + to_string(segList.seg[*it].row.begin()->z);
+					std::ostringstream ssHeadx, ssHeady, ssHeadz;
+					std::ostringstream ssTailx, ssTaily, ssTailz;
+					ssHeadx << (segList.seg[*it].row.end() - 1)->x; string headX(ssHeadx.str());
+					ssHeady << (segList.seg[*it].row.end() - 1)->y; string headY(ssHeady.str());
+					ssHeadz << (segList.seg[*it].row.end() - 1)->z; string headZ(ssHeadz.str());
+					ssTailx << segList.seg[*it].row.begin()->x;     string tailX(ssTailx.str());
+					ssTaily << segList.seg[*it].row.begin()->y;     string tailY(ssTaily.str());
+					ssTailz << segList.seg[*it].row.begin()->z;     string tailZ(ssTailz.str());
+					string headLabel = headX + " " + headY + " " + headZ;
+					string tailLabel = tailX + " " + tailY + " " + tailZ;
+
+					//string headLabel = to_string((segList.seg[*it].row.end() - 1)->x) + " " + to_string((segList.seg[*it].row.end() - 1)->y) + " " + to_string((segList.seg[*it].row.end() - 1)->z);
+					//string tailLabel = to_string(segList.seg[*it].row.begin()->x) + " " + to_string(segList.seg[*it].row.begin()->y) + " " + to_string(segList.seg[*it].row.begin()->z);
 					headCountMap[headLabel].insert(*it);
 					tailCountMap[tailLabel].insert(*it);					
 				}

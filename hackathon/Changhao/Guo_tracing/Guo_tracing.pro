@@ -61,6 +61,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app1
+INCLUDEPATH     += app2
 
 unix {
 LIBS += -L$$V3DMAINPATH/jba/c++
@@ -72,19 +73,26 @@ LIBS += -llibnewmat
 }
 
 HEADERS	+= Guo_tracing_plugin.h
-HEADERS	+= my_surf_objs.h
-HEADERS	+= marker_radius.h
 HEADERS	+= app1/gd.h
 HEADERS	+= app1/v3dneuron_gd_tracing.h
 HEADERS	+= app1/tip_detection.h
 HEADERS	+= neuron_tools.h
-HEADERS	+= fastmarching_dt.h
-HEADERS	+= heap.h
-HEADERS	+= fastmarching_macro.h
+HEADERS	+= app2/fastmarching_dt.h
+HEADERS	+= app2/fastmarching_tree.h
+HEADERS	+= app2/marker_radius.h
+HEADERS	+= app2/heap.h
+HEADERS	+= app2/fastmarching_macro.h
+HEADERS += app2/hierarchy_prune.h
+HEADERS	+= app2/my_surf_objs.h
 HEADERS += ClusterAnalysis_20190409.h
+HEADERS += vn.h
+HEADERS += vn_app1.h
+HEADERS += vn_app2.h
+HEADERS += vn_imgpreprocess.h
 
+SOURCES += vn_imgpreprocess.cpp
 SOURCES	+= Guo_tracing_plugin.cpp
-SOURCES	+= my_surf_objs.cpp
+SOURCES	+= app2/my_surf_objs.cpp
 SOURCES	+= app1/calculate_cover_scores.cpp
 SOURCES	+= app1/gd.cpp
 SOURCES	+= app1/v3dneuron_gd_tracing.cpp

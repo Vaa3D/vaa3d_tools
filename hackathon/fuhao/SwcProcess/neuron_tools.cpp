@@ -161,11 +161,6 @@ vector<NeuronSWC> pointsOfTwoPoint(NeuronSWC point_a,NeuronSWC point_b)
 {
     vector<NeuronSWC> pp;
     pp.push_back(point_a);
-//    if(0)
-//    {//debug
-//        pp.push_back(point_b);
-//        return pp;
-//    }
     if(point_a==point_b)
     {
         return pp;
@@ -190,6 +185,15 @@ vector<NeuronSWC> pointsOfTwoPoint(NeuronSWC point_a,NeuronSWC point_b)
         point_a.x+=direction.x;
         point_a.y+=direction.y;
         point_a.z+=direction.z;
+        if(1)
+        {
+            if(V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5)
+             &&V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5)
+             &&V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5))
+            {
+                continue;
+            }
+        }
         pp.push_back(point_a);
     }
     return pp;
@@ -845,11 +849,21 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
     //输出一个系数   如果该系数曾小于0.2 则输出0.2
     //否则输出该系数
     if(tip_point_num>=nt.listNeuron.size()){cout<<"tip_point_num>nt.listNeuron.size()"; return 0;}
-    NeuronSWC S1,S2;
-//    cout<<"input tip_point_num"<<tip_point_num<<endl;
-    S1=nt.listNeuron.at(tip_point_num);
-    if(S1.parent==-1){/*cout<<"tip_point_num>nt.listNeuron.size()";*/ return 1.0;}
-    S2=nt.listNeuron.at(nt.hashNeuron.value(S1.parent));
+    V3DLONG img_size=sz[0]*sz[1]*sz[2];
+    if(nt.listNeuron.at(tip_point_num).parent==-1){
+        NeuronSWC p1=nt.listNeuron.at(tip_point_num);
+        p1.x=V3DLONG(p1.x+0.5);
+        p1.y=V3DLONG(p1.y+0.5);
+        p1.z=V3DLONG(p1.z+0.5);
+        V3DLONG aaa=sz[0]*sz[1]*p1.z+sz[0]*p1.y+p1.x;
+        if(aaa>img_size||aaa<0) {cout<<"aaa>img_size aaa:"<<aaa<<endl; }
+            cout<<" input parent ==-1  point1 x:"<<p1.x<<" y:"<<p1.y<<" z:"<<p1.z<<endl;
+            cout<<"out as s1.parent==-1"<<endl;
+        if(bimg_datald[aaa]==255)
+        {
+            return 1;
+        }else
+            return 0.5;    }//
 
 //    cout<<"begin get branch"<<endl;
     QVector<QVector<V3DLONG> > childs;
@@ -864,42 +878,46 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
+//    cout<<"init is over"<<endl;
+    float score=0.5;
+    int total_count=0,fore_count=0;
 
+
+    NeuronSWC S1,S2;
+//    cout<<"input tip_point_num"<<tip_point_num<<endl;
+    S1=nt.listNeuron.at(tip_point_num);
+    if(S1.parent==-1){cout<<"S1.parent==-1 but  not checked out???"; return 1.0;}
+    S2=nt.listNeuron.at(nt.hashNeuron.value(S1.parent));
     vector<NeuronSWC> needtoshow;
     needtoshow=pointsOfTwoPoint(S1,S2);
 
-//    cout<<"init is over"<<endl;
-    float score=0.5;
-    int total_count=1,fore_count=1;
-    V3DLONG img_size=sz[0]*sz[1]*sz[2];
-    for(int ii=0;ii<needtoshow.size();ii++)
-    {
-        NeuronSWC current=needtoshow.at(ii);
-        NeuronSWC p1;
-        p1.x=V3DLONG(current.x+0.5);
-        p1.y=V3DLONG(current.y+0.5);
-        p1.z=V3DLONG(current.z+0.5);
-        V3DLONG aaa=sz[0]*sz[1]*p1.z+sz[0]*p1.y+p1.x;
-        if(aaa>img_size||aaa<0) {cout<<"aaa>img_size"; return 0;}
-//        cout<<" point1 x:"<<p1.x<<" y:"<<p1.y<<" z:"<<p1.z<<" bimg:"<<int(bimg_datald[aaa])<<endl;
-        if(bimg_datald[aaa]==255)
-        {
-            fore_count++;
-        }
-        total_count++;
-        score=(float)(fore_count)/(float)total_count;
-        if(score<=0.2)
-        {
-            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
-            return score;
-        }
-    }
+
+//    for(int ii=0;ii<needtoshow.size();ii++)
+//    {
+//        NeuronSWC current=needtoshow.at(ii);
+//        NeuronSWC p1;
+//        p1.x=V3DLONG(current.x+0.5);
+//        p1.y=V3DLONG(current.y+0.5);
+//        p1.z=V3DLONG(current.z+0.5);
+//        V3DLONG aaa=sz[0]*sz[1]*p1.z+sz[0]*p1.y+p1.x;
+//        if(aaa>img_size||aaa<0) {cout<<"aaa>img_size"; return 0;}
+////        cout<<" point1 x:"<<p1.x<<" y:"<<p1.y<<" z:"<<p1.z<<" bimg:"<<int(bimg_datald[aaa])<<endl;
+//        if(bimg_datald[aaa]==255)
+//        {
+//            fore_count++;
+//        }
+//        total_count++;
+//        score=(float)(fore_count+1.0)/(float)(total_count+1.0);
+//        if(score<=0.2)
+//        {
+//            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
+//            return score;
+//        }
+//    }
 //    cout<<"first point is ok"<<endl;
 
     while(childs[nt.hashNeuron.value(S1.parent)].size()<2)
     {
-        S1=S2;
-        S2=nt.listNeuron.at(nt.hashNeuron.value(S1.parent));
         needtoshow=pointsOfTwoPoint(S1,S2);
         for(int ii=0;ii<needtoshow.size();ii++)
         {
@@ -916,23 +934,26 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
                 fore_count++;
             }
             total_count++;
-            score=(float)(fore_count)/(float)total_count;
-            if(score<=0.2)
+            score=(float)(fore_count+1.0)/(float)(total_count+1.0);
+            if(score<=0.1)
             {
-                cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
+                cout<<" score<=0.1 return fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
                 return score;
             }
         }
+        S1=S2;
+        S2=nt.listNeuron.at(nt.hashNeuron.value(S1.parent));
     }
 
-    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
-    cout<<endl;
+    cout<<"end :fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
+//    cout<<endl;
     return score;
 }
 float online_confidece(LocationSimple pointa,LocationSimple pointb,unsigned char * bimg_datald,V3DLONG sz[])
 {
     //输出一个系数   如果该系数曾小于0.2 则输出0.2
     //否则输出该系数
+
     if(pointa==pointb)
     {return 1;}
     V3DLONG img_size=sz[0]*sz[1]*sz[2];
@@ -944,7 +965,7 @@ float online_confidece(LocationSimple pointa,LocationSimple pointb,unsigned char
     needtoshow=pointsOfTwoPoint(S1,S2);
 
     float score=0.5;
-    int total_count=1,fore_count=0;
+    int total_count=0,fore_count=0;
     for(int ii=0;ii<needtoshow.size();ii++)
     {
         NeuronSWC current=needtoshow.at(ii);
@@ -960,14 +981,15 @@ float online_confidece(LocationSimple pointa,LocationSimple pointb,unsigned char
             fore_count++;
         }
         total_count++;
-        score=(float)(fore_count+1.0)/(float)total_count;
-        if(score<=0.2)
-        {
-            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
-            return score;
-        }
+//        score=(float)(fore_count+1.0)/(float)(total_count+1.0);
+//        if(score<=0.1)
+//        {
+//            cout<<"score<=0.1 fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
+//            return score;
+//        }
     }
-    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
+    score=(float)(fore_count+1.0)/(float)(total_count+1.0);
+//    cout<<"online_confidece two point end :fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
 //    cout<<endl;
     return score;
 

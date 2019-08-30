@@ -44,22 +44,128 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	QString fileOpenName = openDlg->file_name;
 	if (SortSWC(neuron, result ,rootid, thres))
 	{
-		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
-		//write new SWC to file
-		QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-				fileDefaultName,
-				QObject::tr("Supported file (*.swc)"
-					";;Neuron structure	(*.swc)"
-					));
+        QString fileDefaultName;
+        QString fileSaveName;
+        if(fileOpenName.endsWith(".eswc",Qt::CaseInsensitive))
+        {
+            fileDefaultName = fileOpenName+QString("_sorted.eswc");
+            fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        fileDefaultName,
+                                                        QObject::tr("Supported file (*.eswc)"
+                                                                    ";;Neuron structure	(*.eswc)"
+                                                                    ));
+
+        }
+        else
+        {
+            fileDefaultName = fileOpenName+QString("_sorted.swc");
+            fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        fileDefaultName,
+                                                        QObject::tr("Supported file (*.swc)"
+                                                                    ";;Neuron structure	(*.swc)"
+                                                                    ));
+        }
 		if (fileSaveName.isEmpty())
 			return;
 		if (!export_list2file(result,fileSaveName,fileOpenName))
 		{
-			v3d_msg("fail to write the output swc file.");
+            v3d_msg("fail to write the output swc/eswc file.");
 			return;
 		}
 	}
 	return;
+}
+void sort_batch_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //choose a directory that contain swc files
+    QString qs_dir_swc = QFileDialog::getExistingDirectory(parent,
+                                                           QString(QObject::tr("Choose the directory that contains files to be soma-corrected"))
+                                                           );
+    if(qs_dir_swc.size()==0){
+        v3d_msg("Empty input folder.\n Let the developer know if you see this message.");
+        return;
+    }
+    if(!qs_dir_swc.endsWith("/")){qs_dir_swc = qs_dir_swc + "/";}
+    //choose output directory
+    QString qs_dir_output = QFileDialog::getExistingDirectory(parent,
+                                                              QString(QObject::tr("Choose the output directory."))
+                                                              );
+    if((qs_dir_output.size()>0) && (!qs_dir_output.endsWith("/"))){qs_dir_output = qs_dir_output + "/";}
+
+    // Specify parameters
+    V3DLONG rootid = 0;
+    double thres;
+    bool ok;
+
+    thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
+    if (!ok)
+        thres = VOID;
+
+    sort_batch(qs_dir_swc, qs_dir_output, thres);
+    return;
+}
+
+void sort_batch(QString input_dir, QString output_dir, double thres_dist){
+
+    bool skip_existing = true;
+
+    qDebug()<<"Welcome to use the \"sort_swc_batch\" plugin";
+    // Step 1: Find swc files under a folder;
+    QDir dir(input_dir);
+    QStringList qsl_filelist, qsl_filters;
+    qsl_filters << "*.swc" << "*.eswc";
+
+    foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
+    {
+        qsl_filelist+=file;
+    }
+
+    if(qsl_filelist.size()==0)
+    {
+        v3d_msg("Cannot find swc files in the given directory!\nTry another diretory");
+        return;
+    }
+
+    // Step 2: Specify output folder
+    if(output_dir.size()==0){output_dir = input_dir + "Soma_Corrected/";}
+    qDebug()<<QString("Output folder is %1.").arg(output_dir);
+    if(!QDir::current().mkdir(output_dir)){
+//        v3d_msg(QString("Cannot create dir \"%1\" or \"%2\" already exists. Please double check.").arg(output_dir).arg(output_dir));
+    }
+
+    // Step 3: Perform swc_sorting through a loop
+    for(int i=0; i<qsl_filelist.size(); i++){
+        // input swc and apo
+        int suffix_len = 5;
+        if(qsl_filelist.at(i).endsWith(".swc") || qsl_filelist.at(i).endsWith(".SWC")){suffix_len = 4;}
+        QString qs_input_swc = input_dir + qsl_filelist.at(i);
+
+        qDebug()<<qs_input_swc;
+        NeuronTree nt = readSWC_file(qs_input_swc);
+        QList<NeuronSWC> neuron = nt.listNeuron;
+        QList<NeuronSWC> result;
+        QString qs_output_swc = output_dir + qsl_filelist.at(i);
+        if(qs_input_swc.endsWith(".eswc",Qt::CaseInsensitive))
+        {
+            qs_output_swc = qs_output_swc+QString("_sorted.eswc");
+        }
+        else
+        {
+            qs_output_swc = qs_output_swc+QString("_sorted.swc");
+        }
+        if((fexists(qs_output_swc)) && (skip_existing)){
+            continue;
+        }
+        if (SortSWC(neuron, result ,VOID, thres_dist))
+        {
+            if (!export_list2file(result, qs_output_swc, qs_input_swc))
+            {
+                v3d_msg("fail to write the output swc/eswc file.");
+                return;
+            }
+        }
+    }
+    return;
 }
 
 void sort_toolbox(const V3DPluginArgList & input)

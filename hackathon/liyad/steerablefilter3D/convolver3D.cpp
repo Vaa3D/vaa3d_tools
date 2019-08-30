@@ -7,13 +7,27 @@
 
 
 // adopted by Liya Ding 2019.05.16
+#include <stdlib.h>
+#include <iostream>
+
 
 void convolveEvenX(const double input[], const double kernel[], const int k, const int nx, const int ny, const int nz, double output[]) {
     int k_1 = k-1;
     int idx = 0;
     int A,B;
+    std::cout<<"convolveEvenX start"<<std::endl;
+    std::cout<<"convolveEvenX nx="<<nx<<std::endl;
+    std::cout<<"convolveEvenX ny="<<ny<<std::endl;
+    std::cout<<"convolveEvenX nz="<<nz<<std::endl;
+    std::cout<<"convolveEvenX k="<<k<<std::endl;
+    
+      
     for (int z=0;z<nz;++z) {
+        //std::cout<<"convolveEvenX, z="<<z<<std::endl;
+
         for (int y=0;y<ny;++y) {
+            //std::cout<<"convolveEvenX, z="<<z<<", y="<<y<<std::endl;
+
             A = y*nx+z*nx*ny;
             B = (y+1)*nx+z*nx*ny-1;
             // "left" border
@@ -21,9 +35,12 @@ void convolveEvenX(const double input[], const double kernel[], const int k, con
                 output[idx] = kernel[0]*input[idx];
                 for (int i=1;i<=x;++i) {
                     output[idx] += kernel[i]*(input[idx-i]+input[idx+i]);
+                    //std::cout<<"output[idx]:"<<output[idx]<<", y="<<y<<", z="<<z<<std::endl;
+
                 }
                 for (int i=x+1;i<k;++i) {
                     output[idx] += kernel[i]*(input[2*A-idx+i]+input[idx+i]);
+                    //std::cout<<"output[idx]:"<<output[idx]<<", y="<<y<<", z="<<z<<",i="<<i<<std::endl;
                 }
                 idx++;
             }
@@ -31,6 +48,8 @@ void convolveEvenX(const double input[], const double kernel[], const int k, con
                 output[idx] = kernel[0]*input[idx];
                 for (int i=1;i<k;++i) {
                     output[idx] += kernel[i]*(input[idx-i]+input[idx+i]);
+                    //std::cout<<"output[idx]:"<<output[idx]<<", y="<<y<<", z="<<z<<",i="<<i<<std::endl;
+
                 }
                 idx++;
             }
@@ -42,11 +61,14 @@ void convolveEvenX(const double input[], const double kernel[], const int k, con
                 }
                 for (int i=nx-x;i<k;++i) {
                     output[idx] += kernel[i]*(input[idx-i]+input[2*B-idx-i]);
+                    //std::cout<<"output[idx]:"<<output[idx]<<", y="<<y<<", z="<<z<<",i="<<i<<std::endl;
                 }
                 idx++;
             }
         }
     }
+    std::cout<<"convolveEvenX end"<<std::endl;
+   
 }
 
 

@@ -106,6 +106,33 @@ bool marker2apo(const V3DPluginArgList & input, V3DPluginArgList & output)
     return true;
 }
 
+bool marker2apo(QString markerFileName)
+{
+	QList <ImageMarker> listLandmarks = readMarker_file(markerFileName);
+	QList<CellAPO> file_inmarkers;
+	for (int i = 0; i<listLandmarks.size(); i++)
+	{
+		CellAPO t;
+		t.x = listLandmarks[i].x;
+		t.y = listLandmarks[i].y;
+		t.z = listLandmarks[i].z;
+		t.color.r = 255;
+		t.color.g = 0;
+		t.color.b = 0;
+		t.volsize = 314.159;
+
+		file_inmarkers.push_back(t);
+	}
+
+	QString saveName = markerFileName + ".apo";
+	writeAPO_file(saveName, file_inmarkers);
+
+	QString FinishMsg = QString("An apo file [") + saveName + QString("] has been generated.");
+	v3d_msg(FinishMsg);
+	
+	return true;
+}
+
 void printHelp(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3d_msg("This plugin converts and saves an image's marker to the SWC format. ");
@@ -123,7 +150,8 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 QStringList Marker2OthersPlugin::menulist() const
 {
 	return QStringList()
-		<<tr("Save markers to SWC format")
+		<< tr("Save markers to SWC format")
+		<< tr("Save markers to apo format")
 		<<tr("about");
 }
 
@@ -139,6 +167,12 @@ void Marker2OthersPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	if (menu_name == tr("Save markers to SWC format"))
 	{
 		marker2others(callback,parent);
+	}
+	else if (menu_name == tr("Save markers to apo format"))
+	{
+		QString markerFileName = QFileDialog::getOpenFileName(0, QObject::tr("Select marker file"), "",
+			QObject::tr("Supported file extension (*.marker)"));
+		marker2apo(markerFileName);
 	}
 	else if (menu_name == tr("help"))
 	{

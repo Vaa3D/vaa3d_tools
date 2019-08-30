@@ -6,12 +6,14 @@
 #include"neuron_tools.h"
 #include "v3d_curvetracepara.h"
 #include "scoreinput.h"
+#include"ClusterAnalysis.h"
 #define using_exist_TMI_data
 class neurontreepruneorgraft:public QObject
 {
     Q_OBJECT
 public slots:
     void getDateFromGUI();
+    void getDateFromGUI_show_neuronTree();
 
 public:
     neurontreepruneorgraft();
@@ -85,6 +87,7 @@ public:
     bool setSwcImg(NeuronTree nt);
 //    void Hackthon_process_onetip(NeuronTree nt,V3DLONG i);
     LandmarkList need_to_show;
+    float  cal_swc_score(NeuronTree nt,int neu_i);
 
 private:
     V3DPluginCallback2 *cb;
@@ -159,7 +162,7 @@ private:
     float *online_confidece_score;
     float *ultimate_score_all;
 
-    float  cal_swc_score(NeuronTree nt,int neu_i);
+
     float  cal_online_confidence_score(NeuronTree nt,int neu_i);//
     float  cal_tip_score(NeuronTree nt,int neu_i);
     void   cal_weighted_score(void);

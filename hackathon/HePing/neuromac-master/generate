@@ -1,0 +1,24 @@
+[system]
+seed=2105200
+proxy_sub_port = 5590
+proxy_pub_port = 5560
+pull_port = 55002
+no_cycles = 60
+out_db=generate.db
+synpase_distance = 12
+avoidance_attempts = 3
+
+[substrate]
+dim_xyz = [1000.0,1000.0,700.0]
+
+[sub_volumes]
+xa=2
+ya=2
+za=1
+
+
+[cell_type_60]
+no_seeds = 12
+algorithm = generate_motor
+location=[[120,100,100],[900,800,600]]
+soma_radius =10

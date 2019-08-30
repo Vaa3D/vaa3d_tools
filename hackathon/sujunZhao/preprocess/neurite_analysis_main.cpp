@@ -30,6 +30,7 @@ NeuronTree return_long_axon(NeuronTree nt, int soma, bool color_tree){
         nt = get_subtree_by_id(nt, idlist);
     }
     return nt;
+    cout<<"*****************return_long_axon**************"<<endl;
 }
 NeuronTree return_axon(NeuronTree nt, int soma){
 

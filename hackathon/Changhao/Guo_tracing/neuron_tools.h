@@ -13,6 +13,8 @@ MyMarker* LocationSimple2MyMarkerP(LocationSimple s);
 MyMarker LocationSimple2MyMarker(LocationSimple s);
 
 void merge_two_neuron(vector<MyMarker*> & swc ,NeuronTree nt);
+void merge_two_neuron(vector<MyMarker*> & swc_main ,vector<MyMarker*> & swc);
+void merge_two_neuron(NeuronTree nt1 ,NeuronTree nt2, NeuronTree &nt_merged);
 NeuronTree merge_two_neuron(NeuronTree swc1 , NeuronTree nt);
 QList <ImageMarker> LandmarkListQList_ImageMarker(LandmarkList marker_l);
 vector<MyMarker*> readSWC_file1(string swc_file);
@@ -26,6 +28,8 @@ LandmarkList Match_leaf_tip(LandmarkList leaf_swc,LandmarkList real_tip,double t
 
 LandmarkList FromTreeGetBranch(NeuronTree nt);
 LandmarkList getCalcuMarker(LandmarkList markerFromMarkerFile);
+void getCalcuMarker(LandmarkList markerFromMarkerFile, LandmarkList &calcuMarker);
+void getCalcuMarker(LandmarkList markerFromMarkerFile,  vector<MyMarker> &calcuMarker);
 void displayMarker(V3DPluginCallback2 &callback, v3dhandle windows, LandmarkList calcuMarker);
 LandmarkList mergeLandmark(LandmarkList a, LandmarkList b);
 vector<LocationSimple> LandmarkList2vectorLocationSimple(LandmarkList a);
@@ -50,5 +54,13 @@ void gaussian_filter(unsigned char * data1d,
                                         unsigned int c,
                                         double sigma,
                                         float * &outimg);
+double dist(MyMarker a, LocationSimple b);
+double dist(LocationSimple a, MyMarker b);
+double dist(LocationSimple a, LocationSimple b);
+double dist(NeuronSWC a, LocationSimple b);
+
+void nt_processing_for_mask(NeuronTree nt, LandmarkList pointSet, NeuronTree &nt_new, double margin);
+bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<string> & infostring);
+QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code);
 
 #endif // NEURON_TOOLS_H
