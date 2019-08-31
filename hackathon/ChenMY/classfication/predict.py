@@ -69,7 +69,7 @@ def predict(infolder,outfolder0,outfolder1):
             # # show the output image
             # cv2.imshow("Output", output)
             # cv2.waitKey(0)
-def createApo(list,saveapo,multiple,id,color0,color1,color2):
+def createApo1(list,saveapo,multiple,id,color0,color1,color2):
     outfile = open(saveapo, 'w')
     outfile.write("##n,orderinfo,name,comment,z,x,y, pixmax,intensity,sdev,volsize,mass,,,, color_r,color_g,color_b\n")
     lines=len(list)
@@ -96,34 +96,34 @@ def createAno(apoPath,anoPath):
      file.write("APOFILE={}\n".format(filename))
      file.write("SWCFILE=wholebrain_stamp_2019_04_17_15_53.ano.eswc")
 
-def get_args():
-    parser = OptionParser()
-    parser.add_option('-s', '--savedir', dest='savedir',
-
-                       help='Which folder the pics save.')
-    parser.add_option('-t', '--truedir', dest='truedir',
-
-                      help='Which folder the true pics save.')
-    parser.add_option('-f', '--falsedir', dest='falsedir',
-
-                      help='Which folder the false pics save.')
-    parser.add_option('-a', '--apopath', dest='apopath',
-
-                      help='set the apo path')
-    (options, args) = parser.parse_args()
-
-    return options
-
-
-if __name__ == '__main__':
-    args = get_args()
-    infolder = args.savedir#set the cropped pics folder
-    outfolder0=args.truedir# set the predicted true folder
-    outfolder1=args.falsedir#set  the predicted false floder
-    savePath = args.apopath # set the trueapo path
-    predict(infolder, outfolder0, outfolder1)
-    xyz = picToapo(outfolder0)
-    createApo(xyz, savePath, 1, 40000, 255, 255, 0)
+# def get_args():
+#     parser = OptionParser()
+#     parser.add_option('-s', '--savedir', dest='savedir',
+#
+#                        help='Which folder the pics save.')
+#     parser.add_option('-t', '--truedir', dest='truedir',
+#
+#                       help='Which folder the true pics save.')
+#     parser.add_option('-f', '--falsedir', dest='falsedir',
+#
+#                       help='Which folder the false pics save.')
+#     parser.add_option('-a', '--apopath', dest='apopath',
+#
+#                       help='set the apo path')
+#     (options, args) = parser.parse_args()
+#
+#     return options
+#
+#
+# if __name__ == '__main__':
+#     args = get_args()
+#     infolder = args.savedir#set the cropped pics folder
+#     outfolder0=args.truedir# set the predicted true folder
+#     outfolder1=args.falsedir#set  the predicted false floder
+#     savePath = args.apopath # set the trueapo path
+#     predict(infolder, outfolder0, outfolder1)
+#     xyz = picToapo(outfolder0)
+#     createApo(xyz, savePath, 1, 40000, 255, 255, 0)
 
 
 
