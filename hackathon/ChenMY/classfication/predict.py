@@ -6,6 +6,7 @@ import argparse
 import imutils
 import cv2
 import os
+from optparse import OptionParser
 
 norm_size = 64
 
@@ -95,13 +96,33 @@ def createAno(apoPath,anoPath):
      file.write("APOFILE={}\n".format(filename))
      file.write("SWCFILE=wholebrain_stamp_2019_04_17_15_53.ano.eswc")
 
+def get_args():
+    parser = OptionParser()
+    parser.add_option('-s', '--savedir', dest='savedir',
+
+                       help='Which folder the pics save.')
+    parser.add_option('-t', '--truedir', dest='truedir',
+
+                      help='Which folder the true pics save.')
+    parser.add_option('-f', '--falsedir', dest='falsedir',
+
+                      help='Which folder the false pics save.')
+    parser.add_option('-a', '--apopath', dest='apopath',
+
+                      help='set the apo path')
+    (options, args) = parser.parse_args()
+
+    return options
+
+
 if __name__ == '__main__':
-    infolder = "E:\\mypersonalgit\\somadata\\18463_50_80\\128_128_64\\png\\true"#set the cropped pics folder
-    outfolder0="E:\\mypersonalgit\\somadata\\18463_50_80\\128_128_64\\png\\true\\0"# set the predicted true folder
-    outfolder1="E:\\mypersonalgit\\somadata\\18463_50_80\\128_128_64\\png\\true\\1"#set  the predicted false floder
+    args = get_args()
+    infolder = args.savedir#set the cropped pics folder
+    outfolder0=args.truedir# set the predicted true folder
+    outfolder1=args.falsedir#set  the predicted false floder
+    savePath = args.apopath # set the trueapo path
     predict(infolder, outfolder0, outfolder1)
     xyz = picToapo(outfolder0)
-    savePath = "F:\\18454-multisoma\\test.apo"  # set the trueapo path
     createApo(xyz, savePath, 1, 40000, 255, 255, 0)
 
 

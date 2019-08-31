@@ -1,6 +1,8 @@
 import os
 import cv2 as cv
 from libtiff import TIFF
+from optparse import OptionParser
+
 def createApo(wholebraintxt,saveapo,multiple):
     path = wholebraintxt
     file = open(path)
@@ -71,16 +73,39 @@ def  apoToInt(apotruepath,apotruepathint):
     for i in range(len(xyz)):
         outfile.write("{}, ,  {},, {},{},{}, 0,0,0,50,0,,,,0,0,255\n".format(i, i, xyz[i][2],xyz[i][0],xyz[i][1]))
     print("apoToInt ok")
+def get_args():
+    parser = OptionParser()
+    parser.add_option('-v', '--v3dExePath', dest='v3dExePath',
 
+                       help='vaa3d_msvc.exe path.')
+    parser.add_option('-c', '--cropped3DImageSeriesPath', dest='cropped3DImageSeriesPath',
+
+                      help='cropped3DImageSeries.dll path.')
+    parser.add_option('-m', '--mipZSlicesPath', dest='mipZSlicesPath',
+
+                      help='mipZSlices.dll path.')
+    parser.add_option('-p', '--pics_folder', dest='pics_folder',
+
+                      help='Which folder the pics save')
+    parser.add_option('-s', '--soma_candidates_path', dest='soma_candidates_path',
+
+                      help='soma candidates path')
+    parser.add_option('-t', '--terafly_folder', dest='terafly_folder',
+
+                      help='Which folder the terafly save')
+    (options, args) = parser.parse_args()
+
+    return options
 if __name__ == "__main__":
-    v3dExePath="D:/v3d_external/bin/vaa3d_msvc.exe"# set v3dExePath
-    cropped3DImageSeriesPath="D:\\vaa3d_tools\\bin\\plugins\\image_geometry\\crop3d_image_series\\cropped3DImageSeries.dll"#set cropped3DImageSeriesPath
-    mipZSlicesPath="D:\\v3d_external\\bin\\plugins\\image_projection\\maximum_intensity_projection_Z_Slices\\mipZSlices.dll"#set mipZSlicesPath
+    args = get_args()
+    v3dExePath=args.v3dExePath# set v3dExePath
+    cropped3DImageSeriesPath=args.cropped3DImageSeriesPath#set cropped3DImageSeriesPath
+    mipZSlicesPath=args.mipZSlicesPath#set mipZSlicesPath
     # step1 generate apo file
-    path = "E:\\test"  # set pics saved folder
+    path = args.pics_folder  # set pics saved folder
     if not os.path.exists(path):
         os.mkdir(path)
-    wholebrainntxt = "E:\\test\\wholebrain.txt"  # set soma candidates ".txt"path
+    wholebrainntxt = args.soma_candidates_path  # set soma candidates ".txt"path
     saveapo = "wholebrain1.apo"
     multiple = 1
     createApo(wholebrainntxt, saveapo, multiple)
@@ -104,7 +129,7 @@ if __name__ == "__main__":
     somapath=os.path.dirname(wholebrainntxt) + "\\" + saveapo2
     print(somapath)
     # step 4 genenate v3draw
-    teraflyFolder = "H:\\mouse18454_teraconvert\\RES(13149x17500x5520)"  # set teraflyFolder path
+    teraflyFolder = args.terafly_folder # set teraflyFolder path
     v3drawpath=path + "\\" + path128 + "\\"+ v3draw
     crop3Ddraw( v3dExePath,cropped3DImageSeriesPath,teraflyFolder, somapath, v3drawpath, 128, 128, 64)
     # setp 5 generate tif
