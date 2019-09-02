@@ -104,7 +104,7 @@ bool ImageCtrl::corrode(vector<vector<vector<unsigned char> > > &image,int mode)
 
     qDebug()<<"---------------------------------------";
 
-    double thres =  65;//this->getMeanIntensity();
+    double thres =  this->getMode();
     vector<vector<vector<int> > > mask=vector<vector<vector<int> > >(sz0,vector<vector<int> >(sz1,vector<int>(sz2,0)));
     for(V3DLONG i=0;i<sz0;++i)
         for(V3DLONG j=0;j<sz1;++j)
@@ -292,3 +292,172 @@ double ImageCtrl::getMode()
 
     return (double)(countmap.rbegin()->second+0.5);
 }
+
+bool ImageCtrl::segment0()
+{
+    vector<vector<vector<unsigned char> > > image;
+    this->Data1d_to_3d(image);
+    vector<vector<vector<int> > > mask = vector<vector<vector<int> > >(sz0,vector<vector<int> >(sz1,vector<int>(sz2,0)));
+
+    double mode = this->getMode();
+
+    qDebug()<<"mode: "<<mode<<endl;
+
+    double mean = this->getMeanIntensity();
+
+    qDebug()<<"mean: "<<mean<<endl;
+
+    for(V3DLONG i=0;i<sz0;++i)
+        for(V3DLONG j=0;j<sz1;++j)
+            for(V3DLONG k=0;k<sz2;++k)
+            {
+                if(image[i].at(j).at(k)<mode)
+                    mask[i].at(j).at(k)=1;
+            }
+
+
+    const int a =16*16;
+    vector<int> counts = vector<int>(16,0);
+
+    multimap<int,simplePoint> countmap;
+
+
+    for(V3DLONG i=0; i<=sz2-16; ++i)
+    {
+        for(V3DLONG j=0; j<=sz1-16; ++j)
+        {
+            for(V3DLONG k=0; k<=sz0-16; ++k)
+            {
+                int count = 0;
+                for(int ii=i; ii<i+16; ++ii)
+                {
+                    for(int jj=j; jj<j+16; ++jj)
+                    {
+                        for(int kk=k; kk<k+16; ++kk)
+                        {
+                            if(mask[ii].at(jj).at(kk)==0)
+                            {
+                                count++;
+                            }
+                        }
+                    }
+                }
+
+                for(int p=0; p<16; ++p)
+                {
+                    if(count>p*a)
+                    {
+                        counts[p]++;
+                    }
+                }
+
+                simplePoint p(i,j,k);
+                countmap.insert(pair<int,simplePoint>(count,p));
+            }
+        }
+    }
+
+    for(int p=0; p<16; ++p)
+    {
+        qDebug()<<"counts "<<p<<" : has "<<counts[p]<<" percent: "<<(double)counts[p]/((sz0-15)*(sz1-15)*(sz2-15))<<endl;
+    }
+
+    multimap<int,simplePoint>::reverse_iterator it = countmap.rbegin();
+
+    while(it!=countmap.rend())
+    {
+        double mask0_count = 0;
+
+
+        simplePoint tmp = it->second;
+        int s = 0;
+
+        vector<int> intensity = vector<int>(256,0);
+
+        for(V3DLONG ii=tmp.x; ii<tmp.x+16; ++ii)
+        {
+            for(V3DLONG jj=tmp.y; jj<tmp.y+16; ++jj)
+            {
+                for(V3DLONG kk=tmp.z; kk<tmp.z+16; ++kk)
+                {
+                    s += image[ii][jj][kk];
+                    intensity[image[ii][jj][kk]]++;
+                    if(mask[ii][jj][kk]==0)
+                        mask0_count++;
+                }
+            }
+        }
+
+        s /= a*16;
+        mask0_count = (double)mask0_count/(a*16);
+
+        qDebug()<<"mask 0 count: "<<mask0_count<<endl;
+
+        vector<int>::iterator it_i = intensity.begin();
+        int count_i = 0;
+        int index_i;
+        while(it_i!=intensity.end())
+        {
+            count_i += *it_i;
+            if(count_i>(a*1.6*9))
+            {
+                index_i = it_i - intensity.begin();
+                break;
+            }
+            it_i++;
+        }
+
+
+
+        if(mask0_count>0.3)
+        {
+            qDebug()<<"index_i: "<<index_i<<endl;
+            for(V3DLONG ii=tmp.x; ii<tmp.x+16; ++ii)
+            {
+                for(V3DLONG jj=tmp.y; jj<tmp.y+16; ++jj)
+                {
+                    for(V3DLONG kk=tmp.z; kk<tmp.z+16; ++kk)
+                    {
+                        if(image[ii][jj][kk]<index_i+0.5)
+                        {
+                            image[ii][jj][kk] = 0;
+                            mask[ii][jj][kk] = 2;
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        it++;
+
+    }
+
+    this->Data3d_to_1d(image);
+
+
+
+    return true;
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
