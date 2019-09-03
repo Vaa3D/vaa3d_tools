@@ -157,9 +157,10 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         ImageCtrl c(pdata,sz);
 
         vector<vector<vector<unsigned char>>> image;
-        c.histogram();
-        c.Data1d_to_3d(image);
+//        c.histogram();
+//        c.Data1d_to_3d(image);
 //        c.corrode(image,2);
+        c.segment0();
         unsigned char* segdata = c.getdata();
         QString tiffile = (outfiles.size()>=1)?outfiles[0]:"";
         simple_saveimage_wrapper(callback,tiffile.toStdString().c_str(),segdata,sz,datatype);
