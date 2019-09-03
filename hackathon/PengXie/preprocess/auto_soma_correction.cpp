@@ -52,7 +52,7 @@ bool auto_soma_correction(QString qs_file_swc, QString qs_file_apo, QString qs_d
     QString cur_dir = qs_file_swc.left(qs_file_swc.lastIndexOf("/")+1);
     if(qs_dir_output.size()==0){qs_dir_output = cur_dir + "Soma_Corrected/";}
     if(!QDir::current().mkdir(qs_dir_output)){
-//        v3d_msg(QString("Cannot create dir \"%1\" or \"%2\" already exists. Please double check.").arg(qs_dir_output).arg(qs_dir_output));
+        v3d_msg(QString("Cannot create dir \"%1\" or \"%2\" already exists. Please double check.").arg(qs_dir_output).arg(qs_dir_output));
     }
 
     int suffix_len = 5;
@@ -90,7 +90,7 @@ bool auto_soma_correction(QString qs_file_swc, QString qs_file_apo, QString qs_d
     bool whether_crop = false;
     if(whether_crop){
         // For testing purpose only
-        // Crop the swc file
+        // Crop the swc file to have a smaller file for testing
         // BEGIN
         qDebug()<<"Begin cropping";
 
@@ -143,12 +143,14 @@ bool auto_soma_correction(QString qs_file_swc, QString qs_file_apo, QString qs_d
     // ------------- Case 1: Soma can be found in the swc ---------------
     qDebug()<<"Begin finding soma candidate";
     V3DLONG soma_id = find_soma_by_apo(nt, soma, candidate_radius);
-//    v3d_msg(QString("%1\nsoma_id%2").arg(qs_file_swc).arg(soma_id));
+    v3d_msg(QString("%1\nsoma_id\t%2\nnt_size\t%3\n").arg(qs_file_swc).arg(soma_id).arg(nt.listNeuron.size()));
     if(soma_id>=0){
         nt.listNeuron[soma_id].type=1;
         nt_sorted = my_SortSWC(nt, nt.listNeuron.at(soma_id).n, 0);
         output_swc = qs_dir_output + prefix + ".soma_reassigned.eswc";
-        export_listNeuron_2eswc(nt_sorted.listNeuron, qPrintable(output_swc));
+        v3d_msg(QString("%1\nsoma_id\t%2\nnt_sorted_size\t%3\n").arg(output_swc).arg(soma_id).arg(nt_sorted.listNeuron.size()));
+//        export_listNeuron_2eswc(nt_sorted.listNeuron, qPrintable(output_swc));
+        writeESWC_file(output_swc, nt_sorted);
         return 1;
     }
 
