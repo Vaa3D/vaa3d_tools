@@ -545,7 +545,6 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronStructExplorer myExplorer;
 		profiledTree tracedProfiledTree(this->tracedTree);
 		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
-		this->thisCallback->redrawEditInfo(12);
 
 		finalTree = this->tracedTree;
 	}
