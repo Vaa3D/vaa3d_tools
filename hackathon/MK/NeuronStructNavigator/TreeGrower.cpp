@@ -28,12 +28,6 @@
 using namespace std;
 using namespace integratedDataTypes;
 
-/* =========================== Polar Coord System Operations =========================== */
-
-/* ====================== END of [Polar Coord System Operations] ====================== */
-
-
-
 /* =========================== Segment Forming / Elongation =========================== */
 profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
 {
@@ -177,6 +171,43 @@ profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputPro
 	return elongatedTree;
 }
 /* ====================== END of [Segment Forming / Elongation] ======================= */
+
+
+
+/* =========================== Polar Coord System Operations =========================== */
+boost::container::flat_map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList)
+{
+	boost::container::flat_map<double, NeuronTree> outputMap;
+	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap_loc.begin(); it != radiusShellMap_loc.end(); ++it)
+	{
+		NeuronTree currShellTree;
+		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
+			currShellTree.listNeuron.push_back(newNode);
+		}
+
+		outputMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
+	}
+
+	return outputMap;
+}
+
+boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap)
+{
+	boost::container::flat_map<double, vector<connectedComponent>> outputMap;
+	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2TreeMap.begin(); it != inputRadius2TreeMap.end(); ++it)
+	{
+		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
+		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
+
+		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
+			ChebyshevCenter_connComp(*it2);
+	}
+
+	return outputMap;
+}
+/* ====================== END of [Polar Coord System Operations] ======================= */
 
 
 
@@ -348,39 +379,6 @@ NeuronTree TreeGrower::branchBreak(const profiledTree& inputProfiledTree, double
 	}
 
 	return outputProfiledTree.tree;
-}
-
-boost::container::flat_map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList)
-{
-	boost::container::flat_map<double, NeuronTree> outputMap;
-	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap_loc.begin(); it != radiusShellMap_loc.end(); ++it)
-	{
-		NeuronTree currShellTree;
-		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
-			currShellTree.listNeuron.push_back(newNode);
-		}
-
-		outputMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
-	}
-
-	return outputMap;
-}
-
-boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap)
-{
-	boost::container::flat_map<double, vector<connectedComponent>> outputMap;
-	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2TreeMap.begin(); it != inputRadius2TreeMap.end(); ++it)
-	{
-		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
-		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
-
-		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
-			ChebyshevCenter_connComp(*it2);
-	}
-
-	return outputMap;
 }
 
 void TreeGrower::dendriticTree_shellCentroid(double distThre)

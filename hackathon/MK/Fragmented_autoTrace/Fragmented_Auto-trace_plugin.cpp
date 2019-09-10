@@ -40,8 +40,10 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	else if (menu_name == tr("settings"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
+		callback.changeFragTraceStatus(true);
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
-		callback.changeUIstatus(false);
+		cout << " -- plugin finished" << endl;
+		callback.changeFragTraceStatus(false);
 	}
 	else
 	{

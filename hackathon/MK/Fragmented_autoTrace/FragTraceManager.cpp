@@ -163,7 +163,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
 		//QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
-		//writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
+		//writeSWC_file(skeletonTreeNameQ, objSkeletonProfiledTree.tree);
 
 		NeuronTree MSTbranchBreakTree = TreeGrower::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
@@ -175,7 +175,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
 		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
-		// Iterative segment elongation / connection
+		// Iterative segment elongation/connection
 		profiledTree newIteredConnectedTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(downSampledProfiledTree, 5);
 
 		if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
@@ -488,8 +488,8 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		vector<NeuronTree> objTrees;
 		NeuronTree finalCentroidTree;
 		// ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
-		{
+//#pragma omp parallel num_threads(this->numProcs)
+		//{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
 				qApp->processEvents();
@@ -531,7 +531,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
 			writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
 			cout << endl;
-		}
+		//}
 
 		NeuronTree objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
 		profiledTree outputProfiledTree(objSkeletonTree);
