@@ -514,24 +514,24 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 
 NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
 {
-	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
+	map<string, vector<NeuronSWC>> refGridSWCmap, sbjGridSWCmap;
 	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
-	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
+	NeuronStructUtil::nodeTileMapGen(subjectTree, sbjGridSWCmap, nodeTileLength);
 
 	NeuronTree outputTree;
-	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
+	for (map<string, vector<NeuronSWC>>::iterator sbjTileIt = sbjGridSWCmap.begin(); sbjTileIt != sbjGridSWCmap.end(); ++sbjTileIt)
 	{
-		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
+		if (refGridSWCmap.find(sbjTileIt->first) == refGridSWCmap.end())
 		{
-			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it)
+			for (vector<NeuronSWC>::iterator it = sbjTileIt->second.begin(); it != sbjTileIt->second.end(); ++it)
 				outputTree.listNeuron.push_back(*it);
 		}
 		else
 		{
 			float minDist = 10000;
-			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
+			for (vector<NeuronSWC>::iterator it1 = sbjTileIt->second.begin(); it1 != sbjTileIt->second.end(); ++it1)
 			{
-				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
+				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(sbjTileIt->first).begin(); it2 != refGridSWCmap.at(sbjTileIt->first).end(); ++it2)
 				{
 					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
 					if (dist <= minDist) minDist = dist;

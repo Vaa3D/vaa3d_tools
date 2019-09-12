@@ -574,7 +574,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 	{
 		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 		{
-			if (nodeIt->type != 7)
+			if (nodeIt->type != 16)
 			{
 				typeAssigned = true;
 				assignedType = nodeIt->type;
@@ -590,8 +590,9 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 				nodeIt->type = assignedType;
 				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->n)].type = assignedType;
 			}
+
 			typeAssigned = false;
-			assignedType = 7;
+			assignedType =16;
 		}
 	}
 

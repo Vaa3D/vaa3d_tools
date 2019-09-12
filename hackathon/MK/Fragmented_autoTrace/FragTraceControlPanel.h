@@ -8,7 +8,7 @@
 
 #define MAINVERSION_NUM 0
 #define SUBVERSION_NUM 8
-#define PATCHVERSION_NUM 0
+#define PATCHVERSION_NUM 1
 
 class FragTraceControlPanel : public QDialog
 {
