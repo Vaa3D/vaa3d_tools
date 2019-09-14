@@ -42,6 +42,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 		if (it->second.size() == 1)
 		{
 			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
+			if (it->second.begin()->seg1Ptr->tails.size() > 1 || it->second.begin()->seg2Ptr->tails.size() > 1) continue;
 
 			if (it->second.begin()->currConnOrt == head_head)
 			{
@@ -62,6 +63,16 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
+
+				/*NeuronTree segTree1, segTree2;
+				vector<NeuronTree> trees;
+				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
+				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
+				trees.push_back(segTree1);
+				trees.push_back(segTree2);
+				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
+				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
+				writeSWC_file(saveFullName, segPairTree);*/
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
@@ -92,6 +103,16 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
 
+				/*NeuronTree segTree1, segTree2;
+				vector<NeuronTree> trees;
+				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
+				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
+				trees.push_back(segTree1);
+				trees.push_back(segTree2);
+				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
+				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
+				writeSWC_file(saveFullName, segPairTree);*/
+
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
@@ -120,6 +141,16 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
 				if (overlapCheck < 0) continue;
+
+				/*NeuronTree segTree1, segTree2;
+				vector<NeuronTree> trees;
+				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
+				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
+				trees.push_back(segTree1);
+				trees.push_back(segTree2);
+				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
+				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
+				writeSWC_file(saveFullName, segPairTree);*/
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
