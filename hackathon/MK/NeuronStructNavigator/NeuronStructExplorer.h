@@ -29,9 +29,9 @@ class NeuronStructExplorer
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	// Needs to provide a default constructor since TreeGrower class doesn't have one. (at at least now)
-	NeuronStructExplorer() {};
-	
+	NeuronStructExplorer() = default;	
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
+	virtual ~NeuronStructExplorer() = default;
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
 	

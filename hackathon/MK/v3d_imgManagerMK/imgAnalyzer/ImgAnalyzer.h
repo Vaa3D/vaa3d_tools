@@ -17,7 +17,7 @@ using namespace integratedDataStructures;
 class ImgAnalyzer
 {	
 public:
-	ImgAnalyzer();
+	ImgAnalyzer() : blobMergingReport(false) {};
 
 	enum processName { blobMerging };
 
