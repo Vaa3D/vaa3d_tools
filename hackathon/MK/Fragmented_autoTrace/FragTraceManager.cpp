@@ -18,6 +18,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 	this->mode = mode;
 
+	this->somaCoords.clear();
+
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
@@ -26,23 +28,6 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
 	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
-		
-	//if (mode == dendriticTree)
-	//{
-		/*unsigned char* dendrite1Dptr = new unsigned char[(dims[0] / 2) * (dims[1] / 2) * dims[2]];
-		int downFacs[3];
-		downFacs[0] = 2;
-		downFacs[1] = 2;
-		downFacs[2] = 1;
-		ImgProcessor::imgDownSampleMax(img1Dptr, dendrite1Dptr, dims, downFacs);
-		delete[] img1Dptr;
-		img1Dptr = dendrite1Dptr;
-		dendrite1Dptr = nullptr; // [dendrite1Dptr]'s memory block is passed to [img1Dptr] and cannot be freed. 
-								 // Therefore, we cannot "delete[] dendrite1Dptr". But we can use nullptr to nullify dendrite1Dptr to ensure the safety.
-
-		dims[0] = dims[0] / 2;
-		dims[1] = dims[1] / 2;*/
-	//}
 	
 	vector<vector<unsigned char>> imgSlices;
 	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);

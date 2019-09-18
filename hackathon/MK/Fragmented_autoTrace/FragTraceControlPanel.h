@@ -91,6 +91,11 @@ private:
 
 	
 
+	int somaNum;
+	int* somaCoords;
+
+
+
 	void fillUpParamsForm(); // This is for future parameter learning project.
 
 	void blankArea(); // will be abandoned in newer version

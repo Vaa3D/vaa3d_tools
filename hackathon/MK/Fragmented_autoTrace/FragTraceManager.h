@@ -22,7 +22,7 @@ class FragTraceManager: public QWidget
 	Q_OBJECT
 
 public:
-	FragTraceManager() {};
+	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
 	QString finalSaveRootQ;       // Save path for the traced result, acquired from UI.
@@ -32,6 +32,7 @@ public:
 
 	workMode mode;                // tracing axon or dendrite
 
+	vector<vector<float>> somaCoords;
 
 
 /*************************** Parameters ***************************/

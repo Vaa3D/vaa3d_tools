@@ -18,6 +18,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->volumeAdjustedCoords = new int[6];
 	this->globalCoords = new int[6];
 	this->displayingDims = new int[3];
+
+	this->somaNum = thisCallback->getSelectedMarkerNum();
+	this->somaCoords = new int[this->somaNum];
 	// ------------------------------ //
 
 	// ------- Set up user interface ------- //
@@ -512,6 +515,16 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_objBasedMST();                             // object-based MST node connecting 
 				this->pa_postElongation();                          // post elongation set up
 				// ---------------------------------------------------------- //
+
+				for (int i = 0; i < this->somaNum; ++i)
+				{
+					for (int j = 0; j < 3; ++j)
+					{
+						cout << this->somaCoords[i * 3 + j] << " ";
+					}
+					cout << endl;
+				}
+				
 			}
 		}
 
