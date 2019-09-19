@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>853</width>
-    <height>938</height>
+    <width>805</width>
+    <height>986</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -217,7 +217,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Trace axonal fragments in the current image block</string>
+            <string>Axon mode</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -235,7 +235,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Trace the dendritic tree in the current image block</string>
+            <string>Dendrite mode</string>
            </property>
           </widget>
          </item>
@@ -289,7 +289,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>756</width>
+               <width>708</width>
                <height>589</height>
               </rect>
              </property>
@@ -813,11 +813,11 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>777</width>
-               <height>538</height>
+               <width>729</width>
+               <height>586</height>
               </rect>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_23">
+             <layout class="QVBoxLayout" name="verticalLayout">
               <item>
                <widget class="QGroupBox" name="groupBox_13">
                 <property name="minimumSize">
@@ -919,6 +919,42 @@
                 </layout>
                </widget>
               </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_15">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>300</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Trace Multiple Somas</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_14">
+                 <item>
+                  <widget class="QListView" name="listView_2"/>
+                 </item>
+                </layout>
+               </widget>
+              </item>
              </layout>
             </widget>
            </widget>
@@ -940,8 +976,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>777</width>
-               <height>538</height>
+               <width>729</width>
+               <height>586</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1047,8 +1083,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>777</width>
-               <height>538</height>
+               <width>729</width>
+               <height>586</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
