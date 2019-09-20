@@ -272,7 +272,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -1538,8 +1538,8 @@
    <slot>saveSettingsClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>640</x>
-     <y>867</y>
+     <x>615</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1554,8 +1554,8 @@
    <slot>traceButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>717</x>
-     <y>867</y>
+     <x>692</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1570,8 +1570,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>794</x>
-     <y>819</y>
+     <x>769</x>
+     <y>902</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1586,8 +1586,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>794</x>
-     <y>867</y>
+     <x>769</x>
+     <y>950</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1650,8 +1650,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>715</x>
-     <y>671</y>
+     <x>697</x>
+     <y>765</y>
     </hint>
     <hint type="destinationlabel">
      <x>781</x>
@@ -1666,8 +1666,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>650</x>
-     <y>399</y>
+     <x>697</x>
+     <y>443</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -1682,8 +1682,8 @@
    <slot>saveSegStepsResultChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>402</y>
+     <x>172</x>
+     <y>438</y>
     </hint>
     <hint type="destinationlabel">
      <x>8</x>
@@ -1698,8 +1698,8 @@
    <slot>saveSegStepsResultChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>186</x>
-     <y>666</y>
+     <x>247</x>
+     <y>762</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1715,7 +1715,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>213</x>
-     <y>534</y>
+     <y>423</y>
     </hint>
     <hint type="destinationlabel">
      <x>1</x>
@@ -1762,8 +1762,8 @@
    <slot>blankAreaClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>431</x>
-     <y>662</y>
+     <x>453</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
      <x>354</x>
@@ -1778,12 +1778,44 @@
    <slot>blankAreaClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>665</y>
+     <x>560</x>
+     <y>734</y>
     </hint>
     <hint type="destinationlabel">
      <x>470</x>
      <y>907</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_15</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>multiSomaTraceChecked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>104</x>
+     <y>535</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>795</x>
+     <y>218</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_15</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>multiSomaTraceChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>102</x>
+     <y>544</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>210</x>
+     <y>978</y>
     </hint>
    </hints>
   </connection>
@@ -1796,5 +1828,6 @@
   <slot>saveSegStepsResultChecked(bool)</slot>
   <slot>nestedChecks(bool)</slot>
   <slot>blankAreaClicked()</slot>
+  <slot>multiSomaTraceChecked(bool)</slot>
  </slots>
 </ui>

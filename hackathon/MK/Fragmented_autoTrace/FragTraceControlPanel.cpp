@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include <qstringlist.h>
 #include <qsettings.h>
@@ -18,6 +19,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->volumeAdjustedCoords = new int[6];
 	this->globalCoords = new int[6];
 	this->displayingDims = new int[3];
+
+	this->markerMonitorSwitch = false;
 	// ------------------------------ //
 
 	// ------- Set up user interface ------- //
@@ -140,6 +143,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
 		}
 	}
+
+	this->somaListViewer = new QStandardItemModel(this);
+	uiPtr->listView_2->setModel(this->somaListViewer);
 	// --------------------------------------- //
 
 
@@ -225,6 +231,19 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 			uiPtr->groupBox_6->setChecked(true);
 		}
 	}
+}
+
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
+{
+	QObject* signalSender = sender();
+	QString checkName = signalSender->objectName();
+
+	if (checked)
+	{
+		this->markerMonitorSwitch = true;
+		this->markerMonitor();
+	}
+	else this->markerMonitorSwitch = false;
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -456,6 +475,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 /* ============================== TRACING INITIALIZING FUNCTION =============================== */
 void FragTraceControlPanel::traceButtonClicked()
 {
+	this->markerMonitorSwitch = false;
+
 	QSettings currSettings("SEU-Allen", "Fragment tracing");
 	if (currSettings.value("savePath").isNull())
 	{
@@ -512,22 +533,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_objBasedMST();                             // object-based MST node connecting 
 				this->pa_postElongation();                          // post elongation set up
 				// ---------------------------------------------------------- //
-
-				this->somaNum = thisCallback->getSelectedMarkerNum();
-				if (this->somaNum > 0)
-				{
-					this->somaCoords = new int[this->somaNum * 3];
-					thisCallback->getSelectedMarkerCoords(this->somaCoords);
-					for (int i = 0; i < this->somaNum; ++i)
-					{
-						for (int j = 0; j < 3; ++j)
-						{
-							cout << this->somaCoords[i * 3 + j] << " ";
-						}
-						cout << endl;
-					}
-					system("pause");
-				}
 			}
 		}
 
@@ -730,6 +735,74 @@ void FragTraceControlPanel::pa_postElongation()
 		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
 	else
 		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
+}
+
+void FragTraceControlPanel::markerMonitor()
+{
+	if (this->markerMonitorSwitch)
+	{
+		list<vector<int>> newSomaList;
+		list<vector<int>> tempLeftList;
+		list<vector<int>> oldSomaList;
+
+		this->somaNum = thisCallback->getSelectedMarkerNum();
+		if (this->somaNum > 0)
+		{
+			this->somaCoords = new int[this->somaNum * 3];
+			thisCallback->getSelectedMarkerCoords(this->somaCoords);
+			for (int i = 0; i < this->somaNum; ++i)
+			{
+				vector<int> currSoma(3);
+				for (int j = 0; j < 3; ++j) currSoma[j] = this->somaCoords[i * 3 + j];
+				newSomaList.push_back(currSoma);
+			}
+			delete[] this->somaCoords;
+			oldSomaList = this->somaList;
+			this->somaList = newSomaList;
+			tempLeftList = newSomaList;
+			this->markerCoordsMonitor();
+
+			for (list<vector<int>>::iterator it = newSomaList.begin(); it != newSomaList.end(); ++it)
+			{
+				if (std::find(oldSomaList.begin(), oldSomaList.end(), *it) != oldSomaList.end())
+				{
+					oldSomaList.remove(*it);
+					tempLeftList.remove(*it);
+				}
+			}
+		}
+		else
+		{
+			oldSomaList = this->somaList;
+			this->somaList.clear();
+		}
+		
+		for (list<vector<int>>::iterator it = oldSomaList.begin(); it != oldSomaList.end(); ++it)
+		{
+			QString itemName2beRemoved = "(" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+			QList<QStandardItem*> matchedList = this->somaListViewer->findItems(itemName2beRemoved);
+			int rowNum = (*matchedList.begin())->row();
+			this->somaListViewer->removeRow(rowNum);
+		}
+
+		for (list<vector<int>>::iterator it = tempLeftList.begin(); it != tempLeftList.end(); ++it)
+		{
+			QString itemName2beAdded = "(" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+			QStandardItem* newItemPtr = new QStandardItem(itemName2beAdded);
+			this->somaListViewer->appendRow(newItemPtr);
+		}
+	
+		QTimer::singleShot(50, this, SLOT(markerMonitor()));
+	}
+}
+
+void FragTraceControlPanel::markerCoordsMonitor()
+{
+	int* global = new int[6];
+	int* local = new int[6];
+	int* localDims = new int[3];
+	if (thisCallback->getPartialVolumeCoords(global, local, localDims))
+		cout << local[0] << " " << local[2] << " " << local[4] << endl;
 }
 /********************** END of [Parameter Collecting Functions] ***********************/
 

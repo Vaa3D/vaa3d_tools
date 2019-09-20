@@ -43,6 +43,7 @@ public slots:
     /************* User Interface Configuration Buttons **************/
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
+	void multiSomaTraceChecked(bool checked);
 	void saveSegStepsResultChecked(bool checked);
 	void saveSettingsClicked();
 	void browseSavePathClicked();
@@ -64,6 +65,7 @@ private:
 	/***************** Additional Widget *****************/
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
+	QStandardItemModel* somaListViewer;
 	/*****************************************************/
 
 
@@ -82,8 +84,8 @@ private:
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
 	bool volumeAdjusted;
-	int* volumeAdjustedCoords;
-	int* globalCoords;
+	int* volumeAdjustedCoords; // local coordinates in the current image block
+	int* globalCoords;         // global coordinates in whole brain space
 	int* displayingDims;
 
 	void teraflyTracePrep(workMode mode);
@@ -93,12 +95,20 @@ private:
 
 	int somaNum;
 	int* somaCoords;
+	bool markerMonitorSwitch;
+	list<vector<int>> somaList;
+	void markerCoordsMonitor();
 
 
 
 	void fillUpParamsForm(); // This is for future parameter learning project.
 
 	void blankArea(); // will be abandoned in newer version
+
+
+
+private slots:
+	void markerMonitor();
 };
 
 
