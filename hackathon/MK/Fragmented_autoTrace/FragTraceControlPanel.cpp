@@ -168,12 +168,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->listViewBlankAreas = new QStandardItemModel(this);
 	uiPtr->listView->setModel(listViewBlankAreas);
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
+	// --------------------------------------- //
 
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
-	this->setWindowTitle(windowTitleQ);
+	this->setWindowTitle(windowTitleQ);  
+
 	this->show();
-	// --------------------------------------- //
 }
 
 FragTraceControlPanel::~FragTraceControlPanel()
@@ -237,6 +238,8 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
 {
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
+
+	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 
 	if (checked)
 	{
@@ -543,6 +546,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
+	
+	thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
+	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
 		v3d_msg(QString("The process has been terminated."));
@@ -599,23 +607,21 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
 
-	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, volumeAdjustedCoords, displayingDims);
 	if (this->volumeAdjusted)
 	{
-		//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-		//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-
 		unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
 		int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
 		memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
 
-		int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+		int originalDims[3] = { this->displayingDims[0], this->displayingDims[1], this->displayingDims[2] };
 		int croppedDims[3];
-		croppedDims[0] = volumeAdjustedCoords[1] - volumeAdjustedCoords[0] + 1;
-		croppedDims[1] = volumeAdjustedCoords[3] - volumeAdjustedCoords[2] + 1;
-		croppedDims[2] = volumeAdjustedCoords[5] - volumeAdjustedCoords[4] + 1;
+		croppedDims[0] = this->volumeAdjustedCoords[1] - this->volumeAdjustedCoords[0] + 1;
+		croppedDims[1] = this->volumeAdjustedCoords[3] - this->volumeAdjustedCoords[2] + 1;
+		croppedDims[2] = this->volumeAdjustedCoords[5] - this->volumeAdjustedCoords[4] + 1;
 		unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
-		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, volumeAdjustedCoords[0], volumeAdjustedCoords[1], volumeAdjustedCoords[2], volumeAdjustedCoords[3], volumeAdjustedCoords[4], volumeAdjustedCoords[5], originalDims);
+		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, this->volumeAdjustedCoords[0], this->volumeAdjustedCoords[1], 
+																 this->volumeAdjustedCoords[2], this->volumeAdjustedCoords[3], 
+																 this->volumeAdjustedCoords[4], this->volumeAdjustedCoords[5], originalDims);
 		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
 
 		// ------- For debug purpose ------- //
@@ -760,7 +766,6 @@ void FragTraceControlPanel::markerMonitor()
 			oldSomaList = this->somaList;
 			this->somaList = newSomaList;
 			tempLeftList = newSomaList;
-			this->markerCoordsMonitor();
 
 			for (list<vector<int>>::iterator it = newSomaList.begin(); it != newSomaList.end(); ++it)
 			{
@@ -776,10 +781,35 @@ void FragTraceControlPanel::markerMonitor()
 			oldSomaList = this->somaList;
 			this->somaList.clear();
 		}
-		
+
 		for (list<vector<int>>::iterator it = oldSomaList.begin(); it != oldSomaList.end(); ++it)
 		{
-			QString itemName2beRemoved = "(" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+			QString itemName2beRemovedGlobal;
+			QString itemName2beRemovedLocal;
+			QString itemName2beRemoved;
+
+			int realLocalX = int((float(it->at(0)) / 256) * float(this->globalCoords[1] - this->globalCoords[0]));
+			int realLocalY = int((float(it->at(1)) / 256) * float(this->globalCoords[3] - this->globalCoords[2]));
+			int realLocalZ = int((float(it->at(2)) / 256) * float(this->globalCoords[5] - this->globalCoords[4]));
+			if (this->volumeAdjusted)
+			{				
+				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
+																	 QString::number(realLocalY + this->globalCoords[2]) + ", z" +
+																	 QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				/*itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
+																  QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
+																  QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
+				itemName2beRemoved = itemName2beRemovedGlobal + "  " + itemName2beRemovedLocal;
+			}
+			else
+			{
+				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
+																	 QString::number(realLocalY + this->globalCoords[2]) + ", z" +
+																	 QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				//itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+				itemName2beRemoved = itemName2beRemovedGlobal + "  " + itemName2beRemovedLocal;
+			}
+			
 			QList<QStandardItem*> matchedList = this->somaListViewer->findItems(itemName2beRemoved);
 			int rowNum = (*matchedList.begin())->row();
 			this->somaListViewer->removeRow(rowNum);
@@ -787,22 +817,38 @@ void FragTraceControlPanel::markerMonitor()
 
 		for (list<vector<int>>::iterator it = tempLeftList.begin(); it != tempLeftList.end(); ++it)
 		{
-			QString itemName2beAdded = "(" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+			QString itemName2beAddedGlobal;
+			QString itemName2beAddedLocal;
+			QString itemName2beAdded;
+
+			int realLocalX = int((float(it->at(0)) / 256) * float(this->globalCoords[1] - this->globalCoords[0]));
+			int realLocalY = int((float(it->at(1)) / 256) * float(this->globalCoords[3] - this->globalCoords[2]));
+			int realLocalZ = int((float(it->at(2)) / 256) * float(this->globalCoords[5] - this->globalCoords[4]));
+			if (this->volumeAdjusted)
+			{
+				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
+																   QString::number(realLocalY + this->globalCoords[2]) + ", z" +
+																   QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				/*itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
+																QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
+																QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
+				itemName2beAdded = itemName2beAddedGlobal + "  " + itemName2beAddedLocal;
+			}
+			else
+			{
+				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
+																   QString::number(realLocalY + this->globalCoords[2]) + ", z" +
+																   QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				//itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
+				itemName2beAdded = itemName2beAddedGlobal + "  " + itemName2beAddedLocal;
+			}
+
 			QStandardItem* newItemPtr = new QStandardItem(itemName2beAdded);
 			this->somaListViewer->appendRow(newItemPtr);
 		}
-	
+
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}
-}
-
-void FragTraceControlPanel::markerCoordsMonitor()
-{
-	int* global = new int[6];
-	int* local = new int[6];
-	int* localDims = new int[3];
-	if (thisCallback->getPartialVolumeCoords(global, local, localDims))
-		cout << local[0] << " " << local[2] << " " << local[4] << endl;
 }
 /********************** END of [Parameter Collecting Functions] ***********************/
 
