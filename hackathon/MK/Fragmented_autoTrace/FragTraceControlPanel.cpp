@@ -239,8 +239,6 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
 
-	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-
 	if (checked)
 	{
 		this->markerMonitorSwitch = true;
@@ -747,10 +745,12 @@ void FragTraceControlPanel::markerMonitor()
 {
 	if (this->markerMonitorSwitch)
 	{
+		int* global = new int[6];
+		thisCallback->getCurrentGlobalVolumeCoords(global);
+
 		list<vector<int>> newSomaList;
 		list<vector<int>> tempLeftList;
 		list<vector<int>> oldSomaList;
-
 		this->somaNum = thisCallback->getSelectedMarkerNum();
 		if (this->somaNum > 0)
 		{
@@ -788,14 +788,14 @@ void FragTraceControlPanel::markerMonitor()
 			QString itemName2beRemovedLocal;
 			QString itemName2beRemoved;
 
-			int realLocalX = int((float(it->at(0)) / 256) * float(this->globalCoords[1] - this->globalCoords[0]));
-			int realLocalY = int((float(it->at(1)) / 256) * float(this->globalCoords[3] - this->globalCoords[2]));
-			int realLocalZ = int((float(it->at(2)) / 256) * float(this->globalCoords[5] - this->globalCoords[4]));
+			int realLocalX = int((float(it->at(0)) / 256) * float(global[1] - global[0]));
+			int realLocalY = int((float(it->at(1)) / 256) * float(global[3] - global[2]));
+			int realLocalZ = int((float(it->at(2)) / 256) * float(global[5] - global[4]));
 			if (this->volumeAdjusted)
 			{				
-				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
-																	 QString::number(realLocalY + this->globalCoords[2]) + ", z" +
-																	 QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
+																	 QString::number(realLocalY + global[2]) + ", z" +
+																	 QString::number(realLocalZ + global[4]) + ")";
 				/*itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
 																  QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
 																  QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
@@ -803,9 +803,10 @@ void FragTraceControlPanel::markerMonitor()
 			}
 			else
 			{
-				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
-																	 QString::number(realLocalY + this->globalCoords[2]) + ", z" +
-																	 QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				cout << global[0] << " " << global[2] << " " << global[4] << endl;
+				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
+																	 QString::number(realLocalY + global[2]) + ", z" +
+																	 QString::number(realLocalZ + global[4]) + ")";
 				//itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
 				itemName2beRemoved = itemName2beRemovedGlobal + "  " + itemName2beRemovedLocal;
 			}
@@ -821,14 +822,14 @@ void FragTraceControlPanel::markerMonitor()
 			QString itemName2beAddedLocal;
 			QString itemName2beAdded;
 
-			int realLocalX = int((float(it->at(0)) / 256) * float(this->globalCoords[1] - this->globalCoords[0]));
-			int realLocalY = int((float(it->at(1)) / 256) * float(this->globalCoords[3] - this->globalCoords[2]));
-			int realLocalZ = int((float(it->at(2)) / 256) * float(this->globalCoords[5] - this->globalCoords[4]));
+			int realLocalX = int((float(it->at(0)) / 256) * float(global[1] - global[0]));
+			int realLocalY = int((float(it->at(1)) / 256) * float(global[3] - global[2]));
+			int realLocalZ = int((float(it->at(2)) / 256) * float(global[5] - global[4]));
 			if (this->volumeAdjusted)
 			{
-				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
-																   QString::number(realLocalY + this->globalCoords[2]) + ", z" +
-																   QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
+																   QString::number(realLocalY + global[2]) + ", z" +
+																   QString::number(realLocalZ + global[4]) + ")";
 				/*itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
 																QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
 																QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
@@ -836,9 +837,10 @@ void FragTraceControlPanel::markerMonitor()
 			}
 			else
 			{
-				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + this->globalCoords[0]) + ", y" +
-																   QString::number(realLocalY + this->globalCoords[2]) + ", z" +
-																   QString::number(realLocalZ + this->globalCoords[4]) + ")";
+				cout << global[0] << " " << global[2] << " " << global[4] << endl;
+				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
+																   QString::number(realLocalY + global[2]) + ", z" +
+																   QString::number(realLocalZ + global[4]) + ")";
 				//itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
 				itemName2beAdded = itemName2beAddedGlobal + "  " + itemName2beAddedLocal;
 			}
@@ -846,6 +848,7 @@ void FragTraceControlPanel::markerMonitor()
 			QStandardItem* newItemPtr = new QStandardItem(itemName2beAdded);
 			this->somaListViewer->appendRow(newItemPtr);
 		}
+		delete[] global;
 
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}
