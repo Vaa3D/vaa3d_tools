@@ -952,6 +952,44 @@
                  <item>
                   <widget class="QListView" name="listView_2"/>
                  </item>
+                 <item>
+                  <widget class="QFrame" name="frame_9">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_5">
+                    <item>
+                     <spacer name="horizontalSpacer_6">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>556</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_9">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Refresh</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </item>
@@ -1819,6 +1857,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_9</sender>
+   <signal>clicked()</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>refreshSomaCoords()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>707</x>
+     <y>786</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>796</x>
+     <y>699</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>saveSettingsClicked()</slot>
@@ -1829,5 +1883,6 @@
   <slot>nestedChecks(bool)</slot>
   <slot>blankAreaClicked()</slot>
   <slot>multiSomaTraceChecked(bool)</slot>
+  <slot>refreshSomaCoords()</slot>
  </slots>
 </ui>

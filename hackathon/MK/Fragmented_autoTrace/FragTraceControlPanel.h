@@ -8,7 +8,7 @@
 
 #define MAINVERSION_NUM 0
 #define SUBVERSION_NUM 8
-#define PATCHVERSION_NUM 3
+#define PATCHVERSION_NUM 4
 
 class FragTraceControlPanel : public QDialog
 {
@@ -93,10 +93,11 @@ private:
 
 	
 
-	int somaNum;
-	int* somaCoords;
+	int* currBlockOriginCoords;
 	bool markerMonitorSwitch;
-	list<vector<int>> somaList;
+	QList<ImageMarker> selectedMarkerList;
+	map<int, ImageMarker> somaMap;
+	map<int, string> somaDisplayNameMap;
 
 
 
@@ -108,6 +109,7 @@ private:
 
 private slots:
 	void markerMonitor();
+	void refreshSomaCoords();
 };
 
 
