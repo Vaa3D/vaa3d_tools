@@ -20,7 +20,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->globalCoords = new int[6];
 	this->displayingDims = new int[3];
 
-	this->currBlockOriginCoords = new int[6];
 	this->markerMonitorSwitch = false;
 	// ------------------------------ //
 
@@ -251,7 +250,6 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
 
 void FragTraceControlPanel::refreshSomaCoords()
 {
-	thisCallback->getCurrentGlobalVolumeCoords(this->currBlockOriginCoords);
 	this->markerMonitorSwitch = false;
 	thisCallback->refreshSelectedMarkers();
 	this->somaListViewer->clear();
@@ -783,6 +781,10 @@ void FragTraceControlPanel::markerMonitor()
 		}
 		else
 		{
+			if (this->somaListViewer->rowCount() > 0)
+			{
+				for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+			}
 			oldMarkerMap = this->somaMap;
 			this->somaMap.clear();
 		}
@@ -791,12 +793,10 @@ void FragTraceControlPanel::markerMonitor()
 		{
 			if (markerIt->second.selected && !markerIt->second.on)
 			{
-				int realLocalX = int((float(markerIt->second.x) / 256) * float(this->currBlockOriginCoords[1] - this->currBlockOriginCoords[0]));
-				int realLocalY = int((float(markerIt->second.y) / 256) * float(this->currBlockOriginCoords[3] - this->currBlockOriginCoords[2]));
-				int realLocalZ = int((float(markerIt->second.z) / 256) * float(this->currBlockOriginCoords[5] - this->currBlockOriginCoords[4]));
-				string displayName = "marker coordinate: (x" + to_string(realLocalX + this->currBlockOriginCoords[0]) + ", y" +
-															   to_string(realLocalY + this->currBlockOriginCoords[2]) + ", z" +
-															   to_string(realLocalZ + this->currBlockOriginCoords[4]) + ")";
+				int markerGlobalX = int(markerIt->second.x);
+				int markerGlobalY = int(markerIt->second.y);
+				int markerGlobalZ = int(markerIt->second.z);
+				string displayName = "marker coordinate: (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
 				this->somaDisplayNameMap.insert(pair<int, string>(markerIt->first, displayName));
 				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
 				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
