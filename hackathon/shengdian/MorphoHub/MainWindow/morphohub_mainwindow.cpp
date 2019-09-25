@@ -172,14 +172,30 @@ QTableWidget* MorphoHub_MainWindow::createTableDataTotal()
     int row = 4;
     int col = qsl.size();
     QTableWidget* t = new QTableWidget(row,col, this);
-    QTableWidgetItem *checkbox_test=new QTableWidgetItem();
-    checkbox_test->setCheckState(Qt::Checked);
     t->setHorizontalHeaderLabels(qsl);
-    t->setItem(0,0,checkbox_test);
     t->setEditTriggers(QAbstractItemView::NoEditTriggers);
     t->setSelectionBehavior(QAbstractItemView::SelectRows);
     t->setSelectionMode(QAbstractItemView::SingleSelection);
     return t;
+}
+
+void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
+{
+    QTreeWidgetItem *itemparent=item->parent();
+    if(itemparent==NULL)
+        return;
+    //int col=itemparent->indexOfChild(item);
+    QString itemtext=item->text(column);
+    //get reconstructions info from this level
+    QList<ReconstructionInfo> thislevelres;
+    thislevelres=getReconstuctionsFromLevel(itemtext);
+    if(thislevelres.size()>0)
+    {
+        QTableWidget* levelTable=new QTableWidget();
+        levelTable=createTableDataLevel(thislevelres);
+        if(levelTable)
+            dataTabwidget->addTab(levelTable,itemtext);
+    }
 }
 QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInfo> levelres)
 {
@@ -214,76 +230,6 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->resizeRowsToContents();
     }
     return t;
-}
-void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
-{
-    QTreeWidgetItem *itemparent=item->parent();
-    if(itemparent==NULL)
-        return;
-    //int col=itemparent->indexOfChild(item);
-    QString itemtext=item->text(column);
-    //get reconstructions info from this level
-    QList<ReconstructionInfo> thislevelres;
-    thislevelres=getReconstuctionsFromLevel(itemtext);
-    QTableWidget* levelTable=new QTableWidget();
-    levelTable=createTableDataLevel(thislevelres);
-    if(levelTable)
-        dataTabwidget->addTab(levelTable,itemtext);
-}
-void MorphoHub_MainWindow::createContentDockWindow()
-{
-    contentwidget=new QDockWidget("WorkingSpace",this);
-    contentwidget->setAllowedAreas(Qt::AllDockWidgetAreas);
-    contentwidget->setFeatures(QDockWidget::AllDockWidgetFeatures);
-    QListWidget *contentlist=new QListWidget(this);
-    //QHBoxLayout *layoutforcontent=new QHBoxLayout(this);
-
-    if(!dbpath.isEmpty())
-    {
-        QString workingspace_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace.conf";
-        QFile configurationfile(workingspace_conf);
-        if(configurationfile.exists())
-        {
-
-            if(configurationfile.open(QIODevice::ReadWrite))
-            {
-                while(!configurationfile.atEnd())
-                {
-                    QByteArray cline=configurationfile.readLine();
-                    QString tmpitem(cline);
-                    tmpitem=tmpitem.simplified();
-                    QListWidgetItem *templistitem=new QListWidgetItem;
-                    templistitem->setText(tmpitem);
-                    contentlist->addItem(templistitem);
-                }
-                configurationfile.close();
-            }
-        }
-        else
-        {
-            //if not exists, give a warning about this
-            QMessageBox::warning(this,"Workingspace Conf Warning","Can't find Configuration file of basic database!");
-        }
-    }
-    //layoutforcontent->addWidget(contentlist);
-    contentlist->setViewMode(QListView::ListMode);
-    connect(contentlist,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(contentValueChange(QListWidgetItem*)));
-    contentwidget->setWidget(contentlist);
-    contentwidget->setMinimumSize(80,100);
-    contentwidget->setMaximumSize(200,600);
-    contentwidget->setGeometry(0,0,180,400);
-    this->addDockWidget(Qt::LeftDockWidgetArea,contentwidget);
-}
-void MorphoHub_MainWindow::contentValueChange(QListWidgetItem *item)
-{
-    contentindex=item->text();
-    //get reconstructions info from this level
-    QList<ReconstructionInfo> thislevelres;
-    thislevelres=getReconstuctionsFromLevel(contentindex);
-    QTableWidget* levelTable=new QTableWidget();
-    levelTable=createTableDataLevel(thislevelres);
-    if(levelTable)
-        dataTabwidget->addTab(levelTable,contentindex);
 }
 QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const QString& levelid)
 {
