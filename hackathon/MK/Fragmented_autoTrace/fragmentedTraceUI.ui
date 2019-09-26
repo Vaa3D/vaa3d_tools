@@ -272,7 +272,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -940,7 +940,7 @@
                  </font>
                 </property>
                 <property name="title">
-                 <string>Trace Multiple Somas</string>
+                 <string>Marker Locator</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -1822,22 +1822,6 @@
     <hint type="destinationlabel">
      <x>470</x>
      <y>907</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>groupBox_15</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>multiSomaTraceChecked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>104</x>
-     <y>535</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>795</x>
-     <y>218</y>
     </hint>
    </hints>
   </connection>
