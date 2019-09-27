@@ -95,7 +95,9 @@ private:
 
 	bool markerMonitorSwitch;
 	QList<ImageMarker> selectedMarkerList;
+	QList<ImageMarker> selectedLocalMarkerList;
 	map<int, ImageMarker> somaMap;
+	map<int, ImageMarker> localSomaMap;
 	map<int, string> somaDisplayNameMap;
 
 

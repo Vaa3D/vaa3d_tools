@@ -18,13 +18,16 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 	this->mode = mode;
 
-	this->somaCoords.clear();
+	this->selectedMarkerMap.clear();
 
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
 	dims[2] = inputImg4DSimplePtr->getZDim();
 	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
+	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
+	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
 	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
 	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
@@ -536,11 +539,17 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob.swc"; //
 		writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
 		// ----------------------------------------------------------------- //
-		vector<int> origin = { 128, 128, 128 };
-		NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
-		this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
-		this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+		if (this->selectedMarkerMap.empty())
+		{
+			vector<int> origin = this->currDisplayingBlockCenter;
+			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
+			this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
+			this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+		}
+		else
+		{
 
+		}
 		//QString denSaveName = this->finalSaveRootQ + "\\newDenTest.swc";
 		//writeSWC_file(denSaveName, this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
 		objSkeletonProfiledTree = this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree");

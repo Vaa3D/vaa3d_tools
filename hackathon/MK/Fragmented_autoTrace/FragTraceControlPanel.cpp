@@ -729,6 +729,15 @@ void FragTraceControlPanel::pa_objFilter()
 		this->traceManagerPtr->objFilter = false;
 		this->traceManagerPtr->voxelSize = false;
 	}
+
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		if (uiPtr->radioButton_5->isEnabled() || uiPtr->radioButton_5->isChecked())
+		{
+			for (int markeri = 0; markeri < this->somaListViewer->rowCount(); ++markeri)
+				this->traceManagerPtr->selectedMarkerMap = this->somaMap;
+		}
+	}
 }
 
 void FragTraceControlPanel::pa_objBasedMST()
@@ -748,9 +757,9 @@ void FragTraceControlPanel::pa_objBasedMST()
 void FragTraceControlPanel::pa_postElongation()
 {
 	if (uiPtr->groupBox_5->isChecked())
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
+		this->paramsFromUI.insert({"labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()) });
 	else
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
+		this->paramsFromUI.insert({ "labeledDistThreshold", -1 });
 }
 
 void FragTraceControlPanel::markerMonitor()
@@ -759,20 +768,20 @@ void FragTraceControlPanel::markerMonitor()
 	{
 		map<int, ImageMarker> newMarkerMap;
 		map<int, ImageMarker> oldMarkerMap;
-		thisCallback->getSelectedMarkerList(this->selectedMarkerList);
+		thisCallback->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
 		if (this->selectedMarkerList.size() > 0)
 		{
 			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
 			{
 				it->selected = true;
 				it->on = false;
-				newMarkerMap.insert(pair<int, ImageMarker>(it->n, *it));
+				newMarkerMap.insert({ it->n, *it });
 			}
 			oldMarkerMap = this->somaMap;
 
 			for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
 			{
-				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert(pair<int, ImageMarker>(it1->first, it1->second));
+				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
 			}
 			
 			for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
@@ -797,8 +806,8 @@ void FragTraceControlPanel::markerMonitor()
 				int markerGlobalX = int(markerIt->second.x);
 				int markerGlobalY = int(markerIt->second.y);
 				int markerGlobalZ = int(markerIt->second.z);
-				string displayName = "marker coordinate: (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
-				this->somaDisplayNameMap.insert(pair<int, string>(markerIt->first, displayName));
+				string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				this->somaDisplayNameMap.insert({markerIt->first, displayName});
 				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
 				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
 				this->somaListViewer->appendRow(newItemPtr);
@@ -818,7 +827,10 @@ void FragTraceControlPanel::markerMonitor()
 		}
 
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+		{
+			//this->localSomaMap.insert({markerIt->first, []()});
 			markerIt->second.on = true;
+		}
 
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}

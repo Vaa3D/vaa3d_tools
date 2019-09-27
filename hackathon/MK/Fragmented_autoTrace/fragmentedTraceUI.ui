@@ -289,8 +289,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>708</width>
-               <height>589</height>
+               <width>729</width>
+               <height>586</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -608,7 +608,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>280</height>
+                  <height>250</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -823,7 +823,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>200</height>
+                  <height>150</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -924,13 +924,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>200</height>
+                  <height>350</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>300</height>
+                  <height>400</height>
                  </size>
                 </property>
                 <property name="font">
@@ -940,7 +940,7 @@
                  </font>
                 </property>
                 <property name="title">
-                 <string>Marker Locator</string>
+                 <string>Marker List / Multiple Dendritic Tracing</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -950,7 +950,27 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_14">
                  <item>
-                  <widget class="QListView" name="listView_2"/>
+                  <widget class="QRadioButton" name="radioButton_5">
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Trace dendritic areas with listed markers</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QListView" name="listView_2">
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::MultiSelection</enum>
+                   </property>
+                   <property name="selectionRectVisible">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
                  </item>
                  <item>
                   <widget class="QFrame" name="frame_9">

@@ -32,7 +32,6 @@ public:
 
 	workMode mode;                // tracing axon or dendrite
 
-	vector<vector<float>> somaCoords;
 
 
 /*************************** Parameters ***************************/
@@ -58,6 +57,8 @@ public:
 	bool objFilter;
 	bool voxelSize, actualSize;
 	int voxelCount;
+	vector<int> currDisplayingBlockCenter;
+	map<int, ImageMarker> selectedMarkerMap;
 	// ------------------------------------- //
 
 	// ------- Fragment Connection ------- //
