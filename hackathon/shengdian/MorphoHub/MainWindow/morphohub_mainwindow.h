@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QtGui>
 #include "../MainDialog/maindialog.h"
+#include "../MainDialog/sourcedatamanagement.h"
 #include "../BasicInfo.h"
 using namespace std;
 
@@ -18,6 +19,7 @@ public:
     //store the basic init folder list for db.
     QStringList DBBasicConf;
     QStringList workingspaceConf;
+    QStringList workingspaceContentConf;
     //status lable
     QLabel *statusLabel;
 
@@ -29,7 +31,9 @@ private:
 
     void createActions();
     QMenu *file;
+    QMenu *managementMenu;
     QMenu *funcs;
+    QMenu *levelControlMenu;
     QMenu *menuWindow;
     QMenu *helpMenu;
     QToolBar *dbToolbar;
@@ -53,6 +57,17 @@ private:
     /*..............Database basic action............*/
     QAction *NewDBAction;
     QAction *SetDBAction;
+    /*..............Management actions............*/
+    QAction *sdconfAction;
+    QAction *annotatorconfAction;
+
+    /*..............Fuction actions............*/
+    /*..............Level control actions............*/
+    QAction *commitAction;
+    QAction *checkAction;
+    QAction *skipAction;
+    QAction *rollbackAction;
+    QAction *reassignAction;
 
     /*Initialization*/
     void MorphoHub_Init();
@@ -76,17 +91,22 @@ private:
     QTreeWidgetItem *content_workingspace;
     QTreeWidgetItem *content_basicData;
 
+    /*..............Management dialog............*/
+    SourceDataManagement *sdconf_dialog;
+
 private slots:
     void NewDB_slot();
     void SetDB_slot();
-    void createContentDockWindow();
+    //void createContentDockWindow();
     void createDataTabDockWindow();
     void removeSubTab(int subindex);
-    void contentValueChange(QListWidgetItem *item);
+//    void contentValueChange(QListWidgetItem *item);
     void contentValueChange(QTreeWidgetItem *item,int column);
 signals:
     
 public slots:
+    //Source data management
+    void sourceDataMAction();
     
 };
 

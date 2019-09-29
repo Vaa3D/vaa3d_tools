@@ -31,12 +31,24 @@ void MorphoHub_MainWindow::createMenus()
     file->addAction(NewDBAction);
     file->addAction(SetDBAction);
 
-    //service menu
+    //Management menu
+    managementMenu=menuBar()->addMenu(tr("Management"));
+    managementMenu->addAction(sdconfAction);
+    managementMenu->addAction(annotatorconfAction);
+    //functions menu
     funcs = menuBar()->addMenu(tr("&Functions"));
+
+    //level control menu
+    levelControlMenu=menuBar()->addMenu(tr("LevelControl"));
+    levelControlMenu->addAction(commitAction);
+    levelControlMenu->addAction(checkAction);
+    levelControlMenu->addAction(skipAction);
+    levelControlMenu->addAction(rollbackAction);
+    levelControlMenu->addAction(reassignAction);
 
     //window menu
     menuWindow = menuBar()->addMenu(tr("&Window"));
-    menuWindow->addAction(ContentAction);
+    //menuWindow->addAction(ContentAction);
     menuWindow->addAction(dataTabAction);
 
     //help menu
@@ -48,27 +60,51 @@ void MorphoHub_MainWindow::createToolBar()
     dbToolbar->addAction(NewDBAction);
     dbToolbar->addAction(SetDBAction);
 
-    funcsToolbar=this->addToolBar(tr("Funcs"));
-    funcsToolbar->addAction(ContentAction);
-    funcsToolbar->addAction(dataTabAction);
+//    funcsToolbar=this->addToolBar(tr("Funcs"));
+//    funcsToolbar->addAction(ContentAction);
+//    funcsToolbar->addAction(dataTabAction);
 
     levelControlToolbar=this->addToolBar(tr("LevelControl"));
     //commit,skip,rollback,assign,...functions
+    levelControlToolbar->addAction(commitAction);
+    levelControlToolbar->addAction(checkAction);
+    levelControlToolbar->addAction(skipAction);
+    levelControlToolbar->addAction(rollbackAction);
+    levelControlToolbar->addAction(reassignAction);
 }
 void MorphoHub_MainWindow::createActions()
 {
     //action for database
-    NewDBAction = new QAction(tr("&New DB"), this);
+    NewDBAction = new QAction(tr("&NewDB"), this);
     NewDBAction->setShortcuts(QKeySequence::New);
     NewDBAction->setStatusTip(tr("Setup a new DB"));
     connect(NewDBAction, SIGNAL(triggered()), this, SLOT(NewDB_slot()));
 
-    SetDBAction = new QAction(tr("&Load DB"), this);
+    SetDBAction = new QAction(tr("&LoadDB"), this);
     SetDBAction->setStatusTip(tr("load an exist DB"));
     connect(SetDBAction, SIGNAL(triggered()), this, SLOT(SetDB_slot()));
 
-    ContentAction=new QAction(tr("WorkingSpace"),this);
-    connect(ContentAction,SIGNAL(triggered()),this,SLOT(createContentDockWindow()));
+//    ContentAction=new QAction(tr("WorkingSpace"),this);
+//    connect(ContentAction,SIGNAL(triggered()),this,SLOT(createContentDockWindow()));
+    //actions for management
+    sdconfAction= new QAction(tr("&SDconfM"), this);
+    sdconfAction->setStatusTip(tr("Source Data Management"));
+    connect(sdconfAction,SIGNAL(triggered()),this,SLOT(sourceDataMAction()));
+    annotatorconfAction= new QAction(tr("&AConfM"), this);
+    annotatorconfAction->setToolTip(tr("Annotator Conf Management"));
+
+    //actions for Functions
+    //actions for levelcontrol
+    commitAction= new QAction(tr("&Commit"), this);
+    commitAction->setToolTip(tr("Commit one neuron to next level"));
+    checkAction= new QAction(tr("&Check"), this);
+    checkAction->setToolTip(tr("Check one neuron"));
+    skipAction= new QAction(tr("&Skip"), this);
+    skipAction->setToolTip(tr("Skip one neuron"));
+    rollbackAction= new QAction(tr("&Rollback"), this);
+    rollbackAction->setToolTip(tr("rollback one neuron"));
+    reassignAction= new QAction(tr("&Reassign"), this);
+    reassignAction->setToolTip(tr("reassign one neuron"));
 
     dataTabAction=new QAction(tr("DataTab"),this);
     connect(dataTabAction,SIGNAL(triggered()),this,SLOT(createDataTabDockWindow()));
@@ -83,6 +119,7 @@ void MorphoHub_MainWindow::setMainLayout()
 //    mainlayout->addWidget(morphoHub_dialog,0,0);
 ////    dialogwideget->setGeometry(10,10,200,200);
 //    dialogwideget->setLayout(mainlayout);
+
     createContentTreeWidget();
     createDataTabDockWindow();
     mainlayout->addWidget(contentTreewidget,2);
@@ -112,7 +149,7 @@ void MorphoHub_MainWindow::createContentTreeWidget()
     //create child node for WorkingSpace
     if(!dbpath.isEmpty())
     {
-        QString workingspace_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace.conf";
+        QString workingspace_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace_content.conf";
         QFile configurationfile(workingspace_conf);
         if(configurationfile.exists())
         {
@@ -336,12 +373,47 @@ void MorphoHub_MainWindow::MorphoHub_Init()
                                    <<"L2D"
                                    <<"QuestionZone"
                                        <<"QuestionZone/tmp";
-    morphoHub_dialog=new MainDialog(this->originparent);
+    workingspaceContentConf          <<"Assigned1"
+                                     <<"L1A"
+                                     <<"L1ACheck"
+                                     <<"L1B"
+                                     <<"L1C"
+                                     <<"L1CCheck"
+                                     <<"L1D"
+                                     <<"Assigned2"
+                                     <<"L2A"
+                                     <<"L2ACheck"
+                                     <<"L2B"
+                                     <<"L2C"
+                                     <<"L2CCheck"
+                                     <<"L2D";
+    //morphoHub_dialog=new MainDialog(this->originparent);
     mainWidget=new QWidget(this);
     mainlayout=new QHBoxLayout();
     logtextedit=new QTextEdit(this);
     logtextedit->setText(tr("Welcome to MorphoHub."));
 }
+/*source data management:
+    This is a dialog
+*/
+void MorphoHub_MainWindow::sourceDataMAction()
+{
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        sdconf_dialog=new SourceDataManagement(this->originparent);
+        sdconf_dialog->setupDBpath(this->dbpath);
+        sdconf_dialog->show();
+        sdconf_dialog->setGeometry(50,50,800,600);
+        this->raise();
+    }
+}
+
 void MorphoHub_MainWindow::NewDB_slot()
 {
     //QMessageBox::information(this, tr("Information"), tr("Open"));
@@ -403,8 +475,24 @@ void MorphoHub_MainWindow::NewDB_slot()
                 wconfigurationfile.close();
             }
         }
+        //create a configuration file for WorkingSpace Content
+        QString basic_workingspace_content_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace_content.conf";
+        QFile wcconfigurationfile(basic_workingspace_content_conf);
+        if(!wcconfigurationfile.exists())
+        {
+            if(wcconfigurationfile.open(QIODevice::ReadWrite | QIODevice::Text))
+            {
+                for(int i=0;i<workingspaceContentConf.size();i++)
+                {
+                    QString data=workingspaceContentConf[i]+"\n";
+                    wcconfigurationfile.write(data.toAscii());
+                }
+                wcconfigurationfile.close();
+            }
+        }
     }
 }
+//need to be revised
 void MorphoHub_MainWindow::SetDB_slot()
 {
     QString title="please select a path for DB";
@@ -415,8 +503,6 @@ void MorphoHub_MainWindow::SetDB_slot()
     if(!dbpath.isEmpty())
     {
         QString basic_db_conf=dbpath+"/Configuration/DB_Basic.conf";
-//        QString brainconf=dbpath+"/DBMS/brain.conf";
-//        readBrainConf(brainconf);
         //bool okay=isFileExist(basic_db_conf);
         QFile configurationfile(basic_db_conf);
         if(configurationfile.exists())
