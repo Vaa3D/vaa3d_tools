@@ -177,15 +177,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->show();
 }
 
-FragTraceControlPanel::~FragTraceControlPanel()
-{
-	delete this->doubleSpinBox;
-
-	if (this->traceManagerPtr != nullptr) delete this->traceManagerPtr;
-
-	delete uiPtr;
-}
-
 
 
 /* =========================== User Interface Configuration Buttons =========================== */
@@ -735,7 +726,10 @@ void FragTraceControlPanel::pa_objFilter()
 		if (uiPtr->radioButton_5->isEnabled() || uiPtr->radioButton_5->isChecked())
 		{
 			for (int markeri = 0; markeri < this->somaListViewer->rowCount(); ++markeri)
-				this->traceManagerPtr->selectedMarkerMap = this->somaMap;
+			{
+				this->traceManagerPtr->selectedSomaMap = this->somaMap;
+				this->traceManagerPtr->selectedLocalSomaMap = this->localSomaMap;
+			}
 		}
 	}
 }
@@ -780,21 +774,15 @@ void FragTraceControlPanel::markerMonitor()
 			oldMarkerMap = this->somaMap;
 
 			for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
-			{
 				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
-			}
 			
 			for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
-			{
 				if (newMarkerMap.find(it2->first) == newMarkerMap.end()) this->somaMap[it2->first].selected = false;
-			}
 		}
 		else
 		{
 			if (this->somaListViewer->rowCount() > 0)
-			{
 				for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
-			}
 			oldMarkerMap = this->somaMap;
 			this->somaMap.clear();
 		}
@@ -828,7 +816,16 @@ void FragTraceControlPanel::markerMonitor()
 
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 		{
-			//this->localSomaMap.insert({markerIt->first, []()});
+			ImageMarker localMarker;
+			for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
+			{
+				if (markerIt->first == it->n)
+				{
+					localMarker = *it;
+					break;
+				}
+			}
+			this->localSomaMap.insert({ markerIt->first,  localMarker});
 			markerIt->second.on = true;
 		}
 

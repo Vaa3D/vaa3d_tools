@@ -57,8 +57,11 @@ public:
 	bool objFilter;
 	bool voxelSize, actualSize;
 	int voxelCount;
+
+	vector<NeuronTree> tracedMultipleDendriticTrees;
 	vector<int> currDisplayingBlockCenter;
-	map<int, ImageMarker> selectedMarkerMap;
+	map<int, ImageMarker> selectedSomaMap;
+	map<int, ImageMarker> selectedLocalSomaMap;
 	// ------------------------------------- //
 
 	// ------- Fragment Connection ------- //

@@ -16,7 +16,6 @@ class FragTraceControlPanel : public QDialog
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
-	~FragTraceControlPanel(); // not sure if this is needed => [delete] can only be used witn array pointer.
 
 	// ------- Saving path for results / intermediate results ------- //
 	QString saveSWCFullName;
@@ -84,8 +83,8 @@ private:
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
 	bool volumeAdjusted;
-	int* volumeAdjustedCoords; // local coordinates in the current image block
-	int* globalCoords;         // global coordinates in whole brain space
+	int* volumeAdjustedCoords; // local coordinates of [displaying image boudaries], eg, 1 ~ 256, etc
+	int* globalCoords;         // global coordinates of [displaying image boundaries] in whole brain scale, currently not used.
 	int* displayingDims;
 
 	void teraflyTracePrep(workMode mode);

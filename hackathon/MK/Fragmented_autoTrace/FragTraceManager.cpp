@@ -18,7 +18,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 	this->mode = mode;
 
-	this->selectedMarkerMap.clear();
+	this->selectedSomaMap.clear();
+	this->selectedLocalSomaMap.clear();
 
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
@@ -539,7 +540,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob.swc"; //
 		writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
 		// ----------------------------------------------------------------- //
-		if (this->selectedMarkerMap.empty())
+		if (this->selectedSomaMap.empty())
 		{
 			vector<int> origin = this->currDisplayingBlockCenter;
 			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
@@ -548,6 +549,17 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		}
 		else
 		{
+			for (map<int, ImageMarker>::iterator it = this->selectedLocalSomaMap.begin(); it != this->selectedLocalSomaMap.end(); ++it)
+			{
+				vector<int> origin(3);
+				origin[0] = int(it->second.x);
+				origin[1] = int(it->second.y);
+				origin[2] = int(it->second.z);
+				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
+				this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
+				this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+
+			}
 
 		}
 		//QString denSaveName = this->finalSaveRootQ + "\\newDenTest.swc";
