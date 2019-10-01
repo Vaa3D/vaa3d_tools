@@ -253,8 +253,8 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
             //foreach item
             t->setItem(i,0,tmpcheckbox);
             t->setItem(i,1,new QTableWidgetItem(tmprecons.SdataID));
-            t->setItem(i,2,new QTableWidgetItem(tmprecons.dataID));
-            t->setItem(i,3,new QTableWidgetItem(tmprecons.author));
+            t->setItem(i,2,new QTableWidgetItem(tmprecons.SomaID));
+            t->setItem(i,3,new QTableWidgetItem(tmprecons.author.UserID));
             t->setItem(i,4,new QTableWidgetItem(tmprecons.checkers));
             t->setItem(i,5,new QTableWidgetItem(tmprecons.levelID));
             t->setItem(i,6,new QTableWidgetItem(tmprecons.updateTime));
@@ -313,12 +313,12 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
             }
             ReconstructionInfo tmprecons;
             tmprecons.SdataID=splitAnoFilelist.at(0);
-            tmprecons.dataID=splitAnoFilelist.at(1);
+            tmprecons.SomaID=splitAnoFilelist.at(1);
             tmprecons.levelID=levelid;
             int stampindex=splitAnoFilelist.indexOf("stamp");
             if(stampindex>2)
             {
-                tmprecons.author=splitAnoFilelist.at(2);
+                tmprecons.author.UserID=splitAnoFilelist.at(2);
                 for(int i=3;i<stampindex;i++)
                 {
                     if(i==3)
@@ -406,10 +406,12 @@ void MorphoHub_MainWindow::sourceDataMAction()
     }
     else
     {
-        sdconf_dialog=new SourceDataManagement(this->originparent);
-        sdconf_dialog->setupDBpath(this->dbpath);
+        sdconf_dialog=new SourceDataManagement(this->dbpath,this->originparent);
+        //sdconf_dialog->setupDBpath();
         sdconf_dialog->show();
-        sdconf_dialog->setGeometry(50,50,800,600);
+        sdconf_dialog->setMinimumSize(600,400);
+        sdconf_dialog->setMaximumSize(1200,1000);
+        sdconf_dialog->setGeometry(50,50,1000,800);
         this->raise();
     }
 }

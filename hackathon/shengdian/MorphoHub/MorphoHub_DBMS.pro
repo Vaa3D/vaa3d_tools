@@ -9,11 +9,14 @@ HEADERS	+= MorphoHub_DBMS_plugin.h \
     MainWindow/morphohub_mainwindow.h \
     MainDialog/maindialog.h \
     BasicInfo.h \
-    MainDialog/sourcedatamanagement.h
+    MainDialog/sourcedatamanagement.h \
+    ../../../v3d_main/basic_c_fun/basic_surf_objs.h
 SOURCES	+= MorphoHub_DBMS_plugin.cpp \
     MainWindow/morphohub_mainwindow.cpp \
     MainDialog/maindialog.cpp \
-    MainDialog/sourcedatamanagement.cpp
+    MainDialog/sourcedatamanagement.cpp \
+    ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp \
+    BasicInfo.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(MorphoHub_DBMS)
