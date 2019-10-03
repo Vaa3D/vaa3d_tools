@@ -546,9 +546,14 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
 			this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
 			this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+			
+			//QString denSaveName = this->finalSaveRootQ + "\\newDenTest.swc";
+			//writeSWC_file(denSaveName, this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+			objSkeletonProfiledTree = this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree");
 		}
 		else
 		{
+			vector<NeuronTree> multipleTrees;
 			for (map<int, ImageMarker>::iterator it = this->selectedLocalSomaMap.begin(); it != this->selectedLocalSomaMap.end(); ++it)
 			{
 				vector<int> origin(3);
@@ -556,15 +561,30 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				origin[1] = int(it->second.y);
 				origin[2] = int(it->second.z);
 				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
+				this->fragTraceTreeGrower.radiusShellMap_loc.clear();
 				this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
-				this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
-
+				if (this->fragTraceTreeGrower.treeDataBase.find("dendriticProfiledTree") != this->fragTraceTreeGrower.treeDataBase.end())
+				{
+					this->fragTraceTreeGrower.treeDataBase.erase(this->fragTraceTreeGrower.treeDataBase.find("dendriticProfiledTree"));
+					this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+					multipleTrees.push_back(this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+					for (QList<NeuronSWC>::iterator nodeIt = (multipleTrees.end() - 1)->listNeuron.begin(); nodeIt != (multipleTrees.end() - 1)->listNeuron.end(); ++nodeIt)
+						nodeIt->type = multipleTrees.size();
+				}
+				else
+				{
+					this->fragTraceTreeGrower.dendriticTree_shellCentroid(); // Dendritic tree is generated here.
+					multipleTrees.push_back(this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+					for (QList<NeuronSWC>::iterator nodeIt = (multipleTrees.end() - 1)->listNeuron.begin(); nodeIt != (multipleTrees.end() - 1)->listNeuron.end(); ++nodeIt)
+						nodeIt->type = multipleTrees.size();
+				}
 			}
-
+			cout << multipleTrees.size() << " trees" << endl;
+			system("pause");
+			profiledTree combinedProfiledDenTree(NeuronStructUtil::swcCombine(multipleTrees));
+			objSkeletonProfiledTree = combinedProfiledDenTree;
 		}
-		//QString denSaveName = this->finalSaveRootQ + "\\newDenTest.swc";
-		//writeSWC_file(denSaveName, this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
-		objSkeletonProfiledTree = this->fragTraceTreeGrower.treeDataBase.at("dendriticProfiledTree");
+		
 		return true;
 	}
 }

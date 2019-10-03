@@ -593,6 +593,8 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
+
+
 }
 /* ============================================================================================ */
 
@@ -725,6 +727,8 @@ void FragTraceControlPanel::pa_objFilter()
 	{
 		if (uiPtr->radioButton_5->isEnabled() || uiPtr->radioButton_5->isChecked())
 		{
+			this->traceManagerPtr->selectedSomaMap.clear();
+			this->traceManagerPtr->selectedLocalSomaMap.clear();
 			for (int markeri = 0; markeri < this->somaListViewer->rowCount(); ++markeri)
 			{
 				this->traceManagerPtr->selectedSomaMap = this->somaMap;
