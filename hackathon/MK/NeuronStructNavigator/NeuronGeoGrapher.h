@@ -111,6 +111,7 @@ public:
 	/***********************************************************************/
 
 
+
 	/*********** SWC - ImgAnalyzer::ConnectedComponent Analysis ************/
 	// Compute and store the ChebyshevCenter for every connected component on the list.
 	static inline void findChebyshevCenter_compList(vector<connectedComponent>& inputCompList) { ChebyshevCenter_connCompList(inputCompList); }

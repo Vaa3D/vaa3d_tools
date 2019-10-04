@@ -225,7 +225,7 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	}
 }
 
-void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; Marker List / Multiple Dendritic Tracing
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker List / Multiple Dendritic Tracing]
 {
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
@@ -668,7 +668,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 
 
 
-/*************************** Parameter Collecting Functions ***************************/
+/* ========================= Parameter Collecting Functions ========================= */
 void FragTraceControlPanel::pa_imgEnhancement()
 {
 	if (uiPtr->groupBox_3->isChecked())
@@ -841,11 +841,11 @@ void FragTraceControlPanel::markerMonitor()
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}
 }
-/********************** END of [Parameter Collecting Functions] ***********************/
+/* ====================== END of [Parameter Collecting Functions] ====================== */
 
 
 
-/***************** Result and Scaling Functions *****************/
+/* =================== Result and Scaling Functions =================== */
 void FragTraceControlPanel::scaleTracedTree()
 {	
 	float imgDims[3];
@@ -891,7 +891,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	return shiftScaleBackTree;
 }
-/************ END of [Result and Scaling Functions] *************/
+/* ================ END of [Result and Scaling Functions] ================ */
 
 
 
