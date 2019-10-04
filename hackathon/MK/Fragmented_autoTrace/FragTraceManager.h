@@ -24,6 +24,7 @@ class FragTraceManager: public QWidget
 public:
 	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
+	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
 	QString finalSaveRootQ;       // Save path for the traced result, acquired from UI.
 	

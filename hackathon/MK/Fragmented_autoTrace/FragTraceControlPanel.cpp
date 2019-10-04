@@ -225,14 +225,13 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	}
 }
 
-void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; Marker List / Multiple Dendritic Tracing
 {
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
 
 	if (checked)
 	{
-		this->markerMonitorSwitch = true;
 		this->refreshSomaCoords();
 		this->markerMonitor();
 	}
@@ -243,8 +242,9 @@ void FragTraceControlPanel::refreshSomaCoords()
 {
 	this->markerMonitorSwitch = false;
 	thisCallback->refreshSelectedMarkers();
-	this->somaListViewer->clear();
+	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
 	this->somaMap.clear();
+	this->localSomaMap.clear();
 	this->somaDisplayNameMap.clear();
 	this->markerMonitorSwitch = true;
 }
@@ -594,7 +594,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
 
-
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		this->markerMonitorSwitch = true;
+		this->markerMonitor();
+	}
 }
 /* ============================================================================================ */
 
@@ -646,16 +650,18 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
 		// --------------------------------- /
 
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
+		else this->traceManagerPtr->reinit(croppedImg4DSimplePtr, mode);
 
 		delete[] currBlock1Dptr;
 		delete[] croppedBlock1Dptr;		
 	}
 	else
 	{
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+			this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, mode);
+		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
 }
 /* ================================================================================== */
@@ -729,11 +735,22 @@ void FragTraceControlPanel::pa_objFilter()
 		{
 			this->traceManagerPtr->selectedSomaMap.clear();
 			this->traceManagerPtr->selectedLocalSomaMap.clear();
-			for (int markeri = 0; markeri < this->somaListViewer->rowCount(); ++markeri)
+			for (map<int, ImageMarker>::iterator somaIt = this->somaMap.begin(); somaIt != this->somaMap.end(); ++somaIt)
 			{
-				this->traceManagerPtr->selectedSomaMap = this->somaMap;
-				this->traceManagerPtr->selectedLocalSomaMap = this->localSomaMap;
+				ImageMarker localMarker;
+				for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
+				{
+					if (somaIt->first == it->n)
+					{
+						localMarker = *it;
+						this->localSomaMap.insert({ somaIt->first, localMarker });
+						break;
+					}
+				}
 			}
+		
+			this->traceManagerPtr->selectedSomaMap = this->somaMap;
+			this->traceManagerPtr->selectedLocalSomaMap = this->localSomaMap;
 		}
 	}
 }
@@ -799,7 +816,7 @@ void FragTraceControlPanel::markerMonitor()
 				int markerGlobalY = int(markerIt->second.y);
 				int markerGlobalZ = int(markerIt->second.z);
 				string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
-				this->somaDisplayNameMap.insert({markerIt->first, displayName});
+				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
 				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
 				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
 				this->somaListViewer->appendRow(newItemPtr);
@@ -819,19 +836,7 @@ void FragTraceControlPanel::markerMonitor()
 		}
 
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
-		{
-			ImageMarker localMarker;
-			for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
-			{
-				if (markerIt->first == it->n)
-				{
-					localMarker = *it;
-					break;
-				}
-			}
-			this->localSomaMap.insert({ markerIt->first,  localMarker});
 			markerIt->second.on = true;
-		}
 
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}

@@ -18,9 +18,6 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 	this->mode = mode;
 
-	this->selectedSomaMap.clear();
-	this->selectedLocalSomaMap.clear();
-
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
@@ -83,6 +80,76 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	// *************************************************************************************************************** //
 }
 
+void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
+{
+	char* numProcsC;
+	numProcsC = getenv("NUMBER_OF_PROCESSORS");
+	string numProcsString(numProcsC);
+	this->numProcs = stoi(numProcsString);
+
+	this->mode = mode;
+
+	int dims[3];
+	dims[0] = inputImg4DSimplePtr->getXDim();
+	dims[1] = inputImg4DSimplePtr->getYDim();
+	dims[2] = inputImg4DSimplePtr->getZDim();
+	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
+	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
+	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
+	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
+	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
+	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
+
+	vector<vector<unsigned char>> imgSlices;
+	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);
+	registeredImg inputRegisteredImg;
+	inputRegisteredImg.imgAlias = "currBlockSlices"; // This is the original images.
+	inputRegisteredImg.dims[0] = dims[0];
+	inputRegisteredImg.dims[1] = dims[1];
+	inputRegisteredImg.dims[2] = dims[2];
+	delete[] img1Dptr;
+
+	int sliceNum = 0;
+	for (vector<vector<unsigned char>>::iterator sliceIt = imgSlices.begin(); sliceIt != imgSlices.end(); ++sliceIt)
+	{
+		++sliceNum;
+		string sliceName;
+		if (sliceNum / 10 == 0) sliceName = "000" + to_string(sliceNum) + ".tif";
+		else if (sliceNum / 100 == 0) sliceName = "00" + to_string(sliceNum) + ".tif";
+		else if (sliceNum / 1000 == 0) sliceName = "0" + to_string(sliceNum) + ".tif";
+		else sliceName = to_string(sliceNum) + ".tif";
+
+		unsigned char* slicePtr = new unsigned char[dims[0] * dims[1]];
+		for (int i = 0; i < sliceIt->size(); ++i) slicePtr[i] = sliceIt->at(i);
+		myImg1DPtr my1Dslice(new unsigned char[dims[0] * dims[1]]);
+		memcpy(my1Dslice.get(), slicePtr, sliceIt->size());
+		inputRegisteredImg.slicePtrs.insert({ sliceName, my1Dslice });
+		delete[] slicePtr;
+
+		sliceIt->clear();
+	}
+	imgSlices.clear();
+
+	this->fragTraceImgManager.imgDatabase.clear();
+	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
+
+	this->adaImgName.clear();
+	this->histThreImgName.clear();
+	cout << " -- Image slice preparation done." << endl;
+	cout << "Image acquisition done. Start fragment tracing.." << endl;
+
+	// ******* QProgressDialog is automatically in separate thread, otherwise, the dialog can NEVER be updated ******* //
+	// NOTE: The parent widget it FragTraceManager, not FragTraceControlPanel. Thus FragTraceControlPanel is still frozen since FragTraceManager is not finished yet.
+	//       FragTraceControlPanel and FragTraceManager are on the same thread.
+	this->progressBarDiagPtr = new QProgressDialog(this);
+	this->progressBarDiagPtr->setWindowTitle("Neuron segment generation in progress");
+	this->progressBarDiagPtr->setMinimumWidth(400);
+	this->progressBarDiagPtr->setRange(0, 100);
+	this->progressBarDiagPtr->setModal(true);
+	this->progressBarDiagPtr->setCancelButtonText("Abort");
+	// *************************************************************************************************************** //
+}
 
 
 
@@ -579,8 +646,6 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 						nodeIt->type = multipleTrees.size();
 				}
 			}
-			cout << multipleTrees.size() << " trees" << endl;
-			system("pause");
 			profiledTree combinedProfiledDenTree(NeuronStructUtil::swcCombine(multipleTrees));
 			objSkeletonProfiledTree = combinedProfiledDenTree;
 		}
