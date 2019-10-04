@@ -16,10 +16,13 @@ public:
 public:
 
     QList<ReconstructionInfo> getReconstuctionsFromLevel(const QString& levelid);
+
     //store the basic init folder list for db.
     QStringList DBBasicConf;
     QStringList workingspaceConf;
     QStringList workingspaceContentConf;
+    QStringList initworkingspaceTablist;
+    QStringList datatitle;//for tab data
     //status lable
     QLabel *statusLabel;
 
@@ -28,6 +31,10 @@ public:
 private:
     QWidget *originparent;
     QString dbpath;
+     /*..............For Annotation ............*/
+    AnnotationProtocol seuallenAP;
+    Annotator curOperator;
+    AnnotationProtocolLevel curLevel;
 
     void createActions();
     QMenu *file;
@@ -61,26 +68,17 @@ private:
     QAction *sdconfAction;
     QAction *annotatorconfAction;
 
-    /*..............Fuction actions............*/
-    /*..............Level control actions............*/
-    QAction *commitAction;
-    QAction *checkAction;
-    QAction *skipAction;
-    QAction *rollbackAction;
-    QAction *reassignAction;
+
 
     /*Initialization*/
     void MorphoHub_Init();
-
+    void InitofAnnotationProtocol();
     /*..............Database dock windows............*/
     QDockWidget *contentwidget;
-    QAction *ContentAction;
+
     QString contentindex;
-    QDockWidget *datawidget;
     QTabWidget *dataTabwidget;
-    QAction *dataTabAction;
-    QTableWidget *datatable;
-    QTableWidget* createTableDataTotal();
+    QList<QTableWidget*> datatablelist;//all the created qtable will have a pointer here.
     QTableWidget* createTableDataLevel(QList<ReconstructionInfo> levelres);
     /*..............Database main dialog............*/
     MainDialog *morphoHub_dialog;
@@ -94,19 +92,32 @@ private:
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
 
+    /****************Protocol functions*************************/
+    ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
+    /*..............Protocol actions............*/
+    QAction *commitAction;
+    QAction *checkAction;
+    QAction *skipAction;
+    QAction *rollbackAction;
+    QAction *reassignAction;
+    QAction *releaseAction;
+    MainDialog *commitDialog;
+
 private slots:
     void NewDB_slot();
     void SetDB_slot();
-    //void createContentDockWindow();
-    void createDataTabDockWindow();
+    void createTabWindow();
     void removeSubTab(int subindex);
-//    void contentValueChange(QListWidgetItem *item);
+    void dataTabChange(int tabindex);
     void contentValueChange(QTreeWidgetItem *item,int column);
+    void celltableInfoUpdate(int row,int column);
 signals:
     
 public slots:
     //Source data management
     void sourceDataMAction();
+    /*..............Protocol slots............*/
+    void commitAction_slot();
     
 };
 

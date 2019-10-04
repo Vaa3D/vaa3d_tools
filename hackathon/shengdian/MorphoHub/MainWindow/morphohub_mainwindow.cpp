@@ -21,9 +21,178 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
     createStatusBar();
     createToolBar();
     createMenus();
+    createContentTreeWidget();
+    createTabWindow();
     setMainLayout();
 }
+void MorphoHub_MainWindow::MorphoHub_Init()
+{
+    dbpath="/home/penglab/Data/MorphoHub_DB";
+    datatitle <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time";
+    DBBasicConf <<"BasicData"
+                <<"WorkingSpace"
+                <<"Finished"
+                    <<"Finished/L1"
+                    <<"Finished/L2"
+                <<"Configuration"
+                    <<"Configuration/BasicData_Conf"
+                    <<"Configuration/WorkingSpace_Conf";
+    workingspaceConf               <<"Assigned1"
+                                       <<"Assigned1/Annotator"
+                                       <<"Assigned1/Priority"
+                                   <<"L1A"
+                                   <<"L1ACheck"
+                                   <<"L1B"
+                                   <<"L1C"
+                                   <<"L1CCheck"
+                                   <<"L1D"
+                                   <<"Assigned2"
+                                       <<"Assigned2/Annotator"
+                                       <<"Assigned2/Priority"
+                                   <<"L2A"
+                                   <<"L2ACheck"
+                                   <<"L2B"
+                                   <<"L2C"
+                                   <<"L2CCheck"
+                                   <<"L2D"
+                                   <<"QuestionZone"
+                                       <<"QuestionZone/tmp";
+    workingspaceContentConf          <<"Assigned1"
+                                     <<"L1A"
+                                     <<"L1ACheck"
+                                     <<"L1B"
+                                     <<"L1C"
+                                     <<"L1CCheck"
+                                     <<"L1D"
+                                     <<"Assigned2"
+                                     <<"L2A"
+                                     <<"L2ACheck"
+                                     <<"L2B"
+                                     <<"L2C"
+                                     <<"L2CCheck"
+                                     <<"L2D";
+    initworkingspaceTablist <<"L1A"
+                            <<"L1B"
+                            <<"L1C"
+                            <<"L2A"
+                            <<"L2B"
+                            <<"L2C";
+    //morphoHub_dialog=new MainDialog(this->originparent);
+    mainWidget=new QWidget(this);
+    mainlayout=new QHBoxLayout();
+    logtextedit=new QTextEdit(this);
+    logtextedit->setText(tr("Welcome to MorphoHub."));
+    //init of annotation protocol
+    seuallenAP.ApConfPath=this->dbpath+"/Configuration/WorkingSpace_Conf/AnnotationProtocol.conf";
+    InitofAnnotationProtocol();
+    //init of annotator
+    //need a sign in window for this.
+    curOperator.UserID="JSD";
+    curOperator.workingplace="SEU";
+    curOperator.priority=APvisitor;
+}
+void MorphoHub_MainWindow::InitofAnnotationProtocol()
+{
+    QString confpath=seuallenAP.ApConfPath;
+    if (confpath.isEmpty())
+        return;
+    QFile scanconffile(confpath);
+    if(!scanconffile.exists())
+    {
+        int reply;
+        reply=QMessageBox::warning(this,"File Not Found",QObject::tr("Can't find configuration file of Annotation protocol!\n")+
+                                   QObject::tr("MorphoHub will create an initialized annotation protocol: %1?\n").arg(confpath),
+                                   QMessageBox::Ok,QMessageBox::Cancel);
+        if(reply==QMessageBox::Cancel)
+            return;
+        else
+        {
+            if(scanconffile.open(QIODevice::WriteOnly | QIODevice::Text))
+            {
+                //write head
+                QString data="StartLevel_EndLevel";
+                for(int i=0;i<seuallenAP.protocolLevel.size();i++)
+                {
+                    data=data+","+seuallenAP.protocolLevel.at(i);
+                }
+                data+="\n";
+                scanconffile.write(data.toAscii());
+                //write inside
+                for(int i=0;i<seuallenAP.protocolLevel.size();i++)
+                {
+                    QString startlevel=seuallenAP.protocolLevel.at(i);
+                    QString levelrules=startlevel;
+                    for(int j=0;j<seuallenAP.protocolLevel.size();j++)
+                    {
+                        QString endlevel=seuallenAP.protocolLevel.at(j);
+                        QString startlevel_endlevel=startlevel+"_"+endlevel;;
+                        AnnotationProtocolFunction apfunc=seuallenAP.protocolrules.value(startlevel_endlevel);
+                        int apfuncint=apfunc;
+                        levelrules+=(","+(QString::number(apfuncint)));
+                    }
+                    qDebug()<<levelrules;
+                    levelrules+="\n";
+                    scanconffile.write(levelrules.toAscii());
+                }
+                scanconffile.close();
+            }
+        }
+    }
+    if(scanconffile.exists())
+    {
+        return;
+    }
+}
 
+void MorphoHub_MainWindow::createActions()
+{
+    //action for database
+    NewDBAction = new QAction(tr("&NewDB"), this);
+    NewDBAction->setShortcuts(QKeySequence::New);
+    NewDBAction->setStatusTip(tr("Setup a new DB"));
+    connect(NewDBAction, SIGNAL(triggered()), this, SLOT(NewDB_slot()));
+
+    SetDBAction = new QAction(tr("&LoadDB"), this);
+    SetDBAction->setStatusTip(tr("load an exist DB"));
+    connect(SetDBAction, SIGNAL(triggered()), this, SLOT(SetDB_slot()));
+
+    //actions for management
+    sdconfAction= new QAction(tr("&SoueceData"), this);
+    sdconfAction->setStatusTip(tr("Source Data Management"));
+    connect(sdconfAction,SIGNAL(triggered()),this,SLOT(sourceDataMAction()));
+    annotatorconfAction= new QAction(tr("&Annotator"), this);
+    annotatorconfAction->setToolTip(tr("Annotator Conf Management"));
+
+    //actions for Functions
+    //actions for levelcontrol
+    commitAction= new QAction(tr("&Commit"), this);
+    commitAction->setToolTip(tr("Commit one neuron to next level"));
+    connect(commitAction,SIGNAL(triggered()),this,SLOT(commitAction_slot()));
+
+    checkAction= new QAction(tr("&Check"), this);
+    checkAction->setToolTip(tr("Check one neuron"));
+    skipAction= new QAction(tr("&Skip"), this);
+    skipAction->setToolTip(tr("Skip one neuron"));
+    rollbackAction= new QAction(tr("&Rollback"), this);
+    rollbackAction->setToolTip(tr("rollback one neuron"));
+    reassignAction= new QAction(tr("&Reassign"), this);
+    reassignAction->setToolTip(tr("reassign one neuron"));
+}
+
+void MorphoHub_MainWindow::createToolBar()
+{
+    dbToolbar=this->addToolBar(tr("DB"));
+    dbToolbar->addAction(NewDBAction);
+    dbToolbar->addAction(SetDBAction);
+
+    levelControlToolbar=this->addToolBar(tr("LevelControl"));
+    //commit,skip,rollback,assign,...functions
+    levelControlToolbar->addAction(commitAction);
+    levelControlToolbar->addAction(checkAction);
+    levelControlToolbar->addAction(skipAction);
+    levelControlToolbar->addAction(rollbackAction);
+    levelControlToolbar->addAction(reassignAction);
+}
 void MorphoHub_MainWindow::createMenus()
 {
     //file menu
@@ -48,82 +217,25 @@ void MorphoHub_MainWindow::createMenus()
 
     //window menu
     menuWindow = menuBar()->addMenu(tr("&Window"));
-    //menuWindow->addAction(ContentAction);
-    menuWindow->addAction(dataTabAction);
 
     //help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
 }
-void MorphoHub_MainWindow::createToolBar()
+/**********************************************************/
+/****************Bottom status bar*************************/
+/**********************************************************/
+void MorphoHub_MainWindow::createStatusBar()
 {
-    dbToolbar=this->addToolBar(tr("DB"));
-    dbToolbar->addAction(NewDBAction);
-    dbToolbar->addAction(SetDBAction);
-
-//    funcsToolbar=this->addToolBar(tr("Funcs"));
-//    funcsToolbar->addAction(ContentAction);
-//    funcsToolbar->addAction(dataTabAction);
-
-    levelControlToolbar=this->addToolBar(tr("LevelControl"));
-    //commit,skip,rollback,assign,...functions
-    levelControlToolbar->addAction(commitAction);
-    levelControlToolbar->addAction(checkAction);
-    levelControlToolbar->addAction(skipAction);
-    levelControlToolbar->addAction(rollbackAction);
-    levelControlToolbar->addAction(reassignAction);
+    statusLabel=new QLabel("MorphoHub");
+    statusLabel->setAlignment(Qt::AlignHCenter);
+    statusLabel->setMinimumSize(statusLabel->sizeHint());
+    statusBar()->addWidget(statusLabel);
 }
-void MorphoHub_MainWindow::createActions()
-{
-    //action for database
-    NewDBAction = new QAction(tr("&NewDB"), this);
-    NewDBAction->setShortcuts(QKeySequence::New);
-    NewDBAction->setStatusTip(tr("Setup a new DB"));
-    connect(NewDBAction, SIGNAL(triggered()), this, SLOT(NewDB_slot()));
 
-    SetDBAction = new QAction(tr("&LoadDB"), this);
-    SetDBAction->setStatusTip(tr("load an exist DB"));
-    connect(SetDBAction, SIGNAL(triggered()), this, SLOT(SetDB_slot()));
-
-//    ContentAction=new QAction(tr("WorkingSpace"),this);
-//    connect(ContentAction,SIGNAL(triggered()),this,SLOT(createContentDockWindow()));
-    //actions for management
-    sdconfAction= new QAction(tr("&SDconfM"), this);
-    sdconfAction->setStatusTip(tr("Source Data Management"));
-    connect(sdconfAction,SIGNAL(triggered()),this,SLOT(sourceDataMAction()));
-    annotatorconfAction= new QAction(tr("&AConfM"), this);
-    annotatorconfAction->setToolTip(tr("Annotator Conf Management"));
-
-    //actions for Functions
-    //actions for levelcontrol
-    commitAction= new QAction(tr("&Commit"), this);
-    commitAction->setToolTip(tr("Commit one neuron to next level"));
-    checkAction= new QAction(tr("&Check"), this);
-    checkAction->setToolTip(tr("Check one neuron"));
-    skipAction= new QAction(tr("&Skip"), this);
-    skipAction->setToolTip(tr("Skip one neuron"));
-    rollbackAction= new QAction(tr("&Rollback"), this);
-    rollbackAction->setToolTip(tr("rollback one neuron"));
-    reassignAction= new QAction(tr("&Reassign"), this);
-    reassignAction->setToolTip(tr("reassign one neuron"));
-
-    dataTabAction=new QAction(tr("DataTab"),this);
-    connect(dataTabAction,SIGNAL(triggered()),this,SLOT(createDataTabDockWindow()));
-}
 void MorphoHub_MainWindow::setMainLayout()
 {
-
-//    LsplitterofM=new QSplitter(Qt::Horizontal,this);
-    //QSplitter *RsplitterofM=new QSplitter(Qt::Horizontal,this);
-//    mainlayout=new QGridLayout();
-//    QWidget *dialogwideget;
-//    mainlayout->addWidget(morphoHub_dialog,0,0);
-////    dialogwideget->setGeometry(10,10,200,200);
-//    dialogwideget->setLayout(mainlayout);
-
-    createContentTreeWidget();
-    createDataTabDockWindow();
     mainlayout->addWidget(contentTreewidget,2);
-    mainlayout->addWidget(datawidget,5);
+    mainlayout->addWidget(dataTabwidget,5);
     mainlayout->addWidget(logtextedit,3);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);
@@ -174,46 +286,34 @@ void MorphoHub_MainWindow::createContentTreeWidget()
     }
     connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
 }
-void MorphoHub_MainWindow::createDataTabDockWindow()
+void MorphoHub_MainWindow::createTabWindow()
 {
-    //new Dock window
-    datawidget=new QDockWidget("DataTab",this);
-    datawidget->setAllowedAreas(Qt::AllDockWidgetAreas);
-    datawidget->setFeatures(QDockWidget::AllDockWidgetFeatures);
-    //dataTabwidget->setWidget(contentlist);
     //new tab window
     dataTabwidget=new QTabWidget();
-    dataTabwidget->setTabsClosable(true);
-    datatable=createTableDataTotal();
-    dataTabwidget->addTab(datatable,tr("ALL"));
+    dataTabwidget->setTabsClosable(false);
+    dataTabwidget->setMovable(false);
+    for(int i=0;i<initworkingspaceTablist.size();i++)
+    {
+        QString initlevel=initworkingspaceTablist.at(i);
+        //get reconstructions info from this level
+        QList<ReconstructionInfo> thislevelres;
+        thislevelres=getReconstuctionsFromLevel(initlevel);
+        if(thislevelres.size()>0)
+        {
+            QTableWidget* levelTable=new QTableWidget();
+            levelTable=createTableDataLevel(thislevelres);
+            if(levelTable)
+            {
+                datatablelist.append(levelTable);
+                dataTabwidget->addTab(levelTable,initlevel);
+            }
+        }
+    }
+
     //set close function
-//    ((QTabBar*)dataTabwidget->tabBar())->setTabButton(dataTabwidget->indexOf(datatable),QTabBar::RightSide,NULL);
     connect(dataTabwidget,SIGNAL(tabCloseRequested(int)),this,SLOT(removeSubTab(int)));
     //set tab widget
-    datawidget->setWidget(dataTabwidget);
-    //datawidget->setMinimumSize(50,50);
-    //datawidget->setMaximumSize(1800,1600);
-    //datawidget->setGeometry(180,0,150,300);
-    this->addDockWidget(Qt::RightDockWidgetArea,datawidget);
-
-}
-void MorphoHub_MainWindow::removeSubTab(int subindex)
-{
-    dataTabwidget->removeTab(subindex);
-}
-
-QTableWidget* MorphoHub_MainWindow::createTableDataTotal()
-{
-    QStringList qsl;
-    qsl << "BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID" << "UpdateTime";
-    int row = 4;
-    int col = qsl.size();
-    QTableWidget* t = new QTableWidget(row,col, this);
-    t->setHorizontalHeaderLabels(qsl);
-    t->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    t->setSelectionBehavior(QAbstractItemView::SelectRows);
-    t->setSelectionMode(QAbstractItemView::SingleSelection);
-    return t;
+    connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
 }
 
 void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
@@ -221,7 +321,6 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
     QTreeWidgetItem *itemparent=item->parent();
     if(itemparent==NULL)
         return;
-    //int col=itemparent->indexOfChild(item);
     QString itemtext=item->text(column);
     //get reconstructions info from this level
     QList<ReconstructionInfo> thislevelres;
@@ -234,30 +333,51 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
             dataTabwidget->addTab(levelTable,itemtext);
     }
 }
+void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
+{
+    if(row>=0)
+    {
+        int curtabindex=dataTabwidget->currentIndex();
+        QTableWidget *levelTable=datatablelist.at(curtabindex);
+        if(levelTable!=NULL)
+        {
+            curRecon.SdataID=levelTable->item(row,0)->text();
+            curRecon.SomaID=levelTable->item(row,1)->text();
+            curRecon.author.UserID=levelTable->item(row,2)->text();
+            curRecon.checkers=levelTable->item(row,3)->text();
+            curRecon.levelID=levelTable->item(row,4)->text();
+            curRecon.updateTime=levelTable->item(row,5)->text();
+
+            if(false)
+            {
+                qDebug()<<"?";
+                commitDialog->setAnnotator(curOperator);//
+                commitDialog->setCurNeuron(curRecon);//get current neuron info
+                commitDialog->setFunction("Commit");
+                commitDialog->updateMainView();
+            }
+        }
+    }
+}
+
 QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInfo> levelres)
 {
-    QStringList title;
-    title << "All"<<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time";
-    int col = title.size();
-    int  row= levelres.size();
+    int col = datatitle.size();
+    int row= levelres.size();
     QTableWidget* t;
     if(levelres.size()>0)
     {
         t= new QTableWidget(row,col, this);
-        t->setHorizontalHeaderLabels(title);
+        t->setHorizontalHeaderLabels(datatitle);
         for(int i=0;i<levelres.size();i++)
         {
             ReconstructionInfo tmprecons=levelres.at(i);
-            QTableWidgetItem *tmpcheckbox=new QTableWidgetItem();
-            tmpcheckbox->setCheckState(Qt::Unchecked);
-            //foreach item
-            t->setItem(i,0,tmpcheckbox);
-            t->setItem(i,1,new QTableWidgetItem(tmprecons.SdataID));
-            t->setItem(i,2,new QTableWidgetItem(tmprecons.SomaID));
-            t->setItem(i,3,new QTableWidgetItem(tmprecons.author.UserID));
-            t->setItem(i,4,new QTableWidgetItem(tmprecons.checkers));
-            t->setItem(i,5,new QTableWidgetItem(tmprecons.levelID));
-            t->setItem(i,6,new QTableWidgetItem(tmprecons.updateTime));
+            t->setItem(i,0,new QTableWidgetItem(tmprecons.SdataID));
+            t->setItem(i,1,new QTableWidgetItem(tmprecons.SomaID));
+            t->setItem(i,2,new QTableWidgetItem(tmprecons.author.UserID));
+            t->setItem(i,3,new QTableWidgetItem(tmprecons.checkers));
+            t->setItem(i,4,new QTableWidgetItem(tmprecons.levelID));
+            t->setItem(i,5,new QTableWidgetItem(tmprecons.updateTime));
             //add item to tab.
         }
         t->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -265,6 +385,8 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->setSelectionMode(QAbstractItemView::SingleSelection);
         t->resizeColumnsToContents();
         t->resizeRowsToContents();
+        //get table cell info when clicked.
+        connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
     }
     return t;
 }
@@ -342,57 +464,7 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
     //3.write to Qlist
     return outlist;
 }
-void MorphoHub_MainWindow::MorphoHub_Init()
-{
-    dbpath="/home/penglab/Data/MorphoHub_DB";
-    DBBasicConf <<"BasicData"
-                <<"WorkingSpace"
-                <<"Finished"
-                    <<"Finished/L1"
-                    <<"Finished/L2"
-                <<"Configuration"
-                    <<"Configuration/BasicData_Conf"
-                    <<"Configuration/WorkingSpace_Conf";
-    workingspaceConf               <<"Assigned1"
-                                       <<"Assigned1/Annotator"
-                                       <<"Assigned1/Priority"
-                                   <<"L1A"
-                                   <<"L1ACheck"
-                                   <<"L1B"
-                                   <<"L1C"
-                                   <<"L1CCheck"
-                                   <<"L1D"
-                                   <<"Assigned2"
-                                       <<"Assigned2/Annotator"
-                                       <<"Assigned2/Priority"
-                                   <<"L2A"
-                                   <<"L2ACheck"
-                                   <<"L2B"
-                                   <<"L2C"
-                                   <<"L2CCheck"
-                                   <<"L2D"
-                                   <<"QuestionZone"
-                                       <<"QuestionZone/tmp";
-    workingspaceContentConf          <<"Assigned1"
-                                     <<"L1A"
-                                     <<"L1ACheck"
-                                     <<"L1B"
-                                     <<"L1C"
-                                     <<"L1CCheck"
-                                     <<"L1D"
-                                     <<"Assigned2"
-                                     <<"L2A"
-                                     <<"L2ACheck"
-                                     <<"L2B"
-                                     <<"L2C"
-                                     <<"L2CCheck"
-                                     <<"L2D";
-    //morphoHub_dialog=new MainDialog(this->originparent);
-    mainWidget=new QWidget(this);
-    mainlayout=new QHBoxLayout();
-    logtextedit=new QTextEdit(this);
-    logtextedit->setText(tr("Welcome to MorphoHub."));
-}
+
 /*source data management:
     This is a dialog
 */
@@ -522,17 +594,7 @@ void MorphoHub_MainWindow::SetDB_slot()
         }
     }
 }
-/**********************************************************/
-/****************Bottom status bar*************************/
-/**********************************************************/
-void MorphoHub_MainWindow::createStatusBar()
-{
-    statusLabel=new QLabel("MorphoHub");
-    statusLabel->setAlignment(Qt::AlignHCenter);
-    statusLabel->setMinimumSize(statusLabel->sizeHint());
-    statusBar()->addWidget(statusLabel);
-}
-//showtext will be showed at bottom of the Window statu bar
+
 void MorphoHub_MainWindow::updateStatusBar(const QString& showtext)
 {
     statusLabel->setText(showtext);
@@ -543,6 +605,14 @@ void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
     QString showText=getlogtext+"\n"+logtext;
     logtextedit->setText(showText);
 }
+void MorphoHub_MainWindow::removeSubTab(int subindex)
+{
+    dataTabwidget->removeTab(subindex);
+}
+void MorphoHub_MainWindow::dataTabChange(int tabindex)
+{
+
+}
 
 MorphoHub_MainWindow::~MorphoHub_MainWindow()
 {
@@ -550,4 +620,34 @@ MorphoHub_MainWindow::~MorphoHub_MainWindow()
 }
 MorphoHub_MainWindow::MorphoHub_MainWindow()
 {
+}
+
+/**********************************************************/
+/****************Protocol functions*************************/
+/********Commit,Check,Skip,Rollback,Reassign,Release*****/
+
+void MorphoHub_MainWindow::commitAction_slot()
+{
+    //
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        commitDialog=new MainDialog(this->dbpath,this->originparent);
+        commitDialog->setAnnotator(curOperator);//
+        commitDialog->setCurNeuron(curRecon);//get current neuron info
+        commitDialog->setFunction("Commit");
+        commitDialog->setupAnnotationProtocol(seuallenAP);
+        commitDialog->updateMainView();
+
+        commitDialog->show();
+        commitDialog->setMinimumSize(400,300);
+        commitDialog->setMaximumSize(800,800);
+        commitDialog->setGeometry(100,100,600,400);
+        this->raise();
+    }
 }

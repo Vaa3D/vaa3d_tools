@@ -48,7 +48,10 @@ private:
     void createActions();
 public slots:
     void removeSubTab(int subindex);
+    void switchTab(int toindex);
     void createSomaTab_slot(int row, int column);
+    void reviseSDTab_slot(int row,int column);
+
     void saveButton_slot();
     void newSDButton_slot();
     void deleteSDButton_slot();
