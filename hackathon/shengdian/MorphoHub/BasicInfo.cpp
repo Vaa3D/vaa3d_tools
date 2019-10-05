@@ -185,7 +185,7 @@ bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputs
     confTitle+="\n";
     if(!scanconffile.exists())
     {
-        QMessageBox::warning(0,"File Not Found",QString("Can't find configuration file at %1 !").arg(confpath));
+        QMessageBox::warning(0,"File Not Found",QObject::tr("Can't find configuration file at %1 !").arg(confpath));
         return false;
     }
     else
@@ -214,4 +214,85 @@ bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputs
         }
         return false;
     }
+}
+QStringList readAnoFile(const QString &filename)
+{
+    QStringList outlist;
+    outlist.clear();
+
+    QFile file(filename);
+    QString baseName = filename.section('/', -1);
+    QString baseDir = filename;
+    baseDir.chop(baseName.size());
+
+    file.open(QIODevice::ReadOnly);
+    QString tmp = file.readAll();
+    file.close();
+
+    if (tmp.isEmpty())
+        return outlist;
+
+    QStringList tmpList = tmp.split(QString("\n"));
+    if (tmpList.size()<=0)
+    {
+        return outlist; //must not be a valid file
+    }
+
+    for (int i=0;i<tmpList.size(); i++)
+    {
+        QStringList itemList;
+
+        if (tmpList.at(i).isEmpty() || tmpList.at(i).at(0)=='#') //a comment line, do nothing
+            continue;
+
+        itemList = tmpList.at(i).split("=");
+        if (itemList.size()==2)
+        {
+            outlist.append(itemList.at(1));
+        }
+    }
+    return outlist;
+}
+bool writeAnoFile(const QString& inputanofile, const QStringList& inputlist)
+{
+    QFile anofile(inputanofile);
+    if(inputlist.size()==0)
+    {
+        QMessageBox::warning(0,"Input Error",QObject::tr("Input list is empty when computer wants to write ano file!"));
+        return false;
+    }
+    if(!anofile.exists())
+    {
+        QMessageBox::warning(0,"File Not Found",QObject::tr("Can't find ano file: %1 !").arg(inputanofile));
+        return false;
+    }
+    else
+    {
+        if(anofile.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            for(int i=0;i<inputlist.size();i++)
+            {
+                QString data;
+                QString suffixtmp=QFileInfo(inputlist.at(i)).suffix().toUpper();
+                if(QString::compare(suffixtmp,"ESWC")==0)
+                {
+                    data="SWCFILE="+inputlist.at(i)+"\n";
+                }
+                else if(QString::compare(suffixtmp,"APO")==0)
+                {
+                    data="APOFILE="+inputlist.at(i)+"\n";
+                }
+                else
+                {
+                    QMessageBox::warning(0,"Invaild File Format",QObject::tr("Error occurs when write %1 file to Ano file!").arg(suffixtmp));
+                    return false;
+                }
+                anofile.write(data.toAscii());
+            }
+            anofile.close();
+            return true;
+        }
+        return false;
+    }
+    return false;
 }

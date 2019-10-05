@@ -210,9 +210,16 @@ struct ReconstructionInfo:SomaConfInfo
     QString checkers;
     QString updateTime;
     QString fatherDirName; //dir name for reconstructions
-    QString filePath;
+    QString fileName;
     ReconstructionInfo(){
-        levelID=checkers=updateTime=fatherDirName=filePath="";
+        levelID=checkers=updateTime=fatherDirName=fileName="";
+    }
+    bool alreadyInit(){
+        if(!SdataID.isEmpty()&&!SomaID.isEmpty()&&!levelID.isEmpty()&&
+                !author.UserID.isEmpty()&&!updateTime.isEmpty()&&!fileName.isEmpty()
+                &&!fatherDirName.isEmpty())
+            return true;
+        return false;
     }
 };
 QList<SomaConfInfo> getSomaConf(const QString& scandstpath);
@@ -220,5 +227,6 @@ QList<SourceDataInfo> getSourceDatalist(const QString& scandstpath);
 QList<Annotator> getAnnotatorlist(const QString& confpath);
 bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputsdlist);
 bool WriteSomalistConfToFile(const QString& confpath,QList<SomaConfInfo> &inputsdlist);
-
+QStringList readAnoFile(const QString& filename);
+bool writeAnoFile(const QString& inputanofile, const QStringList& inputlist);
 #endif // BASICINFO_H

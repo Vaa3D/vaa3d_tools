@@ -157,25 +157,32 @@ void MainDialog::updateMainView()
     QStringList nextlevelist=getNextlevelList();
     //4.display
     if(nextlevelist.size()==0)
+    {
+        okayButton->setEnabled(false);
         return;
+    }
     else if(nextlevelist.size()==1)
     {
         nextlevel_WorkingSpace_LineEdit->setText(nextlevelist.at(0));
+        okayButton->setEnabled(true);
     }
     else if(nextlevelist.size()==2)
     {
         nextlevel_WorkingSpace_LineEdit->setText(nextlevelist.at(0));
         nextlevel_NeuronArchives_LineEdit->setText(nextlevelist.at(1));
+        okayButton->setEnabled(true);
     }
     else if(nextlevelist.size()==3)
     {
         nextlevel_WorkingSpace_LineEdit->setText(nextlevelist.at(0));
         nextlevel_NeuronArchives_LineEdit->setText(nextlevelist.at(1));
         nextlevel_Finished_LineEdit->setText(nextlevelist.at(2));
+        okayButton->setEnabled(true);
     }
     else
     {
         QMessageBox::warning(this,tr("Level Error"),tr("Next list is out of list. Please contact Admin!"));
+        okayButton->setEnabled(false);
         return;
     }
 }
@@ -330,12 +337,10 @@ void MainDialog::setFunction(const QString& func)
 
 void MainDialog::setCurNeuron(ReconstructionInfo inputNeuron)
 {
-    if(!inputNeuron.SdataID.isEmpty() &&
-            !inputNeuron.SomaID.isEmpty()&&
-            !inputNeuron.author.UserID.isEmpty()&&
-            !inputNeuron.updateTime.isEmpty()&&
-            !inputNeuron.levelID.isEmpty())
+    //curNeuron=inputNeuron;
+    if(inputNeuron.alreadyInit())
     {
+        //qDebug()<<"move in";
         curNeuron=inputNeuron;
     }
 //    else
@@ -371,6 +376,52 @@ void MainDialog::setupAnnotationProtocol(AnnotationProtocol inputAP)
 {
     this->ApforthisDialog=inputAP;
 }
+void MainDialog::generateNextNeuron()
+{
+    //this funciton will generate next neuron struct based on the curNeuron.
+    if(curNeuron.alreadyInit())
+    {
+        //sdataID, SomaID,fatherDirname and updateTime will be the same.
+        nextNeuron.SdataID=curNeuron.SdataID;
+        nextNeuron.SomaID=curNeuron.SomaID;
+        nextNeuron.updateTime=curNeuron.updateTime;
+        nextNeuron.fatherDirName=curNeuron.fatherDirName;
+        //if changed
+        nextNeuron.author.UserID=authorLineEdit->text();
+        nextNeuron.checkers=checkersLineEdit->text();
+        nextNeuron.levelID=nextlevel_WorkingSpace_LineEdit->text();
+        //convert checkerlist
+        QStringList checkerslist=nextNeuron.checkers.split("&",QString::SkipEmptyParts);
+        QString newcheckers;
+        if(checkerslist.size()>0)
+        {
+            newcheckers=checkerslist.at(0);
+            for(int i=1;i<checkerslist.size();i++)
+            {
+                newcheckers+=("_"+checkerslist.at(i));
+            }
+        }
+        //convert updatetime
+        QStringList timelist=nextNeuron.updateTime.split("-",QString::SkipEmptyParts);
+        QString newupdatetime;
+        if(timelist.size()>0)
+        {
+            newupdatetime=timelist.at(0);
+            for(int i=1;i<timelist.size();i++)
+            {
+                newupdatetime+=("_"+timelist.at(i));
+            }
+        }
+        if(newcheckers.isEmpty())
+            nextNeuron.fileName=nextNeuron.SdataID+"_"+nextNeuron.SomaID+"_"+nextNeuron.author.UserID+"_stamp_"+newupdatetime;
+        else
+            nextNeuron.fileName=nextNeuron.SdataID+"_"+nextNeuron.SomaID+"_"+nextNeuron.author.UserID+"_"+newcheckers+"_stamp_"+newupdatetime;
+    }
+    else
+    {
+        return;
+    }
+}
 
 //slots
 void MainDialog::changeAuthorNameButton_slot()
@@ -399,7 +450,260 @@ void MainDialog::addcheckerName_slot()
 }
 void MainDialog::okayButton_slot()
 {
-    //1.get next level
+    //0.if next level list is not empty
+    //1.get cur info of the handling neuron
+    if(!curNeuron.alreadyInit())
+    {
+        QMessageBox::warning(this,tr("File Error"),tr("The supplied information of this neuron is not enough."));
+        okayButton->setEnabled(false);
+        return;
+    }
+    QString anofilename=curNeuron.fileName+".ano";
+    QString basefilepath=this->dbpath+"/WorkingSpace/"+
+            curNeuron.levelID+"/"+curNeuron.fatherDirName+"/";
+    QString apofilename;
+    QString swcfilename;
+    QFileInfo anofile(basefilepath,anofilename);
+    QStringList anoinsidelist;
+    if(anofile.exists())
+    {
+       anoinsidelist=readAnoFile(anofile.absoluteFilePath());
+       if(anoinsidelist.size()==2)//limit this into one apo and one swc file
+       {
+           QString thissuffix1=QFileInfo(basefilepath,anoinsidelist.at(0)).suffix().toUpper();
+           QString thissuffix2=QFileInfo(basefilepath,anoinsidelist.at(1)).suffix().toUpper();
+           if(QString::compare(thissuffix1,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+           {
+               apofilename=anoinsidelist.at(1);
+               swcfilename=anoinsidelist.at(0);
+           }
+           else if(QString::compare(thissuffix2,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+           {
+               apofilename=anoinsidelist.at(0);
+               swcfilename=anoinsidelist.at(1);
+           }
+           else
+           {
+               QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers.").arg(basefilepath));
+               okayButton->setEnabled(false);
+               return;
+           }
+       }
+       else
+       {
+           QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers.").arg(basefilepath));
+           okayButton->setEnabled(false);
+           return;
+       }
+    }
+    else
+    {
+        QMessageBox::warning(this,tr("File Error"),tr("%1 file is not exist.").arg(anofilename));
+        okayButton->setEnabled(false);
+        return;
+    }
+    if(!QFileInfo(basefilepath,apofilename).exists()||
+            !QFileInfo(basefilepath,swcfilename).exists())
+    {
+        QMessageBox::warning(this,tr("File Error"),tr("%1 or %2 file is not exist.").arg(apofilename).arg(swcfilename));
+        okayButton->setEnabled(false);
+        return;
+    }
+
+    qDebug()<<"file path ="<<basefilepath;
+    qDebug()<<"ano file ="<<anofilename;
+    qDebug()<<"apo file ="<<apofilename;
+    qDebug()<<"swc file ="<<swcfilename;
+    //2.generate next level neuron info
+    generateNextNeuron();
+    if(!nextNeuron.alreadyInit())
+    {
+        QMessageBox::warning(this,tr("File Error"),tr("The supplied information for next neuron is not enough."));
+        okayButton->setEnabled(false);
+        return;
+    }
+    //new file name
+    QString newanofilename=nextNeuron.fileName+".ano";
+    QString newapofilename=nextNeuron.fileName+".ano.apo";
+    QString newswcfilename=nextNeuron.fileName+".ano.eswc";
+    //new ano filename
+
+    qDebug()<<"new ano file ="<<newanofilename;
+    qDebug()<<"new apo file ="<<newapofilename;
+    qDebug()<<"new swc file ="<<newswcfilename;
+    //3.generate dst path
+    QStringList dstpathlist;
+    if(!nextlevel_WorkingSpace_LineEdit->text().isEmpty())
+    {
+        //first is tmp path
+        //recovery path
+        QString path_recovery=this->dbpath+"/WorkingSpace/QuestionZone/tmp/"+
+                nextNeuron.fatherDirName+"/";
+        dstpathlist.append(path_recovery);
+        qDebug()<<"dst0="<<path_recovery;
+        //WorkingSpace level
+        QString path_workingspace=this->dbpath+"/WorkingSpace/"+
+                nextlevel_WorkingSpace_LineEdit->text()+"/"+nextNeuron.fatherDirName+"/";
+        dstpathlist.append(path_workingspace);
+        qDebug()<<"dst1="<<path_workingspace;
+        if(!nextlevel_NeuronArchives_LineEdit->text().isEmpty())
+        {
+            QString path_neuronarchives=this->dbpath+"/BasicData/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
+                    nextlevel_NeuronArchives_LineEdit->text()+"/";
+            dstpathlist.append(path_neuronarchives);
+            qDebug()<<"dst2="<<path_neuronarchives;
+            if(!nextlevel_Finished_LineEdit->text().isEmpty())
+            {
+                QString path_finished=this->dbpath+"/Finished/"+
+                        nextlevel_Finished_LineEdit->text()+"/"+nextNeuron.fatherDirName+"/";
+                dstpathlist.append(path_finished);
+                qDebug()<<"dst3="<<path_finished;
+            }
+        }
+    }
+    //4.generate dst file path
+    int okstep=0;
+    for(int i=0;i<dstpathlist.size();i++)
+    {
+        bool thisstepok=false;
+        QString curdstpath=dstpathlist.at(i);
+        QDir curdir(curdstpath);
+        if(!curdir.exists())
+            curdir.mkpath(curdstpath);
+        //copy
+        QFile fileoperator;
+        if(i==0)
+        {
+            bool anook=fileoperator.copy((basefilepath+anofilename),(curdstpath+anofilename));
+            bool apook=fileoperator.copy((basefilepath+apofilename),(curdstpath+apofilename));
+            bool swcok=fileoperator.copy((basefilepath+swcfilename),(curdstpath+swcfilename));
+            if(anook&&apook&&swcok)
+                thisstepok=true;
+        }
+        else
+        {
+            bool anook=fileoperator.copy((basefilepath+anofilename),(curdstpath+newanofilename));
+            bool apook=fileoperator.copy((basefilepath+apofilename),(curdstpath+newapofilename));
+            bool swcok=fileoperator.copy((basefilepath+swcfilename),(curdstpath+newswcfilename));
+            if(anook&&apook&&swcok)
+            {
+                QStringList inanolist;
+                inanolist.clear();
+                inanolist.append(newapofilename);
+                inanolist.append(newswcfilename);
+                thisstepok=writeAnoFile((curdstpath+newanofilename),inanolist);
+            }
+        }
+        if(!thisstepok)
+            break;
+        okstep++;
+    }
+    //5.final step: remove old level (curNeuron) and recovery
+    bool recovery=false;
+    if(okstep!=dstpathlist.size())
+    {        //failed at some steps
+        //So i have to delete new changes to the database.
+        qDebug()<<"not finish all the transfer step";
+        recovery=true;
+    }
+    else
+    {        //6.clear and return
+        //check dstpathlist, to see if all operation are done.
+        bool alldone=true;
+        for(int i=1;i<dstpathlist.size();i++)
+        {
+            QString curdstpath=dstpathlist.at(i);
+            QDir curdir(curdstpath);
+            if(!curdir.exists())
+            {
+                alldone=false;
+                break;
+            }
+            bool anook=QFileInfo(curdstpath,newanofilename).exists();
+            bool apook=QFileInfo(curdstpath,newapofilename).exists();
+            bool swcok=QFileInfo(curdstpath,newswcfilename).exists();
+            if(!(anook&&apook&&swcok))
+            {
+                alldone=false;
+                break;
+            }
+        }
+        if(alldone)
+        {
+            qDebug()<<"Already done all the check";
+            //clear older level and tmp dst
+            QDir olderdir(basefilepath);
+            olderdir.setFilter(QDir::Files);
+            if(olderdir.exists())
+            {
+                for(int j=0;j<olderdir.count();j++)
+                {
+                    qDebug()<<"rm"<<olderdir[j];
+                    olderdir.remove(olderdir[j]);
+                }
+                olderdir.rmdir(basefilepath);
+                qDebug()<<"rm dir: "<<basefilepath;
+            }
+            if(olderdir.exists())
+            {                //failed and clear
+                recovery=true;
+            }
+        }
+        else
+        {            //failed and clear
+            recovery=true;
+        }
+    }
+    if(recovery)
+    {
+        QDir curdirbase(basefilepath);
+        if(!curdirbase.exists())
+            curdirbase.mkpath(basefilepath);
+        QString curdstpath=dstpathlist.at(0);
+        //copy
+        QFile fileoperator;
+        bool anook=fileoperator.copy((curdstpath+anofilename),(basefilepath+anofilename));
+        bool apook=fileoperator.copy((curdstpath+apofilename),(basefilepath+apofilename));
+        bool swcok=fileoperator.copy((curdstpath+swcfilename),(basefilepath+swcfilename));
+        if(anook&&apook&&swcok)
+        {
+            QMessageBox::warning(this,tr("Recovery Success"),tr("%1 is recovered from tmp path.").arg(basefilepath+anofilename));
+        }
+        for(int i=0;i<okstep;i++)
+        {
+            QString curdstpathd=dstpathlist.at(i);
+            QDir curdir(curdstpathd);
+            curdir.setFilter(QDir::Files);
+            if(curdir.exists())
+            {
+                for(int j=0;j<curdir.count();j++)
+                {
+                    qDebug()<<"rm"<<curdir[j];
+                    curdir.remove(curdir[j]);
+                }
+                qDebug()<<"rm dir: "<<curdstpathd;
+                curdir.rmdir(curdstpathd);
+            }
+        }
+    }
+    else
+    {
+        //clear tmp path
+        QDir tmpdir(dstpathlist.at(0));
+        tmpdir.setFilter(QDir::Files);
+        if(tmpdir.exists())
+        {
+            for(int j=0;j<tmpdir.count();j++)
+            {
+                qDebug()<<"rm"<<tmpdir[j];
+                tmpdir.remove(tmpdir[j]);
+            }
+            qDebug()<<"rm dir: "<<dstpathlist.at(0);
+            tmpdir.rmdir(dstpathlist.at(0));
+        }
+        QMessageBox::information(this,tr("Success"),tr("%1 file is processed.").arg(curNeuron.fileName));
+    }
+    this->close();
 }
 void MainDialog::cancelButton_slot()
 {

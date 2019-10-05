@@ -79,7 +79,9 @@ private:
     QString contentindex;
     QTabWidget *dataTabwidget;
     QList<QTableWidget*> datatablelist;//all the created qtable will have a pointer here.
+    QStringList datatabletitlelist;//all the tab name of the created qtable
     QTableWidget* createTableDataLevel(QList<ReconstructionInfo> levelres);
+    void updateTableDataLevel(QTableWidget* t,QList<ReconstructionInfo> levelres);
     /*..............Database main dialog............*/
     MainDialog *morphoHub_dialog;
 
@@ -118,7 +120,9 @@ public slots:
     void sourceDataMAction();
     /*..............Protocol slots............*/
     void commitAction_slot();
-    
+    void checkAction_slot();
+    void skipAction_slot();
+    void rollbackAction_slot();
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H

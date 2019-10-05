@@ -28,6 +28,7 @@ public:
     void setAnnotator(Annotator inputauthor);
     void setupDBpath(const QString &path);
     void setupAnnotationProtocol(AnnotationProtocol inputAP);
+    void generateNextNeuron();
 
     /*..............Protocol functions............*/
     void InitofAnnotationProtocol();

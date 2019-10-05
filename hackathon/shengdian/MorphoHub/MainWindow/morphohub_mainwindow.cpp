@@ -28,7 +28,7 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
 void MorphoHub_MainWindow::MorphoHub_Init()
 {
     dbpath="/home/penglab/Data/MorphoHub_DB";
-    datatitle <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time";
+    datatitle <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time"<<"ParentDirName"<<"FileName";
     DBBasicConf <<"BasicData"
                 <<"WorkingSpace"
                 <<"Finished"
@@ -171,8 +171,12 @@ void MorphoHub_MainWindow::createActions()
 
     checkAction= new QAction(tr("&Check"), this);
     checkAction->setToolTip(tr("Check one neuron"));
+    connect(checkAction,SIGNAL(triggered()),this,SLOT(checkAction_slot()));
+
     skipAction= new QAction(tr("&Skip"), this);
     skipAction->setToolTip(tr("Skip one neuron"));
+    connect(skipAction,SIGNAL(triggered()),this,SLOT(skipAction_slot()));
+
     rollbackAction= new QAction(tr("&Rollback"), this);
     rollbackAction->setToolTip(tr("rollback one neuron"));
     reassignAction= new QAction(tr("&Reassign"), this);
@@ -304,6 +308,7 @@ void MorphoHub_MainWindow::createTabWindow()
             levelTable=createTableDataLevel(thislevelres);
             if(levelTable)
             {
+                datatabletitlelist.append(initlevel);
                 datatablelist.append(levelTable);
                 dataTabwidget->addTab(levelTable,initlevel);
             }
@@ -322,15 +327,37 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
     if(itemparent==NULL)
         return;
     QString itemtext=item->text(column);
-    //get reconstructions info from this level
-    QList<ReconstructionInfo> thislevelres;
-    thislevelres=getReconstuctionsFromLevel(itemtext);
-    if(thislevelres.size()>0)
+    //make sure this table hasn't been created.
+    //if already created, update it
+    if(datatabletitlelist.contains(itemtext))
     {
-        QTableWidget* levelTable=new QTableWidget();
-        levelTable=createTableDataLevel(thislevelres);
-        if(levelTable)
-            dataTabwidget->addTab(levelTable,itemtext);
+        //1.move to this tab
+        int tabindex=datatabletitlelist.indexOf(itemtext);
+        dataTabwidget->setCurrentIndex(tabindex);
+        //2.update the content of this tab
+        QTableWidget *levelTable=datatablelist.at(tabindex);
+        levelTable->clear();
+        //get reconstructions info from this level
+        QList<ReconstructionInfo> thislevelres;
+        thislevelres=getReconstuctionsFromLevel(itemtext);
+        updateTableDataLevel(levelTable,thislevelres);
+    }
+    else
+    {
+        //get reconstructions info from this level
+        QList<ReconstructionInfo> thislevelres;
+        thislevelres=getReconstuctionsFromLevel(itemtext);
+        if(thislevelres.size()>0)
+        {
+            QTableWidget* levelTable=new QTableWidget();
+            levelTable=createTableDataLevel(thislevelres);
+            if(levelTable)
+            {
+                datatabletitlelist.append(itemtext);
+                datatablelist.append(levelTable);
+                dataTabwidget->addTab(levelTable,itemtext);
+            }
+        }
     }
 }
 void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
@@ -347,7 +374,8 @@ void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
             curRecon.checkers=levelTable->item(row,3)->text();
             curRecon.levelID=levelTable->item(row,4)->text();
             curRecon.updateTime=levelTable->item(row,5)->text();
-
+            curRecon.fatherDirName=levelTable->item(row,6)->text();
+            curRecon.fileName=levelTable->item(row,7)->text();
             if(false)
             {
                 qDebug()<<"?";
@@ -357,6 +385,38 @@ void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
                 commitDialog->updateMainView();
             }
         }
+    }
+}
+void MorphoHub_MainWindow::updateTableDataLevel(QTableWidget *t,QList<ReconstructionInfo> levelres)
+{
+    int col = datatitle.size();
+    int row= levelres.size();
+    t->setRowCount(row);
+    t->setColumnCount(col);
+    t->setHorizontalHeaderLabels(datatitle);
+    if(levelres.size()>0)
+    {
+//        t= new QTableWidget(row,col, this);
+        for(int i=0;i<levelres.size();i++)
+        {
+            ReconstructionInfo tmprecons=levelres.at(i);
+            t->setItem(i,0,new QTableWidgetItem(tmprecons.SdataID));
+            t->setItem(i,1,new QTableWidgetItem(tmprecons.SomaID));
+            t->setItem(i,2,new QTableWidgetItem(tmprecons.author.UserID));
+            t->setItem(i,3,new QTableWidgetItem(tmprecons.checkers));
+            t->setItem(i,4,new QTableWidgetItem(tmprecons.levelID));
+            t->setItem(i,5,new QTableWidgetItem(tmprecons.updateTime));
+            t->setItem(i,6,new QTableWidgetItem(tmprecons.fatherDirName));
+            t->setItem(i,7,new QTableWidgetItem(tmprecons.fileName));
+            //add item to tab.
+        }
+        t->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        t->setSelectionBehavior(QAbstractItemView::SelectRows);
+        t->setSelectionMode(QAbstractItemView::SingleSelection);
+        t->resizeColumnsToContents();
+        t->resizeRowsToContents();
+        //get table cell info when clicked.
+        connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
     }
 }
 
@@ -378,6 +438,8 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
             t->setItem(i,3,new QTableWidgetItem(tmprecons.checkers));
             t->setItem(i,4,new QTableWidgetItem(tmprecons.levelID));
             t->setItem(i,5,new QTableWidgetItem(tmprecons.updateTime));
+            t->setItem(i,6,new QTableWidgetItem(tmprecons.fatherDirName));
+            t->setItem(i,7,new QTableWidgetItem(tmprecons.fileName));
             //add item to tab.
         }
         t->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -410,7 +472,9 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
         while(scanindex<redirlist.size())
         {
             QFileInfo thisdir=redirlist.at(scanindex);
+            scanindex++;
             QString thisdirname=thisdir.fileName();
+
             QDir dirinside(thisdir.filePath());
             QStringList swcnameFilter;
             swcnameFilter<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
@@ -423,6 +487,7 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
             QStringList apofilelist=dirinside.entryList(aponameFilter,QDir::Files|QDir::NoDotAndDotDot,QDir::Name);
             if(swcfilelist.size()!=1||anofilelist.size()!=1||apofilelist.size()!=1)
             {
+                qDebug()<<swcfilelist.size()<<anofilelist.size()<<apofilelist.size();
                 QMessageBox::warning(this,"File Error","Abnormal file found at"+thisdirname);
                 continue;
             }
@@ -434,6 +499,8 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
                 continue;
             }
             ReconstructionInfo tmprecons;
+            tmprecons.fatherDirName=thisdirname;
+            tmprecons.fileName=anofilebasename;
             tmprecons.SdataID=splitAnoFilelist.at(0);
             tmprecons.SomaID=splitAnoFilelist.at(1);
             tmprecons.levelID=levelid;
@@ -458,7 +525,7 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
             }
 
             outlist.append(tmprecons);
-            scanindex++;
+
         }
     }
     //3.write to Qlist
@@ -625,6 +692,33 @@ MorphoHub_MainWindow::MorphoHub_MainWindow()
 /**********************************************************/
 /****************Protocol functions*************************/
 /********Commit,Check,Skip,Rollback,Reassign,Release*****/
+void MorphoHub_MainWindow::checkAction_slot()
+{
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        if(curRecon.alreadyInit())
+        {
+            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog->setAnnotator(curOperator);//
+            commitDialog->setCurNeuron(curRecon);//get current neuron info
+            commitDialog->setFunction("Check");
+            commitDialog->setupAnnotationProtocol(seuallenAP);
+            commitDialog->updateMainView();
+
+            commitDialog->show();
+            commitDialog->setMinimumSize(400,300);
+            commitDialog->setMaximumSize(800,800);
+            commitDialog->setGeometry(100,100,600,400);
+            this->raise();
+        }
+    }
+}
 
 void MorphoHub_MainWindow::commitAction_slot()
 {
@@ -637,17 +731,51 @@ void MorphoHub_MainWindow::commitAction_slot()
     }
     else
     {
-        commitDialog=new MainDialog(this->dbpath,this->originparent);
-        commitDialog->setAnnotator(curOperator);//
-        commitDialog->setCurNeuron(curRecon);//get current neuron info
-        commitDialog->setFunction("Commit");
-        commitDialog->setupAnnotationProtocol(seuallenAP);
-        commitDialog->updateMainView();
+        if(curRecon.alreadyInit())
+        {
+            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog->setAnnotator(curOperator);//
+            commitDialog->setCurNeuron(curRecon);//get current neuron info
+            commitDialog->setFunction("Commit");
+            commitDialog->setupAnnotationProtocol(seuallenAP);
+            commitDialog->updateMainView();
 
-        commitDialog->show();
-        commitDialog->setMinimumSize(400,300);
-        commitDialog->setMaximumSize(800,800);
-        commitDialog->setGeometry(100,100,600,400);
-        this->raise();
+            commitDialog->show();
+            commitDialog->setMinimumSize(400,300);
+            commitDialog->setMaximumSize(800,800);
+            commitDialog->setGeometry(100,100,600,400);
+            this->raise();
+        }
     }
+}
+void MorphoHub_MainWindow::skipAction_slot()
+{
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        if(curRecon.alreadyInit())
+        {
+            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog->setAnnotator(curOperator);//
+            commitDialog->setCurNeuron(curRecon);//get current neuron info
+            commitDialog->setFunction("Skip");
+            commitDialog->setupAnnotationProtocol(seuallenAP);
+            commitDialog->updateMainView();
+
+            commitDialog->show();
+            commitDialog->setMinimumSize(400,300);
+            commitDialog->setMaximumSize(800,800);
+            commitDialog->setGeometry(100,100,600,400);
+            this->raise();
+        }
+    }
+}
+void MorphoHub_MainWindow::rollbackAction_slot()
+{
+
 }
