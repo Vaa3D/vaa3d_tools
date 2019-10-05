@@ -17,19 +17,18 @@ class FragTraceControlPanel : public QDialog
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 
-	// ------- Saving path for results / intermediate results ------- //
+	// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
 	QString adaSaveRoot;
 	QString histMaskRoot;
-	// -------------------------------------------------------------- //
+	// ============================================================== //
 
 
-
-	/********* Result and Scaling Functions *********/ 
+	/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
-	/************************************************/
+	/* ============================================ */
 
 	map<string, float> paramsFromUI;
 
@@ -39,7 +38,7 @@ signals:
 	void switchOnSegPipe(); // currently not in action
 
 public slots:
-    /************* User Interface Configuration Buttons **************/
+    /* =========== User Interface Configuration Buttons ============ */
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
@@ -47,35 +46,34 @@ public slots:
 	void saveSettingsClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
-    /********* END of [User Interface Configuration Buttons] *********/
+    /* ======= END of [User Interface Configuration Buttons] ======= */
 
-	// ====================================================================== //
+	// ********************************************************************** //
 	void traceButtonClicked(); // ==> THIS IS WHERE THE TRACING PROCESS STARTS
-	// ====================================================================== //
+	// ********************************************************************** //
 
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;
-
 	FragTraceManager* traceManagerPtr;
 
-	/***************** Additional Widget *****************/
+	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
-	/*****************************************************/
+	/* ================================================= */
 
 
 
-	/***************** Parameter Collecting Functions *****************/
+	/* =============== Parameter Collecting Functions =============== */
 	void pa_imgEnhancement();
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
 	void pa_postElongation();
-	/************* END of [Parameter Collecting Functions] ************/
+	/* =========== END of [Parameter Collecting Functions] ========== */
 
 
 

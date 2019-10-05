@@ -17,6 +17,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	this->numProcs = stoi(numProcsString);
 
 	this->mode = mode;
+	this->partialVolumeLowerBoundaries = { 0, 0, 0 };
 
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
@@ -596,19 +597,20 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		// ------------------------------------------------------------- //
 	}
 	else if (mode == dendriticTree)
-	{
-		connectedComponent dendriteComponent = *this->signalBlobs.begin();
-		for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin() + 1; compIt != this->signalBlobs.end(); ++compIt)
-			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
-
-		vector<connectedComponent> denComp = { dendriteComponent };
-		NeuronTree denBlobTree = NeuronStructUtil::blobs2tree(denComp);
-		// ------------------------ FOR DEBUG ------------------------------ //
-		QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob.swc"; //
-		writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
-		// ----------------------------------------------------------------- //
+	{	
 		if (this->selectedSomaMap.empty())
 		{
+			connectedComponent dendriteComponent = *this->signalBlobs.begin();
+			for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin() + 1; compIt != this->signalBlobs.end(); ++compIt)
+				if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
+			
+			QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob.swc";
+			vector<connectedComponent> denComp = { dendriteComponent };
+			NeuronTree denBlobTree = NeuronStructUtil::blobs2tree(denComp);
+			// ------------------------ FOR DEBUG ------------------------------ //			
+			writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
+			// ----------------------------------------------------------------- //
+
 			vector<int> origin = this->currDisplayingBlockCenter;
 			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
 			this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
@@ -621,12 +623,34 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		else
 		{
 			vector<NeuronTree> multipleTrees;
+			set<connectedComponent> processedConnComp;
 			for (map<int, ImageMarker>::iterator it = this->selectedLocalSomaMap.begin(); it != this->selectedLocalSomaMap.end(); ++it)
 			{
 				vector<int> origin(3);
-				origin[0] = int(it->second.x);
-				origin[1] = int(it->second.y);
-				origin[2] = int(it->second.z);
+				origin[0] = int(it->second.x) - this->partialVolumeLowerBoundaries[0];
+				origin[1] = int(it->second.y) - this->partialVolumeLowerBoundaries[1];
+				origin[2] = int(it->second.z) - this->partialVolumeLowerBoundaries[2];
+				cout << origin[0] << " " << origin[1] << " " << origin[2] << endl;
+				cout << this->partialVolumeLowerBoundaries[0] << " " << this->partialVolumeLowerBoundaries[1] << " " << this->partialVolumeLowerBoundaries[2] << endl;
+				system("pause");
+
+				connectedComponent dendriteComponent;
+				for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin(); compIt != this->signalBlobs.end(); ++compIt)
+				{
+					if (compIt->coordSets.find(origin.at(2)) != compIt->coordSets.end())
+					{
+						if (compIt->coordSets.at(origin.at(2)).find(origin) != compIt->coordSets.at(origin.at(2)).end())
+							dendriteComponent = *compIt;
+					}
+				}
+
+				QString denBlobSaveNameQ = this->finalSaveRootQ + "\\denBlob" + QString::number(it->first) + ".swc";
+				vector<connectedComponent> denComp = { dendriteComponent };
+				NeuronTree denBlobTree = NeuronStructUtil::blobs2tree(denComp);
+				// ------------------------ FOR DEBUG ------------------------------ //			
+				writeSWC_file(denBlobSaveNameQ, denBlobTree);                      //
+				// ----------------------------------------------------------------- //
+
 				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
 				this->fragTraceTreeGrower.radiusShellMap_loc.clear();
 				this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
@@ -646,6 +670,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 						nodeIt->type = multipleTrees.size();
 				}
 			}
+
 			profiledTree combinedProfiledDenTree(NeuronStructUtil::swcCombine(multipleTrees));
 			objSkeletonProfiledTree = combinedProfiledDenTree;
 		}

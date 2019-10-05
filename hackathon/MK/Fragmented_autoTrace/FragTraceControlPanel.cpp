@@ -547,7 +547,11 @@ void FragTraceControlPanel::traceButtonClicked()
 	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
 	
-	
+	if (this->somaListViewer->rowCount() == 0)
+	{
+		this->traceManagerPtr->selectedSomaMap.clear();
+		this->traceManagerPtr->selectedLocalSomaMap.clear();
+	}
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
 		v3d_msg(QString("The process has been terminated."));
@@ -599,6 +603,8 @@ void FragTraceControlPanel::traceButtonClicked()
 		this->markerMonitorSwitch = true;
 		this->markerMonitor();
 	}
+
+	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
 /* ============================================================================================ */
 
@@ -648,11 +654,22 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
 		const char* saveNameC2 = saveName2.c_str();
 		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
-		// --------------------------------- /
+		// --------------------------------- //
 
 		if (this->traceManagerPtr == nullptr)
+		{
 			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
-		else this->traceManagerPtr->reinit(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
+		else
+		{
+			this->traceManagerPtr->reinit(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
 
 		delete[] currBlock1Dptr;
 		delete[] croppedBlock1Dptr;		
