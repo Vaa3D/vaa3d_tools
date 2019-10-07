@@ -56,6 +56,7 @@ struct AnnotationProtocol{
     QStringList skipLevel;//skiplevel is the start level of skip function
     QStringList finishedLevel;//finishedlevel is the end level of Finished function
     QStringList archiveFinishedLevel;//end level of Archive function
+    QStringList rollbackLevel;//start level of rollback level
     QString ApConfPath;
     QHash<QString,AnnotationProtocolFunction> protocolrules;
     AnnotationProtocol(){
@@ -71,6 +72,8 @@ struct AnnotationProtocol{
         checkLevel<<"L1A"<<"L1C"<<"L2A"<<"L2C";
         finishedLevel<<"L1D"<<"L2D";
         archiveFinishedLevel<<"L1"<<"L2";
+        rollbackLevel<<"L1ACheck"<<"L1CCheck"
+                    <<"L2ACheck"<<"L2CCheck";
         initprotocolrules();
     }
     void initprotocolrules(){
@@ -84,6 +87,54 @@ struct AnnotationProtocol{
                 protocolrules[startlevel_endlevel]=ApfRead;
             }
         }
+    }
+    QString APFRollback(const QString& inputlevel,bool moveforward=true)
+    {
+        QString outLevel;
+        if(!inputlevel.isEmpty())
+        {
+            int levelindex=rollbackLevel.indexOf(inputlevel);
+            if(levelindex!=-1)
+            {
+                int plevel=protocolLevel.indexOf(inputlevel);
+                if(moveforward)
+                {
+
+                    outLevel=protocolLevel.at(plevel-2);
+                    if(levelindex==0||levelindex==7)
+                        outLevel+="/Annotator";
+                }
+                else
+                    outLevel=protocolLevel.at(plevel-1);//this is for deleting middle level at Neuron Archives
+            }
+        }
+        return outLevel;
+    }
+    QString APFReassign(const QString& inputlevel,bool moveforward=true)
+    {
+        QString outLevel;
+        if(!inputlevel.isEmpty())
+        {
+            int levelindex=rollbackLevel.indexOf(inputlevel);
+            if(levelindex!=-1)
+            {
+                int plevel=protocolLevel.indexOf(inputlevel);
+                int AS2levelindex=protocolLevel.indexOf("Assigned2");
+                if(moveforward)
+                {
+                    if(plevel<AS2levelindex)
+                        outLevel=protocolLevel.at(0);
+                    else if(plevel>AS2levelindex)
+                        outLevel=protocolLevel.at(AS2levelindex);
+                    outLevel+="/Priority";
+                }
+                else
+                {
+                    outLevel=protocolLevel.at(plevel-1);//have error here
+                }
+            }
+        }
+        return outLevel;
     }
     QString APFCommit(const QString& inputlevel)
     {

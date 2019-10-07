@@ -13,7 +13,7 @@ private:
 
     AnnotationProtocol ApforthisDialog;
     Annotator author;
-    QString choseFuction;
+
     ReconstructionInfo curNeuron;
     ReconstructionInfo nextNeuron;
 public:
@@ -21,8 +21,10 @@ public:
     MainDialog();
     ~MainDialog();
     bool dialogReady;
+    QString choseFuction;
     void MainInit();
     void updateMainView();
+    void clearMainView();
     void setFunction(const QString& func);
     void setCurNeuron(ReconstructionInfo inputNeuron);
     void setAnnotator(Annotator inputauthor);
@@ -54,6 +56,12 @@ public:
     QCheckBox *nextlevel_NeuronArchives_CheckBox;
     QCheckBox *nextlevel_Finished_CheckBox;
     QLineEdit *nextlevel_Finished_LineEdit;
+
+    QLineEdit* removeLevel_WorkingSpace_LineEdit;
+    QLineEdit* removeLevel_Finished_LineEdit;
+    QLineEdit* removeLevel_Archives_LineEdit;
+    QLineEdit* recovery_WorkingSpace_LineEdit;
+
     QPushButton *okayButton;
     QPushButton *cancelButton;
 

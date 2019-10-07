@@ -14,7 +14,6 @@ class MorphoHub_MainWindow : public QMainWindow
 public:
     explicit MorphoHub_MainWindow(QWidget *parent = 0);
 public:
-
     QList<ReconstructionInfo> getReconstuctionsFromLevel(const QString& levelid);
 
     //store the basic init folder list for db.
@@ -50,9 +49,9 @@ private:
     /*..............Database layout ............*/
     QWidget *mainWidget;
     QHBoxLayout *mainlayout;
-    QSplitter *LsplitterofM;
-    QSplitter *RsplitterofM;
 
+    /*..............MainLog dock windows............*/
+    QDockWidget *MainLogwidget;
     QTextEdit *logtextedit;//for log
     void toLogWindow(const QString& logtext);
 
@@ -64,17 +63,15 @@ private:
     /*..............Database basic action............*/
     QAction *NewDBAction;
     QAction *SetDBAction;
+    /*..............Management dialog............*/
+    SourceDataManagement *sdconf_dialog;
     /*..............Management actions............*/
     QAction *sdconfAction;
     QAction *annotatorconfAction;
 
-
-
     /*Initialization*/
     void MorphoHub_Init();
     void InitofAnnotationProtocol();
-    /*..............Database dock windows............*/
-    QDockWidget *contentwidget;
 
     QString contentindex;
     QTabWidget *dataTabwidget;
@@ -91,9 +88,6 @@ private:
     QTreeWidgetItem *content_workingspace;
     QTreeWidgetItem *content_basicData;
 
-    /*..............Management dialog............*/
-    SourceDataManagement *sdconf_dialog;
-
     /****************Protocol functions*************************/
     ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
     /*..............Protocol actions............*/
@@ -105,6 +99,18 @@ private:
     QAction *releaseAction;
     MainDialog *commitDialog;
 
+    /*..............Login Dialog............*/
+    QToolBar *loginToolbar;
+    QDialog *loginDialog;
+    QGridLayout *loginMainlayout;
+    QAction *loginAction;
+    QLineEdit *loginUserIDQLineEdit;
+    QLineEdit *loginPasswordQlineedit;
+    QPushButton *loginCancelButton;
+    QPushButton *loginOkayButton;
+
+    QAction *logoutAction;
+
 private slots:
     void NewDB_slot();
     void SetDB_slot();
@@ -113,6 +119,11 @@ private slots:
     void dataTabChange(int tabindex);
     void contentValueChange(QTreeWidgetItem *item,int column);
     void celltableInfoUpdate(int row,int column);
+    void loginAction_slot();
+    void loginOkayButton_slot();
+    void loginCancelButton_slot();
+    void logoutAction_slot();
+
 signals:
     
 public slots:
@@ -123,6 +134,8 @@ public slots:
     void checkAction_slot();
     void skipAction_slot();
     void rollbackAction_slot();
+    void reassignAction_slot();
+
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H

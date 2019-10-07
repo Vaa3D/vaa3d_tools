@@ -80,8 +80,7 @@ void MorphoHub_MainWindow::MorphoHub_Init()
     //morphoHub_dialog=new MainDialog(this->originparent);
     mainWidget=new QWidget(this);
     mainlayout=new QHBoxLayout();
-    logtextedit=new QTextEdit(this);
-    logtextedit->setText(tr("Welcome to MorphoHub."));
+
     //init of annotation protocol
     seuallenAP.ApConfPath=this->dbpath+"/Configuration/WorkingSpace_Conf/AnnotationProtocol.conf";
     InitofAnnotationProtocol();
@@ -144,6 +143,7 @@ void MorphoHub_MainWindow::InitofAnnotationProtocol()
     }
 }
 
+
 void MorphoHub_MainWindow::createActions()
 {
     //action for database
@@ -179,9 +179,24 @@ void MorphoHub_MainWindow::createActions()
 
     rollbackAction= new QAction(tr("&Rollback"), this);
     rollbackAction->setToolTip(tr("rollback one neuron"));
+    connect(rollbackAction,SIGNAL(triggered()),this,SLOT(rollbackAction_slot()));
+
     reassignAction= new QAction(tr("&Reassign"), this);
     reassignAction->setToolTip(tr("reassign one neuron"));
+    connect(reassignAction,SIGNAL(triggered()),this,SLOT(reassignAction_slot()));
+
+    //Actions for window
+    loginAction=new QAction(tr("&Login"),this);
+    loginAction->setToolTip(tr("You have to sign in to get the advanced functions."));
+    loginAction->setEnabled(true);
+    connect(loginAction,SIGNAL(triggered()),this,SLOT(loginAction_slot()));
+
+    logoutAction=new QAction(tr("&LogOut"),this);
+    logoutAction->setEnabled(false);
+    connect(logoutAction,SIGNAL(triggered()),this,SLOT(logoutAction_slot()));
+
 }
+
 
 void MorphoHub_MainWindow::createToolBar()
 {
@@ -196,7 +211,13 @@ void MorphoHub_MainWindow::createToolBar()
     levelControlToolbar->addAction(skipAction);
     levelControlToolbar->addAction(rollbackAction);
     levelControlToolbar->addAction(reassignAction);
+
+    loginToolbar=this->addToolBar(tr("Login"));
+    loginToolbar->addAction(loginAction);
+    loginToolbar->addAction(logoutAction);
+
 }
+
 void MorphoHub_MainWindow::createMenus()
 {
     //file menu
@@ -221,13 +242,15 @@ void MorphoHub_MainWindow::createMenus()
 
     //window menu
     menuWindow = menuBar()->addMenu(tr("&Window"));
-
+    menuWindow->addAction(loginAction);
+    menuWindow->addAction(logoutAction);
     //help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
 }
 /**********************************************************/
 /****************Bottom status bar*************************/
 /**********************************************************/
+
 void MorphoHub_MainWindow::createStatusBar()
 {
     statusLabel=new QLabel("MorphoHub");
@@ -236,14 +259,24 @@ void MorphoHub_MainWindow::createStatusBar()
     statusBar()->addWidget(statusLabel);
 }
 
+
 void MorphoHub_MainWindow::setMainLayout()
 {
-    mainlayout->addWidget(contentTreewidget,2);
-    mainlayout->addWidget(dataTabwidget,5);
-    mainlayout->addWidget(logtextedit,3);
+    logtextedit=new QTextEdit(this);
+    logtextedit->setText(tr("Welcome to MorphoHub."));
+    MainLogwidget=new QDockWidget("Main Log");
+    MainLogwidget->setAllowedAreas(Qt::AllDockWidgetAreas);
+    MainLogwidget->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetFloatable);
+    MainLogwidget->setWidget(logtextedit);
+    this->addDockWidget(Qt::BottomDockWidgetArea,MainLogwidget);
+
+    mainlayout->addWidget(contentTreewidget,1);
+    mainlayout->addWidget(dataTabwidget,7);
+    //mainlayout->addWidget(MainLogwidget,2);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);
 }
+
 void MorphoHub_MainWindow::createContentTreeWidget()
 {
     contentTreewidget=new QTreeWidget(this);
@@ -290,6 +323,7 @@ void MorphoHub_MainWindow::createContentTreeWidget()
     }
     connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
 }
+
 void MorphoHub_MainWindow::createTabWindow()
 {
     //new tab window
@@ -319,7 +353,9 @@ void MorphoHub_MainWindow::createTabWindow()
     connect(dataTabwidget,SIGNAL(tabCloseRequested(int)),this,SLOT(removeSubTab(int)));
     //set tab widget
     connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+
 }
+
 
 void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
 {
@@ -333,14 +369,21 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
     {
         //1.move to this tab
         int tabindex=datatabletitlelist.indexOf(itemtext);
-        dataTabwidget->setCurrentIndex(tabindex);
-        //2.update the content of this tab
-        QTableWidget *levelTable=datatablelist.at(tabindex);
-        levelTable->clear();
-        //get reconstructions info from this level
-        QList<ReconstructionInfo> thislevelres;
-        thislevelres=getReconstuctionsFromLevel(itemtext);
-        updateTableDataLevel(levelTable,thislevelres);
+        if(dataTabwidget->currentIndex()!=tabindex)
+        {
+            dataTabwidget->setCurrentIndex(tabindex);
+        }
+        else
+        {
+            //2.update the content of this tab
+            QTableWidget *levelTable=datatablelist.at(tabindex);
+            levelTable->clear();
+            //get reconstructions info from this level
+            QList<ReconstructionInfo> thislevelres;
+            thislevelres=getReconstuctionsFromLevel(itemtext);
+            updateTableDataLevel(levelTable,thislevelres);
+            toLogWindow(tr("Tab: %1 update!").arg(itemtext));
+        }
     }
     else
     {
@@ -356,6 +399,7 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
                 datatabletitlelist.append(itemtext);
                 datatablelist.append(levelTable);
                 dataTabwidget->addTab(levelTable,itemtext);
+                toLogWindow(tr("New Tab: %1 !").arg(itemtext));
             }
         }
     }
@@ -452,6 +496,7 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
     }
     return t;
 }
+
 QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const QString& levelid)
 {
     QList<ReconstructionInfo> outlist;
@@ -665,6 +710,7 @@ void MorphoHub_MainWindow::SetDB_slot()
 void MorphoHub_MainWindow::updateStatusBar(const QString& showtext)
 {
     statusLabel->setText(showtext);
+    toLogWindow(showtext);
 }
 void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
 {
@@ -672,13 +718,95 @@ void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
     QString showText=getlogtext+"\n"+logtext;
     logtextedit->setText(showText);
 }
+
 void MorphoHub_MainWindow::removeSubTab(int subindex)
 {
     dataTabwidget->removeTab(subindex);
 }
+
 void MorphoHub_MainWindow::dataTabChange(int tabindex)
 {
+    //update the content of this tab
+    QTableWidget *levelTable=datatablelist.at(tabindex);
+    QString itemtext=datatabletitlelist.at(tabindex);
+    levelTable->clear();
+    toLogWindow(tr("Move to Tab: %1").arg(itemtext));
+    //get reconstructions info from this level
+    QList<ReconstructionInfo> thislevelres;
+    thislevelres=getReconstuctionsFromLevel(itemtext);
+    updateTableDataLevel(levelTable,thislevelres);
+    toLogWindow(tr("Tab: %1 update!").arg(itemtext));
+}
 
+void MorphoHub_MainWindow::loginAction_slot()
+{
+    loginDialog=new QDialog();
+    loginDialog->setWindowTitle("MorphoHub-Login-Window");
+
+    QLabel *userIDQLabel=new QLabel("UserID:");
+    loginUserIDQLineEdit=new QLineEdit();
+    QLabel *passwordQLabel=new QLabel("Password:");
+    loginPasswordQlineedit=new QLineEdit();
+
+    loginCancelButton =new QPushButton("Cancel");
+    connect(loginCancelButton,SIGNAL(clicked()),this,SLOT(loginCancelButton_slot()));
+    loginOkayButton=new QPushButton("Okay");
+    connect(loginOkayButton,SIGNAL(clicked()),this,SLOT(loginOkayButton_slot()));
+
+    loginMainlayout=new QGridLayout();
+    loginMainlayout->addWidget(userIDQLabel,1,0,1,2);
+    loginMainlayout->addWidget(loginUserIDQLineEdit,1,2,1,2);
+    loginMainlayout->addWidget(passwordQLabel,2,0,1,1);
+    loginMainlayout->addWidget(loginPasswordQlineedit,2,2,1,2);
+
+    loginMainlayout->addWidget(loginCancelButton,4,0,1,1);
+    loginMainlayout->addWidget(loginOkayButton,4,3,1,1);
+
+    loginDialog->setLayout(loginMainlayout);
+    loginDialog->raise();
+//    loginDialog->setFixedSize(400,400);
+
+    loginDialog->setGeometry(100,100,400,400);
+    loginDialog->show();
+}
+
+void MorphoHub_MainWindow::loginOkayButton_slot()
+{
+    if(!loginUserIDQLineEdit->text().isEmpty())
+    {
+        //check the input at conf
+        //if yes
+        curOperator.UserID=loginUserIDQLineEdit->text().toUpper();
+        curOperator.workingplace="SEU";
+        curOperator.priority=APAdministrater;
+        loginDialog->close();
+        loginAction->setEnabled(false);
+        logoutAction->setEnabled(true);
+        toLogWindow(tr("Welcome %1 login.").arg(curOperator.UserID));
+        updateStatusBar(tr("User: %1").arg(curOperator.UserID));
+    }
+    else
+    {
+        QMessageBox::warning(this,"Input Errot","Please Input User ID!");
+        return;
+    }
+}
+
+void MorphoHub_MainWindow::loginCancelButton_slot()
+{
+    loginDialog->close();
+}
+
+void MorphoHub_MainWindow::logoutAction_slot()
+{
+    QString olduserID=curOperator.UserID;
+    curOperator.UserID="";
+    curOperator.workingplace="";
+    curOperator.priority=APvisitor;
+    loginAction->setEnabled(true);
+    logoutAction->setEnabled(false);
+    toLogWindow(tr("%1 logout").arg(olduserID));
+    updateStatusBar(tr("MorphoHub: nobody").arg(olduserID));
 }
 
 MorphoHub_MainWindow::~MorphoHub_MainWindow()
@@ -692,6 +820,7 @@ MorphoHub_MainWindow::MorphoHub_MainWindow()
 /**********************************************************/
 /****************Protocol functions*************************/
 /********Commit,Check,Skip,Rollback,Reassign,Release*****/
+
 void MorphoHub_MainWindow::checkAction_slot()
 {
     QDir dbdir(this->dbpath);
@@ -712,20 +841,21 @@ void MorphoHub_MainWindow::checkAction_slot()
             commitDialog->updateMainView();
 
             commitDialog->show();
-            commitDialog->setMinimumSize(400,300);
-            commitDialog->setMaximumSize(800,800);
-            commitDialog->setGeometry(100,100,600,400);
+            commitDialog->setGeometry(100,100,600,800);
             this->raise();
         }
     }
 }
 
+
 void MorphoHub_MainWindow::commitAction_slot()
 {
     //
+    toLogWindow("call Commit function");
     QDir dbdir(this->dbpath);
     if(!dbdir.exists())
     {
+        toLogWindow("Error: can't find database path!");
         QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
         return;
     }
@@ -733,6 +863,7 @@ void MorphoHub_MainWindow::commitAction_slot()
     {
         if(curRecon.alreadyInit())
         {
+            toLogWindow("Go to Commit page.");
             commitDialog=new MainDialog(this->dbpath,this->originparent);
             commitDialog->setAnnotator(curOperator);//
             commitDialog->setCurNeuron(curRecon);//get current neuron info
@@ -741,13 +872,12 @@ void MorphoHub_MainWindow::commitAction_slot()
             commitDialog->updateMainView();
 
             commitDialog->show();
-            commitDialog->setMinimumSize(400,300);
-            commitDialog->setMaximumSize(800,800);
-            commitDialog->setGeometry(100,100,600,400);
+            commitDialog->setGeometry(100,100,600,800);
             this->raise();
         }
     }
 }
+
 void MorphoHub_MainWindow::skipAction_slot()
 {
     QDir dbdir(this->dbpath);
@@ -768,14 +898,41 @@ void MorphoHub_MainWindow::skipAction_slot()
             commitDialog->updateMainView();
 
             commitDialog->show();
-            commitDialog->setMinimumSize(400,300);
-            commitDialog->setMaximumSize(800,800);
-            commitDialog->setGeometry(100,100,600,400);
+            commitDialog->setGeometry(100,100,600,800);
             this->raise();
         }
     }
 }
+
 void MorphoHub_MainWindow::rollbackAction_slot()
 {
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        if(curRecon.alreadyInit())
+        {
+            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog->setAnnotator(curOperator);//
+            commitDialog->setCurNeuron(curRecon);//get current neuron info
+            commitDialog->setFunction("Rollback");
+            commitDialog->setupAnnotationProtocol(seuallenAP);
+            commitDialog->updateMainView();
 
+            commitDialog->show();
+            commitDialog->setGeometry(100,100,600,800);
+            this->raise();
+        }
+    }
 }
+
+void MorphoHub_MainWindow::reassignAction_slot()
+{
+    QMessageBox::warning(this,"Not Open","Please Wait!");
+    return;
+}
+

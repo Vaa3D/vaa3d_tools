@@ -3,7 +3,6 @@
 MainDialog::MainDialog(const QString &path, QWidget *parent)
     :QDialog(parent)
 {
-
     setupDBpath(path);
     setWindowTitle(tr("MorphoHub-LevelControl"));
     MainInit();
@@ -79,6 +78,29 @@ void MainDialog::createMainView()
     nextlevel_Finished_CheckBox->setCheckState(Qt::Unchecked);
 //    nextlevel_Finished_CheckBox->setCheckable(true);
 
+    //will remove level
+    QLabel* removeLevel_label=new QLabel(tr("Remove level (Neuron will be removed at the following level.)"));
+    QLabel* removeLevel_WorkingSpace_Label=new QLabel(tr("1.WorkingSpace: "));
+    removeLevel_WorkingSpace_LineEdit=new QLineEdit();
+    removeLevel_WorkingSpace_LineEdit->setText("");
+    removeLevel_WorkingSpace_LineEdit->setEnabled(false);
+
+    QLabel* removeLevel_Archives_Label=new QLabel(tr("2.NeuronArchives: "));
+    removeLevel_Archives_LineEdit=new QLineEdit();
+    removeLevel_Archives_LineEdit->setText("");
+    removeLevel_Archives_LineEdit->setEnabled(false);
+
+    QLabel* removeLevel_Finished_Label=new QLabel(tr("3.Finished: "));
+    removeLevel_Finished_LineEdit=new QLineEdit();
+    removeLevel_Finished_LineEdit->setText("");
+    removeLevel_Finished_LineEdit->setEnabled(false);
+    //recovery path
+    QLabel* recovery_label=new QLabel(tr("Recovery Path (Operations can be recovered from the following level.)"));
+    QLabel* recovery_WorkingSpace_Label=new QLabel(tr("1.WorkingSpace: "));
+    recovery_WorkingSpace_LineEdit=new QLineEdit();
+    recovery_WorkingSpace_LineEdit->setText("");
+    recovery_WorkingSpace_LineEdit->setEnabled(false);
+
     //button: okay & cancel
     okayButton=new QPushButton("YES");
     cancelButton=new QPushButton("Cancel");
@@ -105,21 +127,35 @@ void MainDialog::createMainView()
     mainLayout->addWidget(nowLevelLabel,4,0,1,2);
     mainLayout->addWidget(nowlevelLineEdit,4,2,1,2);
 
+    //nextlevel
     mainLayout->addWidget(nextlevelLabel,5,0,1,4);
     mainLayout->addWidget(nextlevel_WorkingSpace_Label,6,0,1,1);
-    mainLayout->addWidget(nextlevel_WorkingSpace_LineEdit,6,1,1,2);
-    mainLayout->addWidget(nextlevel_WorkingSpace_CheckBox,6,3,1,1);
+    mainLayout->addWidget(nextlevel_WorkingSpace_LineEdit,6,1,1,3);
+    //mainLayout->addWidget(nextlevel_WorkingSpace_CheckBox,6,3,1,1);
 
     mainLayout->addWidget(nextlevel_NeuronArchives_Label,7,0,1,1);
-    mainLayout->addWidget(nextlevel_NeuronArchives_LineEdit,7,1,1,2);
-    mainLayout->addWidget(nextlevel_NeuronArchives_CheckBox,7,3,1,1);
+    mainLayout->addWidget(nextlevel_NeuronArchives_LineEdit,7,1,1,3);
+    //mainLayout->addWidget(nextlevel_NeuronArchives_CheckBox,7,3,1,1);
 
     mainLayout->addWidget(nextlevel_Finished_Label,8,0,1,1);
-    mainLayout->addWidget(nextlevel_Finished_LineEdit,8,1,1,2);
-    mainLayout->addWidget(nextlevel_Finished_CheckBox,8,3,1,1);
+    mainLayout->addWidget(nextlevel_Finished_LineEdit,8,1,1,3);
+    //mainLayout->addWidget(nextlevel_Finished_CheckBox,8,3,1,1);
+    //remove level
+    mainLayout->addWidget(removeLevel_label,9,0,1,2);
+    mainLayout->addWidget(removeLevel_WorkingSpace_Label,10,0,1,1);
+    mainLayout->addWidget(removeLevel_WorkingSpace_LineEdit,10,1,1,3);
+    mainLayout->addWidget(removeLevel_Archives_Label,11,0,1,1);
+    mainLayout->addWidget(removeLevel_Archives_LineEdit,11,1,1,3);
+    mainLayout->addWidget(removeLevel_Finished_Label,12,0,1,1);
+    mainLayout->addWidget(removeLevel_Finished_LineEdit,12,1,1,3);
 
-    mainLayout->addWidget(cancelButton,9,0,1,2);
-    mainLayout->addWidget(okayButton,9,2,1,2);
+    //recovery path
+    mainLayout->addWidget(recovery_label,13,0,1,2);
+    mainLayout->addWidget(recovery_WorkingSpace_Label,14,0,1,1);
+    mainLayout->addWidget(recovery_WorkingSpace_LineEdit,14,1,1,3);
+
+    mainLayout->addWidget(cancelButton,15,0,1,2);
+    mainLayout->addWidget(okayButton,15,2,1,2);
 
 }
 void MainDialog::MainInit()
@@ -133,12 +169,23 @@ void MainDialog::MainInit()
     curNeuron.levelID="Unknown";
     this->dialogReady=false;
 }
-void MainDialog::updateMainView()
+void MainDialog::clearMainView()
 {
-    //0.clear old state
+
+    //clear old state
     nextlevel_WorkingSpace_LineEdit->setText("");
     nextlevel_NeuronArchives_LineEdit->setText("");
     nextlevel_Finished_LineEdit->setText("");
+
+    removeLevel_WorkingSpace_LineEdit->setText("");
+    removeLevel_Finished_LineEdit->setText("");
+    removeLevel_Archives_LineEdit->setText("");
+    recovery_WorkingSpace_LineEdit->setText("");
+}
+
+void MainDialog::updateMainView()
+{
+    clearMainView();
     addcheckerName->setEnabled(true);
     //1. update window title
     this->setWindowTitle(QObject::tr("MorphoHub-%1-%2").arg(choseFuction).arg(author.UserID));
@@ -153,9 +200,15 @@ void MainDialog::updateMainView()
     checkersLineEdit->setText(curNeuron.checkers);
     nowlevelLineEdit->setText(curNeuron.levelID);
     nextlevelLabel->setText(tr("Next Level List (Neuron will %1 to the following level.)").arg(choseFuction));
+    QString path_recovery="/WorkingSpace/QuestionZone/tmp/"+curNeuron.fatherDirName;
+    recovery_WorkingSpace_LineEdit->setText(path_recovery);
+    //if the function is check function,add the operator name to the list
+    if(QString::compare(choseFuction,"Check")==0)
+        addcheckerName_slot();
     //3.According to the chosen function and levelID get the next level list:
     QStringList nextlevelist=getNextlevelList();
     //4.display
+    //4.1 next level
     if(nextlevelist.size()==0)
     {
         okayButton->setEnabled(false);
@@ -185,6 +238,19 @@ void MainDialog::updateMainView()
         okayButton->setEnabled(false);
         return;
     }
+    //4.2 remove level
+    removeLevel_WorkingSpace_LineEdit->setText(curNeuron.levelID);
+    if(QString::compare(choseFuction,"Rollback")==0)
+    {
+        //remove archive level
+        QString archivelevel=ApforthisDialog.APFRollback(curNeuron.levelID,false);
+        if(!archivelevel.isEmpty())
+        {
+            removeLevel_Archives_LineEdit->setText(archivelevel);
+        }
+    }
+
+    //4.3 recovery level
 }
 QStringList MainDialog::getNextlevelList()
 {
@@ -259,6 +325,20 @@ QStringList MainDialog::getNextlevelList()
             }
         }
     }
+        break;
+    case 4://rollback function
+    {
+        QString  workingspacelevel=ApforthisDialog.APFRollback(curNeuron.levelID);
+        if(!workingspacelevel.isEmpty())
+        {
+            if(workingspacelevel.split("/").size()>1)
+                workingspacelevel+=("/"+curNeuron.author.UserID);
+            outlist.append(workingspacelevel);
+        }
+        break;
+    }
+    case 5://reassign function
+
         break;
     }
     //
@@ -433,6 +513,22 @@ void MainDialog::OnfunctionlistQComboBox_slot(int index)
 {
     if(index!=-1)
     {
+        if(index==0||index>4)
+        {
+            QMessageBox::warning(this,"Function Not Ready","Please Wait!");
+            functionlistQComboBox->setCurrentIndex(1);
+        }
+        if(index==4)
+        {
+            //rollback function
+            addcheckerName->setText("Remove Checker Name");
+            addcheckerName->setToolTip("This Button will only remove the last checker name at the checkers list.");
+        }
+        else
+        {
+            addcheckerName->setText("Add Your Name");
+            addcheckerName->setToolTip("This Button will add your name to the checkers list.");
+        }
         choseFuction=functionlistQComboBox->currentText();
         //1.update
         updateMainView();
@@ -442,10 +538,33 @@ void MainDialog::OnfunctionlistQComboBox_slot(int index)
 void MainDialog::addcheckerName_slot()
 {
     QString precheckers=checkersLineEdit->text();
-    if(precheckers.isEmpty())
-        checkersLineEdit->setText(author.UserID);
+    if(addcheckerName->text().compare("Add Your Name")==0)
+    {
+        if(precheckers.isEmpty())
+            checkersLineEdit->setText(author.UserID);
+        else
+            checkersLineEdit->setText(precheckers+"&"+author.UserID);
+    }
     else
-        checkersLineEdit->setText(precheckers+"&"+author.UserID);
+    {
+        if(precheckers.isEmpty())
+            addcheckerName->setEnabled(false);
+        else
+        {
+            QStringList precheckerslist=precheckers.split("&");
+            if(precheckerslist.size()==1)
+                checkersLineEdit->setText("");
+            else
+            {
+                QString newcheckers=precheckerslist.at(0);
+                for(int i=1;i<(precheckerslist.size()-1);i++)
+                {
+                    newcheckers+=("&"+precheckerslist.at(i));
+                }
+                checkersLineEdit->setText(newcheckers);
+            }
+        }
+    }
     addcheckerName->setEnabled(false);
 }
 void MainDialog::okayButton_slot()
@@ -514,6 +633,7 @@ void MainDialog::okayButton_slot()
     qDebug()<<"ano file ="<<anofilename;
     qDebug()<<"apo file ="<<apofilename;
     qDebug()<<"swc file ="<<swcfilename;
+
     //2.generate next level neuron info
     generateNextNeuron();
     if(!nextNeuron.alreadyInit())
@@ -598,7 +718,37 @@ void MainDialog::okayButton_slot()
             break;
         okstep++;
     }
-    //5.final step: remove old level (curNeuron) and recovery
+    //5.generate removepath
+    QStringList rmpathlist;
+    //  5.1 for Commit,Skip and Check. the remove path would be the old level data.
+    //  5.2 for Rollback and Reassign. the remove path would be the old level data at WorkingSpace and the redundant level data at NeuronArchives
+    if(!removeLevel_WorkingSpace_LineEdit->text().isEmpty())
+    {
+        if(choseFuction.compare("Commit")==0||
+                choseFuction.compare("Check")==0||
+                choseFuction.compare("Skip")==0)
+        {
+            QString path_workingspace=this->dbpath+"/WorkingSpace/"+
+                    removeLevel_WorkingSpace_LineEdit->text()+"/"+curNeuron.fatherDirName+"/";
+            rmpathlist.append(path_workingspace);
+            qDebug()<<"rm path1="<<path_workingspace;
+        }
+        else if(choseFuction.compare("Rollback")==0)
+        {
+            QString path_workingspace=this->dbpath+"/WorkingSpace/"+
+                    removeLevel_WorkingSpace_LineEdit->text()+"/"+curNeuron.fatherDirName+"/";
+            rmpathlist.append(path_workingspace);
+            qDebug()<<"rm path1="<<path_workingspace;
+            if(!removeLevel_Archives_LineEdit->text().isEmpty())
+            {
+                QString path_neuronarchives=this->dbpath+"/BasicData/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
+                        removeLevel_Archives_LineEdit->text()+"/";
+                rmpathlist.append(path_neuronarchives);
+                qDebug()<<"rm path1="<<path_neuronarchives;
+            }
+        }
+    }
+    //6.final step: remove old level (curNeuron) and recovery
     bool recovery=false;
     if(okstep!=dstpathlist.size())
     {        //failed at some steps
@@ -607,7 +757,8 @@ void MainDialog::okayButton_slot()
         recovery=true;
     }
     else
-    {        //6.clear and return
+    {
+        //6.clear and return
         //check dstpathlist, to see if all operation are done.
         bool alldone=true;
         for(int i=1;i<dstpathlist.size();i++)
@@ -632,25 +783,31 @@ void MainDialog::okayButton_slot()
         {
             qDebug()<<"Already done all the check";
             //clear older level and tmp dst
-            QDir olderdir(basefilepath);
-            olderdir.setFilter(QDir::Files);
-            if(olderdir.exists())
+            for(int i=0;i<rmpathlist.size();i++)
             {
-                for(int j=0;j<olderdir.count();j++)
+                QDir olderdir(rmpathlist.at(i));
+                olderdir.setFilter(QDir::Files);
+                if(olderdir.exists())
                 {
-                    qDebug()<<"rm"<<olderdir[j];
-                    olderdir.remove(olderdir[j]);
+                    for(int j=0;j<olderdir.count();j++)
+                    {
+                        qDebug()<<"rm"<<olderdir[j];
+                        olderdir.remove(olderdir[j]);
+                    }
+                    olderdir.rmdir(rmpathlist.at(i));
+                    qDebug()<<"rm dir: "<<rmpathlist.at(i);
                 }
-                olderdir.rmdir(basefilepath);
-                qDebug()<<"rm dir: "<<basefilepath;
-            }
-            if(olderdir.exists())
-            {                //failed and clear
-                recovery=true;
+                if(olderdir.exists())
+                {
+                    //failed and clear
+                    recovery=true;
+                    break;
+                }
             }
         }
         else
-        {            //failed and clear
+        {
+            //failed and clear
             recovery=true;
         }
     }
@@ -662,12 +819,12 @@ void MainDialog::okayButton_slot()
         QString curdstpath=dstpathlist.at(0);
         //copy
         QFile fileoperator;
-        bool anook=fileoperator.copy((curdstpath+anofilename),(basefilepath+anofilename));
-        bool apook=fileoperator.copy((curdstpath+apofilename),(basefilepath+apofilename));
-        bool swcok=fileoperator.copy((curdstpath+swcfilename),(basefilepath+swcfilename));
+        bool anook=fileoperator.copy((curdstpath+anofilename),(rmpathlist.at(0)+anofilename));
+        bool apook=fileoperator.copy((curdstpath+apofilename),(rmpathlist.at(0)+apofilename));
+        bool swcok=fileoperator.copy((curdstpath+swcfilename),(rmpathlist.at(0)+swcfilename));
         if(anook&&apook&&swcok)
         {
-            QMessageBox::warning(this,tr("Recovery Success"),tr("%1 is recovered from tmp path.").arg(basefilepath+anofilename));
+            QMessageBox::warning(this,tr("Recovery Success"),tr("%1 is recovered from tmp path.").arg(rmpathlist.at(0)+anofilename));
         }
         for(int i=0;i<okstep;i++)
         {
@@ -710,11 +867,11 @@ void MainDialog::cancelButton_slot()
     this->close();
 }
 
+
 MainDialog::~MainDialog()
 {
 
 }
 MainDialog::MainDialog()
 {
-    qDebug()<<"MainDialog init default";
 }
