@@ -22,7 +22,7 @@ private:
     void SDMInit();
     void createTabView();
     QGridLayout *mainLayout;
-    QHBoxLayout *tabLayout;
+    //QHBoxLayout *tabLayout;
 
     QVBoxLayout *functionLayout;
     QGroupBox *functionGroupBox;

@@ -5,7 +5,9 @@
 #include <QtGui>
 #include "../MainDialog/maindialog.h"
 #include "../MainDialog/sourcedatamanagement.h"
+#include "../MainDialog/annotatormanagement.h"
 #include "../BasicInfo.h"
+#include "v3d_interface.h"
 using namespace std;
 
 class MorphoHub_MainWindow : public QMainWindow
@@ -38,12 +40,12 @@ private:
     void createActions();
     QMenu *file;
     QMenu *managementMenu;
-    QMenu *funcs;
+    //QMenu *funcs;
     QMenu *levelControlMenu;
     QMenu *menuWindow;
     QMenu *helpMenu;
     QToolBar *dbToolbar;
-    QToolBar *funcsToolbar;
+//    QToolBar *funcsToolbar;
     QToolBar *levelControlToolbar;
 
     /*..............Database layout ............*/
@@ -55,6 +57,9 @@ private:
     QTextEdit *logtextedit;//for log
     void toLogWindow(const QString& logtext);
 
+    /*Initialization*/
+    void MorphoHub_Init();
+    void InitofAnnotationProtocol();
     void createMenus();
     void createStatusBar();
     void createToolBar();
@@ -65,13 +70,10 @@ private:
     QAction *SetDBAction;
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
+    AnnotatorManagement *userManagementDialog;
     /*..............Management actions............*/
     QAction *sdconfAction;
-    QAction *annotatorconfAction;
-
-    /*Initialization*/
-    void MorphoHub_Init();
-    void InitofAnnotationProtocol();
+    QAction *userManagementAction;
 
     QString contentindex;
     QTabWidget *dataTabwidget;
@@ -79,8 +81,6 @@ private:
     QStringList datatabletitlelist;//all the tab name of the created qtable
     QTableWidget* createTableDataLevel(QList<ReconstructionInfo> levelres);
     void updateTableDataLevel(QTableWidget* t,QList<ReconstructionInfo> levelres);
-    /*..............Database main dialog............*/
-    MainDialog *morphoHub_dialog;
 
     /*Qtreewidget for content*/
     void createContentTreeWidget();
@@ -99,7 +99,7 @@ private:
     QAction *releaseAction;
     MainDialog *commitDialog;
 
-    /*..............Login Dialog............*/
+    /*..............Login or out Dialog............*/
     QToolBar *loginToolbar;
     QDialog *loginDialog;
     QGridLayout *loginMainlayout;
@@ -108,7 +108,6 @@ private:
     QLineEdit *loginPasswordQlineedit;
     QPushButton *loginCancelButton;
     QPushButton *loginOkayButton;
-
     QAction *logoutAction;
 
 private slots:
@@ -129,6 +128,8 @@ signals:
 public slots:
     //Source data management
     void sourceDataMAction();
+    //annotator management
+    void userManagementAction_slot();
     /*..............Protocol slots............*/
     void commitAction_slot();
     void checkAction_slot();

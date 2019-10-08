@@ -49,6 +49,7 @@ QList<SomaConfInfo> getSomaConf(const QString& scandstpath){
     //3.write to Qlist
     return outlist;
 }
+
 bool WriteSomalistConfToFile(const QString& confpath,QList<SomaConfInfo> &inputsdlist)
 {
     if (confpath.isEmpty())
@@ -83,6 +84,7 @@ bool WriteSomalistConfToFile(const QString& confpath,QList<SomaConfInfo> &inputs
     }
     return false;
 }
+
 
 QList<SourceDataInfo> getSourceDatalist(const QString& scandstpath)
 {
@@ -132,6 +134,7 @@ QList<SourceDataInfo> getSourceDatalist(const QString& scandstpath)
     //3.write to Qlist
     return outlist;
 }
+
 QList<Annotator> getAnnotatorlist(const QString& confpath)
 {
     QList<Annotator> outlist;
@@ -176,6 +179,37 @@ QList<Annotator> getAnnotatorlist(const QString& confpath)
     //3.write to Qlist
     return outlist;
 }
+
+bool WriteAnnotatorConfToFile(const QString& confpath,QList<Annotator> &inputsdlist)
+{
+    if (confpath.isEmpty())
+        return false;
+    QFile scanconffile(confpath);
+    QString confTitle ="UserID,Name,workingplace,priority";
+    confTitle+="\n";
+    qDebug()<<confTitle;
+    if(scanconffile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        //title
+        //make a new conf file
+        scanconffile.write(confTitle.toAscii());
+        //inside
+        for(int i=0;i<inputsdlist.size();i++)
+        {
+            Annotator tempsdi=inputsdlist.at(i);
+            QString data=tempsdi.UserID;
+            data+=(","+tempsdi.Name);
+            data+=(","+tempsdi.workingplace);
+            data+=(","+QString::number((int)tempsdi.priority));
+            data+="\n";
+            scanconffile.write(data.toAscii());
+        }
+        scanconffile.close();
+        return true;
+    }
+    return false;
+}
+
 bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputsdlist)
 {
     if (confpath.isEmpty())
@@ -215,6 +249,7 @@ bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputs
         return false;
     }
 }
+
 QStringList readAnoFile(const QString &filename)
 {
     QStringList outlist;
@@ -253,6 +288,7 @@ QStringList readAnoFile(const QString &filename)
     }
     return outlist;
 }
+
 bool writeAnoFile(const QString& inputanofile, const QStringList& inputlist)
 {
     QFile anofile(inputanofile);

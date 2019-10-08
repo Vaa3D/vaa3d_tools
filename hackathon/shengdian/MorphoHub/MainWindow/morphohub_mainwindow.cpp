@@ -77,7 +77,6 @@ void MorphoHub_MainWindow::MorphoHub_Init()
                             <<"L2A"
                             <<"L2B"
                             <<"L2C";
-    //morphoHub_dialog=new MainDialog(this->originparent);
     mainWidget=new QWidget(this);
     mainlayout=new QHBoxLayout();
 
@@ -160,8 +159,9 @@ void MorphoHub_MainWindow::createActions()
     sdconfAction= new QAction(tr("&SoueceData"), this);
     sdconfAction->setStatusTip(tr("Source Data Management"));
     connect(sdconfAction,SIGNAL(triggered()),this,SLOT(sourceDataMAction()));
-    annotatorconfAction= new QAction(tr("&Annotator"), this);
-    annotatorconfAction->setToolTip(tr("Annotator Conf Management"));
+    userManagementAction= new QAction(tr("&User"), this);
+    userManagementAction->setToolTip(tr("User Management"));
+    connect(userManagementAction,SIGNAL(triggered()),this,SLOT(userManagementAction_slot()));
 
     //actions for Functions
     //actions for levelcontrol
@@ -197,7 +197,6 @@ void MorphoHub_MainWindow::createActions()
 
 }
 
-
 void MorphoHub_MainWindow::createToolBar()
 {
     dbToolbar=this->addToolBar(tr("DB"));
@@ -228,9 +227,9 @@ void MorphoHub_MainWindow::createMenus()
     //Management menu
     managementMenu=menuBar()->addMenu(tr("Management"));
     managementMenu->addAction(sdconfAction);
-    managementMenu->addAction(annotatorconfAction);
+    managementMenu->addAction(userManagementAction);
     //functions menu
-    funcs = menuBar()->addMenu(tr("&Functions"));
+    //funcs = menuBar()->addMenu(tr("&Functions"));
 
     //level control menu
     levelControlMenu=menuBar()->addMenu(tr("LevelControl"));
@@ -577,9 +576,27 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
     return outlist;
 }
 
-/*source data management:
-    This is a dialog
-*/
+void MorphoHub_MainWindow::userManagementAction_slot()
+{
+    QDir dbdir(this->dbpath);
+    if(!dbdir.exists())
+    {
+        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
+        return;
+    }
+    else
+    {
+        userManagementDialog=new AnnotatorManagement(this->dbpath,this->originparent);
+        //sdconf_dialog->setupDBpath();
+        userManagementDialog->show();
+        userManagementDialog->setMinimumSize(600,400);
+        userManagementDialog->setMaximumSize(800,800);
+        userManagementDialog->setGeometry(50,50,800,500);
+        this->raise();
+    }
+}
+
+/*source data management:*/
 void MorphoHub_MainWindow::sourceDataMAction()
 {
     QDir dbdir(this->dbpath);
@@ -717,6 +734,7 @@ void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
     QString getlogtext=logtextedit->toPlainText();
     QString showText=getlogtext+"\n"+logtext;
     logtextedit->setText(showText);
+    logtextedit->moveCursor(QTextCursor::End);
 }
 
 void MorphoHub_MainWindow::removeSubTab(int subindex)

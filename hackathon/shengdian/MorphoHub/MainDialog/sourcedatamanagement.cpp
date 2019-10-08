@@ -45,7 +45,7 @@ void SourceDataManagement::createActions()
 void SourceDataManagement::createTabView()
 {
     tabwidget=new QTabWidget();
-    tabwidget->setTabsClosable(true);
+    tabwidget->setTabsClosable(false);
     sourcedataTab=createTableSourceData();
     tabwidget->addTab(sourcedataTab,tr("SourceData"));
     //set close function
@@ -254,6 +254,7 @@ void SourceDataManagement::saveButton_slot()
     else
         toLog(QString("Save Failed to %1").arg(this->sourcedataconfpath));
 }
+
 void SourceDataManagement::deleteSDButton_slot()
 {
     int rowIndex=sourcedataTab->currentRow();
@@ -267,6 +268,7 @@ void SourceDataManagement::deleteSDButton_slot()
             deleteSDButton->setEnabled(false);
     }
 }
+
 void SourceDataManagement::loadSomalist2Conf_slot()
 {
     //get current SdataID
@@ -372,6 +374,7 @@ void SourceDataManagement::toLog(const QString &logtext)
     QString getlogtext=logTextEdit->toPlainText();
     QString showText=getlogtext+"\n"+logtext;
     logTextEdit->setText(showText);
+    logTextEdit->moveCursor(QTextCursor::End);
 }
 SourceDataManagement::SourceDataManagement()
 {

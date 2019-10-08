@@ -276,6 +276,7 @@ struct ReconstructionInfo:SomaConfInfo
 QList<SomaConfInfo> getSomaConf(const QString& scandstpath);
 QList<SourceDataInfo> getSourceDatalist(const QString& scandstpath);
 QList<Annotator> getAnnotatorlist(const QString& confpath);
+bool WriteAnnotatorConfToFile(const QString& confpath,QList<Annotator> &inputsdlist);
 bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputsdlist);
 bool WriteSomalistConfToFile(const QString& confpath,QList<SomaConfInfo> &inputsdlist);
 QStringList readAnoFile(const QString& filename);
