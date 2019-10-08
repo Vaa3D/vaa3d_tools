@@ -195,7 +195,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	//              3. Assign those tails from the tiles where no head exists by searching connectable heads in their neighboring tiles.
 	//                 -> Because tails are copied and merged by following head cluster's footstep. Those tails without heads in the tile will be missed out.
 	//                 -> Possible issues:
-	//                     a. There may be head clusters should be merged due to identified tails that join them together however is not recognized. 
+	//                     a. There may be head clusters ought to be merged due to identified tails that join them together however is not recognized. 
 	//                        This is because the process handles head clusters first and separately. The reason of this approach is for efficiency purpose.
 	//              4. Merge tail clusters that have segments in common.
 	//                 -> This step is required because there is a tail cluster step after 1. and 2. Consequently, there could be duplicated clusters.
