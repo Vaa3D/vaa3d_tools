@@ -28,20 +28,6 @@
 #include "NeuronStructExplorer.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
-void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
-{
-	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
-	{
-		profiledTree registeredTree(inputTree, segTileLength);
-		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
-	}
-	else
-	{
-		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
-		return;
-	}
-}
-
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
 {
 	// -- This method profiles all segments in a given input tree.

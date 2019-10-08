@@ -44,9 +44,6 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 class TreeGrower: public NeuronStructExplorer
 {
 public:
-
-	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH) override;
-
 	/************** Constructors and Basic Data/Function Members ****************/	
 	vector<polarNeuronSWC> polarNodeList;
 	

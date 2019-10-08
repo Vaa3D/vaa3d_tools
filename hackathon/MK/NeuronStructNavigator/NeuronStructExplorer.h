@@ -29,14 +29,15 @@ class NeuronStructExplorer
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
-	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
+	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
 	virtual ~NeuronStructExplorer() = default;
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
 	map<string, map<string, profiledTree>> treeSeriesDataBase;
 	
 	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
-	virtual void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
+	inline void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
+	inline void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
 	
 	V_NeuronSWC_list segmentList;
 
@@ -130,6 +131,30 @@ public:
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
+
+inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
+{
+	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else
+	{
+		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
+		return;
+	}
+}
+
+inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength)
+{
+	if (replace)
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else this->treeEntry(inputTree, treeName, segTileLength);
+}
 
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)
 {

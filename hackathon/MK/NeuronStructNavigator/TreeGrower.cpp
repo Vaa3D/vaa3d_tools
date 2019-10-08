@@ -11,9 +11,8 @@
 *  Major functionalities include:
 *
 *    a. Basic tree operations, i.e., tree trimming, refining
-*    b. Tree path tracing for tree identification purposes
-*    c. Segment forming / elongating and other operations
-*    d. Dendritic tree and axonal tree forming
+*    b. Segment forming / elongating and other operations
+*    c. Dendritic tree and axonal tree forming
 *
 *  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
 *  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
@@ -27,11 +26,6 @@
 
 using namespace std;
 using namespace integratedDataTypes;
-
-/*void TreeGrower::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
-{
-
-}*/
 
 /* =========================== Segment Forming / Elongation =========================== */
 profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
