@@ -33,8 +33,9 @@ using namespace integratedDataStructures;
 
 class ImgProcessor 
 {
-
 public:
+	virtual ~ImgProcessor() = default;
+
 	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline T getPixValue(const T inputImgPtr[], const int imgDims[], const int x, const int y, const int z = 1);

@@ -887,6 +887,65 @@ void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
 
 
 
+/* ============================ Tree - Subtree Operations ============================= */
+void NeuronStructExplorer::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
+{
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+
+	QList<NeuronSWC> parents;
+	QList<NeuronSWC> children;
+	parents.push_back(startingNode);
+	vector<size_t> childLocs;
+	do
+	{
+		children.clear();
+		childLocs.clear();
+		for (QList<NeuronSWC>::iterator pasIt = parents.begin(); pasIt != parents.end(); ++pasIt)
+		{
+			if (node2childLocMap.find(pasIt->n) != node2childLocMap.end()) childLocs = node2childLocMap.at(pasIt->n);
+			else continue;
+
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				subTreeList.append(inputList.at(int(*childLocIt)));
+				children.push_back(inputList.at(int(*childLocIt)));
+			}
+		}
+		parents = children;
+	} while (childLocs.size() > 0);
+
+	subTreeList.push_front(startingNode);
+
+	return;
+}
+
+void NeuronStructExplorer::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode)
+{
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+
+	if (startingNode.parent == -1) NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
+	else
+	{
+		int parentID = startingNode.parent;
+		int somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
+
+		while (1)
+		{
+			parentID = inputList.at(int(node2locMap.at(parentID))).parent;
+			if (parentID != -1) somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
+			else break;
+		}
+
+		NeuronSWC rootNode = inputList.at(int(node2locMap.at(somaNodeID)));
+		NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
+	}
+}
+/* ======================== END of [Tree - Subtree Operations] ======================== */
+
+
+
 /* ========================================= Auto-tracing Related Neuron Struct Functions ========================================= */
 map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold)
 {

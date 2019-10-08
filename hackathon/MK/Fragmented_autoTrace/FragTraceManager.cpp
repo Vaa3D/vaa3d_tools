@@ -623,6 +623,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		else
 		{
 			vector<NeuronTree> multipleTrees;
+			this->fragTraceTreeGrower.treeDataBase.clear();
 			set<connectedComponent> processedConnComp;
 			for (map<int, ImageMarker>::iterator it = this->selectedLocalSomaMap.begin(); it != this->selectedLocalSomaMap.end(); ++it)
 			{
@@ -654,6 +655,11 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
 				this->fragTraceTreeGrower.radiusShellMap_loc.clear();
 				this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
+
+
+
+
+
 				if (this->fragTraceTreeGrower.treeDataBase.find("dendriticProfiledTree") != this->fragTraceTreeGrower.treeDataBase.end())
 				{
 					this->fragTraceTreeGrower.treeDataBase.erase(this->fragTraceTreeGrower.treeDataBase.find("dendriticProfiledTree"));
