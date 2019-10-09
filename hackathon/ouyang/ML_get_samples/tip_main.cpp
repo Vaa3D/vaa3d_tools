@@ -860,6 +860,252 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    if(label_mip) {delete [] label_mip; label_mip=0;}
    //listNeuron.clear();
 }
+
+void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback){
+
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_folder=infiles.at(0);
+    QString input_swc_folder=infiles.at(1);
+    QString output_2d_dir=outfiles.at(0);
+    //QString output_2d_dir_axon=outfiles.at(1);
+
+    if(!input_folder.endsWith("/")){
+        input_folder = input_folder+"/";
+    }
+    if(!input_swc_folder.endsWith("/")){
+        input_swc_folder = input_swc_folder+"/";
+    }
+    if(!output_2d_dir.endsWith("/")){
+        output_2d_dir = output_2d_dir+"/";
+    }
+
+
+    double percent_his=atof(inparas.at(0));
+    double max_length_threshold=atoi(inparas.at(1));
+    double radius_nodes=atoi(inparas.at(2));
+    double max_length_prunging=atoi(inparas.at(3));
+
+   printf("========================tip pruning============================\n");
+
+   //0.read terafly swc
+//   QDir dir_swc(input_swc_folder);
+
+//   QStringList namelist_swc=dir_swc.entryList();
+
+//   QStringList all_terafly_swc_name;
+//   for(int i=0;i<namelist_swc.size();++i)
+//   {
+//       if(namelist_swc.at(i).endsWith(".eswc")) {
+//            QStringList swc_name= namelist_swc.at(i).split("_");
+//            QString swc_neuron_name=swc_name.at(0)+swc_name.at(1);
+//            all_terafly_swc_name.push_back(swc_neuron_name);
+//       }
+//       else if(namelist_swc.at(i).endsWith(".swc")){
+//           QStringList swc_name= namelist_swc.at(i).split("_");
+//           QString swc_neuron_name=swc_name.at(0)+swc_name.at(1);
+//           all_terafly_swc_name.push_back(swc_neuron_name);
+//       }
+//   }
+
+    //1.read swc and nrrd file
+    QDir dir_tip(input_folder);
+
+    QStringList namelist=dir_tip.entryList();
+
+    QStringList all_swc,all_nrrd;
+    for(int i=0;i<namelist.size();++i)
+    {
+        if(namelist.at(i).endsWith(".nrrd")) all_nrrd.push_back(namelist.at(i));
+        else if(namelist.at(i).endsWith(".eswc")) all_swc.push_back(namelist.at(i));
+        else if(namelist.at(i).endsWith(".swc")) all_swc.push_back(namelist.at(i));
+    }
+
+    //1.1 read terafly swc
+    QString name=all_swc.at(0).split("_")[0]+"_"+all_swc.at(0).split("_")[1];
+    QString terafly_swc_path=input_swc_folder+name+".ano.swc";
+    NeuronTree terafly_nt_input=readSWC_file(terafly_swc_path);
+    printf("swc_path=======================:%s \n",qPrintable(terafly_swc_path));
+
+    QList<int> plist;
+    QList<int> alln;
+    int N=terafly_nt_input.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(terafly_nt_input.listNeuron.at(i).pn);
+        alln.append(terafly_nt_input.listNeuron.at(i).n);
+    }
+
+    QList<int> delete_index;
+    for(int i=0;i<all_swc.size();++i)
+    {
+
+        //read swc
+        QString swc_path=input_folder+all_swc.at(i);
+        qDebug("------------------------------------------swc path:%s \n",qPrintable(swc_path));
+        NeuronTree nt_input=readSWC_file(swc_path);
+
+        //read nrrd
+        QStringList flag=all_swc.at(i).split(".");flag.removeLast();
+        QString name_nrrd=flag.at(0);
+        for(int i=1 ;i<flag.size();i++) name_nrrd=name_nrrd+"."+flag.at(i);
+        QString nrrd_path=input_folder+name_nrrd+".nrrd";
+        qDebug("------------------------------------------nrrd path:%s \n",qPrintable(nrrd_path));
+        Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(nrrd_path) ));
+        int nChannel = p4dImage->getCDim();
+
+        V3DLONG mysz[4];
+        mysz[0] = p4dImage->getXDim();
+        mysz[1] = p4dImage->getYDim();
+        mysz[2] = p4dImage->getZDim();
+        mysz[3] = nChannel;
+        cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
+        unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+        //set threshold
+        //1. block_background and 0.99 threshold
+        double num_intensity[256]={0};
+        long sz01 = mysz[0] * mysz[1];
+        long total_sz=mysz[0] * mysz[1] * mysz[2];
+        for (int i=0;i<mysz[0];i++){
+              for(int j=0;j<mysz[1];j++){
+                   for(int k=0;k<mysz[2];k++){
+                       int id = k*sz01+j*mysz[0]+i;
+                       if (id<=total_sz) {
+                           num_intensity[int(data1d_crop[id])]++;
+                       }}}}
+       double sum_num=0;
+       int index=0;
+       if (sizeof (num_intensity)!=0)//0.99 threshold
+       {
+           while(double(sum_num/(sz01*mysz[2]))<percent_his && index<256)
+           {
+               sum_num=num_intensity[index]+sum_num;
+               index++;
+           }
+       }
+
+       double ave_signal,sdev_block;
+       mean_and_std(data1d_crop,mysz[0]*mysz[1]*mysz[2],ave_signal,sdev_block);
+       double block_bk=ave_signal+sdev_block;//block_background
+
+       // find tips
+       int croped_swc_tip_index;
+       croped_swc_tip_index=find_tip(nt_input,mysz[0],mysz[1],mysz[2]);
+       //2.branch background
+       QList<int> rollback_nodes=find_tip_and_itspn_length(nt_input,max_length_threshold,croped_swc_tip_index);//20 um
+       double branch_intensity=aver_ints_around_nodes(mysz,data1d_crop,radius_nodes,nt_input,rollback_nodes);
+       cout<<"========================4444444444444444444============cut location:"<<index<<endl;
+       cout<<"=========================333333333333333333333333======rollback nodes size:"<<rollback_nodes.size()<<endl;
+       cout<<"======================2222222222222222222222222222=====aver_nodes:"<<branch_intensity<<endl;
+       cout<<"======================1111111111111111111111111111=====aver_global:"<<block_bk<<endl;
+
+       //case1. The whole branch is in a dark area.
+       if(branch_intensity<block_bk) {printf("=============This branch is in a dark area!===============");continue;}
+       //case2.
+       double max_thres=(block_bk>branch_intensity) ? block_bk:branch_intensity;
+       double thres_final=(max_thres>index) ? index:max_thres;
+       cout<<"=====================0000000000000000000000000000 =====final thres:"<<thres_final<<endl;
+       //case2.1 Pruning length is too long
+       QList<int> nodes_maybe_pruned=find_tip_and_itspn_length(nt_input,max_length_prunging,croped_swc_tip_index);//10 um
+       QList<int> nodes_tobe_pruned;
+
+
+
+       int tip_x=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).x+0.5);
+       int tip_y=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).y+0.5);
+       int tip_z=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).z+0.5);
+       int id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
+       int j=0;
+
+       while (id_intens<=total_sz && data1d_crop[id_intens]<thres_final && j<nodes_maybe_pruned.size()-1)
+       {
+           nodes_tobe_pruned.push_back(nodes_maybe_pruned.at(j));
+           j++;
+           tip_x=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).x+0.5);
+           tip_y=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).y+0.5);
+           tip_z=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).z+0.5);
+           id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
+       }
+
+       QString qs_output = output_2d_dir+name_nrrd+".marker";
+       QList <ImageMarker> imagemarks;
+       if(nodes_tobe_pruned.size()!=0){
+           for(int i=0;i<nodes_tobe_pruned.size();i++){
+               ImageMarker ori_center;
+               ori_center.x = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).x+1;
+               ori_center.y = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).y+1;
+               ori_center.z = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).z+1;
+               ori_center.color.a = 0;
+               ori_center.color.b = 0;
+               ori_center.color.g = 0;
+               ori_center.color.r = 255;
+               imagemarks.push_back(ori_center);
+           }
+           writeMarker_file(qs_output,imagemarks);
+       }
+
+//delete swc nodes based on terafly coodinates.
+       if(nodes_tobe_pruned.size()!=0){
+           int nums=nodes_tobe_pruned.size();
+           for (int j=0;j<terafly_nt_input.listNeuron.size();j++)
+           {
+               double x=all_swc.at(i).split("_")[3].toDouble();
+               double y=all_swc.at(i).split("_")[4].toDouble();
+               if(terafly_nt_input.listNeuron.at(j).x==x && terafly_nt_input.listNeuron.at(j).y==y)
+               {
+                   int k;
+                   int g=j;
+                   while(nums>0)
+                   {
+                       delete_index.push_back(g);
+                       terafly_nt_input.listNeuron.removeAt(g);
+                       k=alln.indexOf(terafly_nt_input.listNeuron.at(g).pn);
+                       g=k;
+                       nums--;
+                   }
+               }
+           }
+       }
+       printf("=======================makers====================:%d \n",imagemarks.size());
+   }
+    //write in apo based on terafly coodinates.
+    QString pruned_swc_name = input_swc_folder+name+".pruned.eswc";
+    writeESWC_file(pruned_swc_name,terafly_nt_input);
+    QList <ImageMarker> imagemarks_terafly;
+    QList<CellAPO>  imagemarks_terafly_apo;
+    if(delete_index.size()!=0){
+        for(int i=0;i<delete_index.size();i++){
+            ImageMarker ori_center;
+            CellAPO apo_nodes;
+            apo_nodes.x = terafly_nt_input.listNeuron.at(delete_index.at(i)).x+1;
+            apo_nodes.y = terafly_nt_input.listNeuron.at(delete_index.at(i)).y+1;
+            apo_nodes.z = terafly_nt_input.listNeuron.at(delete_index.at(i)).z+1;
+            apo_nodes.color.a = 0;
+            apo_nodes.color.b = 0;
+            apo_nodes.color.g = 0;
+            apo_nodes.color.r = 255;
+            imagemarks_terafly_apo.push_back(apo_nodes);
+        }
+        //writeMarker_file(qs_output,imagemarks);
+    }
+    QString apo_name = input_swc_folder+name+".apo";
+    writeAPO_file(apo_name,imagemarks_terafly_apo);
+    QString linker_name =input_swc_folder+name+".ano";
+    QFile qf_anofile(linker_name);
+    if(!qf_anofile.open(QIODevice::WriteOnly))
+    {
+        v3d_msg("Cannot open file for writing!");
+        return;
+    }
+
+    QTextStream out(&qf_anofile);
+    out << "SWCFILE=" << QFileInfo(pruned_swc_name).fileName()<<endl;
+    out << "APOFILE=" << QFileInfo(apo_name).fileName()<<endl;
+    printf("=======================delete====================:%d \n",delete_index.size());
+
+    return;
+}
 void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
@@ -879,11 +1125,14 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     int radius=5;
     int relocate_tip_or_not=0;//do not relocate tip position
     int tip_type=2;//get tip from both dendrite and axon
+    double precent_his=0.95;//set default his-cut precent
     if (inparas.size() >= 2)
     {
         int tmp=atoi(inparas.at(0));
         relocate_tip_or_not=atoi(inparas.at(1));
         tip_type=atoi(inparas.at(2));
+        precent_his=atof(inparas.at(3));
+        cout<<"========================================================="<<precent_his<<endl;
         if (tmp>1 && tmp<=20)
         {
             radius=tmp;
@@ -944,7 +1193,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
             cout<<"_+_+_+_+_+_+_+_+"<<croped_swc_tip_index<<endl;
             if (croped_swc_tip_index==VOID) continue;
             else
-            crop_img_not_export(input_image, crop_block, output_2d_dir,callback,data1d_crop,output_image);
+                crop_img_not_export(input_image, crop_block, output_2d_dir,callback,data1d_crop,output_image);
             if (data1d_crop == 0) continue;
 
         }
@@ -1007,37 +1256,57 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         cout<<"average signal in mask:"<<ave_signal_all_mask<<endl;
 
         node_and_id front_info;
-        front_info=return_signal_in_circle_nodes(radius,ave_signal_all_mask,mysz,data1d_crop,tip);
-        center=node_to_center(front_info,nt_crop_swc,mysz,data1d_crop);
+        //front_info=return_signal_in_circle_nodes(radius,ave_signal_all_mask,mysz,data1d_crop,tip);
+        //center=node_to_center(front_info,nt_crop_swc,mysz,data1d_crop);//fine center point based on intensity
         QList<NeuronSWC> output_swc;
         NeuronTree result_tree;
-        output_swc=change_tip_xyz(croped_swc,croped_swc_tip_index,center);
-        result_tree=neuronlist_2_neurontree(output_swc);
-        QString swc_name = output_2d_dir+flag1+"_"+num_cnt+"."+QString ("tip_reset.swc");
+        //output_swc=change_tip_xyz(croped_swc,croped_swc_tip_index,center);
+        //result_tree=neuronlist_2_neurontree(output_swc);
+        //QString swc_name = output_2d_dir+flag1+"_"+num_cnt+"."+QString ("tip_reset.swc");
         //writeSWC_file(swc_name,result_tree);
-        qDebug()<<swc_name;
+        //qDebug()<<swc_name;
 
-        //--------------------------------------------------------------------------------
+        //4.1 histogram
+        //double *num_intensity;
+        int his_radius=7;
+        double num_intensity[256]={0};
+        double cube_bx=tip.x-his_radius-1;
+        double cube_by=tip.y-his_radius-1;
+        double cube_bz=tip.z-his_radius-1;
+        long sz01 = mysz[0] * mysz[1];
+        long total_sz=mysz[0] * mysz[1] * mysz[2];
+        int count=0;
+        for (int i=0;i<2*his_radius;i++){
+            MyMarker node;
+              for(int j=0;j<2*his_radius;j++){
+                   for(int k=0;k<2*his_radius;k++){
+                       node.x=cube_bx+i;node.y=cube_by+j;node.z=cube_bz+k;
+                       int id = node.z*sz01+node.y*mysz[0]+node.x;
+                       if(id<total_sz) num_intensity[int(data1d_crop[id])]++;
+                       count++;
+                   }}}
+        for (int  i= 0; i < 256; i++) cout<<"--------++++++++++++++--------intensity value:"<<num_intensity[i]<<endl;
+        double sum_num=0;
+        int index=0;
+        if (sizeof (num_intensity)!=0){
+            while((sum_num/(8*his_radius*his_radius*his_radius))<precent_his && index<256){
+                sum_num=num_intensity[index]+sum_num;
+                index++;
+            }
+        }
+        cout<<"============================cut location:"<<index<<endl;
 
-        //5.mean_shift tip location
+
+
+ //5.mean_shift tip location(1)
         LandmarkList marklist_2D;
         LocationSimple S;
         S.x = croped.listNeuron.at(croped_swc_tip_index).x;
         S.y = croped.listNeuron.at(croped_swc_tip_index).y;
         S.z = croped.listNeuron.at(croped_swc_tip_index).z;
-        marklist_2D.push_back(S);
-        mean_shift_fun fun_obj;
-        vector<V3DLONG> poss_landmark;
-        vector<float> mass_center;
-        double windowradius = 5;
-        V3DLONG sz_img[4];
-        sz_img[0] = mysz[0]; sz_img[1] = mysz[1]; sz_img[2] = mysz[2]; sz_img[3] = 1;
-        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_crop, sz_img);
-        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
 
-        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
-/*
-        //6.calculate global threshold
+
+        //4.2.calculate global threshold
         vector<MyMarker> allmarkers;
         for (int i=0;i<mysz[2];i++){
             for (int j=0;j<mysz[1];j++){
@@ -1052,7 +1321,56 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         double signal;
         unsigned char *data2d=0;
         signal=get_aver_signal(allmarkers, data1d_crop, data2d,mysz[0], mysz[1], mysz[2], 3);
-*/
+        QList<int> plist;
+        QList<int> alln;
+        int N=croped.listNeuron.size();
+        for(int i=0; i<N; i++){
+            plist.append(croped.listNeuron.at(i).pn);
+            alln.append(croped.listNeuron.at(i).n);
+        }
+        int back_num=0;
+        int croped_swc_tip_index_for_remove=croped_swc_tip_index;
+        while (data1d_crop[int(S.z*sz01+S.y*mysz[0]+S.x)]<=signal && back_num<=2){
+
+            int index_tips_pn=alln.indexOf(croped.listNeuron.at(croped_swc_tip_index_for_remove).pn);
+            if(index_tips_pn!=-1){
+            croped_swc_tip_index_for_remove=index_tips_pn;
+            S.x = croped.listNeuron.at(croped_swc_tip_index_for_remove).x;
+            S.y = croped.listNeuron.at(croped_swc_tip_index_for_remove).y;
+            S.z = croped.listNeuron.at(croped_swc_tip_index_for_remove).z;
+            back_num++;}
+            else back_num=3;
+        }
+
+cout<<"=============================================================================================dddddd"<<endl;
+        marklist_2D.push_back(S);
+        mean_shift_fun fun_obj;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        //double windowradius = 5;
+        V3DLONG sz_img[4];
+        sz_img[0] = mysz[0]; sz_img[1] = mysz[1]; sz_img[2] = mysz[2]; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_crop, sz_img,index);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+cout<<"=============================================================================================eeeee"<<endl;
+        mass_center=fun_obj.mean_shift_center_mass_thres(poss_landmark[0],radius);
+
+
+
+
+ //5.mean_shift tip location(2)
+        LandmarkList marklist_2D2;
+        marklist_2D2.push_back(S);
+        mean_shift_fun fun_obj2;
+        vector<V3DLONG> poss_landmark2;
+        vector<float> mass_center2;
+        //double windowradius = 5;
+        sz_img[0] = mysz[0]; sz_img[1] = mysz[1]; sz_img[2] = mysz[2]; sz_img[3] = 1;
+        fun_obj2.pushNewData<unsigned char>((unsigned char*)data1d_crop, sz_img,index);
+        poss_landmark2=landMarkList2poss(marklist_2D2, sz_img[0], sz_img[0]*sz_img[1]);
+cout<<"=============================================================================================eeeee"<<endl;
+        mass_center2=fun_obj2.mean_shift_center_mass(poss_landmark2[0],radius);
+
         //7.calculate radius
 
         //-------------------------------------------------------------------------------
@@ -1223,8 +1541,41 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         //mean.comment=QString("%1").arg(score_result_mean);
         //mean.radius=r_and_index[1];
         imagemarks.push_back(mean);
+
+        ImageMarker mean_second;
+        mean_second.x = mass_center2[0]+1;
+        mean_second.y = mass_center2[1]+1;
+        mean_second.z = mass_center2[2]+1;
+        mean_second.color.a = 0;
+        /*if(max_score == score_result_mean && mark_or_not){
+
+            mean.color.b = 255;
+            mean.color.g = 255;
+            mean.color.r = 255;
+            mark_or_not=0;
+        }
+        else {
+        */
+            mean_second.color.b = 255;
+            mean_second.color.g = 0;
+            mean_second.color.r = 0;
+        //}
+        //mean.comment=QString("%1").arg(score_result_mean);
+        //mean.radius=r_and_index[1];
+        imagemarks.push_back(mean_second);
+
+
+
+
         //cout<<"radius_ori:"<<r_and_index[0]<<"radius_mean:"<<r_and_index[1]<<"radius_re:"<<r_and_index[2]<<endl;
-        writeMarker_file(qs_output,imagemarks);
+        cout<<"++++++++++++++++++++++++=========================tip ins:"<<int(data1d_crop[int(tip.z*sz01+tip.y*mysz[0]+tip.x)])<<endl;
+        int re_or_not=0;
+        if (int(data1d_crop[int(tip.z*sz01+tip.y*mysz[0]+tip.x)])<index) {
+
+            writeMarker_file(qs_output,imagemarks);
+            re_or_not=1;
+            cout<<"++++++++++++++++++++++++Relocated tip num:"<<i<<endl;
+        }
 
 /*
 //record result:generate and write file
@@ -1264,7 +1615,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
             file.close();
         }
 */
-        if(relocate_tip_or_not)
+        if(relocate_tip_or_not==1 && re_or_not==1)
         {
             float shift_x = mass_center[0]+1-25;
             float shift_y = mass_center[1]+1-25;
@@ -1333,6 +1684,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         }
         //delete []total1dData_mask;
         //delete []test_mask;
+//        /delete []num_intensity;
     }
 
 
@@ -1824,6 +2176,70 @@ int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
     printf("No tip found!\n");
 }
 
+
+QList<int> find_tip_and_itspn_length(NeuronTree nt,double max_length,int tip_index){
+
+    QList<int> all_path_nodes;
+    all_path_nodes.push_back(tip_index);
+    QList<int> plist;
+    QList<int> alln;
+    int N=nt.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(nt.listNeuron.at(i).pn);
+        alln.append(nt.listNeuron.at(i).n);
+    }
+
+    double length=0;
+    int num=1;
+    while (length<max_length && num!=0){
+
+        int pn_index=alln.indexOf(nt.listNeuron.at(tip_index).pn);
+        all_path_nodes.push_back(pn_index);
+        length=length+dist(nt.listNeuron.at(tip_index),nt.listNeuron.at(pn_index));
+        tip_index=pn_index;
+        num=alln.count(pn_index);
+    }
+    return all_path_nodes;
+}
+
+double aver_ints_around_nodes(long mysz[4],unsigned char * data1d,int radius,NeuronTree nt,QList<int> all_nodes){
+
+     int r=int(radius+0.5);
+     double  all_node_intensity=0;
+     int sz1=mysz[0]*mysz[1];
+     int cont=0;
+     for (int i=0;i<all_nodes.size();i++){
+
+         int x=nt.listNeuron.at(all_nodes.at(i)).x;
+         int y=nt.listNeuron.at(all_nodes.at(i)).y;
+         int z=nt.listNeuron.at(all_nodes.at(i)).z;
+         int xa=int(nt.listNeuron.at(all_nodes.at(i)).x-0.5)-r;
+         int xb=int(nt.listNeuron.at(all_nodes.at(i)).x-0.5)+r+1;
+         int ya=int(nt.listNeuron.at(all_nodes.at(i)).y-0.5)-r;
+         int yb=int(nt.listNeuron.at(all_nodes.at(i)).y-0.5)+r+1;
+         int za=int(nt.listNeuron.at(all_nodes.at(i)).z-0.5)-r;
+         int zb=int(nt.listNeuron.at(all_nodes.at(i)).z-0.5)+r+1;
+         double one_node_intensity=0;
+         for (int j=xa;j<xb;j++){
+             for(int k=ya;k<yb;k++){
+                 for(int g=za;g<zb;g++){
+                     double dist_r=sqrt((j-x)*(j-x)+(k-y)*(k-y)+(g-z)*(g-z));
+                     if (dist_r>r) continue;
+                     int id=g*sz1+k*mysz[0]+j;
+                     if(id<=sz1*mysz[2]) {
+                         one_node_intensity=one_node_intensity+data1d[id];
+                         cont++;
+                     }
+                 }
+             }
+         }
+         all_node_intensity=all_node_intensity+one_node_intensity;
+     }
+     double aver_intens=0;
+     if (cont!=0) aver_intens=all_node_intensity/cont;
+     return aver_intens;
+}
+
 QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2)//for mark 2D image witg different coulor indifferent part
 {
     // Return the node at center of the image as tip node
@@ -1995,6 +2411,8 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
 
     vector<MyMarker> nodes=all_max_nodes.all_nodes;
     vector<int> ids=all_max_nodes.all_id;
+    MyMarker null_marker=MyMarker(0,0,0);
+    if(ids.size()==0) return null_marker;
     node_and_id info;
 //    for(int i=0;i<ids.size();i++){
 
@@ -2004,7 +2422,7 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
     vector<int> id_numofneibs,total_signal;
     for(int i=0;i<nodes.size();i++){
         //vector<int> result;
-        info=get_26_neib_id(nodes.at(i),mysz,data1d);
+        info=get_26_neib_id(nodes.at(i),mysz,data1d,1.5);
         //cout<<"27 pixels' id(size):"<<neibs.size()<<endl;
         //sort(info.all_id.begin(),info.all_id.end());
         //set_intersection(ids.begin(),ids.end(),info.all_id.begin(),info.all_id.end(),back_inserter(result));
@@ -2046,20 +2464,20 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
 }
 
 
-node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * data1d){
+node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * data1d,int radius){
 
     node_and_id info_27;
-    int length=3;//27 cube's length
-    double cube_bx=center_marker.x-length;
-    double cube_by=center_marker.y-length;
-    double cube_bz=center_marker.z-length;
+    //radius=5;//1000 cube's length
+    double cube_bx=center_marker.x-radius;
+    double cube_by=center_marker.y-radius;
+    double cube_bz=center_marker.z-radius;
     double signal=0;
     long sz01 = mysz[0] * mysz[1];
     long total_sz=mysz[0] * mysz[1] * mysz[2];
-    for (int i=0;i<length;i++){
+    for (int i=0;i<2*radius;i++){
         MyMarker node;
-          for(int j=0;j<length;j++){
-               for(int k=0;k<length;k++){
+          for(int j=0;j<2*radius;j++){
+               for(int k=0;k<2*radius;k++){
                    node.x=cube_bx+i;node.y=cube_by+j;node.z=cube_bz+k;
                    int id = node.z*sz01+node.y*mysz[0]+node.x;
                    info_27.all_id.push_back(id);
@@ -2073,6 +2491,33 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
     return info_27;
 
 }
+
+double* get_histogram(MyMarker center_marker,long mysz[4],unsigned char * data1d,int radius){
+
+    //double *num_intensity=(double *)malloc(sizeof (double)*8*radius*radius*radius);
+    //static double  num_intensity[8*radius*radius*radius];
+    static double num_intensity[8];
+    double cube_bx=center_marker.x-radius;
+    double cube_by=center_marker.y-radius;
+    double cube_bz=center_marker.z-radius;
+    double signal=0;
+    long sz01 = mysz[0] * mysz[1];
+    long total_sz=mysz[0] * mysz[1] * mysz[2];
+    int count=0;
+    cout<<"------------------------------------------------(size):"<<count<<endl;
+    for (int i=0;i<2*radius;i++){
+        MyMarker node;
+          for(int j=0;j<2*radius;j++){
+               for(int k=0;k<2*radius;k++){
+                   node.x=cube_bx+i;node.y=cube_by+j;node.z=cube_bz+k;
+                   int id = node.z*sz01+node.y*mysz[0]+node.x;
+                   //if(id<total_sz) num_intensity[int(data1d[id])]++;
+                   count++;
+               }}}
+    cout<<"------------------------------------------------(size):"<<count<<endl;
+    return num_intensity;
+}
+
 
 QList<int> get_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
@@ -2250,7 +2695,7 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     QList<int> mark_others_nodes;
     if (mark_others_or_not) mark_others_nodes=find_tip_and_itspn(nt_crop_sorted,in_sz[0],in_sz[1],in_sz[2]);
     else mark_others_nodes.clear();
-    get2d_label_image(nt_crop_sorted,in_sz,cropped_image,callback,save2d,tipnum,tip,mark_others_nodes,mark_others_or_not);
+    //get2d_label_image(nt_crop_sorted,in_sz,cropped_image,callback,save2d,tipnum,tip,mark_others_nodes,mark_others_or_not);
 
     return;
 }
@@ -2341,7 +2786,7 @@ bool crop_swc_cuboid(NeuronTree nt, QString qs_output,block input_block,bool exp
         }
         new_tree.listNeuron.append(node);
     }
-    if (new_tree.listNeuron.size()<5) return 0;
+    //if (new_tree.listNeuron.size()<5) return 0;
     nt.deepCopy(my_SortSWC(new_tree, VOID, 0));
     //4. shift if needed
     if((xshift!=0) || (yshift!=0) || (zshift!=0)){

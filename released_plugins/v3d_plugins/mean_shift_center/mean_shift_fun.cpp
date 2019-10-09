@@ -5,6 +5,7 @@ mean_shift_fun::mean_shift_fun()
     data1Dc_float=0;
     sz_image[0]=sz_image[1]=sz_image[2]=sz_image[3]=0;
     page_size=0;
+    histogram_threshold=0;
 }
 
 mean_shift_fun::~mean_shift_fun()
@@ -24,6 +25,13 @@ vector<float> mean_shift_fun::mean_shift_center_mass(V3DLONG ind, int windowradi
 {
     int methodcode=0; //if methodcode is 2,there are constrains.
     vector<float> center=calc_mean_shift_center_mass(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    return center;
+}
+
+vector<float> mean_shift_fun::mean_shift_center_mass_thres(V3DLONG ind, int windowradius)//added by Ouyang 09.29.2019
+{
+    int methodcode=3; //if methodcode is 2or3,there are constrains.
+    vector<float> center=calc_mean_shift_center_mass_thres(ind,windowradius,data1Dc_float,sz_image,methodcode,histogram_threshold);
     return center;
 }
 
@@ -676,7 +684,180 @@ vector<float> calc_mean_shift_center_mass(V3DLONG ind, int windowradius,float *d
     return center_float;
 }
 
+vector<float> calc_mean_shift_center_mass_thres(V3DLONG ind, int windowradius,float *data1Dc_float,
+                                     V3DLONG sz_image[],int methodcode,double histogram_threshold)
+{
+    //qDebug()<<"methodcode:"<<methodcode;
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
 
+    V3DLONG N = sz_image[0];
+    V3DLONG M = sz_image[1];
+    V3DLONG P = sz_image[2];
+
+    V3DLONG pos;
+    vector<V3DLONG> coord;
+
+    float total_x,total_y,total_z,v_color,sum_v,v_prev,x,y,z;
+    float center_dis=1;
+    vector<float> center_float(3,0);
+    vector<float> center_float_second(3,0);
+
+    coord=pos2xyz(ind, y_offset, z_offset);
+    x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
+    //qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z<<"ind:"<<ind;
+
+    //find out the channel with the maximum intensity for the marker
+    v_prev=data1Dc_float[ind];
+    int channel=0;
+    for (int j=1;j<sz_image[3];j++)
+    {
+        if (data1Dc_float[ind+page_size*j]>v_prev)
+        {
+            v_prev=data1Dc_float[ind+page_size*j];
+            channel=j;
+        }
+    }
+    //qDebug()<<"v_Prev:"<<v_prev;
+    int testCount=0;
+//    int testCount1=0;
+    int pass_num=0;
+    while (center_dis>=0.5 && testCount<50)
+    {
+        total_x=total_y=total_z=sum_v=0;
+
+
+        V3DLONG xb = MAX(x+0.5-windowradius,0);
+        V3DLONG xe = MIN(sz_image[0]-1,x+0.5+windowradius);
+        V3DLONG yb = MAX(y+0.5-windowradius,0);
+        V3DLONG ye = MIN(sz_image[1]-1,y+0.5+windowradius);
+        V3DLONG zb = MAX(z+0.5-windowradius,0);
+        V3DLONG ze = MIN(sz_image[2]-1,z+0.5+windowradius);
+
+        V3DLONG i,j,k;
+        double w;
+
+        //first get the average value
+        double x2, y2, z2;
+        double rx2 = double(windowradius+1)*(windowradius+1);
+        double ry2 = rx2, rz2 = rx2;
+        double tmpd;
+        double xm=0,ym=0,zm=0, s=0, mv=0, n=0;
+
+        s = 0; n = 0;
+        for(k=zb; k<=ze; k++)
+        {
+            V3DLONG offsetkl = k*M*N;
+            z2 = k-z; z2*=z2;
+            for(j=yb; j<=ye; j++)
+            {
+                V3DLONG offsetjl = j*N;
+                y2 = j-y; y2*=y2;
+                tmpd = y2/ry2 + z2/rz2;
+                if (tmpd>1.0)
+                    continue;
+
+                for(i=xb; i<=xe; i++)
+                {
+                    x2 = i-x; x2*=x2;
+                    if (x2/rx2 + tmpd > 1.0)
+                        continue;
+
+                    s += double(data1Dc_float[offsetkl + offsetjl + i]);
+                    n = n+1;
+                }
+            }
+        }
+        if (n!=0)
+            mv = s/n;
+        else
+            mv = 0;
+
+        //now get the center of mass
+        s = 0; n=0;
+        for(k=zb; k<=ze; k++)
+        {
+            V3DLONG offsetkl = k*M*N;
+            z2 = k-z; z2*=z2;
+            for(j=yb; j<=ye; j++)
+            {
+                V3DLONG offsetjl = j*N;
+                y2 = j-y; y2*=y2;
+                tmpd = y2/ry2 + z2/rz2;
+                if (tmpd>1.0)
+                    continue;
+
+                for(i=xb; i<=xe; i++)
+                {
+                    x2 = i-x; x2*=x2;
+                    if (x2/rx2 + tmpd > 1.0)
+                        continue;
+
+                    w = double(data1Dc_float[offsetkl + offsetjl + i]) - mv;
+                    if (w>0)
+                    {
+                    xm += w*i;
+                    ym += w*j;
+                    zm += w*k;
+                    s += w;
+                    n = n+1;
+                    }
+                }
+            }
+        }
+
+        if(n>0)
+        {
+            xm /= s; ym /=s; zm /=s;
+        }
+        else
+        {
+            xm = x; ym=y; zm=z;
+        }
+
+        center_float[0]=xm;
+        center_float[1]=ym;
+        center_float[2]=zm;
+
+        V3DLONG prev_ind=xyz2pos((int)(x+0.5),(int)(y+0.5),(int)(z+0.5),y_offset,z_offset);
+        V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
+                y_offset,z_offset);
+
+        if (methodcode==2)
+        {
+            if (data1Dc_float[tmp_ind+channel*page_size]<data1Dc_float[prev_ind+channel*page_size]&& windowradius>=2) // && windowradius>2)
+            {
+            //qDebug()<<methodcode<<" window too large"<<windowradius;
+            windowradius--;
+            center_dis=1;
+            continue;
+            }
+         }
+
+        if (methodcode==3)
+        {
+            if (data1Dc_float[tmp_ind+channel*page_size]>=histogram_threshold && windowradius>=2) // && windowradius>2)
+            {
+            //qDebug()<<methodcode<<" window too large"<<windowradius;
+            //windowradius--;
+            //center_dis=1;
+            testCount=49;
+            //return center_float;
+            cout<<"=============================================================================================111111111"<<endl;
+            }
+         }
+        testCount++;
+
+        float tmp_1=(center_float[0]-x)*(center_float[0]-x)+(center_float[1]-y)*(center_float[1]-y)
+                    +(center_float[2]-z)*(center_float[2]-z);
+        center_dis=sqrt(tmp_1);
+
+        x=center_float[0]; y=center_float[1]; z=center_float[2];
+    }
+    //for(int i=0;i<center_float_second.size();i++) center_float.push_back(center_float_second.at(i));
+    return center_float;
+}
 unsigned char * memory_allocate_uchar1D(const V3DLONG i_size)
 {
     unsigned char *ptr_result;
