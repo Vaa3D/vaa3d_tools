@@ -18,6 +18,7 @@ bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPlug
 const QString title = QObject::tr("genVirture");
 void generate_virture();
 void configure();
+bool pruning_false_branch(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);//用于修剪重建结果的cross-by中的false positive
 bool generate_virture1(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output, QWidget *parent);//暂时不用这个，命令行运行时使用的函数
 const QString filename1 = "D:/gen_vir_experiment_code";
 const QString filename2 = "D:/test.swc";
@@ -25,12 +26,14 @@ const QStringList *infostring;
 QStringList genVirturePlugin::menulist() const{//菜单
 	return QStringList()
 		<< tr("generate_virture")//生成神经元菜单
+		<< tr("pruning_false_branch")
 		<< tr("configure");//用户用来输入一些自定义参数的调整，目前暂无 date 3/26
 }
 
 QStringList genVirturePlugin::funclist() const{//函数
 	return QStringList()
-		<< tr("generate_virture");
+		<< tr("generate_virture")
+		<< tr("pruning_false_branch");
 }
 
 void genVirturePlugin::domenu(const QString &menu_name,V3DPluginCallback2 &callback,QWidget *parent){
@@ -49,11 +52,16 @@ bool genVirturePlugin::dofunc(const QString &func_name,const V3DPluginArgList &i
    if(func_name==tr("generate_virture")){
 	   return generate_virture1(callback,input, output, parent);
    }
-   else if(func_name==tr("help")){
-       return true;
+   else if(func_name==tr("pruning_false_branch")){
+	   return pruning_false_branch(callback,input,output);
    }
    return false;
 }
+
+bool pruning_false_branch(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){//pruning false positive branch in cross_by
+	
+}
+
 
 void generate_virture(){//调用生成虚拟神经元的函数	
 	QStringList filenames = QFileDialog::getOpenFileNames(0, 0, "", "support file(*.swc)", 0, 0);
