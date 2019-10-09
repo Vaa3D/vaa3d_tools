@@ -21,7 +21,8 @@ LIBS += -llibnewmat
 
 #LIBS += -llibm
 
-HEADERS	+= vaa3dneuron2_plugin.h
+HEADERS	+= vaa3dneuron2_plugin.h \
+    compute_morph.h
 HEADERS += vn_imgpreprocess.h
 HEADERS += vn.h
 HEADERS += vn_app2.h
@@ -32,7 +33,8 @@ HEADERS += app2/fastmarching_tree.h
 HEADERS += app2/hierarchy_prune.h
 HEADERS += app2/fastmarching_dt.h
 
-SOURCES += $$V3DMAINPATH/../released_plugins_more/v3d_plugins/blastneuron_plugin/global_cmp/compute_morph.cpp
+SOURCES += $$V3DMAINPATH/../released_plugins_more/v3d_plugins/blastneuron_plugin/global_cmp/compute_morph.cpp \
+    compute_morph.cpp
 SOURCES += vn_imgpreprocess.cpp
 SOURCES += tip_rayshooting.cpp
 SOURCES += app2_connector.cpp

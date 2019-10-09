@@ -15,7 +15,14 @@
 #include <algorithm>
 #include"ClusterAnalysis.h"
 #include"branch_detection_model.h"
-
+template <class T> void gaussian_filter(T* data1d,
+                     V3DLONG nx, V3DLONG ny,V3DLONG nz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
+                     unsigned int c,
+                     double sigma,
+                     float* &outimg);
 using namespace std;
 struct delete_piont
 {
@@ -155,9 +162,9 @@ int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
 
     // set the parameter
     int thres_2d=30;
-    int ray_numbers_2d=128;
+    int ray_numbers_2d=64;
     int cluster_threshold=20;
-    int T0=3;
+    int T0=5;
     V3DLONG nx=sz[0];
     V3DLONG ny=sz[1];
     V3DLONG nz=sz[2];
@@ -182,7 +189,7 @@ int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
           ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
 
           QSpinBox * thres_2d_spinbox = new QSpinBox();
-          thres_2d_spinbox->setRange(-1, 255);
+          thres_2d_spinbox->setRange(0, 255);
           thres_2d_spinbox->setValue(thres_2d);
 
           QSpinBox * cluster_threshold_spinbox = new QSpinBox();
@@ -191,7 +198,7 @@ int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
 
           QSpinBox * T0_spinbox = new QSpinBox();
           T0_spinbox->setRange(0,255);
-          T0_spinbox->setValue(cluster_threshold);
+          T0_spinbox->setValue(T0);
 
 
           layout->addWidget(new QLabel("ray angle"),0,0);
@@ -281,6 +288,28 @@ int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
         int count=0; // the number of candidate
         vector<V3DLONG> X_loc; //save the non-adjusted x coordinate;
         vector<V3DLONG> Y_loc; //save the non-adjusted y coordinate;
+
+        /* create the ratate matrix */
+        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(1000)), ray_y(ray_numbers_2d,vector<float>(1000));
+        float ang = 2*PI/ray_numbers_2d;
+        float x_dis, y_dis;
+        int max_length=200; // if the rorate crash , please check the max_length;
+        for(int i = 0; i < ray_numbers_2d; i++)
+        {
+           x_dis = cos(ang*(i+1));
+           y_dis = sin(ang*(i+1));
+           for(int j = 0; j<max_length ; j++)
+               {
+                   ray_x[i][j] = x_dis*(j+1);
+                   ray_y[i][j] = y_dis*(j+1);
+               }
+        }
+
+        /* difine the color */
+        RGBA8 red; red.r=255; red.g=0; red.b=0;
+        RGBA8 green; green.r=0; green.g=255; green.b=0;
+        RGBA8 blue; blue.r=0; blue.g=0; blue.b=255;
+
         qint64 etime1;
         QElapsedTimer timer1;
         timer1.start();
@@ -308,26 +337,6 @@ int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
             cout<<"no candidate points in this MIP"<<endl;
         }
         v3d_msg(QString("the all candidate points have detected"));
-        /* create the ratate matrix */
-        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(1000)), ray_y(ray_numbers_2d,vector<float>(1000));
-        float ang = 2*PI/ray_numbers_2d;
-        float x_dis, y_dis;
-        int max_length=200; // if the rorate crash , please check the max_length;
-        for(int i = 0; i < ray_numbers_2d; i++)
-        {
-           x_dis = cos(ang*(i+1));
-           y_dis = sin(ang*(i+1));
-           for(int j = 0; j<max_length ; j++)
-               {
-                   ray_x[i][j] = x_dis*(j+1);
-                   ray_y[i][j] = y_dis*(j+1);
-               }
-        }
-
-        /* difine the color */
-        RGBA8 red; red.r=255; red.g=0; red.b=0;
-        RGBA8 green; green.r=0; green.g=255; green.b=0;
-        RGBA8 blue; blue.r=0; blue.g=0; blue.b=255;
 
         for(V3DLONG k = 0; k < X_candidate.size(); k++)
         {
@@ -628,6 +637,7 @@ int rotate_2D_display_point(V3DPluginCallback2 &callback,QWidget *parent)
          vector<float> dis_x_loc; // background point
          vector<float> dis_y_loc;
          vector<float> Pixe;
+         int change=0;
 
          //create a new mip
          int block_radiu=radiu+double(T0/10)*radiu+block_size;
@@ -752,7 +762,7 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
     // set the parameter
     int thres_2d=30;
     int ray_length=2;
-    int ray_numbers_2d=128;
+    int ray_numbers_2d=64;
     int T0=2;
     int cluster_threshold=100;
     int Db_thres=2;
@@ -893,12 +903,32 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
         int count=0; // the number of candidate
         vector<V3DLONG> X_loc; //save the non-adjusted x coordinate;
         vector<V3DLONG> Y_loc; //save the non-adjusted y coordinate;
+        /* create the ratate matrix */
+        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(100)), ray_y(ray_numbers_2d,vector<float>(100));
+        float ang = 2*PI/ray_numbers_2d;
+        float x_dis, y_dis;
+        int max_length=100; // if the rorate crash , please check the max_length;
+        for(int i = 0; i < ray_numbers_2d; i++)
+        {
+           x_dis = cos(ang*(i+1));
+           y_dis = sin(ang*(i+1));
+           for(int j = 0; j<max_length ; j++)
+               {
+                   ray_x[i][j] = x_dis*(j+1);
+                   ray_y[i][j] = y_dis*(j+1);
+               }
+        }
+
+        /* difine the color */
+        RGBA8 red; red.r=255; red.g=0; red.b=0;
+        RGBA8 green; green.r=0; green.g=255; green.b=0;
+        RGBA8 blue; blue.r=0; blue.g=0; blue.b=255;
+
         qint64 etime1;
         QElapsedTimer timer1;
         timer1.start();
         skeletonization(nx,ny,image_binary);
-        int cs=0;
-        if(QMessageBox::Yes == QMessageBox::question (0, "", QString(" yes: neuron junction detection; no : blood vessel junction detection"), QMessageBox::Yes, QMessageBox::No))    cs = 1;
+        seek_2D_candidate_points(nx,ny,image_binary,X_loc,Y_loc,count);
         int window_size=1;
         if(count>0)
         {
@@ -921,69 +951,76 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
             cout<<"no candidate points in this MIP"<<endl;
         }
         cout<<"the all candidate points have detected"<<endl;
-        /* create the ratate matrix */
-        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(1000)), ray_y(ray_numbers_2d,vector<float>(1000));
-        float ang = 2*PI/ray_numbers_2d;
-        float x_dis, y_dis;
-        int max_length=200; // if the rorate crash , please check the max_length;
-        for(int i = 0; i < ray_numbers_2d; i++)
-        {
-           x_dis = cos(ang*(i+1));
-           y_dis = sin(ang*(i+1));
-           for(int j = 0; j<max_length ; j++)
-               {
-                   ray_x[i][j] = x_dis*(j+1);
-                   ray_y[i][j] = y_dis*(j+1);
-               }
-        }
 
-        /* difine the color */
-        RGBA8 red; red.r=255; red.g=0; red.b=0;
-        RGBA8 green; green.r=0; green.g=255; green.b=0;
-        RGBA8 blue; blue.r=0; blue.g=0; blue.b=255;
-
-        for(V3DLONG k = 0; k < X_candidate.size(); k++)
-        {
-            vector<float> x_loc;
-            vector<float> y_loc;
-            /* using the ray sacn to detect 2D junction points designed by chaowang 2019/1/15 */
-            double ray_sum;
-            double max_value;
-            for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
-            {
-               ray_sum=0;
-               max_value=0;
-                for(int j = Max_value.at(k)+T0*Max_value.at(k); j < Max_value.at(k)+T0*Max_value.at(k)+ray_length; j++)    // n is the numble of the points of the each ray
+                for(V3DLONG k = 0; k < X_candidate.size(); k++)
                 {
-                    if((Max_value.at(k)+T0*Max_value.at(k)+ray_length)>max_length)
+                    vector<float> x_loc;
+                    vector<float> y_loc;
+                    double based_distance=T0;
+                    //create a new block_mip to detect the 2D branch points
+                    int block_radiu=Max_value.at(k)+based_distance+ray_length+5;
+                    int block_length=block_radiu*2+1;
+                    unsigned char *block=0;
+                    try{block=new unsigned char [block_length*block_length*block_length];}
+                    catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+                    //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
+                    if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
                     {
-                        v3d_msg(QString("the max_length is too small to include the model, please check the max_length"));
+                        cout<<"this points beyong the image"<<endl;
+                        continue;
                     }
-                    double pixe = project_interp_2d(Y_candidate.at(k)+ray_y[i][j], X_candidate.at(k)+ray_x[i][j], old_image_binary, nx, ny , Y_candidate.at(k),  X_candidate.at(k));
-                    ray_sum=ray_sum+pixe;
-                    if(pixe>max_value)
+                    int num_block=0;
+                    for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
                     {
-                        max_value=pixe;
-                    }
-                }
-                if((ray_sum/(ray_length+1))>(0.5*max_value))
-                {
-                    for(int j = Max_value.at(k)+T0*Max_value.at(k); j < Max_value.at(k)+T0*Max_value.at(k)+ray_length; j++)
+                         for(V3DLONG c=X_candidate.at(k)-block_radiu;c<=X_candidate.at(k)+block_radiu;c++)
+                         {
+                             unsigned char block_pixe=old_image_binary[b*nx+c];
+                             block[num_block]=block_pixe;
+                             num_block++;
+                         }
+                     }
+                    if(1)
                     {
-                        x_loc.push_back(X_candidate.at(k)+ray_x[i][j]);
-                        y_loc.push_back(Y_candidate.at(k)+ray_y[i][j]);
+                        delete_small_area(block_length,block_length,block);// connected domain denoising
                     }
-                }
-            }
+                     for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
+                     {
+                         for(int j = Max_value.at(k)+based_distance; j < Max_value.at(k)+based_distance+ray_length; j++)    // n is the numble of the points of the each ray
+                         {
+                             if((Max_value.at(k)+based_distance+2)>max_length)
+                                 {
+                                 v3d_msg(QString("the max_length is too small to can not adapt the model, please check the max_length"));
+                             }
+                             double pixe = project_interp_2d(block_radiu+ray_y[i][j], block_radiu+ray_x[i][j], block, block_length, block_length , block_radiu,  block_radiu);
+                             if(pixe>=100)
+                             {
+                                 x_loc.push_back(block_radiu+ray_x[i][j]);
+                                 y_loc.push_back(block_radiu+ray_y[i][j]);
 
-//           /* calculate the DBscan radiu */
-            float change_x1=cos(ang*3)*(Max_value.at(k)+T0*Max_value.at(k)+3)-cos(ang*2)*(Max_value.at(k)+T0*Max_value.at(k)+3);
-            float change_x=pow(change_x1,2);
-            float change_y1=sin(ang*3)*(Max_value.at(k)+T0*Max_value.at(k)+3)-sin(ang*2)*(Max_value.at(k)+T0*Max_value.at(k)+3);
-            float change_y=pow(change_y1,2);
-            float DB_radius=sqrt(change_x+change_y)+1;
-            mycluster.Read_from_coordiante(x_loc,y_loc,Db_thres*DB_radius,Db_thres*2+1);
-            int flag=mycluster.DoDBSCANRecursive();
+                             }
+                         }
+                     }
+                    double a=X_candidate.at(k)+ray_x[0][Max_value.at(k)+based_distance+ray_length]; //x1
+                    double b=X_candidate.at(k)+ray_x[1][Max_value.at(k)+based_distance+ray_length]; //x2
+                    double c=Y_candidate.at(k)+ray_y[0][Max_value.at(k)+based_distance+ray_length]; //y1
+                    double d=Y_candidate.at(k)+ray_y[1][Max_value.at(k)+based_distance+ray_length]; //y2
+                    double change_x=abs(a-b);
+                    double change_x1=pow(change_x,2);
+                    double change_y=abs(c-d);
+                    double change_x2=pow(change_y,2);
+                    double det_x=sqrt(change_x1+change_x2);
+
+                    int det_y=1;
+                    double DB_radius;
+                    if(det_x>det_y)
+                    {
+                        DB_radius=det_x;
+                    }
+                    else {
+                        DB_radius=det_y;
+                    }
+                    mycluster.Read_from_coordiante(x_loc,y_loc,(1.1*DB_radius),1);
+                    int flag=mycluster.DoDBSCANRecursive();
             if(flag==3)
             {
                              s.x=  X_candidate[k]+1;
@@ -993,22 +1030,8 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
                              s.color = red;
                              curlist<<s;
             }
-//             if(flag==4)
-//             {
-//                              s.x=  X_candidate[k]+1;
-//                              s.y = Y_candidate[k]+1;
-//                              s.z = 1;
-//                              s.radius = 1;
-//                              s.color = blue;
-//                              curlist<<s;
-//             }
 
         }
-//         LandmarkList new_curlist;
-//         ClusterAnalysis cluster;
-//         cluster.Read_from_curlist(curlist,5,2);
-//         cluster.DoDBSCANRecursive();
-//         new_curlist = cluster.get_clustered_curlist(curlist);
         etime1 = timer1.elapsed();
         v3d_msg(QString("the detecting take %1 milliseconds").arg(etime1));
 
@@ -1058,7 +1081,12 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
         //if(image_binary) {delete []image_binary; image_binary = 0;}
         //if(datald_mip) {delete []datald_mip; datald_mip = 0;}
 
-        callback.setLandmark(curwin, curlist);
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)old_image_binary, nx, ny, 1, p4DImage->getCDim(), p4DImage->getDatatype());
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.updateImageWindow(newwin);
+        callback.setLandmark(newwin, curlist);
         return 1;
 
 }
@@ -1077,20 +1105,17 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
     V3DLONG sz[3];
     sz[0] = p4DImage->getXDim();
     sz[1] = p4DImage->getYDim();
-    sz[2] = p4DImage->getZDim();
-    sz[3] = p4DImage->getCDim();
     V3DLONG size_image=sz[0]*sz[1];
 
 
     // set the parameter
     int thres_2d=30;
-    int ray_length=2;
-    int ray_numbers_2d=128;
-    int T0=10;
+    int ray_length=1;
+    int ray_numbers_2d=64;
+    int T0=3;
     int cluster_threshold=10;
     V3DLONG nx=sz[0];
     V3DLONG ny=sz[1];
-    V3DLONG nz=sz[2];
 
     if(p4DImage==NULL)
     {
@@ -1186,8 +1211,11 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
 
 
 
+        unsigned char* datald_cope=0;
+        datald_cope=p4DImage->getRawData();
+
         unsigned char* datald=0;
-        datald=p4DImage->getRawData();
+        datald=datald_cope;
 
         unsigned char *datald_mip;
         try{datald_mip=new unsigned char [size_image];}
@@ -1211,45 +1239,15 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
 
         LandmarkList curlist;
         LocationSimple s;
-        vector<V3DLONG> X_candidate;
-        vector<V3DLONG> Y_candidate;
-        vector<double> Max_value;
 
         int count=0; // the number of candidate
         vector<V3DLONG> X_loc; //save the non-adjusted x coordinate;
         vector<V3DLONG> Y_loc; //save the non-adjusted y coordinate;
-        qint64 etime1;
-        QElapsedTimer timer1;
-        timer1.start();
-        skeletonization(nx,ny,datald);
-        seek_2D_candidate_points(nx,ny,datald,X_loc,Y_loc,count);
-        int window_size=1;
-        if(count>0)
-        {
-            for(int i=0;i<count;i++)
-            {
-                if(((X_loc.at(i)-window_size)<=0)||((Y_loc.at(i)-window_size)<=0)||((Y_loc.at(i)+window_size)>=ny)||((X_loc.at(i)+window_size)>=nx))
-                {
-                    continue;
-                }
-                /* using Spherical growth method designed by Chaowang*/
-                V3DLONG adjusted_x, adjusted_y;
-                double radiu;
-                find_neighborhood_maximum_radius(X_loc.at(i),Y_loc.at(i),old_image_binary,window_size,adjusted_x,adjusted_y,radiu,nx,ny,thres_2d);
-                X_candidate.push_back(adjusted_x);  // all adjusted x coordinate of candidate points
-                Y_candidate.push_back(adjusted_y);  // all adjusted y coordinate of candidate points
-                Max_value.push_back(radiu);    // all radiu coordinate of candidate points
-            }
-        }
-        else {
-            cout<<"no candidate points in this MIP"<<endl;
-        }
-        cout<<"the all candidate points have detected"<<endl;
         /* create the ray-shooting matrix */
-        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(1000)), ray_y(ray_numbers_2d,vector<float>(1000));
+        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(500)), ray_y(ray_numbers_2d,vector<float>(500));
         float ang = 2*PI/ray_numbers_2d;
         float x_dis, y_dis;
-        int max_length=200; // if the rorate crash , please check the max_length;
+        int max_length=500; // if the rorate crash , please check the max_length;
         for(int i = 0; i < ray_numbers_2d; i++)
         {
            x_dis = cos(ang*(i+1));
@@ -1266,94 +1264,207 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
         RGBA8 green; green.r=0; green.g=255; green.b=0;
         RGBA8 blue; blue.r=0; blue.g=0; blue.b=255;
 
-        for(V3DLONG k = 0; k < X_candidate.size(); k++)
+        skeletonization(nx,ny,datald);
+        seek_2D_candidate_points_vessel(nx,ny,datald,X_loc,Y_loc,count);
+        qint64 etime1;
+        QElapsedTimer timer1;
+        timer1.start();
+        int window_size=1;
+        if(count>0)
         {
-            vector<float> x_loc;
-            vector<float> y_loc;
-            double based_distance=T0;
-            //create a new block_mip to detect the 2D branch points
-            int block_radiu=Max_value.at(k)+based_distance+ray_length+5;
-            int block_length=block_radiu*2+1;
-            unsigned char *block=0;
-            try{block=new unsigned char [block_length*block_length*block_length];}
-            catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-            //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
-            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
+            for(int i=0;i<count;i++)
             {
-                cout<<"this points beyong the image"<<endl;
-                continue;
-            }
-            int num_block=0;
-            for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
-            {
-                 for(V3DLONG c=X_candidate.at(k)-block_radiu;c<=X_candidate.at(k)+block_radiu;c++)
-                 {
-                     unsigned char block_pixe=old_image_binary[b*nx+c];
-                     block[num_block]=block_pixe;
-                     num_block++;
-                 }
-             }
-            if(1)
-            {
-                delete_small_area(block_length,block_length,block);// connected domain denoising
-            }
-             for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
-             {
-                 for(int j = Max_value.at(k)+based_distance; j < Max_value.at(k)+based_distance+ray_length; j++)    // n is the numble of the points of the each ray
-                 {
-                     if((Max_value.at(k)+based_distance+2)>max_length)
-                         {
-                         v3d_msg(QString("the max_length is too small to can not adapt the model, please check the max_length"));
-                     }
-                     double pixe = project_interp_2d(block_radiu+ray_y[i][j], block_radiu+ray_x[i][j], block, block_length, block_length , block_radiu,  block_radiu);
-                     if(pixe>=100)
+                if(((X_loc.at(i)-window_size)<=0)||((Y_loc.at(i)-window_size)<=0)||((Y_loc.at(i)+window_size)>=ny)||((X_loc.at(i)+window_size)>=nx))
+                {
+                    continue;
+                }
+                /* using Spherical growth method designed by Chaowang*/
+                V3DLONG adjusted_x, adjusted_y;
+                double radiu;
+                find_neighborhood_maximum_radius(X_loc.at(i),Y_loc.at(i),old_image_binary,window_size,adjusted_x,adjusted_y,radiu,nx,ny,thres_2d);
+                vector<float> x_loc;
+                vector<float> y_loc;
+                double based_distance=T0;
+                int block_radiu=radiu+based_distance+ray_length+5;
+                int block_length=block_radiu*2+1;
+                unsigned char *block=0;
+                try{block=new unsigned char [block_length*block_length*block_length];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+                //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
+                if(((adjusted_x+block_radiu)>(nx-1))||((adjusted_x-block_radiu)<1)||((adjusted_y-block_radiu)<1)||((adjusted_y+block_radiu)>(ny-1)))
+                {
+                    cout<<"this points beyong the image"<<endl;
+                    continue;
+                }
+                int num_block=0;
+                for(V3DLONG b=adjusted_y-block_radiu;b<=adjusted_y+block_radiu;b++)
+                {
+                     for(V3DLONG c=adjusted_x-block_radiu;c<=adjusted_x+block_radiu;c++)
                      {
-                         x_loc.push_back(block_radiu+ray_x[i][j]);
-                         y_loc.push_back(block_radiu+ray_y[i][j]);
-
+                         unsigned char block_pixe=old_image_binary[b*nx+c];
+                         block[num_block]=block_pixe;
+                         num_block++;
                      }
                  }
-             }
-            double a=X_candidate.at(k)+ray_x[0][Max_value.at(k)+based_distance+ray_length]; //x1
-            double b=X_candidate.at(k)+ray_x[1][Max_value.at(k)+based_distance+ray_length]; //x2
-            double c=Y_candidate.at(k)+ray_y[0][Max_value.at(k)+based_distance+ray_length]; //y1
-            double d=Y_candidate.at(k)+ray_y[1][Max_value.at(k)+based_distance+ray_length]; //y2
-            double change_x=abs(a-b);
-            double change_x1=pow(change_x,2);
-            double change_y=abs(c-d);
-            double change_x2=pow(change_y,2);
-            double det_x=sqrt(change_x1+change_x2);
+                if(1)
+                {
+                    delete_small_area(block_length,block_length,block);// connected domain denoising
+                }
 
-            int det_y=1;
-            double DB_radius;
-            if(det_x>det_y)
-            {
-                DB_radius=det_x;
-            }
-            else {
-                DB_radius=det_y;
-            }
-            mycluster.Read_from_coordiante(x_loc,y_loc,(1.1*DB_radius),1);
-            int flag=mycluster.DoDBSCANRecursive();
-            if(flag==3)
-            {
-                             s.x=  X_candidate[k]+1;
-                             s.y = Y_candidate[k]+1;
-                             s.z = 1;
-                             s.radius = 1;
-                             s.color = red;
-                             curlist<<s;
-            }
-            else if(flag==4)
-            {
-                              s.x=  X_candidate[k]+1;
-                              s.y = Y_candidate[k]+1;
-                              s.z = 1;
-                              s.radius = 1;
-                              s.color = blue;
-                              curlist<<s;
+                for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
+                {
+                    for(int j = radiu+based_distance; j < radiu+based_distance+ray_length; j++)    // n is the numble of the points of the each ray
+                    {
+                        if((radiu+based_distance+2)>max_length)
+                            {
+                            v3d_msg(QString("the max_length is too small to can not adapt the model, please check the max_length"));
+                        }
+                        double pixe = project_interp_2d(block_radiu+ray_y[i][j], block_radiu+ray_x[i][j], block, block_length, block_length , block_radiu,  block_radiu);
+                        if(pixe>=100)
+                        {
+                            x_loc.push_back(block_radiu+ray_x[i][j]);
+                            y_loc.push_back(block_radiu+ray_y[i][j]);
+
+                        }
+                    }
+                }
+                double a=adjusted_x+ray_x[0][radiu+based_distance+ray_length]; //x1
+                double b=adjusted_x+ray_x[1][radiu+based_distance+ray_length]; //x2
+                double c=adjusted_y+ray_y[0][radiu+based_distance+ray_length]; //y1
+                double d=adjusted_y+ray_y[1][radiu+based_distance+ray_length]; //y2
+                double change_x=abs(a-b);
+                double change_x1=pow(change_x,2);
+                double change_y=abs(c-d);
+                double change_x2=pow(change_y,2);
+                double det_x=sqrt(change_x1+change_x2);
+
+                int det_y=1;
+                double DB_radius;
+                if(det_x>det_y)
+                {
+                    DB_radius=det_x;
+                }
+                else {
+                    DB_radius=det_y;
+                }
+                mycluster.Read_from_coordiante(x_loc,y_loc,(1.1*DB_radius),1);
+                int flag=mycluster.DoDBSCANRecursive();
+                if(flag==3)
+                {
+                                 s.x=  adjusted_x+1;
+                                 s.y = adjusted_y+1;
+                                 s.z = 1;
+                                 s.radius = 1;
+                                 s.color = red;
+                                 curlist<<s;
+                }
+                else if(flag==4)
+                {
+                                  s.x=  adjusted_x+1;
+                                  s.y = adjusted_y+1;
+                                  s.z = 1;
+                                  s.radius = 1;
+                                  s.color = blue;
+                                  curlist<<s;
+                }
+//                X_candidate.push_back(adjusted_x);  // all adjusted x coordinate of candidate points
+//                Y_candidate.push_back(adjusted_y);  // all adjusted y coordinate of candidate points
+//                Max_value.push_back(radiu);    // all radiu coordinate of candidate points
             }
         }
+        else {
+            cout<<"no candidate points in this MIP"<<endl;
+        }
+        cout<<"the all candidate points have detected"<<endl;
+
+//        for(V3DLONG k = 0; k < X_candidate.size(); k++)
+//        {
+//            vector<float> x_loc;
+//            vector<float> y_loc;
+//            double based_distance=T0;
+//            //create a new block_mip to detect the 2D branch points
+//            int block_radiu=Max_value.at(k)+based_distance+ray_length+5;
+//            int block_length=block_radiu*2+1;
+//            unsigned char *block=0;
+//            try{block=new unsigned char [block_length*block_length*block_length];}
+//            catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//            //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
+//            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
+//            {
+//                cout<<"this points beyong the image"<<endl;
+//                continue;
+//            }
+//            int num_block=0;
+//            for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
+//            {
+//                 for(V3DLONG c=X_candidate.at(k)-block_radiu;c<=X_candidate.at(k)+block_radiu;c++)
+//                 {
+//                     unsigned char block_pixe=old_image_binary[b*nx+c];
+//                     block[num_block]=block_pixe;
+//                     num_block++;
+//                 }
+//             }
+//            if(1)
+//            {
+//                delete_small_area(block_length,block_length,block);// connected domain denoising
+//            }
+//             for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
+//             {
+//                 for(int j = Max_value.at(k)+based_distance; j < Max_value.at(k)+based_distance+ray_length; j++)    // n is the numble of the points of the each ray
+//                 {
+//                     if((Max_value.at(k)+based_distance+2)>max_length)
+//                         {
+//                         v3d_msg(QString("the max_length is too small to can not adapt the model, please check the max_length"));
+//                     }
+//                     double pixe = project_interp_2d(block_radiu+ray_y[i][j], block_radiu+ray_x[i][j], block, block_length, block_length , block_radiu,  block_radiu);
+//                     if(pixe>=100)
+//                     {
+//                         x_loc.push_back(block_radiu+ray_x[i][j]);
+//                         y_loc.push_back(block_radiu+ray_y[i][j]);
+
+//                     }
+//                 }
+//             }
+//            double a=X_candidate.at(k)+ray_x[0][Max_value.at(k)+based_distance+ray_length]; //x1
+//            double b=X_candidate.at(k)+ray_x[1][Max_value.at(k)+based_distance+ray_length]; //x2
+//            double c=Y_candidate.at(k)+ray_y[0][Max_value.at(k)+based_distance+ray_length]; //y1
+//            double d=Y_candidate.at(k)+ray_y[1][Max_value.at(k)+based_distance+ray_length]; //y2
+//            double change_x=abs(a-b);
+//            double change_x1=pow(change_x,2);
+//            double change_y=abs(c-d);
+//            double change_x2=pow(change_y,2);
+//            double det_x=sqrt(change_x1+change_x2);
+
+//            int det_y=1;
+//            double DB_radius;
+//            if(det_x>det_y)
+//            {
+//                DB_radius=det_x;
+//            }
+//            else {
+//                DB_radius=det_y;
+//            }
+//            mycluster.Read_from_coordiante(x_loc,y_loc,(1.1*DB_radius),1);
+//            int flag=mycluster.DoDBSCANRecursive();
+//            if(flag==3)
+//            {
+//                             s.x=  X_candidate[k]+1;
+//                             s.y = Y_candidate[k]+1;
+//                             s.z = 1;
+//                             s.radius = 1;
+//                             s.color = red;
+//                             curlist<<s;
+//            }
+//            else if(flag==4)
+//            {
+//                              s.x=  X_candidate[k]+1;
+//                              s.y = Y_candidate[k]+1;
+//                              s.z = 1;
+//                              s.radius = 1;
+//                              s.color = blue;
+//                              curlist<<s;
+//            }
+//        }
         etime1 = timer1.elapsed();
         v3d_msg(QString("the detecting take %1 milliseconds").arg(etime1));
 
@@ -1379,7 +1490,12 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
             }
             if(endwhile){flag_while_xy = false;}
         }
-        callback.setLandmark(curwin, curlist);
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)old_image_binary, nx, ny, 1, p4DImage->getCDim(), p4DImage->getDatatype());
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.updateImageWindow(newwin);
+        callback.setLandmark(newwin, curlist);
         return 1;
 
 }
@@ -1522,8 +1638,8 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
         sz[3] = p4DImage->getCDim();
 
         // set the parameter
-        int thres_2d=30;
-        int ray_numbers_2d=128;
+        int thres_2d=45;
+        int ray_numbers_2d=64;
         int based_distance=5;
         int num_layer=3;
         int clu_thres=100;
@@ -1637,8 +1753,12 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                       cout<<"delete dialog"<<endl;
               }
 
+                unsigned char* datald_cope=0;
+                datald_cope=p4DImage->getRawData();
+
                 unsigned char* datald=0;
-                datald=p4DImage->getRawData();
+                datald=datald_cope;
+
 
                 unsigned char *image_mip;
                 unsigned char *image_binary;
@@ -1652,7 +1772,57 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 unsigned char *image_binary_xz;
                 unsigned char *old_image_binary_xz;
 
+                try{image_mip=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
 
+                try{image_binary=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary=new unsigned char [image_size_xy];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of xy plane is successful"<<endl;
+
+
+                try{image_mip_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+
+                try{image_binary_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary_yz=new unsigned char [image_size_yz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of yz plane is successful"<<endl;
+
+                try{image_mip_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+
+                try{image_binary_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                try{old_image_binary_xz=new unsigned char [image_size_xz];}
+                catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+                cout<<"allocate the memory of xz plane is successful"<<endl;
+                //gaussianfilter
+//                float* outimg = 0;
+//                gaussian_filter(datald,
+//                                nx, ny, nz,
+//                                7,7,7,3,1,outimg);
+//                for(V3DLONG num;num<nx*ny;num++)
+//                {
+//                    if(outimg[num]>thres_2d)
+//                        {
+//                         datald[num]=255;
+
+//                    }
+//                  else
+//                        {
+//                        datald[num]=0;
+//                    }
+
+//                }
 
                 vector<V3DLONG> X_coor;
                 vector<V3DLONG> Y_coor;
@@ -1711,6 +1881,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
                 cout<<"allocate the memory of xz plane is successful"<<endl;
+                cout<<"start to calculat the times"<<endl;
 
                 LandmarkList curlist, curlist_yz, curlist_xz;
                 LocationSimple s , s_yz, s_xz;
@@ -1724,17 +1895,20 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                     case2=1;
                     case3=1;
                 }
+                qint64 etime1;
+                QElapsedTimer timer1;
+                timer1.start();
 
 
 
               if(case2)
               {
                 cout<<"begin to detect juntion point of each yz project"<<endl;
-                for(int size_x=num_layer;size_x<nx-num_layer;size_x+=MAX(1,num_layer/2))
+                for(int size_x=num_layer;size_x<nx-num_layer;size_x+=num_layer)
                 {
 
                     /* detect the 2D branch points in each MIP */
-                    if((size_x+num_layer)<nx)
+                    if((size_x+num_layer)<(nx-2))
                     {
                        mip_layer_yz(nx,ny,nz,size_x,datald,image_mip_yz,num_layer);
                        thres_segment(ny*nz,image_mip_yz,image_binary_yz,thres_2d);
@@ -1786,21 +1960,22 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((Y_candidate.at(k)+block_radiu)>(ny-1))||((Y_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-                               V3DLONG new_ny=ny+block_radiu;
-                               V3DLONG new_nz=nz+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nz*new_ny];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-                               {
-                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-                                 {
-                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_ny=ny+block_radiu;
+//                               V3DLONG new_nz=nz+block_radiu;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nz*new_ny];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+//                               {
+//                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+//                                 {
+//                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
 
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Z_candidate.at(k)-block_radiu;b<=Z_candidate.at(k)+block_radiu;b++)
@@ -1878,7 +2053,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                                }
                                             s_yz.x = loc_x;
                                             s_yz.radius = 1;
-                                            s_yz.color = blue;
+                                            s_yz.color = red;
                                             curlist_yz<<s_yz;
                            }
 
@@ -1891,9 +2066,9 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               {
                 cout<<"begin to detect juntion point of each yz project"<<endl;
 
-                for(int size_y=num_layer;size_y<ny-num_layer;size_y+=MAX(1,num_layer/2))
+                for(int size_y=num_layer;size_y<ny-num_layer;size_y+=num_layer)
                 {
-                    if((size_y+num_layer)<ny)
+                    if((size_y+num_layer)<(ny-2))
                     {
                        mip_layer_xz(nx,ny,nz,size_y,datald,image_mip_xz,num_layer);
                        thres_segment(nx*nz,image_mip_xz,image_binary_xz,thres_2d);
@@ -1946,20 +2121,21 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-                               V3DLONG new_nx=nx+block_radiu;
-                               V3DLONG new_nz=nz+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nz*new_nx];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-                               {
-                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
-                                 {
-                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_nx=nx+block_radiu;
+//                               V3DLONG new_nz=nz+block_radiu;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nz*new_nx];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+//                               {
+//                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
+//                                 {
+//                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Z_candidate.at(k)-block_radiu;b<=Z_candidate.at(k)+block_radiu;b++)
@@ -2037,7 +2213,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                                }
                                             s_xz.y = loc_y;
                                             s_xz.radius = 1;
-                                            s_xz.color = green;
+                                            s_xz.color = red;
                                             curlist_xz<<s_xz;
                            }
 
@@ -2049,11 +2225,11 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
               if(case1)
                {
                 cout<<"begin to detect juntion point of each xy project"<<endl;
-                for(int size_z=num_layer;size_z<nz-num_layer;size_z+=MAX(1,num_layer/2))
+                for(int size_z=num_layer;size_z<nz;size_z+=num_layer)
                 {
-
                     /* detect the 2D branch points in each MIP */
-                    if((size_z+num_layer)<nz)
+                    cout<<"the index of layer is "<<size_z<<endl;
+                    if((size_z+num_layer)<(nz-2))
                     {
                        mip(nx,ny,size_z,datald,image_mip,num_layer);
                        thres_segment(nx*ny,image_mip,image_binary,thres_2d);
@@ -2110,7 +2286,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            vector<float> x_loc;
                            vector<float> y_loc;
                            //create a new block_mip to detect the 2D branch points
-                           int block_radiu=Max_value.at(k)+based_distance+ray_length+2;
+                           int block_radiu=Max_value.at(k)+based_distance+ray_length+1;
                            int block_length=block_radiu*2+1;
                            unsigned char *block=0;
                            try{block=new unsigned char [block_length*block_length*block_length];}
@@ -2118,23 +2294,24 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
                            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
                            {
+                               cout<<"must enlarge the original images"<<endl;
                                //enlagre the original
-                               V3DLONG new_nx=nx+block_radiu;
-                               V3DLONG new_ny=ny+block_radiu;
-                               unsigned char *enlarged_image=0;
-                               enlarged_image=new unsigned char[new_nx*new_ny];
-                               V3DLONG num_datald=0;
-                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-                               {
-                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
-                                 {
-                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
-                                        num_datald++;
+//                               V3DLONG new_nx=nx+2*block_radiu+1;
+//                               V3DLONG new_ny=ny+2*block_radiu+1;
+//                               unsigned char *enlarged_image=0;
+//                               enlarged_image=new unsigned char[new_nx*new_ny];
+//                               V3DLONG num_datald=0;
+//                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+//                               {
+//                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
+//                                 {
+//                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
+//                                        num_datald++;
 
-                                 }
-                               }
+//                                 }
+//                               }
 
-                              // continue;
+                               continue;
                            }
                            int num_block=0;
                            for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
@@ -2189,7 +2366,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                             else {
                                 DB_radius=det_y;
                             }
-                           mycluster.Read_from_coordiante(x_loc,y_loc,DB_radius*1.1,5);
+                           mycluster.Read_from_coordiante(x_loc,y_loc,DB_radius*1.1,3);
                            int flag=mycluster.DoDBSCANRecursive();
 
                            if(flag==3)
@@ -2200,18 +2377,22 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                             int loc_z;
                                                for(int kk=size_z;kk<size_z+num_layer;kk++)
                                                {
-                                                   unsigned char sum_pixe;
-                                                   sum_pixe=datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]+1]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]-1]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]+1]+
-                                                           datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]+1];
-                                                   if(sum_pixe>max_z)
+                                                   if(kk<nz)
                                                    {
-                                                       max_z=sum_pixe;
-                                                       loc_z=kk;
+                                                       unsigned char sum_pixe;
+                                                       sum_pixe=datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]+1]+datald[kk*nx*ny+Y_candidate[k]*nx+X_candidate[k]-1]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]+1)*nx+X_candidate[k]+1]+
+                                                               datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]-1]+datald[kk*nx*ny+(Y_candidate[k]-1)*nx+X_candidate[k]+1];
+                                                       if(sum_pixe>max_z)
+                                                       {
+                                                           max_z=sum_pixe;
+                                                           loc_z=kk;
+                                                       }
                                                    }
                                                }
                                             s.z = loc_z;
+                                            s.z=size_z;
                                             s.radius = 1;
                                             s.color = red;
                                             curlist<<s;
@@ -2219,7 +2400,16 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
 
                        }
                     }
+                    else {
+                        break;
+                    }
                 }
+
+                cout<<"finish xy project detection"<<endl;
+
+                etime1 = timer1.elapsed();
+                cout<<"the elapsed time is :"<<etime1<<endl;
+                v3d_msg(QString("the detecting take %1 milliseconds").arg(etime1));
 
                 int p;
                 if(QMessageBox::Yes == QMessageBox::question (0, "", QString(" yes: delete the soma neiborhood junction; no : NULL"), QMessageBox::Yes, QMessageBox::No))    p = 1;
@@ -2254,7 +2444,6 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                   curlist.append(curlist_xz[i]);
               }
               cout<<"new curlist_xy.size:"<<curlist.size()<<endl;
-
               bool flag_while = true;
               while(flag_while)
               {
@@ -2268,7 +2457,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                               curlist[i].x=(curlist[j].x+curlist[i].x)/2;
                               curlist[i].y=(curlist[j].y+curlist[i].y)/2;
                               curlist[i].z=(curlist[j].z+curlist[i].z)/2;
-                              curlist[i].color=blue;
+                             // curlist[i].color=blue;
                               curlist.removeAt(j);
                               j=j-1;
                               endwhile = false;
@@ -2289,4 +2478,360 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                 delete []old_image_binary_xz;
                 return 1;
 
+}
+
+template <class T> void gaussian_filter(T* data1d,
+                     V3DLONG nx, V3DLONG ny,V3DLONG nz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
+                     unsigned int c,
+                     double sigma,
+                     float* &outimg)
+{
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
+
+     // for filter kernel
+     double sigma_s2 = 0.5/(sigma*sigma); // 1/(2*sigma*sigma)
+     double pi_sigma = 1.0/(sqrt(2*3.1415926)*sigma); // 1.0/(sqrt(2*pi)*sigma)
+
+     float min_val = INF, max_val = 0;
+
+     V3DLONG N = nx;
+     V3DLONG M = ny;
+     V3DLONG P = nz;
+     V3DLONG pagesz = N*M*P;
+
+     //filtering
+     V3DLONG offset_init = (c-1)*pagesz;
+
+     //declare temporary pointer
+     float *pImage = new float [pagesz];
+     if (!pImage)
+     {
+          printf("Fail to allocate memory.\n");
+          return;
+     }
+     else
+     {
+          for(V3DLONG i=0; i<pagesz; i++)
+               pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
+     }
+       //Filtering
+     //
+     //   Filtering along x
+     if(N<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsX = 0;
+          WeightsX = new float [Wx];
+          if (!WeightsX)
+               return;
+
+          float Half = (float)(Wx-1)/2.0;
+
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+       //   for (unsigned int Weight = 0; Weight < Half; ++Weight)
+       //   {
+       //        const float  x = Half* float (Weight) / float (Half);
+      //         WeightsX[(int)Half - Weight] = WeightsX[(int)Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); // Corresponding symmetric WeightsX
+      //    }
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  x = float(Weight)-Half;
+              WeightsX[Weight] = WeightsX[Wx-Weight-1] = pi_sigma * exp(-(x * x *sigma_s2)); // Corresponding symmetric WeightsX
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               k += WeightsX[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               WeightsX[Weight] /= k;
+
+         printf("\n x dierction");
+
+         for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+             printf("/n%f",WeightsX[Weight]);
+
+          //   Allocate 1-D extension array
+          float  *extension_bufferX = 0;
+          extension_bufferX = new float [N + (Wx<<1)];
+
+          unsigned int offset = Wx>>1;
+
+          //	along x
+          const float  *extStop = extension_bufferX + N + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG iy = 0; iy < M; iy++)
+               {
+                    float  *extIter = extension_bufferX + Wx;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferX - 1;
+                    float  *extLeft = extension_bufferX + Wx - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + N + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferX + offset;
+
+                    float  *resIter = &(pImage[iz*M*N + iy*N]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsX;
+                         const float  *const End = WeightsX + Wx;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *(resIter++) = sum;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+
+                    }
+
+               }
+          }
+          //de-alloc
+           if (WeightsX) {delete []WeightsX; WeightsX=0;}
+           if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
+
+     }
+
+     //   Filtering along y
+     if(M<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsY = 0;
+          WeightsY = new float [Wy];
+          if (!WeightsY)
+               return;
+
+          float Half = (float)(Wy-1)/2.0;
+
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+         /* for (unsigned int Weight = 0; Weight < Half; ++Weight)
+          {
+               const float  y = Half* float (Weight) / float (Half);
+               WeightsY[(int)Half - Weight] = WeightsY[(int)Half + Weight] = pi_sigma * exp(-y * y *sigma_s2); // Corresponding symmetric WeightsY
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  y = float(Weight)-Half;
+              WeightsY[Weight] = WeightsY[Wy-Weight-1] = pi_sigma * exp(-(y * y *sigma_s2)); // Corresponding symmetric WeightsY
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               k += WeightsY[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               WeightsY[Weight] /= k;
+
+          //	along y
+          float  *extension_bufferY = 0;
+          extension_bufferY = new float [M + (Wy<<1)];
+
+          unsigned int offset = Wy>>1;
+          const float *extStop = extension_bufferY + M + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+                    float  *extIter = extension_bufferY + Wy;
+                    for(V3DLONG iy = 0; iy < M; iy++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferY - 1;
+                    float  *extLeft = extension_bufferY + Wy - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + M + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferY + offset;
+
+                    float  *resIter = &(pImage[iz*M*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsY;
+                         const float  *const End = WeightsY + Wy;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+
+                    }
+
+               }
+          }
+
+          //de-alloc
+          if (WeightsY) {delete []WeightsY; WeightsY=0;}
+          if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
+
+
+     }
+
+     //  Filtering  along z
+     if(P<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsZ = 0;
+          WeightsZ = new float [Wz];
+          if (!WeightsZ)
+               return;
+
+          float Half = (float)(Wz-1)/2.0;
+
+         /* for (unsigned int Weight = 1; Weight < Half; ++Weight)
+          {
+               const float  z = Half * float (Weight) / Half;
+               WeightsZ[(int)Half - Weight] = WeightsZ[(int)Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; // Corresponding symmetric WeightsZ
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  z = float(Weight)-Half;
+              WeightsZ[Weight] = WeightsZ[Wz-Weight-1] = pi_sigma * exp(-(z * z *sigma_s2)); // Corresponding symmetric WeightsZ
+          }
+
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               k += WeightsZ[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               WeightsZ[Weight] /= k;
+
+          //	along z
+          float  *extension_bufferZ = 0;
+          extension_bufferZ = new float [P + (Wz<<1)];
+
+          unsigned int offset = Wz>>1;
+          const float *extStop = extension_bufferZ + P + offset;
+
+          for(V3DLONG iy = 0; iy < M; iy++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+
+                    float  *extIter = extension_bufferZ + Wz;
+                    for(V3DLONG iz = 0; iz < P; iz++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
+                    }
+
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferZ - 1;
+                    float  *extLeft = extension_bufferZ + Wz - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + P + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferZ + offset;
+
+                    float  *resIter = &(pImage[iy*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsZ;
+                         const float  *const End = WeightsZ + Wz;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += M*N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+
+                    }
+
+               }
+          }
+
+          //de-alloc
+          if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
+          if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
+
+
+     }
+
+    outimg = pImage;
+
+
+    return;
 }

@@ -89,6 +89,21 @@ inline double z_angle_two_point(T &point1,T &point2)
 struct Angle{
     double x,y,z;
     Angle():x(0),y(0),z(0){}
+    Angle(double x,double y,double z)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+
+    Angle norm_angle()
+    {
+        double s = norm_v(*this);
+        x /= s;
+        y /= s;
+        z /= s;
+        return *this;
+    }
     double operator *(const Angle &other) const
     {
         return (x*other.x+y*other.y+z*other.z);
@@ -112,7 +127,7 @@ struct Branch{
     Branch* parent;
     Angle head_angle,end_angle;
     int level;
-    double distance,length;
+    double distance,length,length_to_soma,sum_angle;
     Branch():head_angle(),end_angle(),level(0),distance(0),length(0),head_point(),end_point()
     {
         //head_point=0;
@@ -139,6 +154,16 @@ struct Branch{
 
     bool get_points_of_branch(vector<NeuronSWC> &points,NeuronTree &nt);
     bool get_r_points_of_branch(vector<NeuronSWC> &r_points,NeuronTree &nt);
+
+    bool refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt);
+
+    bool get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
+
+    bool splitbranch(NeuronTree& nt, vector<Branch> &segs, double thres);
+
+    bool refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> &outpoints, QString braindir, V3DPluginCallback2 &callback);
+
+    bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres);
 
 };
 
@@ -179,8 +204,15 @@ struct SwcTree{
     bool get_points_of_branchs(vector<Branch> &b, vector<NeuronSWC> &points, NeuronTree &ntb);
     int get_max_level();
     // added by DZC 19 Jul 2019
-    NeuronTree refine_swc(QString braindir, double thresh, V3DPluginCallback2 &callback);
-    bool gd_on_nt(NeuronTree &branch_nt, NeuronTree & tree_out,QString braindir,V3DPluginCallback2 &callback);
+//    NeuronTree refine_swc(QString braindir, double thresh, V3DPluginCallback2 &callback);
+//    bool gd_on_nt(NeuronTree &branch_nt, NeuronTree & tree_out,QString braindir,V3DPluginCallback2 &callback);
+
+    NeuronTree refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &callback);
+
+    bool test(QString braindir, V3DPluginCallback2 &callback);
+
+    NeuronTree refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback);
+
 };
 
 class Swc_Compare{

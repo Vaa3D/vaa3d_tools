@@ -40,7 +40,7 @@ class ImgManager
 {
 public: 
 	/********* Constructors and Basic Data Members *********/
-	ImgManager() {};
+	ImgManager() = default;
 	ImgManager(QString inputPath);
 
 	QString inputCaseRootPath;

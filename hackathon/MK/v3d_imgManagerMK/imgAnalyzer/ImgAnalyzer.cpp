@@ -2,11 +2,6 @@
 
 #include "ImgAnalyzer.h"
 
-ImgAnalyzer::ImgAnalyzer()
-{
-	this->blobMergingReport = false;
-}
-
 /* ======================================= Image Segmentation/Detection ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {

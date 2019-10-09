@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include <qstringlist.h>
 #include <qsettings.h>
@@ -18,6 +19,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->volumeAdjustedCoords = new int[6];
 	this->globalCoords = new int[6];
 	this->displayingDims = new int[3];
+
+	this->markerMonitorSwitch = false;
 	// ------------------------------ //
 
 	// ------- Set up user interface ------- //
@@ -140,6 +143,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
 		}
 	}
+
+	this->somaListViewer = new QStandardItemModel(this);
+	uiPtr->listView_2->setModel(this->somaListViewer);
 	// --------------------------------------- //
 
 
@@ -162,21 +168,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->listViewBlankAreas = new QStandardItemModel(this);
 	uiPtr->listView->setModel(listViewBlankAreas);
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
+	// --------------------------------------- //
 
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
-	this->setWindowTitle(windowTitleQ);
+	this->setWindowTitle(windowTitleQ);  
+
 	this->show();
-	// --------------------------------------- //
-}
-
-FragTraceControlPanel::~FragTraceControlPanel()
-{
-	delete this->doubleSpinBox;
-
-	if (this->traceManagerPtr != nullptr) delete this->traceManagerPtr;
-
-	delete uiPtr;
 }
 
 
@@ -225,6 +223,30 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 			uiPtr->groupBox_6->setChecked(true);
 		}
 	}
+}
+
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker List / Multiple Dendritic Tracing]
+{
+	QObject* signalSender = sender();
+	QString checkName = signalSender->objectName();
+
+	if (checked)
+	{
+		this->refreshSomaCoords();
+		this->markerMonitor();
+	}
+	else this->markerMonitorSwitch = false;
+}
+
+void FragTraceControlPanel::refreshSomaCoords()
+{
+	this->markerMonitorSwitch = false;
+	thisCallback->refreshSelectedMarkers();
+	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+	this->somaMap.clear();
+	this->localSomaMap.clear();
+	this->somaDisplayNameMap.clear();
+	this->markerMonitorSwitch = true;
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -456,6 +478,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 /* ============================== TRACING INITIALIZING FUNCTION =============================== */
 void FragTraceControlPanel::traceButtonClicked()
 {
+	this->markerMonitorSwitch = false;
+
 	QSettings currSettings("SEU-Allen", "Fragment tracing");
 	if (currSettings.value("savePath").isNull())
 	{
@@ -522,6 +546,12 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
+	
+	if (this->somaListViewer->rowCount() == 0)
+	{
+		this->traceManagerPtr->selectedSomaMap.clear();
+		this->traceManagerPtr->selectedLocalSomaMap.clear();
+	}
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
 		v3d_msg(QString("The process has been terminated."));
@@ -545,7 +575,6 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronStructExplorer myExplorer;
 		profiledTree tracedProfiledTree(this->tracedTree);
 		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
-		this->thisCallback->redrawEditInfo(12);
 
 		finalTree = this->tracedTree;
 	}
@@ -555,8 +584,10 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
 		trees.push_back(scaledBackExistingTree);
 		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
-		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 5);
-		trees.push_back(newlyTracedPart);
+		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 4, 8);
+		profiledTree newlyTracedPartProfiled(newlyTracedPart);
+		NeuronTree cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
+		trees.push_back(cleaned_newlyTracedPart);
 
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
 		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5);
@@ -566,6 +597,14 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
+
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		this->markerMonitorSwitch = true;
+		this->markerMonitor();
+	}
+
+	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
 /* ============================================================================================ */
 
@@ -574,26 +613,28 @@ void FragTraceControlPanel::traceButtonClicked()
 /* =========================== TRACING VOLUME PREPARATION =========================== */
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
+	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
+	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
 
-	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, volumeAdjustedCoords, displayingDims);
 	if (this->volumeAdjusted)
 	{
-		//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-		//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-
 		unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
 		int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
 		memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
 
-		int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+		int originalDims[3] = { this->displayingDims[0], this->displayingDims[1], this->displayingDims[2] };
 		int croppedDims[3];
-		croppedDims[0] = volumeAdjustedCoords[1] - volumeAdjustedCoords[0] + 1;
-		croppedDims[1] = volumeAdjustedCoords[3] - volumeAdjustedCoords[2] + 1;
-		croppedDims[2] = volumeAdjustedCoords[5] - volumeAdjustedCoords[4] + 1;
+		croppedDims[0] = this->volumeAdjustedCoords[1] - this->volumeAdjustedCoords[0] + 1;
+		croppedDims[1] = this->volumeAdjustedCoords[3] - this->volumeAdjustedCoords[2] + 1;
+		croppedDims[2] = this->volumeAdjustedCoords[5] - this->volumeAdjustedCoords[4] + 1;
 		unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
-		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, volumeAdjustedCoords[0], volumeAdjustedCoords[1], volumeAdjustedCoords[2], volumeAdjustedCoords[3], volumeAdjustedCoords[4], volumeAdjustedCoords[5], originalDims);
+		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, this->volumeAdjustedCoords[0], this->volumeAdjustedCoords[1], 
+																 this->volumeAdjustedCoords[2], this->volumeAdjustedCoords[3], 
+																 this->volumeAdjustedCoords[4], this->volumeAdjustedCoords[5], originalDims);
 		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
 
 		// ------- For debug purpose ------- //
@@ -613,25 +654,38 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
 		const char* saveNameC2 = saveName2.c_str();
 		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
-		// --------------------------------- /
+		// --------------------------------- //
 
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+		{
+			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
+		else
+		{
+			this->traceManagerPtr->reinit(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
 
 		delete[] currBlock1Dptr;
 		delete[] croppedBlock1Dptr;		
 	}
 	else
 	{
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+			this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, mode);
+		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
 }
 /* ================================================================================== */
 
 
 
-/*************************** Parameter Collecting Functions ***************************/
+/* ========================= Parameter Collecting Functions ========================= */
 void FragTraceControlPanel::pa_imgEnhancement()
 {
 	if (uiPtr->groupBox_3->isChecked())
@@ -691,6 +745,31 @@ void FragTraceControlPanel::pa_objFilter()
 		this->traceManagerPtr->objFilter = false;
 		this->traceManagerPtr->voxelSize = false;
 	}
+
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		if (uiPtr->radioButton_5->isEnabled() || uiPtr->radioButton_5->isChecked())
+		{
+			this->traceManagerPtr->selectedSomaMap.clear();
+			this->traceManagerPtr->selectedLocalSomaMap.clear();
+			for (map<int, ImageMarker>::iterator somaIt = this->somaMap.begin(); somaIt != this->somaMap.end(); ++somaIt)
+			{
+				ImageMarker localMarker;
+				for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
+				{
+					if (somaIt->first == it->n)
+					{
+						localMarker = *it;
+						this->localSomaMap.insert({ somaIt->first, localMarker });
+						break;
+					}
+				}
+			}
+		
+			this->traceManagerPtr->selectedSomaMap = this->somaMap;
+			this->traceManagerPtr->selectedLocalSomaMap = this->localSomaMap;
+		}
+	}
 }
 
 void FragTraceControlPanel::pa_objBasedMST()
@@ -710,15 +789,80 @@ void FragTraceControlPanel::pa_objBasedMST()
 void FragTraceControlPanel::pa_postElongation()
 {
 	if (uiPtr->groupBox_5->isChecked())
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
+		this->paramsFromUI.insert({"labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()) });
 	else
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
+		this->paramsFromUI.insert({ "labeledDistThreshold", -1 });
 }
-/********************** END of [Parameter Collecting Functions] ***********************/
+
+void FragTraceControlPanel::markerMonitor()
+{
+	if (this->markerMonitorSwitch)
+	{
+		map<int, ImageMarker> newMarkerMap;
+		map<int, ImageMarker> oldMarkerMap;
+		thisCallback->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
+		if (this->selectedMarkerList.size() > 0)
+		{
+			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
+			{
+				it->selected = true;
+				it->on = false;
+				newMarkerMap.insert({ it->n, *it });
+			}
+			oldMarkerMap = this->somaMap;
+
+			for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
+				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
+			
+			for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
+				if (newMarkerMap.find(it2->first) == newMarkerMap.end()) this->somaMap[it2->first].selected = false;
+		}
+		else
+		{
+			if (this->somaListViewer->rowCount() > 0)
+				for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+			oldMarkerMap = this->somaMap;
+			this->somaMap.clear();
+		}
+
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+		{
+			if (markerIt->second.selected && !markerIt->second.on)
+			{
+				int markerGlobalX = int(markerIt->second.x);
+				int markerGlobalY = int(markerIt->second.y);
+				int markerGlobalZ = int(markerIt->second.z);
+				string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
+				this->somaListViewer->appendRow(newItemPtr);
+			}
+			else if (!markerIt->second.selected)
+			{
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
+				this->somaMap.erase(this->somaMap.find(markerIt->first));
+				QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
+				if (!matchedList.isEmpty())
+				{
+					int rowNum = (*matchedList.begin())->row();
+					this->somaListViewer->removeRow(rowNum);
+				}			
+			}
+		}
+
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+			markerIt->second.on = true;
+
+		QTimer::singleShot(50, this, SLOT(markerMonitor()));
+	}
+}
+/* ====================== END of [Parameter Collecting Functions] ====================== */
 
 
 
-/***************** Result and Scaling Functions *****************/
+/* =================== Result and Scaling Functions =================== */
 void FragTraceControlPanel::scaleTracedTree()
 {	
 	float imgDims[3];
@@ -764,7 +908,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	return shiftScaleBackTree;
 }
-/************ END of [Result and Scaling Functions] *************/
+/* ================ END of [Result and Scaling Functions] ================ */
 
 
 

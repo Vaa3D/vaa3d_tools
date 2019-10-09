@@ -8,16 +8,15 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "integratedDataStructures.h"
 #include "ImgProcessor.h"
 
 using namespace std;
 using namespace integratedDataStructures;
 
-class ImgAnalyzer
+class ImgAnalyzer : public ImgProcessor
 {	
 public:
-	ImgAnalyzer();
+	ImgAnalyzer() : blobMergingReport(false) {};
 
 	enum processName { blobMerging };
 

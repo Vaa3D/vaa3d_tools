@@ -29,7 +29,7 @@ using namespace std;
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
 {
 	this->getSegDistance(connOrt);
-	this->turning12(connOrt);
+	//this->turning12(connOrt);  // Problematic if there are branched segments.
 }
 
 void integratedDataTypes::segPairProfile::getSegDistance(connectOrientation connOrt)
