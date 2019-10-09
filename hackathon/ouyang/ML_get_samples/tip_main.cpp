@@ -867,9 +867,9 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-    QString input_folder=infiles.at(0);
-    QString input_swc_folder=infiles.at(1);
-    QString output_2d_dir=outfiles.at(0);
+    QString input_folder=infiles.at(0);//swc and nrrd folder
+    QString input_swc_folder=infiles.at(1);//terafly swc folder
+    QString output_2d_dir=outfiles.at(0);//rewrited terafly swc save folder
     //QString output_2d_dir_axon=outfiles.at(1);
 
     if(!input_folder.endsWith("/")){
@@ -884,11 +884,12 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
 
 
     double percent_his=atof(inparas.at(0));
-    double max_length_threshold=atoi(inparas.at(1));
-    double radius_nodes=atoi(inparas.at(2));
-    double max_length_prunging=atoi(inparas.at(3));
+    double max_length_threshold=atoi(inparas.at(1));//max length for calculating branch threshold
+    double radius_nodes=atoi(inparas.at(2));//radius for calculating branch threshold
+    double max_length_prunging=atoi(inparas.at(3));//max length for pruning
 
-   printf("========================tip pruning============================\n");
+   printf("========================Tip pruning============================\n");
+   printf("========================Tip pruning============================\n");
 
    //0.read terafly swc
 //   QDir dir_swc(input_swc_folder);
@@ -963,7 +964,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
         cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
         unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
         //set threshold
-        //1. block_background and 0.99 threshold
+        //1. block_background
         double num_intensity[256]={0};
         long sz01 = mysz[0] * mysz[1];
         long total_sz=mysz[0] * mysz[1] * mysz[2];
@@ -974,6 +975,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
                        if (id<=total_sz) {
                            num_intensity[int(data1d_crop[id])]++;
                        }}}}
+       //1. 0.99 threshold
        double sum_num=0;
        int index=0;
        if (sizeof (num_intensity)!=0)//0.99 threshold
@@ -995,22 +997,20 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        //2.branch background
        QList<int> rollback_nodes=find_tip_and_itspn_length(nt_input,max_length_threshold,croped_swc_tip_index);//20 um
        double branch_intensity=aver_ints_around_nodes(mysz,data1d_crop,radius_nodes,nt_input,rollback_nodes);
-       cout<<"========================4444444444444444444============cut location:"<<index<<endl;
-       cout<<"=========================333333333333333333333333======rollback nodes size:"<<rollback_nodes.size()<<endl;
-       cout<<"======================2222222222222222222222222222=====aver_nodes:"<<branch_intensity<<endl;
-       cout<<"======================1111111111111111111111111111=====aver_global:"<<block_bk<<endl;
+       cout<<"=======================================cut location:"<<index<<endl;
+       cout<<"================================rollback nodes size:"<<rollback_nodes.size()<<endl;
+       cout<<"==================================aver_around_nodes:"<<branch_intensity<<endl;
+       cout<<"=====================================aver_in_global:"<<block_bk<<endl;
 
        //case1. The whole branch is in a dark area.
        if(branch_intensity<block_bk) {printf("=============This branch is in a dark area!===============");continue;}
        //case2.
        double max_thres=(block_bk>branch_intensity) ? block_bk:branch_intensity;
        double thres_final=(max_thres>index) ? index:max_thres;
-       cout<<"=====================0000000000000000000000000000 =====final thres:"<<thres_final<<endl;
+       cout<<"========================================final thres:"<<thres_final<<endl;
        //case2.1 Pruning length is too long
        QList<int> nodes_maybe_pruned=find_tip_and_itspn_length(nt_input,max_length_prunging,croped_swc_tip_index);//10 um
        QList<int> nodes_tobe_pruned;
-
-
 
        int tip_x=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).x+0.5);
        int tip_y=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).y+0.5);
@@ -1027,25 +1027,26 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
            tip_z=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).z+0.5);
            id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
        }
-
+       //write imagemarkers in block
        QString qs_output = output_2d_dir+name_nrrd+".marker";
        QList <ImageMarker> imagemarks;
        if(nodes_tobe_pruned.size()!=0){
            for(int i=0;i<nodes_tobe_pruned.size();i++){
-               ImageMarker ori_center;
-               ori_center.x = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).x+1;
-               ori_center.y = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).y+1;
-               ori_center.z = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).z+1;
-               ori_center.color.a = 0;
-               ori_center.color.b = 0;
-               ori_center.color.g = 0;
-               ori_center.color.r = 255;
-               imagemarks.push_back(ori_center);
+               ImageMarker marker_inblock;
+               marker_inblock.x = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).x+1;
+               marker_inblock.y = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).y+1;
+               marker_inblock.z = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).z+1;
+               marker_inblock.color.a = 0;
+               marker_inblock.color.b = 0;
+               marker_inblock.color.g = 0;
+               marker_inblock.color.r = 255;
+               imagemarks.push_back(marker_inblock);
            }
            writeMarker_file(qs_output,imagemarks);
        }
 
-//delete swc nodes based on terafly coodinates.
+       //delete swc nodes based on terafly coodinates.
+       QList<int> delete_index_inblock;//record deleted nodes in block
        if(nodes_tobe_pruned.size()!=0){
            int nums=nodes_tobe_pruned.size();
            for (int j=0;j<terafly_nt_input.listNeuron.size();j++)
@@ -1059,6 +1060,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
                    while(nums>0)
                    {
                        delete_index.push_back(g);
+                       delete_index_inblock.push_back(g);
                        terafly_nt_input.listNeuron.removeAt(g);
                        k=alln.indexOf(terafly_nt_input.listNeuron.at(g).pn);
                        g=k;
@@ -1072,11 +1074,10 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     //write in apo based on terafly coodinates.
     QString pruned_swc_name = input_swc_folder+name+".pruned.eswc";
     writeESWC_file(pruned_swc_name,terafly_nt_input);
-    QList <ImageMarker> imagemarks_terafly;
     QList<CellAPO>  imagemarks_terafly_apo;
     if(delete_index.size()!=0){
         for(int i=0;i<delete_index.size();i++){
-            ImageMarker ori_center;
+            //terafly apo. file
             CellAPO apo_nodes;
             apo_nodes.x = terafly_nt_input.listNeuron.at(delete_index.at(i)).x+1;
             apo_nodes.y = terafly_nt_input.listNeuron.at(delete_index.at(i)).y+1;
@@ -1087,7 +1088,6 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
             apo_nodes.color.r = 255;
             imagemarks_terafly_apo.push_back(apo_nodes);
         }
-        //writeMarker_file(qs_output,imagemarks);
     }
     QString apo_name = input_swc_folder+name+".apo";
     writeAPO_file(apo_name,imagemarks_terafly_apo);
@@ -3324,7 +3324,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f remove_tip_location -i <original swc> <input tiff\nrrd.image> -p <radius> <0 or 1(relocation)> <1 or 2(separate or not)> -o <output iamge file dir>\n";
 
-    //6.prune_tip_APP1
+    //6.1.prune_tip_APP1
     cout<<"This fuction for pruning nodes in tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t prune_tip_APP1\n";
@@ -3334,6 +3334,12 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-p<30(default 30)>:\t\t your input threshold(default 30) \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <input threshold(default 30)> -o <output swc.file dir>\n";
+
+    //6.2.prune_tip_thres
+    cout<<"This fuction for pruning nodes in tip using different threshold"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t prune_tip_thres\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_thres -i <swc and nrrd folder> <terafly swc folder> -p <0.99> <20> <2> <10> -o <output rewrited swc.file dir>\n";
 
     //7.find_fake_tip
     cout<<"This fuction for finding short branches"<<endl;
