@@ -73,6 +73,8 @@ public:
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 
 	static NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
+	static NeuronTree swcCombine(const map<string, NeuronTree>& inputTreesMap);
+	static NeuronTree swcCombine(const map<string, profiledTree>& inputProfiledTreesMap);
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 

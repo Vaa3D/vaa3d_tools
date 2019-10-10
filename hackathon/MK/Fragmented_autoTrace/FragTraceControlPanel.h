@@ -7,8 +7,8 @@
 #include "FragTraceManager.h"
 
 #define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 8
-#define PATCHVERSION_NUM 6
+#define SUBVERSION_NUM 9
+#define PATCHVERSION_NUM 0
 
 class FragTraceControlPanel : public QDialog
 {
@@ -26,6 +26,7 @@ public:
 
 	/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
+	map<string, NeuronTree> tracedTrees;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
 	/* ============================================ */

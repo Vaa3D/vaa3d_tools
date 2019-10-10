@@ -869,7 +869,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_folder=infiles.at(0);//swc and nrrd folder
     QString input_swc_folder=infiles.at(1);//terafly swc folder
-    QString output_2d_dir=outfiles.at(0);//rewrited terafly swc save folder
+    //QString output_2d_dir=outfiles.at(0);//block marker save folder
     //QString output_2d_dir_axon=outfiles.at(1);
 
     if(!input_folder.endsWith("/")){
@@ -878,9 +878,9 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     if(!input_swc_folder.endsWith("/")){
         input_swc_folder = input_swc_folder+"/";
     }
-    if(!output_2d_dir.endsWith("/")){
-        output_2d_dir = output_2d_dir+"/";
-    }
+    //if(!output_2d_dir.endsWith("/")){
+    //    output_2d_dir = output_2d_dir+"/";
+    //}
 
 
     double percent_his=atof(inparas.at(0));
@@ -926,7 +926,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
 
     //1.1 read terafly swc
     QString name=all_swc.at(0).split("_")[0]+"_"+all_swc.at(0).split("_")[1];
-    QString terafly_swc_path=input_swc_folder+name+".ano.swc";
+    QString terafly_swc_path=input_swc_folder+name+".swc";
     NeuronTree terafly_nt_input=readSWC_file(terafly_swc_path);
     printf("swc_path=======================:%s \n",qPrintable(terafly_swc_path));
 
@@ -938,8 +938,9 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
         alln.append(terafly_nt_input.listNeuron.at(i).n);
     }
 
-    QList<int> delete_index;
-    for(int i=0;i<all_swc.size();++i)
+    map<int,QString> delete_index;
+    QList<int> delete_index_interafly;//record deleted nodes in terafly
+    for(int i=0;i<all_swc.size();i++)
     {
 
         //read swc
@@ -1028,7 +1029,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
            id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
        }
        //write imagemarkers in block
-       QString qs_output = output_2d_dir+name_nrrd+".marker";
+       QString qs_output = input_folder+name_nrrd+".marker";
        QList <ImageMarker> imagemarks;
        if(nodes_tobe_pruned.size()!=0){
            for(int i=0;i<nodes_tobe_pruned.size();i++){
@@ -1046,22 +1047,28 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        }
 
        //delete swc nodes based on terafly coodinates.
-       QList<int> delete_index_inblock;//record deleted nodes in block
+       QStringList block_name;
+       for(int k=0;k<3;k++) block_name.append(all_swc.at(i).split("_")[k]);
        if(nodes_tobe_pruned.size()!=0){
            int nums=nodes_tobe_pruned.size();
            for (int j=0;j<terafly_nt_input.listNeuron.size();j++)
            {
                double x=all_swc.at(i).split("_")[3].toDouble();
                double y=all_swc.at(i).split("_")[4].toDouble();
-               if(terafly_nt_input.listNeuron.at(j).x==x && terafly_nt_input.listNeuron.at(j).y==y)
+               double z=all_swc.at(i).split("_")[5].toDouble();
+               MyMarker tip_marker=MyMarker(x,y,z);
+               double dist_tip_found=dist(terafly_nt_input.listNeuron.at(j),tip_marker);
+               if(dist_tip_found<1)
+               //if(terafly_nt_input.listNeuron.at(j).x==x && terafly_nt_input.listNeuron.at(j).y==y)
                {
                    int k;
                    int g=j;
                    while(nums>0)
                    {
-                       delete_index.push_back(g);
-                       delete_index_inblock.push_back(g);
-                       terafly_nt_input.listNeuron.removeAt(g);
+                       QString block=block_name.join("_");
+                       delete_index[g]=block;
+                       delete_index_interafly.push_back(g);
+                       //terafly_nt_input.listNeuron.removeAt(g);
                        k=alln.indexOf(terafly_nt_input.listNeuron.at(g).pn);
                        g=k;
                        nums--;
@@ -1072,23 +1079,34 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        printf("=======================makers====================:%d \n",imagemarks.size());
    }
     //write in apo based on terafly coodinates.
-    QString pruned_swc_name = input_swc_folder+name+".pruned.eswc";
-    writeESWC_file(pruned_swc_name,terafly_nt_input);
     QList<CellAPO>  imagemarks_terafly_apo;
     if(delete_index.size()!=0){
-        for(int i=0;i<delete_index.size();i++){
+        map<int, QString>::iterator iter;
+            iter = delete_index.begin();
+            while(iter != delete_index.end()){
             //terafly apo. file
             CellAPO apo_nodes;
-            apo_nodes.x = terafly_nt_input.listNeuron.at(delete_index.at(i)).x+1;
-            apo_nodes.y = terafly_nt_input.listNeuron.at(delete_index.at(i)).y+1;
-            apo_nodes.z = terafly_nt_input.listNeuron.at(delete_index.at(i)).z+1;
+            apo_nodes.x = terafly_nt_input.listNeuron.at(iter->first).x+1;
+            apo_nodes.y = terafly_nt_input.listNeuron.at(iter->first).y+1;
+            apo_nodes.z = terafly_nt_input.listNeuron.at(iter->first).z+1;
+            apo_nodes.n=terafly_nt_input.listNeuron.at(iter->first).n;
+            apo_nodes.volsize=50;//radius
+            apo_nodes.comment=iter->second;
             apo_nodes.color.a = 0;
             apo_nodes.color.b = 0;
             apo_nodes.color.g = 0;
             apo_nodes.color.r = 255;
             imagemarks_terafly_apo.push_back(apo_nodes);
+            iter++;
         }
     }
+    //delete nodes after generating marker.
+    qSort(delete_index_interafly.begin(),delete_index_interafly.end());
+    for(int i=delete_index_interafly.size()-1;i>=0;i--) {terafly_nt_input.listNeuron.removeAt(delete_index_interafly.at(i));cout<<"----------------------"<<delete_index_interafly.at(i)+1<<endl;}
+    QString pruned_swc_name = input_swc_folder+name+".pruned.swc";
+    writeESWC_file(pruned_swc_name,terafly_nt_input);
+
+
     QString apo_name = input_swc_folder+name+".apo";
     writeAPO_file(apo_name,imagemarks_terafly_apo);
     QString linker_name =input_swc_folder+name+".ano";
