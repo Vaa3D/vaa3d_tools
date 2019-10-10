@@ -258,9 +258,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
 		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
+		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
-		finalOutputTree = hookRemovedProfiledTree.tree; // cancel image volume downsampling since the polar coord approach is fast
+		finalOutputTree = branchBrokenTree; // cancel image volume downsampling since the polar coord approach is fast
 													    // without downsampling, tracing result's inacurracy is remedied.
 	}
 
