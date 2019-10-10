@@ -3,7 +3,7 @@
 #include<algorithm>
 #include "filter_dialog.h"
 #include <iostream>
-
+#define length_threshold 150
 
 //找到整个树的所有孩子节点
 bool SWCTreeSeg::initialize(NeuronTree t){//初始化整个树的结构
@@ -14,7 +14,7 @@ bool SWCTreeSeg::initialize(NeuronTree t){//初始化整个树的结构
     for(V3DLONG i=0;i<size;i++){
         V3DLONG pn=nt.listNeuron[i].parent;
         if(pn<0){
-            root=nt.listNeuron[i];
+            //root=nt.listNeuron[i];
             continue;
         }
         children[nt.hashNeuron.value(pn)].push_back(i);
@@ -32,63 +32,106 @@ bool SWCTreeSeg::block_seg(NeuronTree orig,vector<NeuronSWC> &candidate_point,ve
     V3DLONG size=candidate_point.size();
     int times = pow(2,(resolution-1));
     qDebug()<<"candidate size"<<size;
+    bool flag_length=false;
     while(!candidate_point.empty()){//候选点此时还是绝对坐标
+        qDebug()<<"***********************************";
         NeuronSWC tmp = candidate_point.back();
         //转换为此块内的相对坐标，再判断是否在此块内的所有点中
         tmp.x=tmp.x/times-x0;
         tmp.y=tmp.y/times-y0;
         tmp.z=tmp.z/times-z0;
         //select_point tmp1(tmp.n,false);
+        if(tmp.parent<0){
+            root=tmp;
+        }
         if(find(subNeuron.begin(),subNeuron.end(),tmp.n)==subNeuron.end()){//候选点可能有些不在当前块中，在块移动的时候
             not_block.push_back(tmp);//不在当前块的候选起始点
             candidate_point.erase(candidate_point.end()-1);
             continue;
         }
         candidate_point.erase(candidate_point.end()-1);
-
-        qDebug()<<"child size:"<<children[nt.hashNeuron.value(tmp.n)].size();
+        qDebug()<<"candidate point size:"<<candidate_point.size();
+        qDebug()<<tmp.n;
+        //qDebug()<<"child size:"<<children[nt.hashNeuron.value(tmp.n)].size();
         for(V3DLONG i=0;i<children[nt.hashNeuron.value(tmp.n)].size();i++){//从候选点的孩子开始
+            qDebug()<<"---------------------";
             segment seg;
             seg.start=tmp;
             seg.points.push_back(tmp);
-
+            seg.length=0;
             seg.segs_index=segments.size(); //暂时不用
             NeuronSWC child = nt.listNeuron[children[nt.hashNeuron.value(seg.start.n)][i]];
             //select_point child_s(child.n,false);
             vector<V3DLONG>::iterator it=find(subNeuron.begin(),subNeuron.end(),child.n);//查看孩子节点是否在当前块的节点内
             if(it==subNeuron.end()){//分叉点的可能存在在块的边缘，导致出现只有一个点的段
-                not_block.push_back(child);
-                qDebug()<<"-------------------------------===--------------------------";
+                not_block.push_back(orig.listNeuron[orig.hashNeuron.value(child.n)]);
+                //qDebug()<<"-----------------------not-block--------------------";
                 continue;
             }
+            Point_xyz point1(tmp.x,tmp.y,tmp.z);
+            Point_xyz point2(child.x,child.y,child.z);
+            qDebug()<<"child size in seg:"<<children[nt.hashNeuron.value(child.n)].size();
             while(children[nt.hashNeuron.value(child.n)].size()==1&&it!=subNeuron.end()){//没有分叉，且在当前块中
                 //it->select=true;//当前点已经在段中了
                 seg.points.push_back(child);//将该段的所有点都保留下来，在块内的点已经是相对坐标
                 seg.end=child;
+                seg.length+=distance_two_point(point1,point2);
+                if(seg.length>=length_threshold){//长度过长的切断阈值暂定40
+                    qDebug()<<"------------cut seg length---------";
+                    flag_length=true;
+                    break;
+                }
                 child=nt.listNeuron[children[nt.hashNeuron.value(child.n)][0]];
                 //select_point child_s(child.n,false);
+                point1=point2;
+                point2=Point_xyz(child.x,child.y,child.z);
                 it=find(subNeuron.begin(),subNeuron.end(),child.n);
             }
-            if(children[nt.hashNeuron.value(child.n)].size()>=2){//因为分叉结束
-                //因为child是经过坐标变换的，前面还要再变换一次会造成错误，所以这里只能存放原来该点的绝对坐标
-                //找到它原来的位置
-                candidate_point.push_back(orig.listNeuron[orig.hashNeuron.value(child.n)]);//分叉表示分段未结束，导致新的起始点
+            qDebug()<<"child size in seg:"<<children[nt.hashNeuron.value(child.n)].size();
+            if(flag_length){//因段的长度过长而被切断,有可能正好到分叉点
+                //qDebug()<<"new candidate1"<<child.n;
+                candidate_point.push_back(orig.listNeuron[orig.hashNeuron.value(child.n)]);
+                segments.push_back(seg);
+                //qDebug()<<"end cord1:"<<seg.end.x<<seg.end.y<<seg.end.z;
+                flag_length=false;
             }
-            else if(it==subNeuron.end()){//到达块的边缘
+            else if(it==subNeuron.end()){//到达块的边缘,可能同时在块的边缘，又是分叉点，所以先判断是否到达块的边缘
                 new_candidate.push_back(orig.listNeuron[orig.hashNeuron.value(child.n)]);//下一个块的候选点
                 segments.push_back(seg);//因为达到边缘而终止，所以它的上一个节点作为本段的终点
                 qDebug()<<"cut seg size: "<<seg.points.size();
+                //qDebug()<<"seg :"<<seg.start.n<<seg.end.n;
+                //qDebug()<<"end cordc:"<<seg.end.x<<seg.end.y<<seg.end.z;
                 continue;
             }
-            seg.points.push_back(child);//有可能达到叶子节点，或者分叉点
-            seg.end=child;
-            segments.push_back(seg);//放入分段中，表示已经被分段了
-            qDebug()<<"seg size: "<<seg.points.size();
+            else if(children[nt.hashNeuron.value(child.n)].size()>=2){//因为分叉结束
+                //因为child是经过坐标变换的，前面还要再变换一次会造成错误，所以这里只能存放原来该点的绝对坐标
+                //找到它原来的位置
+                qDebug()<<"new candidate2"<<child.n;
+                candidate_point.push_back(orig.listNeuron[orig.hashNeuron.value(child.n)]);//分叉表示分段未结束，导致新的起始点
+                seg.points.push_back(child);//分叉点
+                seg.end=child;
+                segments.push_back(seg);
+                //qDebug()<<"end cord2:"<<seg.end.x<<seg.end.y<<seg.end.z;
+                continue;
+            }
+            else if(children[nt.hashNeuron.value(child.n)].size()==0){
+                seg.points.push_back(child);
+                seg.end=child;
+                segments.push_back(seg);
+                //qDebug()<<"end cord0:"<<seg.end.x<<seg.end.y<<seg.end.z;
+            }
+            //有可能达到叶子节点
+            //放入分段中，表示已经被分段了
+//            qDebug()<<"seg size: "<<seg.points.size();
+//            qDebug()<<"seg :"<<seg.start.n<<seg.end.n;
+
+//            //qDebug()<<"seg length:"<<seg.length;
 
         }
 
     }
     qDebug()<<"segments size:"<<segments.size();
+
 
     //vector<V3DLONG> merge_point;
     candidate_point.insert(candidate_point.end(),not_block.begin(),not_block.end());//不在这个块内的剩余候选点
@@ -149,12 +192,15 @@ bool SWCTreeSeg::seg_intensity(V3DLONG sz0,V3DLONG sz1,V3DLONG sz2,unsigned char
                 count++;
             }
         }
-        qDebug()<<"count:"<<count;//segment 上体素的数目
+        //qDebug()<<"count:"<<count;//segment 上体素的数目
         seg.avg_intensity/=count;
         qDebug()<<"seg_intensity:"<<seg.avg_intensity;
+        qDebug()<<"seg length:"<<seg.length;
+
         segments[i]=seg;
         qDebug()<<"-------------*------------------";
     }
+
     return true;
 }
 
@@ -215,6 +261,15 @@ bool cut_block(QString input,V3DPluginCallback2 &callback,NeuronTree &nt,V3DLONG
     p1data = callback.getSubVolumeTeraFly(current_braindir.toStdString().c_str(),x0,x1,y0,y1,z0,z1);
     qDebug()<<"cut_block p1data:"<<p1data;
 
+    //将该块保存下来，方便后期显示
+    V3DLONG sz0=x1-x0;
+    V3DLONG sz1=y1-y0;
+    V3DLONG sz2=z1-z0;
+
+    QString tiffile = "D://subvolum//"+QString::number(x0)+"_"+QString::number(y0)+"_"+QString::number(z0)+".tif";
+    V3DLONG sz[4] = {sz0,sz1,sz2,1};
+    simple_saveimage_wrapper(callback,tiffile.toStdString().c_str(),p1data,sz,1);
+
     //切块，将坐标转换为块内的相对坐标
     V3DLONG size = nt.listNeuron.size();
     for(V3DLONG i=0;i<size;i++){
@@ -229,6 +284,7 @@ bool cut_block(QString input,V3DPluginCallback2 &callback,NeuronTree &nt,V3DLONG
             nt.listNeuron[i].z=nt.listNeuron[i].z/times-z0;
             //select_point point(nt.listNeuron[i].n,false);
             subNeuron.push_back(nt.listNeuron[i].n);//存放在该块中点的index
+            //qDebug()<<nt.listNeuron[i].n;
         }
     }
     return true;
@@ -246,6 +302,7 @@ bool move_block(QString braindir, V3DPluginCallback2 &callback,NeuronTree orig,S
     for(V3DLONG i=0;i<size;i++){  
         V3DLONG pn = segs.nt.listNeuron[i].parent;
         if(pn<0){//以root为中心点切块
+
             candidate_point.push_back(segs.nt.listNeuron[i]);//将候选起始追踪点放入栈中
         }
 
@@ -270,20 +327,23 @@ bool Comp(segment &a,segment &b){
 
 
 //将每个段的信息都保存到相关的结构中，然后后期一起写入文件
-bool write_swc(NeuronTree orig,NeuronTree &nt,QList<CellAPO> &markers,segment seg,V3DLONG &index){
+bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segment seg,V3DLONG &index){
         qDebug()<<"segment index:"<<index;
         int size=seg.points.size();//还是相对坐标，没有转换,所以通过index找到它原来在树中的坐标值，之前不能改成绝对坐标，因为计算mask需要相对坐标
         qDebug()<<"seg avg intensity:"<<seg.avg_intensity;
         //只在段尾添加marker，避免出现重复
-        CellAPO *marker_end;
+        //CellAPO *marker_end;
+        ImageMarker *marker_end;
         NeuronSWC start,end;
 
-        start=orig.listNeuron[orig.hashNeuron.value(seg.start.n)];//找到绝对坐标
-        end=orig.listNeuron[orig.hashNeuron.value(seg.end.n)];
+//        start=orig.listNeuron[orig.hashNeuron.value(seg.start.n)];//找到绝对坐标
+//        end=orig.listNeuron[orig.hashNeuron.value(seg.end.n)];
+        start=seg.start;
+        end=seg.end;//相对坐标
         qDebug()<<"start,end:"<<start.n<<end.n;
 
-        //marker_end=new ImageMarker(type,shape,end.x,end.y,end.z,r);
-        marker_end=new CellAPO();
+        marker_end=new ImageMarker();
+        //marker_end=new CellAPO();
         marker_end->name=QString::number(index);
         marker_end->color.r=255;
         marker_end->color.g=0;
@@ -295,7 +355,8 @@ bool write_swc(NeuronTree orig,NeuronTree &nt,QList<CellAPO> &markers,segment se
 
         NeuronSWC point;
         for(int j=1;j<size;j++){//防止分叉点重复出现
-            point=orig.listNeuron[orig.hashNeuron.value(seg.points[j].n)];//不知道坐标找没找对
+            //point=orig.listNeuron[orig.hashNeuron.value(seg.points[j].n)];//绝对坐标
+            point=seg.points[j];//相对坐标
             point.type=index%14;//记录顺序信息
             nt.listNeuron.push_back(point);
             //std::cout<<point.n<<" ";
@@ -309,9 +370,14 @@ bool write_swc(NeuronTree orig,NeuronTree &nt,QList<CellAPO> &markers,segment se
 然后按照排序结果，依次选择一个段假设为A作为一个新的开始，将该段的所有子段按照灰度值排序，
 然后对排序结果进行处理，将子段中存在父子关系的段调整位置，保证父段在子段的前面
 ***/
-bool sequence_rule(SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > children){
+bool sequence_rule(QString inputpath,SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > children){
+    QFileInfo eswcfileinfo;
+    eswcfileinfo=QFileInfo(inputpath);
+    QString eswcfile=eswcfileinfo.fileName();
+    eswcfile.mid(0,eswcfile.indexOf("."));
     NeuronTree nt1;
-    QList<CellAPO> markers;
+    //QList<CellAPO> markers;
+    QList<ImageMarker> markers;
     vector<segment> segs = swcTree.segments;
     V3DLONG size=segs.size();
     //qDebug()<<"swctree segments size:"<<segs.size();
@@ -320,22 +386,28 @@ bool sequence_rule(SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > 
 
     //找到每个段的父段,子段
     for(V3DLONG i=0;i<size;i++){
-
-        if(segs[i].start.parent<0){
+        if(segs[i].start.parent<0){//没有父段
             segs[i].parent_seg=0;
+
         }
-        if(children[nt1.hashNeuron.value(segs[i].end.n)].size()==0){
-            segs[i].child_seg.push_back(0);//叶子段
-        }
-        else{
-            for(V3DLONG j=0;j<size;j++){
-                if(segs[i].start==segs[j].end){
-                    segs[i].parent_seg=&segs[j];//每个段只有一个父段
-                    segs[j].child_seg.push_back(&segs[i]);//一个段存在两个子段
-                }
+        V3DLONG j;
+        for(j=0;j<size;j++){
+            if(i==j){
+                continue;
             }
-        }
+            if(segs[i].end.n==segs[j].start.n){
+               segs[j].parent_seg=&segs[i];//每个段只有一个父段
+               segs[i].child_seg.push_back(&segs[j]);//一个段存在两个子段
+            }
+         }
+
+        if(j==size&&segs[i].child_seg.size()==0){//没有子段，叶子节点或者到达块的边缘,防止有孩子的也push0
+                segs[i].child_seg.push_back(0);
+
+            }
+        //qDebug()<<"seg"<<i<<"child size:"<<segs[i].child_seg.size();
     }
+
 
     //按照灰度值进行从大到小排序,存在问题(由于一些段较短所以平均灰度反而很大先被重建)暂时不用
     //sort(segs.begin(),segs.end(),Comp);
@@ -365,44 +437,61 @@ bool sequence_rule(SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > 
         vector<segment> child_segs;//所有子段
         vector<segment> bfs_seg;
         //获取所有子段,广度优先遍历
+        //qDebug()<<"first child size:" <<child_seg.size();
         while(child_seg.front()!=0&&!child_seg.empty()){//取出初始段的左右孩子
             bfs_seg.push_back(*child_seg.front());
             //qDebug()<< child_seg.front();
             child_seg.erase(child_seg.begin());
         }
         qDebug()<<"---------111---------";
+        //qDebug()<<"first bfs size:"<<bfs_seg.size();
         while(!bfs_seg.empty()){
             segment seg=bfs_seg.front();
             bfs_seg.erase(bfs_seg.begin());
             child_segs.push_back(seg);
             child_seg=seg.child_seg;
+            //qDebug()<<"-------1---1-------";
             while(child_seg.front()!=0&&!child_seg.empty()){//左右孩子入队
                 bfs_seg.push_back(*child_seg.front());
                 //qDebug()<< child_seg.front();
                 child_seg.erase(child_seg.begin());
             }
+            //qDebug()<<bfs_seg.size();
         }
+        qDebug()<<"---------222---------";
         //按照平均灰度从大到小排序
         sort(child_segs.begin(),child_segs.end(),Comp);
         qDebug()<<"child segs size:"<<child_segs.size();
-        qDebug()<<"---------222---------";
+        vector<segment> new_child_segs;
         //将父段插入子段的前面
-        for(V3DLONG k=0;k<child_segs.size();k++){
+        V3DLONG child_size=child_segs.size();
+        for(V3DLONG k=0;k<child_size;k++){
+            vector<segment> new_child;
             qDebug()<<"child segs index:"<<k;
             segment seg1=child_segs[k];
+            new_child.push_back(seg1);
+            qDebug()<<seg1.parent_seg->start.n;
             segment* pn_seg=seg1.parent_seg;
             int count=0;
+            //qDebug<<"pn seg start:"<<pn_seg->start.n;
             while(pn_seg!=0){//递归往上找到所有父段,除掉初始段
                 //qDebug()<<"count:"<<count;
                 vector<segment>::iterator it;
                 it=find(child_segs.begin(),child_segs.end(),*pn_seg);
-                if(it==child_segs.end()){//父段不在其中
+                //new_it=find(new_child_segs.begin(),new_child_segs.end(),*pn_seg);
+//                if(new_it!=new_child_segs.end()){//已经被排序过了，所以它的所有父段都在已经排序的新序列中
+//                    break;
+//                }
+                if(it==child_segs.end()){//父段不在其中,已经被排过序了
                     break;
                 }
                 qDebug()<<"pn seg index:"<<distance(child_segs.begin(),it);
                 if(distance(child_segs.begin(),it)>k){//distance 算两个迭代器之间的距离，包含多少个元素
                     child_segs.erase(it);//先移除父段
-                    child_segs.insert(child_segs.begin()+k-count,*pn_seg);//插入
+                    child_size=child_segs.size();//删除后vector的长度发生了改变
+                    new_child.push_back(*pn_seg);
+                    //new_child_segs.push_back(*pn_seg);
+                    //child_segs.insert(child_segs.begin()+k-count,*pn_seg);//插入
                     pn_seg=pn_seg->parent_seg;
                     count++;
                 }
@@ -411,8 +500,11 @@ bool sequence_rule(SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > 
                 }
 
             }
+            reverse(new_child.begin(),new_child.end());//反转,父子关系列表，让祖先放在前面，孩子放在后面
+            qDebug()<<"size:"<<new_child.size();
+            new_child_segs.insert(new_child_segs.end(),new_child.begin(),new_child.end());
         }
-
+        child_segs=new_child_segs;
         qDebug()<<"------------*********------------";
         //写入初始段的子段
         for(V3DLONG jj=0;jj<child_segs.size();jj++){
@@ -439,10 +531,12 @@ bool sequence_rule(SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > 
 //    }
 
 
-
-    nt1.listNeuron.push_back(orig.listNeuron[orig.hashNeuron.value(swcTree.root.n)]);
-    writeESWC_file("C://Users//penglab//Desktop//17302-00001//review_test//sequence_test1.eswc",nt1);
-    writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test//marker.apo",markers);
+    nt1.listNeuron.push_back(swcTree.root);
+    qDebug()<<"segments size:"<<index;
+    //nt1.listNeuron.push_back(orig.listNeuron[orig.hashNeuron.value(swcTree.root.n)]);
+    writeESWC_file("C://Users//penglab//Desktop//17302-00001//review_test1//"+eswcfile+".eswc",nt1);
+    //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
+    writeMarker_file("C://Users//penglab//Desktop//17302-00001//review_test1//"+eswcfile+".marker",markers);
     return true;
 }
 

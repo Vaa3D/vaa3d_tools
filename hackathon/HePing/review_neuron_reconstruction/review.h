@@ -17,10 +17,15 @@ struct select_point{
     }
 };
 
+template<class T>
+inline double distance_two_point(T &point1,T &point2){
+    return sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)+(point1.z-point2.z)*(point1.z-point2.z));
+}
+
 struct Point_xyz
 {
-    int x,y,z;
-    Point_xyz(int x,int y,int z){
+    double x,y,z;
+    Point_xyz(double x,double y,double z){
         this->x=x;
         this->y=y;
         this->z=z;
@@ -34,6 +39,7 @@ struct segment{
     segment* parent_seg;
     vector<segment*> child_seg;
     vector<NeuronSWC> points;
+    double length;
     double avg_intensity;
     int seq_index;
     int segs_index;
@@ -42,13 +48,17 @@ struct segment{
         seq_index=0;
         segs_index=0;
         parent_seg=0;
+        length=0;
     }
     ~segment(){
 
     }
     bool operator ==(const segment &seg)const{//重载运算符==，segment比较的函数
-        if(start==seg.start&&end==seg.end){
+        if(this->start.n==seg.start.n&&this->end.n==seg.end.n){
             return true;
+        }
+        else{
+            return false;
         }
     }
 };
@@ -72,10 +82,10 @@ struct SWCTreeSeg{
 };
 
 
-bool write_swc(NeuronTree orig,NeuronTree &nt,QList<CellAPO> &markers,segment seg,V3DLONG &index);
+bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segment seg,V3DLONG &index);
 bool cut_block(QString input_path,V3DPluginCallback2 &callback,NeuronTree &nt,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,size_t &x0,size_t &y0,size_t &z0, NeuronSWC center_point,vector<V3DLONG> &subNeuron,int resolution,unsigned char* &p1data);//以center_point为中心切块
 bool move_block(QString braindir,V3DPluginCallback2 &callback,NeuronTree orig,SWCTreeSeg &segs ,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,vector<NeuronSWC> &candidate_point);
-bool sequence_rule(SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
+bool sequence_rule(QString input,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
 
 #endif // REVIEW_H
 

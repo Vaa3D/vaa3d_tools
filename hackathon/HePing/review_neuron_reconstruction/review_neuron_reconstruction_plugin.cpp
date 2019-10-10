@@ -51,7 +51,7 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
 	if (func_name == tr("func1"))
-    {   V3DLONG sz0=256,sz1=256,sz2=128;
+    {   V3DLONG sz0=512,sz1=256,sz2=128;
         vector<NeuronSWC> candidate_point;
         QString swcfile=(infiles.size()>=1)?infiles[0]:"";//输入swc文件
         NeuronTree t = readSWC_file(swcfile);
@@ -62,7 +62,7 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
         //在整个树中移动块，并在每个块中完成分段和平均灰度值的计算
         move_block(input_path,callback,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
         //对所有的段进行排序(目前只有一个块中的段)
-        sequence_rule(swcTree,t,swcTree.children);
+        sequence_rule(swcfile,swcTree,t,swcTree.children);
 
 	}
 	else if (func_name == tr("func2"))
