@@ -75,8 +75,7 @@ public:
 	// ------------------------------------------------------- //
 
 	// - Dendritic tree forming(polar coord radial approach) - //
-	void dendriticTree_shellCentroid(double distThre = 1);
-	void dendriticTree_shellCentroid(string treeName, double distThre = 1);
+	NeuronTree dendriticTree_shellCentroid(double distThre = 1);
 	// ------------------------------------------------------- //
 
 	// ------------- Piecing tiled tree together ------------- //

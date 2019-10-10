@@ -185,6 +185,55 @@ NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTrees)
 	return outputTree;
 }
 
+NeuronTree NeuronStructUtil::swcCombine(const map<string, NeuronTree>& inputTreesMap)
+{
+	NeuronTree outputTree;
+	ptrdiff_t listSize = 0;
+	int nodeIDmax = 0;
+	for (map<string, NeuronTree>::const_iterator it = inputTreesMap.begin(); it != inputTreesMap.end(); ++it)
+	{
+		for (QList<NeuronSWC>::iterator outputNodeIt = outputTree.listNeuron.begin(); outputNodeIt != outputTree.listNeuron.end(); ++outputNodeIt)
+			if (outputNodeIt->n > nodeIDmax) nodeIDmax = outputNodeIt->n;
+
+		outputTree.listNeuron.append(it->second.listNeuron);
+		for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin() + listSize; nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->n = nodeIt->n + nodeIDmax;
+			if (nodeIt->parent == -1) continue;
+			else nodeIt->parent = nodeIt->parent + nodeIDmax;
+		}
+
+		listSize = ptrdiff_t(outputTree.listNeuron.size());
+	}
+
+	return outputTree;
+}
+
+NeuronTree NeuronStructUtil::swcCombine(const map<string, profiledTree>& inputProfiledTreesMap)
+{
+	NeuronTree outputTree;
+
+	ptrdiff_t listSize = 0;
+	int nodeIDmax = 0;
+	for (map<string, profiledTree>::const_iterator it = inputProfiledTreesMap.begin(); it != inputProfiledTreesMap.end(); ++it)
+	{
+		for (QList<NeuronSWC>::iterator outputNodeIt = outputTree.listNeuron.begin(); outputNodeIt != outputTree.listNeuron.end(); ++outputNodeIt)
+			if (outputNodeIt->n > nodeIDmax) nodeIDmax = outputNodeIt->n;
+
+		outputTree.listNeuron.append(it->second.tree.listNeuron);
+		for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin() + listSize; nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->n = nodeIt->n + nodeIDmax;
+			if (nodeIt->parent == -1) continue;
+			else nodeIt->parent = nodeIt->parent + nodeIDmax;
+		}
+
+		listSize = ptrdiff_t(outputTree.listNeuron.size());
+	}
+
+	return outputTree;
+}
+
 void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
