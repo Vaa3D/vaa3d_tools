@@ -62,7 +62,7 @@ typedef std::pair<Node, Node> Edge;
 #include <boost/config.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 using namespace boost;
-using namespace std;
+
 struct ParaShortestPath
 {
 	int node_step; //should be >=1 && odd.
@@ -223,7 +223,7 @@ bool smooth_radius(vector <T> & mCoord, int winsize, bool median_filter)
 	int halfwin = winsize/2;
 
 	for (int i=1; i<N-1; i++) // don't move start & end point
-	{
+	{ 
 		std::vector<T> winC;
 		std::vector<double> winW;
 		winC.clear();
@@ -293,7 +293,7 @@ bool smooth_curve(std::vector<T> & mCoord, int winsize)
 			winW.push_back( 1.+halfwin-j );
 		}
 		//std::cout<<"winC.size = "<<winC.size()<<"\n";
-
+		
 		double s, x,y,z;
 		s = x = y = z = 0;
 		for (int i=0; i<winC.size(); i++)
@@ -480,7 +480,6 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 
 				//090621 RZC: dynamic radius estimation
 				radius = 2* fitRadiusPercent(img3d, dim0, dim1, dim2, imgTH,  AR*2, xc, yc, zc, zthickness, b_est_in_xyplaneonly);
-				//cout << radius << endl;
 
 				V3DLONG x0 = xc - radius; x0 = (x0<0)?0:x0;
 				V3DLONG x1 = xc + radius; x1 = (x1>dim0-1)?(dim0-1):x1;
@@ -534,7 +533,6 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 					M_term.z = zc;
 				}
 				/////////////////////////////////////////////
-				//std::cout << "wp_debug: " << __LINE__ << " " << bending_code << endl;
 				//090621 RZC
 				if (bending_code==1)	curve_bending_vector(mCoord, j, M_term);
 				/////////////////////////////////////////////
