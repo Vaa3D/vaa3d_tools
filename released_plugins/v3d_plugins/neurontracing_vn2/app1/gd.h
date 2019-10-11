@@ -460,8 +460,9 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 
 
 	for (V3DLONG nloop=0; nloop<max_loops; nloop++)
-	{
+        {
 		// for each control point
+            double average_radius = 0;
 		for (j=0; j<M; j++)
 		{
 			//==================================================================
@@ -472,6 +473,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 
 			//------------------------------------------------------------------
 			//image force: M_term
+
 			if (img3d && (b_use_M_term))
 			{
 				double xc = mCoord.at(j).x;
@@ -479,15 +481,16 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				double zc = mCoord.at(j).z;
 
 				//090621 RZC: dynamic radius estimation
-				radius = fitRadiusPercent(img3d, dim0, dim1, dim2, imgTH,  AR*2, xc, yc, zc, zthickness, b_est_in_xyplaneonly);
-				//cout << radius << endl;
+                                radius = 2 * fitRadiusPercent(img3d, dim0, dim1, dim2, imgTH,  AR*2, xc, yc, zc, zthickness, b_est_in_xyplaneonly);
+                                average_radius += radius/M;
+//                                cout << radius << endl;
 
 				V3DLONG x0 = xc - radius; x0 = (x0<0)?0:x0;
 				V3DLONG x1 = xc + radius; x1 = (x1>dim0-1)?(dim0-1):x1;
 				V3DLONG y0 = yc - radius; y0 = (y0<0)?0:y0;
 				V3DLONG y1 = yc + radius; y1 = (y1>dim1-1)?(dim1-1):y1;
-				V3DLONG z0 = zc - radius; z0 = (z0<0)?0:z0;
-				V3DLONG z1 = zc + radius; z1 = (z1>dim2-1)?(dim2-1):z1;
+                                V3DLONG z0 = zc - radius / zthickness; z0 = (z0<0)?0:z0;
+                                V3DLONG z1 = zc + radius / zthickness; z1 = (z1>dim2-1)?(dim2-1):z1;
 
 				double sum_x=0, sum_y=0, sum_z=0, sum_px=0, sum_py=0, sum_pz=0;
 				V3DLONG ix, iy, iz;
@@ -495,12 +498,11 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				double dx,dy,dz, r2=double(radius)*(radius);
 				for (iz=z0;iz<=z1;iz++)
 				{
-					dz = fabs(iz-zc); dz*=dz;
-
-					for (iy=y0;iy<=y1;iy++)
+                                        dz = fabs(iz-zc) * zthickness; dz*=dz;
+                                        for (iy=y0;iy<=y1;iy++)
 					{
 						dy = fabs(iy-yc); dy*=dy;
-						if (dy+dz>r2) continue;
+                                                if (dy+dz>r2) continue;
 						dy += dz;
 
 						for (ix=x0;ix<x1;ix++)
@@ -541,6 +543,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				if (bending_code==1)	curve_bending_vector(mCoord, j, M_term);
 				/////////////////////////////////////////////
 			}
+
 
 			//----------------------------------------------------------------
 			// image prior G_term (grident)
@@ -659,10 +662,14 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				mCoord_new.at(j).x = (f_length*F_1_term.x + f_smooth*F_2_term.x + f_image*M_term.x + f_prior*P_term.x + f_gradient*G_term.x) /f;
 				mCoord_new.at(j).y = (f_length*F_1_term.y + f_smooth*F_2_term.y + f_image*M_term.y + f_prior*P_term.y + f_gradient*G_term.y) /f;
 				mCoord_new.at(j).z = (f_length*F_1_term.z + f_smooth*F_2_term.z + f_image*M_term.z + f_prior*P_term.z + f_gradient*G_term.z) /f;
-			}
+                        }
+                        cout<<"image w: "<<f_image*M_term.x<<endl;
+                        cout<<"smooth w: "<<f_smooth*F_2_term.x<<endl;
+
 
 			//printf("[%5.3f, %5.3f, %5.3f], %d\n", mCoord_new.at(j).x, mCoord_new.at(j).y, mCoord_new.at(j).z, j);
 		}
+                cout<<"Radius: "<<average_radius<<endl;
 
 		///////////////////////////////////////////////////////
 		//090621 RZC
@@ -699,12 +706,14 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 			break;
 		if (nloop > 0)
 		{
-			if (fabs(lastscore-score) < TH*0.1/M) // to prevent jumping around
+                        if (fabs(lastscore-score) < TH*0.5/M) // to prevent jumping around
 				break;
 		}
 
 		lastscore = score;
 	}
+        for (j=0; j<M; j++)
+            mCoord.at(j).z += 1;
 
 	return true;
 }
