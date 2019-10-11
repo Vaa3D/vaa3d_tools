@@ -21,6 +21,9 @@ public:
     //store the basic init folder list for db.
     QStringList DBBasicConf;
     QStringList workingspaceConf;
+    QList<Annotationlevel> workingspacelevellist;
+    QList<Annotationlevel> finishedlevellist;
+    QStringList finishedConf;
     QStringList workingspaceContentConf;
     QStringList initworkingspaceTablist;
     QStringList datatitle;//for tab data
@@ -37,7 +40,6 @@ private:
     Annotator curOperator;
     AnnotationProtocolLevel curLevel;
 
-    void createActions();
     QMenu *file;
     QMenu *managementMenu;
     //QMenu *funcs;
@@ -56,10 +58,13 @@ private:
     QDockWidget *MainLogwidget;
     QTextEdit *logtextedit;//for log
     void toLogWindow(const QString& logtext);
+    //help
+    QAction *helpAction;
 
     /*Initialization*/
     void MorphoHub_Init();
     void InitofAnnotationProtocol();
+    void createActions();
     void createMenus();
     void createStatusBar();
     void createToolBar();
@@ -68,6 +73,7 @@ private:
     /*..............Database basic action............*/
     QAction *NewDBAction;
     QAction *SetDBAction;
+    QAction *SettingAction;
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
     AnnotatorManagement *userManagementDialog;
@@ -83,14 +89,17 @@ private:
     void updateTableDataLevel(QTableWidget* t,QList<ReconstructionInfo> levelres);
 
     /*Qtreewidget for content*/
-    void createContentTreeWidget();
+    void createContentTreeWidget(bool init);
+    void createTabWindow(bool init);
     QTreeWidget *contentTreewidget;
     QTreeWidgetItem *content_workingspace;
     QTreeWidgetItem *content_basicData;
 
     /****************Protocol functions*************************/
+    void setProtocolFunctionEnabled(bool en);
     ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
     /*..............Protocol actions............*/
+
     QAction *commitAction;
     QAction *checkAction;
     QAction *skipAction;
@@ -113,7 +122,8 @@ private:
 private slots:
     void NewDB_slot();
     void SetDB_slot();
-    void createTabWindow();
+    void SettingAction_slot();
+
     void removeSubTab(int subindex);
     void dataTabChange(int tabindex);
     void contentValueChange(QTreeWidgetItem *item,int column);
@@ -122,6 +132,7 @@ private slots:
     void loginOkayButton_slot();
     void loginCancelButton_slot();
     void logoutAction_slot();
+    void helpAction_slot();
 
 signals:
     
