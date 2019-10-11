@@ -270,9 +270,7 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
     {
         list_braindir.push_back(vtmp[i]);
     }
-//    qDebug()<<"end assign";
 
-//    qDebug()<<"sizeï¼?"<<list_braindir.size();
 
     for(int i=0; i<dir_count; ++i)
     {
@@ -284,8 +282,10 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
     BDB_Minus_Prior_Parameter bdb_para;
     bdb_para.f_length = 0;
     bdb_para.f_prior = 0;
-    bdb_para.f_smooth = 0;
+    bdb_para.f_smooth = 0.2;
     bool b_fix_end = false;
+	bdb_para.nloops = 20;
+	bdb_para.Kfactor = 4;
 
     qDebug()<<"bdb_para---------------------------------------------------------------------------";
     qDebug()<<bdb_para.f_length<<" "<<bdb_para.f_prior<<" "<<bdb_para.f_smooth<<" "<<bdb_para.Kfactor<<" "<<bdb_para.nloops;
@@ -353,14 +353,14 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
         NeuronTree orig_nt;
         for(int j=0; j<points.size(); ++j)
         {
-            points[j].type = 3;
+            //points[j].type = 5;
             orig_nt.listNeuron.push_back(points[j]);
         }
 
-        QString origtiffile = "C:\\Users\\wpkenan\\Desktop\\refine\\tmp\\" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "_resolution.tif";
-        QString origeswcfile = "C:\\Users\\wpkenan\\Desktop\\refine\\tmp\\" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "_resolution.eswc";
+        /*QString origtiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + ".tif";
+        QString origeswcfile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + ".eswc";
         simple_saveimage_wrapper(callback,origtiffile.toStdString().c_str(),pdata,sz,1);
-        writeESWC_file(origeswcfile,orig_nt);
+        writeESWC_file(origeswcfile,orig_nt);*/
 
         qDebug()<<"start to get mask "<<i<<"---------------------------------";
 
@@ -368,7 +368,7 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
         V3DLONG sz_num = sz0*sz1*sz2;
         data1d_mask = new unsigned char[sz_num];
         memset(data1d_mask,0,sz_num*sizeof(unsigned char));
-        double margin = 5;
+        double margin = 6;
         ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
 
         for(V3DLONG j=0; j<sz_num; ++j)
@@ -415,15 +415,15 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
 
         for(int i=0; i<points.size(); ++i)
         {
-            points[i].type = 6;
+            //points[i].type = 6;
             result_nt.listNeuron.push_back(points[i]);
         }
 
-        resulttiffile = "C:\\Users\\wpkenan\\Desktop\\refine\\tmp\\" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "_resolution_result.tif";
-        resultswcfile = "C:\\Users\\wpkenan\\Desktop\\refine\\tmp\\" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "_resolution_result.eswc";
+        /*resulttiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "mask.tif";
+        resultswcfile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "refine.eswc";
 
         simple_saveimage_wrapper(callback,resulttiffile.toStdString().c_str(),pdata,sz,1);
-        writeESWC_file(resultswcfile,result_nt);
+        writeESWC_file(resultswcfile,result_nt);*/
 
         for(V3DLONG i=0; i<points.size(); ++i)
         {
@@ -1907,7 +1907,7 @@ NeuronTree SwcTree::refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &call
 
         for(int i=1; i<points.size()-1; ++i)
         {
-            points[i].type = 6;
+            //points[i].type = 6;
             refinetree.listNeuron.push_back(points[i]);
         }
 
@@ -1938,7 +1938,7 @@ NeuronTree SwcTree::refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &call
 
     for(int i=0; i<bpoints.size(); ++i)
     {
-        bpoints[i].type = 6;
+        //bpoints[i].type = 6;
         refinetree.listNeuron.push_back(bpoints[i]);
     }
 

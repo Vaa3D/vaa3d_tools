@@ -417,7 +417,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 		const vector <T> & mCoord_prior, int bending_code=1, float zthickness=1.0, bool b_est_in_xyplaneonly=false) // 0--no bending, 1--bending M_term, 2--bending mCoord
 {
 	bool b_use_M_term = 1; //for switch
-	bool b_use_P_term = 1; //for switch
+	bool b_use_P_term = 0; //for switch
 	bool b_use_G_term = 0; //for switch
 
 
@@ -479,7 +479,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				double zc = mCoord.at(j).z;
 
 				//090621 RZC: dynamic radius estimation
-				radius = 2* fitRadiusPercent(img3d, dim0, dim1, dim2, imgTH,  AR*2, xc, yc, zc, zthickness, b_est_in_xyplaneonly);
+				radius = fitRadiusPercent(img3d, dim0, dim1, dim2, imgTH,  AR*2, xc, yc, zc, zthickness, b_est_in_xyplaneonly);
 				//cout << radius << endl;
 
 				V3DLONG x0 = xc - radius; x0 = (x0<0)?0:x0;
@@ -508,7 +508,9 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 							dx = fabs(ix-xc); dx*=dx;
 							if (dx+dy>r2) continue;
 
-							register unsigned char tmpval = img3d[iz][iy][ix];
+							//register unsigned char tmpval = img3d[iz][iy][ix];
+							int tmpval = img3d[iz][iy][ix];
+							tmpval = tmpval^2;
 							if (tmpval)
 							{
 								sum_x += tmpval;
