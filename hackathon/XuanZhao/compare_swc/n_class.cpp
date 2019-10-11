@@ -767,13 +767,16 @@ bool Branch::refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> 
         V3DLONG sz_num = sz0*sz1*sz2;
         data1d_mask = new unsigned char[sz_num];
         memset(data1d_mask,0,sz_num*sizeof(unsigned char));
-        double margin = 10;
+        double margin = 5;
         ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
 
-    //    for(V3DLONG i=0; i<sz_num; ++i)
-    //    {
-    //        pdata[i] = (data1d_mask[i]==0) ? 0 : pdata[i];
-    //    }
+        for(V3DLONG i=0; i<sz_num; ++i)
+        {
+            if(data1d_mask[i]==0 && (double)pdata[i]>branchmean)
+            {
+                pdata[i] = 0;
+            }
+        }
 
         unsigned char**** p4d = 0;
         if(!new4dpointer(p4d,sz[0],sz[1],sz[2],sz[3],pdata))
