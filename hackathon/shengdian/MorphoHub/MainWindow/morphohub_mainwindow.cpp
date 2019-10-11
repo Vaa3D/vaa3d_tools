@@ -21,73 +21,54 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
     createStatusBar();
     createToolBar();
     createMenus();
-    createContentTreeWidget();
-    createTabWindow();
+    createContentTreeWidget(true);
+    createTabWindow(true);
+    if(this->dbpath.isEmpty())
+    {
+        //remind user to setup the dbpath
+        QMessageBox::warning(this,"Initializtion","Can't find database path, Please set the database path!");
+    }
     setMainLayout();
 }
+
 void MorphoHub_MainWindow::MorphoHub_Init()
 {
-    dbpath="/home/penglab/Data/MorphoHub_DB";
-    datatitle <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time"<<"ParentDirName"<<"FileName";
-    DBBasicConf <<"BasicData"
-                <<"WorkingSpace"
-                <<"Finished"
-                    <<"Finished/L1"
-                    <<"Finished/L2"
-                <<"Configuration"
-                    <<"Configuration/BasicData_Conf"
-                    <<"Configuration/WorkingSpace_Conf";
-    workingspaceConf               <<"Assigned1"
-                                       <<"Assigned1/Annotator"
-                                       <<"Assigned1/Priority"
-                                   <<"L1A"
-                                   <<"L1ACheck"
-                                   <<"L1B"
-                                   <<"L1C"
-                                   <<"L1CCheck"
-                                   <<"L1D"
-                                   <<"Assigned2"
-                                       <<"Assigned2/Annotator"
-                                       <<"Assigned2/Priority"
-                                   <<"L2A"
-                                   <<"L2ACheck"
-                                   <<"L2B"
-                                   <<"L2C"
-                                   <<"L2CCheck"
-                                   <<"L2D"
-                                   <<"QuestionZone"
-                                       <<"QuestionZone/tmp";
-    workingspaceContentConf          <<"Assigned1"
-                                     <<"L1A"
-                                     <<"L1ACheck"
-                                     <<"L1B"
-                                     <<"L1C"
-                                     <<"L1CCheck"
-                                     <<"L1D"
-                                     <<"Assigned2"
-                                     <<"L2A"
-                                     <<"L2ACheck"
-                                     <<"L2B"
-                                     <<"L2C"
-                                     <<"L2CCheck"
-                                     <<"L2D";
-    initworkingspaceTablist <<"L1A"
-                            <<"L1B"
-                            <<"L1C"
-                            <<"L2A"
-                            <<"L2B"
-                            <<"L2C";
-    mainWidget=new QWidget(this);
-    mainlayout=new QHBoxLayout();
+//    dbpath="/home/penglab/Data/MorphoHub_DB";
+    datatitle=seuallenAP.ReconstructionConfItems;
+    DBBasicConf=seuallenAP.architechure.originForder;
+    workingspacelevellist=seuallenAP.architechure.workingSpace;
+    for(int i=0;i<workingspacelevellist.size();i++)
+    {
+        QString thisname="/"+workingspacelevellist.at(i).ParentDir+"/"+workingspacelevellist.at(i).Name;
+        workingspaceConf.append(thisname);
+        if(workingspacelevellist.at(i).childlist.size()>0)
+        {
+            for(int j=0;j<workingspacelevellist.at(i).childlist.size();j++)
+            {
+                workingspaceConf.append(thisname+"/"+workingspacelevellist.at(i).childlist.at(j));
+            }
+        }
+
+    }
+    finishedlevellist=seuallenAP.architechure.finished;
+    for(int i=0;i<finishedlevellist.size();i++)
+    {
+        QString thisname="/"+finishedlevellist.at(i).ParentDir+"/"+finishedlevellist.at(i).Name;
+        finishedConf.append(thisname);
+    }
+
+    //need to be initialized at settings
+    initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"
+                            <<"L2A"<<"L2B"<<"L2C";
 
     //init of annotation protocol
-    seuallenAP.ApConfPath=this->dbpath+"/Configuration/WorkingSpace_Conf/AnnotationProtocol.conf";
-    InitofAnnotationProtocol();
+    //seuallenAP.ApConfPath=this->dbpath+"/Configuration/WorkingSpace_Conf/AnnotationProtocol.conf";
+    //InitofAnnotationProtocol();
     //init of annotator
     //need a sign in window for this.
-    curOperator.UserID="JSD";
-    curOperator.workingplace="SEU";
-    curOperator.priority=APvisitor;
+//    curOperator.UserID="";
+//    curOperator.workingplace="";
+//    curOperator.priority=APvisitor;
 }
 void MorphoHub_MainWindow::InitofAnnotationProtocol()
 {
@@ -142,7 +123,6 @@ void MorphoHub_MainWindow::InitofAnnotationProtocol()
     }
 }
 
-
 void MorphoHub_MainWindow::createActions()
 {
     //action for database
@@ -154,6 +134,10 @@ void MorphoHub_MainWindow::createActions()
     SetDBAction = new QAction(tr("&LoadDB"), this);
     SetDBAction->setStatusTip(tr("load an exist DB"));
     connect(SetDBAction, SIGNAL(triggered()), this, SLOT(SetDB_slot()));
+
+    SettingAction = new QAction(tr("&Settings"), this);
+    SettingAction->setStatusTip(tr("Default settings"));
+    connect(SettingAction, SIGNAL(triggered()), this, SLOT(SettingAction_slot()));
 
     //actions for management
     sdconfAction= new QAction(tr("&SoueceData"), this);
@@ -183,7 +167,7 @@ void MorphoHub_MainWindow::createActions()
 
     reassignAction= new QAction(tr("&Reassign"), this);
     reassignAction->setToolTip(tr("reassign one neuron"));
-    connect(reassignAction,SIGNAL(triggered()),this,SLOT(reassignAction_slot()));
+    connect(reassignAction,SIGNAL(triggered()),this,SLOT(reassignAction_slot()));    
 
     //Actions for window
     loginAction=new QAction(tr("&Login"),this);
@@ -195,6 +179,22 @@ void MorphoHub_MainWindow::createActions()
     logoutAction->setEnabled(false);
     connect(logoutAction,SIGNAL(triggered()),this,SLOT(logoutAction_slot()));
 
+    //Action for Help
+    helpAction=new QAction(tr("&Help"),this);
+    helpAction->setToolTip(tr("Get the help from this."));
+    connect(helpAction,SIGNAL(triggered()),this,SLOT(helpAction_slot()));
+}
+
+void MorphoHub_MainWindow::setProtocolFunctionEnabled(bool en)
+{
+    sdconfAction->setEnabled(en);
+    userManagementAction->setEnabled(en);
+    commitAction->setEnabled(en);
+    checkAction->setEnabled(en);
+    skipAction->setEnabled(en);
+    rollbackAction->setEnabled(en);
+    reassignAction->setEnabled(en);
+    //releaseAction->setEnabled(en);
 }
 
 void MorphoHub_MainWindow::createToolBar()
@@ -223,6 +223,7 @@ void MorphoHub_MainWindow::createMenus()
     file = menuBar()->addMenu(tr("&Database"));
     file->addAction(NewDBAction);
     file->addAction(SetDBAction);
+    file->addAction(SettingAction);
 
     //Management menu
     managementMenu=menuBar()->addMenu(tr("Management"));
@@ -245,6 +246,7 @@ void MorphoHub_MainWindow::createMenus()
     menuWindow->addAction(logoutAction);
     //help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(helpAction);
 }
 /**********************************************************/
 /****************Bottom status bar*************************/
@@ -261,6 +263,8 @@ void MorphoHub_MainWindow::createStatusBar()
 
 void MorphoHub_MainWindow::setMainLayout()
 {
+    mainWidget=new QWidget(this);
+    mainlayout=new QHBoxLayout();
     logtextedit=new QTextEdit(this);
     logtextedit->setText(tr("Welcome to MorphoHub."));
     MainLogwidget=new QDockWidget("Main Log");
@@ -274,87 +278,83 @@ void MorphoHub_MainWindow::setMainLayout()
     //mainlayout->addWidget(MainLogwidget,2);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);
+    setProtocolFunctionEnabled(false);
 }
 
-void MorphoHub_MainWindow::createContentTreeWidget()
+void MorphoHub_MainWindow::createContentTreeWidget(bool init)
 {
-    contentTreewidget=new QTreeWidget(this);
-    contentTreewidget->setColumnCount(1);
-    contentTreewidget->setHeaderLabel(tr("Content"));
-    //contentTreewidget->setGeometry(0,0,180,50);
-    QList<QTreeWidgetItem*> contentitems;
-    //create nodes
-    content_workingspace=new QTreeWidgetItem(contentTreewidget,QStringList(QString("WorkingSpace")));
-    content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("BasicData")));
-    contentitems.append(content_workingspace);
-    contentitems.append(content_basicData);
-
-    //create parent node
-    contentTreewidget->insertTopLevelItems(0,contentitems);
-    contentTreewidget->setItemsExpandable(false);
-    contentTreewidget->expandAll();
-
-    //create child node for WorkingSpace
-    if(!dbpath.isEmpty())
+    if(init)
     {
-        QString workingspace_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace_content.conf";
-        QFile configurationfile(workingspace_conf);
-        if(configurationfile.exists())
+        contentTreewidget=new QTreeWidget(this);
+        contentTreewidget->setColumnCount(1);
+        contentTreewidget->setHeaderLabel(tr("Content"));
+        //contentTreewidget->setGeometry(0,0,180,50);
+        QList<QTreeWidgetItem*> contentitems;
+        //create nodes
+        content_workingspace=new QTreeWidgetItem(contentTreewidget,QStringList(QString("WorkingSpace")));
+        //content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("BasicData")));
+        contentitems.append(content_workingspace);
+        //contentitems.append(content_basicData);
+
+        //create parent node
+        contentTreewidget->insertTopLevelItems(0,contentitems);
+        contentTreewidget->setItemsExpandable(true);
+        contentTreewidget->expandAll();
+    }
+    else
+    {
+        //create child node for WorkingSpace
+        if(!dbpath.isEmpty())
         {
-            if(configurationfile.open(QIODevice::ReadWrite))
+            QList<Annotationlevel> workingspacelevellisttmp=seuallenAP.architechure.workingSpace;
+            for(int i=0;i<workingspacelevellisttmp.size();i++)
             {
-                while(!configurationfile.atEnd())
+                QString thisname=workingspacelevellist.at(i).Name;
+                QString tmpitem;
+                tmpitem=thisname.simplified();
+                QTreeWidgetItem *content_workingspace_childnode=new QTreeWidgetItem(content_workingspace,QStringList(tmpitem));
+                content_workingspace->addChild(content_workingspace_childnode);
+            }
+            connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
+        }
+    }
+}
+
+void MorphoHub_MainWindow::createTabWindow(bool init)
+{
+    if(init)
+    {
+        //new tab window
+        dataTabwidget=new QTabWidget();
+        dataTabwidget->setTabsClosable(false);
+        dataTabwidget->setMovable(false);
+        //set close function
+        connect(dataTabwidget,SIGNAL(tabCloseRequested(int)),this,SLOT(removeSubTab(int)));
+        //set tab widget
+        connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+    }
+    else
+    {
+        for(int i=0;i<initworkingspaceTablist.size();i++)
+        {
+            QString initlevel=initworkingspaceTablist.at(i);
+            //get reconstructions info from this level
+            QList<ReconstructionInfo> thislevelres;
+            thislevelres=getReconstuctionsFromLevel(initlevel);
+            if(thislevelres.size()>0)
+            {
+                QTableWidget* levelTable=new QTableWidget();
+                levelTable=createTableDataLevel(thislevelres);
+                if(levelTable)
                 {
-                    QByteArray cline=configurationfile.readLine();
-                    QString tmpitem(cline);
-                    tmpitem=tmpitem.simplified();
-                    QTreeWidgetItem *content_workingspace_childnode=new QTreeWidgetItem(content_workingspace,QStringList(tmpitem));
-                    content_workingspace->addChild(content_workingspace_childnode);
+                    datatabletitlelist.append(initlevel);
+                    datatablelist.append(levelTable);
+                    dataTabwidget->addTab(levelTable,initlevel);
                 }
-                configurationfile.close();
-            }
-        }
-        else
-        {
-            //if not exists, give a warning about this
-            QMessageBox::warning(this,"Workingspace Conf Warning","Can't find Configuration file of basic database!");
-        }
-    }
-    connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
-}
-
-void MorphoHub_MainWindow::createTabWindow()
-{
-    //new tab window
-    dataTabwidget=new QTabWidget();
-    dataTabwidget->setTabsClosable(false);
-    dataTabwidget->setMovable(false);
-    for(int i=0;i<initworkingspaceTablist.size();i++)
-    {
-        QString initlevel=initworkingspaceTablist.at(i);
-        //get reconstructions info from this level
-        QList<ReconstructionInfo> thislevelres;
-        thislevelres=getReconstuctionsFromLevel(initlevel);
-        if(thislevelres.size()>0)
-        {
-            QTableWidget* levelTable=new QTableWidget();
-            levelTable=createTableDataLevel(thislevelres);
-            if(levelTable)
-            {
-                datatabletitlelist.append(initlevel);
-                datatablelist.append(levelTable);
-                dataTabwidget->addTab(levelTable,initlevel);
             }
         }
     }
-
-    //set close function
-    connect(dataTabwidget,SIGNAL(tabCloseRequested(int)),this,SLOT(removeSubTab(int)));
-    //set tab widget
-    connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
-
 }
-
 
 void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
 {
@@ -569,7 +569,6 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
             }
 
             outlist.append(tmprecons);
-
         }
     }
     //3.write to Qlist
@@ -627,7 +626,8 @@ void MorphoHub_MainWindow::NewDB_slot()
                                                      |QFileDialog::DontResolveSymlinks);
     if(!dbpath.isEmpty())
     {
-        updateStatusBar(dbpath);
+        updateStatusBar(tr("Database path : %1").arg(dbpath));
+        toLogWindow(tr("Database path : %1").arg(dbpath));
         //make new dir for basic db
         for(int i=0;i<DBBasicConf.size();i++)
         {
@@ -636,65 +636,37 @@ void MorphoHub_MainWindow::NewDB_slot()
             if(!dir.exists())
             {
                 dir.mkdir(thisfolderpath);
-            }
-        }
-        //create a configuration file for recording the basic folder
-        QString basic_db_conf=dbpath+"/Configuration/DB_Basic.conf";
-        QFile configurationfile(basic_db_conf);
-        if(!configurationfile.exists())
-        {
-            if(configurationfile.open(QIODevice::ReadWrite | QIODevice::Text))
-            {
-                for(int i=0;i<DBBasicConf.size();i++)
-                {
-                    QString data=DBBasicConf[i]+"\n";
-                    configurationfile.write(data.toAscii());
-                }
-                configurationfile.close();
+                toLogWindow(tr("New Dir: %1").arg(thisfolderpath));
             }
         }
         //make new dir for workingspace
         for(int i=0;i<workingspaceConf.size();i++)
         {
-            QString thisfolderpath=dbpath+"/WorkingSpace/"+workingspaceConf[i];
+            QString thisfolderpath=dbpath+workingspaceConf[i];
             QDir dir(thisfolderpath);
             if(!dir.exists())
             {
                 dir.mkdir(thisfolderpath);
+                toLogWindow(tr("New WorkingSpace Dir: %1").arg(thisfolderpath));
             }
         }
-        //create a configuration file for WorkingSpace folder
-        QString basic_workingspace_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace.conf";
-        QFile wconfigurationfile(basic_workingspace_conf);
-        if(!wconfigurationfile.exists())
+        //make new dir for Finished path
+        for(int i=0;i<finishedConf.size();i++)
         {
-            if(wconfigurationfile.open(QIODevice::ReadWrite | QIODevice::Text))
+            QString thisfolderpath=dbpath+finishedConf[i];
+            QDir dir(thisfolderpath);
+            if(!dir.exists())
             {
-                for(int i=0;i<workingspaceConf.size();i++)
-                {
-                    QString data=workingspaceConf[i]+"\n";
-                    wconfigurationfile.write(data.toAscii());
-                }
-                wconfigurationfile.close();
+                dir.mkdir(thisfolderpath);
+                toLogWindow(tr("New WorkingSpace Dir: %1").arg(thisfolderpath));
             }
         }
-        //create a configuration file for WorkingSpace Content
-        QString basic_workingspace_content_conf=dbpath+"/Configuration/WorkingSpace_Conf/workingspace_content.conf";
-        QFile wcconfigurationfile(basic_workingspace_content_conf);
-        if(!wcconfigurationfile.exists())
-        {
-            if(wcconfigurationfile.open(QIODevice::ReadWrite | QIODevice::Text))
-            {
-                for(int i=0;i<workingspaceContentConf.size();i++)
-                {
-                    QString data=workingspaceContentConf[i]+"\n";
-                    wcconfigurationfile.write(data.toAscii());
-                }
-                wcconfigurationfile.close();
-            }
-        }
+        //content widget init
+        createContentTreeWidget(false);
+        createTabWindow(false);
     }
 }
+
 //need to be revised
 void MorphoHub_MainWindow::SetDB_slot()
 {
@@ -705,30 +677,68 @@ void MorphoHub_MainWindow::SetDB_slot()
                                                      |QFileDialog::DontResolveSymlinks);
     if(!dbpath.isEmpty())
     {
-        QString basic_db_conf=dbpath+"/Configuration/DB_Basic.conf";
-        //bool okay=isFileExist(basic_db_conf);
-        QFile configurationfile(basic_db_conf);
-        if(configurationfile.exists())
+        //1.check the basic path of the database.
+        //if not exist, make new dir and give a note.
+        updateStatusBar(tr("Database path : %1").arg(dbpath));
+        toLogWindow(tr("Database path : %1").arg(dbpath));
+        //make new dir for basic db
+        for(int i=0;i<DBBasicConf.size();i++)
         {
-            if(configurationfile.open(QIODevice::ReadWrite))
+            QString thisfolderpath=dbpath+"/"+DBBasicConf[i];
+            QDir dir(thisfolderpath);
+            if(!dir.exists())
             {
-                QString tmp=configurationfile.readAll();
-                configurationfile.close();
+                dir.mkdir(thisfolderpath);
+                toLogWindow(tr("New Dir: %1").arg(thisfolderpath));
             }
         }
-        else
+        //make new dir for workingspace
+        for(int i=0;i<workingspaceConf.size();i++)
         {
-            //if not exists, give a warning about this
-            QMessageBox::warning(this,"Conf Warning","Can't find Configuration file of basic database!");
+            QString thisfolderpath=dbpath+workingspaceConf[i];
+            QDir dir(thisfolderpath);
+            if(!dir.exists())
+            {
+                dir.mkdir(thisfolderpath);
+                toLogWindow(tr("New WorkingSpace Dir: %1").arg(thisfolderpath));
+            }
         }
+        //make new dir for Finished path
+        for(int i=0;i<finishedConf.size();i++)
+        {
+            QString thisfolderpath=dbpath+finishedConf[i];
+            QDir dir(thisfolderpath);
+            if(!dir.exists())
+            {
+                dir.mkdir(thisfolderpath);
+                toLogWindow(tr("New WorkingSpace Dir: %1").arg(thisfolderpath));
+            }
+        }
+        //content widget init
+        createContentTreeWidget(false);
+        createTabWindow(false);
+    }
+    else
+    {
+        QMessageBox::warning(this,"Path Error","Can't find database path, Please reset it again!");
+        return;
     }
 }
+
+void MorphoHub_MainWindow::SettingAction_slot()
+{
+    //1.dbpath
+    //2.userID
+    //3.initworkingspaceTablist
+}
+
 
 void MorphoHub_MainWindow::updateStatusBar(const QString& showtext)
 {
     statusLabel->setText(showtext);
     toLogWindow(showtext);
 }
+
 void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
 {
     QString getlogtext=logtextedit->toPlainText();
@@ -737,10 +747,12 @@ void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
     logtextedit->moveCursor(QTextCursor::End);
 }
 
+
 void MorphoHub_MainWindow::removeSubTab(int subindex)
 {
     dataTabwidget->removeTab(subindex);
 }
+
 
 void MorphoHub_MainWindow::dataTabChange(int tabindex)
 {
@@ -755,6 +767,7 @@ void MorphoHub_MainWindow::dataTabChange(int tabindex)
     updateTableDataLevel(levelTable,thislevelres);
     toLogWindow(tr("Tab: %1 update!").arg(itemtext));
 }
+
 
 void MorphoHub_MainWindow::loginAction_slot()
 {
@@ -788,6 +801,7 @@ void MorphoHub_MainWindow::loginAction_slot()
     loginDialog->show();
 }
 
+
 void MorphoHub_MainWindow::loginOkayButton_slot()
 {
     if(!loginUserIDQLineEdit->text().isEmpty())
@@ -802,6 +816,7 @@ void MorphoHub_MainWindow::loginOkayButton_slot()
         logoutAction->setEnabled(true);
         toLogWindow(tr("Welcome %1 login.").arg(curOperator.UserID));
         updateStatusBar(tr("User: %1").arg(curOperator.UserID));
+        setProtocolFunctionEnabled(true);
     }
     else
     {
@@ -810,10 +825,12 @@ void MorphoHub_MainWindow::loginOkayButton_slot()
     }
 }
 
+
 void MorphoHub_MainWindow::loginCancelButton_slot()
 {
     loginDialog->close();
 }
+
 
 void MorphoHub_MainWindow::logoutAction_slot()
 {
@@ -825,7 +842,47 @@ void MorphoHub_MainWindow::logoutAction_slot()
     logoutAction->setEnabled(false);
     toLogWindow(tr("%1 logout").arg(olduserID));
     updateStatusBar(tr("MorphoHub: nobody").arg(olduserID));
+    setProtocolFunctionEnabled(false);
 }
+
+
+void MorphoHub_MainWindow::helpAction_slot()
+{
+    QString helptext=
+            "MorphoHub a platform for whole brain neuron morphology reconstruction project.<br>"
+            "This plugin is developed by Shengdian Jiang. 2019-10 <br>"
+            "<br>============================================="
+            "<H2>Introduction: Main View </H2>"
+            "=============================================<br>"
+            "1.MorphoHub is a database management platform.<br>"
+            "---------------------------------------------<br>"
+            "2.function toolbar:<br>"
+            "   2.1 NewDB and LoadDB button are placed at toolbar so that you can quickly setup the software environment.<br>"
+            "   2.2 Serval fuctions of level control are also placed at toolbar.<br>"
+            "   2.3 In order to manage the data, you have to log in to MorphoHub with a registered UserID.<br>"
+            "---------------------------------------------<br>"
+            "3.Main view of MorphoHub is combined with three parts:<br>"
+            "   3.1 Content Window.<br>"
+            "       Click one of the item at content, a new data tab about this level will be created at Data window.<br>"
+            "       Note: If this level is already created at Data Window, the data tab will be updated.<br>"
+            "   3.2 Data Window.<br>"
+            "       This part will show the basic information of neurons of the chosen level.<br>"
+            "   3.3 Main Log Window.<br>"
+            "       This window will show the operations you make.<br>"
+            "---------------------------------------------<br>"
+            "<br>============================================="
+            "<H2>Usage: Initialization</H2>"
+            "=============================================<br>"
+            ""
+            ;
+    QTextEdit *textEdit=new QTextEdit(helptext);
+    textEdit->setWindowTitle("MorphoHub Document and Help");
+    textEdit->resize(850, 700); //use the QWidget function
+    textEdit->setReadOnly(true);
+    textEdit->setFontPointSize(16);
+    textEdit->show();
+}
+
 
 MorphoHub_MainWindow::~MorphoHub_MainWindow()
 {
@@ -835,9 +892,11 @@ MorphoHub_MainWindow::MorphoHub_MainWindow()
 {
 }
 
+
 /**********************************************************/
 /****************Protocol functions*************************/
 /********Commit,Check,Skip,Rollback,Reassign,Release*****/
+
 
 void MorphoHub_MainWindow::checkAction_slot()
 {
@@ -864,7 +923,6 @@ void MorphoHub_MainWindow::checkAction_slot()
         }
     }
 }
-
 
 void MorphoHub_MainWindow::commitAction_slot()
 {

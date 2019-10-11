@@ -46,6 +46,75 @@ enum AnnotationProtocolLevel{
     L2D
 };
 
+struct SourceData{
+    QString Name;
+    QString ParentDir;
+    QString Comments;
+    QStringList childlist;
+    SourceData(){
+        Name=ParentDir=Comments="";
+        childlist.clear();
+    }
+    SourceData(const QString& name,const QString& pdir){
+        Name=name;ParentDir=pdir;Comments="";
+        childlist<<"Somalist"<<"Undo"<<"Finished"<<"AutoTraced"<<"NeuronArchives";
+    }
+};
+
+struct Annotationlevel{
+    QString Name;
+    QString ParentDir;
+    QString Comments;
+    QStringList childlist;
+    Annotationlevel(){
+        Name=ParentDir=Comments="";
+        childlist.clear();
+    }
+    Annotationlevel(const QString& name,const QString& pdir)
+    {
+        Name=name;ParentDir=pdir;Comments="";
+    }
+};
+
+struct ArchitechureofMorphoHub{
+    QList<SourceData> basicData;
+    QStringList originForder;
+    QList<Annotationlevel> finished;
+    QList<Annotationlevel> workingSpace;
+    ArchitechureofMorphoHub(){
+        basicData.clear();
+        originForder<<"BasicData"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Release"<<"Registration";
+        QStringList flevel;
+        flevel<<"L1"<<"L2";
+        for(int i=0;i<flevel.size();i++)
+        {
+            Annotationlevel tmplevel;
+            tmplevel.Name=flevel.at(i);
+            tmplevel.ParentDir="Finished";
+            tmplevel.Comments="";
+            finished.append(tmplevel);
+        }
+        QStringList wlevel;
+        wlevel<<"Assigned1"<<"L1A"<<"L1ACheck"<<"L1B"<<"L1C"<<"L1CCheck"<<"L1D"
+             <<"Assigned2"<<"L2A"<<"L2ACheck"<<"L2B"<<"L2C"<<"L2CCheck"<<"L2D"
+            <<"QuestionZone";
+        for(int i=0;i<wlevel.size();i++)
+        {
+            Annotationlevel tmplevel;
+            tmplevel.Name=wlevel.at(i);
+            if(tmplevel.Name.compare("Assigned1")==0||
+                    tmplevel.Name.compare("Assigned2")==0)
+            {
+                tmplevel.childlist.append("Annotator");
+                tmplevel.childlist.append("Priority");
+            }
+            tmplevel.ParentDir="WorkingSpace";
+            tmplevel.Comments="";
+            workingSpace.append(tmplevel);
+        }
+    }
+};
+
 struct AnnotationProtocol{
     QString protocolName;
     QString protocolComments;
@@ -57,7 +126,9 @@ struct AnnotationProtocol{
     QStringList finishedLevel;//finishedlevel is the end level of Finished function
     QStringList archiveFinishedLevel;//end level of Archive function
     QStringList rollbackLevel;//start level of rollback level
+    QStringList ReconstructionConfItems;
     QString ApConfPath;
+    ArchitechureofMorphoHub architechure;
     QHash<QString,AnnotationProtocolFunction> protocolrules;
     AnnotationProtocol(){
         protocolName="InitAp";//Annotation protocol one
@@ -74,6 +145,7 @@ struct AnnotationProtocol{
         archiveFinishedLevel<<"L1"<<"L2";
         rollbackLevel<<"L1ACheck"<<"L1CCheck"
                     <<"L2ACheck"<<"L2CCheck";
+        ReconstructionConfItems <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time"<<"ParentDirName"<<"FileName";
         initprotocolrules();
     }
     void initprotocolrules(){
@@ -263,7 +335,7 @@ struct ReconstructionInfo:SomaConfInfo
     QString fatherDirName; //dir name for reconstructions
     QString fileName;
     ReconstructionInfo(){
-        levelID=checkers=updateTime=fatherDirName=fileName="";
+        levelID=checkers=updateTime=fatherDirName=fileName="";        
     }
     bool alreadyInit(){
         if(!SdataID.isEmpty()&&!SomaID.isEmpty()&&!levelID.isEmpty()&&
