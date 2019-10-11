@@ -46,8 +46,11 @@ bool Branch::get_points_of_branch(vector<NeuronSWC> &points, NeuronTree &nt)
     return true;
 }
 
+
 bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt)
 {
+	
+
     
 	/*
     QDir all_braindir(braindir);
@@ -890,7 +893,7 @@ bool SwcTree::initialize(NeuronTree t)
     {
         NeuronSWC tmp=queue.front();
         queue.erase(queue.begin());
-		cout << "wp_debug: " << tmp.n << endl;
+		//cout << "wp_debug: " << tmp.n << endl;
         for(int i=0;i<children[nt.hashNeuron.value(tmp.n)].size();++i)
         {
             Branch branch;
@@ -901,7 +904,7 @@ bool SwcTree::initialize(NeuronTree t)
             Angle near_point_angle = Angle(child.x-tmp.x,child.y-tmp.y,child.z-tmp.z);
             near_point_angle.norm_angle();
             double sum_angle = 0;
-            while(children[nt.hashNeuron.value(child.n)].size()==1/*&&branch.length<100*/)
+            while(children[nt.hashNeuron.value(child.n)].size()==1&&branch.length<1000)
             {
                 NeuronSWC par=child;
                 child=nt.listNeuron[children[nt.hashNeuron.value(par.n)][0]];
@@ -1822,6 +1825,7 @@ bool Swc_Compare::get_sub_image(QString dir, vector<int> &a_false, vector<int> &
 
 NeuronTree SwcTree::refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &callback)
 {
+	
     NeuronTree refinetree;
 
     int size = branchs.size();
@@ -1862,8 +1866,12 @@ NeuronTree SwcTree::refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &call
             branchs[branchindex].length_to_soma = branchs[branchindex].parent->length_to_soma + branchs[branchindex].parent->length;
         }
 
-        if(branchs[branchindex].length_to_soma>=0&&branchs[branchindex].length>8)
+		cout << "wp_debug**: " << branchs.size() << " "<< branchs[branchindex].length << endl;
+		if (branchs[branchindex].length_to_soma >= 0 && branchs[branchindex].length>8)
         {
+			/*vector<Branch> segs;
+			branchs[branchindex].splitbranch(nt, segs, 80);
+			int seg_count = segs.size();*/
             branchs[branchindex].refine_branch(points,braindir,callback,nt);
         }
         else

@@ -6,20 +6,24 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1
-#INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/swc_to_maskimage
-#INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
+INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/swc_to_maskimage
+INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/worm_straighten_c
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/cellseg
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += ../../zhi/IVSCC_sort_swc
+INCLUDEPATH     += D:/boost_1_61_0
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/winlib64
 
 unix {
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++
 LIBS += -lv3dnewmat
 }
-
-
+win32 {
+LIBS += -l$$VAA3DPATH/v3d_main/common_lib/winlib64/libtiff
+LIBS += -l$$VAA3DPATH/v3d_main/common_lib/winlib64/libnewmat
+}
 HEADERS	+= compare_swc_plugin.h \
            n_class.h \
     $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h\
