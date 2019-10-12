@@ -146,7 +146,7 @@ struct AnnotationProtocol{
         rollbackLevel<<"L1ACheck"<<"L1CCheck"
                     <<"L2ACheck"<<"L2CCheck";
         ReconstructionConfItems <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time"<<"ParentDirName"<<"FileName";
-        initprotocolrules();
+        //initprotocolrules();
     }
     void initprotocolrules(){
         for(int i=0;i<protocolLevel.size();i++)

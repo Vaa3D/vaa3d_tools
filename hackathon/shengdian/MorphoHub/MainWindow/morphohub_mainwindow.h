@@ -29,6 +29,7 @@ public:
     QStringList datatitle;//for tab data
     //status lable
     QLabel *statusLabel;
+    QLabel *userStatusLabel;
 
     MorphoHub_MainWindow();
     ~MorphoHub_MainWindow();
@@ -74,6 +75,18 @@ private:
     QAction *NewDBAction;
     QAction *SetDBAction;
     QAction *SettingAction;
+    QDialog *SettingDialog;
+    QTabWidget *SettingsTabwidget;
+    QGridLayout *basictabQGridLayout;
+    QHBoxLayout *mainlayoutforSettings;
+    QWidget *mainWidgetforSettings;
+    QPushButton *setdbpath_pushbutton;
+    QLineEdit *dbpath_LineEdit;
+    QPushButton* setting_Apply_Qpushbutton;
+    QPushButton* setting_Cancel_Qpushbutton;
+    QPushButton* setting_Reset_Qpushbutton;
+    QLineEdit *userID_QLineEdit;
+    QLineEdit *Inittab_LineEdit;
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
     AnnotatorManagement *userManagementDialog;
@@ -99,7 +112,6 @@ private:
     void setProtocolFunctionEnabled(bool en);
     ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
     /*..............Protocol actions............*/
-
     QAction *commitAction;
     QAction *checkAction;
     QAction *skipAction;
@@ -123,6 +135,11 @@ private slots:
     void NewDB_slot();
     void SetDB_slot();
     void SettingAction_slot();
+    void setdbpath_pushbutton_slot();
+    void settingsValueChanges_slot(const QString& text);
+    void setting_Apply_Qpushbutton_slot();
+    void setting_Cancel_Qpushbutton_slot();
+    void setting_Reset_Qpushbutton_slot();
 
     void removeSubTab(int subindex);
     void dataTabChange(int tabindex);
@@ -147,7 +164,6 @@ public slots:
     void skipAction_slot();
     void rollbackAction_slot();
     void reassignAction_slot();
-
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H

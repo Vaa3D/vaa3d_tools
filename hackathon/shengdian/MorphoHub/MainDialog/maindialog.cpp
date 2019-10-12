@@ -22,17 +22,17 @@ void MainDialog::createMainView()
     QLabel *sdatidQlabel=new QLabel(tr("SDataID:"));
     sdataidLineEdit=new QLineEdit();
     sdataidLineEdit->setText("00000");
-    sdataidLineEdit->setEnabled(false);
+    sdataidLineEdit->setReadOnly(true);
     QLabel *somaidQlabel=new QLabel(tr("SomaID:"));
     somaidLineEdit=new QLineEdit();
     somaidLineEdit->setText("00000");
-    somaidLineEdit->setEnabled(false);
+    somaidLineEdit->setReadOnly(true);
 
     //Author
     QLabel* authorLabel=new QLabel(tr("Author"));
     authorLineEdit=new QLineEdit();
     authorLineEdit->setText("Visitor");
-    authorLineEdit->setEnabled(false);
+    authorLineEdit->setReadOnly(true);
     changeAuthorNameButton=new QPushButton(tr("Change To Your Name"));
     changeAuthorNameButton->setEnabled(true);
     connect(changeAuthorNameButton,SIGNAL(clicked()),this,SLOT(changeAuthorNameButton_slot()));
@@ -41,7 +41,7 @@ void MainDialog::createMainView()
     QLabel* checkersLabel=new QLabel(tr("Checkers"));
     checkersLineEdit=new QLineEdit();
     checkersLineEdit->setText("");
-    checkersLineEdit->setEnabled(false);
+    checkersLineEdit->setReadOnly(true);
     addcheckerName=new QPushButton("Add Your Name");
     connect(addcheckerName,SIGNAL(clicked()),this,SLOT(addcheckerName_slot()));
 
@@ -49,7 +49,7 @@ void MainDialog::createMainView()
     QLabel* nowLevelLabel=new QLabel(tr("Now Level (WorkingSpace)"));
     nowlevelLineEdit=new QLineEdit();
     nowlevelLineEdit->setText("");
-    nowlevelLineEdit->setEnabled(false);
+    nowlevelLineEdit->setReadOnly(true);
     //nextlevel:
     nextlevelLabel=new QLabel(tr("Next Level List (Neuron will %1 to the following level.)").arg(choseFuction));
     //nl1:workingspace nl2:NeuronArchives nl3:finished nl4:release
@@ -57,7 +57,7 @@ void MainDialog::createMainView()
     QLabel* nextlevel_WorkingSpace_Label=new QLabel(tr("1.WorkingSpace: "));
     nextlevel_WorkingSpace_LineEdit=new QLineEdit();
     nextlevel_WorkingSpace_LineEdit->setText("");
-    nextlevel_WorkingSpace_LineEdit->setEnabled(false);
+    nextlevel_WorkingSpace_LineEdit->setReadOnly(true);
     nextlevel_WorkingSpace_CheckBox=new QCheckBox();
     nextlevel_WorkingSpace_CheckBox->setCheckState(Qt::Checked);
 //    nextlevel_WorkingSpace_CheckBox->setCheckable(true);
@@ -65,7 +65,7 @@ void MainDialog::createMainView()
     QLabel* nextlevel_NeuronArchives_Label=new QLabel(tr("2.NeuronArchives: "));
     nextlevel_NeuronArchives_LineEdit=new QLineEdit();
     nextlevel_NeuronArchives_LineEdit->setText("");
-    nextlevel_NeuronArchives_LineEdit->setEnabled(false);
+    nextlevel_NeuronArchives_LineEdit->setReadOnly(true);
     nextlevel_NeuronArchives_CheckBox=new QCheckBox();
     nextlevel_NeuronArchives_CheckBox->setCheckState(Qt::Checked);
 //    nextlevel_NeuronArchives_CheckBox->setCheckable(true);
@@ -73,7 +73,7 @@ void MainDialog::createMainView()
     QLabel* nextlevel_Finished_Label=new QLabel(tr("3.Finished: "));
     nextlevel_Finished_LineEdit=new QLineEdit();
     nextlevel_Finished_LineEdit->setText("");
-    nextlevel_Finished_LineEdit->setEnabled(false);
+    nextlevel_Finished_LineEdit->setReadOnly(true);
     nextlevel_Finished_CheckBox=new QCheckBox();
     nextlevel_Finished_CheckBox->setCheckState(Qt::Unchecked);
 //    nextlevel_Finished_CheckBox->setCheckable(true);
@@ -83,23 +83,23 @@ void MainDialog::createMainView()
     QLabel* removeLevel_WorkingSpace_Label=new QLabel(tr("1.WorkingSpace: "));
     removeLevel_WorkingSpace_LineEdit=new QLineEdit();
     removeLevel_WorkingSpace_LineEdit->setText("");
-    removeLevel_WorkingSpace_LineEdit->setEnabled(false);
+    removeLevel_WorkingSpace_LineEdit->setReadOnly(true);
 
     QLabel* removeLevel_Archives_Label=new QLabel(tr("2.NeuronArchives: "));
     removeLevel_Archives_LineEdit=new QLineEdit();
     removeLevel_Archives_LineEdit->setText("");
-    removeLevel_Archives_LineEdit->setEnabled(false);
+    removeLevel_Archives_LineEdit->setReadOnly(true);
 
     QLabel* removeLevel_Finished_Label=new QLabel(tr("3.Finished: "));
     removeLevel_Finished_LineEdit=new QLineEdit();
     removeLevel_Finished_LineEdit->setText("");
-    removeLevel_Finished_LineEdit->setEnabled(false);
+    removeLevel_Finished_LineEdit->setReadOnly(true);
     //recovery path
     QLabel* recovery_label=new QLabel(tr("Recovery Path (Operations can be recovered from the following level.)"));
     QLabel* recovery_WorkingSpace_Label=new QLabel(tr("1.WorkingSpace: "));
     recovery_WorkingSpace_LineEdit=new QLineEdit();
     recovery_WorkingSpace_LineEdit->setText("");
-    recovery_WorkingSpace_LineEdit->setEnabled(false);
+    recovery_WorkingSpace_LineEdit->setReadOnly(true);
 
     //button: okay & cancel
     okayButton=new QPushButton("YES");
