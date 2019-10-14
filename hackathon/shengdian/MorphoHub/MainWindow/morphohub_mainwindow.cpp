@@ -33,6 +33,10 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget 
     }
     else
     {
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
         toLogWindow(tr("Load Database: %1").arg(dbpath));
         createTabWindow(false);
         updateStatusBar(tr("Database: %1").arg(dbpath));
@@ -715,6 +719,10 @@ void MorphoHub_MainWindow::NewDB_slot()
                                                      |QFileDialog::DontResolveSymlinks);
     if(!dbpath.isEmpty())
     {
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
         updateStatusBar(tr("Database path : %1").arg(dbpath));
         toLogWindow(tr("Database path : %1").arg(dbpath));
         //make new dir for basic db
@@ -768,6 +776,13 @@ void MorphoHub_MainWindow::SetDB_slot()
                                                      |QFileDialog::DontResolveSymlinks);
     if(!dbpath.isEmpty())
     {
+        //converter dir path
+
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
+
         //1.check the basic path of the database.
         //if not exist, make new dir and give a note.
         updateStatusBar(tr("Database path : %1").arg(dbpath));
