@@ -44,7 +44,7 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 int find_tip(NeuronTree nt, long sz0, long sz1, long sz2);
-QList<int> find_tip_and_itspn_length(NeuronTree nt,double max_length,int tip_index);
+QList<int> find_tip_and_itschild_length(NeuronTree nt,double max_length,int tip_index);
 QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2);
 double aver_ints_around_nodes(long mysz[4],unsigned char * data1d,int radius,NeuronTree nt,QList<int> all_nodes);
 double get_circle_signal(vector<MyMarker> allmarkers, unsigned char * data1d,long sz0, long sz1, long sz2);
