@@ -189,7 +189,7 @@ void SourceDataManagement::SDMInit()
             }
             sourcedataconffile.write(data.toAscii());
             sourcedataconffile.close();
-            toLog("Make a new source data configuration file at Configuration/BasicData_Conf/sourceData.conf");
+            toLog("Make a new source data configuration file at Configuration/BrainConf/sourceData.conf");
             toLog(data);
         }
     }
@@ -275,7 +275,7 @@ void SourceDataManagement::loadSomalist2Conf_slot()
     int curtabindex=tabwidget->currentIndex();
     QString curtabTitle=tabwidget->tabText(curtabindex);
 
-    QString somaconfpath=this->dbpath+"/Configuration/BasicData_Conf/"+curtabTitle+"_soma.conf";
+    QString somaconfpath=this->dbpath+"/Configuration/BrainConf/"+curtabTitle+"_soma.conf";
     QString title="choose soma list file (apo): ";
     QString somaapofilepath=QFileDialog::getOpenFileName(this, title,
                                                     "",
@@ -319,7 +319,7 @@ void SourceDataManagement::createSomaTab_slot(int row, int column)
     if(column==0)
     {
         QString tabtile=sourcedataTab->item(row,column)->text();
-        QString somaconfpath=this->dbpath+"/Configuration/BasicData_Conf/"+tabtile+"_soma.conf";
+        QString somaconfpath=this->dbpath+"/Configuration/BrainConf/"+tabtile+"_soma.conf";
         QFile somaconffile(somaconfpath);
         if(!somaconffile.exists())
         {
@@ -367,7 +367,7 @@ void SourceDataManagement::setupDBpath(const QString &path)
         return;
     }
     this->dbpath=path;
-    this->sourcedataconfpath=this->dbpath+"/Configuration/BasicData_Conf/sourceData.conf";
+    this->sourcedataconfpath=this->dbpath+"/Configuration/BrainConf/sourceData.conf";
 }
 void SourceDataManagement::toLog(const QString &logtext)
 {

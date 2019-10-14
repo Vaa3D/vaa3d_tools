@@ -241,17 +241,17 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
     QFileInfoList list_braindir = all_braindir.entryInfoList(QStringList(),QDir::Dirs|QDir::NoDotAndDotDot,QDir::Type);
     int dir_count = list_braindir.size();
 
-    qDebug()<<"dir count: "<<dir_count;
+//    qDebug()<<"dir count: "<<dir_count;
 
     map<int,int> sizemap;
 
     for(int i=0; i<dir_count; ++i)
     {
-        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+//        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
         QString t = list_braindir[i].baseName();
         QStringList ts =t.split('x');
         int resolution = ts[1].toInt();
-        qDebug()<<resolution;
+//        qDebug()<<resolution;
         sizemap[resolution] = i;
     }
 
@@ -274,7 +274,7 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
 
     for(int i=0; i<dir_count; ++i)
     {
-        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+//        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
     }
 
     QString current_braindir;
@@ -353,28 +353,28 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
         NeuronTree orig_nt;
         for(int j=0; j<points.size(); ++j)
         {
-            //points[j].type = 5;
+//            points[j].type = 5;
             orig_nt.listNeuron.push_back(points[j]);
         }
 
-        /*QString origtiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + ".tif";
+        QString origtiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + ".tif";
         QString origeswcfile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + ".eswc";
         simple_saveimage_wrapper(callback,origtiffile.toStdString().c_str(),pdata,sz,1);
-        writeESWC_file(origeswcfile,orig_nt);*/
+        writeESWC_file(origeswcfile,orig_nt);
 
         qDebug()<<"start to get mask "<<i<<"---------------------------------";
 
         unsigned char* data1d_mask = 0;
         V3DLONG sz_num = sz0*sz1*sz2;
-        data1d_mask = new unsigned char[sz_num];
-        memset(data1d_mask,0,sz_num*sizeof(unsigned char));
-        double margin = 6;
-        ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
+//        data1d_mask = new unsigned char[sz_num];
+//        memset(data1d_mask,0,sz_num*sizeof(unsigned char));
+//        double margin = 6;
+//        ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
 
-        for(V3DLONG j=0; j<sz_num; ++j)
-        {
-            pdata[j] = (data1d_mask[j]==0) ? 0 : pdata[j];
-        }
+//        for(V3DLONG j=0; j<sz_num; ++j)
+//        {
+//            pdata[j] = (data1d_mask[j]==0) ? 0 : pdata[j];
+//        }
 
         qDebug()<<"start to trans 3d "<<i<<"-------------------------------------";
 
@@ -405,7 +405,9 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
 
         vector<vector<NeuronSWC> > pointslist;
 
-        point_bdb_minus_3d_localwinmass_prior(indata3d,sz0,sz1,sz2,points,bdb_para,b_fix_end,prior);
+        int bending_code=1;
+        float zthickness=4.0;
+        point_bdb_minus_3d_localwinmass_prior(indata3d,sz0,sz1,sz2,points,bdb_para,b_fix_end,prior,bending_code,zthickness);
 
 
         NeuronTree result_nt;
@@ -415,15 +417,15 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
 
         for(int i=0; i<points.size(); ++i)
         {
-            //points[i].type = 6;
+            points[i].type = 6;
             result_nt.listNeuron.push_back(points[i]);
         }
 
-        /*resulttiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "mask.tif";
+        resulttiffile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "mask.tif";
         resultswcfile = "temp/" + QString::number(x0) + "_" + QString::number(y0) + "_" + QString::number(z0) + "_" + QString::number(i) + "refine.eswc";
 
         simple_saveimage_wrapper(callback,resulttiffile.toStdString().c_str(),pdata,sz,1);
-        writeESWC_file(resultswcfile,result_nt);*/
+        writeESWC_file(resultswcfile,result_nt);
 
         for(V3DLONG i=0; i<points.size(); ++i)
         {

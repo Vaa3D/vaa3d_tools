@@ -14,7 +14,7 @@ class MorphoHub_MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MorphoHub_MainWindow(QWidget *parent = 0);
+    explicit MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget *parent = 0);
 public:
     QList<ReconstructionInfo> getReconstuctionsFromLevel(const QString& levelid);
 
@@ -29,12 +29,14 @@ public:
     QStringList datatitle;//for tab data
     //status lable
     QLabel *statusLabel;
+    QLabel *userStatusLabel;
 
     MorphoHub_MainWindow();
     ~MorphoHub_MainWindow();
 private:
     QWidget *originparent;
     QString dbpath;
+    V3DPluginCallback2 *MorphoHubcallback;
      /*..............For Annotation ............*/
     AnnotationProtocol seuallenAP;
     Annotator curOperator;
@@ -74,6 +76,18 @@ private:
     QAction *NewDBAction;
     QAction *SetDBAction;
     QAction *SettingAction;
+    QDialog *SettingDialog;
+    QTabWidget *SettingsTabwidget;
+    QGridLayout *basictabQGridLayout;
+    QHBoxLayout *mainlayoutforSettings;
+    QWidget *mainWidgetforSettings;
+    QPushButton *setdbpath_pushbutton;
+    QLineEdit *dbpath_LineEdit;
+    QPushButton* setting_Apply_Qpushbutton;
+    QPushButton* setting_Cancel_Qpushbutton;
+    QPushButton* setting_Reset_Qpushbutton;
+    QLineEdit *userID_QLineEdit;
+    QLineEdit *Inittab_LineEdit;
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
     AnnotatorManagement *userManagementDialog;
@@ -99,7 +113,6 @@ private:
     void setProtocolFunctionEnabled(bool en);
     ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
     /*..............Protocol actions............*/
-
     QAction *commitAction;
     QAction *checkAction;
     QAction *skipAction;
@@ -123,11 +136,17 @@ private slots:
     void NewDB_slot();
     void SetDB_slot();
     void SettingAction_slot();
+    void setdbpath_pushbutton_slot();
+    void settingsValueChanges_slot(const QString& text);
+    void setting_Apply_Qpushbutton_slot();
+    void setting_Cancel_Qpushbutton_slot();
+    void setting_Reset_Qpushbutton_slot();
 
     void removeSubTab(int subindex);
     void dataTabChange(int tabindex);
     void contentValueChange(QTreeWidgetItem *item,int column);
     void celltableInfoUpdate(int row,int column);
+    void seeIn3Dview_slot(int row,int column);
     void loginAction_slot();
     void loginOkayButton_slot();
     void loginCancelButton_slot();
@@ -147,7 +166,6 @@ public slots:
     void skipAction_slot();
     void rollbackAction_slot();
     void reassignAction_slot();
-
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H

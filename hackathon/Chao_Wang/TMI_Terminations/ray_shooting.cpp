@@ -11,7 +11,7 @@ using namespace std;
 #define PI 3.1415926
 
 float square(float x){return x*x;}
-int  rayinten_2D(int point_x,int point_y,int m,int n, vector<vector<float>> ray_x,vector<vector<float>> ray_y,V3DLONG nx,  V3DLONG ny, unsigned char *PP, int intensity_threshold,float angle_threshold)
+int  rayinten_2D(int point_x,int point_y,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y,V3DLONG nx,  V3DLONG ny, unsigned char *PP, int intensity_threshold,float angle_threshold)
 {
     n=n+6;
     int result=0;

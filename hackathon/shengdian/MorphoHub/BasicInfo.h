@@ -83,7 +83,7 @@ struct ArchitechureofMorphoHub{
     QList<Annotationlevel> workingSpace;
     ArchitechureofMorphoHub(){
         basicData.clear();
-        originForder<<"BasicData"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Release"<<"Registration";
+        originForder<<"Brain"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Configuration/BrainConf"<<"Configuration/WorkingSpace_Conf"<<"Release"<<"Registration";
         QStringList flevel;
         flevel<<"L1"<<"L2";
         for(int i=0;i<flevel.size();i++)
@@ -146,7 +146,7 @@ struct AnnotationProtocol{
         rollbackLevel<<"L1ACheck"<<"L1CCheck"
                     <<"L2ACheck"<<"L2CCheck";
         ReconstructionConfItems <<"BrainID"  << "NeuronID" << "Author" << "Checkerlist" << "LevelID"<<"Time"<<"ParentDirName"<<"FileName";
-        initprotocolrules();
+        //initprotocolrules();
     }
     void initprotocolrules(){
         for(int i=0;i<protocolLevel.size();i++)

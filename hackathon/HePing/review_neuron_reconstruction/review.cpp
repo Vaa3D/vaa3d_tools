@@ -3,7 +3,7 @@
 #include<algorithm>
 #include "filter_dialog.h"
 #include <iostream>
-#define length_threshold 150
+#define length_threshold 120
 
 //找到整个树的所有孩子节点
 bool SWCTreeSeg::initialize(NeuronTree t){//初始化整个树的结构
@@ -357,7 +357,7 @@ bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segmen
         for(int j=1;j<size;j++){//防止分叉点重复出现
             //point=orig.listNeuron[orig.hashNeuron.value(seg.points[j].n)];//绝对坐标
             point=seg.points[j];//相对坐标
-            point.type=index%14;//记录顺序信息
+            point.type=index%16+2;//记录顺序信息,为方便显示去除白色和黑色
             nt.listNeuron.push_back(point);
             //std::cout<<point.n<<" ";
         }
@@ -370,7 +370,7 @@ bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segmen
 然后按照排序结果，依次选择一个段假设为A作为一个新的开始，将该段的所有子段按照灰度值排序，
 然后对排序结果进行处理，将子段中存在父子关系的段调整位置，保证父段在子段的前面
 ***/
-bool sequence_rule(QString inputpath,SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > children){
+bool sequence_rule(QString inputpath,QString save_folder,SWCTreeSeg &swcTree,NeuronTree orig,vector<vector<V3DLONG> > children){
     QFileInfo eswcfileinfo;
     eswcfileinfo=QFileInfo(inputpath);
     QString eswcfile=eswcfileinfo.fileName();
@@ -506,6 +506,39 @@ bool sequence_rule(QString inputpath,SWCTreeSeg &swcTree,NeuronTree orig,vector<
         }
         child_segs=new_child_segs;
         qDebug()<<"------------*********------------";
+
+        //将叶子段的位置进行调整，将叶子段的顺序放在它的直接父段的后面，提高某些弱信号分支的优先级
+        for(V3DLONG jj=0;jj<child_segs.size();jj++){
+            segment seg0=child_segs[jj];
+            if(seg0.child_seg.front()==0){//叶子段
+                segment* pn_seg=seg0.parent_seg;
+                vector<segment>::iterator it;
+                it=find(child_segs.begin(),child_segs.end(),*pn_seg);//找到直接父段
+                if(it!=child_segs.end()){//找到父段
+                    if(jj-distance(child_segs.begin(),it)==1){//本来就在父段的下一个，不需要调整
+                        qDebug()<<"-----00000------";
+                        continue;
+                    }
+                    else{
+                        child_segs.erase(child_segs.begin()+jj);//先移除叶子段
+                        segment seg1=*(it+1);//父段的下一个段
+                        if(*seg1.parent_seg==*it&&seg1.child_seg.front()==0){//也是它的叶子段，那应该是信号比当前子段强的
+                            child_segs.insert(it+2,seg0);//插入它兄弟段的后面
+                            qDebug()<<"front is sobi";
+                        }
+                        else{//父段后面不是它的兄弟叶子段
+                            child_segs.insert(it+1,seg0);//插入叶子段到它的父段后面
+                            qDebug()<<"-----beef seg------";
+                        }
+
+
+
+                    }
+                }
+            }
+        }
+
+
         //写入初始段的子段
         for(V3DLONG jj=0;jj<child_segs.size();jj++){
             write_swc(orig,nt1,markers,child_segs[jj],index);
@@ -534,9 +567,9 @@ bool sequence_rule(QString inputpath,SWCTreeSeg &swcTree,NeuronTree orig,vector<
     nt1.listNeuron.push_back(swcTree.root);
     qDebug()<<"segments size:"<<index;
     //nt1.listNeuron.push_back(orig.listNeuron[orig.hashNeuron.value(swcTree.root.n)]);
-    writeESWC_file("C://Users//penglab//Desktop//17302-00001//review_test1//"+eswcfile+".eswc",nt1);
+    writeESWC_file(save_folder+"//"+eswcfile+".eswc",nt1);
     //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
-    writeMarker_file("C://Users//penglab//Desktop//17302-00001//review_test1//"+eswcfile+".marker",markers);
+    writeMarker_file(save_folder+"//"+eswcfile+".marker",markers);
     return true;
 }
 

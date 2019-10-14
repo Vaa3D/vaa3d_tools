@@ -7,9 +7,9 @@
 #include <vector>
 #include "ML_get_sample_plugin.h"
 #include "APP1_pruning.h"
-#include "/home/braincenter5/vaa3d_tools/hackathon/fl_cellseg/src/FL_watershed_vs.h"
-#include "/home/braincenter5/vaa3d_tools/hackathon/fl_cellseg/src/FL_bwlabel2D3D.h"
-#include "/home/braincenter5/v3d_external/v3d_main/basic_c_fun/volimg_proc.h"
+#include "FL_watershed_vs.h"
+#include "FL_bwlabel2D3D.h"
+#include "volimg_proc.h"
 //#include "/home/braincenter5/vaa3d_tools/hackathon/fl_cellseg/src/label_object_dialog.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(ML_get_sample, ML_sample);

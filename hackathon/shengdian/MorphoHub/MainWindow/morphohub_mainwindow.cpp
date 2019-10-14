@@ -11,10 +11,11 @@
 #include "morphohub_mainwindow.h"
 #include <QSettings>
 using namespace std;
-MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
+MorphoHub_MainWindow::MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget *parent) :
     QMainWindow(parent)
 {
     this->originparent=parent;
+    MorphoHubcallback=&callback;
     setWindowTitle(tr("MorphoHub-DBMS"));
     MorphoHub_Init();
     createActions();
@@ -23,17 +24,63 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
     createMenus();
     createContentTreeWidget(true);
     createTabWindow(true);
+    setMainLayout();
     if(this->dbpath.isEmpty())
     {
         //remind user to setup the dbpath
-        QMessageBox::warning(this,"Initializtion","Can't find database path, Please set the database path!");
+        //QMessageBox::warning(this,"Initializtion","Please set the database path!");
+        toLogWindow("Warning: Please set the database path!");
     }
-    setMainLayout();
+    else
+    {
+        toLogWindow(tr("Load Database: %1").arg(dbpath));
+        createTabWindow(false);
+        updateStatusBar(tr("Database: %1").arg(dbpath));
+    }
+    if(curOperator.UserID.isEmpty())
+    {
+        loginAction->setEnabled(true);
+        logoutAction->setEnabled(false);
+        setProtocolFunctionEnabled(false);
+        toLogWindow("Warning: You have to sign in to get the advanced functions.");
+        userStatusLabel->setText("UserID: Nobody");
+    }
+    else
+    {
+        loginAction->setEnabled(false);
+        logoutAction->setEnabled(true);
+        toLogWindow(tr("Current UserID: %1").arg(curOperator.UserID));
+        setProtocolFunctionEnabled(true);
+        userStatusLabel->setText(tr("UserID: %1").arg(curOperator.UserID));
+    }
+
 }
 
 void MorphoHub_MainWindow::MorphoHub_Init()
 {
-//    dbpath="/home/penglab/Data/MorphoHub_DB";
+    QSettings settings("MorphoHub","Vaa3d");
+    //read and update settings
+    QStringList setinitworkingspaceTablist=settings.value("InitTab").toStringList();
+    if(setinitworkingspaceTablist.size()==0)
+    {
+        qDebug()<<"No init setting";
+        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
+        settings.setValue("InitTab",initworkingspaceTablist);
+    }
+    else if(setinitworkingspaceTablist.size()==1
+            &&setinitworkingspaceTablist.at(0).isEmpty())
+    {
+        qDebug()<<"settings empty";
+        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
+        settings.setValue("InitTab",initworkingspaceTablist);
+    }
+    else
+    {
+        initworkingspaceTablist=setinitworkingspaceTablist;
+    }
+    dbpath=settings.value("dbpath").toString();
+    curOperator.UserID=settings.value("UserID").toString();
+
     datatitle=seuallenAP.ReconstructionConfItems;
     DBBasicConf=seuallenAP.architechure.originForder;
     workingspacelevellist=seuallenAP.architechure.workingSpace;
@@ -56,19 +103,9 @@ void MorphoHub_MainWindow::MorphoHub_Init()
         QString thisname="/"+finishedlevellist.at(i).ParentDir+"/"+finishedlevellist.at(i).Name;
         finishedConf.append(thisname);
     }
-
-    //need to be initialized at settings
-    initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"
-                            <<"L2A"<<"L2B"<<"L2C";
-
     //init of annotation protocol
     //seuallenAP.ApConfPath=this->dbpath+"/Configuration/WorkingSpace_Conf/AnnotationProtocol.conf";
     //InitofAnnotationProtocol();
-    //init of annotator
-    //need a sign in window for this.
-//    curOperator.UserID="";
-//    curOperator.workingplace="";
-//    curOperator.priority=APvisitor;
 }
 void MorphoHub_MainWindow::InitofAnnotationProtocol()
 {
@@ -257,7 +294,12 @@ void MorphoHub_MainWindow::createStatusBar()
     statusLabel=new QLabel("MorphoHub");
     statusLabel->setAlignment(Qt::AlignHCenter);
     statusLabel->setMinimumSize(statusLabel->sizeHint());
+
+    userStatusLabel=new QLabel("MorphoHub");
+    userStatusLabel->setAlignment(Qt::AlignRight);
+    userStatusLabel->setMinimumSize(userStatusLabel->sizeHint());
     statusBar()->addWidget(statusLabel);
+    statusBar()->addWidget(userStatusLabel,1);
 }
 
 
@@ -277,8 +319,7 @@ void MorphoHub_MainWindow::setMainLayout()
     mainlayout->addWidget(dataTabwidget,7);
     //mainlayout->addWidget(MainLogwidget,2);
     mainWidget->setLayout(mainlayout);
-    setCentralWidget(mainWidget);
-    setProtocolFunctionEnabled(false);
+    setCentralWidget(mainWidget);    
 }
 
 void MorphoHub_MainWindow::createContentTreeWidget(bool init)
@@ -292,34 +333,26 @@ void MorphoHub_MainWindow::createContentTreeWidget(bool init)
         QList<QTreeWidgetItem*> contentitems;
         //create nodes
         content_workingspace=new QTreeWidgetItem(contentTreewidget,QStringList(QString("WorkingSpace")));
-        //content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("BasicData")));
+        //content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("Brain")));
         contentitems.append(content_workingspace);
         //contentitems.append(content_basicData);
 
+        QList<Annotationlevel> workingspacelevellisttmp=seuallenAP.architechure.workingSpace;
+        for(int i=0;i<workingspacelevellisttmp.size();i++)
+        {
+            QString thisname=workingspacelevellist.at(i).Name;
+            QString tmpitem;
+            tmpitem=thisname.simplified();
+            QTreeWidgetItem *content_workingspace_childnode=new QTreeWidgetItem(content_workingspace,QStringList(tmpitem));
+            content_workingspace->addChild(content_workingspace_childnode);
+        }
         //create parent node
         contentTreewidget->insertTopLevelItems(0,contentitems);
         contentTreewidget->setItemsExpandable(true);
         contentTreewidget->expandAll();
-    }
-    else
-    {
-        //create child node for WorkingSpace
-        if(!dbpath.isEmpty())
-        {
-            QList<Annotationlevel> workingspacelevellisttmp=seuallenAP.architechure.workingSpace;
-            for(int i=0;i<workingspacelevellisttmp.size();i++)
-            {
-                QString thisname=workingspacelevellist.at(i).Name;
-                QString tmpitem;
-                tmpitem=thisname.simplified();
-                QTreeWidgetItem *content_workingspace_childnode=new QTreeWidgetItem(content_workingspace,QStringList(tmpitem));
-                content_workingspace->addChild(content_workingspace_childnode);
-            }
-            connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
-        }
+        connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
     }
 }
-
 void MorphoHub_MainWindow::createTabWindow(bool init)
 {
     if(init)
@@ -328,13 +361,22 @@ void MorphoHub_MainWindow::createTabWindow(bool init)
         dataTabwidget=new QTabWidget();
         dataTabwidget->setTabsClosable(false);
         dataTabwidget->setMovable(false);
-        //set close function
-        connect(dataTabwidget,SIGNAL(tabCloseRequested(int)),this,SLOT(removeSubTab(int)));
-        //set tab widget
-        connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
     }
     else
     {
+        //clear old state
+//        dataTabwidget->clear();
+        if(dataTabwidget->count()>0)
+        {
+            //set tab widget
+            dataTabwidget->disconnect();
+            //disconnect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+            qDebug()<<"remove tab";
+            dataTabwidget->clear();
+        }
+        datatablelist.clear();
+        //update
+        qDebug()<<"size= "<<initworkingspaceTablist.size();
         for(int i=0;i<initworkingspaceTablist.size();i++)
         {
             QString initlevel=initworkingspaceTablist.at(i);
@@ -347,21 +389,37 @@ void MorphoHub_MainWindow::createTabWindow(bool init)
                 levelTable=createTableDataLevel(thislevelres);
                 if(levelTable)
                 {
+                    qDebug()<<"create Tab: "<<initlevel;
                     datatabletitlelist.append(initlevel);
                     datatablelist.append(levelTable);
                     dataTabwidget->addTab(levelTable,initlevel);
                 }
             }
         }
+        //set tab widget
+        connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
     }
 }
-
 void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
 {
+    if(this->dbpath.isEmpty())
+    {
+        QMessageBox::warning(this,"Initializtion","Please set the database path!");
+        toLogWindow("Warning: Please set the database path!");
+        return;
+    }
     QTreeWidgetItem *itemparent=item->parent();
     if(itemparent==NULL)
         return;
     QString itemtext=item->text(column);
+    //shield Assigned1 , Assigned2 and Questionzone
+    if(itemtext.compare("Assigned1")==0||
+            itemtext.compare("Assigned2")==0||
+            itemtext.compare("QuestionZone")==0)
+    {
+        QMessageBox::warning(this,"Function Not Ready","Please Wait!");
+        return;
+    }
     //make sure this table hasn't been created.
     //if already created, update it
     if(datatabletitlelist.contains(itemtext))
@@ -403,6 +461,36 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
         }
     }
 }
+
+void MorphoHub_MainWindow::seeIn3Dview_slot(int row, int column)
+{
+//    qDebug()<<"row= "<<row<<"cloumn = "<<column;
+    if(column==1)
+    {
+        //get the path of the clicked neuron
+        int curtabindex=dataTabwidget->currentIndex();
+        QTableWidget *levelTable=datatablelist.at(curtabindex);
+        if(levelTable!=NULL)
+        {
+            QString levelid=levelTable->item(row,4)->text();
+            QString parentdir=levelTable->item(row,6)->text();
+            QString clickedName=levelTable->item(row,7)->text();
+            QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+levelid+"/"+parentdir+"/"+clickedName+".ano";
+
+            QFileInfo curSWCBase(curPathSWC);
+            if(curSWCBase.exists())
+            {
+                qDebug()<<"path "<<curPathSWC;
+//                V3dR_MainWindow * surface_win = MorphoHubcallback->createEmpty3DViewer();
+                MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
+//                new3DWindow = MorphoHubcallback->open3DViewerForSingleSurfaceFile(curPathSWC);
+                //reset window title to basename instead of path name
+//                MorphoHubcallback->setWindowDataTitle(new3DWindow,curSWCBase.baseName());
+            }
+        }
+    }
+}
+
 void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
 {
     if(row>=0)
@@ -419,14 +507,6 @@ void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
             curRecon.updateTime=levelTable->item(row,5)->text();
             curRecon.fatherDirName=levelTable->item(row,6)->text();
             curRecon.fileName=levelTable->item(row,7)->text();
-            if(false)
-            {
-                qDebug()<<"?";
-                commitDialog->setAnnotator(curOperator);//
-                commitDialog->setCurNeuron(curRecon);//get current neuron info
-                commitDialog->setFunction("Commit");
-                commitDialog->updateMainView();
-            }
         }
     }
 }
@@ -460,6 +540,8 @@ void MorphoHub_MainWindow::updateTableDataLevel(QTableWidget *t,QList<Reconstruc
         t->resizeRowsToContents();
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
+        //double click to get a 3D view of the neuron
+        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
     }
 }
 
@@ -492,9 +574,12 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->resizeRowsToContents();
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
+        //double click to get a 3D view of the neuron
+        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
     }
     return t;
 }
+
 
 QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const QString& levelid)
 {
@@ -532,14 +617,14 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
             if(swcfilelist.size()!=1||anofilelist.size()!=1||apofilelist.size()!=1)
             {
                 qDebug()<<swcfilelist.size()<<anofilelist.size()<<apofilelist.size();
-                QMessageBox::warning(this,"File Error","Abnormal file found at"+thisdirname);
+                QMessageBox::warning(this,"File Error","Abnormal file found at "+thisdirname);
                 continue;
             }
             QString anofilebasename=QFileInfo(dirinside,anofilelist.at(0)).completeBaseName();
             QStringList splitAnoFilelist=anofilebasename.split("_");
             if(splitAnoFilelist.size()<9)
             {
-                QMessageBox::warning(this,"Name Format Error","Abnormal file name format found at"+thisdirname);
+                QMessageBox::warning(this,"Name Format Error","Abnormal file name format found at "+thisdirname);
                 continue;
             }
             ReconstructionInfo tmprecons;
@@ -572,6 +657,10 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
         }
     }
     //3.write to Qlist
+    if(outlist.size()==0)
+    {
+        toLogWindow(tr("%1 is empty!").arg(levelid));
+    }
     return outlist;
 }
 
@@ -662,12 +751,14 @@ void MorphoHub_MainWindow::NewDB_slot()
             }
         }
         //content widget init
-        createContentTreeWidget(false);
         createTabWindow(false);
+        //test settings
+        QSettings settings("MorphoHub","Vaa3d");
+        settings.setValue("dbpath",dbpath);
     }
 }
 
-//need to be revised
+
 void MorphoHub_MainWindow::SetDB_slot()
 {
     QString title="please select a path for DB";
@@ -715,8 +806,9 @@ void MorphoHub_MainWindow::SetDB_slot()
             }
         }
         //content widget init
-        createContentTreeWidget(false);
         createTabWindow(false);
+        QSettings settings("MorphoHub","Vaa3d");
+        settings.setValue("dbpath",dbpath);
     }
     else
     {
@@ -725,11 +817,133 @@ void MorphoHub_MainWindow::SetDB_slot()
     }
 }
 
+void MorphoHub_MainWindow::setting_Apply_Qpushbutton_slot()
+{
+    QSettings settings("MorphoHub","Vaa3d");
+    settings.setValue("dbpath",dbpath_LineEdit->text());
+    settings.setValue("UserID",userID_QLineEdit->text().toUpper());
+    QStringList showtextlist=Inittab_LineEdit->text().simplified().split(",");
+    settings.setValue("InitTab",showtextlist);
+    setting_Apply_Qpushbutton->setEnabled(false);
+    QMessageBox::information(this,tr("Success"),tr("All the settings have been saved (Restart to load the new settings)."));
+}
+
+void MorphoHub_MainWindow::setting_Cancel_Qpushbutton_slot()
+{
+    SettingDialog->close();
+}
+
+void MorphoHub_MainWindow::setting_Reset_Qpushbutton_slot()
+{
+    dbpath_LineEdit->setText("");
+    userID_QLineEdit->setText("");
+    Inittab_LineEdit->setText("L1A,L1B,L1C,L2A,L2B,L2C");
+    //Inittab_LineEdit->setPlaceholderText("Input like this: L1A,L1CCheck");
+    setting_Apply_Qpushbutton->setEnabled(true);
+}
+
+void MorphoHub_MainWindow::settingsValueChanges_slot(const QString &text)
+{
+    setting_Apply_Qpushbutton->setEnabled(true);
+}
+
+void MorphoHub_MainWindow::setdbpath_pushbutton_slot()
+{
+    QString title="please select a path for DB";
+    QString inputpath = QFileDialog::getExistingDirectory(this, title,
+                                                     "~/",
+                                                     QFileDialog::ShowDirsOnly
+                                                     |QFileDialog::DontResolveSymlinks);
+    if(inputpath.isEmpty())
+    {
+        QMessageBox::warning(this,"Path Error","Can't find database path, Please reset it again!");
+        return;
+    }
+    else
+    {
+        dbpath_LineEdit->setText(inputpath);
+        setting_Apply_Qpushbutton->setEnabled(true);
+    }
+}
+
 void MorphoHub_MainWindow::SettingAction_slot()
 {
-    //1.dbpath
-    //2.userID
-    //3.initworkingspaceTablist
+    QSettings settings("MorphoHub","Vaa3d");
+    QString setdbpath=settings.value("dbpath").toString();
+    QString setUserID=settings.value("UserID").toString();
+    QStringList setinitworkingspaceTablist=settings.value("InitTab").toStringList();
+    //    settings.clear();
+        //1.dbpath
+        //2.userID
+        //3.initworkingspaceTablist
+    SettingDialog=new QDialog(this);
+    SettingDialog->setWindowTitle("MorphoHub-Settings");
+    mainlayoutforSettings=new QHBoxLayout();
+    SettingsTabwidget=new QTabWidget();
+    SettingsTabwidget->setTabsClosable(false);
+    SettingsTabwidget->setMovable(false);
+
+    mainWidgetforSettings=new QWidget;
+    basictabQGridLayout=new QGridLayout();
+
+    QLabel *dbpath_label=new QLabel("DB path: ");
+    dbpath_LineEdit=new QLineEdit();
+    dbpath_LineEdit->setReadOnly(true);
+    dbpath_LineEdit->setText(setdbpath);
+    setdbpath_pushbutton=new QPushButton("Choose");
+    connect(setdbpath_pushbutton,SIGNAL(clicked()),this,SLOT(setdbpath_pushbutton_slot()));
+    connect(dbpath_LineEdit,SIGNAL(textChanged(QString)),this,SLOT(settingsValueChanges_slot(QString)));
+
+    QLabel *userID_QLabel=new QLabel("UserID:");
+    userID_QLineEdit=new QLineEdit();
+    userID_QLineEdit->setText(setUserID);
+    userID_QLineEdit->setReadOnly(false);
+    connect(userID_QLineEdit,SIGNAL(textChanged(QString)),this,SLOT(settingsValueChanges_slot(QString)));
+
+    QLabel *Inittab_label=new QLabel("Init Level tab: ");
+    Inittab_LineEdit=new QLineEdit();
+    if(setinitworkingspaceTablist.size()==0)
+        Inittab_LineEdit->setPlaceholderText("Input like this: L1A,L1CCheck");
+    else
+    {
+        QString showtext=setinitworkingspaceTablist.at(0);
+        for(int i=1;i<setinitworkingspaceTablist.size();i++)
+        {
+            showtext+=(","+setinitworkingspaceTablist.at(i));
+        }
+        Inittab_LineEdit->setText(showtext);
+    }
+    connect(Inittab_LineEdit,SIGNAL(textChanged(QString)),this,SLOT(settingsValueChanges_slot(QString)));
+
+    setting_Apply_Qpushbutton=new QPushButton("Apply");
+    setting_Apply_Qpushbutton->setEnabled(false);
+    connect(setting_Apply_Qpushbutton,SIGNAL(clicked()),this,SLOT(setting_Apply_Qpushbutton_slot()));
+    setting_Cancel_Qpushbutton=new QPushButton("Cancel");
+    connect(setting_Cancel_Qpushbutton,SIGNAL(clicked()),this,SLOT(setting_Cancel_Qpushbutton_slot()));
+    setting_Reset_Qpushbutton=new QPushButton("Reset");
+    connect(setting_Reset_Qpushbutton,SIGNAL(clicked()),this,SLOT(setting_Reset_Qpushbutton_slot()));
+
+    //layout of basic setting tab
+    basictabQGridLayout->addWidget(dbpath_label,0,0,1,1);
+    basictabQGridLayout->addWidget(dbpath_LineEdit,0,1,1,5);
+    basictabQGridLayout->addWidget(setdbpath_pushbutton,0,6,1,1);
+    basictabQGridLayout->addWidget(userID_QLabel,1,0,1,1);
+    basictabQGridLayout->addWidget(userID_QLineEdit,1,1,1,6);
+    basictabQGridLayout->addWidget(Inittab_label,2,0,1,1);
+    basictabQGridLayout->addWidget(Inittab_LineEdit,2,1,1,6);
+
+    basictabQGridLayout->addWidget(setting_Cancel_Qpushbutton,6,0,1,1);
+    basictabQGridLayout->addWidget(setting_Reset_Qpushbutton,6,3,1,1);
+    basictabQGridLayout->addWidget(setting_Apply_Qpushbutton,6,6,1,1);
+
+    mainWidgetforSettings->setLayout(basictabQGridLayout);
+    SettingsTabwidget->addTab(mainWidgetforSettings,"Basic");
+    mainlayoutforSettings->addWidget(SettingsTabwidget,0);
+    SettingDialog->setLayout(mainlayoutforSettings);
+    SettingDialog->setGeometry(100,100,600,600);
+    SettingDialog->raise();
+    SettingDialog->show();
+
 }
 
 
@@ -747,10 +961,10 @@ void MorphoHub_MainWindow::toLogWindow(const QString &logtext)
     logtextedit->moveCursor(QTextCursor::End);
 }
 
-
 void MorphoHub_MainWindow::removeSubTab(int subindex)
 {
     dataTabwidget->removeTab(subindex);
+    qDebug()<<"remove tab c1";
 }
 
 
@@ -814,9 +1028,11 @@ void MorphoHub_MainWindow::loginOkayButton_slot()
         loginDialog->close();
         loginAction->setEnabled(false);
         logoutAction->setEnabled(true);
+        userStatusLabel->setText(tr("UserID: %1").arg(curOperator.UserID));
         toLogWindow(tr("Welcome %1 login.").arg(curOperator.UserID));
-        updateStatusBar(tr("User: %1").arg(curOperator.UserID));
         setProtocolFunctionEnabled(true);
+        QSettings settings("MorphoHub","Vaa3d");
+        settings.setValue("UserID",curOperator.UserID);
     }
     else
     {
@@ -841,7 +1057,7 @@ void MorphoHub_MainWindow::logoutAction_slot()
     loginAction->setEnabled(true);
     logoutAction->setEnabled(false);
     toLogWindow(tr("%1 logout").arg(olduserID));
-    updateStatusBar(tr("MorphoHub: nobody").arg(olduserID));
+    userStatusLabel->setText(tr("UserID: Nobody"));
     setProtocolFunctionEnabled(false);
 }
 
