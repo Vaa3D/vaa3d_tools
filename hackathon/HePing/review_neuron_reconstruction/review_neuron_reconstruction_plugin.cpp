@@ -13,7 +13,7 @@ Q_EXPORT_PLUGIN2(review_neuron_reconstruction, reviewNReconstruction);
 QStringList reviewNReconstruction::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+        <<tr("segment sequence")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -28,9 +28,9 @@ QStringList reviewNReconstruction::funclist() const
 
 void reviewNReconstruction::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("segment sequence"))
 	{
-		v3d_msg("To be implemented.");
+        review_neuron(callback,parent);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -51,18 +51,19 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
 	if (func_name == tr("func1"))
-    {   V3DLONG sz0=512,sz1=256,sz2=128;
+    {   V3DLONG sz0=512,sz1=512,sz2=256;
         vector<NeuronSWC> candidate_point;
         QString swcfile=(infiles.size()>=1)?infiles[0]:"";//输入swc文件
         NeuronTree t = readSWC_file(swcfile);
         QString input_path = (infiles.size()>=2)?infiles[1]:"";//输入脑的位置
+        QString save_folder = "C://Users//penglab//Desktop//17302-00001//review_test";
         SWCTreeSeg swcTree;
         //获取孩子节点
         swcTree.initialize(t);
         //在整个树中移动块，并在每个块中完成分段和平均灰度值的计算
         move_block(input_path,callback,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
         //对所有的段进行排序(目前只有一个块中的段)
-        sequence_rule(swcfile,swcTree,t,swcTree.children);
+        sequence_rule(swcfile,save_folder,swcTree,t,swcTree.children);
 
 	}
 	else if (func_name == tr("func2"))

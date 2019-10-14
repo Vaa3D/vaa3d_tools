@@ -85,7 +85,10 @@ struct SWCTreeSeg{
 bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segment seg,V3DLONG &index);
 bool cut_block(QString input_path,V3DPluginCallback2 &callback,NeuronTree &nt,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,size_t &x0,size_t &y0,size_t &z0, NeuronSWC center_point,vector<V3DLONG> &subNeuron,int resolution,unsigned char* &p1data);//以center_point为中心切块
 bool move_block(QString braindir,V3DPluginCallback2 &callback,NeuronTree orig,SWCTreeSeg &segs ,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,vector<NeuronSWC> &candidate_point);
-bool sequence_rule(QString input,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
+bool sequence_rule(QString input,QString save,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
+
+bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent);
+
 
 #endif // REVIEW_H
 
