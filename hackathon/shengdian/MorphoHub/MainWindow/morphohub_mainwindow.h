@@ -14,7 +14,7 @@ class MorphoHub_MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MorphoHub_MainWindow(QWidget *parent = 0);
+    explicit MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget *parent = 0);
 public:
     QList<ReconstructionInfo> getReconstuctionsFromLevel(const QString& levelid);
 
@@ -36,6 +36,7 @@ public:
 private:
     QWidget *originparent;
     QString dbpath;
+    V3DPluginCallback2 *MorphoHubcallback;
      /*..............For Annotation ............*/
     AnnotationProtocol seuallenAP;
     Annotator curOperator;
@@ -145,6 +146,7 @@ private slots:
     void dataTabChange(int tabindex);
     void contentValueChange(QTreeWidgetItem *item,int column);
     void celltableInfoUpdate(int row,int column);
+    void seeIn3Dview_slot(int row,int column);
     void loginAction_slot();
     void loginOkayButton_slot();
     void loginCancelButton_slot();

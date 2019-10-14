@@ -11,10 +11,11 @@
 #include "morphohub_mainwindow.h"
 #include <QSettings>
 using namespace std;
-MorphoHub_MainWindow::MorphoHub_MainWindow(QWidget *parent) :
+MorphoHub_MainWindow::MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget *parent) :
     QMainWindow(parent)
 {
     this->originparent=parent;
+    MorphoHubcallback=&callback;
     setWindowTitle(tr("MorphoHub-DBMS"));
     MorphoHub_Init();
     createActions();
@@ -332,7 +333,7 @@ void MorphoHub_MainWindow::createContentTreeWidget(bool init)
         QList<QTreeWidgetItem*> contentitems;
         //create nodes
         content_workingspace=new QTreeWidgetItem(contentTreewidget,QStringList(QString("WorkingSpace")));
-        //content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("BasicData")));
+        //content_basicData=new QTreeWidgetItem(contentTreewidget,QStringList(QString("Brain")));
         contentitems.append(content_workingspace);
         //contentitems.append(content_basicData);
 
@@ -411,6 +412,14 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
     if(itemparent==NULL)
         return;
     QString itemtext=item->text(column);
+    //shield Assigned1 , Assigned2 and Questionzone
+    if(itemtext.compare("Assigned1")==0||
+            itemtext.compare("Assigned2")==0||
+            itemtext.compare("QuestionZone")==0)
+    {
+        QMessageBox::warning(this,"Function Not Ready","Please Wait!");
+        return;
+    }
     //make sure this table hasn't been created.
     //if already created, update it
     if(datatabletitlelist.contains(itemtext))
@@ -452,6 +461,36 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
         }
     }
 }
+
+void MorphoHub_MainWindow::seeIn3Dview_slot(int row, int column)
+{
+//    qDebug()<<"row= "<<row<<"cloumn = "<<column;
+    if(column==1)
+    {
+        //get the path of the clicked neuron
+        int curtabindex=dataTabwidget->currentIndex();
+        QTableWidget *levelTable=datatablelist.at(curtabindex);
+        if(levelTable!=NULL)
+        {
+            QString levelid=levelTable->item(row,4)->text();
+            QString parentdir=levelTable->item(row,6)->text();
+            QString clickedName=levelTable->item(row,7)->text();
+            QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+levelid+"/"+parentdir+"/"+clickedName+".ano";
+
+            QFileInfo curSWCBase(curPathSWC);
+            if(curSWCBase.exists())
+            {
+                qDebug()<<"path "<<curPathSWC;
+//                V3dR_MainWindow * surface_win = MorphoHubcallback->createEmpty3DViewer();
+                MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
+//                new3DWindow = MorphoHubcallback->open3DViewerForSingleSurfaceFile(curPathSWC);
+                //reset window title to basename instead of path name
+//                MorphoHubcallback->setWindowDataTitle(new3DWindow,curSWCBase.baseName());
+            }
+        }
+    }
+}
+
 void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
 {
     if(row>=0)
@@ -468,14 +507,6 @@ void MorphoHub_MainWindow::celltableInfoUpdate(int row, int column)
             curRecon.updateTime=levelTable->item(row,5)->text();
             curRecon.fatherDirName=levelTable->item(row,6)->text();
             curRecon.fileName=levelTable->item(row,7)->text();
-            if(false)
-            {
-                qDebug()<<"?";
-                commitDialog->setAnnotator(curOperator);//
-                commitDialog->setCurNeuron(curRecon);//get current neuron info
-                commitDialog->setFunction("Commit");
-                commitDialog->updateMainView();
-            }
         }
     }
 }
@@ -509,6 +540,8 @@ void MorphoHub_MainWindow::updateTableDataLevel(QTableWidget *t,QList<Reconstruc
         t->resizeRowsToContents();
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
+        //double click to get a 3D view of the neuron
+        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
     }
 }
 
@@ -541,6 +574,8 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->resizeRowsToContents();
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
+        //double click to get a 3D view of the neuron
+        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
     }
     return t;
 }
@@ -622,6 +657,10 @@ QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const
         }
     }
     //3.write to Qlist
+    if(outlist.size()==0)
+    {
+        toLogWindow(tr("%1 is empty!").arg(levelid));
+    }
     return outlist;
 }
 

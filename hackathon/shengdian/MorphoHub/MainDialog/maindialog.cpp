@@ -668,7 +668,7 @@ void MainDialog::okayButton_slot()
         qDebug()<<"dst1="<<path_workingspace;
         if(!nextlevel_NeuronArchives_LineEdit->text().isEmpty())
         {
-            QString path_neuronarchives=this->dbpath+"/BasicData/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
+            QString path_neuronarchives=this->dbpath+"/Brain/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
                     nextlevel_NeuronArchives_LineEdit->text()+"/";
             dstpathlist.append(path_neuronarchives);
             qDebug()<<"dst2="<<path_neuronarchives;
@@ -741,7 +741,7 @@ void MainDialog::okayButton_slot()
             qDebug()<<"rm path1="<<path_workingspace;
             if(!removeLevel_Archives_LineEdit->text().isEmpty())
             {
-                QString path_neuronarchives=this->dbpath+"/BasicData/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
+                QString path_neuronarchives=this->dbpath+"/Brain/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
                         removeLevel_Archives_LineEdit->text()+"/";
                 rmpathlist.append(path_neuronarchives);
                 qDebug()<<"rm path1="<<path_neuronarchives;

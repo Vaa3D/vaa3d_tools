@@ -83,7 +83,7 @@ struct ArchitechureofMorphoHub{
     QList<Annotationlevel> workingSpace;
     ArchitechureofMorphoHub(){
         basicData.clear();
-        originForder<<"BasicData"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Release"<<"Registration";
+        originForder<<"Brain"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Configuration/BrainConf"<<"Configuration/WorkingSpace_Conf"<<"Release"<<"Registration";
         QStringList flevel;
         flevel<<"L1"<<"L2";
         for(int i=0;i<flevel.size();i++)
