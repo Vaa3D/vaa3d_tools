@@ -250,6 +250,7 @@ bool WriteSourceDataToFile(const QString& confpath,QList<SourceDataInfo> &inputs
     }
 }
 
+
 QStringList readAnoFile(const QString &filename)
 {
     QStringList outlist;
@@ -283,7 +284,7 @@ QStringList readAnoFile(const QString &filename)
         itemList = tmpList.at(i).split("=");
         if (itemList.size()==2)
         {
-            outlist.append(itemList.at(1));
+            outlist.append(itemList.at(1).trimmed());
         }
     }
     return outlist;

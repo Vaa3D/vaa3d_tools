@@ -4,6 +4,7 @@
 #include <QtGui>
 #include <QWidget>
 #include "../BasicInfo.h"
+using namespace std;
 class MainDialog: public QDialog
 {
     Q_OBJECT

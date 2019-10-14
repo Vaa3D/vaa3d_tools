@@ -587,18 +587,20 @@ void MainDialog::okayButton_slot()
     if(anofile.exists())
     {
        anoinsidelist=readAnoFile(anofile.absoluteFilePath());
-       qDebug()<<"Scan file number = "<<anoinsidelist.size();
        if(anoinsidelist.size()==2)//limit this into one apo and one swc file
        {
-           QString thissuffix1=QFileInfo(basefilepath,anoinsidelist.at(0)).suffix().toUpper();
-           QString thissuffix2=QFileInfo(basefilepath,anoinsidelist.at(1)).suffix().toUpper();
-           qDebug()<<"Get suffix1:"<<thissuffix1<<" and suffix2:"<<thissuffix2;
-           if(QString::compare(thissuffix1,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+//           qDebug()<<anoinsidelist.at(0);
+//           qDebug()<<anoinsidelist.at(1);
+           QString fileout1=basefilepath+anoinsidelist.at(0);
+           QString fileout2=basefilepath+anoinsidelist.at(1);
+           QString thissuffix1=QFileInfo(fileout1).suffix().toUpper();
+           QString thissuffix2=QFileInfo(fileout2).suffix().toUpper();
+           if((thissuffix1=="ESWC")&&(thissuffix2=="APO"))
            {
                apofilename=anoinsidelist.at(1);
                swcfilename=anoinsidelist.at(0);
            }
-           else if(QString::compare(thissuffix2,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+           else if((thissuffix2=="ESWC")&&(thissuffix1=="APO"))
            {
                apofilename=anoinsidelist.at(0);
                swcfilename=anoinsidelist.at(1);
