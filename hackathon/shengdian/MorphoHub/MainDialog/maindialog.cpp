@@ -587,10 +587,12 @@ void MainDialog::okayButton_slot()
     if(anofile.exists())
     {
        anoinsidelist=readAnoFile(anofile.absoluteFilePath());
+       qDebug()<<"Scan file number = "<<anoinsidelist.size();
        if(anoinsidelist.size()==2)//limit this into one apo and one swc file
        {
            QString thissuffix1=QFileInfo(basefilepath,anoinsidelist.at(0)).suffix().toUpper();
            QString thissuffix2=QFileInfo(basefilepath,anoinsidelist.at(1)).suffix().toUpper();
+           qDebug()<<"Get suffix1:"<<thissuffix1<<" and suffix2:"<<thissuffix2;
            if(QString::compare(thissuffix1,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
            {
                apofilename=anoinsidelist.at(1);
@@ -610,7 +612,7 @@ void MainDialog::okayButton_slot()
        }
        else
        {
-           QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers.").arg(basefilepath));
+           QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers (inside ano).").arg(basefilepath));
            okayButton->setEnabled(false);
            return;
        }
