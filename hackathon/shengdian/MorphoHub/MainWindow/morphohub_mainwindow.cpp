@@ -714,12 +714,19 @@ void MorphoHub_MainWindow::NewDB_slot()
 {
     //QMessageBox::information(this, tr("Information"), tr("Open"));
     QString title="please select a path for DB";
-    this->dbpath = QFileDialog::getExistingDirectory(this, title,
+    QString inputpath = QFileDialog::getExistingDirectory(this, title,
                                                      "~/",
                                                      QFileDialog::ShowDirsOnly
                                                      |QFileDialog::DontResolveSymlinks);
-    if(!dbpath.isEmpty())
+    if(!inputpath.isEmpty())
     {
+        int reply;
+        reply=QMessageBox::warning(this,"Database Initialization",QObject::tr("You are making a new database now!\n")+
+                                   QObject::tr("MorphoHub will create some folders for initialization.\n")+
+                                   QObject::tr("Are you sure you want to do this?\n"),
+                                   QMessageBox::Ok,QMessageBox::Cancel);
+        if(reply==QMessageBox::Cancel)
+            return;
         QDir::setCurrent(dbpath);
         QDir dir(QDir::currentPath());
         dbpath=dir.absolutePath();
@@ -771,14 +778,20 @@ void MorphoHub_MainWindow::NewDB_slot()
 void MorphoHub_MainWindow::SetDB_slot()
 {
     QString title="please select a path for DB";
-    this->dbpath = QFileDialog::getExistingDirectory(this, title,
+    QString inputpath = QFileDialog::getExistingDirectory(this, title,
                                                      "~/",
                                                      QFileDialog::ShowDirsOnly
                                                      |QFileDialog::DontResolveSymlinks);
-    if(!dbpath.isEmpty())
+    if(!inputpath.isEmpty())
     {
         //converter dir path
-
+        int reply;
+        reply=QMessageBox::warning(this,"Database Initialization",QObject::tr("You are switching database now!\n")+
+                                   QObject::tr("MorphoHub will create some folders for initialization.\n")+
+                                   QObject::tr("Are you sure you want to do this?\n"),
+                                   QMessageBox::Ok,QMessageBox::Cancel);
+        if(reply==QMessageBox::Cancel)
+            return;
         QDir::setCurrent(dbpath);
         QDir dir(QDir::currentPath());
         dbpath=dir.absolutePath();
@@ -1153,7 +1166,7 @@ void MorphoHub_MainWindow::checkAction_slot()
             commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            //this->raise();
         }
     }
 }
@@ -1184,7 +1197,7 @@ void MorphoHub_MainWindow::commitAction_slot()
             commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            //this->raise();
         }
     }
 }
@@ -1211,7 +1224,7 @@ void MorphoHub_MainWindow::skipAction_slot()
             commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            //this->raise();
         }
     }
 }
@@ -1238,7 +1251,7 @@ void MorphoHub_MainWindow::rollbackAction_slot()
             commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            //this->raise();
         }
     }
 }

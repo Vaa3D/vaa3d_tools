@@ -326,7 +326,9 @@ QStringList MainDialog::getNextlevelList()
         break;
     case 4://rollback function
     {
+        //qDebug()<<"Input level "<<curNeuron.levelID;
         QString  workingspacelevel=ApforthisDialog.APFRollback(curNeuron.levelID);
+        //qDebug()<<"out level "<<workingspacelevel;
         if(!workingspacelevel.isEmpty())
         {
             if(workingspacelevel.split("/").size()>1)
