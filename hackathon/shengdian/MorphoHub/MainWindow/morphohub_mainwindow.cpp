@@ -379,6 +379,7 @@ void MorphoHub_MainWindow::createTabWindow(bool init)
             dataTabwidget->clear();
         }
         datatablelist.clear();
+        datatabletitlelist.clear();
         //update
         qDebug()<<"size= "<<initworkingspaceTablist.size();
         for(int i=0;i<initworkingspaceTablist.size();i++)
@@ -956,9 +957,9 @@ void MorphoHub_MainWindow::SettingAction_slot()
     mainlayoutforSettings->addWidget(SettingsTabwidget,0);
     SettingDialog->setLayout(mainlayoutforSettings);
     SettingDialog->setGeometry(100,100,600,600);
-    SettingDialog->raise();
+//    SettingDialog->raise();
+    SettingDialog->setModal(true);
     SettingDialog->show();
-
 }
 
 
@@ -1000,7 +1001,7 @@ void MorphoHub_MainWindow::dataTabChange(int tabindex)
 
 void MorphoHub_MainWindow::loginAction_slot()
 {
-    loginDialog=new QDialog();
+    loginDialog=new QDialog(this);
     loginDialog->setWindowTitle("MorphoHub-Login-Window");
 
     QLabel *userIDQLabel=new QLabel("UserID:");
@@ -1027,6 +1028,7 @@ void MorphoHub_MainWindow::loginAction_slot()
 //    loginDialog->setFixedSize(400,400);
 
     loginDialog->setGeometry(100,100,400,400);
+    loginDialog->setModal(true);
     loginDialog->show();
 }
 
@@ -1141,13 +1143,14 @@ void MorphoHub_MainWindow::checkAction_slot()
     {
         if(curRecon.alreadyInit())
         {
-            commitDialog=new MainDialog(this->dbpath,this->originparent);
+//            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog=new MainDialog(this->originparent);
             commitDialog->setAnnotator(curOperator);//
             commitDialog->setCurNeuron(curRecon);//get current neuron info
             commitDialog->setFunction("Check");
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
-
+            commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
             this->raise();
@@ -1178,6 +1181,7 @@ void MorphoHub_MainWindow::commitAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
             this->raise();
@@ -1204,6 +1208,7 @@ void MorphoHub_MainWindow::skipAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
             this->raise();
@@ -1230,6 +1235,7 @@ void MorphoHub_MainWindow::rollbackAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
             commitDialog->setGeometry(100,100,600,800);
             this->raise();

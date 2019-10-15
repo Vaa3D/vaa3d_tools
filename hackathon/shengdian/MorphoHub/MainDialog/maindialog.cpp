@@ -8,7 +8,6 @@ MainDialog::MainDialog(const QString &path, QWidget *parent)
     MainInit();
     createMainView();
     setLayout(mainLayout);
-    this->dialogReady=true;
 }
 void MainDialog::createMainView()
 {
@@ -167,7 +166,6 @@ void MainDialog::MainInit()
     curNeuron.author.UserID="Visitor";
     curNeuron.checkers="";
     curNeuron.levelID="Unknown";
-    this->dialogReady=false;
 }
 void MainDialog::clearMainView()
 {
@@ -876,6 +874,12 @@ MainDialog::~MainDialog()
 {
 
 }
-MainDialog::MainDialog()
+MainDialog::MainDialog(QWidget *parent):QDialog(parent)
 {
+    QDir dir(QDir::currentPath());
+    setupDBpath(dir.absolutePath());
+    setWindowTitle(tr("MorphoHub-LevelControl"));
+    MainInit();
+    createMainView();
+    setLayout(mainLayout);
 }

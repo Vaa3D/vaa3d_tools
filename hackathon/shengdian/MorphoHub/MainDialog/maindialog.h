@@ -19,9 +19,8 @@ private:
     ReconstructionInfo nextNeuron;
 public:
     explicit MainDialog(const QString &path,QWidget *parent = 0);
-    MainDialog();
+    MainDialog(QWidget *parent);
     ~MainDialog();
-    bool dialogReady;
     QString choseFuction;
     void MainInit();
     void updateMainView();
