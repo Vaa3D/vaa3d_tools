@@ -153,8 +153,8 @@ void MainDialog::createMainView()
     mainLayout->addWidget(recovery_WorkingSpace_Label,14,0,1,1);
     mainLayout->addWidget(recovery_WorkingSpace_LineEdit,14,1,1,3);
 
-    mainLayout->addWidget(cancelButton,15,0,1,2);
-    mainLayout->addWidget(okayButton,15,2,1,2);
+    mainLayout->addWidget(cancelButton,15,0,1,1);
+    mainLayout->addWidget(okayButton,15,3,1,1);
 
 }
 void MainDialog::MainInit()
