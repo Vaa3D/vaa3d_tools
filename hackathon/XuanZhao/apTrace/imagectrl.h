@@ -59,6 +59,8 @@ public:
     bool histogram();
 
     double getMode();
+
+    bool segment0();
 };
 
 #endif // IMAGECTRL_H

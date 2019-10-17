@@ -54,16 +54,6 @@ public:
 
 
 
-	/********************** Polar Coord System Operations ***********************/
-	// Returns a map of radius to shell trees. [radiusShellMap_loc] = map of radius to locations of polarNeuronSWC on [inputPolarNodeList].
-	// Note, [radiusShellMap_loc] can be obtained through NeuronGeoGrapher::nodeList2polarNodeList.
-	static boost::container::flat_map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList);
-
-	static boost::container::flat_map<double, vector<connectedComponent>> radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap);
-	/****************************************************************************/
-
-
-
 	/********************** Segment Forming / Elongation ************************/
 	// Connects segments that meet the predefined criteria in which their segment ends are in the same cluster with given distance threshold [destThreshold].
 	// NOTE: This is the framework under which segment connection/elongation takes place. The algorithmic requirements of connecting shall be integrated here.
@@ -85,27 +75,12 @@ public:
 	// ------------------------------------------------------- //
 
 	// - Dendritic tree forming(polar coord radial approach) - //
-	void dendriticTree_shellCentroid(double distThre = 1);
+	NeuronTree dendriticTree_shellCentroid(double distThre = 1);
 	// ------------------------------------------------------- //
 
 	// ------------- Piecing tiled tree together ------------- //
 	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	// ------------------------------------------------------- //
-	/****************************************************************************/
-
-
-
-	/*********************** Tree - Subtree Operations **************************/
-	// Extract a subtree that is the upstream of a given starting node from the original tree.
-	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap);
-	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
-	static inline void upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
-
-	// Extract a subtree that is the downstream of a given starting node from the original tree.
-	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap);
-
-	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
-	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/****************************************************************************/
 
 
@@ -152,41 +127,6 @@ inline NeuronTree TreeGrower::treeCut(NeuronTree& inputTree, double distThre)
 	}
 
 	return outputTree;
-}
-
-inline void TreeGrower::upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap)
-{
-	tracedList.push_front(downstreamEnd);
-	while (tracedList.front().parent != upstreamEnd.n) tracedList.push_front(inputList.at(int(node2locMap.at(tracedList.front().parent))));
-	tracedList.push_front(upstreamEnd);
-}
-
-inline void TreeGrower::upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum)
-{
-	tracedList.push_front(startingNode);
-	int parentID = startingNode.parent;
-	while (tracedList.size() < nodeNum)
-	{
-		if (node2locMap.find(parentID) == node2locMap.end()) break;
-		tracedList.push_front(inputList.at(int(node2locMap.at(parentID))));
-		parentID = tracedList.front().parent;
-		if (parentID == -1) break;
-	}
-}
-
-inline void TreeGrower::upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum)
-{
-	tracedList.push_back(startingNode);
-	int parentID = startingNode.parent;
-	while (tracedList.size() < nodeNum)
-	{
-		if (node2locMap.find(parentID) == node2locMap.end()) break;
-		tracedList.push_back(inputList.at(int(node2locMap.at(parentID))));
-		parentID = tracedList.back().parent;
-		if (parentID == -1) break;
-	}
-
-	reverse(tracedList.begin(), tracedList.end());
 }
 
 #endif
