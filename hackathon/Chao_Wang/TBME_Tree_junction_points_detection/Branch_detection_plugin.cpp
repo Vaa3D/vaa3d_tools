@@ -2039,7 +2039,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
@@ -2203,7 +2203,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
@@ -2383,7 +2383,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
