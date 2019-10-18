@@ -14,7 +14,7 @@ QStringList reviewNReconstruction::menulist() const
 {
 	return QStringList() 
         <<tr("segment sequence")
-		<<tr("menu2")
+		<<tr("show segment")
 		<<tr("about");
 }
 
@@ -32,9 +32,9 @@ void reviewNReconstruction::domenu(const QString &menu_name, V3DPluginCallback2 
 	{
         review_neuron(callback,parent);
 	}
-	else if (menu_name == tr("menu2"))
+	else if (menu_name == tr("show segment"))
 	{
-		v3d_msg("To be implemented.");
+        show_dialog(callback,parent);
 	}
 	else
 	{
@@ -53,6 +53,8 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
 	if (func_name == tr("func1"))
     {   V3DLONG sz0=512,sz1=512,sz2=256;
         vector<NeuronSWC> candidate_point;
+        QList<CellAPO> markers;
+        NeuronTree new_sequence_tree;
         QString swcfile=(infiles.size()>=1)?infiles[0]:"";//输入swc文件
         NeuronTree t = readSWC_file(swcfile);
         QString input_path = (infiles.size()>=2)?infiles[1]:"";//输入脑的位置
@@ -61,10 +63,18 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
         //获取孩子节点
         swcTree.initialize(t);
         //在整个树中移动块，并在每个块中完成分段和平均灰度值的计算
-        move_block(input_path,callback,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
-        //对所有的段进行排序(目前只有一个块中的段)
-        sequence_rule(swcfile,save_folder,swcTree,t,swcTree.children);
-
+        move_block(input_path,callback,new_sequence_tree,markers,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
+        new_sequence_tree.listNeuron.push_back(t.listNeuron[t.hashNeuron.value(swcTree.root.n)]);
+        //写文件
+        QFileInfo eswcfileinfo;
+        eswcfileinfo=QFileInfo(swcfile);
+        QString eswcfile=eswcfileinfo.fileName();
+        eswcfile.mid(0,eswcfile.indexOf("."));
+        //nt1.listNeuron.push_back(orig.listNeuron[orig.hashNeuron.value(swcTree.root.n)]);
+        writeESWC_file(save_folder+"//"+eswcfile+".eswc",new_sequence_tree);
+        //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
+        writeAPO_file(save_folder+"//"+eswcfile+".apo",markers);
+        v3d_msg("finish write eswc and apo file!");
 	}
 	else if (func_name == tr("func2"))
 	{

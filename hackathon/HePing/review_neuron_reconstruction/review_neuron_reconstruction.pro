@@ -8,11 +8,13 @@ INCLUDEPATH     += $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage
 HEADERS	+= review_neuron_reconstruction_plugin.h \
     review.h\
     $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h \
-    review_gui.h
+    review_gui.h \
+    show_segment_gui.h
 SOURCES	+= review_neuron_reconstruction_plugin.cpp \
     reconstruction_rule.cpp\
     ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
-    review.cpp
+    review.cpp \
+    show_segment.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 

@@ -73,8 +73,8 @@ struct SWCTreeSeg{
     V3DLONG block_sz0, block_sz1, block_sz2;
     unsigned char *p1data;
     bool initialize(NeuronTree t);//将一个重建好的swc分成若干段，人工重建过程中可能存在断点的地方，先只按分叉点来分段
-    bool block_seg(NeuronTree orig,vector<NeuronSWC> &candidate_point,vector<V3DLONG> &subNeuron,size_t x0,size_t y0,size_t z0,int resolution);
-    bool seg_intensity(V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,unsigned char* &p1data);
+    bool block_seg(NeuronTree orig,vector<NeuronSWC> &candidate_point,vector<V3DLONG> &subNeuron,int resolution);
+    bool seg_intensity(V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,unsigned char* &p1data,size_t &x0,size_t &y0,size_t &z0);
 //    SWCTreeSeg(){
 //        block_sz1=block_sz2=block_sz0=0;
 //        p1data=0;
@@ -82,13 +82,13 @@ struct SWCTreeSeg{
 };
 
 
-bool write_swc(NeuronTree orig,NeuronTree &nt,QList<ImageMarker> &markers,segment seg,V3DLONG &index);
+bool write_swc(NeuronTree orig,NeuronTree &nt,QList<CellAPO> &markers,segment seg,V3DLONG &index);
 bool cut_block(QString input_path,V3DPluginCallback2 &callback,NeuronTree &nt,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,size_t &x0,size_t &y0,size_t &z0, NeuronSWC center_point,vector<V3DLONG> &subNeuron,int resolution,unsigned char* &p1data);//以center_point为中心切块
-bool move_block(QString braindir,V3DPluginCallback2 &callback,NeuronTree orig,SWCTreeSeg &segs ,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,vector<NeuronSWC> &candidate_point);
-bool sequence_rule(QString input,QString save,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
+bool move_block(QString braindir,V3DPluginCallback2 &callback,NeuronTree &new_sequence_tree,QList<CellAPO> &markers,NeuronTree orig,SWCTreeSeg &segs ,V3DLONG block_sz0,V3DLONG block_sz1,V3DLONG block_sz2,vector<NeuronSWC> &candidate_point);
+bool sequence_rule(V3DLONG &index,QList<CellAPO> &markers,NeuronTree &new_sequence_tree,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
 
 bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent);
-
-
+bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc);
+bool show_dialog(V3DPluginCallback2 &callback,QWidget *parent);
 #endif // REVIEW_H
 

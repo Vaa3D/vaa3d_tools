@@ -56,6 +56,8 @@ bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent)
 
     V3DLONG sz0=512,sz1=512,sz2=256;
     vector<NeuronSWC> candidate_point;
+    QList<CellAPO> markers;
+    NeuronTree new_sequence_tree;
     //swcFile=pt.SWC_FILE;//输入swc文件
     qDebug()<<"swc file:"<<swcFile;
     NeuronTree t = readSWC_file(swcFile);
@@ -65,12 +67,17 @@ bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent)
     //获取孩子节点
     swcTree.initialize(t);
     //在整个树中移动块，并在每个块中完成分段和平均灰度值的计算
-    move_block(input_path,callback,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
-    //对所有的段进行排序(目前只有一个块中的段)
-    sequence_rule(swcFile,save_path,swcTree,t,swcTree.children);
+    move_block(input_path,callback,new_sequence_tree,markers,t,swcTree,sz0,sz1,sz2,candidate_point);//移动块获取候选点分段
+    new_sequence_tree.listNeuron.push_back(t.listNeuron[t.hashNeuron.value(swcTree.root.n)]);
 
-
-
-
+    //写文件
+    QFileInfo eswcfileinfo;
+    eswcfileinfo=QFileInfo(swcFile);
+    QString eswcfile=eswcfileinfo.fileName();
+    eswcfile.mid(0,eswcfile.indexOf("."));
+    //nt1.listNeuron.push_back(orig.listNeuron[orig.hashNeuron.value(swcTree.root.n)]);
+    writeESWC_file(save_path+"//"+eswcfile+".eswc",new_sequence_tree);
+    //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
+    writeAPO_file(save_path+"//"+eswcfile+".apo",markers);
     return true;
 }
