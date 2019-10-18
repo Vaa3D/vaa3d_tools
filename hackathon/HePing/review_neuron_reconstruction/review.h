@@ -88,7 +88,7 @@ bool move_block(QString braindir,V3DPluginCallback2 &callback,NeuronTree &new_se
 bool sequence_rule(V3DLONG &index,QList<CellAPO> &markers,NeuronTree &new_sequence_tree,SWCTreeSeg &segs,NeuronTree orig_tree,vector<vector<V3DLONG> > children);
 
 bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent);
-bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc);
+bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc,QString save_folders);
 bool show_dialog(V3DPluginCallback2 &callback,QWidget *parent);
 #endif // REVIEW_H
 

@@ -12,11 +12,11 @@ bool show_dialog(V3DPluginCallback2 &callback,QWidget *parent){
         return false;
     }
     dialog.update();
-    show_segment(callback,dialog.current_index,dialog.swc_file);
+    show_segment(callback,dialog.current_index,dialog.swc_file,dialog.save_folders);
      return true;
 }
 
-bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc)
+bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc,QString save_folders)
 {
     //ShowDialog dialog(parent);
     //if(dialog.exec()!=QDialog::Accepted)return false;
@@ -34,17 +34,26 @@ bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc)
     QString link_file;
     QString swc_file;
     QString tiffile;
+    QString file_name=QFileInfo(open_swc).fileName();
+    file_name=file_name.mid(0,11);
+    qDebug()<<file_name;
     //QString open_swc;
-    QString save_location="C://Users//penglab//Desktop//test_segment//"+QString::number(index)+"//";
+    QString save_folder=save_folders+"//"+file_name;
+    if(_access(save_folder.toStdString().c_str(),0)==-1){
+        _mkdir(save_folder.toStdString().c_str());
+    }
+    QString save_location=save_folder+"//"+QString::number(index)+"//";
     if( _access(save_location.toStdString().c_str(),0)==-1){
         _mkdir(save_location.toStdString().c_str());
+        v3d_msg("finish");
     }
     //open_swc=QString(dialog.swc_file.c_str());
     nt=readSWC_file(open_swc);//分段排序完的完整swc/eswc文件
+
     //nt=callback.getSWCTeraFly();//获取terafly中打开的apo文件
     if(nt.listNeuron.isEmpty()||nt.listNeuron[0].seg_id==-1){
         v3d_msg("please load right swc file in terafly!");
-        return false;
+        //return false;
     }
     qDebug()<<nt.listNeuron.size();
     V3DLONG i=0;
@@ -69,6 +78,7 @@ bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc)
     }
     if(i==nt.listNeuron.size()&&seg_tree.listNeuron.isEmpty()){
         v3d_msg("index is over range!");
+        return false;
     }
 
     x0-=5;
@@ -98,9 +108,14 @@ bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc)
         seg_tree.listNeuron[j].y-=y0;
         seg_tree.listNeuron[j].z-=z0;
     }
-    swc_file=save_location+QFileInfo(open_swc).fileName()+".eswc";
+    swc_file=save_location+file_name+".eswc";
     writeESWC_file(swc_file,seg_tree);
-    link_file=save_location+QFileInfo(open_swc).fileName()+".ano";
+    QFile tif_file(tiffile);
+    QFile eswc_file(swc_file);
+//    while(!tif_file.exists()||!eswc_file.exists()){
+//        continue;
+//    }
+    link_file=save_location+file_name+".ano";
     QFile qf_anofile(link_file);
     if(!qf_anofile.open(QIODevice::WriteOnly))
     {
