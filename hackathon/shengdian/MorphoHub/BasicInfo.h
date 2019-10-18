@@ -171,9 +171,8 @@ struct AnnotationProtocol{
                 int plevel=protocolLevel.indexOf(inputlevel);
                 if(moveforward)
                 {
-
                     outLevel=protocolLevel.at(plevel-2);
-                    if(levelindex==0||levelindex==7)
+                    if(plevel==2||plevel==9)
                         outLevel+="/Annotator";
                 }
                 else

@@ -91,7 +91,6 @@ private:
     /*..............Management dialog............*/
     SourceDataManagement *sdconf_dialog;
     AnnotatorManagement *userManagementDialog;
-    /*..............Management actions............*/
     QAction *sdconfAction;
     QAction *userManagementAction;
 
@@ -132,6 +131,10 @@ private:
     QPushButton *loginOkayButton;
     QAction *logoutAction;
 
+    //right click pop menu for data Tab
+    QMenu *popMenuFordataTab;
+    QAction *popAction_3Dview;
+
 private slots:
     void NewDB_slot();
     void SetDB_slot();
@@ -147,11 +150,14 @@ private slots:
     void contentValueChange(QTreeWidgetItem *item,int column);
     void celltableInfoUpdate(int row,int column);
     void seeIn3Dview_slot(int row,int column);
+    void ondataTab_customContextmenuRequested(QPoint pos);
+    void cellSortColumn(int c);
     void loginAction_slot();
     void loginOkayButton_slot();
     void loginCancelButton_slot();
     void logoutAction_slot();
     void helpAction_slot();
+    void popAction_3Dview_slot();
 
 signals:
     
@@ -166,6 +172,7 @@ public slots:
     void skipAction_slot();
     void rollbackAction_slot();
     void reassignAction_slot();
+    void contextMenuEvent(QContextMenuEvent *event);
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H

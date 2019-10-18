@@ -33,6 +33,10 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget 
     }
     else
     {
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
         toLogWindow(tr("Load Database: %1").arg(dbpath));
         createTabWindow(false);
         updateStatusBar(tr("Database: %1").arg(dbpath));
@@ -220,6 +224,11 @@ void MorphoHub_MainWindow::createActions()
     helpAction=new QAction(tr("&Help"),this);
     helpAction->setToolTip(tr("Get the help from this."));
     connect(helpAction,SIGNAL(triggered()),this,SLOT(helpAction_slot()));
+
+    //Action for data tab
+    //set content menu
+    popAction_3Dview=new QAction("See In 3D View",this);
+    connect(popAction_3Dview,SIGNAL(triggered()),this,SLOT(popAction_3Dview_slot()));
 }
 
 void MorphoHub_MainWindow::setProtocolFunctionEnabled(bool en)
@@ -284,6 +293,10 @@ void MorphoHub_MainWindow::createMenus()
     //help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(helpAction);
+
+    //pop menu
+    popMenuFordataTab=new QMenu();
+
 }
 /**********************************************************/
 /****************Bottom status bar*************************/
@@ -316,7 +329,7 @@ void MorphoHub_MainWindow::setMainLayout()
     this->addDockWidget(Qt::BottomDockWidgetArea,MainLogwidget);
 
     mainlayout->addWidget(contentTreewidget,1);
-    mainlayout->addWidget(dataTabwidget,7);
+    mainlayout->addWidget(dataTabwidget,6);
     //mainlayout->addWidget(MainLogwidget,2);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);    
@@ -375,6 +388,7 @@ void MorphoHub_MainWindow::createTabWindow(bool init)
             dataTabwidget->clear();
         }
         datatablelist.clear();
+        datatabletitlelist.clear();
         //update
         qDebug()<<"size= "<<initworkingspaceTablist.size();
         for(int i=0;i<initworkingspaceTablist.size();i++)
@@ -462,6 +476,76 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
     }
 }
 
+void MorphoHub_MainWindow::cellSortColumn(int c)
+{
+    if(c>=0)
+    {
+        int curtabindex=dataTabwidget->currentIndex();
+        QTableWidget *levelTable=datatablelist.at(curtabindex);
+        if(levelTable->rowCount()>0)
+        {
+            levelTable->sortItems(c,Qt::AscendingOrder);
+            toLogWindow(tr("Sort Column by the %1").arg(datatitle.at(c)));
+        }
+    }
+}
+
+void MorphoHub_MainWindow::popAction_3Dview_slot()
+{
+    int curtabindex=dataTabwidget->currentIndex();
+    QTableWidget *levelTable=datatablelist.at(curtabindex);
+    if(levelTable!=NULL)
+    {
+        QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+
+        QFileInfo curSWCBase(curPathSWC);
+        if(curSWCBase.exists())
+        {
+            qDebug()<<"path "<<curPathSWC;
+            V3dR_MainWindow * surface_win = MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
+//            MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
+//                new3DWindow = MorphoHubcallback->open3DViewerForSingleSurfaceFile(curPathSWC);
+            //reset window title to basename instead of path name
+                MorphoHubcallback->setWindowDataTitle(surface_win,curSWCBase.baseName());
+        }
+    }
+}
+
+void MorphoHub_MainWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+    QPoint pointnow=event->pos();
+    int curtabindex=dataTabwidget->currentIndex();
+    QTableWidget *levelTable=datatablelist.at(curtabindex);
+    QTableWidgetItem *item=levelTable->itemAt(pointnow);
+    if(item!=NULL)
+    {
+        popMenuFordataTab->clear();
+        popMenuFordataTab->addAction(popAction_3Dview);
+        popMenuFordataTab->addSeparator();
+
+        popMenuFordataTab->exec(QCursor::pos());
+        event->accept();
+    }
+}
+
+void MorphoHub_MainWindow::ondataTab_customContextmenuRequested(QPoint pos)
+{
+//    int curtabindex=dataTabwidget->currentIndex();
+//    QTableWidget *levelTable=datatablelist.at(curtabindex);
+//    if(levelTable!=NULL)
+//    {
+//        curRecon.SdataID=levelTable->item(row,0)->text();
+//        curRecon.SomaID=levelTable->item(row,1)->text();
+//        curRecon.author.UserID=levelTable->item(row,2)->text();
+//        curRecon.checkers=levelTable->item(row,3)->text();
+//        curRecon.levelID=levelTable->item(row,4)->text();
+//        curRecon.updateTime=levelTable->item(row,5)->text();
+//        curRecon.fatherDirName=levelTable->item(row,6)->text();
+//        curRecon.fileName=levelTable->item(row,7)->text();
+//    }
+//    popMenuFordataTab->exec(QCursor::pos());
+}
+
 void MorphoHub_MainWindow::seeIn3Dview_slot(int row, int column)
 {
 //    qDebug()<<"row= "<<row<<"cloumn = "<<column;
@@ -538,10 +622,15 @@ void MorphoHub_MainWindow::updateTableDataLevel(QTableWidget *t,QList<Reconstruc
         t->setSelectionMode(QAbstractItemView::SingleSelection);
         t->resizeColumnsToContents();
         t->resizeRowsToContents();
+
+        t->setContextMenuPolicy(Qt::CustomContextMenu);
+        //connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
         //double click to get a 3D view of the neuron
         connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
+        //sort Item
+        connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
     }
 }
 
@@ -572,10 +661,18 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->setSelectionMode(QAbstractItemView::SingleSelection);
         t->resizeColumnsToContents();
         t->resizeRowsToContents();
+        //set content menu
+        t->setContextMenuPolicy(Qt::CustomContextMenu);
+//        popMenuFordataTab=new QMenu();
+//        popAction_3Dview=new QAction("See In 3D View");
+//        connect(popAction_3Dview,SIGNAL(triggered()),this,SLOT(popAction_3Dview_slot()));
+        //connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
         //double click to get a 3D view of the neuron
         connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
+        //sort Item
+        connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
     }
     return t;
 }
@@ -680,7 +777,6 @@ void MorphoHub_MainWindow::userManagementAction_slot()
         userManagementDialog->setMinimumSize(600,400);
         userManagementDialog->setMaximumSize(800,800);
         userManagementDialog->setGeometry(50,50,800,500);
-        this->raise();
     }
 }
 
@@ -701,7 +797,6 @@ void MorphoHub_MainWindow::sourceDataMAction()
         sdconf_dialog->setMinimumSize(600,400);
         sdconf_dialog->setMaximumSize(1200,1000);
         sdconf_dialog->setGeometry(50,50,1000,800);
-        this->raise();
     }
 }
 
@@ -709,12 +804,23 @@ void MorphoHub_MainWindow::NewDB_slot()
 {
     //QMessageBox::information(this, tr("Information"), tr("Open"));
     QString title="please select a path for DB";
-    this->dbpath = QFileDialog::getExistingDirectory(this, title,
+    QString inputpath = QFileDialog::getExistingDirectory(this, title,
                                                      "~/",
                                                      QFileDialog::ShowDirsOnly
                                                      |QFileDialog::DontResolveSymlinks);
-    if(!dbpath.isEmpty())
+    if(!inputpath.isEmpty())
     {
+        int reply;
+        reply=QMessageBox::warning(this,"Database Initialization",QObject::tr("You are making a new database now!\n")+
+                                   QObject::tr("MorphoHub will create some folders for initialization.\n")+
+                                   QObject::tr("Are you sure you want to do this?\n"),
+                                   QMessageBox::Ok,QMessageBox::Cancel);
+        if(reply==QMessageBox::Cancel)
+            return;
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
         updateStatusBar(tr("Database path : %1").arg(dbpath));
         toLogWindow(tr("Database path : %1").arg(dbpath));
         //make new dir for basic db
@@ -762,12 +868,25 @@ void MorphoHub_MainWindow::NewDB_slot()
 void MorphoHub_MainWindow::SetDB_slot()
 {
     QString title="please select a path for DB";
-    this->dbpath = QFileDialog::getExistingDirectory(this, title,
+    QString inputpath = QFileDialog::getExistingDirectory(this, title,
                                                      "~/",
                                                      QFileDialog::ShowDirsOnly
                                                      |QFileDialog::DontResolveSymlinks);
-    if(!dbpath.isEmpty())
+    if(!inputpath.isEmpty())
     {
+        //converter dir path
+        int reply;
+        reply=QMessageBox::warning(this,"Database Initialization",QObject::tr("You are switching database now!\n")+
+                                   QObject::tr("MorphoHub will create some folders for initialization.\n")+
+                                   QObject::tr("Are you sure you want to do this?\n"),
+                                   QMessageBox::Ok,QMessageBox::Cancel);
+        if(reply==QMessageBox::Cancel)
+            return;
+        QDir::setCurrent(dbpath);
+        QDir dir(QDir::currentPath());
+        dbpath=dir.absolutePath();
+        qDebug()<<"path is : "<<dbpath;
+
         //1.check the basic path of the database.
         //if not exist, make new dir and give a note.
         updateStatusBar(tr("Database path : %1").arg(dbpath));
@@ -941,9 +1060,9 @@ void MorphoHub_MainWindow::SettingAction_slot()
     mainlayoutforSettings->addWidget(SettingsTabwidget,0);
     SettingDialog->setLayout(mainlayoutforSettings);
     SettingDialog->setGeometry(100,100,600,600);
-    SettingDialog->raise();
+//    SettingDialog->raise();
+    SettingDialog->setModal(true);
     SettingDialog->show();
-
 }
 
 
@@ -985,7 +1104,7 @@ void MorphoHub_MainWindow::dataTabChange(int tabindex)
 
 void MorphoHub_MainWindow::loginAction_slot()
 {
-    loginDialog=new QDialog();
+    loginDialog=new QDialog(this);
     loginDialog->setWindowTitle("MorphoHub-Login-Window");
 
     QLabel *userIDQLabel=new QLabel("UserID:");
@@ -1012,6 +1131,7 @@ void MorphoHub_MainWindow::loginAction_slot()
 //    loginDialog->setFixedSize(400,400);
 
     loginDialog->setGeometry(100,100,400,400);
+    loginDialog->setModal(true);
     loginDialog->show();
 }
 
@@ -1067,6 +1187,9 @@ void MorphoHub_MainWindow::helpAction_slot()
     QString helptext=
             "MorphoHub a platform for whole brain neuron morphology reconstruction project.<br>"
             "This plugin is developed by Shengdian Jiang. 2019-10 <br>"
+            "Email : shengdianjiang@seu.edu.cn <br>"
+            "Version:1.1<br>"
+            "Update log:Fixed window switching bug.(2019.10.13)<br>"
             "<br>============================================="
             "<H2>Introduction: Main View </H2>"
             "=============================================<br>"
@@ -1088,6 +1211,15 @@ void MorphoHub_MainWindow::helpAction_slot()
             "---------------------------------------------<br>"
             "<br>============================================="
             "<H2>Usage: Initialization</H2>"
+            "1.Database<br>"
+            "  1.1 New Database<br>"
+            "  1.2 Load Database<br>"
+            "  1.3 Settings<br>"
+            "2.Level Control<br>"
+            "3.Management<br>"
+            "  3.1 Data Management<br>"
+            "  3.2 User Management<br>"
+            "4.Login<br>"
             "=============================================<br>"
             ""
             ;
@@ -1126,16 +1258,17 @@ void MorphoHub_MainWindow::checkAction_slot()
     {
         if(curRecon.alreadyInit())
         {
-            commitDialog=new MainDialog(this->dbpath,this->originparent);
+//            commitDialog=new MainDialog(this->dbpath,this->originparent);
+            commitDialog=new MainDialog(this->originparent);
             commitDialog->setAnnotator(curOperator);//
             commitDialog->setCurNeuron(curRecon);//get current neuron info
             commitDialog->setFunction("Check");
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
-
+            commitDialog->setModal(true);
             commitDialog->show();
-            commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            commitDialog->setGeometry(100,100,600,600);
+            //this->raise();
         }
     }
 }
@@ -1163,9 +1296,10 @@ void MorphoHub_MainWindow::commitAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
-            commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            commitDialog->setGeometry(100,100,600,600);
+            //this->raise();
         }
     }
 }
@@ -1189,9 +1323,9 @@ void MorphoHub_MainWindow::skipAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
-            commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            commitDialog->setGeometry(100,100,600,600);
         }
     }
 }
@@ -1215,9 +1349,9 @@ void MorphoHub_MainWindow::rollbackAction_slot()
             commitDialog->setupAnnotationProtocol(seuallenAP);
             commitDialog->updateMainView();
 
+            commitDialog->setModal(true);
             commitDialog->show();
-            commitDialog->setGeometry(100,100,600,800);
-            this->raise();
+            commitDialog->setGeometry(100,100,600,600);
         }
     }
 }

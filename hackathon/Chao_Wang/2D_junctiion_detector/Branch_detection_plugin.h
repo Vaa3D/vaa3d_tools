@@ -31,17 +31,21 @@ int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent);
 bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 void printHelp();
+int skeletonization(V3DPluginCallback2 &callback, QWidget *parent);
 int display_rayshooting_model_in_xyproject(V3DPluginCallback2 &callback, QWidget *parent);
+int display_length_model(V3DPluginCallback2 &callback,QWidget *parent);
+int create_groundtruth(V3DPluginCallback2 &callback,QWidget *parent);
 int rotate_2D_display_point(V3DPluginCallback2 &callback,QWidget *parent);
 int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent);
 int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent);
 int rotate_3D_image(V3DPluginCallback2 &callback,QWidget *parent);
+int rotate_3D_display_point(V3DPluginCallback2 &callback,QWidget *parent);
+int rotate_vf_3projection(V3DPluginCallback2 &callback, QWidget *parent);
 int radius_estimation(V3DPluginCallback2 &callback, QWidget *parent);
+int corner_detection(V3DPluginCallback2 &callback, QWidget *parent);
+int Base_distance_for_ray_scan(V3DPluginCallback2 &callback, QWidget *parent);
 int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent);
-int ray_shooting_3D_image(V3DPluginCallback2 &callback, QWidget *parent);
-int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent);
-int enlarge_images(V3DPluginCallback2 &callback, QWidget *parent);
-
+int classification_for_ray_shooting(V3DPluginCallback2 &callback, QWidget *parent);
 
 #endif
 

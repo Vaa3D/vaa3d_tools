@@ -8,7 +8,6 @@ MainDialog::MainDialog(const QString &path, QWidget *parent)
     MainInit();
     createMainView();
     setLayout(mainLayout);
-    this->dialogReady=true;
 }
 void MainDialog::createMainView()
 {
@@ -154,8 +153,8 @@ void MainDialog::createMainView()
     mainLayout->addWidget(recovery_WorkingSpace_Label,14,0,1,1);
     mainLayout->addWidget(recovery_WorkingSpace_LineEdit,14,1,1,3);
 
-    mainLayout->addWidget(cancelButton,15,0,1,2);
-    mainLayout->addWidget(okayButton,15,2,1,2);
+    mainLayout->addWidget(cancelButton,15,0,1,1);
+    mainLayout->addWidget(okayButton,15,3,1,1);
 
 }
 void MainDialog::MainInit()
@@ -167,7 +166,6 @@ void MainDialog::MainInit()
     curNeuron.author.UserID="Visitor";
     curNeuron.checkers="";
     curNeuron.levelID="Unknown";
-    this->dialogReady=false;
 }
 void MainDialog::clearMainView()
 {
@@ -328,7 +326,9 @@ QStringList MainDialog::getNextlevelList()
         break;
     case 4://rollback function
     {
+        //qDebug()<<"Input level "<<curNeuron.levelID;
         QString  workingspacelevel=ApforthisDialog.APFRollback(curNeuron.levelID);
+        //qDebug()<<"out level "<<workingspacelevel;
         if(!workingspacelevel.isEmpty())
         {
             if(workingspacelevel.split("/").size()>1)
@@ -589,14 +589,18 @@ void MainDialog::okayButton_slot()
        anoinsidelist=readAnoFile(anofile.absoluteFilePath());
        if(anoinsidelist.size()==2)//limit this into one apo and one swc file
        {
-           QString thissuffix1=QFileInfo(basefilepath,anoinsidelist.at(0)).suffix().toUpper();
-           QString thissuffix2=QFileInfo(basefilepath,anoinsidelist.at(1)).suffix().toUpper();
-           if(QString::compare(thissuffix1,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+//           qDebug()<<anoinsidelist.at(0);
+//           qDebug()<<anoinsidelist.at(1);
+           QString fileout1=basefilepath+anoinsidelist.at(0);
+           QString fileout2=basefilepath+anoinsidelist.at(1);
+           QString thissuffix1=QFileInfo(fileout1).suffix().toUpper();
+           QString thissuffix2=QFileInfo(fileout2).suffix().toUpper();
+           if((thissuffix1=="ESWC")&&(thissuffix2=="APO"))
            {
                apofilename=anoinsidelist.at(1);
                swcfilename=anoinsidelist.at(0);
            }
-           else if(QString::compare(thissuffix2,"ESWC")==0&&QString::compare(thissuffix1,"APO")==0)
+           else if((thissuffix2=="ESWC")&&(thissuffix1=="APO"))
            {
                apofilename=anoinsidelist.at(0);
                swcfilename=anoinsidelist.at(1);
@@ -610,7 +614,7 @@ void MainDialog::okayButton_slot()
        }
        else
        {
-           QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers.").arg(basefilepath));
+           QMessageBox::warning(this,tr("File Numbers Error"),tr("%1 path has abnormal file numbers (inside ano).").arg(basefilepath));
            okayButton->setEnabled(false);
            return;
        }
@@ -872,6 +876,12 @@ MainDialog::~MainDialog()
 {
 
 }
-MainDialog::MainDialog()
+MainDialog::MainDialog(QWidget *parent):QDialog(parent)
 {
+    QDir dir(QDir::currentPath());
+    setupDBpath(dir.absolutePath());
+    setWindowTitle(tr("MorphoHub-LevelControl"));
+    MainInit();
+    createMainView();
+    setLayout(mainLayout);
 }

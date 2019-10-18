@@ -115,7 +115,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     }
 
 //    QList<NeuronSWC> sort_swc;
-//    SortSWC(nt2.listNeuron, sort_swc ,VOID, 0);
+      //SortSWC(nt2.listNeuron, sort_swc ,VOID, 0);
 //    NeuronTree nt1;
 //    QHash <int, int> hash_nt;
 
@@ -868,7 +868,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_folder=infiles.at(0);//swc and nrrd folder
-    QString input_swc_folder=infiles.at(1);//terafly swc folder
+    QString input_swc_folder=infiles.at(1);//terafly swc path
     //QString output_2d_dir=outfiles.at(0);//block marker save folder
     //QString output_2d_dir_axon=outfiles.at(1);
 
@@ -925,10 +925,30 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     }
 
     //1.1 read terafly swc
+
+    QDir dir_terafly_swc(input_swc_folder);
+
+    QStringList namelist1=dir_terafly_swc.entryList();
+
+    QStringList all_terafly_swc;
+    for(int i=0;i<namelist1.size();++i)
+    {
+        if(namelist1.at(i).endsWith(".ano.eswc")) all_terafly_swc.push_back(namelist1.at(i));
+        else if(namelist1.at(i).endsWith(".ano.swc")) all_terafly_swc.push_back(namelist1.at(i));
+    }
     QString name=all_swc.at(0).split("_")[0]+"_"+all_swc.at(0).split("_")[1];
-    QString terafly_swc_path=input_swc_folder+name+".swc";
-    NeuronTree terafly_nt_input=readSWC_file(terafly_swc_path);
-    printf("swc_path=======================:%s \n",qPrintable(terafly_swc_path));
+    //QString terafly_swc_path=input_swc_folder+name+".ano.swc";
+    NeuronTree terafly_nt_input;
+    if(all_terafly_swc.size()>0){
+        for (int i=0;i<all_terafly_swc.size();i++){
+            if (all_terafly_swc.at(i).split("/").last().split(".")[0]==name)
+            {
+                terafly_nt_input=readSWC_file(input_swc_folder+"/"+all_terafly_swc.at(i));
+                printf("swc_path=======================:%s \n",qPrintable(all_terafly_swc.at(i)));
+            }
+        }
+    }
+
 
     QList<int> plist;
     QList<int> alln;
@@ -946,7 +966,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
         //read swc
         QString swc_path=input_folder+all_swc.at(i);
         qDebug("------------------------------------------swc path:%s \n",qPrintable(swc_path));
-        NeuronTree nt_input=readSWC_file(swc_path);
+        NeuronTree nt_input1=readSWC_file(swc_path);
 
         //read nrrd
         QStringList flag=all_swc.at(i).split(".");flag.removeLast();
@@ -992,11 +1012,32 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        mean_and_std(data1d_crop,mysz[0]*mysz[1]*mysz[2],ave_signal,sdev_block);
        double block_bk=ave_signal+sdev_block;//block_background
 
+
+       // find tips
+       int croped_swc_tip_index1;
+       croped_swc_tip_index1=find_tip(nt_input1,mysz[0],mysz[1],mysz[2]);
+       int tip_n=nt_input1.listNeuron.at(croped_swc_tip_index1).n;
+
+       QList<NeuronSWC> sorted_swc;
+       SortSWC(nt_input1.listNeuron, sorted_swc ,tip_n, 0);
+
+       NeuronTree nt_input;
+       QHash <int, int> hash_nt;
+
+       for(V3DLONG j=0; j<sorted_swc.size();j++){
+           hash_nt.insert(sorted_swc[j].n, j);
+       }
+       nt_input.listNeuron=sorted_swc;
+       nt_input.hashNeuron=hash_nt;
+
        // find tips
        int croped_swc_tip_index;
        croped_swc_tip_index=find_tip(nt_input,mysz[0],mysz[1],mysz[2]);
+
+
        //2.branch background
-       QList<int> rollback_nodes=find_tip_and_itspn_length(nt_input,max_length_threshold,croped_swc_tip_index);//20 um
+
+       QList<int> rollback_nodes=find_tip_and_itschild_length(nt_input,max_length_threshold,croped_swc_tip_index);//20 um
        double branch_intensity=aver_ints_around_nodes(mysz,data1d_crop,radius_nodes,nt_input,rollback_nodes);
        cout<<"=======================================cut location:"<<index<<endl;
        cout<<"================================rollback nodes size:"<<rollback_nodes.size()<<endl;
@@ -1010,22 +1051,25 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        double thres_final=(max_thres>index) ? index:max_thres;
        cout<<"========================================final thres:"<<thres_final<<endl;
        //case2.1 Pruning length is too long
-       QList<int> nodes_maybe_pruned=find_tip_and_itspn_length(nt_input,max_length_prunging,croped_swc_tip_index);//10 um
+       QList<int> nodes_maybe_pruned=find_tip_and_itschild_length(nt_input,max_length_prunging,croped_swc_tip_index);//10 um
+       cout<<"========================================final thres:"<<thres_final<<endl;
        QList<int> nodes_tobe_pruned;
 
-       int tip_x=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).x+0.5);
-       int tip_y=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).y+0.5);
-       int tip_z=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(0)).z+0.5);
+       int tip_x=int(sorted_swc.at(nodes_maybe_pruned.at(0)).x+0.5);
+       int tip_y=int(sorted_swc.at(nodes_maybe_pruned.at(0)).y+0.5);
+       int tip_z=int(sorted_swc.at(nodes_maybe_pruned.at(0)).z+0.5);
        int id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
        int j=0;
-
+       cout<<"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<x: \n"<<tip_x<<endl;
+       cout<<"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<y: \n"<<tip_y<<endl;
+       cout<<"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<z: \n"<<tip_z<<endl;
        while (id_intens<=total_sz && data1d_crop[id_intens]<thres_final && j<nodes_maybe_pruned.size()-1)
        {
            nodes_tobe_pruned.push_back(nodes_maybe_pruned.at(j));
            j++;
-           tip_x=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).x+0.5);
-           tip_y=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).y+0.5);
-           tip_z=int(nt_input.listNeuron.at(nodes_maybe_pruned.at(j)).z+0.5);
+           tip_x=int(sorted_swc.at(nodes_maybe_pruned.at(j)).x+0.5);
+           tip_y=int(sorted_swc.at(nodes_maybe_pruned.at(j)).y+0.5);
+           tip_z=int(sorted_swc.at(nodes_maybe_pruned.at(j)).z+0.5);
            id_intens=tip_z*sz01+tip_y*mysz[0]+tip_x;
        }
        //write imagemarkers in block
@@ -1034,9 +1078,9 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        if(nodes_tobe_pruned.size()!=0){
            for(int i=0;i<nodes_tobe_pruned.size();i++){
                ImageMarker marker_inblock;
-               marker_inblock.x = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).x+1;
-               marker_inblock.y = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).y+1;
-               marker_inblock.z = nt_input.listNeuron.at(nodes_tobe_pruned.at(i)).z+1;
+               marker_inblock.x = sorted_swc.at(nodes_tobe_pruned.at(i)).x+1;
+               marker_inblock.y = sorted_swc.at(nodes_tobe_pruned.at(i)).y+1;
+               marker_inblock.z = sorted_swc.at(nodes_tobe_pruned.at(i)).z+1;
                marker_inblock.color.a = 0;
                marker_inblock.color.b = 0;
                marker_inblock.color.g = 0;
@@ -1045,7 +1089,6 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
            }
            writeMarker_file(qs_output,imagemarks);
        }
-
        //delete swc nodes based on terafly coodinates.
        QStringList block_name;
        for(int k=0;k<3;k++) block_name.append(all_swc.at(i).split("_")[k]);
@@ -1120,7 +1163,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     QTextStream out(&qf_anofile);
     out << "SWCFILE=" << QFileInfo(pruned_swc_name).fileName()<<endl;
     out << "APOFILE=" << QFileInfo(apo_name).fileName()<<endl;
-    printf("=======================delete====================:%d \n",delete_index.size());
+    printf("=======================delete=====================:%d \n",delete_index.size());
 
     return;
 }
@@ -2195,10 +2238,10 @@ int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
 }
 
 
-QList<int> find_tip_and_itspn_length(NeuronTree nt,double max_length,int tip_index){
+QList<int> find_tip_and_itschild_length(NeuronTree nt,double max_length,int tip_index){
 
     QList<int> all_path_nodes;
-    all_path_nodes.push_back(tip_index);
+    //all_path_nodes.push_back(tip_index);
     QList<int> plist;
     QList<int> alln;
     int N=nt.listNeuron.size();
@@ -2208,14 +2251,14 @@ QList<int> find_tip_and_itspn_length(NeuronTree nt,double max_length,int tip_ind
     }
 
     double length=0;
-    int num=1;
-    while (length<max_length && num!=0){
-
-        int pn_index=alln.indexOf(nt.listNeuron.at(tip_index).pn);
-        all_path_nodes.push_back(pn_index);
+    int num=0;
+    while (length<max_length)
+    {
+        int pn_index=plist.indexOf(nt.listNeuron.at(tip_index).n);
+        if(plist.count(nt.listNeuron.at(tip_index).n)>1) break;//aviod deleting branch point
+        all_path_nodes.push_back(tip_index);
         length=length+dist(nt.listNeuron.at(tip_index),nt.listNeuron.at(pn_index));
         tip_index=pn_index;
-        num=alln.count(pn_index);
     }
     return all_path_nodes;
 }
@@ -3357,7 +3400,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"This fuction for pruning nodes in tip using different threshold"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t prune_tip_thres\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_thres -i <swc and nrrd folder> <terafly swc folder> -p <0.99> <20> <2> <10> -o <output rewrited swc.file dir>\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_thres -i <swc and nrrd folder> <terafly swc folder> -p <0.99> <20> <2> <10>\n";
 
     //7.find_fake_tip
     cout<<"This fuction for finding short branches"<<endl;
