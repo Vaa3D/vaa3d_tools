@@ -7,7 +7,7 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 from random import shuffle
-from skimage.filters import threshold_adaptive
+#from skimage.filters import threshold_adaptive
 from math import ceil, floor
 #import cv2 as cv
 
@@ -55,9 +55,9 @@ def mip_plot(x, axis='Z', ax=None, cmap='viridis', do_thresholding=False, block_
     # MIP and thresholding
     axis_int = axis_name_to_int[axis]
     mip_array = np.max(x, axis=axis_int)
-    if do_thresholding:
-        binary_adaptive = threshold_adaptive(mip_array, method='gaussian', block_size=block_size, offset=offset)
-        mip_array = mip_array * binary_adaptive
+    #if do_thresholding:
+ #       binary_adaptive = threshold_adaptive(mip_array, method='gaussian', block_size=block_size, offset=offset)
+  #      mip_array = mip_array * binary_adaptive
 
     # Plot
     if ax is None:
@@ -175,7 +175,7 @@ X /= 255
 # In[37]:
 
 
-model1=keras.models.load_model('/home/braincenter4/Desktop/ML/prediction/60x10000_50x50x50_nore_CNN_aa_den.model')
+model1=keras.models.load_model('/home/braincenter5/Desktop/ML/80x40000_50x50x50_nore_CNN_aa_axon.model')
 prediction=model1.predict(X)
 #ohl=keras.utils.to_categorical([1,1],2)
 
@@ -188,7 +188,10 @@ print(len(prediction))
 result=np.eye(2,dtype=int)[np.argmax(prediction,axis=1)]
 print(result)
 #metadata.dtypes
-
+output_frame = pd.DataFrame(data={'filename':positive_nrrd, 'prediction':prediction[:, 0], 'result':result[:, 0]}).set_index('filename').sort_values('prediction', ascending=False)
+output_frame['result'].replace({0:'Yes', 1:'No'}, inplace=True)
+#print(output_frame)
+output_frame.to_csv(os.path.join(sys.argv[1], 'prediction&result_axon.csv'), sep=' ')
 
 # In[39]:
 
@@ -224,7 +227,7 @@ for i in range(len(prediction)):
 
 # In[40]:
 print(len(out))
-
+exit()
 
 
 

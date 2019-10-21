@@ -11,9 +11,8 @@
 *  Major functionalities include:
 *
 *    a. Basic tree operations, i.e., tree trimming, refining
-*    b. Tree path tracing for tree identification purposes
-*    c. Segment forming / elongating and other operations
-*    d. Dendritic tree and axonal tree forming
+*    b. Segment forming / elongating and other operations
+*    c. Dendritic tree and axonal tree forming
 *
 *  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
 *  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
@@ -198,47 +197,9 @@ profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputPro
 	}
 	cout << endl;
 
-	this->treeEntry(elongatedTree.tree, "elongatedTree_clusterBased");
 	return elongatedTree;
 }
 /* ====================== END of [Segment Forming / Elongation] ======================= */
-
-
-
-/* =========================== Polar Coord System Operations =========================== */
-boost::container::flat_map<double, NeuronTree> TreeGrower::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList)
-{
-	boost::container::flat_map<double, NeuronTree> outputMap;
-	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap_loc.begin(); it != radiusShellMap_loc.end(); ++it)
-	{
-		NeuronTree currShellTree;
-		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
-			currShellTree.listNeuron.push_back(newNode);
-		}
-
-		outputMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
-	}
-
-	return outputMap;
-}
-
-boost::container::flat_map<double, vector<connectedComponent>> TreeGrower::radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap)
-{
-	boost::container::flat_map<double, vector<connectedComponent>> outputMap;
-	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2TreeMap.begin(); it != inputRadius2TreeMap.end(); ++it)
-	{
-		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
-		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
-
-		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
-			ChebyshevCenter_connComp(*it2);
-	}
-
-	return outputMap;
-}
-/* ====================== END of [Polar Coord System Operations] ======================= */
 
 
 
@@ -412,16 +373,18 @@ NeuronTree TreeGrower::branchBreak(const profiledTree& inputProfiledTree, double
 	return outputProfiledTree.tree;
 }
 
-void TreeGrower::dendriticTree_shellCentroid(double distThre)
+NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 {
+	NeuronTree outputTree;
+
 	if (this->radiusShellMap_loc.empty() || this->polarNodeList.empty())
 	{
 		cout << "Either polarNodeList or the map of radius to polarNodeList location is empty. Do nothing and return." << endl;
-		return;
+		return outputTree;
 	}
 
-	this->radius2shellTreeMap = TreeGrower::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
-	this->radius2shellConnCompMap = TreeGrower::radius2connCompsShell(this->radius2shellTreeMap);	
+	this->radius2shellTreeMap = NeuronGeoGrapher::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
+	this->radius2shellConnCompMap = NeuronGeoGrapher::radius2connCompsShell(this->radius2shellTreeMap);	
 	
 	map<double, boost::container::flat_map<int, vector<int>>> shell2shellConnMap; // The map of inner shell's connected components to outer shell's connected components.
 																				  // shell2shellConnMap: the location of the conn. component on the previous shell to the locaions of the conn. components on the current shell.
@@ -458,7 +421,6 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 	// --------------- END of [Profiling spacially adjacent connected components between inner and outer shells] ---------------
 
 	// ------------------------------------- Building up dendritic tree -------------------------------------
-	NeuronTree outputTree;
 	int nodeID = 1;
 	boost::container::flat_map<int, int> innerLoc2nodeIDmap;
 	boost::container::flat_map<int, int> outerLoc2nodeIDmap;
@@ -540,7 +502,7 @@ void TreeGrower::dendriticTree_shellCentroid(double distThre)
 	}
 	// -------------------------------- END of [Building up dendritic tree] --------------------------------
 
-	this->treeEntry(outputTree, "dendriticProfiledTree");
+	return outputTree;
 }
 
 NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
@@ -593,65 +555,6 @@ NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const
 	return outputTree;
 }
 /* ============================== END of [Tree Forming] =============================== */
-
-
-
-/* ============================ Tree - Subtree Operations ============================= */
-void TreeGrower::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
-{
-	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
-
-	QList<NeuronSWC> parents;
-	QList<NeuronSWC> children;
-	parents.push_back(startingNode);
-	vector<size_t> childLocs;
-	do
-	{
-		children.clear();
-		childLocs.clear();
-		for (QList<NeuronSWC>::iterator pasIt = parents.begin(); pasIt != parents.end(); ++pasIt)
-		{
-			if (node2childLocMap.find(pasIt->n) != node2childLocMap.end()) childLocs = node2childLocMap.at(pasIt->n);
-			else continue;
-
-			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
-			{
-				subTreeList.append(inputList.at(int(*childLocIt)));
-				children.push_back(inputList.at(int(*childLocIt)));
-			}
-		}
-		parents = children;
-	} while (childLocs.size() > 0);
-
-	subTreeList.push_front(startingNode);
-
-	return;
-}
-
-void TreeGrower::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode)
-{
-	map<int, size_t> node2locMap;
-	map<int, vector<size_t>> node2childLocMap;
-	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
-
-	if (startingNode.parent == -1) TreeGrower::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
-	else
-	{
-		int parentID = startingNode.parent;
-		int somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
-
-		while (1)
-		{
-			parentID = inputList.at(int(node2locMap.at(parentID))).parent;
-			if (parentID != -1) somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
-			else break;
-		}
-
-		NeuronSWC rootNode = inputList.at(int(node2locMap.at(somaNodeID)));
-		TreeGrower::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
-	}
-}
-/* ======================== END of [Tree - Subtree Operations] ======================== */
 
 
 

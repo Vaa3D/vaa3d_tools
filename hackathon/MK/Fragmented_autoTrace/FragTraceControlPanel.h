@@ -7,8 +7,8 @@
 #include "FragTraceManager.h"
 
 #define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 8
-#define PATCHVERSION_NUM 3
+#define SUBVERSION_NUM 9
+#define PATCHVERSION_NUM 0
 
 class FragTraceControlPanel : public QDialog
 {
@@ -16,21 +16,20 @@ class FragTraceControlPanel : public QDialog
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
-	~FragTraceControlPanel(); // not sure if this is needed => [delete] can only be used witn array pointer.
 
-	// ------- Saving path for results / intermediate results ------- //
+	// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
 	QString adaSaveRoot;
 	QString histMaskRoot;
-	// -------------------------------------------------------------- //
+	// ============================================================== //
 
 
-
-	/********* Result and Scaling Functions *********/ 
+	/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
+	map<string, NeuronTree> tracedTrees;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
-	/************************************************/
+	/* ============================================ */
 
 	map<string, float> paramsFromUI;
 
@@ -40,7 +39,7 @@ signals:
 	void switchOnSegPipe(); // currently not in action
 
 public slots:
-    /************* User Interface Configuration Buttons **************/
+    /* =========== User Interface Configuration Buttons ============ */
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
@@ -48,35 +47,34 @@ public slots:
 	void saveSettingsClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
-    /********* END of [User Interface Configuration Buttons] *********/
+    /* ======= END of [User Interface Configuration Buttons] ======= */
 
-	// ====================================================================== //
+	// ********************************************************************** //
 	void traceButtonClicked(); // ==> THIS IS WHERE THE TRACING PROCESS STARTS
-	// ====================================================================== //
+	// ********************************************************************** //
 
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;
-
 	FragTraceManager* traceManagerPtr;
 
-	/***************** Additional Widget *****************/
+	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
-	/*****************************************************/
+	/* ================================================= */
 
 
 
-	/***************** Parameter Collecting Functions *****************/
+	/* =============== Parameter Collecting Functions =============== */
 	void pa_imgEnhancement();
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
 	void pa_postElongation();
-	/************* END of [Parameter Collecting Functions] ************/
+	/* =========== END of [Parameter Collecting Functions] ========== */
 
 
 
@@ -84,8 +82,8 @@ private:
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
 	bool volumeAdjusted;
-	int* volumeAdjustedCoords; // local coordinates in the current image block
-	int* globalCoords;         // global coordinates in whole brain space
+	int* volumeAdjustedCoords; // local coordinates of [displaying image boudaries], eg, 1 ~ 256, etc
+	int* globalCoords;         // global coordinates of [displaying image boundaries] in whole brain scale, currently not used.
 	int* displayingDims;
 
 	void teraflyTracePrep(workMode mode);
@@ -93,10 +91,12 @@ private:
 
 	
 
-	int somaNum;
-	int* somaCoords;
 	bool markerMonitorSwitch;
-	list<vector<int>> somaList;
+	QList<ImageMarker> selectedMarkerList;
+	QList<ImageMarker> selectedLocalMarkerList;
+	map<int, ImageMarker> somaMap;
+	map<int, ImageMarker> localSomaMap;
+	map<int, string> somaDisplayNameMap;
 
 
 
@@ -108,6 +108,7 @@ private:
 
 private slots:
 	void markerMonitor();
+	void refreshSomaCoords();
 };
 
 

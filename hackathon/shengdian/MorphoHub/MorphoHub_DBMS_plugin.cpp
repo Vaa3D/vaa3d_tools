@@ -28,10 +28,10 @@ void MorphoHub_DBMS::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 {
 	if (menu_name == tr("MorphoHub_DBMS"))
 	{
-        MorphoHub_MainWindow *mainwindow=new MorphoHub_MainWindow(parent);
-        mainwindow->setWindowState(Qt::WindowNoState);
-        mainwindow->raise();
-        mainwindow->activateWindow();
+        MorphoHub_MainWindow *mainwindow=new MorphoHub_MainWindow(callback,parent);
+        //mainwindow->setWindowState(Qt::WindowNoState);
+        //mainwindow->activateWindow();
+        //mainwindow->raise();
         mainwindow->setGeometry(100,400,1280,1080);
         mainwindow->show();
 	}

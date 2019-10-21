@@ -415,6 +415,39 @@ boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGra
 
 	return outputShellMap;
 }
+
+boost::container::flat_map<double, NeuronTree> NeuronGeoGrapher::radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList)
+{
+	boost::container::flat_map<double, NeuronTree> outputMap;
+	for (boost::container::flat_map<double, boost::container::flat_set<int>>::const_iterator it = radiusShellMap_loc.begin(); it != radiusShellMap_loc.end(); ++it)
+	{
+		NeuronTree currShellTree;
+		for (boost::container::flat_set<int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			NeuronSWC newNode = NeuronGeoGrapher::polar2CartesianNode(inputPolarNodeList.at(*it2));
+			currShellTree.listNeuron.push_back(newNode);
+		}
+
+		outputMap.insert(pair<double, NeuronTree>(it->first, currShellTree));
+	}
+
+	return outputMap;
+}
+
+boost::container::flat_map<double, vector<connectedComponent>> NeuronGeoGrapher::radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap)
+{
+	boost::container::flat_map<double, vector<connectedComponent>> outputMap;
+	for (boost::container::flat_map<double, NeuronTree>::const_iterator it = inputRadius2TreeMap.begin(); it != inputRadius2TreeMap.end(); ++it)
+	{
+		vector<connectedComponent> currConnCompList = NeuronStructUtil::swc2signal3DBlobs(it->second);
+		outputMap.insert(pair<double, vector<connectedComponent>>(it->first, currConnCompList));
+
+		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
+			ChebyshevCenter_connComp(*it2);
+	}
+
+	return outputMap;
+}
 /* ======================== END of [Polar Coordinate System Operations] =========================== */
 
 

@@ -40,6 +40,7 @@ QStringList TestPlugin::menulist() const
         <<tr("2D junction detection based on ray-shoooting model ")
         <<tr("2D rotate algorithm display")
         <<tr("local radius estimation")
+        <<tr("enlarge images")
         <<tr("about");
 
 }
@@ -58,7 +59,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     {
         int flag=junction_points_detection_3D(callback,parent);
         if(flag==1)
-            v3d_msg("OK ");
+            v3d_msg("3D junction points have been detected ");
     }
     else if(menu_name==tr("2D juntion detection"))
         {
@@ -103,6 +104,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             if(flag==1)
                 v3d_msg("2D junction point have been detected ");
         }
+    else if(menu_name==tr("enlarge images"))
+        {
+            int flag=enlarge_images(callback,parent);
+            if(flag==1)
+                v3d_msg("2D junction point have been detected ");
+        }
         else
         {
             v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -141,6 +148,135 @@ void printHelp()
     return;
 }
 
+int enlarge_images(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if(!curwin)
+    {
+            v3d_msg("No image is open.");
+            return -1;
+    }
+    Image4DSimple *p4DImage = callback.getImage(curwin);
+
+    unsigned char* datald=0;
+    datald=p4DImage->getRawData();
+
+
+    V3DLONG sz[3];
+    sz[0] = p4DImage->getXDim();
+    sz[1] = p4DImage->getYDim();
+    sz[2] = p4DImage->getZDim();
+    sz[3] = p4DImage->getCDim();
+
+    // set the parameter
+    int enlagrge_x=10;
+    int enlagrge_y=10;
+    int enlagrge_z=10;
+    V3DLONG nx=sz[0];
+    V3DLONG ny=sz[1];
+    V3DLONG nz=sz[2];
+
+
+    if(p4DImage==NULL)
+    {
+       v3d_msg("No image ");
+    }
+
+      //set update the dialog
+      QDialog * dialog = new QDialog();
+
+
+      if(p4DImage->getZDim() > 1)
+              dialog->setWindowTitle("3D neuron image branch point detection Based on Ray-shooting algorithm");
+      else
+              dialog->setWindowTitle("2D neuron image branch point detection Based on Ray-shooting algorithm");
+          QGridLayout * layout = new QGridLayout();
+
+          QSpinBox * enlarge_x_spinbox = new QSpinBox();
+          enlarge_x_spinbox->setRange(1,1000);
+          enlarge_x_spinbox->setValue(enlagrge_x);
+
+          QSpinBox * enlarge_y_spinbox = new QSpinBox();
+          enlarge_y_spinbox->setRange(1, 1000);
+          enlarge_y_spinbox->setValue(enlagrge_y);
+
+          QSpinBox * enlarge_z_spinbox = new QSpinBox();
+          enlarge_z_spinbox->setRange(1,1000);
+          enlarge_z_spinbox->setValue(enlagrge_z);
+
+
+          layout->addWidget(new QLabel("x"),0,0);
+          layout->addWidget(enlarge_x_spinbox, 0,1,1,5);
+
+          layout->addWidget(new QLabel("y"),1,0);
+          layout->addWidget(enlarge_y_spinbox, 1,1,1,5);
+
+          layout->addWidget(new QLabel("z "),2,0);
+          layout->addWidget(enlarge_z_spinbox, 2,1,1,5);
+
+          QHBoxLayout * hbox2 = new QHBoxLayout();
+          QPushButton * ok = new QPushButton(" ok ");
+          ok->setDefault(true);
+          QPushButton * cancel = new QPushButton("cancel");
+          hbox2->addWidget(cancel);
+          hbox2->addWidget(ok);
+
+
+          layout->addLayout(hbox2,9,0,1,9);
+          dialog->setLayout(layout);
+          QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+          QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+
+          //run the dialog
+
+          if(dialog->exec() != QDialog::Accepted)
+              {
+                      if (dialog)
+                      {
+                              delete dialog;
+                              dialog=0;
+                              cout<<"delete dialog"<<endl;
+                      }
+
+              }
+          cout<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<endl;
+
+          enlagrge_x = enlarge_x_spinbox->value();
+          enlagrge_y = enlarge_y_spinbox->value();
+          enlagrge_z = enlarge_z_spinbox->value();
+
+          V3DLONG new_ny=ny+2*enlagrge_y;
+          V3DLONG new_nz=nz+2*enlagrge_z;
+          V3DLONG new_nx=nx+2*enlagrge_x;
+          unsigned char *enlarged_image=0;
+          enlarged_image=new unsigned char[new_nz*new_ny*new_nx];
+          for(long enlarge_size=0; enlarge_size<new_ny*new_nz;enlarge_size++)
+          {
+              enlarged_image[enlarge_size]=0;
+          }
+          V3DLONG num_datald=0;
+          for(V3DLONG iz=enlagrge_z;iz<new_nz-enlagrge_z;iz++)
+          {
+            for(V3DLONG iy=enlagrge_y;iy<new_ny-enlagrge_y;iy++)
+            {
+                for(V3DLONG ix=enlagrge_x;ix<new_nx-enlagrge_x;ix++)
+                {
+
+                   enlarged_image[iz*new_ny*new_nx+iy*new_nx+ix]=datald[num_datald];
+                   num_datald++;
+                }
+
+            }
+          }
+          Image4DSimple * new4DImage = new Image4DSimple();
+          new4DImage->setData((unsigned char *)enlarged_image, new_nx, new_ny, new_nz , p4DImage->getCDim(), p4DImage->getDatatype());
+          v3dhandle newwin = callback.newImageWindow();
+          callback.setImage(newwin, new4DImage);
+          callback.updateImageWindow(newwin);
+          return 1;
+
+}
 int ray_shooting_model(V3DPluginCallback2 &callback, QWidget *parent)
 {
     ClusterAnalysis mycluster;
@@ -850,6 +986,8 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
                               delete dialog;
                               dialog=0;
                               cout<<"delete dialog"<<endl;
+                              return 1;
+
                       }
 
               }
@@ -1087,6 +1225,8 @@ int ray_scan_model(V3DPluginCallback2 &callback,QWidget *parent)
         callback.setImage(newwin, new4DImage);
         callback.updateImageWindow(newwin);
         callback.setLandmark(newwin, curlist);
+        callback.open3DWindow(newwin);
+        callback.pushObjectIn3DWindow(newwin);
         return 1;
 
 }
@@ -1367,104 +1507,9 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
                                   s.color = blue;
                                   curlist<<s;
                 }
-//                X_candidate.push_back(adjusted_x);  // all adjusted x coordinate of candidate points
-//                Y_candidate.push_back(adjusted_y);  // all adjusted y coordinate of candidate points
-//                Max_value.push_back(radiu);    // all radiu coordinate of candidate points
-            }
         }
-        else {
-            cout<<"no candidate points in this MIP"<<endl;
         }
         cout<<"the all candidate points have detected"<<endl;
-
-//        for(V3DLONG k = 0; k < X_candidate.size(); k++)
-//        {
-//            vector<float> x_loc;
-//            vector<float> y_loc;
-//            double based_distance=T0;
-//            //create a new block_mip to detect the 2D branch points
-//            int block_radiu=Max_value.at(k)+based_distance+ray_length+5;
-//            int block_length=block_radiu*2+1;
-//            unsigned char *block=0;
-//            try{block=new unsigned char [block_length*block_length*block_length];}
-//            catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-//            //cout<<"x is :"<<X_candidate.at(k)<<" "<<" y is :"<<Y_candidate.at(k)<<" "<<"the length is "<<block_length<<endl;
-//            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)-block_radiu)<1)||((Y_candidate.at(k)+block_radiu)>(ny-1)))
-//            {
-//                cout<<"this points beyong the image"<<endl;
-//                continue;
-//            }
-//            int num_block=0;
-//            for(V3DLONG b=Y_candidate.at(k)-block_radiu;b<=Y_candidate.at(k)+block_radiu;b++)
-//            {
-//                 for(V3DLONG c=X_candidate.at(k)-block_radiu;c<=X_candidate.at(k)+block_radiu;c++)
-//                 {
-//                     unsigned char block_pixe=old_image_binary[b*nx+c];
-//                     block[num_block]=block_pixe;
-//                     num_block++;
-//                 }
-//             }
-//            if(1)
-//            {
-//                delete_small_area(block_length,block_length,block);// connected domain denoising
-//            }
-//             for(int i = 0; i <ray_numbers_2d; i++)   //m is the numble of the ray
-//             {
-//                 for(int j = Max_value.at(k)+based_distance; j < Max_value.at(k)+based_distance+ray_length; j++)    // n is the numble of the points of the each ray
-//                 {
-//                     if((Max_value.at(k)+based_distance+2)>max_length)
-//                         {
-//                         v3d_msg(QString("the max_length is too small to can not adapt the model, please check the max_length"));
-//                     }
-//                     double pixe = project_interp_2d(block_radiu+ray_y[i][j], block_radiu+ray_x[i][j], block, block_length, block_length , block_radiu,  block_radiu);
-//                     if(pixe>=100)
-//                     {
-//                         x_loc.push_back(block_radiu+ray_x[i][j]);
-//                         y_loc.push_back(block_radiu+ray_y[i][j]);
-
-//                     }
-//                 }
-//             }
-//            double a=X_candidate.at(k)+ray_x[0][Max_value.at(k)+based_distance+ray_length]; //x1
-//            double b=X_candidate.at(k)+ray_x[1][Max_value.at(k)+based_distance+ray_length]; //x2
-//            double c=Y_candidate.at(k)+ray_y[0][Max_value.at(k)+based_distance+ray_length]; //y1
-//            double d=Y_candidate.at(k)+ray_y[1][Max_value.at(k)+based_distance+ray_length]; //y2
-//            double change_x=abs(a-b);
-//            double change_x1=pow(change_x,2);
-//            double change_y=abs(c-d);
-//            double change_x2=pow(change_y,2);
-//            double det_x=sqrt(change_x1+change_x2);
-
-//            int det_y=1;
-//            double DB_radius;
-//            if(det_x>det_y)
-//            {
-//                DB_radius=det_x;
-//            }
-//            else {
-//                DB_radius=det_y;
-//            }
-//            mycluster.Read_from_coordiante(x_loc,y_loc,(1.1*DB_radius),1);
-//            int flag=mycluster.DoDBSCANRecursive();
-//            if(flag==3)
-//            {
-//                             s.x=  X_candidate[k]+1;
-//                             s.y = Y_candidate[k]+1;
-//                             s.z = 1;
-//                             s.radius = 1;
-//                             s.color = red;
-//                             curlist<<s;
-//            }
-//            else if(flag==4)
-//            {
-//                              s.x=  X_candidate[k]+1;
-//                              s.y = Y_candidate[k]+1;
-//                              s.z = 1;
-//                              s.radius = 1;
-//                              s.color = blue;
-//                              curlist<<s;
-//            }
-//        }
         etime1 = timer1.elapsed();
         v3d_msg(QString("the detecting take %1 milliseconds").arg(etime1));
 
@@ -1496,9 +1541,11 @@ int ray_scan_model_vessel(V3DPluginCallback2 &callback,QWidget *parent)
         callback.setImage(newwin, new4DImage);
         callback.updateImageWindow(newwin);
         callback.setLandmark(newwin, curlist);
+        callback.open3DWindow(newwin);
+        callback.pushObjectIn3DWindow(newwin);
         return 1;
-
 }
+
 
 int radius_estimation(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -1733,6 +1780,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                   delete dialog;
                                   dialog=0;
                                   cout<<"delete dialog"<<endl;
+                                  return 1;
                           }
 
                   }
@@ -1960,20 +2008,24 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((Y_candidate.at(k)+block_radiu)>(ny-1))||((Y_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-//                               V3DLONG new_ny=ny+block_radiu;
-//                               V3DLONG new_nz=nz+block_radiu;
-//                               unsigned char *enlarged_image=0;
-//                               enlarged_image=new unsigned char[new_nz*new_ny];
-//                               V3DLONG num_datald=0;
-//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-//                               {
-//                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-//                                 {
-//                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
-//                                        num_datald++;
+                               V3DLONG new_ny=ny+block_radiu;
+                               V3DLONG new_nz=nz+block_radiu;
+                               unsigned char *enlarged_image=0;
+                               enlarged_image=new unsigned char[new_nz*new_ny];
+                               for(long enlarge_size=0; enlarge_size<new_ny*new_nz;enlarge_size++)
+                               {
+                                   enlarged_image[enlarge_size]=0;
+                               }
+                               V3DLONG num_datald=0;
+                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+                               {
+                                 for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+                                 {
+                                        enlarged_image[iz*new_ny+iy]=old_image_binary_yz[num_datald];
+                                        num_datald++;
 
-//                                 }
-//                               }
+                                 }
+                               }
 
                                continue;
                            }
@@ -1987,7 +2039,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
@@ -2030,7 +2082,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                             else {
                                 DB_radius=det_y;
                             }
-                           mycluster.Read_from_coordiante(y_loc,z_loc,DB_radius*1.1,5);
+                           mycluster.Read_from_coordiante(y_loc,z_loc,DB_radius*1.1,3);
                            int flag=mycluster.DoDBSCANRecursive();
 
                            if(flag==3)
@@ -2089,7 +2141,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                        {
                            for(int i=0;i<count;i++)
                            {
-                               int edge_size =10;
+                               int edge_size =2;
                                if(((X_loc.at(i)-window_size)<=edge_size)||((Z_loc.at(i)-window_size)<=edge_size)||((X_loc.at(i)+window_size)>=(nx-edge_size))||((Z_loc.at(i)+window_size)>=(nz-edge_size)))
                                {
                                    continue;
@@ -2121,20 +2173,24 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            if(((X_candidate.at(k)+block_radiu)>(nx-1))||((X_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)-block_radiu)<1)||((Z_candidate.at(k)+block_radiu)>(nz-1)))
                            {
                                //enlagre the original
-//                               V3DLONG new_nx=nx+block_radiu;
-//                               V3DLONG new_nz=nz+block_radiu;
-//                               unsigned char *enlarged_image=0;
-//                               enlarged_image=new unsigned char[new_nz*new_nx];
-//                               V3DLONG num_datald=0;
-//                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
-//                               {
-//                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
-//                                 {
-//                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
-//                                        num_datald++;
+                               V3DLONG new_nx=nx+block_radiu;
+                               V3DLONG new_nz=nz+block_radiu;
+                               unsigned char *enlarged_image=0;
+                               enlarged_image=new unsigned char[new_nz*new_nx];
+                               for(long enlarged_size=0;enlarged_size<new_nz*new_nx;enlarged_size++)
+                               {
+                                   enlarged_image[enlarged_size]=0;
+                               }
+                               V3DLONG num_datald=0;
+                               for(V3DLONG iz=block_radiu;iz<new_nz-block_radiu;iz++)
+                               {
+                                 for(V3DLONG ix=block_radiu;ix<new_nx-block_radiu;ix++)
+                                 {
+                                        enlarged_image[iz*new_nx+ix]=old_image_binary_yz[num_datald];
+                                        num_datald++;
 
-//                                 }
-//                               }
+                                 }
+                               }
                                continue;
                            }
                            int num_block=0;
@@ -2147,7 +2203,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
@@ -2190,7 +2246,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                             else {
                                 DB_radius=det_y;
                             }
-                           mycluster.Read_from_coordiante(x_loc,z_loc,DB_radius*1.1,5);
+                           mycluster.Read_from_coordiante(x_loc,z_loc,DB_radius*1.1,3);
                            int flag=mycluster.DoDBSCANRecursive();
 
                            if(flag==3)
@@ -2250,7 +2306,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                        {
                            for(int i=0;i<count;i++)
                            {
-                               int edge_size =10;
+                               int edge_size =2;
                                if(((X_loc.at(i)-window_size)<=edge_size)||((Y_loc.at(i)-window_size)<=edge_size)||((Y_loc.at(i)+window_size)>=(ny-edge_size))||((X_loc.at(i)+window_size)>=(nx-edge_size)))
                                {
                                    continue;
@@ -2296,20 +2352,24 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                            {
                                cout<<"must enlarge the original images"<<endl;
                                //enlagre the original
-//                               V3DLONG new_nx=nx+2*block_radiu+1;
-//                               V3DLONG new_ny=ny+2*block_radiu+1;
-//                               unsigned char *enlarged_image=0;
-//                               enlarged_image=new unsigned char[new_nx*new_ny];
-//                               V3DLONG num_datald=0;
-//                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
-//                               {
-//                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
-//                                 {
-//                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
-//                                        num_datald++;
+                               V3DLONG new_nx=nx+2*block_radiu;
+                               V3DLONG new_ny=ny+2*block_radiu;
+                               unsigned char *enlarged_image=0;
+                               enlarged_image=new unsigned char[new_nx*new_ny*2];
+                               for(long enlarged_size=0;enlarged_size<new_nx*new_ny;enlarged_size++)
+                               {
+                                   enlarged_image[enlarged_size]=0;
+                               }
+                               V3DLONG num_datald=0;
+                               for(V3DLONG iy=block_radiu;iy<new_ny-block_radiu;iy++)
+                               {
+                                 for(V3DLONG ix=block_radiu;ix<new_ny-block_radiu;ix++)
+                                 {
+                                        enlarged_image[iy*new_nx+ix]=old_image_binary[num_datald];
+                                        num_datald++;
 
-//                                 }
-//                               }
+                                 }
+                               }
 
                                continue;
                            }
@@ -2323,7 +2383,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                                     num_block++;
                                 }
                             }
-                           if(0)
+                           if(1)
                            {
                                delete_small_area(block_length,block_length,block);// connected domain denoising
                            }
@@ -2368,6 +2428,7 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                             }
                            mycluster.Read_from_coordiante(x_loc,y_loc,DB_radius*1.1,3);
                            int flag=mycluster.DoDBSCANRecursive();
+                           cout << "branch number is :"<< flag<<endl;
 
                            if(flag==3)
                            {
@@ -2467,6 +2528,8 @@ int junction_points_detection_3D(V3DPluginCallback2 &callback, QWidget *parent)
                   if(endwhile){flag_while = false;}
               }
               callback.setLandmark(curwin, curlist);
+              callback.open3DWindow(curwin);
+              callback.pushObjectIn3DWindow(curwin);
                 delete []image_mip;
                 delete []image_binary;
                 delete []old_image_binary;

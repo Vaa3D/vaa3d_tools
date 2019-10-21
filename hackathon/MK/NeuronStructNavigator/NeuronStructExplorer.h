@@ -29,13 +29,15 @@ class NeuronStructExplorer
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
-	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
+	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
 	virtual ~NeuronStructExplorer() = default;
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
+	map<string, map<string, profiledTree>> treeSeriesDataBase;
 	
 	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
-	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
+	inline void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
+	inline void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
 	
 	V_NeuronSWC_list segmentList;
 
@@ -78,6 +80,21 @@ public:
 
 
 
+	/*********************** Tree - Subtree Operations **************************/
+	// Extract a subtree that is the upstream of a given starting node from the original tree.
+	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap);
+	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
+	static inline void upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
+
+	// Extract a subtree that is the downstream of a given starting node from the original tree.
+	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap);
+
+	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
+	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
+	/****************************************************************************/
+
+
+
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
 	// Computes the distance from every node to its nearest node in the given node lise.
 	// The output is a map of 4 measures: mean, std, var, median.
@@ -115,6 +132,30 @@ public:
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
 
+inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
+{
+	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else
+	{
+		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
+		return;
+	}
+}
+
+inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength)
+{
+	if (replace)
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else this->treeEntry(inputTree, treeName, segTileLength);
+}
+
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)
 {
 	map<double, string> r_segAngleMap;
@@ -135,6 +176,41 @@ inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, d
 			elongConnMap.insert(pair<int, int>(seg1, seg2));
 		}
 	}
+}
+
+inline void NeuronStructExplorer::upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap)
+{
+	tracedList.push_front(downstreamEnd);
+	while (tracedList.front().parent != upstreamEnd.n) tracedList.push_front(inputList.at(int(node2locMap.at(tracedList.front().parent))));
+	tracedList.push_front(upstreamEnd);
+}
+
+inline void NeuronStructExplorer::upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum)
+{
+	tracedList.push_front(startingNode);
+	int parentID = startingNode.parent;
+	while (tracedList.size() < nodeNum)
+	{
+		if (node2locMap.find(parentID) == node2locMap.end()) break;
+		tracedList.push_front(inputList.at(int(node2locMap.at(parentID))));
+		parentID = tracedList.front().parent;
+		if (parentID == -1) break;
+	}
+}
+
+inline void NeuronStructExplorer::upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum)
+{
+	tracedList.push_back(startingNode);
+	int parentID = startingNode.parent;
+	while (tracedList.size() < nodeNum)
+	{
+		if (node2locMap.find(parentID) == node2locMap.end()) break;
+		tracedList.push_back(inputList.at(int(node2locMap.at(parentID))));
+		parentID = tracedList.back().parent;
+		if (parentID == -1) break;
+	}
+
+	reverse(tracedList.begin(), tracedList.end());
 }
 
 #endif

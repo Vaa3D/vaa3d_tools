@@ -177,15 +177,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->show();
 }
 
-FragTraceControlPanel::~FragTraceControlPanel()
-{
-	delete this->doubleSpinBox;
-
-	if (this->traceManagerPtr != nullptr) delete this->traceManagerPtr;
-
-	delete uiPtr;
-}
-
 
 
 /* =========================== User Interface Configuration Buttons =========================== */
@@ -234,17 +225,28 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	}
 }
 
-void FragTraceControlPanel::multiSomaTraceChecked(bool checked)
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker List / Multiple Dendritic Tracing]
 {
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
 
 	if (checked)
 	{
-		this->markerMonitorSwitch = true;
+		this->refreshSomaCoords();
 		this->markerMonitor();
 	}
 	else this->markerMonitorSwitch = false;
+}
+
+void FragTraceControlPanel::refreshSomaCoords()
+{
+	this->markerMonitorSwitch = false;
+	thisCallback->refreshSelectedMarkers();
+	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+	this->somaMap.clear();
+	this->localSomaMap.clear();
+	this->somaDisplayNameMap.clear();
+	this->markerMonitorSwitch = true;
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -545,10 +547,11 @@ void FragTraceControlPanel::traceButtonClicked()
 	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
 	
-	thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-
+	if (this->somaListViewer->rowCount() == 0)
+	{
+		this->traceManagerPtr->selectedSomaMap.clear();
+		this->traceManagerPtr->selectedLocalSomaMap.clear();
+	}
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
 		v3d_msg(QString("The process has been terminated."));
@@ -594,6 +597,14 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
+
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		this->markerMonitorSwitch = true;
+		this->markerMonitor();
+	}
+
+	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
 /* ============================================================================================ */
 
@@ -602,6 +613,10 @@ void FragTraceControlPanel::traceButtonClicked()
 /* =========================== TRACING VOLUME PREPARATION =========================== */
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
+	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
+	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
 
@@ -639,25 +654,38 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
 		const char* saveNameC2 = saveName2.c_str();
 		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
-		// --------------------------------- /
+		// --------------------------------- //
 
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+		{
+			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
+		else
+		{
+			this->traceManagerPtr->reinit(croppedImg4DSimplePtr, mode);
+			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
+			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
+		}
 
 		delete[] currBlock1Dptr;
 		delete[] croppedBlock1Dptr;		
 	}
 	else
 	{
-		if (mode == axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, axon);
-		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+		if (this->traceManagerPtr == nullptr)
+			this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, mode);
+		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
 }
 /* ================================================================================== */
 
 
 
-/*************************** Parameter Collecting Functions ***************************/
+/* ========================= Parameter Collecting Functions ========================= */
 void FragTraceControlPanel::pa_imgEnhancement()
 {
 	if (uiPtr->groupBox_3->isChecked())
@@ -717,6 +745,31 @@ void FragTraceControlPanel::pa_objFilter()
 		this->traceManagerPtr->objFilter = false;
 		this->traceManagerPtr->voxelSize = false;
 	}
+
+	if (uiPtr->groupBox_15->isChecked())
+	{
+		if (uiPtr->radioButton_5->isEnabled() || uiPtr->radioButton_5->isChecked())
+		{
+			this->traceManagerPtr->selectedSomaMap.clear();
+			this->traceManagerPtr->selectedLocalSomaMap.clear();
+			for (map<int, ImageMarker>::iterator somaIt = this->somaMap.begin(); somaIt != this->somaMap.end(); ++somaIt)
+			{
+				ImageMarker localMarker;
+				for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
+				{
+					if (somaIt->first == it->n)
+					{
+						localMarker = *it;
+						this->localSomaMap.insert({ somaIt->first, localMarker });
+						break;
+					}
+				}
+			}
+		
+			this->traceManagerPtr->selectedSomaMap = this->somaMap;
+			this->traceManagerPtr->selectedLocalSomaMap = this->localSomaMap;
+		}
+	}
 }
 
 void FragTraceControlPanel::pa_objBasedMST()
@@ -736,128 +789,80 @@ void FragTraceControlPanel::pa_objBasedMST()
 void FragTraceControlPanel::pa_postElongation()
 {
 	if (uiPtr->groupBox_5->isChecked())
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
+		this->paramsFromUI.insert({"labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()) });
 	else
-		this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
+		this->paramsFromUI.insert({ "labeledDistThreshold", -1 });
 }
 
 void FragTraceControlPanel::markerMonitor()
 {
 	if (this->markerMonitorSwitch)
 	{
-		int* global = new int[6];
-		thisCallback->getCurrentGlobalVolumeCoords(global);
-
-		list<vector<int>> newSomaList;
-		list<vector<int>> tempLeftList;
-		list<vector<int>> oldSomaList;
-		this->somaNum = thisCallback->getSelectedMarkerNum();
-		if (this->somaNum > 0)
+		map<int, ImageMarker> newMarkerMap;
+		map<int, ImageMarker> oldMarkerMap;
+		thisCallback->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
+		if (this->selectedMarkerList.size() > 0)
 		{
-			this->somaCoords = new int[this->somaNum * 3];
-			thisCallback->getSelectedMarkerCoords(this->somaCoords);
-			for (int i = 0; i < this->somaNum; ++i)
+			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
 			{
-				vector<int> currSoma(3);
-				for (int j = 0; j < 3; ++j) currSoma[j] = this->somaCoords[i * 3 + j];
-				newSomaList.push_back(currSoma);
+				it->selected = true;
+				it->on = false;
+				newMarkerMap.insert({ it->n, *it });
 			}
-			delete[] this->somaCoords;
-			oldSomaList = this->somaList;
-			this->somaList = newSomaList;
-			tempLeftList = newSomaList;
+			oldMarkerMap = this->somaMap;
 
-			for (list<vector<int>>::iterator it = newSomaList.begin(); it != newSomaList.end(); ++it)
-			{
-				if (std::find(oldSomaList.begin(), oldSomaList.end(), *it) != oldSomaList.end())
-				{
-					oldSomaList.remove(*it);
-					tempLeftList.remove(*it);
-				}
-			}
+			for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
+				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
+			
+			for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
+				if (newMarkerMap.find(it2->first) == newMarkerMap.end()) this->somaMap[it2->first].selected = false;
 		}
 		else
 		{
-			oldSomaList = this->somaList;
-			this->somaList.clear();
+			if (this->somaListViewer->rowCount() > 0)
+				for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+			oldMarkerMap = this->somaMap;
+			this->somaMap.clear();
 		}
 
-		for (list<vector<int>>::iterator it = oldSomaList.begin(); it != oldSomaList.end(); ++it)
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 		{
-			QString itemName2beRemovedGlobal;
-			QString itemName2beRemovedLocal;
-			QString itemName2beRemoved;
-
-			int realLocalX = int((float(it->at(0)) / 256) * float(global[1] - global[0]));
-			int realLocalY = int((float(it->at(1)) / 256) * float(global[3] - global[2]));
-			int realLocalZ = int((float(it->at(2)) / 256) * float(global[5] - global[4]));
-			if (this->volumeAdjusted)
-			{				
-				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
-																	 QString::number(realLocalY + global[2]) + ", z" +
-																	 QString::number(realLocalZ + global[4]) + ")";
-				/*itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
-																  QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
-																  QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
-				itemName2beRemoved = itemName2beRemovedGlobal + "  " + itemName2beRemovedLocal;
-			}
-			else
+			if (markerIt->second.selected && !markerIt->second.on)
 			{
-				cout << global[0] << " " << global[2] << " " << global[4] << endl;
-				itemName2beRemovedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
-																	 QString::number(realLocalY + global[2]) + ", z" +
-																	 QString::number(realLocalZ + global[4]) + ")";
-				//itemName2beRemovedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
-				itemName2beRemoved = itemName2beRemovedGlobal + "  " + itemName2beRemovedLocal;
+				int markerGlobalX = int(markerIt->second.x);
+				int markerGlobalY = int(markerIt->second.y);
+				int markerGlobalZ = int(markerIt->second.z);
+				string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
+				this->somaListViewer->appendRow(newItemPtr);
 			}
-			
-			QList<QStandardItem*> matchedList = this->somaListViewer->findItems(itemName2beRemoved);
-			int rowNum = (*matchedList.begin())->row();
-			this->somaListViewer->removeRow(rowNum);
+			else if (!markerIt->second.selected)
+			{
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
+				this->somaMap.erase(this->somaMap.find(markerIt->first));
+				QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
+				if (!matchedList.isEmpty())
+				{
+					int rowNum = (*matchedList.begin())->row();
+					this->somaListViewer->removeRow(rowNum);
+				}			
+			}
 		}
 
-		for (list<vector<int>>::iterator it = tempLeftList.begin(); it != tempLeftList.end(); ++it)
-		{
-			QString itemName2beAddedGlobal;
-			QString itemName2beAddedLocal;
-			QString itemName2beAdded;
-
-			int realLocalX = int((float(it->at(0)) / 256) * float(global[1] - global[0]));
-			int realLocalY = int((float(it->at(1)) / 256) * float(global[3] - global[2]));
-			int realLocalZ = int((float(it->at(2)) / 256) * float(global[5] - global[4]));
-			if (this->volumeAdjusted)
-			{
-				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
-																   QString::number(realLocalY + global[2]) + ", z" +
-																   QString::number(realLocalZ + global[4]) + ")";
-				/*itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0) - volumeLocalCoords[0]) + ", " +
-																QString::number(it->at(1) - volumeLocalCoords[2]) + ", " +
-																QString::number(it->at(2) - volumeLocalCoords[4]) + ")";*/
-				itemName2beAdded = itemName2beAddedGlobal + "  " + itemName2beAddedLocal;
-			}
-			else
-			{
-				cout << global[0] << " " << global[2] << " " << global[4] << endl;
-				itemName2beAddedGlobal = "Marker coordinate: (x" + QString::number(realLocalX + global[0]) + ", y" +
-																   QString::number(realLocalY + global[2]) + ", z" +
-																   QString::number(realLocalZ + global[4]) + ")";
-				//itemName2beAddedLocal = "Local coordinate: (" + QString::number(it->at(0)) + ", " + QString::number(it->at(1)) + ", " + QString::number(it->at(2)) + ")";
-				itemName2beAdded = itemName2beAddedGlobal + "  " + itemName2beAddedLocal;
-			}
-
-			QStandardItem* newItemPtr = new QStandardItem(itemName2beAdded);
-			this->somaListViewer->appendRow(newItemPtr);
-		}
-		delete[] global;
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+			markerIt->second.on = true;
 
 		QTimer::singleShot(50, this, SLOT(markerMonitor()));
 	}
 }
-/********************** END of [Parameter Collecting Functions] ***********************/
+/* ====================== END of [Parameter Collecting Functions] ====================== */
 
 
 
-/***************** Result and Scaling Functions *****************/
+/* =================== Result and Scaling Functions =================== */
 void FragTraceControlPanel::scaleTracedTree()
 {	
 	float imgDims[3];
@@ -903,7 +908,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	return shiftScaleBackTree;
 }
-/************ END of [Result and Scaling Functions] *************/
+/* ================ END of [Result and Scaling Functions] ================ */
 
 
 
