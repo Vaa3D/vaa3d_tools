@@ -26,7 +26,7 @@ public:
 
 int tipdetection(V3DPluginCallback2 &callback, QWidget *parent);
 int tip_detection(V3DPluginCallback2 &callback, QWidget *parent);
-
+int tipdetection1(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void printHelp();
 #endif
 
