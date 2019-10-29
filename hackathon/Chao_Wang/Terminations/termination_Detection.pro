@@ -19,12 +19,17 @@ unix:!macx {
     LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib -ltiff
 
 }
-HEADERS	+= Tip_Detection_plugin.h
+HEADERS	+= Tip_Detection_plugin.h \
+    tipdetector.h
 HEADERS	+= ray_shooting.h
-SOURCES	+= Tip_Detection_plugin.cpp
+#HEADERS += neuron_tools.h
+
+SOURCES	+= Tip_Detection_plugin.cpp \
+    tipdetector.cpp
 SOURCES	+= ray_shooting.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+#SOURCES +=neuron_tools.cpp
 
 TARGET	= $$qtLibraryTarget(Tip_Detection)
 DESTDIR	= $$V3DMAINPATH/bin/plugins/Termination_Detection/
