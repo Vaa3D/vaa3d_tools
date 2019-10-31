@@ -8,6 +8,8 @@
 #include "adaboost_plugin.h"
 #include "basic_surf_objs.h"
 #include "neuron_sim_scores.h"
+#include <stdio.h>
+#include <iostream>
 using namespace std;
 Q_EXPORT_PLUGIN2(adaboost, adaboost);
  
@@ -136,14 +138,14 @@ bool adaboost::dofunc(const QString & func_name, const V3DPluginArgList & input,
          if(nt1.listNeuron.size()<5)
          {
                 dist=-1;
-                qDebug()<<"no swc there to compare";
+                cout<<dist<<endl;
          }else
          {
             NeuronTree nt2 = readSWC_file(infiles[1]);
             NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres);
 
             double dist=tmp_score.dist_12_allnodes;
-            qDebug()<<dist;
+             cout<<dist<<endl;
             }
 
 
