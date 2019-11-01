@@ -492,12 +492,14 @@ void MorphoHub_MainWindow::cellSortColumn(int c)
 
 void MorphoHub_MainWindow::popAction_3Dview_slot()
 {
+    qDebug()<<"call 3d view";
     int curtabindex=dataTabwidget->currentIndex();
     QTableWidget *levelTable=datatablelist.at(curtabindex);
     if(levelTable!=NULL)
     {
         QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
 
+        qDebug()<<"swc path:"<<curPathSWC;
         QFileInfo curSWCBase(curPathSWC);
         if(curSWCBase.exists())
         {
@@ -511,39 +513,29 @@ void MorphoHub_MainWindow::popAction_3Dview_slot()
     }
 }
 
-void MorphoHub_MainWindow::contextMenuEvent(QContextMenuEvent *event)
+void MorphoHub_MainWindow::ondataTab_customContextmenuRequested(const QPoint &pos)
 {
-    QPoint pointnow=event->pos();
+    qDebug()<<"Call Right-Click Menu";
     int curtabindex=dataTabwidget->currentIndex();
     QTableWidget *levelTable=datatablelist.at(curtabindex);
-    QTableWidgetItem *item=levelTable->itemAt(pointnow);
+    QTableWidgetItem *item=levelTable->itemAt(pos);
     if(item!=NULL)
     {
+        int row=item->row();
+        curRecon.SdataID=levelTable->item(row,0)->text();
+        curRecon.SomaID=levelTable->item(row,1)->text();
+        curRecon.author.UserID=levelTable->item(row,2)->text();
+        curRecon.checkers=levelTable->item(row,3)->text();
+        curRecon.levelID=levelTable->item(row,4)->text();
+        curRecon.updateTime=levelTable->item(row,5)->text();
+        curRecon.fatherDirName=levelTable->item(row,6)->text();
+        curRecon.fileName=levelTable->item(row,7)->text();
+
         popMenuFordataTab->clear();
         popMenuFordataTab->addAction(popAction_3Dview);
         popMenuFordataTab->addSeparator();
-
         popMenuFordataTab->exec(QCursor::pos());
-        event->accept();
     }
-}
-
-void MorphoHub_MainWindow::ondataTab_customContextmenuRequested(QPoint pos)
-{
-//    int curtabindex=dataTabwidget->currentIndex();
-//    QTableWidget *levelTable=datatablelist.at(curtabindex);
-//    if(levelTable!=NULL)
-//    {
-//        curRecon.SdataID=levelTable->item(row,0)->text();
-//        curRecon.SomaID=levelTable->item(row,1)->text();
-//        curRecon.author.UserID=levelTable->item(row,2)->text();
-//        curRecon.checkers=levelTable->item(row,3)->text();
-//        curRecon.levelID=levelTable->item(row,4)->text();
-//        curRecon.updateTime=levelTable->item(row,5)->text();
-//        curRecon.fatherDirName=levelTable->item(row,6)->text();
-//        curRecon.fileName=levelTable->item(row,7)->text();
-//    }
-//    popMenuFordataTab->exec(QCursor::pos());
 }
 
 void MorphoHub_MainWindow::seeIn3Dview_slot(int row, int column)
@@ -624,11 +616,11 @@ void MorphoHub_MainWindow::updateTableDataLevel(QTableWidget *t,QList<Reconstruc
         t->resizeRowsToContents();
 
         t->setContextMenuPolicy(Qt::CustomContextMenu);
-        //connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
+        connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
         //double click to get a 3D view of the neuron
-        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
+//        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
         //sort Item
         connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
     }
@@ -663,20 +655,16 @@ QTableWidget* MorphoHub_MainWindow::createTableDataLevel(QList<ReconstructionInf
         t->resizeRowsToContents();
         //set content menu
         t->setContextMenuPolicy(Qt::CustomContextMenu);
-//        popMenuFordataTab=new QMenu();
-//        popAction_3Dview=new QAction("See In 3D View");
-//        connect(popAction_3Dview,SIGNAL(triggered()),this,SLOT(popAction_3Dview_slot()));
-        //connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
+        connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
         //get table cell info when clicked.
         connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
         //double click to get a 3D view of the neuron
-        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
+//        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
         //sort Item
         connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
     }
     return t;
 }
-
 
 QList<ReconstructionInfo> MorphoHub_MainWindow::getReconstuctionsFromLevel(const QString& levelid)
 {

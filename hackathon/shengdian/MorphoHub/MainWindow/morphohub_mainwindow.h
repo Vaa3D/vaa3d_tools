@@ -150,7 +150,7 @@ private slots:
     void contentValueChange(QTreeWidgetItem *item,int column);
     void celltableInfoUpdate(int row,int column);
     void seeIn3Dview_slot(int row,int column);
-    void ondataTab_customContextmenuRequested(QPoint pos);
+    void ondataTab_customContextmenuRequested(const QPoint &pos);
     void cellSortColumn(int c);
     void loginAction_slot();
     void loginOkayButton_slot();
@@ -172,7 +172,6 @@ public slots:
     void skipAction_slot();
     void rollbackAction_slot();
     void reassignAction_slot();
-    void contextMenuEvent(QContextMenuEvent *event);
 };
 
 #endif // MORPHOHUB_MAINWINDOW_H
