@@ -1246,17 +1246,15 @@ void MorphoHub_MainWindow::checkAction_slot()
     {
         if(curRecon.alreadyInit())
         {
-//            commitDialog=new MainDialog(this->dbpath,this->originparent);
-            commitDialog=new MainDialog(this->originparent);
-            commitDialog->setAnnotator(curOperator);//
-            commitDialog->setCurNeuron(curRecon);//get current neuron info
-            commitDialog->setFunction("Check");
-            commitDialog->setupAnnotationProtocol(seuallenAP);
-            commitDialog->updateMainView();
-            commitDialog->setModal(true);
-            commitDialog->show();
-            commitDialog->setGeometry(100,100,600,600);
-            //this->raise();
+            levelControlDialog=new MainDialog(this->originparent);
+            levelControlDialog->setAnnotator(curOperator);//
+            levelControlDialog->setCurNeuron(curRecon);//get current neuron info
+            levelControlDialog->setFunction("Check");
+            levelControlDialog->setupAnnotationProtocol(seuallenAP);
+            levelControlDialog->updateMainView();
+            levelControlDialog->setModal(true);
+            levelControlDialog->show();
+            levelControlDialog->setGeometry(100,100,600,600);
         }
     }
 }
@@ -1277,16 +1275,16 @@ void MorphoHub_MainWindow::commitAction_slot()
         if(curRecon.alreadyInit())
         {
             toLogWindow("Go to Commit page.");
-            commitDialog=new MainDialog(this->dbpath,this->originparent);
-            commitDialog->setAnnotator(curOperator);//
-            commitDialog->setCurNeuron(curRecon);//get current neuron info
-            commitDialog->setFunction("Commit");
-            commitDialog->setupAnnotationProtocol(seuallenAP);
-            commitDialog->updateMainView();
+            levelControlDialog=new MainDialog(this->dbpath,this->originparent);
+            levelControlDialog->setAnnotator(curOperator);//
+            levelControlDialog->setCurNeuron(curRecon);//get current neuron info
+            levelControlDialog->setFunction("Commit");
+            levelControlDialog->setupAnnotationProtocol(seuallenAP);
+            levelControlDialog->updateMainView();
 
-            commitDialog->setModal(true);
-            commitDialog->show();
-            commitDialog->setGeometry(100,100,600,600);
+            levelControlDialog->setModal(true);
+            levelControlDialog->show();
+            levelControlDialog->setGeometry(100,100,600,600);
             //this->raise();
         }
     }
@@ -1304,16 +1302,16 @@ void MorphoHub_MainWindow::skipAction_slot()
     {
         if(curRecon.alreadyInit())
         {
-            commitDialog=new MainDialog(this->dbpath,this->originparent);
-            commitDialog->setAnnotator(curOperator);//
-            commitDialog->setCurNeuron(curRecon);//get current neuron info
-            commitDialog->setFunction("Skip");
-            commitDialog->setupAnnotationProtocol(seuallenAP);
-            commitDialog->updateMainView();
+            levelControlDialog=new MainDialog(this->dbpath,this->originparent);
+            levelControlDialog->setAnnotator(curOperator);//
+            levelControlDialog->setCurNeuron(curRecon);//get current neuron info
+            levelControlDialog->setFunction("Skip");
+            levelControlDialog->setupAnnotationProtocol(seuallenAP);
+            levelControlDialog->updateMainView();
 
-            commitDialog->setModal(true);
-            commitDialog->show();
-            commitDialog->setGeometry(100,100,600,600);
+            levelControlDialog->setModal(true);
+            levelControlDialog->show();
+            levelControlDialog->setGeometry(100,100,600,600);
         }
     }
 }
@@ -1330,16 +1328,16 @@ void MorphoHub_MainWindow::rollbackAction_slot()
     {
         if(curRecon.alreadyInit())
         {
-            commitDialog=new MainDialog(this->dbpath,this->originparent);
-            commitDialog->setAnnotator(curOperator);//
-            commitDialog->setCurNeuron(curRecon);//get current neuron info
-            commitDialog->setFunction("Rollback");
-            commitDialog->setupAnnotationProtocol(seuallenAP);
-            commitDialog->updateMainView();
+            levelControlDialog=new MainDialog(this->dbpath,this->originparent);
+            levelControlDialog->setAnnotator(curOperator);//
+            levelControlDialog->setCurNeuron(curRecon);//get current neuron info
+            levelControlDialog->setFunction("Rollback");
+            levelControlDialog->setupAnnotationProtocol(seuallenAP);
+            levelControlDialog->updateMainView();
 
-            commitDialog->setModal(true);
-            commitDialog->show();
-            commitDialog->setGeometry(100,100,600,600);
+            levelControlDialog->setModal(true);
+            levelControlDialog->show();
+            levelControlDialog->setGeometry(100,100,600,600);
         }
     }
 }

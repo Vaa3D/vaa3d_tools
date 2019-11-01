@@ -118,7 +118,7 @@ private:
     QAction *rollbackAction;
     QAction *reassignAction;
     QAction *releaseAction;
-    MainDialog *commitDialog;
+    MainDialog *levelControlDialog;
 
     /*..............Login or out Dialog............*/
     QToolBar *loginToolbar;
