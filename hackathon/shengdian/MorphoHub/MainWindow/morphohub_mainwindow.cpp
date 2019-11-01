@@ -805,7 +805,7 @@ void MorphoHub_MainWindow::NewDB_slot()
                                    QMessageBox::Ok,QMessageBox::Cancel);
         if(reply==QMessageBox::Cancel)
             return;
-        QDir::setCurrent(dbpath);
+        QDir::setCurrent(inputpath);
         QDir dir(QDir::currentPath());
         dbpath=dir.absolutePath();
         qDebug()<<"path is : "<<dbpath;
@@ -870,7 +870,7 @@ void MorphoHub_MainWindow::SetDB_slot()
                                    QMessageBox::Ok,QMessageBox::Cancel);
         if(reply==QMessageBox::Cancel)
             return;
-        QDir::setCurrent(dbpath);
+        QDir::setCurrent(inputpath);
         QDir dir(QDir::currentPath());
         dbpath=dir.absolutePath();
         qDebug()<<"path is : "<<dbpath;

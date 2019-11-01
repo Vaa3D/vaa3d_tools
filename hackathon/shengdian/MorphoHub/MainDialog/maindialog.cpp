@@ -748,7 +748,7 @@ void MainDialog::okayButton_slot()
                 QString path_neuronarchives=this->dbpath+"/Brain/"+nextNeuron.SdataID+"/NeuronArchives/"+nextNeuron.SomaID+"/"+
                         removeLevel_Archives_LineEdit->text()+"/";
                 rmpathlist.append(path_neuronarchives);
-                qDebug()<<"rm path1="<<path_neuronarchives;
+                qDebug()<<"rm path2="<<path_neuronarchives;
             }
         }
     }
