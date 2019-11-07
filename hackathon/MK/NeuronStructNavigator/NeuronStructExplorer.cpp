@@ -26,6 +26,7 @@
 #include "neuron_format_converter.h"
 
 #include "NeuronStructExplorer.h"
+#include "NeuronStructNavigator_Define.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
@@ -185,6 +186,18 @@ void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTre
 	//cout << "======= after merging clusters =======" << endl;
 	//cout << "head segment number: " << headSegNum << " -- tail segment number: " << tailSegNum << endl;
 	//cout << "head segment map number: " << inputProfiledTree.headSeg2ClusterMap.size() << " -- tail segment map number: " << inputProfiledTree.tailSeg2ClusterMap.size() << endl;
+
+#ifdef __SEGEND_CLUSTER_DEBUG__
+	QString outputPath = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\debug\\";
+	QDir outputDir(outputPath);
+	outputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	QStringList segEndTestList = outputDir.entryList();
+	int num = 0;
+	for (QStringList::iterator it = segEndTestList.begin(); it != segEndTestList.end(); ++it)
+		if (it->contains("segEndCluster")) ++num;
+	string segEndTestFullPath = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\debug\\segEndCluster" + to_string(num + 1) + ".swc";
+	this->__segEndClusteringExam(inputProfiledTree, segEndTestFullPath);
+#endif
 }
 
 void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
@@ -1452,7 +1465,6 @@ NeuronTree NeuronStructExplorer::swcIdentityCompare(const NeuronTree& subjectTre
 	return outputTree;
 }
 /* ================================================================================================================================= */
-
 
 
 

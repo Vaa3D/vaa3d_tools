@@ -36,32 +36,23 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 
 	vector<int> newSegIDs;
 	set<int> connectedSegIDs;
+	cout << " -- sharp angle: " << endl << "      ";
 	for (boost::container::flat_map<int, vector<segPairProfile>>::iterator it = outputProfiledTree.cluster2segPairMap.begin(); it != outputProfiledTree.cluster2segPairMap.end(); ++it)
 	{
-		if (it->second.size() == 1)
+		// Currently it ONLY processes clusters with ONLY 1 segPair.
+		// Clusters with multiple segPairs are more complicated since it involves optimizing the segPair arrangement.
+		if (it->second.size() == 1) 
 		{
 			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
 			if (it->second.begin()->seg1Ptr->tails.size() > 1 || it->second.begin()->seg2Ptr->tails.size() > 1) continue;
 
 			if (it->second.begin()->currConnOrt == head_head)
 			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
-				if (overlapCheck < 0) continue;
+				if (it->second.begin()->segsAngleDiff > 0.5)
+				{
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					continue;
+				}
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -84,23 +75,11 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			}
 			else if (it->second.begin()->currConnOrt == head_tail)
 			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
-									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
-				if (overlapCheck < 0) continue;
+				if (it->second.begin()->segsAngleDiff > 0.5)
+				{
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					continue;
+				}
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -123,23 +102,11 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			}
 			else if (it->second.begin()->currConnOrt == tail_tail)
 			{
-				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
-				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
-				seg1HeadID = it->second.begin()->seg1Ptr->head;
-				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
-				seg2HeadID = it->second.begin()->seg2Ptr->head;
-				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
-				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
-				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
-				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
-				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
-
-				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Head, seg1Tail);
-				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
-				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
-									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
-				if (overlapCheck < 0) continue;
+				if (it->second.begin()->segsAngleDiff > 0.5)
+				{
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					continue;
+				}
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -162,6 +129,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			}
 		}
 	}
+	cout << endl;
 
 	vector<ptrdiff_t> nodeDelLocs;
 	for (set<int>::iterator connectedIt = connectedSegIDs.begin(); connectedIt != connectedSegIDs.end(); ++connectedIt)
@@ -184,7 +152,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 
 profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
-	cout << "iteration 1 " << endl;
+	cout << "analyzing seg end clusters..." << endl;
+	cout << " -- iteration 1 " << endl;
 	int iterCount = 1;
 	profiledTree elongatedTree = this->connectSegsWithinClusters(inputProfiledTree, distThreshold);
 	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
@@ -192,7 +161,7 @@ profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputPro
 		inputProfiledTree = elongatedTree;
 
 		++iterCount;
-		cout << "iteration " << iterCount << " " << endl;
+		cout << " -- iteration " << iterCount << " " << endl;
 		elongatedTree = this->connectSegsWithinClusters(inputProfiledTree);
 	}
 	cout << endl;
@@ -386,7 +355,7 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 	this->radius2shellTreeMap = NeuronGeoGrapher::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
 	this->radius2shellConnCompMap = NeuronGeoGrapher::radius2connCompsShell(this->radius2shellTreeMap);	
 	
-	map<double, boost::container::flat_map<int, vector<int>>> shell2shellConnMap; // The map of inner shell's connected components to outer shell's connected components.
+	map<double, boost::container::flat_map<int, vector<int>>> shell2shellConnMap; // The map of inner shell's connected component to outer shell's connected components.
 																				  // shell2shellConnMap: the location of the conn. component on the previous shell to the locaions of the conn. components on the current shell.
 																				  //   -> 'location' means the location on the vector<connectedComponent> of radius2connCompsShell.second.
 	// Pre-allocate shell2shellConnMap to speed up the process later on.
@@ -418,6 +387,8 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 			shell2shellConnMap.at(shellIt->first).insert(pair<int, vector<int>>(int(innerIt - (shellIt - 1)->second.begin()), outerConnLocs));
 		}
 	}
+
+
 	// --------------- END of [Profiling spacially adjacent connected components between inner and outer shells] ---------------
 
 	// ------------------------------------- Building up dendritic tree -------------------------------------
@@ -432,7 +403,7 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 		if (shellIt->second.empty()) emptyShell = true;
 		else emptyShell = false;
 
-		if (emptyShell)
+		if (emptyShell) // If previous shell is empty, then all centroids from the connected components on the current shell will be roots.
 		{		
 			for (vector<connectedComponent>::iterator rootCompIt = this->radius2shellConnCompMap.at(shellIt->first).begin(); rootCompIt != this->radius2shellConnCompMap.at(shellIt->first).end(); ++rootCompIt)
 			{
@@ -469,7 +440,7 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 					newNode.parent = innerLoc2nodeIDmap.at(loc2locIt->first);
 					newNode.type = 3;
 					outputTree.listNeuron.push_back(newNode);
-					outerLoc2nodeIDmap.insert(pair<int, int>(*outerIt, nodeID));
+					outerLoc2nodeIDmap.insert(pair<int, int>(*outerIt, nodeID)); // boost's associate containers haven't adopted C++11's expression yet.
 					
 					if (outerLocs.find(*outerIt) != outerLocs.end()) outerLocs.erase(outerLocs.find(*outerIt));
 					++nodeID;
@@ -630,8 +601,8 @@ profiledTree TreeGrower::removeHookingHeadTail(const profiledTree& inputProfiled
 
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
 	{
-		if (segIt->second.nodes.size() <= 3) continue;
-		if (segIt->second.seg_childLocMap.at(segIt->second.head).size() > 1) continue;
+		if (segIt->second.nodes.size() <= 3) continue;									// skip short segments
+		if (segIt->second.seg_childLocMap.at(segIt->second.head).size() > 1) continue;  
 		int headChildID = segIt->second.nodes.at(*(segIt->second.seg_childLocMap.at(segIt->second.head).begin())).n;
 		if (segIt->second.seg_childLocMap.at(headChildID).size() > 1) continue;
 		
@@ -669,5 +640,23 @@ profiledTree TreeGrower::removeHookingHeadTail(const profiledTree& inputProfiled
 	profiledTreeReInit(outputProfiledTree);
 
 	return outputProfiledTree;
+}
+
+profiledTree TreeGrower::itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre)
+{
+	cout << "removing hooks.." << endl << "  iteration 1 " << endl;
+	int iterCount = 1;
+	profiledTree hookRemovedTree = TreeGrower::removeHookingHeadTail(inputProfiledTree, radAngleThre);
+	while (hookRemovedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
+	{
+		inputProfiledTree = hookRemovedTree;
+
+		++iterCount;
+		cout << "  iteration " << iterCount << " " << endl;
+		hookRemovedTree = TreeGrower::removeHookingHeadTail(inputProfiledTree, radAngleThre);
+	}
+	cout << endl;
+
+	return hookRemovedTree;
 }
 /* ======================== END of [Tree Trimming / Refining] ========================= */

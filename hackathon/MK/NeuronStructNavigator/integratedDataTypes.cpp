@@ -29,7 +29,15 @@ using namespace std;
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
 {
 	this->getSegDistance(connOrt);
-	//this->turning12(connOrt);  // Problematic if there are branched segments.
+
+	if (inputSeg1.tails.size() > 1 || inputSeg2.tails.size() > 1)
+	{
+		cerr << " -- Branched segments are currently not supported. The turnning angle of 2 segments won't be computed." << endl;
+		return;
+	}
+	
+	this->turning12(connOrt);
+	this->segsAngleDiff12(connOrt);
 }
 
 void integratedDataTypes::segPairProfile::getSegDistance(connectOrientation connOrt)
@@ -82,6 +90,33 @@ void integratedDataTypes::segPairProfile::turning12(connectOrientation connOrt)
 	else if (connOrt == head_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
 	else if (connOrt == tail_head) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
 	else if (connOrt == tail_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+}
+
+void integratedDataTypes::segPairProfile::segsAngleDiff12(connectOrientation connOrt)
+{
+	vector<double> dispVec1, dispVec2;
+	if (connOrt == head_head)
+	{
+		dispVec1 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg1Ptr, head);
+		dispVec2 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg2Ptr, tail);
+	}
+	else if (connOrt == head_tail)
+	{
+		dispVec1 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg1Ptr, head);
+		dispVec2 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg2Ptr, head);
+	}
+	else if (connOrt == tail_head)
+	{
+		dispVec1 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg1Ptr, tail);
+		dispVec2 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg2Ptr, tail);
+	}
+	else if (connOrt == tail_tail)
+	{
+		dispVec1 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg1Ptr, tail);
+		dispVec2 = NeuronGeoGrapher::getSegDispVector<double>(*this->seg2Ptr, head);
+	}
+
+	this->segsAngleDiff = NeuronGeoGrapher::getPiAngle(dispVec1, dispVec2);
 }
 
 integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)

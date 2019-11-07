@@ -28,8 +28,8 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
 	
 	vector<string> paras;
 	for (int i = 2; i < argc; ++i)
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	string funcName = "spikeRemoveTest";
+	//string funcName = "spikeRemoveTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -380,8 +380,8 @@ int main(int argc, char* argv[])
 
 		TreeGrower newGrowingTree;
 		profiledTree inputProfiledTree(inputTree);
-		profiledTree testTree = newGrowingTree.connectSegsWithinClusters(inputProfiledTree, 5);
-		//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\connect1.swc", testTree.tree);
+		profiledTree testTree = newGrowingTree.itered_connectSegsWithinClusters(inputProfiledTree, 5);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\connect.swc", testTree.tree);
 		newGrowingTree.getSegHeadTailClusters(inputProfiledTree);
 		int clusterCount = 1;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)

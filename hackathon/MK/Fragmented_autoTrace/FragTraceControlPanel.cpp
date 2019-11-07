@@ -572,11 +572,11 @@ void FragTraceControlPanel::traceButtonClicked()
 	NeuronTree finalTree;
 	if (existingTree.listNeuron.isEmpty())
 	{
-		NeuronStructExplorer myExplorer;
 		profiledTree tracedProfiledTree(this->tracedTree);
-		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
+		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(tracedProfiledTree, 5);
+		this->thisCallback->setSWCTeraFly(finalProfiledTree.tree);
 
-		finalTree = this->tracedTree;
+		finalTree = this->tracedTree; // this is still the tree before iteratively connected by TreeGrower::itered_connectSegsWithinClusters
 	}
 	else
 	{
@@ -592,6 +592,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
 		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5);
 		this->tracedTree = finalProfiledTree.tree;
+		//this->tracedTree = combinedProfiledTree.tree;
 		this->scaleTracedTree();
 		this->thisCallback->setSWCTeraFly(this->tracedTree);
 	}

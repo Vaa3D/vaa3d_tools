@@ -175,6 +175,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	
 	if (this->cutoffIntensity != 0)
 	{
+		// The signal mask is generated here with adaptive threshodling followed by simple thresholding.
+		// Original signal intensity is preserved and background is zero.
 		this->simpleThre(this->adaImgName, dims, "ada_cutoff");
 		
 		if (this->gammaCorrection)
@@ -257,8 +259,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
-		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
-		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
+		//profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
+		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
+		NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
 		finalOutputTree = branchBrokenTree; // cancel image volume downsampling since the polar coord approach is fast

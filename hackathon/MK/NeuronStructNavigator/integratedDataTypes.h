@@ -115,11 +115,16 @@ namespace integratedDataTypes
 		const segUnit* seg1Ptr;
 		const segUnit* seg2Ptr;
 		connectOrientation currConnOrt;
-		double turningAngle, distance;
+
+		double distance;			// The shortest distance between the 2 segments
+		double turningAngle;		// The turnning angle from seg1's displacement vector to seg2's connecting point
+		double segsAngleDiff;		// The 'sequential' angle difference from displacement vector 1 to displacement vector 2.
+		
 		map<connectOrientation, double> connDistMap;
 
-		void getSegDistance(connectOrientation connOrt = all_ort);
-		void turning12(connectOrientation connOrt);
+		void getSegDistance(connectOrientation connOrt = all_ort);  // Get the closest distance between the 2 segments
+		void turning12(connectOrientation connOrt);					// Get the angle formed by elongating segment's displacement vector and connecting vector (from elongating end to connecting end).
+		void segsAngleDiff12(connectOrientation connOrt);
 	};
 	/************************************************************************/
 
