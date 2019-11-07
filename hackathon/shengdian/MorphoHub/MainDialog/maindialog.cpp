@@ -786,7 +786,7 @@ void MainDialog::okayButton_slot()
         if(alldone)
         {
             qDebug()<<"Already done all the check";
-            //clear older level and tmp dst
+            qDebug()<<"clear older level and tmp folder";
             for(int i=0;i<rmpathlist.size();i++)
             {
                 QDir olderdir(rmpathlist.at(i));
@@ -812,11 +812,13 @@ void MainDialog::okayButton_slot()
         else
         {
             //failed and clear
+            qDebug()<<"Fail: clear older level and tmp folder";
             recovery=true;
         }
     }
     if(recovery)
     {
+        qDebug()<<"Fail: Recover older level from tmp folder";
         QDir curdirbase(basefilepath);
         if(!curdirbase.exists())
             curdirbase.mkpath(basefilepath);
@@ -850,6 +852,7 @@ void MainDialog::okayButton_slot()
     else
     {
         //clear tmp path
+        qDebug()<<"Recovery is not needed and tmp folder is removed.";
         QDir tmpdir(dstpathlist.at(0));
         tmpdir.setFilter(QDir::Files);
         if(tmpdir.exists())
