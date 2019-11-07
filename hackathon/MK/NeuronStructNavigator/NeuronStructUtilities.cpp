@@ -29,6 +29,7 @@
 #include "basic_4dimage.h"
 
 #include "NeuronStructUtilities.h"
+#include "NeuronStructNavigator_Define.h"
 #include "ImgProcessor.h"
 
 using namespace boost;
@@ -590,8 +591,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	//		1. Identifying the same 3D blobs slice by slice.
 	//		2. Merging 3D blobs that contain the same 2D blobs.
 
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 	cout << "Merging 2D signal blobs.." << endl;
 	cout << "-- processing slice ";
+#endif
 
 	vector<connectedComponent> outputConnCompList;
 
@@ -641,7 +644,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			continue;
 		}
 
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 		cout << i << "->";
+#endif
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
 		if (preSliceConnComps.empty())
@@ -712,16 +717,22 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				increasedSize = increasedSize + comps.size();
 			}
 		}
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 		cout << increasedSize << ", ";
+#endif
 	}
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 	cout << endl;
 	cout << "Done merging 2D blobs from every 2 slices." << endl;
+#endif
 	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
 
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
 	// Merge any 3D blobs if any of them share the same 2D blob members.
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 	cout << "Now merging 3D blobs.." << endl;
 	cout << " -- original 3D blobs number: " << b3Dcomps.size() << endl;
+#endif
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -741,7 +752,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
 							b3Dcomps.erase(checkIt2);
 							currBaseBlob = checkIt1->first;
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
+#endif
 							goto MERGED;
 						}
 					}
@@ -753,8 +766,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	MERGED:
 		continue;
 	}
+#ifdef __MERGE2DCONNCOMPONENT_DEBUG__
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	cout << "    ------------------------------" << endl << endl;
+#endif
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
 	// ------------------------------------- Create 3D connected component data -------------------------------------

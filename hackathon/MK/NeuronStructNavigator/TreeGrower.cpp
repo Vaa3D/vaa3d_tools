@@ -50,9 +50,27 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			{
 				if (it->second.begin()->segsAngleDiff > 0.5)
 				{
-					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << "(head-head), ";
 					continue;
 				}
+
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -77,9 +95,27 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			{
 				if (it->second.begin()->segsAngleDiff > 0.5)
 				{
-					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << "(head-tail), ";
 					continue;
 				}
+
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -104,9 +140,27 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 			{
 				if (it->second.begin()->segsAngleDiff > 0.5)
 				{
-					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << ", ";
+					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << "(tail-tail), ";
 					continue;
 				}
+
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Head, seg1Tail);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectionVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
+									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
+				if (overlapCheck < 0) continue;
 
 				/*NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
@@ -601,7 +655,7 @@ profiledTree TreeGrower::removeHookingHeadTail(const profiledTree& inputProfiled
 
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
 	{
-		if (segIt->second.nodes.size() <= 3) continue;									// skip short segments
+		if (segIt->second.nodes.size() <= 3) continue;	// skip short segments
 		if (segIt->second.seg_childLocMap.at(segIt->second.head).size() > 1) continue;  
 		int headChildID = segIt->second.nodes.at(*(segIt->second.seg_childLocMap.at(segIt->second.head).begin())).n;
 		if (segIt->second.seg_childLocMap.at(headChildID).size() > 1) continue;

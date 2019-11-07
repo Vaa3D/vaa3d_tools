@@ -259,9 +259,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
-		//profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
-		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
-		NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
+		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
+		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
+		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
 		finalOutputTree = branchBrokenTree; // cancel image volume downsampling since the polar coord approach is fast
@@ -698,8 +698,13 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 	
 	bool typeAssigned = false;
 	int assignedType;
+	cout << "  looking through existing segments";
+	int segCount = 0;
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
 	{
+		++segCount;
+		if (segCount % 50 == 0) cout << ".";
+
 		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 		{
 			if (nodeIt->type != 16)
@@ -712,7 +717,6 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 
 		if (typeAssigned)
 		{
-			cout << "existing segment found" << endl;
 			for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 			{
 				nodeIt->type = assignedType;
@@ -723,6 +727,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 			assignedType =16;
 		}
 	}
+	cout << endl;
 
 	bool duplicatedRemove = true;
 	while (duplicatedRemove)
