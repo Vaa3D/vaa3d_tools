@@ -188,7 +188,16 @@ void MorphoHub_MainWindow::createActions()
     userManagementAction->setToolTip(tr("User Management"));
     connect(userManagementAction,SIGNAL(triggered()),this,SLOT(userManagementAction_slot()));
 
-    //actions for Functions
+    //actions for services
+    visualizationAction=new QAction(tr("Screenwall"),this);
+    visualizationAction->setToolTip(tr("Visualiztion of the workflow"));
+    connect(visualizationAction,SIGNAL(triggered()),this,SLOT(visualizationAction_slot()));
+//    QAction *qualityControlAction;
+//    QAction *registrationAction;
+//    QAction *releaseAction;
+    errorCheckAction=new QAction(tr("ErrorCheck"),this);
+    errorCheckAction->setToolTip(tr("Check the error of the Workingspace."));
+    connect(errorCheckAction,SIGNAL(triggered()),this,SLOT(errorCheckAction_slot()));
     //actions for levelcontrol
     commitAction= new QAction(tr("&Commit"), this);
     commitAction->setToolTip(tr("Commit one neuron to next level"));
@@ -261,6 +270,8 @@ void MorphoHub_MainWindow::createToolBar()
     loginToolbar->addAction(loginAction);
     loginToolbar->addAction(logoutAction);
 
+    servicesToolbar=this->addToolBar(tr("Services"));
+    servicesToolbar->addAction(errorCheckAction);
 }
 
 void MorphoHub_MainWindow::createMenus()
@@ -275,8 +286,10 @@ void MorphoHub_MainWindow::createMenus()
     managementMenu=menuBar()->addMenu(tr("Management"));
     managementMenu->addAction(sdconfAction);
     managementMenu->addAction(userManagementAction);
-    //functions menu
-    //funcs = menuBar()->addMenu(tr("&Functions"));
+    //services menu
+    servicesMenu = menuBar()->addMenu(tr("&Services"));
+    servicesMenu->addAction(visualizationAction);
+    servicesMenu->addAction(errorCheckAction);
 
     //level control menu
     levelControlMenu=menuBar()->addMenu(tr("LevelControl"));
@@ -1218,7 +1231,23 @@ void MorphoHub_MainWindow::helpAction_slot()
     textEdit->setFontPointSize(16);
     textEdit->show();
 }
+/**********************************************************/
+/****************Services SLots*************************/
+/********ErrorCheck,Visualiztion*****/
+void MorphoHub_MainWindow::visualizationAction_slot()
+{
+    BigscreenControlDialog bigscreencontroldialog(originparent);
+    if(bigscreencontroldialog.exec()!=QDialog::Accepted)
+        return;
+    bigscreencontroldialog.update();
+    DisplayPARA controlPara=bigscreencontroldialog.controlPara;
+    MethodForBigScreenDisplay(*MorphoHubcallback,originparent,controlPara);
+}
 
+void MorphoHub_MainWindow::errorCheckAction_slot()
+{
+    qDebug()<<"ErrorCheck service";
+}
 
 MorphoHub_MainWindow::~MorphoHub_MainWindow()
 {

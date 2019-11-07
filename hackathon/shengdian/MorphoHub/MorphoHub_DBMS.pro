@@ -11,14 +11,17 @@ HEADERS	+= MorphoHub_DBMS_plugin.h \
     BasicInfo.h \
     MainDialog/sourcedatamanagement.h \
     ../../../v3d_main/basic_c_fun/basic_surf_objs.h \
-    MainDialog/annotatormanagement.h
+    MainDialog/annotatormanagement.h \
+    MainDialog/screenwallDialog.h \
+    Service/BigScreenDispaly_func.h
 SOURCES	+= MorphoHub_DBMS_plugin.cpp \
     MainWindow/morphohub_mainwindow.cpp \
     MainDialog/maindialog.cpp \
     MainDialog/sourcedatamanagement.cpp \
     ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp \
     BasicInfo.cpp \
-    MainDialog/annotatormanagement.cpp
+    MainDialog/annotatormanagement.cpp \
+    Service/BigScreenDisplay_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(MorphoHub_DBMS)

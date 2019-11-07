@@ -1,5 +1,5 @@
-#ifndef BIGSCREENCONTROLDIALOG_H
-#define BIGSCREENCONTROLDIALOG_H
+#ifndef SCREENWALLDIALOG_H
+#define SCREENWALLDIALOG_H
 #include<QtGui>;
 #include <string>;
 #include "v3d_message.h"
@@ -78,7 +78,7 @@ public:
         combineNeuron=new QCheckBox();
         combineNeuron->setText(tr("Combine"));
         combineNeuron->setObjectName("combine neuron");
-        combineNeuron->setChecked(true);
+        combineNeuron->setChecked(false);
 
         downSampleRate=new QSpinBox();
         downSampleRate->setRange(1,1000);
@@ -91,7 +91,7 @@ public:
         downSampleCombined=new QCheckBox();
         downSampleCombined->setText(tr("Down Sample (combined)"));
         downSampleCombined->setObjectName("downSampleCombined");
-        downSampleCombined->setChecked("true");
+        downSampleCombined->setChecked(false);
 
         ok = new QPushButton(tr("ok"));
         cancel = new QPushButton(tr("cancel"));
@@ -235,7 +235,7 @@ public slots:
     }
     void setAnchorFile()
     {
-        QString title="choose anchor file for displaying : ";
+        QString title="chose anchor file for displaying : ";
         QString current_file= editor_anchorfile->text();
         QString anchorfile=QFileDialog::getOpenFileName(this, title,
                                                         "",
@@ -316,4 +316,4 @@ public:
     QPushButton * cancel;
 
 };
-#endif // BIGSCREENCONTROLDIALOG_H
+#endif // SCREENWALLDIALOG_H

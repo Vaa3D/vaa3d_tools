@@ -7,6 +7,8 @@
 #include "../MainDialog/sourcedatamanagement.h"
 #include "../MainDialog/annotatormanagement.h"
 #include "../BasicInfo.h"
+#include "../MainDialog/screenwallDialog.h"
+#include "../Service/BigScreenDispaly_func.h"
 #include "v3d_interface.h"
 using namespace std;
 
@@ -44,14 +46,20 @@ private:
 
     QMenu *file;
     QMenu *managementMenu;
-    //QMenu *funcs;
+    QMenu *servicesMenu;
     QMenu *levelControlMenu;
     QMenu *menuWindow;
     QMenu *helpMenu;
     QToolBar *dbToolbar;
-//    QToolBar *funcsToolbar;
+    QToolBar *servicesToolbar;
     QToolBar *levelControlToolbar;
 
+    /*..............services: Visualization, qc, registration, backup and release............*/
+    QAction *visualizationAction;
+    QAction *qualityControlAction;
+    QAction *registrationAction;
+    QAction *releaseAction;
+    QAction *errorCheckAction;
     /*..............Database layout ............*/
     QWidget *mainWidget;
     QHBoxLayout *mainlayout;
@@ -117,7 +125,7 @@ private:
     QAction *skipAction;
     QAction *rollbackAction;
     QAction *reassignAction;
-    QAction *releaseAction;
+
     MainDialog *levelControlDialog;
 
     /*..............Login or out Dialog............*/
@@ -166,6 +174,9 @@ public slots:
     void sourceDataMAction();
     //annotator management
     void userManagementAction_slot();
+    /*..............services slots............*/
+    void visualizationAction_slot();
+    void errorCheckAction_slot();
     /*..............Protocol slots............*/
     void commitAction_slot();
     void checkAction_slot();
