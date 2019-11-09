@@ -43,7 +43,10 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 		// Clusters with multiple segPairs are more complicated since it involves optimizing the segPair arrangement.
 		if (it->second.size() == 1) 
 		{
+			// Skip segments if they have been connected.
 			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
+			
+			// Skip segments if they have multiple tails.
 			if (it->second.begin()->seg1Ptr->tails.size() > 1 || it->second.begin()->seg2Ptr->tails.size() > 1) continue;
 
 			if (it->second.begin()->currConnOrt == head_head)

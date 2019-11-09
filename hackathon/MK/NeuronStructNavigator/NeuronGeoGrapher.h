@@ -49,7 +49,10 @@ public:
 	template<class T> // Get the displacement vector of an input [segUnit] with specified orientation.
 	static inline vector<T> getSegDispVector(const segUnit& inputSeg, connectOrientation connOrt);
 
-	template<class T> // Get the unit displacement vector between 2 vectors ==> Needs to redefine starting and ending locations.
+	template<class T> // Get the unit displacement vector of an input segUnit with specified orientation.
+	static inline vector<T> getSegDispUnitVector(const segUnit& inputSeg, connectOrientation connOrt);
+
+	template<class T> // Get the unit displacement vector between 2 vectors
 	static inline vector<T> getDispUnitVector(const vector<T>& endingLoc, const vector<T>& startingLoc);
 
 	// Get the vector between 2 NeuronSWC nodes with the vector's starting location (startNode). 
@@ -155,6 +158,20 @@ inline vector<T> NeuronGeoGrapher::getSegDispVector(const segUnit& inputSeg, con
 	else if (connOrt == tail) vec = NeuronGeoGrapher::getVector_NeuronSWC<T>(tailNode, headNode);
 
 	return vec;
+}
+
+template<class T>
+inline vector<T> NeuronGeoGrapher::getSegDispUnitVector(const segUnit& inputSeg, connectOrientation connOrt)
+{
+	vector<T> segDispVec = NeuronGeoGrapher::getSegDispVector(inputSeg, connOrt);
+	T segLength = sqrt((segDispVec.at(0) * segDispVec.at(0)) + (segDispVec.at(1) * segDispVec.at(1)) + (segDispVec.at(2) * segDispVec.at(2)));
+	
+	vector<T> outputVec;
+	outputVec[0] = segDispVec.at(0) / segLength;
+	outputVec[1] = segDispVec.at(1) / segLength;
+	outputVec[2] = segDispVec.at(2) / segLength;
+
+	return outputVec;
 }
 
 template<class T>
