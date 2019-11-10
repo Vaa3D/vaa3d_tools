@@ -10,6 +10,7 @@
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
+#define MAX_DOUBLE 1.79769e+308
 
 using namespace std;
 
@@ -84,6 +85,7 @@ void Analysis(QString indir,vector<char*> outfiles, bool hasOutput){
             cout<<"Error in writing swc to file"<<endl;
         }
 
+
         //split
         split_neuron(fileSaveName, indir);
 
@@ -95,6 +97,14 @@ void Analysis(QString indir,vector<char*> outfiles, bool hasOutput){
 
         //2.dendrite
         NeuronTree nt_dendrite = readSWC_file(file_den);
+        // determine whether apical/basal
+        bool apical = false;
+        for (int i=0;i<nt_dendrite.listNeuron.size();i++){
+            if (nt_dendrite.listNeuron.at(i).type == 4){
+                apical = true;
+                break;
+            }
+        }
         double * den_features = new double[FNUM];
         computeFeature(nt_dendrite,den_features);
 
@@ -163,7 +173,7 @@ void Analysis(QString indir,vector<char*> outfiles, bool hasOutput){
                 judgement = false;
             }
         }
-        if(!judgement){
+        if(judgement){
         //printf("%s currently has no obvious problems!",id.toStdString().data());
         out<<id.toStdString().data()<<" currently has no obvious problems!"<<endl;
         }
@@ -505,10 +515,10 @@ QList<int> match_axon(NeuronTree axon, NeuronTree lpa){
 }
 
 QList<int> get_subtree(NeuronTree nt, int id){
-    //bool *visited = new bool [nt.listNeuron.size()];
+    bool *visited = new bool [nt.listNeuron.size()];
     QList<int> names;
     for(int m=0; m<nt.listNeuron.size(); m++){
-        //visited[m]=false;
+        visited[m]=false;
         names.push_back(nt.listNeuron.at(m).n);
     }
 
@@ -521,68 +531,68 @@ QList<int> get_subtree(NeuronTree nt, int id){
         children[pid].push_back(k);
     }
 
-    QList<int> neworder;
+//    QList<int> neworder;
 
-    // DFS to sort current component;
+//    // DFS to sort current component;
 
-    // Initialization
-    QStack<int> pstack;
-    QList<int> visited;
-    for(int i=0;i<nt.listNeuron.size(); i++){visited.append(0);}
-    visited[id]=1;
-    pstack.push(id);
-    neworder.append(id);
+//    // Initialization
+//    QStack<int> pstack;
+//    QList<int> visited;
+//    for(int i=0;i<nt.listNeuron.size(); i++){visited.append(0);}
+//    visited[id]=1;
+//    pstack.push(id);
+//    neworder.append(id);
 
-    // Tree traverse
-    bool is_push;
-    int p;
-    while(!pstack.isEmpty()){
-        is_push = false;
-        p = pstack.top();
-        // whether exist unvisited neighbors of pid
-        // if yes, push neighbor to stack;
-        QList<int>::iterator it;
-        //QVector<V3DLONG> cur_neighbors = neighbors.at(pid);
-        for(it = children[p].begin();it!=children[p].end(); ++it)
-        {
-            if(visited.at(*it)==0)
-            {
-                pstack.push(*it);
-                is_push=true;
-                visited[*it]=1;
-                neworder.append(*it);
-                break;
-            }
-        }
-        // else, pop pid
-        if(!is_push){
-            pstack.pop();
-        }
-    }
-    return neworder;
-
-
-//    QList<int> queue,treelist;
-//    visited[id]=true;
-//    queue.push_back(id);
-//    treelist.push_back(id);
-
-//    int id_queue;
-//    cout<<"----------------------------------------------------"<<endl;
-//    while(!queue.empty()){
-//        id_queue = queue.front();
-//        queue.pop_front();
-
-//        for(QList<int>::iterator i = children[id_queue].begin();i!=children[id_queue].end();++i){
-//            if(!visited[*i]){
-//                visited[*i] = true;
-//                queue.push_back(*i);
-//                treelist.push_back(*i);
+//    // Tree traverse
+//    bool is_push;
+//    int p;
+//    while(!pstack.isEmpty()){
+//        is_push = false;
+//        p = pstack.top();
+//        // whether exist unvisited neighbors of pid
+//        // if yes, push neighbor to stack;
+//        QList<int>::iterator it;
+//        //QVector<V3DLONG> cur_neighbors = neighbors.at(pid);
+//        for(it = children[p].begin();it!=children[p].end(); ++it)
+//        {
+//            if(visited.at(*it)==0)
+//            {
+//                pstack.push(*it);
+//                is_push=true;
+//                visited[*it]=1;
+//                neworder.append(*it);
+//                break;
 //            }
 //        }
+//        // else, pop pid
+//        if(!is_push){
+//            pstack.pop();
+//        }
 //    }
-//    cout<<"finish"<<endl;
-//    return treelist;
+//    return neworder;
+
+
+    QList<int> queue,treelist;
+    visited[id]=true;
+    queue.push_back(id);
+    treelist.push_back(id);
+
+    int id_queue;
+    cout<<"----------------------------------------------------"<<endl;
+    while(!queue.empty()){
+        id_queue = queue.front();
+        queue.pop_front();
+
+        for(QList<int>::iterator i = children[id_queue].begin();i!=children[id_queue].end();++i){
+            if(!visited[*i]){
+                visited[*i] = true;
+                queue.push_back(*i);
+                treelist.push_back(*i);
+            }
+        }
+    }
+    cout<<"finish"<<endl;
+    return treelist;
 }
 
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
@@ -1089,10 +1099,10 @@ bool split_neuron(QString qs_input, QString qs_outdir){
 
     //2.2 dendrite
     NeuronTree nt_dendrite = return_dendrite(nt,soma);
-    nt_dendrite = my_SortSWC(nt_dendrite,1,0);
+    nt_dendrite = my_SortSWC(nt_dendrite,VOID,VOID);
     //2.3 axon
     NeuronTree nt_axon = return_axon(nt,soma);
-    nt_axon = my_SortSWC(nt_axon,1,0);
+    nt_axon = my_SortSWC(nt_axon,VOID,VOID);
     //2.4 long_projection without branches
     int soma_axon = get_soma(nt_axon);
     if(soma_axon<0){return 0;}
@@ -1102,12 +1112,12 @@ bool split_neuron(QString qs_input, QString qs_outdir){
     }
     NeuronTree lpa = return_long_axon(nt_axon,soma_axon);
     cout<<"check0"<<endl;
-    lpa = my_SortSWC(lpa,1,0);
-    cout<<"!!!!!!!!!!!!!!"<<endl;
+    //lpa = my_SortSWC(lpa,1,0);
+    //cout<<"!!!!!!!!!!!!!!"<<endl;
     //2.5 3 parts
     QList<int> l=match_axon_and_lpa(nt_axon,lpa);
     NeuronTree nt_long=get_subtree_by_name(nt_axon,l);
-    nt_long = my_SortSWC(nt_long,1,0);
+    //nt_long = my_SortSWC(nt_long,1,0);
     QList<int> long_in_axon = match_axon(nt_axon,nt_long);
     cout<<"check1"<<endl;
     //longest path length
@@ -1273,16 +1283,16 @@ bool split_neuron(QString qs_input, QString qs_outdir){
     writeSWC_file(den_swc, nt_dendrite);
     if(proximal_axon.listNeuron.size()!=0){
     proximal_axon = missing_parent(proximal_axon);
-    proximal_axon = my_SortSWC(proximal_axon, proximal_axon.listNeuron.at(0).n, 0);
+    proximal_axon = my_SortSWC(proximal_axon, proximal_axon.listNeuron.at(0).n, VOID);
     writeSWC_file(proximal_swc, proximal_axon);}
     cout<<"check save proximal"<<endl;
     if(long_projection.listNeuron.size()!=0){
     long_projection = missing_parent(long_projection);
-    long_projection = my_SortSWC(long_projection, long_projection.listNeuron.at(0).n, 0);
+    long_projection = my_SortSWC(long_projection, long_projection.listNeuron.at(0).n, VOID);
     writeSWC_file(long_swc, long_projection);}
     cout<<"check save long"<<endl;
     distal_axon = missing_parent(distal_axon);
-    distal_axon = my_SortSWC(distal_axon, distal_axon.listNeuron.at(0).n, 0);
+    distal_axon = my_SortSWC(distal_axon, distal_axon.listNeuron.at(0).n, VOID);
     writeSWC_file(distal_swc, distal_axon);
     return 1;
 }
@@ -1781,4 +1791,221 @@ double computeHausdorff(const NeuronTree & nt)
     hd *= -12.0/(cnt*(cnt*cnt-1.0))/log(2.0);
     return(hd);
 }
+
+QList<int> loop_detection(const NeuronTree & nt){
+    int siz = nt.listNeuron.size();
+    //cout<<siz<<endl;
+    QList<int> nlist,plist,soma_candidate,trifur;
+    nlist.clear();
+    plist.clear();
+    QVector< QVector<int> > neighbor;
+    QVector< QVector<int> > same_coord;
+    neighbor = QVector< QVector<int> >(siz, QVector<int>() );
+    same_coord = QVector< QVector<int> >(siz, QVector<int>() );
+    bool *visited = new bool [nt.listNeuron.size()];;
+    //count xyz pair, record corresponding ids
+    cout<<"check2"<<endl;
+    cout<<siz<<endl;
+    QHash<QString, QList<int> > id_hash;
+    for(int i=0; i<siz; i++){
+        QString coordi;
+        coordi = QString("%1").arg(nt.listNeuron.at(i).x)+"_"+QString("%1").arg(nt.listNeuron.at(i).y)+"_"+QString("%1").arg(nt.listNeuron.at(i).z);
+        //qDebug()<<coordi;
+        if(!id_hash.contains(coordi)){
+            QList<int> tmp;
+            tmp.append(i);
+            id_hash.insert(coordi,tmp);
+        }
+        else{
+            //cout << "***********"<<id_hash.value(coordi).size()<<endl;
+            for(int j=0; j<id_hash.value(coordi).size();j++){
+                same_coord[i].push_back(id_hash.value(coordi).at(j));
+                same_coord[id_hash.value(coordi).at(j)].push_back(i);
+            }
+            QList<int> t=id_hash.value(coordi);
+            t.append(i);
+            id_hash[coordi] = t;
+            //cout << "***********"<<id_hash.value(coordi).size()<<endl;
+        }
+        nlist.append(nt.listNeuron[i].n);
+        plist.append(nt.listNeuron[i].pn);
+        visited[i]=false;
+        //cout << "***********"<<id_hash.value(coordi).size()<<endl;
+    }
+    //children-parent relation
+//    QVector<QVector<V3DLONG> > children;
+//    children = QVector< QVector<V3DLONG> >(siz, QVector<V3DLONG>() );
+//    for (int i=0;i<siz;i++)
+//    {
+//        int pid = nlist.lastIndexOf(nt.listNeuron.at(i).pn);
+//        if (pid<0) continue;
+//        children[pid].push_back(i);
+//    }
+    cout<<"check3"<<endl;
+    //neighbor matrix
+    for(int i=0; i<siz; i++){
+        QString indicator_codi;
+        indicator_codi = QString("%1").arg(nt.listNeuron.at(i).x)+"_"+QString("%1").arg(nt.listNeuron.at(i).y)+"_"+QString("%1").arg(nt.listNeuron.at(i).z);
+        //qDebug()<<indicator_codi.toStdString().data();
+        int child_id = plist.indexOf(nt.listNeuron.at(i).n);
+        int parent_id = nlist.indexOf(nt.listNeuron.at(i).pn);
+        //cout<<nt.listNeuron[i].n<<"*************"<<child_id<<endl;
+        if(child_id != -1){
+            //cout<<"!!!!!!!!!!!!!!!!!!!"<<endl;
+            neighbor[i].push_back(child_id);
+            neighbor[child_id].push_back(i);
+            //cout<<child_id<<endl;
+        }
+        if(plist.at(i) != -1 && parent_id != -1){
+            neighbor[i].push_back(parent_id);
+            neighbor[parent_id].push_back(i);
+            //cout<<parent_id<<endl;
+        }
+    }
+    cout<<"check4"<<endl;
+    // starting points of tree structure
+    for(int i=0; i<siz; i++){
+        if(nt.listNeuron.at(i).type == 1){
+            soma_candidate.append(i);
+        }
+        QString indi_codi;
+        indi_codi = QString("%1").arg(nt.listNeuron.at(i).x)+"_"+QString("%1").arg(nt.listNeuron.at(i).y)+"_"+QString("%1").arg(nt.listNeuron.at(i).z);
+        if(nt.listNeuron.at(i).pn==-1 && id_hash.value(indi_codi).size()==1){
+            soma_candidate.append(i);
+            //cout<<"***************"<<i<<endl;
+        }
+    }
+    cout<<"check5"<<endl;
+    //DFS
+    QList<int> loop_mark_candidate;
+//    QHash <QString, int> cnt;
+    for(int j=0;j<soma_candidate.size();j++){
+        QList<int> queue;
+        queue.push_back(soma_candidate.at(j));
+        visited[soma_candidate.at(j)]=true;
+        //cout<<"***************"<<soma_candidate.at(j)<<endl;
+//        QString indicator=QString("%1").arg(nt.listNeuron.at(soma_candidate.at(j)).x)+"_"+QString("%1").arg(nt.listNeuron.at(soma_candidate.at(j)).y)+"_"+QString("%1").arg(nt.listNeuron.at(soma_candidate.at(j)).z);
+//       cnt[indicator]=1;
+        int id_queue;
+        while(!queue.empty()){
+            id_queue = queue.front();
+            queue.pop_front();
+            if(same_coord[id_queue].size()>0){
+                for(QVector<int>::iterator it=same_coord[id_queue].begin();it!=same_coord[id_queue].end();++it){
+                    if(!visited[*it]){
+                        visited[*it]=true;
+                        queue.push_back(*it);
+                    }
+//                    else{
+//                        QString indicator=QString("%1").arg(nt.listNeuron.at(*iter).x)+"_"+QString("%1").arg(nt.listNeuron.at(*iter).y)+"_"+QString("%1").arg(nt.listNeuron.at(*iter).z);
+//                        cnt[indicator]=1;
+//                    }
+            }
+            }
+                for(QVector<int>::iterator iter = neighbor[id_queue].begin(); iter!=neighbor[id_queue].end(); ++iter){
+                    if(!visited[*iter]){
+                        visited[*iter]=true;
+                        queue.push_back(*iter);
+                        //cout<<*iter<<endl;
+//                        if(!cnt.count(indicator)){
+//                            cnt[indicator]=1;
+//                        }
+//                        else{
+//                            cnt[indicator]++;
+//                            cout<<cnt[indicator]<<"***************"<<endl;
+//                        }
+                    }
+                    else{
+                        if(!loop_mark_candidate.contains(*iter) && !loop_mark_candidate.contains(id_queue)){
+                            int k=0;
+                            for(int m=0; m<same_coord[*iter].size(); m++){
+                                if(visited[same_coord[*iter].at(m)]!=true){
+                                    k=k+1;
+                                }
+                            }
+                            if(k == 0 && same_coord[*iter].size()>0){
+                               loop_mark_candidate.append(id_queue);
+                               loop_mark_candidate.append(*iter);
+                               break;
+                            }
+                            //cout<<"**********"<<id_queue<<endl;
+                        }
+//                        if(!cnt.count(indicator)){
+//                            cnt[indicator]=1;
+                        }
+//                        else{
+//                            cnt[indicator]++;
+//                            cout<<cnt[indicator]<<"***************"<<endl;
+//                        }
+//                    }
+                }
+    }
+    }
+    cout<<"check6"<<endl;
+    return loop_mark_candidate;
+}
+
+//double minDist(QList<NeuronSWC> & neuron1, QList<NeuronSWC> & neuron2)
+//{
+//    double dis=MAX_DOUBLE;
+//    for(int i=0;i<neuron1.size();i++)
+//    {
+//        for(int j=0;j<neuron2.size();j++)
+//        {
+//            if(dist(neuron1[i],neuron2[j])<dis)
+//                dis = dist(neuron1[i],neuron2[j]);
+//        }
+//    }
+//    return dis;
+//}
+
+//bool TC_segments(NeuronTree nt, QMultiMap<int, QList<NeuronSWC>> multi_tree, QList<double> percent, QList<double> gap){
+//    int siz=nt.listNeuron.size();
+//    int count_tree =0;
+//    QList<NeuronSWC> nt_list;
+//    for(int i=0; i<siz; i++){
+//        nt_list.append(nt.listNeuron.at(i));
+//    }
+//    // count tree number
+//    int start=0;
+//    for(int i=0; i<siz; i++){
+//        if(nt.listNeuron.at(i).pn == -1){
+//            count_tree = count_tree+1;
+//            // store segments
+//            if(count_tree != 1){
+//                multi_tree.insert(count_tree-1,nt_list.mid(start,i-1));
+//                start = i;
+//            }
+//        }
+//    }
+//    multi_tree.insert(count_tree,nt_list.mid(start,siz-1));
+//    // calculate min distance between each tree
+//    for(int i=0; i<count_tree; i++){
+//        double d=MAX_DOUBLE;
+//        for(int j=0; j<count_tree; j++){
+//            if(i!=j){
+//                int count_id1=i+1;
+//                int count_id2=j+1;
+//                QList<NeuronSWC> neuron1, neuron2;
+//                neuron1 = multi_tree.value(count_id1);
+//                neuron2 = multi_tree.value(count_id2);
+//                double dis = minDist(neuron1,neuron2);
+//                if(dis<d){
+//                    d=dis;
+//                }
+//            }
+//        }
+//        gap.append(d);
+//    }
+//    //percentage
+//    for(int i=0; i<count_tree; i++){
+//        QList<NeuronSWC> neuron;
+//        neuron = multi_tree.value(i+1);
+//        double p;
+//        p=100*(double)neuron.size()/(double)nt_list.size();
+//        percent.append(p);
+//    }
+//    return;
+//}
+
 

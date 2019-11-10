@@ -63,15 +63,23 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         else{hasOutput=false;}
         QString swc_file = in.at(0);
         NeuronTree nt_unsorted = readSWC_file(swc_file);
+        cout<<"check1"<<endl;
         QList<int> result;
-        result=get_subtree(nt_unsorted, 1);
-        NeuronTree out;
-        QString filename = "/home/penglab/Desktop/test2/1/test2.swc";
+        result = loop_detection(nt_unsorted);
+        QList<CellAPO> apo;
+        QString filename = "/home/penglab/Desktop/test2/1.apo";
         for (int i=0;i<result.size();i++){
-            NeuronSWC node = nt_unsorted.listNeuron.at(result.at(i));
-            out.listNeuron.append(node);
+            CellAPO m;
+            m.x = nt_unsorted.listNeuron.at(result.at(i)).x;
+            m.y = nt_unsorted.listNeuron.at(result.at(i)).y;
+            m.z = nt_unsorted.listNeuron.at(result.at(i)).z;
+            m.color.r=255;
+            m.color.g=0;
+            m.color.b=0;
+            m.volsize = 50;
+            apo.push_back(m);
         }
-        writeSWC_file(filename, out);
+        writeAPO_file(filename, apo);
 	}
 	else if (func_name == tr("help"))
 	{

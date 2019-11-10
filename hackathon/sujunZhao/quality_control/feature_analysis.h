@@ -41,5 +41,5 @@ bool split_neuron(QString qs_input, QString qs_outdir);
 void Analysis(QString indir,vector<char*> outfiles, bool hasOutput);
 void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback);
 QList<int> get_subtree(NeuronTree nt, int id);
-
+QList<int> loop_detection(const NeuronTree & nt);
 #endif // FEATURE_ANALYSIS_H
