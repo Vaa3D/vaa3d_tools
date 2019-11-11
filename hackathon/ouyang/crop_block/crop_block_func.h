@@ -7,6 +7,7 @@
 
 
 void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void crop_defined_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 QList<int> get_branch(NeuronTree nt);
 QList<int> get_tips(NeuronTree nt, bool include_root);
 

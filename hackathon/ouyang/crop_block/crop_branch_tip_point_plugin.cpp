@@ -20,7 +20,7 @@ QStringList crop_block::funclist() const
 {
 	return QStringList()
         <<tr("get_block")
-		<<tr("func2")
+        <<tr("get_defined_block")
 		<<tr("help");
 }
 
@@ -52,9 +52,9 @@ bool crop_block::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     {
         crop_bt_block(input,output,callback);
     }
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("get_defined_block"))
 	{
-		v3d_msg("To be implemented.");
+        crop_defined_block(input,output,callback);;
 	}
 	else if (func_name == tr("help"))
 	{

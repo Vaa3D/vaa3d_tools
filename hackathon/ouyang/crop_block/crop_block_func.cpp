@@ -82,7 +82,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type = 1 && node.type == 3){  //only get branch points from dendrite
+            else if(tip_type == 1 && node.type == 3){  //only get branch points from dendrite
 
 
                 QString output_swc = output_dir+"branch_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -93,7 +93,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type = 1 && node.type == 2){  //only get branch points from axon
+            else if(tip_type == 1 && node.type == 2){  //only get branch points from axon
 
 
                 QString output_swc = output_dir_axon+"branch_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -131,7 +131,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type = 1 && node.type == 3){  //only get branch points from dendrite
+            else if(tip_type == 1 && node.type == 3){  //only get branch points from dendrite
 
 
                 QString output_swc = output_dir+"tip_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -142,7 +142,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type = 1 && node.type == 2){  //only get branch points from axon
+            else if(tip_type == 1 && node.type == 2){  //only get branch points from axon
 
 
                 QString output_swc = output_dir_axon+"tip_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -157,6 +157,147 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     }
     return;
 }
+
+void crop_defined_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString image_file=infiles.at(0);//raw image
+    QString swc_folder=infiles.at(1);//all swc of same brain folder
+
+    XYZ block_size=XYZ(50,50,50);//default 50x50x50
+    int crop_all_in_input_swc=atoi(inparas.at(0));//1 for crop all swc nodes,0 is constrain
+    if (inparas.size() >= 3 )
+    {
+        int tmp1=atoi(inparas.at(0));
+        int tmp2=atoi(inparas.at(1));
+        int tmp3=atoi(inparas.at(2));
+        crop_all_in_input_swc=atoi(inparas.at(3));
+        if (tmp1 != 0 && tmp2 != 0 && tmp3 != 0)
+        {
+            block_size=XYZ(tmp1,tmp2,tmp3);
+            printf("block size is set to:[%dx%dx%d]",tmp1,tmp2,tmp3);
+        }
+        else
+            v3d_msg("The parameter of block size is not valid, the program will use default value of [50x50x50]",0);
+    }
+    if(!swc_folder.endsWith("/")){
+        swc_folder = swc_folder+"/";
+    }
+
+
+    QDir dir_tip(swc_folder);
+
+    QStringList namelist=dir_tip.entryList();
+
+    QStringList all_swc;
+    for(int i=0;i<namelist.size();++i)
+    {
+        if(namelist.at(i).endsWith("swc")) all_swc.push_back(namelist.at(i));
+        else if(namelist.at(i).endsWith("eswc")) all_swc.push_back(namelist.at(i));
+    }
+
+    QStringList list=all_swc.at(0).split("_");
+    QString block_folder_name_a=list.at(0)+"_all_block_after_pruning"+"/";
+    QString block_folder_name_b=list.at(0)+"_all_block_before_pruning"+"/";
+    QString block_folder_name_refined=list.at(0)+"_all_block_refined"+"/";
+
+    QString dir_output_block_a=swc_folder+block_folder_name_a;
+    QString dir_output_block_b=swc_folder+block_folder_name_b;
+    QString dir_output_block_refined=swc_folder+block_folder_name_refined;
+//    QDir dir_block_a(dir_output_block_a);
+//    if(!dir_block_a.exists() && crop_all_in_input_swc)
+//    {
+//        dir_block_a.mkdir(dir_output_block_a);
+//    }
+//    else
+//    {
+//        dir_block_a.setFilter(QDir::Files);
+//        int fileCount = dir_block_a.count();
+//        for (int i = 0; i < fileCount; i++)
+//            dir_block_a.remove(dir_block_a[i]);
+//    }
+
+    if(crop_all_in_input_swc==1)
+    {
+        QDir dir_block_b(dir_output_block_b);
+        if(!dir_block_b.exists() && crop_all_in_input_swc)
+        {
+            dir_block_b.mkdir(dir_output_block_b);
+        }
+        else
+        {
+            dir_block_b.setFilter(QDir::Files);
+            int fileCount = dir_block_b.count();
+            for (int i = 0; i < fileCount; i++)
+                dir_block_b.remove(dir_block_b[i]);
+        }
+    }
+
+    if(crop_all_in_input_swc==0)
+    {
+        QDir dir_block_refined(dir_output_block_refined);
+        if(!dir_block_refined.exists())
+        {
+            dir_block_refined.mkdir(dir_output_block_refined);
+        }
+        else
+        {
+            dir_block_refined.setFilter(QDir::Files);
+            int fileCount = dir_block_refined.count();
+            for (int i = 0; i < fileCount; i++)
+                dir_block_refined.remove(dir_block_refined[i]);
+        }
+    }
+    // Crop branch points-centered regions one by one
+    block zcenter_block; // This is a block centered at (0,0,0)
+    zcenter_block.small = 0-block_size/2;
+    zcenter_block.large = block_size/2;
+    printf("welcome to use get_termial\n");
+    for(int i=0; i<all_swc.size(); i++)
+    {
+        cout<<"000000000000000000000000000000000000000"<<endl;
+        QString flag1=all_swc.at(i).split(".")[0];
+        NeuronTree pruned_swc=readSWC_file(swc_folder+all_swc.at(i));
+        if (crop_all_in_input_swc){
+            for(int j=0;j<pruned_swc.listNeuron.size();j++)
+            {
+                QString num_cnt=QString("%1").arg(j);
+                NeuronSWC node = pruned_swc.listNeuron.at(j);
+                QString r=QString("%1").arg(node.r);
+                block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+                QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
+                crop_block.name = QString::number(i);
+
+                QString output_image = flag1+"_r"+r+cordinates;
+                crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
+//                if (all_swc.at(i).split(".")[1]=="after_pruning") crop_img(image_file, crop_block, dir_output_block_a, callback,output_image);
+//                if (all_swc.at(i).split(".")[1]=="before_pruning") crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
+            }
+        }
+        else {
+            for(int j=0;j<pruned_swc.listNeuron.size();j++)
+            {
+                NeuronSWC node = pruned_swc.listNeuron.at(j);
+                if(node.r>=8)
+                {
+                    QString num_cnt=QString("%1").arg(j);
+                    QString r=QString("%1").arg(node.r);
+                    block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+                    QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
+                    crop_block.name = QString::number(i);
+
+                    QString output_image = flag1+"_r"+r+cordinates;
+                    crop_img(image_file, crop_block, dir_output_block_refined, callback,output_image);
+               }
+            }
+        }
+    }
+    return;
+}
+
 
 
 QList<int> get_branch(NeuronTree nt){

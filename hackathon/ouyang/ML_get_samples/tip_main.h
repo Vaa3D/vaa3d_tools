@@ -3,7 +3,7 @@
 
 #include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-#include "prune_short_branch.h"
+//#include "prune_short_branch.h"
 #include "../../../../vaa3d_tools/v3d_main/jba/newmat11/newmatap.h"
 #include "../../../../vaa3d_tools/v3d_main/jba/newmat11/newmatio.h"
 #include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/align_axis.h"
@@ -30,7 +30,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
 void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 QList<int> get_tips(NeuronTree nt, bool include_root);
 block offset_block(block input_block, XYZ offset);
-void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip,bool mark_others_or_not);
+void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc=0,int tipnum=0,XYZ tip=0,bool mark_others_or_not=0);
 void crop_img_not_export(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback,unsigned char * & cropped_image,QString output_format,QString input_swc=0,int tipnum=0,XYZ tip=0,bool mark_others_or_not=0);
 void crop_swc(QString input_swc, QString output_swc, block crop_block);
 bool crop_swc_cuboid(NeuronTree nt, QString qs_output,block input_block,bool export_or_not=1);
@@ -64,6 +64,7 @@ NeuronTree get_off_signal_fun(QList<int> tip_list,NeuronTree sort_swc,int range)
 QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_branch_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void find_short_branch_tips_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void find_short_branch_tips_menu(V3DPluginCallback2 &callback, QWidget *parent);
 bool export_file2record(string swc_name,vector<int>input_num,double cur_per, QString fileSaveName);
