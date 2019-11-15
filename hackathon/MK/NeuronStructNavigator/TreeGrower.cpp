@@ -622,6 +622,7 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 		{
 			delLocs.insert(delLocs.end(), tipBranchNodeLocs.begin(), tipBranchNodeLocs.end());
 			tipBranchNodeLocs.clear();
+			TreeGrower::spikeRoots.insert(currPaID);
 		}
 	}
 
@@ -635,6 +636,8 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 
 profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum)
 {
+	TreeGrower::spikeRoots.clear();
+
 	cout << "removing spikes.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
 	profiledTree cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);

@@ -89,6 +89,7 @@ public:
 	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
 	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);	
 	static profiledTree itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+	static boost::container::flat_set<int> spikeRoots;
 
 	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
 	static profiledTree itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre);

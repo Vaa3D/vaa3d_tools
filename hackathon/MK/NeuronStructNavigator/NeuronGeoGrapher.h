@@ -72,6 +72,12 @@ public:
 	template<class T> // Get the included angle of 2 given vectors in radian.
 	static inline T getRadAngle(const vector<T>& vector1, const vector<T>& vector2);
 
+	template<class T> // Get the forming angle with 3 input nodes.
+	static T get3nodesFormingAngle(const NeuronSWC& angularNode, const NeuronSWC& endNode1, const NeuronSWC& endNode2);
+
+	template<class T> // Get the forming angle of a given node on a segment. (not implemented yet)
+	static T get3nodesFormingAngle(const NeuronSWC& angularNode, const segUnit& inputSeg);
+
 	// Find out the projection vector onto the given axial vector from the projecting vector.
 	static vector<pair<float, float>> getProjectionVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector);
 	/***********************************************************************/
@@ -265,6 +271,15 @@ inline T NeuronGeoGrapher::selfTurningRadAngleSum(const vector<vector<T>>& input
 	}
 
 	return radAngleSum;
+}
+
+template<class T>
+T NeuronGeoGrapher::get3nodesFormingAngle(const NeuronSWC& angularNode, const NeuronSWC& endNode1, const NeuronSWC& endNode2)
+{
+	vector<T> vector1 = NeuronGeoGrapher::getVector_NeuronSWC<T>(endNode1, angularNode);
+	vector<T> vector2 = NeuronGeoGrapher::getVector_NeuronSWC<T>(endNode2, angularNode);
+	T piAngle = NeuronGeoGrapher::getPiAngle(vector1, vector2);
+	return T;
 }
 
 template<class T>

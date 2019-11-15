@@ -247,20 +247,39 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree profiledDenTree;
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
+		QString rawDendriticTreeNameQ = this->finalSaveRootQ + "\\rawDenTree.swc";
+		writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
 
 		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2); // reduce zig-zagging
+		QString dnSampledRawDenTreeNameQ = this->finalSaveRootQ + "\\dnSampledRawDenTree.swc";
+		writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
 
 		NeuronTree floatingExcludedTree;
 		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
 		else floatingExcludedTree = downSampledDenTree.tree;
+		QString dnSampledNoDotsNameQ = this->finalSaveRootQ + "\\dnSampledNoDots.swc";
+		writeSWC_file(dnSampledNoDotsNameQ, floatingExcludedTree);
 
 		profiledTree dnSampledProfiledTree(floatingExcludedTree);
-		//QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\beforeSpikeRemove.swc";
-		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\beforeSpikeRemove.swc";
+		writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
+		QString removeSpikeFullName = this->finalSaveRootQ + "/noSpike.swc";
+		writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
+
+		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(TreeGrower::spikeRoots, spikeRemovedProfiledTree);
+		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
+		writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
+
 		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
+		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "/beforeBranchBreak.swc";
+		writeSWC_file(beforeBranchBreakSWCFullName, hookRemovedProfiledTree.tree);
+
 		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
+		QString branchBreakNameQ = this->finalSaveRootQ + "/branchBreak.swc";
+		writeSWC_file(branchBreakNameQ, branchBrokenTree);
 		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
@@ -536,6 +555,34 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 
 
 /*************************** Final Traced Tree Generation ***************************/
+profiledTree FragTraceManager::straightenSpikeRoots(const boost::container::flat_set<int>& spikeRootIDs, const profiledTree& inputProfiledTree, double angleThre)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	for (boost::container::flat_set<int>::const_iterator it = spikeRootIDs.begin(); it != spikeRootIDs.end(); ++it)
+	{
+		if (inputProfiledTree.node2LocMap.find(*it) != inputProfiledTree.node2LocMap.end())
+		{
+			if (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*it)).parent != -1 && inputProfiledTree.node2childLocMap.at(*it).size() == 1)
+			{
+				NeuronSWC angularNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*it));
+				NeuronSWC endNode1 = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(angularNode.parent));
+				NeuronSWC endNode2 = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*inputProfiledTree.node2childLocMap.at(*it).begin()));
+
+				float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
+				if (angle <= 0.5)
+				{
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].x = (endNode1.x + endNode2.x) / 2;
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].y = (endNode1.y + endNode2.y) / 2;
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].z = (endNode1.z + endNode2.z) / 2;
+				}
+			}
+		}
+	}
+
+	profiledTreeReInit(outputProfiledTree);
+	return outputProfiledTree;
+}
+
 bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProfiledTree)
 {
 	cout << endl << "Finishing up processing objects.." << endl;
