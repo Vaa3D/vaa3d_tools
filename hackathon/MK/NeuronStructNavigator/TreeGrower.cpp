@@ -589,6 +589,7 @@ NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const
 /* ============================= Tree Trimming / Refining ============================= */
 profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
+	boost::container::flat_set<int> tempRootIds = inputProfiledTree.spikeRootIDs;
 	profiledTree processingProfiledTree = inputProfiledTree;
 	vector<size_t> tipLocs;
 	for (QList<NeuronSWC>::iterator it = processingProfiledTree.tree.listNeuron.begin(); it != processingProfiledTree.tree.listNeuron.end(); ++it)
@@ -622,7 +623,7 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 		{
 			delLocs.insert(delLocs.end(), tipBranchNodeLocs.begin(), tipBranchNodeLocs.end());
 			tipBranchNodeLocs.clear();
-			TreeGrower::spikeRoots.insert(currPaID);
+			tempRootIds.insert(currPaID);
 		}
 	}
 
@@ -630,17 +631,17 @@ profiledTree TreeGrower::spikeRemoval(const profiledTree& inputProfiledTree, int
 	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
 		processingProfiledTree.tree.listNeuron.erase(processingProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
 	profiledTreeReInit(processingProfiledTree);
+	processingProfiledTree.spikeRootIDs.insert(tempRootIds.begin(), tempRootIds.end());
 
 	return processingProfiledTree;
 }
 
 profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum)
 {
-	TreeGrower::spikeRoots.clear();
-
 	cout << "removing spikes.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
 	profiledTree cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
+	cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
 	while (cleanedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
 	{
 		inputProfiledTree = cleanedTree;
@@ -648,6 +649,7 @@ profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, in
 		++iterCount;
 		cout << "  iteration " << iterCount << " " << endl;
 		cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
+		cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
 	}
 	cout << endl;
 

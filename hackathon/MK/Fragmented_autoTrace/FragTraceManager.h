@@ -151,7 +151,7 @@ private:
 	
 
 /* =================== Final Traced Tree Generation =================== */
-	profiledTree straightenSpikeRoots(const boost::container::flat_set<int>& spikeRootIDs, const profiledTree& inputProfiledTree, double angleThre = 0.5);
+	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 /* ==================================================================== */
 };

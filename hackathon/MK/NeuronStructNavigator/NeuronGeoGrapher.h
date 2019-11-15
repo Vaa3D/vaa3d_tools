@@ -279,7 +279,8 @@ T NeuronGeoGrapher::get3nodesFormingAngle(const NeuronSWC& angularNode, const Ne
 	vector<T> vector1 = NeuronGeoGrapher::getVector_NeuronSWC<T>(endNode1, angularNode);
 	vector<T> vector2 = NeuronGeoGrapher::getVector_NeuronSWC<T>(endNode2, angularNode);
 	T piAngle = NeuronGeoGrapher::getPiAngle(vector1, vector2);
-	return T;
+	
+	return piAngle;
 }
 
 template<class T>

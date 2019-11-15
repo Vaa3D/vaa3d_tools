@@ -269,7 +269,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		QString removeSpikeFullName = this->finalSaveRootQ + "/noSpike.swc";
 		writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
 
-		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(TreeGrower::spikeRoots, spikeRemovedProfiledTree);
+		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(spikeRemovedProfiledTree);
 		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
 		writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
 
@@ -555,18 +555,19 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 
 
 /*************************** Final Traced Tree Generation ***************************/
-profiledTree FragTraceManager::straightenSpikeRoots(const boost::container::flat_set<int>& spikeRootIDs, const profiledTree& inputProfiledTree, double angleThre)
+profiledTree FragTraceManager::straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre)
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
-	for (boost::container::flat_set<int>::const_iterator it = spikeRootIDs.begin(); it != spikeRootIDs.end(); ++it)
+	cout << " -- spike root number:" << inputProfiledTree.spikeRootIDs.size() << endl;
+	for (boost::container::flat_set<int>::iterator it = outputProfiledTree.spikeRootIDs.begin(); it != outputProfiledTree.spikeRootIDs.end(); ++it)
 	{
-		if (inputProfiledTree.node2LocMap.find(*it) != inputProfiledTree.node2LocMap.end())
+		if (outputProfiledTree.node2LocMap.find(*it) != outputProfiledTree.node2LocMap.end())
 		{
-			if (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*it)).parent != -1 && inputProfiledTree.node2childLocMap.at(*it).size() == 1)
+			if (outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it)).parent != -1 && outputProfiledTree.node2childLocMap.at(*it).size() == 1)
 			{
-				NeuronSWC angularNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*it));
-				NeuronSWC endNode1 = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(angularNode.parent));
-				NeuronSWC endNode2 = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*inputProfiledTree.node2childLocMap.at(*it).begin()));
+				NeuronSWC angularNode = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it));
+				NeuronSWC endNode1 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(angularNode.parent));
+				NeuronSWC endNode2 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*outputProfiledTree.node2childLocMap.at(*it).begin()));
 
 				float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
 				if (angle <= 0.5)
