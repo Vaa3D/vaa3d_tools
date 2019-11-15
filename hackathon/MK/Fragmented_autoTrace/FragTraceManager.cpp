@@ -266,19 +266,19 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
-		QString removeSpikeFullName = this->finalSaveRootQ + "/noSpike.swc";
+		QString removeSpikeFullName = this->finalSaveRootQ + "\\noSpike.swc";
 		writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
 
 		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(spikeRemovedProfiledTree);
 		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
 		writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
 
-		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(spikeRemovedProfiledTree, angleThre);
-		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "/beforeBranchBreak.swc";
-		writeSWC_file(beforeBranchBreakSWCFullName, hookRemovedProfiledTree.tree);
+		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(profiledSpikeRootStrightTree, angleThre);
+		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "\\spikeStraight_beforeBranchBreak.swc";
+		writeSWC_file(beforeBranchBreakSWCFullName, profiledSpikeRootStrightTree.tree);
 
 		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
-		QString branchBreakNameQ = this->finalSaveRootQ + "/branchBreak.swc";
+		QString branchBreakNameQ = this->finalSaveRootQ + "\\branchBreak.swc";
 		writeSWC_file(branchBreakNameQ, branchBrokenTree);
 		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
 
@@ -558,19 +558,19 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 profiledTree FragTraceManager::straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre)
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
-	cout << " -- spike root number:" << inputProfiledTree.spikeRootIDs.size() << endl;
+	//cout << " -- spike root number:" << outputProfiledTree.spikeRootIDs.size() << endl;
 	for (boost::container::flat_set<int>::iterator it = outputProfiledTree.spikeRootIDs.begin(); it != outputProfiledTree.spikeRootIDs.end(); ++it)
 	{
-		if (outputProfiledTree.node2LocMap.find(*it) != outputProfiledTree.node2LocMap.end())
+		if (outputProfiledTree.node2LocMap.find(*it) != outputProfiledTree.node2LocMap.end() && outputProfiledTree.node2childLocMap.find(*it) != outputProfiledTree.node2childLocMap.end())
 		{
 			if (outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it)).parent != -1 && outputProfiledTree.node2childLocMap.at(*it).size() == 1)
 			{
 				NeuronSWC angularNode = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it));
 				NeuronSWC endNode1 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(angularNode.parent));
-				NeuronSWC endNode2 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*outputProfiledTree.node2childLocMap.at(*it).begin()));
+				NeuronSWC endNode2 = outputProfiledTree.tree.listNeuron.at(*outputProfiledTree.node2childLocMap.at(*it).begin());
 
 				float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
-				if (angle <= 0.5)
+				if (angle <= 0.6)
 				{
 					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].x = (endNode1.x + endNode2.x) / 2;
 					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].y = (endNode1.y + endNode2.y) / 2;

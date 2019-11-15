@@ -641,7 +641,7 @@ profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, in
 	cout << "removing spikes.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
 	profiledTree cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
-	cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
+	//cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
 	while (cleanedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
 	{
 		inputProfiledTree = cleanedTree;
@@ -649,7 +649,7 @@ profiledTree TreeGrower::itered_spikeRemoval(profiledTree& inputProfiledTree, in
 		++iterCount;
 		cout << "  iteration " << iterCount << " " << endl;
 		cleanedTree = TreeGrower::spikeRemoval(inputProfiledTree, spikeNodeNum);
-		cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
+		//cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
 	}
 	cout << endl;
 

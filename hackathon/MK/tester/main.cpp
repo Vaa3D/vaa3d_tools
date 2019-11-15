@@ -28,18 +28,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
-	for (int i = 2; i < argc; ++i)
+	/*for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "spikeRemoveTest";
+	string funcName = "spikeRemove_spikeRoots";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -108,16 +108,46 @@ int main(int argc, char* argv[])
 		myImgTester.outputString = paras.at(1);
 		myImgTester.thre_stats();
 	}
-	else if (!funcName.compare("spikeRemoveTest"))
+	else if (!funcName.compare("spikeRemove_spikeRoots"))
 	{
 		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
-		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\somaTestCase2\\beforeSpikeRemove.swc";
+		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\spikeTest\\beforeSpikeRemove.swc";
 		NeuronTree beforeSpikeRemoveTree = readSWC_file(inputSWCFullNameQ);
 		profiledTree spikedProfiledTree(beforeSpikeRemoveTree);
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(spikedProfiledTree);
 		//QString outputSWCfullName = QString::fromStdString(paras.at(1));
-		QString outputSWCfullName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\somaTestCase2\\afterSpikeRemove.swc";
+		QString outputSWCfullName = "C:\\Users\\hsienchik\\Desktop\\spikeTest\\afterSpikeRemove.swc";
 		writeSWC_file(outputSWCfullName, spikeRemovedProfiledTree.tree);
+
+		cout << " -- spike root number:" << spikeRemovedProfiledTree.spikeRootIDs.size() << endl;
+		for (boost::container::flat_set<int>::iterator it = spikeRemovedProfiledTree.spikeRootIDs.begin(); it != spikeRemovedProfiledTree.spikeRootIDs.end(); ++it)
+		{
+			if (spikeRemovedProfiledTree.node2LocMap.find(*it) != spikeRemovedProfiledTree.node2LocMap.end() && spikeRemovedProfiledTree.node2childLocMap.find(*it) != spikeRemovedProfiledTree.node2childLocMap.end())
+			{
+				cout << *it << ": ";
+				if (spikeRemovedProfiledTree.tree.listNeuron.at(spikeRemovedProfiledTree.node2LocMap.at(*it)).parent != -1 && spikeRemovedProfiledTree.node2childLocMap.at(*it).size() == 1)
+				{
+					cout << spikeRemovedProfiledTree.tree.listNeuron.at(spikeRemovedProfiledTree.node2LocMap.at(*it)).parent << " " << *spikeRemovedProfiledTree.node2childLocMap.at(*it).begin();
+					NeuronSWC angularNode = spikeRemovedProfiledTree.tree.listNeuron.at(spikeRemovedProfiledTree.node2LocMap.at(*it));
+					NeuronSWC endNode1 = spikeRemovedProfiledTree.tree.listNeuron.at(spikeRemovedProfiledTree.node2LocMap.at(angularNode.parent));
+					NeuronSWC endNode2 = spikeRemovedProfiledTree.tree.listNeuron.at(*spikeRemovedProfiledTree.node2childLocMap.at(*it).begin());
+
+					float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
+					if (angle <= 0.5)
+					{
+						spikeRemovedProfiledTree.tree.listNeuron[spikeRemovedProfiledTree.node2LocMap.at(*it)].x = (endNode1.x + endNode2.x) / 2;
+						spikeRemovedProfiledTree.tree.listNeuron[spikeRemovedProfiledTree.node2LocMap.at(*it)].y = (endNode1.y + endNode2.y) / 2;
+						spikeRemovedProfiledTree.tree.listNeuron[spikeRemovedProfiledTree.node2LocMap.at(*it)].z = (endNode1.z + endNode2.z) / 2;
+					}
+				}
+				cout << endl;
+			}
+		}
+		profiledTreeReInit(spikeRemovedProfiledTree);
+		
+		//QString outputSWCStrightenfullName = QString::fromStdString(paras.at(2));
+		QString spikeRootStrightFullName = "C:\\Users\\hsienchik\\Desktop\\spikeTest\\spikeStright.swc";
+		writeSWC_file(spikeRootStrightFullName, spikeRemovedProfiledTree.tree);
 	}
 	else if (!funcName.compare("centroidTree2MST"))
 	{
