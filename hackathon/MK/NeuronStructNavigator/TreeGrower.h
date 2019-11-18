@@ -93,6 +93,8 @@ public:
 	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
 	static profiledTree itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre);
 
+	static void segMorphProfile(profiledTree& inputProfiledTree, int range);
+
 	// Breaks all branches in [inputProfiledTree].
 	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
 	static NeuronTree branchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);

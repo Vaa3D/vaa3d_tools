@@ -100,6 +100,8 @@ namespace integratedDataTypes
 		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
+		map<int, boost::container::flat_map<int, map<string, double>>> segSmoothnessMap;
+
 		bool to_be_deleted;
 	};
 	/***********************************************/

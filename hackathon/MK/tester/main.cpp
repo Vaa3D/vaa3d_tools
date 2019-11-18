@@ -358,6 +358,19 @@ int main(int argc, char* argv[])
 		QString saveName = "C:\\Users\\hsienchik\\Desktop\\denDebug.swc";
 		writeSWC_file(saveName, myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
 	}
+	else if (!funcName.compare("segMorphStats"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		profiledTree inputProfiledTree(readSWC_file(inputSWCFullNameQ));
+		for (map<int, segUnit>::iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
+		{
+			for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
+				inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(nodeIt->n)].type = it->first;
+			
+
+		}
+
+	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));

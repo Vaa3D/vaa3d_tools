@@ -258,28 +258,28 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
 		else floatingExcludedTree = downSampledDenTree.tree;
 		QString dnSampledNoDotsNameQ = this->finalSaveRootQ + "\\dnSampledNoDots.swc";
-		//writeSWC_file(dnSampledNoDotsNameQ, floatingExcludedTree);
+		writeSWC_file(dnSampledNoDotsNameQ, floatingExcludedTree);
 
 		profiledTree dnSampledProfiledTree(floatingExcludedTree);
 		QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\beforeSpikeRemove.swc";
-		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
 		float angleThre = (float(2) / float(3)) * PI;
 		QString removeSpikeFullName = this->finalSaveRootQ + "\\noSpike.swc";
-		//writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
+		writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
 
 		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(spikeRemovedProfiledTree);
 		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
-		//writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
+		writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
 
 		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(profiledSpikeRootStrightTree, angleThre);
 		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "\\spikeStraight_beforeBranchBreak.swc";
-		//writeSWC_file(beforeBranchBreakSWCFullName, profiledSpikeRootStrightTree.tree);
+		writeSWC_file(beforeBranchBreakSWCFullName, profiledSpikeRootStrightTree.tree);
 
 		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
 		QString branchBreakNameQ = this->finalSaveRootQ + "\\branchBreak.swc";
-		//writeSWC_file(branchBreakNameQ, branchBrokenTree);
+		writeSWC_file(branchBreakNameQ, branchBrokenTree);
 		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
