@@ -172,6 +172,56 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 	}
 }
 
+void NeuronStructExplorer::segMorphProfile(profiledTree& inputProfiledTree, int range)
+{
+	int halfRange = (range - 1) / 2;
+	if (halfRange < 1)
+	{
+		cerr << "Invalid search range. Return." << endl;
+		return;
+	}
+
+	for (map<int, segUnit>::iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		//cout << segIt->first << ": " << segIt->second.nodes.size() << endl;
+		if (segIt->second.nodes.size() < range) continue;
+		boost::container::flat_map<int, map<string, double>> segSmoothness;
+		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin() + ptrdiff_t(halfRange); nodeIt != segIt->second.nodes.end() - ptrdiff_t(halfRange); ++nodeIt)
+		{
+			if (nodeIt->parent == -1 || segIt->second.seg_childLocMap.at(nodeIt->n).size() == 0) continue;
+			//cout << "  " << nodeIt->n << ": ";
+			NeuronSWC currNodePaRoot = *nodeIt;
+			NeuronSWC currNodeChildRoot = *nodeIt;
+			double length = 0;
+			map<string, double> currNodeStatMap;
+
+			for (int i = 1; i <= halfRange; ++i)
+			{
+				NeuronSWC currPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(currNodePaRoot.parent));
+				NeuronSWC currChildNode = segIt->second.nodes.at(*segIt->second.seg_childLocMap.at(currNodeChildRoot.n).begin());
+				length = length + sqrt((currPaNode.x - currNodePaRoot.x) * (currPaNode.x - currNodePaRoot.x) +
+								       (currPaNode.y - currNodePaRoot.y) * (currPaNode.y - currNodePaRoot.y) +
+									   (currPaNode.z - currNodePaRoot.z) * (currPaNode.z - currNodePaRoot.z));
+				//cout << length << "(" << currPaNode.x << "," << currPaNode.y << "," << currPaNode.z << ")(" << currNodePaRoot.x << "," << currNodePaRoot.y << "," << currNodePaRoot.z << ")   ";
+				length = length + sqrt((currChildNode.x - currNodeChildRoot.x) * (currChildNode.x - currNodeChildRoot.x) +
+									   (currChildNode.y - currNodeChildRoot.y) * (currChildNode.y - currNodeChildRoot.y) +
+									   (currChildNode.z - currNodeChildRoot.z) * (currChildNode.z - currNodeChildRoot.z));
+				//cout << length << "(" << currChildNode.x << "," << currChildNode.y << "," << currChildNode.z << ")(" << currNodeChildRoot.x << "," << currNodeChildRoot.y << "," << currNodeChildRoot.z << ")" << endl;
+				currNodePaRoot = currPaNode;
+				currNodeChildRoot = currChildNode;
+			}
+			currNodeStatMap.insert({ "length", length });
+
+			double dist = sqrt((currNodePaRoot.x - currNodeChildRoot.x) * (currNodePaRoot.x - currNodeChildRoot.x) + (currNodePaRoot.y - currNodeChildRoot.y) * (currNodePaRoot.y - currNodeChildRoot.y) + (currNodePaRoot.z - currNodeChildRoot.z) * (currNodePaRoot.z - currNodeChildRoot.z));
+			currNodeStatMap.insert({ "distance", dist });
+
+			segSmoothness.insert(pair<int, map<string, double>>(nodeIt->n, currNodeStatMap));
+		}
+		//cout << endl;
+		segIt->second.segSmoothnessMap.insert(pair<int, boost::container::flat_map<int, map<string, double>>>(range, segSmoothness));
+	}
+}
+
 void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
 	this->getTileBasedSegClusters(inputProfiledTree, distThreshold);

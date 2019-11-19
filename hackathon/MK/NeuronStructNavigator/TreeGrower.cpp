@@ -721,49 +721,4 @@ profiledTree TreeGrower::itered_removeHookingHeadTail(profiledTree& inputProfile
 
 	return hookRemovedTree;
 }
-
-void TreeGrower::segMorphProfile(profiledTree& inputProfiledTree, int range)
-{
-	int halfRange = (range - 1) / 2;
-	if (halfRange < 1)
-	{
-		cerr << "Invalid search range. Return." << endl;
-		return;
-	}
-
-	for (map<int, segUnit>::iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
-	{
-		if (segIt->second.nodes.size() < range) continue;
-
-		boost::container::flat_map<int, map<string, double>> segSmoothness;
-		
-		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin() + ptrdiff_t(halfRange); nodeIt != segIt->second.nodes.end() - ptrdiff_t(halfRange); ++nodeIt)
-		{
-			NeuronSWC currNodeLeft = *nodeIt; 
-			NeuronSWC currNodeRight = *nodeIt;
-			double length = 0;
-			map<string, double> currNodeStatMap;
-
-			for (int i = 1; i <= halfRange; ++i)
-			{
-				length += sqrt(((nodeIt - ptrdiff_t(i))->x - currNodeLeft.x) * ((nodeIt - ptrdiff_t(i))->x - currNodeLeft.x) +
-							   ((nodeIt - ptrdiff_t(i))->y - currNodeLeft.y) * ((nodeIt - ptrdiff_t(i))->y - currNodeLeft.y) +
-							   ((nodeIt - ptrdiff_t(i))->z - currNodeLeft.z) * ((nodeIt - ptrdiff_t(i))->z - currNodeLeft.z));
-				length += sqrt(((nodeIt + ptrdiff_t(i))->x - currNodeRight.x) * ((nodeIt + ptrdiff_t(i))->x - currNodeRight.x) +
-							   ((nodeIt + ptrdiff_t(i))->y - currNodeRight.y) * ((nodeIt + ptrdiff_t(i))->y - currNodeRight.y) +
-							   ((nodeIt + ptrdiff_t(i))->z - currNodeRight.z) * ((nodeIt + ptrdiff_t(i))->z - currNodeRight.z));
-				currNodeLeft = *(nodeIt - ptrdiff_t(i));
-				currNodeRight = *(nodeIt + ptrdiff_t(i));
-			}
-			currNodeStatMap.insert({ "length", length });
-			
-			double dist = sqrt((currNodeLeft.x - currNodeRight.x) * (currNodeLeft.x - currNodeRight.x) +
-							   (currNodeLeft.y - currNodeRight.y) * (currNodeLeft.y - currNodeRight.y) +
-							   (currNodeLeft.z - currNodeRight.z) * (currNodeLeft.z - currNodeRight.z));
-			currNodeStatMap.insert({ "distance", dist });
-
-
-		}
-	}
-}
 /* ======================== END of [Tree Trimming / Refining] ========================= */

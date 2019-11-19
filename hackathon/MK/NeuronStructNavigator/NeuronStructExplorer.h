@@ -52,6 +52,8 @@ public:
 	// -- head == false: generate segment-tail tile map.
 	// This method is called when a profiledTree is initialized.
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
+
+	static void segMorphProfile(profiledTree& inputProfiledTree, int range = 3);
 	
 	// ------------------- segment-end clustering ------------------- //	
 	// Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. 

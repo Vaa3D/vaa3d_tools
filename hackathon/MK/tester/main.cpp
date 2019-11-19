@@ -28,18 +28,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "spikeRemove_spikeRoots";
+	//string funcName = "segMorphStats";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -361,15 +361,24 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("segMorphStats"))
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\noSpike.swc";
 		profiledTree inputProfiledTree(readSWC_file(inputSWCFullNameQ));
+		NeuronStructExplorer::segMorphProfile(inputProfiledTree, 3);
 		for (map<int, segUnit>::iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
 		{
-			for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
-				inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(nodeIt->n)].type = it->first;
-			
-
+			cout << it->first << ": size=" << it->second.nodes.size() << endl;
+			if (it->second.nodes.size() < 3) continue;
+			for (boost::container::flat_map<int, map<string, double>>::iterator nodeIt = it->second.segSmoothnessMap.at(3).begin(); nodeIt != it->second.segSmoothnessMap.at(3).end(); ++nodeIt)
+			{
+				cout << "  " << nodeIt->first << " " << nodeIt->second.at("length") << "-" << nodeIt->second.at("distance") << endl;
+				if (nodeIt->second.at("length") / nodeIt->second.at("distance") >= 1.2)
+					inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(nodeIt->first)].type = 15;
+			}
+			cout << endl;
 		}
-
+		QString outputSWCNameQ = QString::fromStdString(paras.at(1));
+		//QString outputSWCNameQ = "C:\\Users\\hsienchik\Desktop\\Work\\FragTrace\\segProfiled.swc";
+		writeSWC_file(outputSWCNameQ, inputProfiledTree.tree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
