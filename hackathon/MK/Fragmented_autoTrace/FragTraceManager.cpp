@@ -265,7 +265,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 
 		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
-		float angleThre = (float(2) / float(3)) * PI;
 		QString removeSpikeFullName = this->finalSaveRootQ + "\\noSpike.swc";
 		writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
 
@@ -273,14 +272,21 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
 		writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
 
-		profiledTree hookRemovedProfiledTree = TreeGrower::removeHookingHeadTail(profiledSpikeRootStrightTree, angleThre);
-		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "\\spikeStraight_beforeBranchBreak.swc";
-		writeSWC_file(beforeBranchBreakSWCFullName, profiledSpikeRootStrightTree.tree);
-
-		NeuronTree branchBrokenTree = TreeGrower::branchBreak(hookRemovedProfiledTree);
-		QString branchBreakNameQ = this->finalSaveRootQ + "\\branchBreak.swc";
+		NeuronTree branchBrokenTree = TreeGrower::branchBreak(profiledSpikeRootStrightTree);
+		QString branchBreakNameQ = this->finalSaveRootQ + "\\branchBreakAfterSpikeRootStraight.swc";
 		writeSWC_file(branchBreakNameQ, branchBrokenTree);
 		//NeuronTree branchBrokenTree = TreeGrower::branchBreak(spikeRemovedProfiledTree);
+
+		profiledTree branchBrokenProfiledTree(branchBrokenTree);
+		float angleThre = (float(2) / float(3)) * PI;
+		profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
+		QString beforeBranchBreakSWCFullName = this->finalSaveRootQ + "\\removeHooks.swc";
+		writeSWC_file(beforeBranchBreakSWCFullName, profiledSpikeRootStrightTree.tree);
+
+		NeuronStructExplorer::segMorphProfile(branchBrokenProfiledTree, 3);
+		NeuronStructExplorer::__segMorphProfiled_debug(branchBrokenProfiledTree, 3, 1.2);
+		QString sharpAngleLabeledNameQ = this->finalSaveRootQ + "angleLabeled.swc";
+		writeSWC_file(sharpAngleLabeledNameQ, branchBrokenProfiledTree.tree);
 
 		//finalOutputTree = dnSampledProfiledTree.tree;
 		finalOutputTree = branchBrokenTree; // cancel image volume downsampling since the polar coord approach is fast

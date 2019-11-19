@@ -190,11 +190,11 @@ void NeuronStructExplorer::segMorphProfile(profiledTree& inputProfiledTree, int 
 		{
 			if (nodeIt->parent == -1 || segIt->second.seg_childLocMap.at(nodeIt->n).size() == 0) continue;
 			//cout << "  " << nodeIt->n << ": ";
+			
 			NeuronSWC currNodePaRoot = *nodeIt;
 			NeuronSWC currNodeChildRoot = *nodeIt;
 			double length = 0;
 			map<string, double> currNodeStatMap;
-
 			for (int i = 1; i <= halfRange; ++i)
 			{
 				NeuronSWC currPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(currNodePaRoot.parent));
@@ -219,6 +219,19 @@ void NeuronStructExplorer::segMorphProfile(profiledTree& inputProfiledTree, int 
 		}
 		//cout << endl;
 		segIt->second.segSmoothnessMap.insert(pair<int, boost::container::flat_map<int, map<string, double>>>(range, segSmoothness));
+	}
+}
+
+void NeuronStructExplorer::__segMorphProfiled_debug(profiledTree& inputProfiledTree, int range, double lengthDistRatio)
+{
+	for (map<int, segUnit>::iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
+	{
+		if (it->second.nodes.size() < range) continue;
+		for (boost::container::flat_map<int, map<string, double>>::iterator nodeIt = it->second.segSmoothnessMap.at(3).begin(); nodeIt != it->second.segSmoothnessMap.at(3).end(); ++nodeIt)
+		{
+			if (nodeIt->second.at("length") / nodeIt->second.at("distance") >= lengthDistRatio)
+				inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(nodeIt->first)].type = 15;
+		}
 	}
 }
 

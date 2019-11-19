@@ -677,7 +677,11 @@ profiledTree TreeGrower::removeHookingHeadTail(const profiledTree& inputProfiled
 		vec1 = NeuronGeoGrapher::getVector_NeuronSWC<float>(headNode, headPivotNode);
 		vec2 = NeuronGeoGrapher::getVector_NeuronSWC<float>(headPivotChildNode, headPivotNode);
 		float headTurnAngle = NeuronGeoGrapher::getRadAngle(vec1, vec2);		
-		if (headTurnAngle < radAngleThre) delLocs.push_back(outputProfiledTree.node2LocMap.at(headNode.n));
+		if (headTurnAngle < radAngleThre)
+		{
+			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(headPivotNode.n)].parent = -1;
+			delLocs.push_back(outputProfiledTree.node2LocMap.at(headNode.n));
+		}
 
 		for (vector<int>::iterator tailIt = segIt->second.tails.begin(); tailIt != segIt->second.tails.end(); ++tailIt)
 		{
