@@ -123,6 +123,7 @@ struct Trunk{
 };
 
 struct Branch{
+	QString filePath;
     NeuronSWC head_point,end_point;
     Branch* parent;
     Angle head_angle,end_angle;
@@ -168,6 +169,7 @@ struct Branch{
 };
 
 struct SwcTree{
+	QString filePath;
     vector<Branch> branchs;
     vector<Trunk> trunks;
     NeuronTree nt;

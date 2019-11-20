@@ -239,11 +239,30 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     {
 		cout << "wp_debug:" << __LINE__ << endl;
         NeuronTree nt1=readSWC_file(infiles[0]);
+		cout << infiles[0] << endl;
+		
+		QDir dir(infiles[0]);
+		if (dir.exists())
+		{
+			cout << "exist" << endl;
+		}
+		else
+		{
+			cout << "start mkdir" << endl;
+			cout << ("../temp" + QString(infiles[0]).split('\\')[QString(infiles[0]).split('\\').size() - 1]).toStdString() << endl;
+			bool ok = dir.mkdir("../temp_" + QString(infiles[0]).split('\\')[QString(infiles[0]).split('\\').size()-1]);//只创建一级子目录，即必须保证上级目录存在
+			cout << ok << endl;
+			//return 0;
+		}
+		
+		
+
         QString braindir= infiles[1];
         SwcTree a;
+		a.filePath = QString(infiles[0]) + "/../temp_" + QString(infiles[0]).split('\\')[QString(infiles[0]).split('\\').size() - 1];
         a.initialize(nt1);
 		cout << "wp_debug: " << __LINE__ << endl;
-        NeuronTree refinetree = a.refine_swc_by_bdb(braindir,callback);
+		NeuronTree refinetree = a.refine_swc_by_bdb(braindir, callback);
         QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : "";
         writeESWC_file(eswcfile,refinetree);
 
