@@ -74,7 +74,7 @@ bool reviewNReconstruction::dofunc(const QString & func_name, const V3DPluginArg
         writeESWC_file(save_folder+"//"+eswcfile+".eswc",new_sequence_tree);
         //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
         writeAPO_file(save_folder+"//"+eswcfile+".apo",markers);
-        v3d_msg("finish write eswc and apo file!");
+
 	}
 	else if (func_name == tr("func2"))
 	{

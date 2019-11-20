@@ -92,7 +92,7 @@ public:
         connect(close, SIGNAL(clicked()), this, SLOT(reject()));
         connect(button_forward, SIGNAL(clicked()), this, SLOT(move_segment()));
         connect(button_backward, SIGNAL(clicked()), this, SLOT(move_segment()));
-        //connect(ok, SIGNAL(clicked()), this, SLOT(update()));
+        connect(ok, SIGNAL(clicked()), this, SLOT(update()));
 
         this->setLayout(gridLayout);
         this->setWindowTitle("show segment dialog");

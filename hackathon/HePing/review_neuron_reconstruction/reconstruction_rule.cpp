@@ -79,5 +79,7 @@ bool review_neuron(V3DPluginCallback2 &callback,QWidget *parent)
     writeESWC_file(save_path+"//"+eswcfile+".eswc",new_sequence_tree);
     //writeAPO_file("C://Users//penglab//Desktop//17302-00001//review_test1//marker.apo",markers);
     writeAPO_file(save_path+"//"+eswcfile+".apo",markers);
+    v3d_msg("finish write eswc and apo file!");
+
     return true;
 }

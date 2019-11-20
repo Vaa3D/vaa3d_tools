@@ -38,6 +38,17 @@ bool show_segment(V3DPluginCallback2 &callback,V3DLONG index,QString open_swc,QS
     file_name=file_name.mid(0,11);
     qDebug()<<file_name;
     //QString open_swc;
+    string save_path=save_folders.toStdString().c_str();
+    QDir dir(save_path.c_str());
+    if(!dir.exists()){
+        QMessageBox::warning(0, QObject::tr("ERROR"), QObject::tr("Un existing folder:%1").arg(save_path.c_str()));
+        return false;
+    }
+    else{
+        v3d_msg(QString("Save Directory:%1").arg(save_path.c_str()));
+    }
+    QDir::setCurrent(save_path.c_str());
+    cout<<"current path:"<<QDir::current().dirName().toStdString()<<endl;
     QString save_folder=save_folders+"//"+file_name;
     if(_access(save_folder.toStdString().c_str(),0)==-1){
         _mkdir(save_folder.toStdString().c_str());
