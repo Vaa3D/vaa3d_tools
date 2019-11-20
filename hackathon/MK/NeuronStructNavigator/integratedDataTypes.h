@@ -160,6 +160,7 @@ namespace integratedDataTypes
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;
 
 		boost::container::flat_set<int> spikeRootIDs;
+		boost::container::flat_set<int> smoothedNodeIDs;
 
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);

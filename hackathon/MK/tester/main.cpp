@@ -28,18 +28,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
-	for (int i = 2; i < argc; ++i)
+	/*for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "segMorphStats";
+	string funcName = "sharpAngleSmooth";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -379,6 +379,15 @@ int main(int argc, char* argv[])
 		QString outputSWCNameQ = QString::fromStdString(paras.at(1));
 		//QString outputSWCNameQ = "C:\\Users\\hsienchik\Desktop\\Work\\FragTrace\\segProfiled.swc";
 		writeSWC_file(outputSWCNameQ, inputProfiledTree.tree);
+	}
+	else if (!funcName.compare("sharpAngleSmooth"))
+	{
+		QString inputSWCNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\angleLabeled.swc";
+		profiledTree inputProfiledTree(readSWC_file(inputSWCNameQ));
+		NeuronStructExplorer::segMorphProfile(inputProfiledTree);
+		profiledTree smoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, 1.2);
+		QString outputNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\angleSmoothTest.swc";
+		writeSWC_file(outputNameQ, smoothedTree.tree);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{

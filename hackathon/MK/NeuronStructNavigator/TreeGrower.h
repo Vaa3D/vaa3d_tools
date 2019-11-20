@@ -93,6 +93,11 @@ public:
 	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
 	static profiledTree itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre);
 
+	static profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);
+	static profiledTree itered_segSharpAngleSmooth_lengthDistRatio(profiledTree& inputProfiledTree, double ratio);
+
+	static profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
+
 	// Breaks all branches in [inputProfiledTree].
 	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
 	static NeuronTree branchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);

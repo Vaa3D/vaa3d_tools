@@ -725,4 +725,78 @@ profiledTree TreeGrower::itered_removeHookingHeadTail(profiledTree& inputProfile
 
 	return hookRemovedTree;
 }
+
+profiledTree TreeGrower::segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	boost::container::flat_set<int> smoothedNodeIDs;
+	outputProfiledTree.smoothedNodeIDs.clear();
+	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
+	{
+		if (segIt->second.segSmoothnessMap.find(3) == segIt->second.segSmoothnessMap.end()) continue;
+
+		for (boost::container::flat_map<int, map<string, double>>::iterator nodeIt = segIt->second.segSmoothnessMap.at(3).begin(); nodeIt != segIt->second.segSmoothnessMap.at(3).end(); ++nodeIt)
+		{
+			if (nodeIt->second.at("length") / nodeIt->second.at("distance") >= ratio)
+			{
+				NeuronSWC currPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->first)).parent));
+				NeuronSWC currChildNode = segIt->second.nodes.at(*segIt->second.seg_childLocMap.at(nodeIt->first).begin());
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->first)].x = (currPaNode.x + currChildNode.x) / 2;
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->first)].y = (currPaNode.y + currChildNode.y) / 2;
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->first)].z = (currPaNode.z + currChildNode.z) / 2;
+				smoothedNodeIDs.insert(nodeIt->first);
+			}
+		}
+	}
+
+	profiledTreeReInit(outputProfiledTree);
+	outputProfiledTree.smoothedNodeIDs = smoothedNodeIDs;
+	return outputProfiledTree;
+}
+
+profiledTree TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(profiledTree& inputProfiledTree, double ratio)
+{
+	cout << "smoothing angles.." << endl << "  iteration 1 " << endl;
+	int iterCount = 1;
+	
+	profiledTree angleSmoothedTree = TreeGrower::segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, ratio);
+	while (angleSmoothedTree.smoothedNodeIDs.size() > 0)
+	{
+		NeuronStructExplorer::segMorphProfile(angleSmoothedTree);
+		inputProfiledTree = angleSmoothedTree;
+
+		++iterCount;
+		cout << "  iteration " << iterCount << " " << endl;
+		angleSmoothedTree = TreeGrower::segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, ratio);
+	}
+	cout << endl;
+
+	return angleSmoothedTree;
+}
+
+profiledTree TreeGrower::segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
+	{
+		if (segIt->second.segSmoothnessMap.find(3) == segIt->second.segSmoothnessMap.end()) continue;
+
+		for (boost::container::flat_map<int, map<string, double>>::iterator nodeIt = segIt->second.segSmoothnessMap.at(3).begin(); nodeIt != segIt->second.segSmoothnessMap.at(3).end(); ++nodeIt)
+		{
+			if (nodeIt->second.at("distance") > distThre)
+			{
+				NeuronSWC currPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->first)).parent));
+				NeuronSWC currChildNode = segIt->second.nodes.at(*segIt->second.seg_childLocMap.at(nodeIt->first).begin());
+				NeuronSWC centerNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->first));
+				if (abs(currPaNode.x - centerNode.x) + abs(currPaNode.y - centerNode.y) + abs(currPaNode.z - centerNode.z) >
+					abs(currChildNode.x - centerNode.x) + abs(currChildNode.y - centerNode.y) + abs(currChildNode.z - centerNode.z))
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->first)].parent = -1;
+				else outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(currChildNode.n)].parent = -1;			
+			}
+		}
+	}
+
+	profiledTreeReInit(outputProfiledTree);
+	return outputProfiledTree;
+}
 /* ======================== END of [Tree Trimming / Refining] ========================= */

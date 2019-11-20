@@ -222,7 +222,7 @@ void NeuronStructExplorer::segMorphProfile(profiledTree& inputProfiledTree, int 
 	}
 }
 
-void NeuronStructExplorer::__segMorphProfiled_debug(profiledTree& inputProfiledTree, int range, double lengthDistRatio)
+void NeuronStructExplorer::__segMorphProfiled_lengthDistRatio(profiledTree& inputProfiledTree, int range, double lengthDistRatio)
 {
 	for (map<int, segUnit>::iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
 	{

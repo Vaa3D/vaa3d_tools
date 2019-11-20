@@ -112,7 +112,7 @@ public:
 	/*************************** Debug Functions ***************************/
 	inline bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath);
 
-	static void __segMorphProfiled_debug(profiledTree& inputProfiledTree, int range, double lengthDistRatio);
+	static void __segMorphProfiled_lengthDistRatio(profiledTree& inputProfiledTree, int range, double lengthDistRatio);
 	/***********************************************************************/
 
 
