@@ -100,6 +100,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         prediction(input,output,callback);
     }
+    else if (func_name == tr("mean_shift"))
+    {
+        mean_shift_oyq(input,output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
         printHelp(input,output);

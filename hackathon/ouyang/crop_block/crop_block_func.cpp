@@ -17,7 +17,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     QString output_dir_axon=outfiles.at(1);//needed only when seperate axon and dendrite nodes
     QString output_apo;
 
-    XYZ block_size=XYZ(50,50,50);
+    XYZ block_size=XYZ(100,100,100);
 
     int branch_or_tip_node=atoi(inparas.at(0));//1:branch;2:tip;3:both
     int tip_type=atoi(inparas.at(1));//1:seperate axon and dendrite;2:not seperate
@@ -121,7 +121,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
             QString cordinates=QString("_%1_%2_%3").arg(node.x).arg(node.y).arg(node.z);
 
             // create a tip-centered block
-            if(tip_type == 2){  //get branch points from both dendrite and axon
+            if(tip_type == 2){  //get tip points from both dendrite and axon
 
                 QString output_swc = output_dir+"tip_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
                 if(crop_swc_cuboid(sorted_tree, output_swc, crop_block))
@@ -131,7 +131,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type == 1 && node.type == 3){  //only get branch points from dendrite
+            else if(tip_type == 1 && node.type == 3){  //only get tip points from dendrite
 
 
                 QString output_swc = output_dir+"tip_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -142,7 +142,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
                 }
             }
-            else if(tip_type == 1 && node.type == 2){  //only get branch points from axon
+            else if(tip_type == 1 && node.type == 2){  //only get tip points from axon
 
 
                 QString output_swc = output_dir_axon+"tip_"+flag1+"_"+num_cnt+cordinates+"_croped.eswc";
@@ -166,7 +166,8 @@ void crop_defined_block(const V3DPluginArgList & input, V3DPluginArgList & outpu
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString image_file=infiles.at(0);//raw image
     QString swc_folder=infiles.at(1);//all swc of same brain folder
-
+    QString original_swc_folder=infiles.at(2);//terafly swc for croppping swc block
+    NeuronTree sorted_tree = readSWC_file(original_swc_folder);
     XYZ block_size=XYZ(50,50,50);//default 50x50x50
     int crop_all_in_input_swc=atoi(inparas.at(0));//1 for crop all swc nodes,0 is constrain
     if (inparas.size() >= 3 )
@@ -272,9 +273,15 @@ void crop_defined_block(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 crop_block.name = QString::number(i);
 
                 QString output_image = flag1+"_r"+r+cordinates;
-                crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
-//                if (all_swc.at(i).split(".")[1]=="after_pruning") crop_img(image_file, crop_block, dir_output_block_a, callback,output_image);
-//                if (all_swc.at(i).split(".")[1]=="before_pruning") crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
+                //crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
+                // crop swc
+                QString output_swc = dir_output_block_b+output_image+"_croped.eswc";
+                if(crop_swc_cuboid(sorted_tree, output_swc, crop_block))
+                // crop image
+                {
+                    //QString output_image = "branch_"+flag1+"_"+num_cnt+cordinates;
+                    crop_img(image_file, crop_block, dir_output_block_b, callback,output_image);
+                }
             }
         }
         else {
@@ -290,7 +297,17 @@ void crop_defined_block(const V3DPluginArgList & input, V3DPluginArgList & outpu
                     crop_block.name = QString::number(i);
 
                     QString output_image = flag1+"_r"+r+cordinates;
-                    crop_img(image_file, crop_block, dir_output_block_refined, callback,output_image);
+                    //crop_img(image_file, crop_block, dir_output_block_refined, callback,output_image);
+                    // crop swc
+                    QString output_swc = dir_output_block_refined+output_image+"_croped.eswc";
+                    if(crop_swc_cuboid(pruned_swc, output_swc, crop_block))
+                    // crop image
+                    {
+                        crop_img(image_file, crop_block, dir_output_block_refined, callback,output_image);
+                    }
+
+
+
                }
             }
         }
