@@ -7,7 +7,13 @@
 #include <vector>
 #include "soma_branch_plugin.h"
 #include "branch_count_soma.h"
+#include<v3d_interface.h>
+#include<eigen_3_3_4/Eigen/Dense>
+#include<fstream>
+#include<direct.h>
+#include<io.h>
 using namespace std;
+//extern template<class T> bool compute_marker_pca_hp(vector<T> markers,V3DLONG r,double &pc1,double &pc2,double &pc3);
 Q_EXPORT_PLUGIN2(soma_branch, BranchCount);
  
 QStringList BranchCount::menulist() const
@@ -30,7 +36,7 @@ void BranchCount::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 {
 	if (menu_name == tr("menu1"))
 	{
-		v3d_msg("To be implemented.");
+        //branch_count_menu(callback,parent);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -52,22 +58,57 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
     if (func_name == tr("branch_count"))
 	{
-        QString swcfile=(infiles.size()>=1)?infiles[0]:"";
-        NeuronTree nt=readSWC_file(swcfile);
-        SWCTree t;
-        QList<ImageMarker> markers;
-        vector<location> points;
-        QFileInfo eswcfileinfo;
-        eswcfileinfo=QFileInfo(swcfile);
-        QString eswcfile=eswcfileinfo.fileName();
-        eswcfile.mid(0,eswcfile.indexOf("."));
-        t.count_branch_location(nt,markers,points);
-        bool flag=four_point(points);
-        if(flag==true) qDebug()<<"yes!";
-        else qDebug()<<"no!";
-        qDebug()<<"branch num:"<<markers.size();
+        //QString swcfile=(infiles.size()>=1)?infiles[0]:"";
         QString apofile=(outfiles.size()>=1)?outfiles[0]:"";
-        writeMarker_file(apofile+"//"+eswcfile+".marker",markers);
+
+        if(_access(apofile.toStdString().c_str(),0)==-1)
+            _mkdir(apofile.toStdString().c_str());
+        string path=apofile.toStdString()+"//data.txt";
+        ofstream datafile(path,ios::app);
+        if(datafile.fail()){
+            qDebug()<<"file can't open!";
+        }
+
+        for(int i=0;i<infiles.size();i++){
+            QString swcfile=infiles[i];
+            NeuronTree nt=readSWC_file(swcfile);
+            SWCTree t;
+            QList<ImageMarker> markers;
+            vector<location> points;
+            double pc1=0,pc2=0,pc3=0;
+            double pc13=0;
+            double max_radius;
+            QFileInfo eswcfileinfo;
+            eswcfileinfo=QFileInfo(swcfile);
+            QString eswcfile=eswcfileinfo.fileName();
+            eswcfile.mid(0,eswcfile.indexOf("."));
+            t.count_branch_location(nt,markers,points,max_radius);
+            V3DLONG max_r=(V3DLONG)(max_radius+1);
+            compute_marker_pca_hp(points,max_r,pc1,pc2,pc3);
+            qDebug()<<pc1<<pc2<<pc3;
+            if(pc1==0||pc2==0||pc3==0){
+                qDebug()<<"it is pc problem!"<<endl;
+                pc13=1;
+            }
+            else{
+                double num1,num2;//min,max
+                num1=(pc1<pc2)?pc1:pc2;
+                num1=(num1<pc3)?num1:pc3;
+                num2=(pc1<pc2)?pc2:pc1;
+                num2=(num2<pc3)?pc3:num2;
+                pc13=num1/num2;
+            }
+            qDebug()<<"sigma1/sigma2:"<<pc13;
+            //datafile<<markers.size()<<" "<<pc13<<endl;
+            datafile<<pc13<<endl;
+    //        bool flag=four_point(points);
+    //        if(flag==true) qDebug()<<"yes!";
+    //        else qDebug()<<"no!";
+            qDebug()<<"branch num:"<<markers.size();
+            writeMarker_file(apofile+"//"+eswcfile+".marker",markers);
+        }
+        datafile.close();
+
 
 	}
 	else if (func_name == tr("func2"))
