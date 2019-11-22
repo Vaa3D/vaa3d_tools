@@ -779,7 +779,11 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     cout<<"+++++++++++"<<endl;
     QStringList list=input_swc.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
-    QString flag1=list1.first();
+    //QString flag1=list1.first();
+
+    QStringList tif_name;
+    for(int k=0;k<4;k++) tif_name.append(flag.split("_")[k]);
+    QString flag1=tif_name.join("_");
 //    QString flag=input_swc.right(input_swc.length()-43);
 //    QString flag1=flag.left(flag.length()-4);
 //    //printf("______________:%s\n",output_2d_dir.data());
@@ -1524,7 +1528,6 @@ cout<<"=========================================================================
         poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
 cout<<"=============================================================================================eeeee"<<endl;
         mass_center=fun_obj.mean_shift_center_mass_thres(poss_landmark[0],radius);
-
 
 
 
@@ -2466,6 +2469,7 @@ QList<NeuronSWC> change_tip_xyz(QList<NeuronSWC>input_swc,int tip_node,MyMarker 
     s.radius=input_swc.at(i).radius;
     s.pn=input_swc.at(i).pn;
     s.n=input_swc.at(i).n;
+    XYZ off;
     output_swc.append(s);}
     else{
         NeuronSWC s;
@@ -2661,6 +2665,75 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
     return info_27;
 
 }
+
+void mean_shift_oyq(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_image=infiles.at(0);
+    QString input_marker=infiles.at(1);
+    int radius=atoi(inparas.at(0));
+    //QString output_2d_dir=outfiles.at(0);
+
+    QStringList list=input_marker.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");
+    list1.removeLast();
+    QString flag1=list1.join(".");
+    list.removeLast();
+    QString folder=list.join("/");
+
+
+    Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
+    int nChannel = p4dImage->getCDim();
+
+    V3DLONG mysz[4];
+    mysz[0] = p4dImage->getXDim();
+    mysz[1] = p4dImage->getYDim();
+    mysz[2] = p4dImage->getZDim();
+    mysz[3] = nChannel;
+    cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
+    unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+
+
+    QString qs_output = folder+"/"+flag1+"_shift.marker";
+    QList <ImageMarker> imagemarks;
+
+    QList <ImageMarker> marker=readMarker_file(input_marker);
+    for(int i=0;i<marker.size();i++)
+    {
+        LandmarkList marklist_2D2;
+        LocationSimple Ss;
+        Ss.x = marker.at(i).x;
+        Ss.y = marker.at(i).y;
+        Ss.z = marker.at(i).z;
+        marklist_2D2.append(Ss);
+
+        mean_shift_fun fun_obj2;
+        vector<V3DLONG> poss_landmark2;
+        vector<float> mass_center2;
+        //double windowradius = 5;
+        V3DLONG sz_img[4];
+        sz_img[0] = mysz[0]; sz_img[1] = mysz[1]; sz_img[2] = mysz[2]; sz_img[3] = 1;
+        fun_obj2.pushNewData<unsigned char>((unsigned char*)data1d_crop, sz_img);
+        poss_landmark2=landMarkList2poss(marklist_2D2, sz_img[0], sz_img[0]*sz_img[1]);
+        //cout<<"=============================================================================================eeeee"<<endl;
+        mass_center2=fun_obj2.mean_shift_center_mass(poss_landmark2[0],radius);
+
+        ImageMarker marker_inblock;
+        marker_inblock.x = mass_center2[0]+1;
+        marker_inblock.y = mass_center2[1]+1;
+        marker_inblock.z = mass_center2[2]+1;
+        marker_inblock.color.a = 0;
+        marker_inblock.color.b = 0;
+        marker_inblock.color.g = 0;
+        marker_inblock.color.r = 255;
+        imagemarks.push_back(marker_inblock);
+    }
+    writeMarker_file(qs_output,imagemarks);
+}
+
 
 double* get_histogram(MyMarker center_marker,long mysz[4],unsigned char * data1d,int radius){
 

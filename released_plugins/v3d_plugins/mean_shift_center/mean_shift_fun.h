@@ -60,7 +60,7 @@ public:
     V3DLONG sz_image[4];
     //unsigned char * mask1D;
     template <class T>
-    void pushNewData(T * data1Dc_in, V3DLONG sz_img[4], double histogram_value )
+    void pushNewData(T * data1Dc_in, V3DLONG sz_img[4], double histogram_value=0 )
     {
         if(data1Dc_float!=0){
             memory_free_float1D(data1Dc_float);

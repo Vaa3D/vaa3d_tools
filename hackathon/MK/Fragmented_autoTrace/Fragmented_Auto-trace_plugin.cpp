@@ -40,6 +40,7 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	else if (menu_name == tr("settings"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
+		this->instancePtr = panelPtr;
 		callback.changeFragTraceStatus(true);
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
 		callback.changeFragTraceStatus(false);
@@ -58,9 +59,13 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+	if (func_name == tr("hotKey"))
 	{
-		v3d_msg("To be implemented.");
+		string inputParam = input.at(1).type.toStdString();
+		cout << this->instancePtr->tracedTree.listNeuron.size() << endl;
+		//QString inputParamQ = inparas.at(0);
+		//string inputParam = inputParamQ.toStdString();
+		//cout << inputParam << endl;
 	}
 	else if (func_name == tr("func2"))
 	{
