@@ -51,6 +51,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 
 			if (it->second.begin()->currConnOrt == head_head)
 			{
+				// Skip segments if the angle formed by their displacement vector is greater than 90 degrees.
 				if (it->second.begin()->segsAngleDiff > 0.5)
 				{
 					cout << it->second.begin()->seg1Ptr->segID << "-" << it->second.begin()->seg2Ptr->segID << "(head-head), ";

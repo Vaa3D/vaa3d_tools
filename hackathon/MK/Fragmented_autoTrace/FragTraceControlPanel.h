@@ -6,10 +6,6 @@
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
 
-#define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 9
-#define PATCHVERSION_NUM 3
-
 class FragTraceControlPanel : public QDialog
 {
 	Q_OBJECT

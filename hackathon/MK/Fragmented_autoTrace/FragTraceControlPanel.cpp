@@ -8,6 +8,7 @@
 #include <qtimer.h>
 
 #include "FragTraceControlPanel.h"
+#include "FragTracer_Define.h"
 
 using namespace std;
 
@@ -554,6 +555,7 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
+		// Newly traced tree will be stored in this->tracedTree.
 		v3d_msg(QString("The process has been terminated."));
 		return;
 	}
@@ -573,8 +575,7 @@ void FragTraceControlPanel::traceButtonClicked()
 	if (existingTree.listNeuron.isEmpty())
 	{
 		profiledTree tracedProfiledTree(this->tracedTree);
-		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(tracedProfiledTree, 5);
-		this->thisCallback->setSWCTeraFly(finalProfiledTree.tree);
+		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
 
 		finalTree = this->tracedTree; // this is still the tree before iteratively connected by TreeGrower::itered_connectSegsWithinClusters
 	}
@@ -586,7 +587,8 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
 		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 4, 8);
 		profiledTree newlyTracedPartProfiled(newlyTracedPart);
-		NeuronTree cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
+		NeuronTree cleaned_newlyTracedPart;
+		if (this->traceManagerPtr->minNodeNum > 0) cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
 		trees.push_back(cleaned_newlyTracedPart);
 
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
