@@ -852,19 +852,19 @@ void MainDialog::okayButton_slot()
     else
     {
         //clear tmp path
-        qDebug()<<"Recovery is not needed and tmp folder is removed.";
-        QDir tmpdir(dstpathlist.at(0));
-        tmpdir.setFilter(QDir::Files);
-        if(tmpdir.exists())
-        {
-            for(int j=0;j<tmpdir.count();j++)
-            {
-                qDebug()<<"rm"<<tmpdir[j];
-                tmpdir.remove(tmpdir[j]);
-            }
-            qDebug()<<"rm dir: "<<dstpathlist.at(0);
-            tmpdir.rmdir(dstpathlist.at(0));
-        }
+//        qDebug()<<"Recovery is not needed and tmp folder is removed.";
+//        QDir tmpdir(dstpathlist.at(0));
+//        tmpdir.setFilter(QDir::Files);
+//        if(tmpdir.exists())
+//        {
+//            for(int j=0;j<tmpdir.count();j++)
+//            {
+//                qDebug()<<"rm"<<tmpdir[j];
+//                tmpdir.remove(tmpdir[j]);
+//            }
+//            qDebug()<<"rm dir: "<<dstpathlist.at(0);
+//            tmpdir.rmdir(dstpathlist.at(0));
+//        }
         QMessageBox::information(this,tr("Success"),tr("%1 file is processed.").arg(curNeuron.fileName));
     }
     this->close();
