@@ -188,7 +188,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		}
 		else
 		{
-			if (this->mode == dendriticTree)
+			if (this->mode == dendriticTree) // MOST DENDRITE GOES HERE
 			{
 				//clock_t begin = clock();
 				if (!this->mask2swc("ada_cutoff", "blobTree")) return false;
@@ -196,7 +196,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
 			}
-			else
+			else // MOST AXON GOES HERE
 			{
 				this->histThreImg3D("ada_cutoff", dims, this->histThreImgName);
 				if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
@@ -224,24 +224,45 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree objSkeletonProfiledTree;
 		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
-		//QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
-		//writeSWC_file(skeletonTreeNameQ, objSkeletonProfiledTree.tree);
 
 		NeuronTree MSTbranchBreakTree = TreeGrower::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
 		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
-		//QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
-		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
 
 		profiledTree downSampledProfiledTree = NeuronStructUtil::treeDownSample(objBranchBreakTree, 2);
-		QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
-		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
 		// Iterative segment elongation/connection
-		profiledTree newIteredConnectedTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(downSampledProfiledTree, 5);
+		profiledTree iteredConnectedTree = this->segConnectAmongTrees(downSampledProfiledTree, 10);
 
-		if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
-		else finalOutputTree = newIteredConnectedTree.tree;
+		// Profiled segment shape/morphology
+		NeuronStructExplorer::segMorphProfile(iteredConnectedTree, 3);
+		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
+
+		NeuronTree noDotTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
+		//if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
+		//else finalOutputTree = iteredConnectedTree.tree;
+
+		profiledTree noDotProfiledTree(noDotTree);
+		profiledTree iteredConnectedTree2 = this->segConnectAmongTrees(noDotProfiledTree, 10);
+
+		finalOutputTree = iteredConnectedTree2.tree;
+
+#ifdef __AXON_TREEFORMING_DEBUG__
+		QString branchBreakTreeName = this->finalSaveRootQ + "\\axonBranchBreakTree.swc";
+		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
+
+		QString downSampledTreeName = this->finalSaveRootQ + "\\axonDownSampledTree.swc";
+		//writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
+
+		QString iteredConnectedTreeNameQ = this->finalSaveRootQ + "\\axonIteredConnectedTree.swc";
+		writeSWC_file(iteredConnectedTreeNameQ, iteredConnectedTree.tree);
+
+		QString axonAngleSooothedNameQ = this->finalSaveRootQ + "\\axonAngleSmoothedTree.swc";
+		writeSWC_file(axonAngleSooothedNameQ, angleSmoothedTree.tree);
+
+		QString noFloatingTinyNameQ = this->finalSaveRootQ + "\\axonNoFloatingTinyTree.swc";
+		writeSWC_file(noFloatingTinyNameQ, finalOutputTree);
+#endif
 	}
 	else if (this->mode == dendriticTree)
 	{
@@ -667,9 +688,6 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
 				objTrees.push_back(profiledMSTtree.tree);
 			}
-
-			QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
-			writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
 			cout << endl;
 		//}
 
@@ -678,6 +696,14 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			nodeIt->type = 16;
 		profiledTree outputProfiledTree(objSkeletonTree);
 		objSkeletonProfiledTree = outputProfiledTree;
+
+#ifdef __AXON_TREEFORMING_DEBUG__
+		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "\\centroidTree.swc";
+		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
+
+		QString skeletonTreeNameQ = this->finalSaveRootQ + "\\axonSkeleton.swc";
+		writeSWC_file(skeletonTreeNameQ, outputProfiledTree.tree);
+#endif
 		
 		return true;
 		// ------------------------------------------------------------- //

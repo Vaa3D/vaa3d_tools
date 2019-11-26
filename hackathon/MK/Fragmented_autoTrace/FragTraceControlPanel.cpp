@@ -587,6 +587,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
 		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 4, 8);
 		profiledTree newlyTracedPartProfiled(newlyTracedPart);
+		
 		NeuronTree cleaned_newlyTracedPart;
 		if (this->traceManagerPtr->minNodeNum > 0) cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
 		trees.push_back(cleaned_newlyTracedPart);

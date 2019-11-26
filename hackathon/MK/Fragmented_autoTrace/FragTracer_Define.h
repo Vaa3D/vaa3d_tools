@@ -3,7 +3,7 @@
 
 #define MAINVERSION_NUM 0
 #define SUBVERSION_NUM 9
-#define PATCHVERSION_NUM 3
+#define PATCHVERSION_NUM 5
 
 #define __DENDRITE_BLOB_DEBUG__
 #define __AXON_BLOB_DEBUG__
