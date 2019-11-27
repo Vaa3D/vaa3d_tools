@@ -8,7 +8,7 @@
 #include <string>
 #include <omp.h>
 
-#include <boost\filesystem.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/container/flat_set.hpp>
 #include <boost/container/flat_map.hpp>
@@ -655,31 +655,6 @@ int main(int argc, char* argv[])
 			QString outputFullName = saveFolderName + QString::fromStdString(swcName);
 			qDebug() << outputFullName;
 			writeSWC_file(outputFullName, outputTree);
-		}
-	}
-	else if (!funcName.compare("rename"))
-	{
-		string inputFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
-		//string destFolderName = "C:\\Users\\hsienchik\\Desktop\\CCF\\empty_brain_regions\\";
-		for (filesystem::directory_iterator fileIt(inputFolderName); fileIt != filesystem::directory_iterator(); ++fileIt)
-		{
-			string fileName = fileIt->path().string();
-			string swcName = fileIt->path().filename().string();
-			vector<string> inputs;
-			boost::split(inputs, swcName, boost::is_any_of("-"));
-			string newFileName;
-
-			if (inputs.size() == 2) newFileName = inputs.at(0);
-			else
-			{
-				for (vector<string>::iterator it = inputs.begin(); it != inputs.end() - 2; ++it) newFileName = *it + "-";
-				newFileName = newFileName + *(inputs.end() - 2);
-			}
-			newFileName = newFileName + ".swc";
-			string destName = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces\\";
-			destName = destName + newFileName;
-			cout << destName << endl;
-			filesystem::rename(fileName, destName);
 		}
 	}
 	else if (!funcName.compare("surfReadTest"))

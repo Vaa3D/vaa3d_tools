@@ -62,16 +62,29 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 		st.nt = nt1;
 		st.searchRadius = atoi(inparas[0]);
 		cout << "st.searchRadius: " << st.searchRadius << endl;
-		int crossPointsNum=st.initialize();
-		
+
+		int crossType1, crossType2;
+		crossType1 = 0;
+		crossType2 = 0;
+		st.initialize();
+		int crossPointsNum = st.crossBranchDetect(crossType1, crossType2);
+
+
+		NeuronTree ntNoneCrossBranch;
+		ntNoneCrossBranch.listNeuron.clear();
+		ntNoneCrossBranch.hashNeuron.clear();
+
+		st.crossBranchDeal(ntNoneCrossBranch);
 		QString eswcfile = (outfiles.size() >= 1) ? outfiles[0] : "";
 		QString markerfile = (outfiles.size() >= 2) ? outfiles[1] : "";
 		
 		
-		markerfile = markerfile + "_"+QString::number(crossPointsNum) + ".marker";
+		markerfile = markerfile + "{" + QString::number(crossType1)+"_" + QString::number(crossType2) + "_" + QString::number(crossPointsNum)+"}" + ".marker";
 		//writeESWC_file(eswcfile, st.nt);
 		writeESWC_file(eswcfile, st.nt);
+		writeESWC_file(eswcfile+"delete.eswc", ntNoneCrossBranch);
 		writeMarker_file(markerfile, st.listMarker);
+
 		
 		
 
