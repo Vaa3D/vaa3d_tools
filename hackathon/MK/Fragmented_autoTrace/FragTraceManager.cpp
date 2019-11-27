@@ -312,13 +312,13 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 #ifdef __DENDRITE_TREEFORMING_DEBUG__
 		QString rawDendriticTreeNameQ = this->finalSaveRootQ + "\\rawDenTree.swc";
-		//writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
+		writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
 
 		QString dnSampledRawDenTreeNameQ = this->finalSaveRootQ + "\\dnSampledRawDenTree.swc";
-		//writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
+		writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
 
 		QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\dnSampledNoDots.swc";
-		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 
 		QString removeSpikeFullName = this->finalSaveRootQ + "\\noSpike.swc";
 		//writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
