@@ -82,22 +82,158 @@ bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double
     return true;
 }
 
+bool mean_shift_soma_location_hp(unsigned char*** image3d,NeuronSWC &soma,V3DLONG dim0,V3DLONG dim1,V3DLONG dim2,double radius,int max_loops){
+    //qDebug()<<image3d[0][0][0];
+    location new_soma;
+    for(int nloop=0;nloop<max_loops;nloop++){
+        double xc=soma.x;
+        double yc=soma.y;
+        double zc=soma.z;
+        qDebug()<<"iterator:"<<nloop;
+        if(image3d){
+            V3DLONG x0=xc-radius;x0=(x0<0)?0:x0;
+            V3DLONG x1=xc+radius;x1=(x1>dim0-1)?(dim0-1):x1;
+            V3DLONG y0=yc-radius;y0=(y0<0)?0:x0;
+            V3DLONG y1=yc+radius;y1=(y1>dim1-1)?(dim1-1):y1;
+            V3DLONG z0=zc-radius;z0=(z0<0)?0:z0;
+            V3DLONG z1=zc+radius;z1=(z1>dim2-1)?(dim2-1):z1;
+            qDebug()<<x0<<x1<<y0<<y1<<z0<<z1;
+            V3DLONG xstep=x1-x0;
+            V3DLONG ystep=y1-y0;
+            V3DLONG zstep=z1-z0;
+            double imgAve,v=0;
+            double preImgAve=0;
+            V3DLONG n=0;
+            //imgAve = getBlockAveValue(image3d,x1-x0,y1-y0,z1-z0,soma.x,soma.y,soma.z,xstep,ystep,zstep);
+            double sum_x=0, sum_y=0, sum_z=0, sum_px=0, sum_py=0, sum_pz=0;
+            V3DLONG ix,iy,iz;
+            double dx,dy,dz,r2=double(radius)*(radius);
+            qDebug()<<"r2:"<<r2;
+            for(iz=z0;iz<=z1;iz++){
+                dz=fabs(iz-zc);dz*=dz;
+                for(iy=y0;iy<=y1;iy++){
+                    dy=fabs(iy-yc);dy*=dy;
+                    if(dy+dz>r2){
+                        continue;
+                    }
+                    dy+=dz;
+                    for(ix=x0;ix<x1;ix++){
+                        dx=fabs(ix-xc);dx*=dx;
+                        if(dx+dy>r2)continue;
+                        //qDebug()<<"-----------";
+                        //qDebug()<<"iz,iy,ix:"<<iz<<iy<<ix;
+                        //qDebug()<<image3d[iz][iy][ix];
+                        int tmpval=image3d[iz][iy][ix];
+                        //qDebug()<<tmpval;
+                        v+=tmpval;
+                        n++;
+                        tmpval=tmpval^2;
+                        if(tmpval){
+                            sum_x+=tmpval;
+                            sum_y+=tmpval;
+                            sum_z+=tmpval;
+                            sum_px+=double(tmpval)*ix;
+                            sum_py+=double(tmpval)*iy;
+                            sum_pz+=double(tmpval)*iz;
 
+                        }
+                    }
+                }
+            }
+            imgAve=(n==0)?0:v/n;
+            qDebug()<<"imgAVE:"<<imgAve;
+
+            if(sum_x&&sum_y&&sum_z){
+                new_soma.x=sum_px/sum_x;
+                new_soma.y=sum_py/sum_y;
+                new_soma.z=sum_pz/sum_z;
+            }
+            else{
+                new_soma.x=xc;
+                new_soma.y=yc;
+                new_soma.z=zc;
+            }
+            double score=0;
+            score=fabs(new_soma.x-soma.x)+fabs(new_soma.y-soma.y)+fabs(new_soma.z-soma.z);
+            qDebug()<<"score:"<<score;
+            soma.x=new_soma.x;
+            soma.y=new_soma.y;
+            soma.z=new_soma.z;
+            if(score<0.5){//移动的位置小于阈值则停止迭代
+                break;
+            }
+
+//            if(imgAve>preImgAve){//现在只考虑平均亮度值减小作为终止条件
+//                soma.x=new_soma.x;
+//                soma.y=new_soma.y;
+//                soma.z=new_soma.z;
+//            }
+//            else{
+//                break;
+//            }
+            preImgAve=imgAve;
+            qDebug()<<"new soma location:"<<soma.x<<soma.y<<soma.z;
+
+
+
+        }
+    }
+    return true;
+}
+
+bool find_soma(NeuronTree n,NeuronSWC &soma,double &radius){
+    for(V3DLONG i=0;i<n.listNeuron.size();i++){
+        if(n.listNeuron[i].parent<0){
+            soma=n.listNeuron[i];
+//            soma.x=n.listNeuron[i].x;
+//            soma.y=n.listNeuron[i].y;
+//            soma.z=n.listNeuron[i].z;
+            radius=n.listNeuron[i].r;
+            qDebug()<<"soma location:"<<soma.x<<soma.y<<soma.z;
+            break;
+        }
+    }
+    return true;
+}
+
+bool p1data_to_image3d(unsigned char* p1data,V3DLONG* sz,unsigned char*** &image3d){
+
+    V3DLONG sz0=sz[0],sz1=sz[1],sz2=sz[2];
+
+    image3d=new unsigned char**[sz2];
+    qDebug()<<"1->3 sz2,sz1,sz0:"<<sz2<<sz1<<sz0;
+    for(int i=0;i<sz2;i++){
+        image3d[i]=new unsigned char*[sz1];
+        for(int j=0;j<sz1;j++){
+            image3d[i][j]=new unsigned char[sz0];
+
+        }
+    }
+    for(int z0=0;z0<sz2;z0++){
+        for(int y0=0;y0<sz1;y0++){
+            for(int x0=0;x0<sz0;x0++){
+                image3d[z0][y0][x0] = p1data[z0*sz1*sz0+y0*sz0+x0];
+            }
+        }
+    }
+    //qDebug()<<"11"<<image3d[0][0][0];
+    return true;
+}
 
 //找到所有与soma估计半径表面相交的分支上的点
-void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,vector<location> &points,double &max_radius){
+void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,vector<location> &points,NeuronSWC &soma,double &radius_threshold){
 
     V3DLONG size=nt.listNeuron.size();
-    NeuronSWC soma;
-    double radius_threshold;//soma 半径
-    //double max_radius;
+//    NeuronSWC soma;
+//    double radius_threshold;//soma 半径
+    double max_radius;
     vector<vector<V3DLONG> > children=vector<vector<V3DLONG> >(size,vector<V3DLONG>());
     for(V3DLONG i=0;i<size;i++){
         V3DLONG par=nt.listNeuron[i].parent;
         if(par<0){
-            soma=nt.listNeuron[i];
-            radius_threshold=soma.r;
-            qDebug()<<"radius:"<<radius_threshold;
+//            soma=nt.listNeuron[i];
+//            radius_threshold=soma.r;
+//            qDebug()<<"radius:"<<radius_threshold;
             continue;
         }
         children[nt.hashNeuron.value(par)].push_back(i);//所有node的children
@@ -146,9 +282,19 @@ void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,ve
 
     }
     //将soma放入点集中
+    qDebug()<<"push soma:"<<soma.x<<soma.y<<soma.z;
     location point0=location(soma.x,soma.y,soma.z);
     points.push_back(point0);
-
+    //用于meanshift中显示soma平移后的位置
+    ImageMarker *marker;
+    marker=new ImageMarker();
+    marker->x=soma.x+1;
+    marker->y=soma.y+1;
+    marker->z=soma.z+1;
+    marker->color.r=0;
+    marker->color.g=0;
+    marker->color.b=255;
+    markers.push_back(*marker);
     //将与soma表面相交的分支上的点放入点集中
     for(int j=0;j<locations.size();j++){
         NeuronSWC node;

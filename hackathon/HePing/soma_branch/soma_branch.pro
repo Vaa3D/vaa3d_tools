@@ -13,7 +13,8 @@ HEADERS	+= soma_branch_plugin.h \
     $$VAA3DPATH/v3d_main/v3d/compute_win_pca.h\
     branch_count_soma.h \
     branch_count_gui.h\
-    $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
+    $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h \
+    mean_shift_soma.h
 HEADERS+=$$VAA3DPATH/v3d_main/basic_c_fun/basic_landmark.h\
     $$VAA3DPATH/v3d_main/jba/newmat11/newmatap.h\
     $$VAA3DPATH/v3d_main/jba/newmat11/newmatio.h
@@ -21,7 +22,9 @@ HEADERS+=$$VAA3DPATH/v3d_main/basic_c_fun/basic_landmark.h\
 SOURCES	+= soma_branch_plugin.cpp \
     ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp\
     branch_count_soma.cpp \
-    branch_count_menu.cpp
+    branch_count_menu.cpp \
+    find_files.cpp \
+    mean_shift_soma.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 TARGET	= $$qtLibraryTarget(soma_branch)
