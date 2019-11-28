@@ -21,45 +21,26 @@
 #define IMGMANAGER_H
 
 #include <string>
-#include <vector>
 #include <deque>
-#include <map>
 
 #include <boost/filesystem.hpp>
-#include <boost/shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
 
-#include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
 
-typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
-													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
+#include "integratedDataStructures.h"
 
-struct registeredImg
-{
-	string imgAlias;
-	QString imgCaseRootQ;
-
-	void createBlankImg(const int imgDims[]);
-	map<string, myImg1DPtr> slicePtrs;
-
-	map<int, size_t> histMap;
-	map<int, double> histMap_log10;
-	void getHistMap_no0();
-	void getHistMap_no0_log10();
-	
-	int dims[3];
-};
+using namespace integratedDataStructures;
 
 class ImgManager
 {
 public: 
 	/********* Constructors and Basic Data Members *********/
-	ImgManager() {};
+	ImgManager() = default;
 	ImgManager(QString inputPath);
 
 	QString inputCaseRootPath;
@@ -76,6 +57,7 @@ public:
 	/*******************************************************/
 
 
+
 	/***************** I/O and Image Property Profile *****************/
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgEntry(string caseID, imgFormat format);
@@ -87,7 +69,6 @@ public:
 
 
 	// ~~~~~~~~~~~~~~~~~ The following is not frequently used. Most of them were developed for IVSCC project. May be deprecated in the future. ~~~~~~~~~~~~~~~~~ //
-
 	/***************** Image - SWC Functionalities *****************/
 	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
 	
@@ -111,7 +92,6 @@ public:
 	/********* Dessemble Image/Stack Into Tiles. This Is For Caffe's Memory Leak Issue *********/
 	static void imgSliceDessemble(string imgName, int tileSize);
 	/*******************************************************************************************/
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
 

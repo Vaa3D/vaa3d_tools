@@ -18,6 +18,7 @@
 #include <string.h>
 #include <vector>
 #include <iostream>
+#include "fstream"
 
 using namespace std;
 
@@ -64,7 +65,11 @@ using namespace std;
 #define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
 #endif
 
-
+bool fexists(QString filename)
+{
+  std::ifstream ifile(qPrintable(filename));
+  return ifile.good();
+}
 QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QHash<V3DLONG,V3DLONG> & LUT)
 {
     // generate neighbor lists for each node, using new ids.

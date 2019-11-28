@@ -1,0 +1,1 @@
+"D:\V3D\v3d_external\bin\vaa3d_msvc.exe" /x "D:\V3D\v3d_external\bin\plugins\Termination_Detection\Tip_Detection.dll" /f "Terminations Detection" /i "D:\shenlan\tip\18455_00004_4_15331_10210_3626_croped.nrrd.tif" /p 64 10 5 4 4 2 115 68 /o "D:\shenlan\tip\test1.marker"

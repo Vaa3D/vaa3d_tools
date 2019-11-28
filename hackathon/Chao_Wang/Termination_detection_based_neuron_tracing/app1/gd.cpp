@@ -1626,7 +1626,7 @@ char* find_shortest_path_graphpointset(V3DLONG n_all_nodes,
 			printf("\n");
 			
 			mUnit.push_back(cc);
-            v3d_msg(QString("lengths is %1").arg(mUnit.size()));
+            //v3d_msg(QString("lengths is %1").arg(mUnit.size()));
             mUnit.size();
 			
 			for (k=0;k<n;k++) //at most n edge links

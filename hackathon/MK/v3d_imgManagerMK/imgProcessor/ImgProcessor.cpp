@@ -16,78 +16,9 @@
 *
 ********************************************************************************/
 
-#include <iostream>
-
-#include <boost/container/flat_set.hpp>
-
 #include "ImgProcessor.h"
 
 using namespace std;
-
-morphStructElement2D::morphStructElement2D(shape selectedEleShape, int length) : structEleShape(selectedEleShape), xLength(length), yLength(length)
-{
-	if (this->structEleShape == morphStructElement2D::disk)
-	{
-		this->radius = length / 2;
-		this->structElePtr = new unsigned char[(this->radius * 2 + 1) * (this->radius * 2 + 1)];
-		if (length == 3)
-		{
-			this->structElePtr[0] = 0; this->structElePtr[1] = 1; this->structElePtr[2] = 0;
-			this->structElePtr[3] = 1; this->structElePtr[4] = 1; this->structElePtr[5] = 1;
-			this->structElePtr[6] = 0; this->structElePtr[7] = 1; this->structElePtr[8] = 0;
-		}
-		else
-		{
-			int count = 0;
-			for (int j = -this->radius; j <= this->radius; ++j)
-			{
-				for (int i = -this->radius; i <= this->radius; ++i)
-				{
-					int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
-					if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
-					else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
-
-					++count;
-				}
-			}
-		}
-	}
-}
-
-morphStructElement2D::morphStructElement2D(string shape, int length) : eleShape(shape), xLength(length), yLength(length)
-{
-	if (!this->eleShape.compare("circle"))
-	{
-		this->radius = length / 2;
-		this->structElePtr = new unsigned char[(this->radius * 2 + 1) * (this->radius * 2 + 1)];
-		if (length == 3)
-		{
-			this->structElePtr[0] = 0; this->structElePtr[1] = 1; this->structElePtr[2] = 0;
-			this->structElePtr[3] = 1; this->structElePtr[4] = 1; this->structElePtr[5] = 1;
-			this->structElePtr[6] = 0; this->structElePtr[7] = 1; this->structElePtr[8] = 0;
-		}
-		else
-		{
-			int count = 0;
-			for (int j = -this->radius; j <= this->radius; ++j)
-			{
-				for (int i = -this->radius; i <= this->radius; ++i)
-				{
-					int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
-					if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
-					else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
-
-					++count;
-				}
-			}
-		}
-	}
-}
-
-morphStructElement2D::~morphStructElement2D()
-{
-	if (this->structElePtr != nullptr) delete[] this->structElePtr;
-}
 
 map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& inputHistList)
 {

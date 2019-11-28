@@ -133,7 +133,7 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     if(extract_type == "l"){
         nt = return_long_axon(nt, soma, false);
         qDebug()<<"Now sort long axon";
-        export_listNeuron_2swc(nt.listNeuron, "test.swc");
+//        export_listNeuron_2swc(nt.listNeuron, "test.swc");
     }
     if(extract_type == "d"){nt=return_dendrite(nt, soma);}
     nt = my_SortSWC(nt, 1, 0);

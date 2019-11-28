@@ -32,11 +32,11 @@ class BigscreenControlDialog : public QDialog
 public:
     BigscreenControlDialog(QWidget * parent) : QDialog(parent)
     {
-        displaypath_label=new QLabel(tr("Choose the display directory : "));
+        displaypath_label=new QLabel(tr("Chose the display directory : "));
         editor_displayfolder = new QLineEdit(tr(""));
         button_displaypath = new QPushButton(tr("..."));
 
-        anchorpath_label=new QLabel(tr("Choose the anchor file : "));
+        anchorpath_label=new QLabel(tr("Chose the anchor file : "));
         editor_anchorfile = new QLineEdit(tr(""));
         button_anchorfile = new QPushButton(tr("..."));
 

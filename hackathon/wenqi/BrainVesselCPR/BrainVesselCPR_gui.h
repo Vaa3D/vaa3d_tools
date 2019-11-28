@@ -9,7 +9,9 @@
 #include <string>
 #include <QtDebug>
 #include<iostream>
-
+#include<QLayout>
+#include "BrainVesselCPR_centerline.h"
+#include "BrainVesselCPR_sampleplane.h"
 using namespace std;
 class SetContrastWidget: public QWidget
 {
@@ -341,5 +343,58 @@ private slots:
      void reject();
 };
 
+
+class SelectMRI : public QWidget
+{
+    Q_OBJECT
+public:
+    QPushButton * ok;
+    QComboBox * openedFile;
+    v3dhandleList win_list;
+    v3dhandle mrihandle;
+    V3DPluginCallback2 * callback;
+    vector<Coor3D> centerline;
+    V3DLONG x_length, y_length, z_length, radius;
+    QHBoxLayout * hbox;
+
+    SelectMRI(V3DPluginCallback2 &callback, QWidget * parent) : QWidget(parent)
+    {
+        this->callback = &callback;
+        this->x_length = x_length;
+        this->y_length = y_length;
+        this->z_length = z_length;
+        this->radius = radius;
+        ok = new QPushButton("OK");
+        openedFile = new QComboBox();
+        win_list = callback.getImageWindowList();
+        QStringList items;
+        for (int i=0; i<win_list.size(); i++)
+            items << callback.getImageName(win_list[i]);
+
+        cout << "break: " << __LINE__ << endl;
+
+        hbox = new QHBoxLayout();
+        openedFile->addItems(items);
+        cout << "break: " << __LINE__ << endl;
+        hbox->addWidget(this->openedFile);
+        cout << "break: " << __LINE__ << endl;
+        hbox->addWidget(this->ok);
+        cout << "break: " << __LINE__ << endl;
+        this->setLayout(hbox);
+        cout << "break: " << __LINE__ << endl;
+
+        connect(ok, SIGNAL(clicked()), this, SLOT(getMRI()));
+        cout << "break: " << __LINE__ << endl;
+    }
+public slots:
+    void getMRI()
+    {
+        for(int i=0;i<this->win_list.size();i++)
+        {
+            if(this->openedFile->currentText()==callback->getImageName(win_list[i]))
+                this->mrihandle = win_list[i];
+        }
+    }
+};
 
 #endif // BRAINVESSELCPR_GUI_H

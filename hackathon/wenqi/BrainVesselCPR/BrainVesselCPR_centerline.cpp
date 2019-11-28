@@ -1,6 +1,4 @@
 #include "BrainVesselCPR_centerline.h"
-#include "BrainVesselCPR_sampleplane.h"
-#include "BrainVesselCPR_spline.h"
 
 #define INF 1E9
 
@@ -253,8 +251,6 @@ vector<Coor3D> reSampleCurve(vector<Coor3D> path, double step)
     return new_path;
 }
 
-
-
 // path finding function using modified A* algorithm
 vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -276,7 +272,6 @@ vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1
 
     //cout << "start!" << endl;
 
-    // A* search path, get discrete voxels
     while(!frontier.empty())
     {
        Node current = frontier.top();
@@ -323,11 +318,11 @@ vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1
            }
        }
     }
-    //A* finished.
+
 
     //output path in console.
     V3DLONG tmp = goal;
-    //V3DLONG * path_point = new V3DLONG[x_length * y_length * int(floor(z_length/10))];
+    V3DLONG * path_point = new V3DLONG[x_length * y_length * int(floor(z_length/10))];
     V3DLONG point_count = 0;
     vector<Coor3D> smooth_path;
     Coor3D tmpCoor3D;
@@ -349,88 +344,31 @@ vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1
     tmpCoor3D.x = tmp % x_length;
     tmpCoor3D.y = floor(tmp % (x_length * y_length)) / x_length;
     tmpCoor3D.z = floor(tmp / (x_length * y_length));
+
+    //smooth path
     smooth_path.push_back(tmpCoor3D);
 
     //meanshift
     //cout << "break: " << __LINE__ << endl;
     int windowradius = 8;
     smooth_path = meanshift(smooth_path, image1d, x_length, y_length, z_length, windowradius);
+    //cout << "break: " << __LINE__ << endl;
+
+
     cout << "path size: " << smooth_path.size() << endl;
-    //meanshift finished. no upsampling.
+    smooth_curve(smooth_path, 15);
+    //cout << "break: " << __LINE__ << endl;
+//    QString filename("/Users/walker/MyProject/test.swc");
+    cout << "path size (after smooth): " << smooth_path.size() << endl;
+    //display trace in 3d
 
+    //resample path
+    vector<Coor3D> resampled_path;
+    cout << "smooth path length: " << smooth_path.size() << endl;
+    resampled_path = reSampleCurve(smooth_path, 1);
+    cout << "resampled path length: " << resampled_path.size() << endl;
 
-    //catmull rom spline
-    smooth_curve(smooth_path, 8);
-    int control_skip = 7;
-
-    double * dis_from_start = new double(smooth_path.size());
-    dis_from_start[0] = 0;
-    for(int i=1;i<smooth_path.size();i++)
-    {
-        tmpCoor3D = smooth_path[i] - smooth_path[i-1];
-        dis_from_start[i] = dis_from_start[i-1] + sqrt(tmpCoor3D.x*tmpCoor3D.x+tmpCoor3D.y*tmpCoor3D.y+tmpCoor3D.z*tmpCoor3D.z);
-    }
-
-    vector<Coor3D> control_points;
-    vector<int> control_points_id;
-    control_points.push_back(smooth_path[0]);
-    control_points_id.push_back(0);
-
-    for(int i=1;i<smooth_path.size();i++)
-    {
-        if(i%control_skip == 1)
-        {
-            control_points.push_back(smooth_path[i]);
-            control_points_id.push_back(i);
-        }
-    }
-
-    control_points.push_back(smooth_path.back());
-    control_points_id.push_back(smooth_path.size()-1);
-
-    double total_len = dis_from_start[control_points_id.back()] - dis_from_start[1];
-    double spline_resolution = 0.2;
-    int spline_center_num = floor(total_len / spline_resolution);
-
-    vector<Coor3D> spline_center(spline_center_num);
-    spline_center[0] = control_points[1];
-    int cur_up_dis_id_of_control = 2;
-    double tmpdis;
-    for(int i=1;i<spline_center_num;i++)
-    {
-        tmpdis = i*spline_resolution + dis_from_start[1];
-        if(tmpdis > dis_from_start[cur_up_dis_id_of_control])
-        {
-            cur_up_dis_id_of_control++;
-        }
-        tmpdis = tmpdis - dis_from_start[cur_up_dis_id_of_control];
-        spline_center[i] =
-    }
-
-
-    //TODO: apply cubic spline to path.
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //smooth_curve(smooth_path, 15);
-
-//    //resample path
-//    vector<Coor3D> resampled_path;
-//    cout << "smooth path length: " << smooth_path.size() << endl;
-//    resampled_path = reSampleCurve(smooth_path, 0.2);
-//    cout << "resampled path length: " << resampled_path.size() << endl;
-    NeuronTree tree = construcSwc(control_path);
-    //NeuronTree tree = construcSwc(resampled_path);
+    NeuronTree tree = construcSwc(resampled_path);
     //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
 
     v3dhandle curwin = callback.currentImageWindow();

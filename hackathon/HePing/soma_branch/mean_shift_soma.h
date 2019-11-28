@@ -1,0 +1,4 @@
+#ifndef MEAN_SHIFT_SOMA_H
+#define MEAN_SHIFT_SOMA_H
+
+#endif // MEAN_SHIFT_SOMA_H

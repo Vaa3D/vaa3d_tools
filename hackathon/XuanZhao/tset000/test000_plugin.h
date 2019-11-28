@@ -24,5 +24,18 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+struct coordinate{
+    float x;
+    float y;
+    float z;
+};
+struct block{
+    coordinate a;
+    string path;
+    int dx;
+    int dy;
+    int dz;
+};
+
 #endif
 

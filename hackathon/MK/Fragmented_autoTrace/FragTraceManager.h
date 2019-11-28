@@ -10,26 +10,34 @@
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 #include "processManager.h"
+#include "TreeGrower.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #endif
 
-enum workMode { wholeBlock_axon, dendriticTree };
+enum workMode { axon, dendriticTree };
 
 class FragTraceManager: public QWidget
 {
 	Q_OBJECT
 
 public:
-	FragTraceManager() {};
+	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
+	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
-	QString finalSaveRootQ;
-	vector<string> imgEnhanceSeq;
-	vector<string> imgThreSeq;
+	QString finalSaveRootQ;       // Save path for the traced result, acquired from UI.
+	
+	vector<string> imgEnhanceSeq; // Image Enhancement steps specified by the user, acquired from UI.
+	vector<string> imgThreSeq;    // Image Thresholding steps specified by the user, acquired from UI.
+	vector<int> partialVolumeLowerBoundaries;
 
-	workMode mode;
+	workMode mode;                // tracing axon or dendrite
 
+
+
+/* =========================== Parameters =========================== */
+	// ------- Image Enhancement ------- //
 	bool ada;
 	string adaImgName;
 	int simpleAdaStepsize, simpleAdaRate, cutoffIntensity;
@@ -37,60 +45,119 @@ public:
 	QString simpleAdaSaveDirQ;
 
 	bool gammaCorrection;
+	// --------------------------------- //
 
+	// ------- Image Segmentation ------- //
 	bool histThre;
 	string histThreImgName;
 	float stdFold;
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
+	// ---------------------------------- //
 
+	// ------- Object Classification ------- //
 	bool objFilter;
 	bool voxelSize, actualSize;
 	int voxelCount;
 
+	vector<NeuronTree> tracedMultipleDendriticTrees;
+	vector<int> currDisplayingBlockCenter;
+	map<int, ImageMarker> selectedSomaMap;
+	map<int, ImageMarker> selectedLocalSomaMap;
+	// ------------------------------------- //
+
+	// ------- Fragment Connection ------- //
 	bool MST;
 	string MSTtreeName;
 	int minNodeNum;
+	// ----------------------------------- //
 
+	// ------- Blank Area Specification (to be deprecated) ------- //
 	bool blankArea;
 	vector<int> blankXs;
 	vector<int> blankYs;
 	vector<int> blankZs;
 	vector<int> blankRadius;
+	// ----------------------------------------------------------- //
+/* ====================== END of [Parameters] ======================= */
 
-	vector<connectedComponent> signalBlobs;
-	vector<connectedComponent> signalBlobs2D;
 
+
+	// ======= Crucial Intermediate Result ======= //
+	vector<connectedComponent> signalBlobs;   // All segmented blobs are stored here.
+	vector<connectedComponent> signalBlobs2D; // not used
+	// =========================================== //
+
+
+
+	// *********************************************************************************************** //
+	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
+	// *********************************************************************************************** //
+
+
+/* ================= Result Finalization ================= */
+	// -- Connects existing trees.
 	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
-	bool imgProcPipe_wholeBlock();
-
 signals:
+	// -- Sends traced result back to FragTraceControlPanel
 	void emitTracedTree(NeuronTree tracedTree);
+/* ======================================================= */
+
+
 
 public slots:
-	bool blobProcessMonitor(ProcessManager& blobMonitor);
+	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
+
+
 
 private:
+/* ======= FragTraceManager Fascilities ======= */
+	ImgManager fragTraceImgManager;
+	ImgAnalyzer fragTraceImgAnalyzer;
+	TreeGrower fragTraceTreeGrower;
+	NeuronStructExplorer fragTraceTreeManager;
+/* ============================================ */
+
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;
 
-	vector<vector<unsigned char>> imgSlices;
-	ImgManager fragTraceImgManager;
-	ImgAnalyzer fragTraceImgAnalyzer;
-	NeuronStructExplorer fragTraceTreeManager;
-	NeuronStructUtil fragTraceTreeUtil;
-
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
+	
+
+
+/* =================== Image Enhancement =================== */
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+/* ========================================================= */
+
+
+
+/* =================== Image Segmentation =================== */
 	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	
+	// ------- Object Classification ------- //
+	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
+	// ------------------------------------- //
 
 	bool mask2swc(const string inputImgName, string outputTreeName);
-	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
+	
+	// -- Each signal blob is represented by its centroid
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
+/* ========================================================== */
+
+	
+
+/* =================== Final Traced Tree Generation =================== */
+	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
+	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
+
+	vector<connectedComponent> peripheralSignalBlobs;
+	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
+	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree);
+/* ==================================================================== */
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
@@ -120,7 +187,7 @@ inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> sign
 	NeuronTree centerTree;
 	for (vector<connectedComponent>::iterator it = signalBlobs.begin(); it != signalBlobs.end(); ++it)
 	{
-		ImgAnalyzer::ChebyshevCenter_connComp(*it);
+		ChebyshevCenter_connComp(*it);
 		NeuronSWC centerNode;
 		centerNode.n = it->islandNum;
 		centerNode.x = it->ChebyshevCenter[0];

@@ -9,6 +9,7 @@
 #include <math.h>
 #include "sort_swc.h"
 
+
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
@@ -88,6 +89,7 @@ vector<MyMarker *>nt2markers(NeuronTree nt)
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {
     qDebug()<<"crawler_raw_app_entry";
+    int timeout= 40000;
     QElapsedTimer timer1;
     timer1.start();
 
@@ -178,6 +180,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
     qDebug()<<"The first finaloutputswc is "<<finaloutputswc;}
 
+
     if(QFileInfo(finaloutputswc).exists() && !P.resume)
     {
         qDebug()<<"delete existed finaloutputswc";
@@ -193,6 +196,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         printf("\n *********************************\n");
            app_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+
+           qDebug()<<"time passed="<<timer1.elapsed();
+           v3d_msg("check time elapsed",0);
+           if(timeout-timer1.elapsed()<0) break;
 
 
         allTipsList.removeAt(0);
@@ -219,7 +226,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
     }
 
-    v3d_msg("crawler_app2 finishes. now return.");
+    v3d_msg("crawler_app2 finishes. now return.",0);
 return true;
 }
 
@@ -353,7 +360,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
     saveTextFile.close();
 
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_scaled, mysz, total4DImage->getDatatype());
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
 
@@ -466,7 +473,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     outputMarker.comment= "mean shift";
                     seedsToSave.append(outputMarker);
 
-                    QString marker_name = imageSaveString + ".marker";
+                    QString marker_name = QString(imageSaveString) + ".marker";
                     writeMarker_file(marker_name, seedsToSave);
 
                 }
@@ -502,7 +509,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     }else
                     {
 
-                        v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z));
+                        v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
                         V3DLONG num_tips = 100;
                         double tips_th;
                         if(P.global_name)
@@ -512,21 +519,21 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         }
                         else
                             tips_th = p2.p4dImage->getXDim()*100/512;
-                        p2.bkg_thresh = -1;//P.bkg_thresh;
+                        //p2.bkg_thresh = -1;//P.bkg_thresh;
                         double imgAve, imgStd;
                         mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
                         double td= (imgStd<10)? 10: imgStd;
                         //p2.bkg_thresh =-1;
                         p2.bkg_thresh = imgAve +0.7*td ; //revised by DZC 2019May22
 
-                        //p2.landmarks.push_back(RootNewLocation); //find another way to input the marker
+                        p2.landmarks.push_back(RootNewLocation); //find another way to input the marker
 
                         QList<ImageMarker>  rootlocation_marker;
                         ImageMarker m;
                         m.x=RootNewLocation.x; m.y=RootNewLocation.y;m.z=RootNewLocation.z;
                         m.color.r=255; m.color.g=255; m.color.b=255;
                         rootlocation_marker.push_back(m);
-                        QString rootmarkerfn=saveDirString+QString("\\x%1_y%2_z%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z)+".marker";
+                        QString rootmarkerfn=QString(imageSaveString) + ".marker";
                         writeMarker_file(rootmarkerfn,rootlocation_marker);
 
 
@@ -565,6 +572,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         }
 
                         int count=0;
+                        int binary_count=0;
                         do
                         {
                             if(count>4)
@@ -577,16 +585,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             printf("count=%d", count);
                             soma_tile = false;
                             num_tips = 0;
-                            int binary_count=0; // added for count for later binary process
+                             // added for count for later binary process
                             QString binary_img_fn;
                             QString app2pluginimg;
 
                             //call app2 directly. since there is bug using the function proc_app2
 
+
                             //proc_app2(callback, p2, versionStr);
-
-
-
                             QString app2pluginname= "vn2";
                             QString app2funcname= "app2";
 
@@ -597,9 +603,10 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             arg.type = "random";
                             std::vector <char *>arg_input_app2;
 
-                            if(binary_count==0)
+//                            if(binary_count==0)
+                            if(1)
                             {
-                                app2pluginimg= imageSaveString;
+                                app2pluginimg= QString(imageSaveString);
                             }
                             else
                             {
@@ -617,41 +624,44 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                             // /p parameters set for app2
                             QByteArray rootmarkerfn_ba=rootmarkerfn.toLatin1();
-                            char * p= rootmarkerfn_ba.data();
-                            arg_para_app2.push_back(p);
-                            p ="0";arg_para_app2.push_back(p);
-                            if (binary_count==0)
+                            char * p_para= rootmarkerfn_ba.data();
+                            arg_para_app2.push_back(p_para);
+                            arg_para_app2.push_back("0"); // channel=0;
+//                            if (binary_count==0)
+                            if(1)
                             {
-                                QByteArray bkg_thresh_ba= QString::number(p2.bkg_thresh).toLatin1();
-                                p= bkg_thresh_ba.data();
-                                v3d_msg(QString("binary count  =0. bkg_thresh=%1").arg(QString::number(p2.bkg_thresh)),0);
-                                arg_para_app2.push_back(p);
+//                                QByteArray bkg_thresh_ba= QString::number(p2.bkg_thresh).toLatin1();
+//                                p= bkg_thresh_ba.data();
+
+                                char * p_bkgthr= new char [5];
+                                sprintf(p_bkgthr, "%d", p2.bkg_thresh);
+
+                                v3d_msg(QString("binary count=0. bkg_thresh=%1").arg(QString::number(p2.bkg_thresh)),0);
+                                arg_para_app2.push_back(p_bkgthr);
                             }
-                            else
-                            {
-                                p= "AUTO"; arg_para_app2.push_back(p);
-                                v3d_msg("binary count >0 AUTO",0);
-                                arg_para_app2.push_back(p);
+//                            else
+//                            {
+//                                p= "AUTO"; arg_para_app2.push_back(p);
+//                                v3d_msg("binary count >0 AUTO",0);
+//                                arg_para_app2.push_back(p);
 
-                            }
-
-
-                            p ="1";arg_para_app2.push_back(p);
-                            p= "1";arg_para_app2.push_back(p);
-                            p ="0";arg_para_app2.push_back(p);
-                            p ="0";arg_para_app2.push_back(p);
-                            p ="5";arg_para_app2.push_back(p);
-                            p ="0";arg_para_app2.push_back(p);
-                            p ="0";arg_para_app2.push_back(p);
-                            p= "0";arg_para_app2.push_back(p);
+//                            }
+                            arg_para_app2.push_back("1"); //b_256cube
+                            arg_para_app2.push_back("1");//b_RadiusFrom2D
+                            arg_para_app2.push_back("0");//is_gsdt
+                            arg_para_app2.push_back("0");//is_break_accept
+                            arg_para_app2.push_back("5");//length_thresh
+                            arg_para_app2.push_back("0");//b_resample
+                            arg_para_app2.push_back("0");//b_brightfield
+                            arg_para_app2.push_back("0");//b_intensity
                             arg.p= (void *)& arg_para_app2;
                             input_app2<<arg;
 
                             // /o outputswc
                             arg.type= "random";
                             std::vector <char *> arg_output_app2;
-                            QString outswc=poutswc_file;
-                            QByteArray outswc_ba= outswc.toLatin1();
+                            //QString outswc=poutswc_file;
+                            QByteArray outswc_ba= poutswc_file.toLatin1();
                             char * outswc_string=outswc_ba.data();
                             arg_output_app2.push_back(outswc_string);
                             arg.p =(void *) & arg_output_app2;
@@ -684,17 +694,22 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                             }
 
+                            printf("tip number is : %d", num_tips);
+                            v3d_msg("check tip number",0);
+
+
                             if (num_tips>=tips_th  && ifs_swc) //add <=20 and #tips>=100 constraints by PHC 20170801
                             {
-                                v3d_msg("start to binary process",0);
-                                unsigned char* total1dData_apa = 0;
-                                total1dData_apa = new unsigned char [pagesz_vim];
-                                BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
+                                v3d_msg("start to increase the bkg_threshold",0);
+                                //unsigned char* total1dData_apa = 0;
+                                //total1dData_apa = new unsigned char [pagesz_vim];
+                                //BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
                                 //p2.p4dImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
                                 //p2.bkg_thresh =-1;
-                                binary_img_fn=imageSaveString+"_binary.v3draw";
+                                //binary_img_fn=imageSaveString+"_binary.v3draw";
 
-                                simple_saveimage_wrapper(callback,binary_img_fn.toStdString().c_str(),total1dData_apa,in_sz,1);
+                                p2.bkg_thresh +=10;
+                                //simple_saveimage_wrapper(callback,binary_img_fn.toLatin1().data(),(unsigned char *)total1dData_apa,in_sz,1);
                                 binary_count++;
 
                             }
@@ -900,6 +915,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 //                {
 //                    node_pn_2nd = getParent(node_pn,nt);
 //                }
+
 
 //                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
 //                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
@@ -1251,7 +1267,7 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
 
 
 
-void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
+void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData, TRACE_LS_PARA P)
 {
     qDebug()<<"now start to generate the final result";
 
@@ -1397,14 +1413,14 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     writeSWC_file(fileSaveName,nt_pruned_2nd);
 
-//    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
-//    qDebug() <<"initial copyname="<<copyname;
-//    //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
-//                      //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));
-//    qDebug()<< "P.fusion_folder=  "<< P.fusion_folder;
-//    copyname= P.fusion_folder+copyname;
-//    qDebug()<<"copyname =" <<copyname;
-//    writeSWC_file(copyname, nt_pruned_2nd);
+    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
+    qDebug() <<"initial copyname="<<copyname;
+    //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
+                      //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));
+    qDebug()<< "P.fusion_folder=  "<< P.fusion_folder;
+    copyname= P.fusion_folder+copyname;
+    qDebug()<<"copyname =" <<copyname;
+    writeSWC_file(copyname, nt_pruned_2nd);
 
 
     //write tc file
@@ -1569,7 +1585,7 @@ void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSa
             inputswc = readSWC_file(swcfilepath);;
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
-                inputswc[d]->type = node_type;
+                //inputswc[d]->type = node_type;
                 outswc.push_back(inputswc[d]);
             }
             saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
@@ -1606,7 +1622,7 @@ void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSa
             outswc = readSWC_file(fileSaveName.toStdString());
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
-                inputswc[d]->type = node_type;
+                //inputswc[d]->type = node_type;
                 int flag_prune = 0;
                 for(int dd = 0; dd < outswc.size();dd++)
                 {
@@ -1648,38 +1664,4 @@ void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSa
 
 
 
-void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
-{
-    ifstream ifs(fileWithData.toLatin1());
-    string info_swc;
-    string swcfilepath;
-    vector<MyMarker*> outswc,inputswc;
 
-    QString fileSaveName = fileWithData + "wofusion.swc";
-    int offsetX, offsetY,offsetZ,sizeX, sizeY, sizeZ;
-    while(ifs && getline(ifs, info_swc))
-    {
-        std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> offsetZ >> swcfilepath >> sizeX >> sizeY >> sizeZ;
-
-            inputswc = readSWC_file(swcfilepath);;
-            for(V3DLONG d = 0; d < inputswc.size(); d++)
-            {
-                inputswc[d]->x = inputswc[d]->x + offsetX;
-                inputswc[d]->y = inputswc[d]->y + offsetY;
-                inputswc[d]->z = inputswc[d]->z + offsetZ;
-                outswc.push_back(inputswc[d]);
-            }
-    }
-    ifs.close();
-    saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
-    NeuronTree nt_final = readSWC_file(fileSaveName);
-    QList<NeuronSWC> neuron_final_sorted;
-
-    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, VOID))
-    {
-        v3d_msg("fail to call swc sorting function.",0);
-    }
-
-    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
-}

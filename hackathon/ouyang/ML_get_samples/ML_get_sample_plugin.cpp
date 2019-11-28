@@ -7,10 +7,10 @@
 #include <vector>
 #include "ML_get_sample_plugin.h"
 #include "APP1_pruning.h"
-#include "/home/braincenter4/vaa3d_tools/hackathon/fl_cellseg/src/FL_watershed_vs.h"
-#include "/home/braincenter4/vaa3d_tools/hackathon/fl_cellseg/src/FL_bwlabel2D3D.h"
-#include "/home/braincenter4/v3d_external/v3d_main/basic_c_fun/volimg_proc.h"
-//#include "/home/braincenter4/vaa3d_tools/hackathon/fl_cellseg/src/label_object_dialog.h"
+#include "FL_watershed_vs.h"
+#include "FL_bwlabel2D3D.h"
+#include "volimg_proc.h"
+//#include "/home/braincenter5/vaa3d_tools/hackathon/fl_cellseg/src/label_object_dialog.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(ML_get_sample, ML_sample);
  
@@ -84,6 +84,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         pruning_covered_leaf_single_cover(input,output,callback);
     }
+    else if (func_name == tr("prune_tip_thres"))
+    {
+        prune_terminal_nodes(input,output,callback);
+    }
     else if (func_name == tr("find_fake_tip"))
     {
         find_short_branch_tips_func(input,output,callback);
@@ -95,6 +99,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     else if (func_name == tr("prediction_model"))
     {
         prediction(input,output,callback);
+    }
+    else if (func_name == tr("mean_shift"))
+    {
+        mean_shift_oyq(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{

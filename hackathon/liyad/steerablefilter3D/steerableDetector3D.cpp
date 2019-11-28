@@ -298,10 +298,12 @@ void Filter::run() {
                 
         response_[i] = a1;
         //std::cout<< "response_[i]:"<<response_[i]<<std::endl;
+        ColumnVector eigenvector_largest =eigenvectors_matrix.column(largest_ind);
         
-        orientation_[i][0] = eigenvectors_matrix(largest_ind,3);
-        orientation_[i][1] = eigenvectors_matrix(largest_ind,3);
-        orientation_[i][2] = eigenvectors_matrix(largest_ind,3);
+        
+        orientation_[i][0] = eigenvector_largest(1);
+        orientation_[i][1] = eigenvector_largest(2);
+        orientation_[i][2] = eigenvector_largest(3);
         //std::cout<<"filter::run, orientation_[i][0]="<<orientation_[i][0]<<", [i][1]="<<orientation_[i][1]<<", [i][2]="<<orientation_[i][2]<<std::endl;
     
     }

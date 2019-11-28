@@ -69,9 +69,9 @@ class SteerableFilter3DDialog : public QDialog
             pRoiList=cb.getROI(cb.currentImageWindow());
             int chn_num = image->getCDim();
 
-            order_editor = new QLineEdit(QString("").setNum(2));            
+            order_editor = new QLineEdit(QString("").setNum(1));            
             sigma_editor = new QLineEdit(QString("").setNum(1));
-            zfactor_editor = new QLineEdit(QString("").setNum(3));
+            zfactor_editor = new QLineEdit(QString("").setNum(1));
             
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);

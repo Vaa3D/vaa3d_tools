@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = D:/v3d_2013/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= Hackathon_demo2_plugin.h \
@@ -19,4 +19,3 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 TARGET	= $$qtLibraryTarget(Hackathon_demo2)
 DESTDIR	= $$VAA3DPATH/bin/plugins/Hackathon_demo2/
 
-FORMS +=

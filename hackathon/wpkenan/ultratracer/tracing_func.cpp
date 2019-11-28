@@ -1598,17 +1598,21 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }else
         P.length_thresh = 5;
 
+<<<<<<< HEAD
 
      /*yong
 
+=======
+//python predict3DUnetPP.py x_12486_y_41608_z_2774.tif result.tif UNetPP.h5 256 256 128
+>>>>>>> edb0dd08d1b721be7450eaf6c1dc2a625103615f
         if(1)
         {
             P.length_thresh = 5;
             QString imageUnetString = imageSaveString + "unet.tif";
 
-#if  defined(Q_OS_LINUX)
-    QString cmd_predict = QString("python predict.py %1 %2")
-            .arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
+#if defined(Q_OS_LINUX)
+    QString cmd_predict = QString("/home/braincenter12/anaconda3/envs/py36/bin/python3.6 /home/braincenter12/Desktop/wpkenan/yong/predict3DUnetPP.py %1 %2 /home/braincenter12/Desktop/wpkenan/yong/UNetPP.h5 %3 %4 %5")
+            .arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str()).arg(mysz[0]).arg(mysz[1]).arg(mysz[2]);
     system(qPrintable(cmd_predict));
 #endif
             int datatype;

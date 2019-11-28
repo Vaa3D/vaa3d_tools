@@ -12,7 +12,7 @@ Q_EXPORT_PLUGIN2(quality_control, TestPlugin);
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+		<<tr("quality control")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -27,7 +27,7 @@ QStringList TestPlugin::funclist() const
 
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("quality control"))
 	{
 		v3d_msg("To be implemented.");
 	}
@@ -53,9 +53,33 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         Process(input,output,callback);
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("test"))
 	{
-		v3d_msg("To be implemented.");
+        vector<char*> in, inparas, outfiles;
+        if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+        if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+        bool hasOutput;
+        if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);hasOutput=true;}
+        else{hasOutput=false;}
+        QString swc_file = in.at(0);
+        NeuronTree nt_unsorted = readSWC_file(swc_file);
+        cout<<"check1"<<endl;
+        QList<int> result;
+        result = loop_detection(nt_unsorted);
+        QList<CellAPO> apo;
+        QString filename = "/home/penglab/Desktop/test2/1.apo";
+        for (int i=0;i<result.size();i++){
+            CellAPO m;
+            m.x = nt_unsorted.listNeuron.at(result.at(i)).x;
+            m.y = nt_unsorted.listNeuron.at(result.at(i)).y;
+            m.z = nt_unsorted.listNeuron.at(result.at(i)).z;
+            m.color.r=255;
+            m.color.g=0;
+            m.color.b=0;
+            m.volsize = 50;
+            apo.push_back(m);
+        }
+        writeAPO_file(filename, apo);
 	}
 	else if (func_name == tr("help"))
 	{

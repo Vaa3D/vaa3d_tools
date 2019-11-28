@@ -1,0 +1,4 @@
+There are two ways to use plugins:
+
+The first method, you need to compile the source code I uploaded;
+The second method, you can directly put the dll file I uploaded into the V3D client you downloaded: /bin/plugin/Create a new folder / the dll file I uploaded

@@ -12,6 +12,8 @@
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "my_surf_objs.h"
 #include "vn_app2.h"
+#include <stdlib.h>
+//#include "sort_swc.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(tera_retrace, retrace);
@@ -44,25 +46,26 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         //if you want to change some of the parameters, pls go to app_tracing_ada_win3d to set
 
         P.image=0;
-        P.block_size=512;
+        P.block_size=256;
         P.soma=0;
         P.channel=1;
-        P.bkg_thresh=10;
+        P.bkg_thresh= -1;
         P.resume =  1;   //add continue tracing option
         P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
-        P.is_break_accept =  0;
+        P.is_break_accept = 0;
         P.length_thresh =  5;
         P.adap_win= 1;
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.global_name = true;
         P.method = app2;
-        LandmarkList locationlist=callback.getLandmarkTeraFly();
-        //neurontracer_app2_raw dialog(callback, parent);
-        QString imgpath=callback.getPathTeraFly();
 
+        // get parameters from terafly window
+
+        LandmarkList locationlist=callback.getLandmarkTeraFly();
+        QString imgpath=callback.getPathTeraFly();
         QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
         QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
         QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
@@ -113,9 +116,60 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
 
          QString savefolder= "D:\\retrace_tmp";
+
+         if (QDir(savefolder).exists())
+         {
+             qDebug()<< "tmp folder existed. delete";
+             system(qPrintable(QString("rd /s /q %1").arg(savefolder.toStdString().c_str())));
+
+         }
          system(qPrintable(QString("mkdir %1").arg(savefolder.toStdString().c_str())));
+         QString ref_swc_fn= savefolder + "\\ref_swc_2ndres.swc";
+         writeSWC_file(ref_swc_fn,ref_swc);
+
+          // sort swc
+/*
+        "  QList<NeuronSWC> ref_swc_sort;
+         if (!SortSWC(ref_swc.listNeuron,ref_swc_sort,VOID,0))
+         {
+             fprintf(stderr,"error in sorting swc" );
+         }
+
+         QString ref_swc_sort_fn;
+         if (! export_list2file(ref_swc_sort,ref_swc_sort_fn,ref_swc_fn))
+         {
+             fprintf(stderr, "cannot write swc to file");
+         };
+
+         ref_swc= readSWC_file(ref_swc_sort_fn);
+
          QString ref_swc_highres_fn= savefolder+"\\ref_swc_highres.swc";
          writeSWC_file(ref_swc_highres_fn,ref_swc_highres);
+*/
+
+         //sort swc
+         QString plugin_name="sort_neuron_swc" ;
+         QString func_name= "sort_swc";
+         V3DPluginArgItem arg;
+         V3DPluginArgList sort_input;
+         V3DPluginArgList sort_output;
+
+         arg.type="random";std::vector<char*> arg_input_sort;QByteArray swcfn_ba=ref_swc_fn.toLatin1();char * swcfn_char= swcfn_ba.data();
+         arg_input_sort.push_back(swcfn_char);
+         arg.p = (void *) & arg_input_sort;
+         sort_input<<arg;
+
+         arg.type= "random";std::vector <char* > arg_para_sort;
+         arg_para_sort.push_back("0"); // no new link
+         arg.p = (void *) & arg_para_sort;
+         sort_input<<arg;
+
+         callback.callPluginFunc(plugin_name,func_name,sort_input,sort_output);
+
+         QString sortswcfn= ref_swc_fn+"_sorted.swc";
+         ref_swc =readSWC_file(sortswcfn);
+
+
 
 
          QString fiswcfolder = savefolder+"\\finalswcfolder";
@@ -123,7 +177,7 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
          system(qPrintable(QString("mkdir %1").arg(fiswcfolder.toStdString().c_str())));
          P.fusion_folder=fiswcfolder;
 
-         v3d_msg("check");
+         v3d_msg("check",0);
 
         for (int i=0; i<locationlist.size();i++)
         {
@@ -151,26 +205,29 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
                 writeMarker_file(indimarkerfn,indimarker);
                 qDebug()<<"markerfilename: \n"<<indimarkerfn;
-                v3d_msg("check marker name.");
+                v3d_msg("check marker name.",0);
                 QString ref_swcfn= indimarkerfn + QString("_nc_APP2_GD.swc");
                 writeSWC_file(ref_swcfn,ref_swc);
                 P.markerfilename = indimarkerfn ;
+                P.block_size=256;
+                v3d_msg("check swc",0);
 
                 printf("-------------------------------\n");
                 crawler_raw_app(callback,parent,P,bmenu);
 
-                v3d_msg("check output");
+                v3d_msg("check output",0);
                 QString txtfileName= indimarkerfn+"_tmp_APP2\\scanData.txt";
                 qDebug()<<"txtfilename:"<<txtfileName;
                 qDebug() <<"txtfileName="<< txtfileName;
                 list<string> infostring;
-                processSmartScan_3D_wofuison(callback,infostring,txtfileName);
+                processSmartScan_3D(callback,infostring,txtfileName,P );
 
 
             }
         }
 
-        v3d_msg("check whole output without fusion");
+
+        v3d_msg("check whole output without fusion",0);
         QString ref_swc_wf= QString(fiswcfolder) + "\\ori.swc";
         writeSWC_file(ref_swc_wf,ref_swc);
         QString fusedswc= QString(fiswcfolder) + "_fused.swc";
@@ -238,7 +295,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         TRACE_LS_PARA P;
 
         P.image=0;
-        P.block_size=512;
+        P.block_size=256;
         P.soma=0;
         P.channel=1;
         P.bkg_thresh=-1;
@@ -259,23 +316,34 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString imgpath= infiles[0];
         qDebug()<<"input imgpath="<<imgpath;
 
-        //        QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
-        //        QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
-        //        QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
-
-        //        QString zdim_2nd= QString::number(zdim.toInt()/2);
-        //        QString ydim_2nd= QString::number(ydim.toInt()/2);
-        //        QString xdim_2nd= QString::number(xdim.toInt()/2);
-        //        QString res2ndimgpath= imgpath.split("RES")[0]+"RES("
-        //                +xdim_2nd +"x"+ydim_2nd+"x"+zdim_2nd+")";
-
-        //        qDebug()<< "x ="<<xdim;qDebug()<< "y ="<<ydim;qDebug()<< "z ="<<zdim;
-        //        qDebug()<< "x_2nd ="<<xdim_2nd;qDebug()<< "y_2nd ="<<ydim_2nd;qDebug()<< "z_2nd ="<<zdim_2nd;
-        //        qDebug()<< "2ndimgpath"<<res2ndimgpath;
-
-
         QString swcfn= infiles[1];
-        NeuronTree ref_swc= readSWC_file(swcfn);
+        //NeuronTree ref_swc= readSWC_file(swcfn);
+
+        //sort swc
+
+        QString plugin_name="sort_neuron_swc" ;
+        QString func_name= "sort_swc";
+        V3DPluginArgItem arg;
+        V3DPluginArgList sort_input;
+        V3DPluginArgList sort_output;
+
+        arg.type="random";std::vector<char*> arg_input_sort;QByteArray swcfn_ba=swcfn.toLatin1();char * swcfn_char= swcfn_ba.data();
+        arg_input_sort.push_back(swcfn_char);
+        arg.p = (void *) & arg_input_sort;
+        sort_input<<arg;
+
+        arg.type= "random";std::vector <char* > arg_para_sort;
+        arg_para_sort.push_back("0"); // no new link
+        arg.p = (void *) & arg_para_sort;
+        sort_input<<arg;
+
+        callback.callPluginFunc(plugin_name,func_name,sort_input,sort_output);
+
+        QString sortswcfn= swcfn+"_sorted.swc";
+        NeuronTree ref_swc =readSWC_file(sortswcfn);
+
+
+
         //qDebug()<<"imgpath: \n" <<imgpath;
 
 
@@ -303,6 +371,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
 
 
+
         for (int i=0; i<markerlist.size();i++)
         {
             if ( markerlist.at(i).color.r==255 && markerlist.at(i).color.g==0 && markerlist.at(i).color.b==0)
@@ -327,13 +396,14 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
                 writeMarker_file(indimarker,indimarkerls);
 
                 P.markerfilename= indimarker;
+                P.block_size= 256;
                 crawler_raw_app(callback,parent,P ,bmenu);
 
                 QString txtfileName= indimarker+"_tmp_APP2\\scanData.txt";
                 qDebug() <<"txtfileName="<< txtfileName;
                 list<string> infostring;
                 //processSmartScan_3D(callback,infostring,txtfileName);
-                 processSmartScan_3D(callback,infostring,txtfileName);
+                 processSmartScan_3D(callback,infostring,txtfileName,P);
             }
 
         }
@@ -370,7 +440,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString txtfilenName = infiles[0];
         TRACE_LS_PARA P;
         list<string> infostring;
-        processSmartScan_3D(callback,infostring,txtfilenName);
+        processSmartScan_3D(callback,infostring,txtfilenName,P);
 	}
     else if (func_name == tr("single_image"))
 	{
@@ -382,7 +452,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         p2.length_thresh =5 ;
         p2.cnn_type = 2;
         p2.channel = 0;
-        p2.SR_ratio = 0.30303;
+        p2.SR_ratio = 0.333333;
         p2.b_256cube = 1;
         p2.b_RadiusFrom2D = 1;
         p2.b_resample = 0;
@@ -414,6 +484,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString app2funcname="app2";
 
 
+        TRACE_LS_PARA p2;
         V3DPluginArgItem arg;
         V3DPluginArgList input_app2;
         arg.type = "random";
@@ -426,20 +497,36 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         input_app2<<arg;
 
         arg.type="random";
+
+
         std::vector <char *> arg_para_app2;
 
         //parameters set for app2
-        char *p= "NULL";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p= "AUTO";arg_para_app2.push_back(p);
-        p ="1";arg_para_app2.push_back(p);
-        p= "1";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="5";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p= "0";arg_para_app2.push_back(p);
+        arg_para_app2.push_back("NULL");
+        arg_para_app2.push_back("0");
+        if(1)
+        {
+            p2.bkg_thresh=20;
+
+            //QByteArray p_ba =QString::number(p2.bkg_thresh).toLatin1();
+            //p= p_ba.data();
+           // itoa(p2.bkg_thresh,p,10);
+            char * pp= new char [5];
+            sprintf(pp, "%d", p2.bkg_thresh);
+            //printf("\n p=%s \n", p);
+            arg_para_app2.push_back(pp);
+
+        }
+
+        //p= "10";arg_para_app2.push_back(p);
+        arg_para_app2.push_back("1");
+        arg_para_app2.push_back("1");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("5");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
         arg.p= (void *)& arg_para_app2;
         input_app2<<arg;
 
@@ -455,6 +542,15 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
 
         //p NULL 0 AUTO 1 1  0 0 5 0 0 0
+
+    }
+    else if (func_name==tr("fusion"))
+    {
+        QString inputdir= infiles[0];
+        QString outswc = inputdir+"\\fused.swc";
+        smartFuse(callback,inputdir,outswc);
+
+
 
     }
 
