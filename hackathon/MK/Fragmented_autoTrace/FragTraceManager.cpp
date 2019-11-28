@@ -271,6 +271,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
+		// Get peripheral signal centroids
+		NeuronTree periSignalTree = this->getPeripheralSigTree(profiledDenTree, this->minNodeNum);
+
 		// Downsample the node density to reduce segment zig-zagging
 		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2);	
 		
@@ -313,6 +316,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 #ifdef __DENDRITE_TREEFORMING_DEBUG__
 		QString rawDendriticTreeNameQ = this->finalSaveRootQ + "\\rawDenTree.swc";
 		writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
+
+		QString periSigTreeNameQ = this->finalSaveRootQ + "\\periSigTree.swc";
+		writeSWC_file(periSigTreeNameQ, periSignalTree);
 
 		QString dnSampledRawDenTreeNameQ = this->finalSaveRootQ + "\\dnSampledRawDenTree.swc";
 		writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
@@ -858,6 +864,82 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 	writeSWC_file(combinedTreeFullName, outputProfiledTree.tree);
 
 	return outputProfiledTree;
+}
+
+NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
+	{
+		if (it->second.nodes.size() > 5) continue;
+		else
+		{
+			for (QList<NeuronSWC>::const_iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
+			{
+				NeuronSWC newNode = *nodeIt;
+				newNode.parent = -1;
+				outputTree.listNeuron.push_back(newNode);
+			}
+		}
+	}
+
+	return outputTree;
+}
+
+vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree& inputNeuronTree)
+{
+	vector<connectedComponent> peripheralComponents;
+	map<double, set<ptrdiff_t>> pickedComponentsMap;
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = this->fragTraceTreeGrower.radius2shellConnCompMap.begin(); it != this->fragTraceTreeGrower.radius2shellConnCompMap.end(); ++it)
+	{
+		set<ptrdiff_t> newSet;
+		pickedComponentsMap.insert(pair<double, set<ptrdiff_t>>(it->first, newSet));
+	}
+
+	if (selectedSomaMap.empty())
+	{
+		vector<int> origin = this->currDisplayingBlockCenter;
+		for (QList<NeuronSWC>::const_iterator nodeIt = inputNeuronTree.listNeuron.begin(); nodeIt != inputNeuronTree.listNeuron.end(); ++nodeIt)
+		{
+			double dist = sqrt((double(nodeIt->x) - double(origin.at(0))) * (double(nodeIt->x) - double(origin.at(0))) +
+							   (double(nodeIt->y) - double(origin.at(1))) * (double(nodeIt->y) - double(origin.at(1))) +
+							   (double(nodeIt->z) - double(origin.at(2))) * (double(nodeIt->z) - double(origin.at(2))));
+			dist = round(dist);
+			for (vector<connectedComponent>::iterator compIt = this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin(); compIt != this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).end(); ++compIt)
+			{
+				if (pickedComponentsMap.at(dist).find(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin()) == pickedComponentsMap.at(dist).end())
+					goto COMPONENT_PICKED;
+
+				for (map<int, set<vector<int>>>::iterator shellCompIt = compIt->coordSets.begin(); shellCompIt != compIt->coordSets.end(); ++shellCompIt)
+				{
+					for (set<vector<int>>::iterator coordIt = shellCompIt->second.begin(); coordIt != shellCompIt->second.end(); ++coordIt)
+					{
+						if (int(round(nodeIt->x)) == coordIt->at(0) && int(round(nodeIt->y)) == coordIt->at(1) && int(round(nodeIt->z)) == coordIt->at(2))
+						{
+							peripheralComponents.push_back(*compIt);
+							pickedComponentsMap.at(dist).insert(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin());
+							goto COMPONENT_PICKED;
+						}
+					}
+				}
+			}
+
+		COMPONENT_PICKED:
+			continue;
+		}
+
+		NeuronTree periSigTree = NeuronStructUtil::blobs2tree(peripheralComponents);
+		vector<connectedComponent> outputComps = NeuronStructUtil::swc2signal3DBlobs(periSigTree);
+
+		return outputComps;
+	}
+	else
+	{
+
+	}
+
+
+	
 }
 /********************** END of [Final Traced Tree Generation] ***********************/
 

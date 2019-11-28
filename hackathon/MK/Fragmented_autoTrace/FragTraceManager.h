@@ -153,6 +153,10 @@ private:
 /* =================== Final Traced Tree Generation =================== */
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
+
+	vector<connectedComponent> peripheralSignalBlobs;
+	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
+	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree);
 /* ==================================================================== */
 };
 
