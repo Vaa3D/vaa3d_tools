@@ -3438,7 +3438,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             system(qPrintable(cmd_tremap));
         #else
             v3d_msg("The OS is not Linux or Mac. Do nothing.");
-            return;
+            return false;
         #endif
 
         }else

@@ -89,9 +89,17 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 		
 
 	}
-	else if (func_name == tr("func2"))
+	else if (func_name == tr("cutSwc2Blocks"))
 	{
-		v3d_msg("To be implemented.");
+		/*NeuronTree nt1 = readSWC_file(infiles[0]);
+
+		SwcTree st;
+		st.filePath = infiles[0];
+		st.nt = nt1;
+		st.initialize();*/
+
+
+		//v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("help"))
 	{
