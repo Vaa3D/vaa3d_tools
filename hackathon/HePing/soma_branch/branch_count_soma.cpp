@@ -7,20 +7,21 @@ using namespace Eigen;
 #define VAL_INVALID 0
 
 
-bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double &pc2,double &pc3){
+double compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double &pc2,double &pc3){
    //frist get the center of mass:soma location
     double xm,ym,zm;//均值
     int size=markers.size();
-
+//    qDebug()<<"----*****------------";
     for(int i=0;i<size;i++){
         xm+=markers[i].x;
         ym+=markers[i].y;
         zm+=markers[i].z;
+//        qDebug()<<markers[i].x<<markers[i].y<<markers[i].z;
     }
     xm/=size;
     ym/=size;
     zm/=size;
-
+//    qDebug()<<"----*****------------";
     //计算协方差
     double cc11=0,cc12=0,cc13=0,cc22=0,cc23=0,cc33=0;
     double dfx,dfy,dfz;
@@ -35,13 +36,15 @@ bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double
         cc23+=dfy*dfz;
         cc33+=dfz*dfz;
     }
-    cc11/=(size-1);cc12/=(size-1);cc13=(size-1);cc22/=(size-1);cc23/=(size-1);cc33/=(size-1);
+    cc11/=(size-1);cc12/=(size-1);cc13/=(size-1);cc22/=(size-1);cc23/=(size-1);cc33/=(size-1);
 
     try{
 
         Matrix3d cov_matrix;
         cov_matrix<<cc11,cc12,cc13,cc12,cc22,cc23,cc13,cc23,cc33;
-
+//        qDebug()<<cc11<<cc12<<cc13;
+//        qDebug()<<cc12<<cc22<<cc23;
+//        qDebug()<<cc13<<cc23<<cc33;
         EigenSolver<Matrix3d> es(cov_matrix);
         MatrixXcd val=es.eigenvalues();
         MatrixXd evalsReal=val.real();
@@ -49,7 +52,8 @@ bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double
         pc1=evalsReal(0);
         pc2=evalsReal(1);
         pc3=evalsReal(2);
-        //std::cout<<es.eigenvalues();
+        qDebug()<<"======";
+        std::cout<<es.eigenvalues();
 
         //MatrixXd evalsReal;
 //        evalsReal=evals.real();
@@ -78,8 +82,20 @@ bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double
         pc2 = VAL_INVALID;
         pc3 = VAL_INVALID;
     }
+    double pc13=-1;
+    if(pc1==0||pc2==0||pc3==0){
+        qDebug()<<"it is pc problem!"<<endl;
 
-    return true;
+    }
+    else{
+        double num1,num2;//min,max
+        num1=(pc1<pc2)?pc1:pc2;
+        num1=(num1<pc3)?num1:pc3;
+        num2=(pc1<pc2)?pc2:pc1;
+        num2=(num2<pc3)?pc3:num2;
+        pc13=num1/num2;
+    }
+    return pc13;
 }
 
 bool mean_shift_soma_location_hp(unsigned char*** image3d,NeuronSWC &soma,V3DLONG dim0,V3DLONG dim1,V3DLONG dim2,double radius,int max_loops){
@@ -310,6 +326,7 @@ void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,ve
         marker->color.g=0;
         marker->color.b=0;
         markers.push_back(*marker);
+        delete marker;
     }
 
 

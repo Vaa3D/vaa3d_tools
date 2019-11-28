@@ -88,12 +88,13 @@ struct SWCTree{
 
 bool four_point(vector<location> &points);
 
-bool compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double &pc2,double &pc3);
+double compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,double &pc2,double &pc3);
 
 bool mean_shift_soma_location_hp(unsigned char*** image3d,NeuronSWC &soma,V3DLONG dim0,V3DLONG dim1,V3DLONG dim2,double radius,int max_loops);
 bool find_soma(NeuronTree n,NeuronSWC &soma,double &radius);
+//找到输入参数目录下的所有swc文件和v3draw文件
+void find_files(QString path,vector<QString> &swcfiles,vector<QString> &v3drawfiles);
 
-
-
+bool find_corresponding_file(QString dir,QString &swcfile,QString &v3drawfile);
 
 #endif // BRANCH_COUNT_SOMA_H
