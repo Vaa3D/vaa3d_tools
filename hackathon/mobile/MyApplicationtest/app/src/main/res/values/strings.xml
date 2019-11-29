@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Application-test</string>
+    <string name="Button">Read</string>
+    <string name="text">Path</string>
+</resources>
