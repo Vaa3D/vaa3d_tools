@@ -25,9 +25,6 @@ QStringList TestPlugin::menulist() const
         <<tr("get_sub_by_show_boundary")
 		<<tr("get_sub_terafly")
         <<tr("get_sub_terafly_and_swc")
-//        <<tr("get_sub_terafly_and_swc_by_marker_in_swcfile_as_center")
-//        <<tr("test_get_sub_and_swc_auto_by_readfiles")
-//        <<tr("test_search_swc")
         <<tr("about");
 }
 
@@ -132,45 +129,6 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         else
         {   v3d_msg("menu flag != 1"); return;}
     }
-//    else if (menu_name == tr("get_sub_terafly_and_swc_by_marker_in_swcfile_as_center"))
-//    {
-//        int flag = get_sub_terafly_and_swc_by_marker_in_swcfile_as_center(callback,parent);
-//        if (flag == 1)
-//        {
-//            cout<<endl;
-//            cout<<"******************************************************************"<<endl;
-//            cout<<"*get_sub_terafly_and_swc_by_marker_in_swcfile_as_center finished!*"<<endl;
-//            cout<<"******************************************************************"<<endl;
-//        }
-//        else
-//        {   v3d_msg("menu flag != 1"); return;}
-//    }
-//    else if (menu_name == tr("test_get_sub_and_swc_auto_by_readfiles"))
-//    {
-//        int flag = test_get_sub_and_swc_auto_by_readfiles(callback, parent);
-//        if (flag == 1)
-//        {
-//            cout<<endl;
-//            cout<<"************************************"<<endl;
-//            cout<<"*test_get_sub_and_swc_auto_by_readfiles finished!*"<<endl;
-//            cout<<"************************************"<<endl;
-//        }
-//        else
-//        {   v3d_msg("menu flag != 1"); return;}
-//    }
-//    else if (menu_name == tr("test_search_swc"))
-//    {
-//        int flag = test_search_swc(callback, parent);
-//        if (flag == 1)
-//        {
-//            cout<<endl;
-//            cout<<"***************************"<<endl;
-//            cout<<"*test_search_swc finished!*"<<endl;
-//            cout<<"***************************"<<endl;
-//        }
-//        else
-//        {   v3d_msg("menu flag != 1"); return;}
-//    }
     else
 	{
         v3d_msg(tr("1.get_sub_block_auto:\nAutomatically save all sub-images in the same dir. Each marker is a center of a sub-image.\n"
@@ -178,7 +136,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                    "3.get_sub_by_marker_as_LeftUpCorner:\nAutomaticlly save all sub-images in the same dir. Each marker is a LeftUpCorner of a sub-image.\n"
                    "4.get_sub_by_input_LeftUpCorner:\ninput one point's pozition. The point is a LeftUpCorner of the sub-image.\n"
                    "5.get_sub_by_show_boundary:\nYou could see the four corners of the sub-image that will be obtained.\n"
-                   "6.get_sub_terafly:\nFor teraFly.\n"
+                   "6.get_sub_terafly:\nFor teraFly mode. You could get sub-images. Each marker is a center of a sub-image\n"
+                   "7.get_sub_terafly_and_swc:\nFor teraFly mode. You could get sub-images and sub-swcs at the same time. Each marker is a center of a pair of sub-image and sub-swc.\n"
 			"Developed by guochanghao, 2018-10-16"));
 	}
 }
@@ -229,9 +188,9 @@ LandmarkList QList_ImageMarker2LandmarkList(QList <ImageMarker> markers)
 
 }
 
-bool saveSWC_file1(string swc_file, vector<MyMarker*> & outmarkers)
+bool saveSWC_file1(string swc_file, vector<MyMarker*> & outMarker1s)
 {
-    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
+    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outMarker1s);
     map<MyMarker*, int> ind;
     ofstream ofs(swc_file.c_str());
     if(ofs.fail())
@@ -241,14 +200,19 @@ bool saveSWC_file1(string swc_file, vector<MyMarker*> & outmarkers)
     }
     ofs<<"#name "<<swc_file<<endl;
     ofs<<"##n,type,x,y,z,radius,parent"<<endl;
-    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+    for(int i = 0; i < outMarker1s.size(); i++) ind[outMarker1s[i]] = i+1;
 
-    for(int i = 0; i < outmarkers.size(); i++)
+    for(int i = 0; i < outMarker1s.size(); i++)
     {
-        MyMarker * marker = outmarkers[i];
+        MyMarker * marker = outMarker1s[i];
         int parent_id;
         if(marker->parent == 0) parent_id = -1;
-        else parent_id = ind[marker->parent];
+        else
+        {
+            parent_id = ind[marker->parent];
+            if(parent_id==0)
+            {   parent_id = -1;}
+        }
         ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
     }
     ofs.close();
@@ -330,7 +294,7 @@ vector<MyMarker*> readSWC_file1(string swc_file)
     }
     return swc;
 }
-bool vectorMyMarkerX2vectorMyMarker(vector<MyMarkerX*> &inputMarkers, vector<MyMarker*> & outmarkers)
+bool vectorMyMarkerX2vectorMyMarker(vector<MyMarkerX*> &inputMarkers, vector<MyMarker*> & outMarker1s)
 {
     string swc_file="temp_for_eswc2swc.swc";
     cout<<"marker num = "<<inputMarkers.size()<<", save swc file to "<<swc_file<<endl;
@@ -356,9 +320,9 @@ bool vectorMyMarkerX2vectorMyMarker(vector<MyMarkerX*> &inputMarkers, vector<MyM
     }
     ofs.close();
 
-//    outmarkers = readSWC_file1(swc_file);
+//    outMarker1s = readSWC_file1(swc_file);
 
-    readSWC_file(swc_file,outmarkers);
+    readSWC_file(swc_file,outMarker1s);
     remove((char*)swc_file.c_str());
     return true;
 }
@@ -1170,8 +1134,6 @@ int get_sub_by_show_boundary(V3DPluginCallback2 &callback, QWidget *parent)
 
 }
 
-
-
 int get_sub(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
@@ -1391,6 +1353,8 @@ int get_sub(V3DPluginCallback2 &callback, QWidget *parent)
 
 }
 
+//程序可以在terafly模式下挖出子图
+//步骤：打开一张terafly图。在terafly窗口点上marker。选择保存子图的目录。将以marker为中心挖出一个以x_radius，y_radius，z_radius为半径的子图。
 int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 {
     QString inimg_file = callback.getPathTeraFly();
@@ -1457,12 +1421,12 @@ int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
         dialog=0;
         cout<<"delete dialog"<<endl;
     }
-    for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+    for(V3DLONG m=0;m<terafly_landmarks.size();m++)
     {
         LocationSimple t;
-        t.x = terafly_landmarks[i].x;
-        t.y = terafly_landmarks[i].y;
-        t.z = terafly_landmarks[i].z;
+        t.x = terafly_landmarks[m].x;
+        t.y = terafly_landmarks[m].y;
+        t.z = terafly_landmarks[m].z;
 
         V3DLONG im_cropped_sz[4];
 
@@ -1492,9 +1456,9 @@ int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
                                                   yb,ye+1,zb,ze+1);
 
         QString tmpstr = "";
-        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[i].x));
-        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[i].y));
-        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[i].z));
+        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[m].x));
+        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[m].y));
+        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[m].z));
         QString outimg_file = "";
         QString file_name = inimg_file;
         QFileInfo info(file_name);
@@ -1512,6 +1476,8 @@ int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 }
 
+//程序可以在terafly模式下同时挖出子图和子swc
+//步骤：打开一张terafly图。如果terafly窗口里没有marker，将提示选择一个marker文件。选择保存子图和子swc的目录。如果terafly窗口里没有swc，将提示选择一个或多个swc或eswc文件。将以marker为中心挖出一个以x_radius，y_radius，z_radius为半径的子图以及swc。
 int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
 {
     QString inimg_file = callback.getPathTeraFly();
@@ -1601,42 +1567,11 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
                                   QObject::tr("(*.*)"
                                   ));
 
+    QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
 
-//    vector<MyMarker*> outMarker;
-//    if(state_1)
-//    {
-//        nt = callback.getSWCTeraFly();
-//    }
-//    else
-//    {
-//        QStringList temp=QFileDialog::getOpenFileNames(0,"Choose ESWC",QObject::tr("(*.eswc)"));
-//        for(int i=0;i<temp.size();i++)
-//        {
-//            if(!temp.at(i).endsWith(".eswc"))
-//            {
-//                temp.removeAt(i);
-//            }
-//        }
-//        for(int i=0;i<temp.size();i++)
-//        {
-//            cout<<temp.at(i).toUtf8().data()<<endl;
-//        }
-//        vector<MyMarkerX*> temp_swc_all;
-//        for(int i=0;i<temp.size();i++)
-//        {
-//            vector<MyMarkerX*> temp_eswc;
-//            readESWC_file(temp.at(i).toStdString(),temp_eswc);
-//            for(int j=0;j<temp.size();j++)
-//            {
-//               temp_swc_all.push_back(temp_eswc.at(j));
-//            }
+    vector<MyMarker*> outMarker1; outMarker1.clear();
+    vector<MyMarker*> outMarker2; outMarker2.clear();
 
-//        }
-//        vectorMyMarkerX2vectorMyMarker(temp_swc_all,outMarker);
-
-//    }
-
-    vector<MyMarker*> outMarker; outMarker.clear();
 
     QStringList swc_list;
 
@@ -1647,7 +1582,7 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
     else
     {
         swcInWindows=0;
-        swc_list=QFileDialog::getOpenFileNames(0,"Choose ESWC or SWC","D:\\",QObject::tr("*.eswc;;*.swc"));
+        swc_list=QFileDialog::getOpenFileNames(0,"Choose SWC or ESWC","D:\\",QObject::tr("*.swc;;*.eswc"));
         if(swc_list.isEmpty()){return 0;}
         int input_as_swc;//0 for eswc, 1 for swc
         if(swc_list.at(0).endsWith(".eswc"))
@@ -1666,22 +1601,36 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
             {
                 cout<<swc_list.at(i).toUtf8().data()<<endl;
             }
-            vector<MyMarker*> temp_swc_all;
+            vector<MyMarker*> temp_swc_all1;
             for(int i=0;i<swc_list.size();i++)
             {
                 vector<MyMarker*> temp_swc;temp_swc.clear();
                 readSWC_file(swc_list.at(i).toStdString(),temp_swc);
-                cout<<"i :"<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
+                cout<<"i="<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
                 for(int j=0;j<temp_swc.size();j++)
                 {
-                   temp_swc_all.push_back(temp_swc.at(j));
+                   temp_swc_all1.push_back(temp_swc.at(j));
                 }
             }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            outMarker=temp_swc_all;
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
+            cout<<"temp_swc_all1.size:"<<temp_swc_all1.size()<<endl;
+            outMarker1=temp_swc_all1;
+            cout<<"outMarker1.size:"<<outMarker1.size()<<endl;
             QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
+            saveSWC_file1(all_swc_file.toStdString(),outMarker1);
+
+            vector<MyMarker*> temp_swc_all2;
+            for(int i=0;i<swc_list.size();i++)
+            {
+                vector<MyMarker*> temp_swc;temp_swc.clear();
+                readSWC_file(swc_list.at(i).toStdString(),temp_swc);
+                cout<<"i="<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
+                for(int j=0;j<temp_swc.size();j++)
+                {
+                   temp_swc_all2.push_back(temp_swc.at(j));
+                }
+            }
+            cout<<"temp_swc_all2.size:"<<temp_swc_all2.size()<<endl;
+            outMarker2=temp_swc_all2;
         }
         else
         {
@@ -1697,32 +1646,52 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
             {
                 cout<<swc_list.at(i).toUtf8().data()<<endl;
             }
-            vector<MyMarkerX*> temp_swc_all;
+            vector<MyMarkerX*> temp_swc_all1;
             for(int i=0;i<swc_list.size();i++)
             {
                 vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
                 readESWC_file(swc_list.at(i).toStdString(),temp_eswc);
-                cout<<"i :"<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
+                cout<<"i="<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
                 for(int j=0;j<temp_eswc.size();j++)
                 {
-                   temp_swc_all.push_back(temp_eswc.at(j));
+                   temp_swc_all1.push_back(temp_eswc.at(j));
                 }
 
             }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            vectorMyMarkerX2vectorMyMarker(temp_swc_all,outMarker);
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
-            QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
+            cout<<"temp_swc_all1.size:"<<temp_swc_all1.size()<<endl;
+            vectorMyMarkerX2vectorMyMarker(temp_swc_all1,outMarker1);
+            cout<<"outMarker1.size:"<<outMarker1.size()<<endl;
+            saveSWC_file1(all_swc_file.toStdString(),outMarker1);
+
+            vector<MyMarkerX*> temp_swc_all2;
+            for(int i=0;i<swc_list.size();i++)
+            {
+                vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
+                readESWC_file(swc_list.at(i).toStdString(),temp_eswc);
+                cout<<"i="<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
+                for(int j=0;j<temp_eswc.size();j++)
+                {
+                   temp_swc_all2.push_back(temp_eswc.at(j));
+                }
+            }
+            cout<<"temp_swc_all2.size:"<<temp_swc_all2.size()<<endl;
+            vectorMyMarkerX2vectorMyMarker(temp_swc_all2,outMarker2);
         }
     }
 
-    for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+
+
+    double time_counter=1, process1 = 0, entire_time=terafly_landmarks.size();
+    for(V3DLONG m=0;m<terafly_landmarks.size();m++)
     {
+        double process2 = (time_counter++)*1000.0/entire_time;
+        if(process2-process1 >=1)
+        {cout<<"\r"<<(int)process2/10.0<<"%   "<<endl; cout.flush(); process1 = process2;}
+
         LocationSimple t;
-        t.x = terafly_landmarks[i].x;
-        t.y = terafly_landmarks[i].y;
-        t.z = terafly_landmarks[i].z;
+        t.x = terafly_landmarks[m].x;
+        t.y = terafly_landmarks[m].y;
+        t.z = terafly_landmarks[m].z;
 
         V3DLONG im_cropped_sz[4];
 
@@ -1746,14 +1715,14 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
 
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-        cout<<"xb:"<<xb<<" xe:"<<xe<<" yb:"<<yb<<" ye:"<<ye<<" zb:"<<zb<<" ze:"<<ze<<endl;
+//        cout<<"xb:"<<xb<<" xe:"<<xe<<" yb:"<<yb<<" ye:"<<ye<<" zb:"<<zb<<" ze:"<<ze<<endl;
 
         im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
 
         QString tmpstr = "";
-        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[i].x));
-        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[i].y));
-        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[i].z));
+        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[m].x));
+        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[m].y));
+        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[m].z));
 
         QString default_name = info.baseName()+"_TeraSub"+tmpstr+".tif";
         QString save_path_img = dir+"\\"+default_name;
@@ -1762,18 +1731,18 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 
 
-        vector<MyMarker*> swc_sub;
-        vector<MyMarker*> swc_tmp;
-        vector<MyMarker*> swc;
+        vector<MyMarker*> swc_sub, swc_notsub; swc_sub.clear(); swc_notsub.clear();
+        vector<MyMarker*> swc_tmp; swc_tmp.clear();
+        vector<MyMarker*> swc; swc.clear();
         if(swcInWindows)
         {
-            swc_tmp = NeuronTree2vectorofMyMarker(nt);
             swc = NeuronTree2vectorofMyMarker(nt);
+            swc_tmp = NeuronTree2vectorofMyMarker(nt);
         }
         else
         {
-            swc_tmp=outMarker;
-            swc=outMarker;
+            swc = outMarker1;
+            swc_tmp = outMarker2;
         }
         for (V3DLONG i=0; i<swc.size(); i++)
         {
@@ -1781,811 +1750,25 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
             MyMarker * curr_m_tmp = swc_tmp.at(i);
             if(curr_m->x>=xb&&curr_m->x<=xe&&curr_m->y>=yb&&curr_m->y<=ye&&curr_m->z>=zb&&curr_m->z<=ze)
             {
-                curr_m_tmp->x=swc_tmp.at(i)->x-xb;
-                curr_m_tmp->y=swc_tmp.at(i)->y-yb;
-                curr_m_tmp->z=swc_tmp.at(i)->z-zb;
+                curr_m_tmp->x=swc_tmp.at(i)->x;
+                curr_m_tmp->y=swc_tmp.at(i)->y;
+                curr_m_tmp->z=swc_tmp.at(i)->z;
                 swc_sub.push_back(curr_m_tmp);
             }
         }
         QString save_path_swc = dir+"\\"+ info.baseName()+"_TeraSub"+tmpstr+".swc";
-        saveSWC_file1(save_path_swc.toUtf8().data(),swc_sub);
-    }
-    return 1;
 
-}
-
-
-int get_sub_terafly_and_swc_by_marker_in_swcfile_as_center(V3DPluginCallback2 &callback,QWidget *parent)
-{
-    QString inimg_file = callback.getPathTeraFly();
-    QString file_name = inimg_file;
-    QFileInfo info(file_name);
-
-
-    int x_radius = 50;
-    int y_radius = 50;
-    int z_radius = 50;
-    //************set update the dialog
-    QDialog * dialog = new QDialog();
-
-    //*************set spinbox
-    QSpinBox *x_radius_spinbox = new QSpinBox();
-    x_radius_spinbox->setRange(0,10000);
-    x_radius_spinbox->setValue(x_radius);
-    QSpinBox *y_radius_spinbox = new QSpinBox();
-    y_radius_spinbox->setRange(0,10000);
-    y_radius_spinbox->setValue(y_radius);
-    QSpinBox *z_radius_spinbox = new QSpinBox();
-    z_radius_spinbox->setRange(0,10000);
-    z_radius_spinbox->setValue(z_radius);
-
-    QGridLayout *layout = new QGridLayout();
-    layout->addWidget(new QLabel("x radius of the subblock"),0,0);
-    layout->addWidget(x_radius_spinbox, 0,1,1,5);
-    layout->addWidget(new QLabel("y radius of the subblock"),1,0);
-    layout->addWidget(y_radius_spinbox, 1,1,1,5);
-    layout->addWidget(new QLabel("z radius of the subblock"),2,0);
-    layout->addWidget(z_radius_spinbox, 2,1,1,5);
-
-
-    QHBoxLayout *hbox2 = new QHBoxLayout();
-    QPushButton *ok = new QPushButton(" ok ");
-    ok->setDefault(true);
-    QPushButton *cancel = new QPushButton("cancel");
-    hbox2->addWidget(cancel);
-    hbox2->addWidget(ok);
-
-    layout->addLayout(hbox2,6,0,1,6);
-    dialog->setLayout(layout);
-    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
-    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
-
-    //**************run the dialog
-    if(dialog->exec() != QDialog::Accepted)
-    {
-        if (dialog)
+        saveSWC_file1(save_path_swc.toStdString(),swc_sub);
+        readSWC_file(save_path_swc.toStdString(),swc_sub);
+        for (V3DLONG i=0; i<swc_sub.size(); i++)
         {
-            delete dialog;
-            dialog=0;
-            cout<<"delete dialog"<<endl;
+            swc_sub[i]->x -= xb;
+            swc_sub[i]->y -= yb;
+            swc_sub[i]->z -= zb;
         }
-        return -1;
-    }
-
-    //***************get the dialog return values
-    x_radius = x_radius_spinbox->value();
-    y_radius = y_radius_spinbox->value();
-    z_radius = z_radius_spinbox->value();
-
-    if (dialog)
-    {
-        delete dialog;
-        dialog=0;
-        cout<<"delete dialog"<<endl;
-    }
-
-    QString dir = "";
-    dir = QFileDialog::getExistingDirectory(0,
-                                  "choose the save dir",
-                                  QObject::tr("(*.*)"
-                                  ));
-
-
-
-    vector<MyMarker*> outMarker; outMarker.clear();
-
-    QStringList swc_list;
-
-    NeuronTree nt = callback.getSWCTeraFly();
-    int swcInWindows=0;
-    if(nt.listNeuron.size()!=0)
-    {   swcInWindows=1;}
-    else
-    {
-        swcInWindows=0;
-        swc_list=QFileDialog::getOpenFileNames(0,"Choose ESWC or SWC","D:\\",QObject::tr("swcfile (*.swc);;eswcfile (*.eswc);;All(*)"));
-        if(swc_list.isEmpty()){return 0;}
-        int input_as_swc;//0 for eswc, 1 for swc
-        if(swc_list.at(0).endsWith(".eswc"))
-        {   input_as_swc=0;}
-        else{   input_as_swc=1;}
-        if(input_as_swc)
-        {
-            for(int i=0;i<swc_list.size();i++)
-            {
-                if(!swc_list.at(i).endsWith(".swc"))
-                {
-                    swc_list.removeAt(i);
-                }
-            }
-            for(int i=0;i<swc_list.size();i++)
-            {
-                cout<<swc_list.at(i).toUtf8().data()<<endl;
-            }
-            vector<MyMarker*> temp_swc_all;
-            for(int i=0;i<swc_list.size();i++)
-            {
-                vector<MyMarker*> temp_swc;temp_swc.clear();
-                readSWC_file(swc_list.at(i).toStdString(),temp_swc);
-                cout<<"i :"<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
-                for(int j=0;j<temp_swc.size();j++)
-                {
-                   temp_swc_all.push_back(temp_swc.at(j));
-                }
-
-            }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            outMarker=temp_swc_all;
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
-            QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-        }
-        else
-        {
-            //0 for eswc
-            for(int i=0;i<swc_list.size();i++)
-            {
-                if(!swc_list.at(i).endsWith(".eswc"))
-                {
-                    swc_list.removeAt(i);
-                }
-            }
-            for(int i=0;i<swc_list.size();i++)
-            {
-                cout<<swc_list.at(i).toUtf8().data()<<endl;
-            }
-            vector<MyMarkerX*> temp_swc_all;
-            for(int i=0;i<swc_list.size();i++)
-            {
-                vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
-                readESWC_file(swc_list.at(i).toStdString(),temp_eswc);
-                cout<<"i :"<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
-                for(int j=0;j<temp_eswc.size();j++)
-                {
-                   temp_swc_all.push_back(temp_eswc.at(j));
-                }
-
-            }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            vectorMyMarkerX2vectorMyMarker(temp_swc_all,outMarker);
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
-            QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-        }
-    }
-    if(outMarker.size()==0)
-    {
-        v3d_msg("outMarker.size()==0");
-        return false;
-    }
-
-    float x0=outMarker.at(0)->x, y0=outMarker.at(0)->y, z0=outMarker.at(0)->z;
-    float x1=outMarker.at(0)->x, y1=outMarker.at(0)->y, z1=outMarker.at(0)->z;
-    for(V3DLONG i=0; i<outMarker.size(); i++)
-    {
-        if(x0>outMarker.at(i)->x){x0=outMarker.at(i)->x;}
-        if(x1<outMarker.at(i)->x){x1=outMarker.at(i)->x;}
-        if(y0>outMarker.at(i)->y){y0=outMarker.at(i)->y;}
-        if(y1<outMarker.at(i)->y){y1=outMarker.at(i)->y;}
-        if(z0>outMarker.at(i)->z){z0=outMarker.at(i)->z;}
-        if(z1<outMarker.at(i)->z){z1=outMarker.at(i)->z;}
-    }
-
-    LandmarkList terafly_landmarks;
-
-//    int x0=0; int x1=370; int y0=0; int y1=1000; int z0=0; int z1=700;
-    BoundingBox swc_area;
-    swc_area.x0=x0; swc_area.y0=y0; swc_area.z0=z0; swc_area.x1=x1; swc_area.y1=y1; swc_area.z1=z1;
-    qDebug()<<"x0:"<<x0<<" y0:"<<y0<<" z0:"<<z0<<" x1:"<<x1<<" y1:"<<y1<<" z1:"<<z1;
-
-
-    int margin = 10;
-    int num_block_x = ceil((float)((x1-x0)-x_radius*2)/(x_radius*2-margin))+1;
-    int num_block_y = ceil((float)((y1-y0)-y_radius*2)/(y_radius*2-margin))+1;
-    int num_block_z = ceil((float)((z1-z0)-z_radius*2)/(z_radius*2-margin))+1;
-
-    qDebug()<<"num_block_x:"<<num_block_x;
-    qDebug()<<"num_block_y:"<<num_block_y;
-    qDebug()<<"num_block_z:"<<num_block_z;
-    if(num_block_x<1||num_block_y<1||num_block_z<1)
-    {
-        qDebug()<<"num_block<1";
-        return false;
-    }
-
-    for(V3DLONG k=0; k<num_block_z; k++)
-    {
-        for(V3DLONG j=0; j<num_block_y; j++)
-        {
-            for(V3DLONG i=0; i<num_block_x; i++)
-            {
-                LocationSimple s;
-                s.x = x_radius+i*(x_radius*2-margin); s.y = y_radius+j*(y_radius*2-margin); s.z = z_radius+k*(z_radius*2-margin);
-//                qDebug()<<"s.x:"<<s.x<<" s.y:"<<s.y<<" s.z:"<<s.z;
-//                if()
-                terafly_landmarks.push_back(s);
-            }
-        }
-    }
-    qDebug()<<"terafly_landmarks.size:"<<terafly_landmarks.size();
-
-    writeMarker_file("C:\\Users\\xf\\Desktop\\terafly_landmarks.marker",LandmarkListQList_ImageMarker(terafly_landmarks));
-
-//    unsigned char * tmp_data = new unsigned char[1000*1000*1000];
-//    for(V3DLONG i=0; i<1000*1000*1000; i++)
-//    {
-//        tmp_data[i]=0;
-//    }
-//    Image4DSimple * newp4DImage = new Image4DSimple();
-//    newp4DImage->setData((unsigned char *)tmp_data, 1000, 1000, 1000, 1, V3D_UINT8);
-//    v3dhandle newwin1 = callback.newImageWindow();
-//    callback.setImageName(newwin1,"tmp_data");
-//    callback.setImage(newwin1, newp4DImage);
-//    callback.updateImageWindow(newwin1);
-//    callback.setLandmark(newwin1, terafly_landmarks);
-
-//    for(V3DLONG i=0; i<ceil((float)outMarker.size()/5); i+=ceil((float)outMarker.size()/5))
-//    {
-//        terafly_landmarks.push_back(LocationSimple(outMarker.at(i)->x,outMarker.at(i)->y,outMarker.at(i)->z));
-//    }
-
-////    terafly_landmarks = callback.getLandmarkTeraFly();
-
-//    for(V3DLONG i=0;i<terafly_landmarks.size();i++)
-//    {
-//        LocationSimple t;
-//        t.x = terafly_landmarks[i].x;
-//        t.y = terafly_landmarks[i].y;
-//        t.z = terafly_landmarks[i].z;
-
-//        V3DLONG im_cropped_sz[4];
-
-//        unsigned char * im_cropped = 0;
-//        V3DLONG pagesz;
-//        double l_x = x_radius;
-//        double l_y = y_radius;
-//        double l_z = z_radius;
-
-//        V3DLONG xb = t.x-l_x;
-//        V3DLONG xe = t.x+l_x-1;
-//        V3DLONG yb = t.y-l_y;
-//        V3DLONG ye = t.y+l_y-1;
-//        V3DLONG zb = t.z-l_z;
-//        V3DLONG ze = t.z+l_z-1;
-//        pagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
-//        im_cropped_sz[0] = xe-xb+1;
-//        im_cropped_sz[1] = ye-yb+1;
-//        im_cropped_sz[2] = ze-zb+1;
-//        im_cropped_sz[3] = 1;
-
-//        try {im_cropped = new unsigned char [pagesz];}
-//        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-//        cout<<"xb:"<<xb<<" xe:"<<xe<<" yb:"<<yb<<" ye:"<<ye<<" zb:"<<zb<<" ze:"<<ze<<endl;
-
-//        im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
-
-//        QString tmpstr = "";
-//        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[i].x));
-//        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[i].y));
-//        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[i].z));
-
-//        QString default_name = info.baseName()+"_TeraSub"+tmpstr+".tif";
-//        QString save_path_img = dir+"\\"+default_name;
-
-//        simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
-//        if(im_cropped) {delete []im_cropped; im_cropped = 0;}
-
-
-//        vector<MyMarker*> swc_sub;
-//        vector<MyMarker*> swc_tmp;
-//        vector<MyMarker*> swc;
-//        if(swcInWindows)
-//        {
-//            swc_tmp = NeuronTree2vectorofMyMarker(nt);
-//            swc = NeuronTree2vectorofMyMarker(nt);
-//        }
-//        else
-//        {
-//            swc_tmp=outMarker;
-//            swc=outMarker;
-//        }
-//        for (V3DLONG i=0; i<swc.size(); i++)
-//        {
-//            MyMarker * curr_m = swc.at(i);
-//            MyMarker * curr_m_tmp = swc_tmp.at(i);
-//            if(curr_m->x>=xb&&curr_m->x<=xe&&curr_m->y>=yb&&curr_m->y<=ye&&curr_m->z>=zb&&curr_m->z<=ze)
-//            {
-//                curr_m_tmp->x=swc_tmp.at(i)->x-xb;
-//                curr_m_tmp->y=swc_tmp.at(i)->y-yb;
-//                curr_m_tmp->z=swc_tmp.at(i)->z-zb;
-//                swc_sub.push_back(curr_m_tmp);
-//            }
-//        }
-//        QString save_path_swc = dir+"\\"+ info.baseName()+"_TeraSub"+tmpstr+".swc";
-//        saveSWC_file1(save_path_swc.toUtf8().data(),swc_sub);
-//    }
-    return 1;
-
-}
-
-
-
-//程序将以每个marker为中心点，截取一个半径分别为x_radius，y_radius，z_radius的子图。
-//步骤：打开一张图，点上marker，输入参数x_length，y_length，z_length，选择保存子图的目录。
-int test_get_sub_and_swc_auto_by_readfiles(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    v3dhandle curwin = callback.currentImageWindow();
-    if(!curwin)
-    {
-        v3d_msg("No image is open.");
-        return -1;
-    }
-
-    Image4DSimple *p4DImage = callback.getImage(curwin);
-
-    //************the default radius of the sub block
-    V3DLONG x_radius = 100;
-    V3DLONG y_radius = 100;
-    V3DLONG z_radius = 50;
-
-    //************set update the dialog
-    QDialog * dialog = new QDialog();
-
-    if(p4DImage->getZDim() > 1)
-        dialog->setWindowTitle("3D neuron image");
-    else
-        dialog->setWindowTitle("2D neuron image");
-
-    //*************set spinbox
-    QSpinBox *x_radius_spinbox = new QSpinBox();
-    x_radius_spinbox->setRange(0,p4DImage->getXDim()*3);
-    x_radius_spinbox->setValue(x_radius);
-    QSpinBox *y_radius_spinbox = new QSpinBox();
-    y_radius_spinbox->setRange(0,p4DImage->getYDim()*3);
-    y_radius_spinbox->setValue(y_radius);
-    QSpinBox *z_radius_spinbox = new QSpinBox();
-    z_radius_spinbox->setRange(0,p4DImage->getZDim()*15);
-    if(p4DImage->getZDim()==1)
-    {    z_radius_spinbox->setValue(0);}
-    else
-    {    z_radius_spinbox->setValue(z_radius);}
-
-    QGridLayout *layout = new QGridLayout();
-    layout->addWidget(new QLabel("x radius of the subblock"),0,0);
-    layout->addWidget(x_radius_spinbox, 0,1,1,5);
-    layout->addWidget(new QLabel("y radius of the subblock"),1,0);
-    layout->addWidget(y_radius_spinbox, 1,1,1,5);
-    layout->addWidget(new QLabel("z radius of the subblock"),2,0);
-    layout->addWidget(z_radius_spinbox, 2,1,1,5);
-
-
-    QHBoxLayout *hbox2 = new QHBoxLayout();
-    QPushButton *ok = new QPushButton(" ok ");
-    ok->setDefault(true);
-    QPushButton *cancel = new QPushButton("cancel");
-    hbox2->addWidget(cancel);
-    hbox2->addWidget(ok);
-
-    layout->addLayout(hbox2,6,0,1,6);
-    dialog->setLayout(layout);
-    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
-    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
-
-    //**************run the dialog
-    if(dialog->exec() != QDialog::Accepted)
-    {
-        if (dialog)
-        {
-            delete dialog;
-            dialog=0;
-            cout<<"delete dialog"<<endl;
-        }
-        return -1;
-    }
-
-    //***************get the dialog return values
-    x_radius = x_radius_spinbox->value();
-    y_radius = y_radius_spinbox->value();
-    z_radius = z_radius_spinbox->value();
-
-    if (dialog)
-    {
-        delete dialog;
-        dialog=0;
-        cout<<"delete dialog"<<endl;
-    }
-    V3DLONG sz[4];
-    sz[0] = p4DImage->getXDim();
-    sz[1] = p4DImage->getYDim();
-    sz[2] = p4DImage->getZDim();
-    sz[3] = p4DImage->getCDim();
-
-    unsigned char *data1d=0;
-    data1d = p4DImage->getRawData();
-    V3DLONG nx=sz[0];
-    V3DLONG ny=sz[1];
-    V3DLONG nz=sz[2];
-
-    unsigned char *sub = 0;
-
-    //***************get the location of a marker
-    LandmarkList marker = callback.getLandmark(curwin);
-    if(marker.isEmpty())
-    {
-        v3d_msg("No marker is found.Please select in the image.");
-        return -1;
-    }
-
-
-    QString outimg_dir = "";
-    QString file_name = QString(p4DImage->getFileName());
-    QFileInfo info(file_name);
-    QString default_name = info.baseName()+"_sub";
-    outimg_dir = QFileDialog::getExistingDirectory(0,
-                                  "Select a dir to save files" );
-
-    vector<MyMarker*> outMarker; outMarker.clear();
-    QStringList temp=QFileDialog::getOpenFileNames(0,"Choose ESWC","D:\\",QObject::tr("*.eswc;;*.swc"));
-    if(temp.isEmpty()){return 0;}
-    int input_as_swc;//0 eswc   1  swc
-    if(temp.at(0).endsWith(".eswc"))
-    {
-        input_as_swc=0;
-    }
-    else{input_as_swc=1;}
-    if(input_as_swc)
-    {
-        for(int i=0;i<temp.size();i++)
-        {
-            if(!temp.at(i).endsWith(".swc"))
-            {
-                temp.removeAt(i);
-            }
-        }
-        for(int i=0;i<temp.size();i++)
-        {
-            cout<<temp.at(i).toUtf8().data()<<endl;
-        }
-        vector<MyMarker*> temp_swc_all;
-        for(int i=0;i<temp.size();i++)
-        {
-            vector<MyMarker*> temp_swc;temp_swc.clear();
-            readSWC_file(temp.at(i).toStdString(),temp_swc);
-            cout<<"temp_swc.size:"<<temp_swc.size()<<" i :"<<i<<endl;
-            for(int j=0;j<temp_swc.size();j++)
-            {
-               temp_swc_all.push_back(temp_swc.at(j));
-            }
-
-        }
-        cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-        outMarker=temp_swc_all;
-        cout<<"outMarker.size:"<<outMarker.size()<<endl;
-        QString all_swc_file = outimg_dir + "\\" + default_name+"_all_swc.swc";
-        saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-
-//        readSWC_file()
+        saveSWC_file1(save_path_swc.toStdString(),swc_sub);
 
     }
-    else
-    {
-        //0 for eswc
-        for(int i=0;i<temp.size();i++)
-        {
-            if(!temp.at(i).endsWith(".eswc"))
-            {
-                temp.removeAt(i);
-            }
-        }
-        for(int i=0;i<temp.size();i++)
-        {
-            cout<<temp.at(i).toUtf8().data()<<endl;
-        }
-        vector<MyMarkerX*> temp_swc_all;
-        for(int i=0;i<temp.size();i++)
-        {
-            vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
-            readESWC_file(temp.at(i).toStdString(),temp_eswc);
-            cout<<"temp_eswc.size:"<<temp_eswc.size()<<" i :"<<i<<endl;
-            for(int j=0;j<temp_eswc.size();j++)
-            {
-               temp_swc_all.push_back(temp_eswc.at(j));
-            }
-
-        }
-        cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-        vectorMyMarkerX2vectorMyMarker(temp_swc_all,outMarker);
-        cout<<"outMarker.size:"<<outMarker.size()<<endl;
-        QString all_swc_file = outimg_dir + "\\" + default_name+"_all_swc.swc";
-        saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-    }
-
-
-    V3DLONG im_cropped_sz[4];
-    for(V3DLONG m=0;m<marker.size();m++)
-    {
-        LocationSimple t;
-        t.x = marker[m].x;
-        t.y = marker[m].y;
-        t.z = marker[m].z;
-
-        QString tmpstr = "";
-        tmpstr.append("_x").append(QString("%1").arg(marker[m].x));
-        tmpstr.append("_y").append(QString("%1").arg(marker[m].y));
-        tmpstr.append("_z").append(QString("%1").arg(marker[m].z));
-        QString outimg_file = outimg_dir + "\\" + default_name + tmpstr +".tif";
-
-        V3DLONG xb,xe,yb,ye,zb,ze;
-
-        if(nz!=1)
-        {
-            xb = t.x-x_radius;
-            xe = t.x+x_radius;
-            yb = t.y-y_radius;
-            ye = t.y+y_radius;
-            zb = t.z-z_radius;
-            ze = t.z+z_radius;
-
-
-            im_cropped_sz[0] = xe-xb+1;
-            im_cropped_sz[1] = ye-yb+1;
-            im_cropped_sz[2] = ze-zb+1;
-            im_cropped_sz[3] = 1;
-
-            try {sub = new unsigned char [im_cropped_sz[0]*im_cropped_sz[1]*im_cropped_sz[2]*im_cropped_sz[3]];}
-            catch(...)  {v3d_msg("cannot allocate memory for sub."); return false;}
-
-            V3DLONG num_size = 0;
-            for(V3DLONG i = zb; i <= ze; i++)
-            {
-                V3DLONG z_location = i*nx*ny;
-                for(V3DLONG j = yb; j <= ye; j++)
-                {
-                    V3DLONG y_location = j*nx;
-                    for(V3DLONG k = xb; k <= xe; k++)
-                    {
-                        if (i<0||i>=nz||j<0||j>=ny||k<0||k>=nx)
-                            sub[num_size] = 0;
-                        else
-                            sub[num_size] = data1d[z_location+y_location+k];
-                        num_size++;
-                    }
-                }
-            }
-        }
-        else
-        {
-            t.x = marker[m].x;
-            t.y = marker[m].y;
-            t.z = 1;
-
-            xb = t.x-x_radius;
-            xe = t.x+x_radius;
-            yb = t.y-y_radius;
-            ye = t.y+y_radius;
-            zb = 1;
-            ze = 1;
-
-
-            im_cropped_sz[0] = xe-xb+1;
-            im_cropped_sz[1] = ye-yb+1;
-            im_cropped_sz[2] = ze-zb+1;
-            im_cropped_sz[3] = 1;
-
-            try {sub = new unsigned char [im_cropped_sz[0]*im_cropped_sz[1]*im_cropped_sz[2]*im_cropped_sz[3]];}
-            catch(...)  {v3d_msg("cannot allocate memory for sub."); return false;}
-
-            V3DLONG num_size = 0;
-            for(V3DLONG i = zb; i <= ze; i++)
-            {
-                V3DLONG z_location = 0;
-                for(V3DLONG j = yb; j <= ye; j++)
-                {
-                    V3DLONG y_location = j*nx;
-                    for(V3DLONG k = xb; k <= xe; k++)
-                    {
-                        if (j<0||j>=ny||k<0||k>=nx)
-                            sub[num_size] = 0;
-                        else
-                            sub[num_size] = data1d[z_location+y_location+k];
-                        num_size++;
-                    }
-                }
-            }
-        }
-        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)sub,im_cropped_sz,1);
-
-        vector<MyMarker*> swc_sub;
-        vector<MyMarker*> swc_tmp = outMarker;
-        vector<MyMarker*> swc = outMarker;
-
-
-        for (V3DLONG i=0; i<swc.size(); i++)
-        {
-            MyMarker * curr_m = swc.at(i);
-            MyMarker * curr_m_tmp = swc_tmp.at(i);
-            if(curr_m->x>=xb&&curr_m->x<=xe&&curr_m->y>=yb&&curr_m->y<=ye&&curr_m->z>=zb&&curr_m->z<=ze)
-            {
-                curr_m_tmp->x=swc_tmp.at(i)->x-xb;
-                curr_m_tmp->y=swc_tmp.at(i)->y-yb;
-                curr_m_tmp->z=swc_tmp.at(i)->z-zb;
-                swc_sub.push_back(curr_m_tmp);
-            }
-        }
-        QString save_path_swc =outimg_dir + "\\" + default_name+tmpstr+".swc";
-        cout<<m<<" swc_sub.size:"<<swc_sub.size()<<endl;
-
-        saveSWC_file1(save_path_swc.toUtf8().data(),swc_sub);
-    }
-
-    if(sub){ delete []sub; sub=0;}
-
-    return 1;
-
-}
-
-
-int test_search_swc(V3DPluginCallback2 &callback,QWidget *parent)
-{
-    v3dhandle curwin = callback.currentImageWindow();
-    if(!curwin)
-    {v3d_msg("no image open.",0); return false;}
-
-    Image4DSimple *p4DImage = callback.getImage(curwin);
-
-    V3DLONG sz[4];
-    sz[0] = p4DImage->getXDim();
-    sz[1] = p4DImage->getYDim();
-    sz[2] = p4DImage->getZDim();
-    sz[3] = p4DImage->getCDim();
-
-    unsigned char *data1d=0;
-    data1d = p4DImage->getRawData();
-    V3DLONG nx=sz[0];
-    V3DLONG ny=sz[1];
-    V3DLONG nz=sz[2];
-
-//    QString dir = "";
-//    dir = QFileDialog::getExistingDirectory(0,
-//                                  "choose the save dir",
-//                                  QObject::tr("(*.*)"
-//                                  ));
-
-
-
-    vector<MyMarker*> outMarker; outMarker.clear();
-
-    QStringList swc_list;
-
-    NeuronTree nt = callback.getSWC(curwin);
-    int swcInWindows=0;
-    if(nt.listNeuron.size()!=0)
-    {   swcInWindows=1;}
-    else
-    {
-        swcInWindows=0;
-        swc_list=QFileDialog::getOpenFileNames(0,"Choose ESWC or SWC","D:\\",QObject::tr("swcfile (*.swc);;eswcfile (*.eswc);;All(*)"));
-        if(swc_list.isEmpty()){return 0;}
-        int input_as_swc;//0 for eswc, 1 for swc
-        if(swc_list.at(0).endsWith(".eswc"))
-        {   input_as_swc=0;}
-        else{   input_as_swc=1;}
-        if(input_as_swc)
-        {
-            for(int i=0;i<swc_list.size();i++)
-            {
-                if(!swc_list.at(i).endsWith(".swc"))
-                {
-                    swc_list.removeAt(i);
-                }
-            }
-            for(int i=0;i<swc_list.size();i++)
-            {
-                cout<<swc_list.at(i).toUtf8().data()<<endl;
-            }
-            vector<MyMarker*> temp_swc_all;
-            for(int i=0;i<swc_list.size();i++)
-            {
-                vector<MyMarker*> temp_swc;temp_swc.clear();
-                readSWC_file(swc_list.at(i).toStdString(),temp_swc);
-                cout<<"i :"<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
-                for(int j=0;j<temp_swc.size();j++)
-                {
-                   temp_swc_all.push_back(temp_swc.at(j));
-                }
-
-            }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            outMarker=temp_swc_all;
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
-//            QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-//            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-        }
-        else
-        {
-            //0 for eswc
-            for(int i=0;i<swc_list.size();i++)
-            {
-                if(!swc_list.at(i).endsWith(".eswc"))
-                {
-                    swc_list.removeAt(i);
-                }
-            }
-            for(int i=0;i<swc_list.size();i++)
-            {
-                cout<<swc_list.at(i).toUtf8().data()<<endl;
-            }
-            vector<MyMarkerX*> temp_swc_all;
-            for(int i=0;i<swc_list.size();i++)
-            {
-                vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
-                readESWC_file(swc_list.at(i).toStdString(),temp_eswc);
-                cout<<"i :"<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
-                for(int j=0;j<temp_eswc.size();j++)
-                {
-                   temp_swc_all.push_back(temp_eswc.at(j));
-                }
-
-            }
-            cout<<"temp_swc_all.size:"<<temp_swc_all.size()<<endl;
-            vectorMyMarkerX2vectorMyMarker(temp_swc_all,outMarker);
-            cout<<"outMarker.size:"<<outMarker.size()<<endl;
-//            QString all_swc_file = dir + "\\" + info.baseName() +"_all_swc.swc";
-//            saveSWC_file1(all_swc_file.toUtf8().data(),outMarker);
-        }
-    }
-    if(outMarker.size()==0)
-    {
-        v3d_msg("outMarker.size()==0");
-        return false;
-    }
-
-
-    int block_length_x = 10;
-    int block_length_y = 10;
-    int block_length_z = 10;
-
-
-    int num_block_x = ceil((float)nx/block_length_x);
-    int num_block_y = ceil((float)ny/block_length_y);
-    int num_block_z = ceil((float)nz/block_length_z);
-
-    qDebug()<<"nx:"<<nx;
-    qDebug()<<"ny:"<<ny;
-    qDebug()<<"nz:"<<nz;
-
-    qDebug()<<"num_block_x:"<<num_block_x;
-    qDebug()<<"num_block_y:"<<num_block_y;
-    qDebug()<<"num_block_z:"<<num_block_z;
-    if(num_block_x<1||num_block_y<1||num_block_z<1)
-    {
-        qDebug()<<"num_block<1";
-        return false;
-    }
-
-    unsigned char *flag_map = new unsigned char[num_block_x*num_block_y*num_block_z];
-    for(V3DLONG i=0; i<num_block_x*num_block_y*num_block_z; i++)
-    {
-        flag_map[i]=0;
-    }
-
-    for(V3DLONG i=0; i<outMarker.size(); i++)
-    {
-        int loc_x = ceil((float)outMarker.at(i)->x/block_length_x);
-        int loc_y = ceil((float)outMarker.at(i)->y/block_length_y);
-        int loc_z = ceil((float)outMarker.at(i)->z/block_length_z);
-//        cout<<"loc_x:"<<loc_x<<" loc_y:"<<loc_y<<" loc_z:"<<loc_z<<endl;
-        flag_map[(loc_z-1)*num_block_x*num_block_y+(loc_y-1)*num_block_x+(loc_x-1)]=255;
-    }
-
-    Image4DSimple *new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char*)flag_map, num_block_x, num_block_y,num_block_z, sz[3], p4DImage->getDatatype());
-    v3dhandle newwin = callback.newImageWindow();
-    callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin,"flag_map");
-    callback.updateImageWindow(newwin);
-
-
     return 1;
 
 }
