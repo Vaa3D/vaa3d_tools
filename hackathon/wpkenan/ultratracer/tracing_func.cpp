@@ -1541,8 +1541,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-
-    if(!ifs_swc && P.soma)
+//    if(!ifs_swc && P.soma)
+    if(-1)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
@@ -1598,7 +1598,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }else
         P.length_thresh = 5;
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 
      /*yong
 
