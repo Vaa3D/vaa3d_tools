@@ -23,6 +23,7 @@
 
 #include "NeuronStructUtilities.h"
 #include "TreeGrower.h"
+#include "NeuronStructNavigator_Define.h"
 
 using namespace std;
 using namespace integratedDataTypes;
@@ -457,9 +458,12 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 	boost::container::flat_map<int, int> outerLoc2nodeIDmap;
 	boost::container::flat_set<int> outerLocs;
 	bool emptyShell = true;
+	vector<connectedComponent> newRootComponents;
 	for (map<double, boost::container::flat_map<int, vector<int>>>::iterator shellIt = shell2shellConnMap.begin(); shellIt != shell2shellConnMap.end(); ++shellIt)
 	{
-		//cout << "shell " << shellIt->first << ":" << endl;
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+		cout << "shell " << shellIt->first << ":" << endl;
+#endif
 		if (shellIt->second.empty()) emptyShell = true;
 		else emptyShell = false;
 
@@ -478,7 +482,9 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 				innerLoc2nodeIDmap.insert(pair<int, int>(int(rootCompIt - this->radius2shellConnCompMap.at(shellIt->first).begin()), nodeID));
 				++nodeID;
 			}	
-			//cout << endl;
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+			cout << endl;
+#endif
 			continue;
 		}
 		else
@@ -488,10 +494,14 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 
 			for (boost::container::flat_map<int, vector<int>>::iterator loc2locIt = shellIt->second.begin(); loc2locIt != shellIt->second.end(); ++loc2locIt)
 			{
-				//cout << loc2locIt->first << "-> ";			
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+				cout << loc2locIt->first << "-> ";
+#endif
 				for (vector<int>::iterator outerIt = loc2locIt->second.begin(); outerIt != loc2locIt->second.end(); ++outerIt)
 				{
-					//cout << *outerIt << " ";
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+					cout << *outerIt << " ";
+#endif
 					NeuronSWC newNode;
 					newNode.n = nodeID;
 					newNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*outerIt).ChebyshevCenter[0];
@@ -505,13 +515,19 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 					if (outerLocs.find(*outerIt) != outerLocs.end()) outerLocs.erase(outerLocs.find(*outerIt));
 					++nodeID;
 				}
-				//cout << endl;
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+				cout << endl;
+#endif
 			}
 
-			//cout << "new root: ";
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+			cout << "new root: ";
+#endif
 			for (boost::container::flat_set<int>::iterator remainIt = outerLocs.begin(); remainIt != outerLocs.end(); ++remainIt)
 			{
-				//cout << *remainIt << " ";
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+				cout << *remainIt << " ";
+#endif
 				NeuronSWC newRootNode;
 				newRootNode.n = nodeID;
 				newRootNode.x = this->radius2shellConnCompMap.at(shellIt->first).at(*remainIt).ChebyshevCenter[0];
@@ -523,9 +539,13 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 				outerLoc2nodeIDmap.insert(pair<int, int>(*remainIt, nodeID));
 				++nodeID;
 			}
-			//cout << endl;
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+			cout << endl;
+#endif
 		}
-		//cout << endl;
+#ifdef __RADIAL_DENDRITICTREE_GROWING_PRINTOUT__
+		cout << endl;
+#endif
 
 		innerLoc2nodeIDmap.clear();
 		innerLoc2nodeIDmap = outerLoc2nodeIDmap;

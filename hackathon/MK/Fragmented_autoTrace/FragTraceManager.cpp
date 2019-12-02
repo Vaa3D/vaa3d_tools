@@ -274,6 +274,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		// Get peripheral signal centroids
 		NeuronTree periSignalTree = this->getPeripheralSigTree(profiledDenTree, this->minNodeNum);
 
+		// Get peripheral signal blobs
+		vector<connectedComponent> periBlobs = this->getPeripheralBlobs(periSignalTree);
+		NeuronTree periBlobTree = NeuronStructUtil::blobs2tree(periBlobs);
+
 		// Downsample the node density to reduce segment zig-zagging
 		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2);	
 		
@@ -319,6 +323,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		QString periSigTreeNameQ = this->finalSaveRootQ + "\\periSigTree.swc";
 		writeSWC_file(periSigTreeNameQ, periSignalTree);
+
+		QString periSigBlobTreeNameQ = this->finalSaveRootQ + "\\periSigBlobTree.swc";
+		writeSWC_file(periSigBlobTreeNameQ, periBlobTree);
 
 		QString dnSampledRawDenTreeNameQ = this->finalSaveRootQ + "\\dnSampledRawDenTree.swc";
 		writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
@@ -900,26 +907,24 @@ vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree
 	{
 		vector<int> origin = this->currDisplayingBlockCenter;
 		for (QList<NeuronSWC>::const_iterator nodeIt = inputNeuronTree.listNeuron.begin(); nodeIt != inputNeuronTree.listNeuron.end(); ++nodeIt)
-		{
-			double dist = sqrt((double(nodeIt->x) - double(origin.at(0))) * (double(nodeIt->x) - double(origin.at(0))) +
-							   (double(nodeIt->y) - double(origin.at(1))) * (double(nodeIt->y) - double(origin.at(1))) +
-							   (double(nodeIt->z) - double(origin.at(2))) * (double(nodeIt->z) - double(origin.at(2))));
+		{  
+			float dist = sqrtf((nodeIt->x - float(origin.at(0))) * (nodeIt->x - float(origin.at(0))) +
+							   (nodeIt->y - float(origin.at(1))) * (nodeIt->y - float(origin.at(1))) +
+							   (nodeIt->z - float(origin.at(2))) * (nodeIt->z - float(origin.at(2))));
 			dist = round(dist);
-			for (vector<connectedComponent>::iterator compIt = this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin(); compIt != this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).end(); ++compIt)
-			{
-				if (pickedComponentsMap.at(dist).find(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin()) == pickedComponentsMap.at(dist).end())
-					goto COMPONENT_PICKED;
 
-				for (map<int, set<vector<int>>>::iterator shellCompIt = compIt->coordSets.begin(); shellCompIt != compIt->coordSets.end(); ++shellCompIt)
+			if (this->fragTraceTreeGrower.radius2shellConnCompMap.find(dist) != this->fragTraceTreeGrower.radius2shellConnCompMap.end())
+			{
+				for (vector<connectedComponent>::iterator compIt = this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin(); compIt != this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).end(); ++compIt)
 				{
-					for (set<vector<int>>::iterator coordIt = shellCompIt->second.begin(); coordIt != shellCompIt->second.end(); ++coordIt)
+					if (pickedComponentsMap.at(dist).find(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin()) != pickedComponentsMap.at(dist).end())
+						continue;
+
+					if (nodeIt->x == compIt->ChebyshevCenter[0] && nodeIt->y == compIt->ChebyshevCenter[1] && nodeIt->z == compIt->ChebyshevCenter[2])
 					{
-						if (int(round(nodeIt->x)) == coordIt->at(0) && int(round(nodeIt->y)) == coordIt->at(1) && int(round(nodeIt->z)) == coordIt->at(2))
-						{
-							peripheralComponents.push_back(*compIt);
-							pickedComponentsMap.at(dist).insert(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin());
-							goto COMPONENT_PICKED;
-						}
+						peripheralComponents.push_back(*compIt);
+						pickedComponentsMap.at(dist).insert(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin());
+						goto COMPONENT_PICKED;
 					}
 				}
 			}
