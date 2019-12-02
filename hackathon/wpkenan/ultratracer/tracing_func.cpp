@@ -1542,7 +1542,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
 //    if(!ifs_swc && P.soma)
-    if(-1)
+	if (!ifs_swc && P.soma && total4DImage->getZDim() >= 64)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
@@ -1814,7 +1814,38 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 					wpNewLocation.z=P.listLandmarks[wp_i].z-total4DImage->getOriginZ();
                     cout << wpNewLocation.x << " " << wpNewLocation.y << " " << wpNewLocation.z << endl;
                     if(wpNewLocation.x>=0&&wpNewLocation.y>=0&&wpNewLocation.z>=0&&wpNewLocation.x<total4DImage->getOriginX()&&wpNewLocation.y<total4DImage->getOriginY()&&wpNewLocation.z<total4DImage->getOriginZ()){
-                        p2.landmarks.push_back(wpNewLocation);
+                        
+						LandmarkList marklist_tmp;
+						marklist_tmp.push_back(wpNewLocation);
+
+
+						ImageMarker outputMarker;
+						//QList<ImageMarker> seedsToSave;
+						outputMarker.x = wpNewLocation.x;
+						outputMarker.y = wpNewLocation.y;
+						outputMarker.z = wpNewLocation.z;
+						//seedsToSave.append(outputMarker);
+
+
+
+
+						vector<V3DLONG> poss_landmark;
+						double windowradius = 30;
+
+						poss_landmark = landMarkList2poss(marklist_tmp, mysz[0], mysz[0] * mysz[1]);
+						marklist_tmp.clear();
+						vector<float> mass_center = fun_obj.mean_shift_center_mass(poss_landmark[0], windowradius);
+						wpNewLocation.x = mass_center[0] + 1;
+						wpNewLocation.y = mass_center[1] + 1;
+						wpNewLocation.z = mass_center[2] + 1;
+
+						//outputMarker.x = RootNewLocation.x;
+						//outputMarker.y = RootNewLocation.y;
+						//outputMarker.z = RootNewLocation.z;
+						/*seedsToSave.append(outputMarker);*/
+
+						
+						p2.landmarks.push_back(wpNewLocation);
                     }
 
 				}
