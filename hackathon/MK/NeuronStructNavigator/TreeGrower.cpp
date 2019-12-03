@@ -412,7 +412,9 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 		cout << "Either polarNodeList or the map of radius to polarNodeList location is empty. Do nothing and return." << endl;
 		return outputTree;
 	}
-
+	
+	this->radius2shellTreeMap.clear();
+	this->radius2shellConnCompMap.clear();
 	this->radius2shellTreeMap = NeuronGeoGrapher::radius2NeuronTreeMap(this->radiusShellMap_loc, this->polarNodeList);
 	this->radius2shellConnCompMap = NeuronGeoGrapher::radius2connCompsShell(this->radius2shellTreeMap);	
 	

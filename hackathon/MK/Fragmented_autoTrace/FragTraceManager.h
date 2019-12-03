@@ -154,9 +154,14 @@ private:
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 
-	vector<connectedComponent> peripheralSignalBlobs;
+	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
+	map<string, profiledTree> periRawDenTreeMap;
+	map<string, profiledTree> periRawMSTdenTreeMap;
+	map<string, profiledTree> periDnSampledTreeMap;
+	map<string, profiledTree> periIteredConnectedTreeMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
-	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree);
+	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
+	void generatePeriDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
 /* ==================================================================== */
 };
 
