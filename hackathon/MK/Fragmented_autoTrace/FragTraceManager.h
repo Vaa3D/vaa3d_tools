@@ -159,9 +159,12 @@ private:
 	map<string, profiledTree> periRawMSTdenTreeMap;
 	map<string, profiledTree> periDnSampledTreeMap;
 	map<string, profiledTree> periIteredConnectedTreeMap;
+	map<string, profiledTree> periNoHookTreeMap;
+	map<string, profiledTree> periNoJumpAngleSmoothedTreeMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
 	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
-	void generatePeriDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
+	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
+	NeuronTree getSmoothedPeriDenTree();
 /* ==================================================================== */
 };
 

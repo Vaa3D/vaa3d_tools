@@ -271,31 +271,16 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
-		// Generate raw peripheral dendritic tree
-		this->generatePeriDenTree(this->peripheralSignalBlobMap);
-
-		// Break branches on raw peripheral dendritic tree
-		this->periRawMSTdenTreeMap.clear();
-		for (map<string, profiledTree>::iterator it = this->periRawDenTreeMap.begin(); it != this->periRawDenTreeMap.end(); ++it)
-		{
-			profiledTree periMSTprofiledTree(TreeGrower::branchBreak(it->second));
-			this->periRawMSTdenTreeMap.insert({ it->first, periMSTprofiledTree });
-
-			profiledTree periDnSampledProfiledTree = NeuronStructUtil::treeDownSample(periMSTprofiledTree, 2);
-			this->periDnSampledTreeMap.insert({ it->first, periDnSampledProfiledTree });
-
-			profiledTree noDotProfiledTree(NeuronStructUtil::singleDotRemove(periDnSampledProfiledTree.tree, 3));
-			profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(noDotProfiledTree, 3);
-			this->periIteredConnectedTreeMap.insert({ it->first, iteredConnectedProfiledTree });
-		}
+		// Prepare peripheral dendritic signal tree
+		NeuronTree periTree = this->getSmoothedPeriDenTree();
 
 		// Downsample the node density to reduce segment zig-zagging
-		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2);	
-		
+		profiledTree downSampledDenTree = NeuronStructUtil::treeDownSample(profiledDenTree, 2);
+
 		// 1st time removing floating tiny segments
 		NeuronTree floatingExcludedTree;
 		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructUtil::singleDotRemove(downSampledDenTree, this->minNodeNum);
-		else floatingExcludedTree = downSampledDenTree.tree;	
+		else floatingExcludedTree = downSampledDenTree.tree;
 		profiledTree dnSampledProfiledTree(floatingExcludedTree);
 
 		// Remove spikes
@@ -309,12 +294,18 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		// Remove hooking and sharp-angled segment ends
 		float angleThre = (float(2) / float(3)) * PI;
-		profiledTree branchBrokenProfiledTree(branchBrokenTree);	
+		profiledTree branchBrokenProfiledTree(branchBrokenTree);
 		profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
-	
+
+		// Combine main dendritic tree with peripheral dendritic tree
+		vector<NeuronTree> allTrees;
+		allTrees.push_back(hookRemovedProfiledTree.tree);
+		allTrees.push_back(periTree);
+		profiledTree completeProfiledTree(NeuronStructUtil::swcCombine(allTrees));
+
 		// Iteratively connect segments within seg-end clusters
-		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(branchBrokenProfiledTree, 10);
-		
+		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(completeProfiledTree, 10);
+
 		// Profiled segment shape/morphology
 		NeuronStructExplorer::segMorphProfile(iteredConnectedProfiledTree, 3);
 		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
@@ -330,31 +321,22 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 #ifdef __DENDRITE_TREEFORMING_DEBUG__
 		QString rawDendriticTreeNameQ = this->finalSaveRootQ + "\\rawDenTree.swc";
-		writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
-
-		for (map<string, profiledTree>::iterator it = periRawMSTdenTreeMap.begin(); it != periRawMSTdenTreeMap.end(); ++it)
-		{
-			QString periRawMSTdenTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_branchBreak.swc";
-			writeSWC_file(periRawMSTdenTreeNameQ, it->second.tree);
-
-			QString periDnSampledDenTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_dnSampled.swc";
-			writeSWC_file(periDnSampledDenTreeNameQ, this->periDnSampledTreeMap.at(it->first).tree);
-
-			QString periIteredConnectedTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_iteredConnected.swc";
-			writeSWC_file(periIteredConnectedTreeNameQ, this->periIteredConnectedTreeMap.at(it->first).tree);
-		}
+		//writeSWC_file(rawDendriticTreeNameQ, profiledDenTree.tree);
 
 		QString dnSampledRawDenTreeNameQ = this->finalSaveRootQ + "\\dnSampledRawDenTree.swc";
-		writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
+		//writeSWC_file(dnSampledRawDenTreeNameQ, downSampledDenTree.tree);
 
 		QString beforeSpikeRemoveSWCfullName = this->finalSaveRootQ + "\\dnSampledNoDots.swc";
-		writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
+		//writeSWC_file(beforeSpikeRemoveSWCfullName, dnSampledProfiledTree.tree);
 
 		QString removeSpikeFullName = this->finalSaveRootQ + "\\noSpike.swc";
 		//writeSWC_file(removeSpikeFullName, spikeRemovedProfiledTree.tree);
 
 		QString spikeRootStrightNameQ = this->finalSaveRootQ + "\\spikeRootStraight.swc";
 		//writeSWC_file(spikeRootStrightNameQ, profiledSpikeRootStrightTree.tree);
+
+		QString hookRemovedTreeNameQ = this->finalSaveRootQ + "\\hookRemovedMainPart.swc";
+		writeSWC_file(hookRemovedTreeNameQ, hookRemovedProfiledTree.tree);
 
 		QString branchBreakNameQ = this->finalSaveRootQ + "\\branchBreakAfterSpikeRootStraight.swc";
 		//writeSWC_file(branchBreakNameQ, branchBrokenTree);
@@ -365,7 +347,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		QString iteredConntedTreeNameQ = this->finalSaveRootQ + "\\iteredConnected.swc";
 		//writeSWC_file(iteredConntedTreeNameQ, iteredConnectedProfiledTree.tree);
 
-		QString angleSmoothedNameQ = this->finalSaveRootQ + "\\angleSmoothed.swc";
+		QString angleSmoothedNameQ = this->finalSaveRootQ + "\\finalDenAngleSmoothed.swc";
 		writeSWC_file(angleSmoothedNameQ, angleSmoothedTree.tree);
 #endif
 	}
@@ -852,9 +834,9 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 	}
 }
 
-void FragTraceManager::generatePeriDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap)
+map<string, profiledTree> FragTraceManager::generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap)
 {
-	this->periRawDenTreeMap.clear();
+	map<string, profiledTree> outputPeriRawDenTreeMap;
 	NeuronTree finalPeriCentroidTree;
 	vector<NeuronTree> objTrees;
 	int somaCount = 0;
@@ -889,7 +871,7 @@ void FragTraceManager::generatePeriDenTree(const map<string, vector<connectedCom
 			nodeIt->type = 16 + this->peripheralSignalBlobMap.size() - 1;
 		profiledTree thisPeriProfiledTree(thisPeriSkeleton);
 		string thisPeriSkeletonName = "periTree" + to_string(somaCount);
-		this->periRawDenTreeMap.insert({ thisPeriSkeletonName, thisPeriProfiledTree });
+		outputPeriRawDenTreeMap.insert({ thisPeriSkeletonName, thisPeriProfiledTree });
 		++somaCount;
 
 #ifdef __DENDRITE_TREEFORMING_PERIPHERALSIGNAL_DEBUG__
@@ -897,6 +879,8 @@ void FragTraceManager::generatePeriDenTree(const map<string, vector<connectedCom
 		writeSWC_file(skeletonTreeNameQ, thisPeriProfiledTree.tree);
 #endif
 	}
+
+	return outputPeriRawDenTreeMap;
 }
 
 vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin)
@@ -943,6 +927,62 @@ vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree
 	peripheralComponents = NeuronStructUtil::swc2signal3DBlobs(blobTree);
 
 	return peripheralComponents;
+}
+
+NeuronTree FragTraceManager::getSmoothedPeriDenTree()
+{
+	map<string, profiledTree> periRawDenTreeMap = this->generatePeriRawDenTree(this->peripheralSignalBlobMap);
+
+	map<string, profiledTree> periMSTtreeMap, periDnSampledTreeMap, periIteredconnectedTreeMap, periNoHookTreeMap, periNoJumpSmoothedTreeMap;
+	int periCount = 0;
+	for (map<string, profiledTree>::iterator it = periRawDenTreeMap.begin(); it != periRawDenTreeMap.end(); ++it)
+	{
+		profiledTree periMSTprofiledTree(TreeGrower::branchBreak(it->second));
+		periMSTtreeMap.insert({ it->first, periMSTprofiledTree });
+
+		profiledTree periDnSampledProfiledTree = NeuronStructUtil::treeDownSample(periMSTprofiledTree, 3);
+		periDnSampledTreeMap.insert({ it->first, periDnSampledProfiledTree });
+
+		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(periDnSampledProfiledTree, 3);
+		profiledTree noDotProfiledTree(NeuronStructUtil::singleDotRemove(iteredConnectedProfiledTree.tree, this->minNodeNum));
+		periIteredconnectedTreeMap.insert({ it->first, noDotProfiledTree });
+
+		float angleThre = (float(2) / float(3)) * PI;
+		profiledTree noHookProfiledTree = TreeGrower::itered_removeHookingHeadTail(noDotProfiledTree, angleThre);
+		periNoHookTreeMap.insert({ it->first, noHookProfiledTree });
+
+		NeuronStructExplorer::segMorphProfile(noHookProfiledTree, 3);
+		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(noHookProfiledTree, 1.2);
+		profiledTree noJumpProfiledTree = TreeGrower::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
+		periNoJumpSmoothedTreeMap.insert({ it->first, noJumpProfiledTree });
+
+		for (QList<NeuronSWC>::iterator nodeIt = periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.begin(); nodeIt != periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.end(); ++nodeIt)
+			nodeIt->type = 16 + periCount;
+		++periCount;
+	}
+	NeuronTree periTree = NeuronStructUtil::swcCombine(periNoJumpSmoothedTreeMap);
+
+#ifdef __DENDRITE_TREEFORMING_PERIPHERALSIGNAL_DEBUG__
+	for (map<string, profiledTree>::iterator it = periMSTtreeMap.begin(); it != periMSTtreeMap.end(); ++it)
+	{
+		QString periRawMSTdenTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_branchBreak.swc";
+		writeSWC_file(periRawMSTdenTreeNameQ, it->second.tree);
+
+		QString periDnSampledDenTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_dnSampled.swc";
+		writeSWC_file(periDnSampledDenTreeNameQ, periDnSampledTreeMap.at(it->first).tree);
+
+		QString periIteredConnectedTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_iteredConnected.swc";
+		writeSWC_file(periIteredConnectedTreeNameQ, periIteredconnectedTreeMap.at(it->first).tree);
+
+		QString periNoHookTreeNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_noHook.swc";
+		writeSWC_file(periNoHookTreeNameQ, periNoHookTreeMap.at(it->first).tree);
+
+		QString periNoJumpSmoothedNameQ = this->finalSaveRootQ + "\\" + QString::fromStdString(it->first) + "_noJumpSmoothed.swc";
+		writeSWC_file(periNoJumpSmoothedNameQ, periNoJumpSmoothedTreeMap.at(it->first).tree);
+	}
+#endif
+
+	return periTree;
 }
 
 profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
