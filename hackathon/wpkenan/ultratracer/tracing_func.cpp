@@ -1541,7 +1541,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(!ifs_swc && P.soma && total4DImage->getZDim()>=64)
+    if(!ifs_swc && P.soma && total4DImage->getZDim()>=64&&0)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
@@ -1651,6 +1651,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     mean_shift_fun fun_obj;
     fun_obj.pushNewData<unsigned char>((unsigned char*)total1dData, mysz);
 
+
     vector<MyMarker*> tileswc_file;
     if(P.method == app1 || P.method == app2)
     {
@@ -1703,14 +1704,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     seedsToSave.append(outputMarker);
 
 
-
-
                     vector<V3DLONG> poss_landmark;
                     double windowradius = 10;
-
+                    cout << windowradius << " " << mysz[0] << " " << mysz[0]*mysz[1] << endl;
                     poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
+
+                    cout << "wp_debug: " << __FUNCTION__ << ": " << __LINE__ << ": " << poss_landmark[0] << endl;
+
+
                     marklist_tmp.clear();
                     vector<float> mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
+                    cout << "wp_debug: " << __FUNCTION__ << ": " << __LINE__ << ": " << mass_center[2] << endl;
                     RootNewLocation.x = mass_center[0]+1;
                     RootNewLocation.y = mass_center[1]+1;
                     RootNewLocation.z = mass_center[2]+1;
@@ -1722,6 +1726,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                     QString marker_name = imageSaveString + ".marker";
                     writeMarker_file(marker_name, seedsToSave);
+                    return 0;
 
                 }
 

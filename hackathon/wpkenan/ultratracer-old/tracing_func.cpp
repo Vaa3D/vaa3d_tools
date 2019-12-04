@@ -1520,7 +1520,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     total4DImage->setRezZ(3.0);//set the flg for 3d crawler
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".tif");
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
@@ -1542,7 +1542,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
 //    if(!ifs_swc && P.soma)
-	if (!ifs_swc && P.soma && total4DImage->getZDim() >= 64)
+    if (!ifs_swc && P.soma && total4DImage->getZDim() >= 64&&0)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
@@ -1738,7 +1738,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
 
                     vector<V3DLONG> poss_landmark;
-                    double windowradius = 30;
+                    double windowradius = 10;
 
                     poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
                     marklist_tmp.clear();
@@ -1754,6 +1754,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                     QString marker_name = imageSaveString + ".marker";
                     writeMarker_file(marker_name, seedsToSave);
+//                    return 0;
 
                 }
 
@@ -1820,17 +1821,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
 
 						ImageMarker outputMarker;
-						//QList<ImageMarker> seedsToSave;
+                        QList<ImageMarker> seedsToSave;
 						outputMarker.x = wpNewLocation.x;
 						outputMarker.y = wpNewLocation.y;
 						outputMarker.z = wpNewLocation.z;
-						//seedsToSave.append(outputMarker);
-
-
-
+                        seedsToSave.append(outputMarker);
 
 						vector<V3DLONG> poss_landmark;
-						double windowradius = 30;
+                        double windowradius = 10;
 
 						poss_landmark = landMarkList2poss(marklist_tmp, mysz[0], mysz[0] * mysz[1]);
 						marklist_tmp.clear();
@@ -1839,13 +1837,15 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 						wpNewLocation.y = mass_center[1] + 1;
 						wpNewLocation.z = mass_center[2] + 1;
 
-						//outputMarker.x = RootNewLocation.x;
-						//outputMarker.y = RootNewLocation.y;
-						//outputMarker.z = RootNewLocation.z;
-						/*seedsToSave.append(outputMarker);*/
+                        outputMarker.x = wpNewLocation.x;
+                        outputMarker.y = wpNewLocation.y;
+                        outputMarker.z = wpNewLocation.z;
+                        seedsToSave.append(outputMarker);
+                        writeMarker_file(imageSaveString+"first_block_multitracer.marker", seedsToSave);
 
-						
+
 						p2.landmarks.push_back(wpNewLocation);
+
                     }
 
 				}

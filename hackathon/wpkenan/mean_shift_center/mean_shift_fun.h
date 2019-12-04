@@ -30,6 +30,7 @@ void convert2UINT8_meanshift(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
 vector<float> calc_mean_shift_center_mass(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
+vector<float> calc_mean_shift_center_mass_thres(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode,double histogram_threshold);
 
 bool load_data(V3DPluginCallback2 *cb,unsigned char * &image1Dc_in,LandmarkList &LList,
                ImagePixelType &pixeltype,V3DLONG sz_img[4],v3dhandle &curwin);
@@ -41,6 +42,7 @@ public:
     ~mean_shift_fun();
     vector<float> mean_shift_center(V3DLONG ind, int windowradius);
     vector<float> mean_shift_center_mass(V3DLONG ind, int windowradius);  //added by Zhi 90122017
+    vector<float> mean_shift_center_mass_thres(V3DLONG ind, int windowradius);  //added by Ouyang 92922019
 
     vector<float> mean_shift_with_constraint(V3DLONG ind, int windowradius);
     vector<float> ray_shoot_center(V3DLONG ind, int bg_thr, int j);
@@ -51,17 +53,19 @@ private:
 
     V3DLONG page_size;
     float * data1Dc_float;
+    double  histogram_threshold;
 
 public:
 
     V3DLONG sz_image[4];
     //unsigned char * mask1D;
     template <class T>
-    void pushNewData(T * data1Dc_in, V3DLONG sz_img[4])
+    void pushNewData(T * data1Dc_in, V3DLONG sz_img[4], double histogram_value=0 )
     {
         if(data1Dc_float!=0){
             memory_free_float1D(data1Dc_float);
         }
+        histogram_threshold=histogram_value;
         sz_image[0]=sz_img[0];
         sz_image[1]=sz_img[1];
         sz_image[2]=sz_img[2];
