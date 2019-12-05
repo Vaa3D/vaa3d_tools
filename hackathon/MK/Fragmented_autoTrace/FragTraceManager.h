@@ -155,12 +155,6 @@ private:
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
-	map<string, profiledTree> periRawDenTreeMap;
-	map<string, profiledTree> periRawMSTdenTreeMap;
-	map<string, profiledTree> periDnSampledTreeMap;
-	map<string, profiledTree> periIteredConnectedTreeMap;
-	map<string, profiledTree> periNoHookTreeMap;
-	map<string, profiledTree> periNoJumpAngleSmoothedTreeMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
 	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
 	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);

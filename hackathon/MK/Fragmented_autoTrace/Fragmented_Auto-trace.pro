@@ -32,6 +32,8 @@ win32: {
 
 FORMS += fragmentedTraceUI.ui
 
+RESOURCES += FragTracer_Resource.qrc
+
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h

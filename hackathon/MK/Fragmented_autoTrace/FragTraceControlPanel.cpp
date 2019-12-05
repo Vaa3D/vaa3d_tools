@@ -159,13 +159,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	// ------------------------------- //
 
 
-	// ------- Segment Post-processing ------- //
-	if (callOldSettings.value("PostElongDistChecked") == true)
-	{
-		uiPtr->lineEdit_4->setEnabled(true);
-		uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
-	}
-		
+	// ------- Segment Post-processing ------- //		
 	this->listViewBlankAreas = new QStandardItemModel(this);
 	uiPtr->listView->setModel(listViewBlankAreas);
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -456,20 +450,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	// ------------------------------- //
 
 
-	// ------- Post Elongation ------- //
-	if (uiPtr->groupBox_5->isChecked())
-	{
-		settings.setValue("PostElongDistChecked", true);
-		settings.setValue("PostElongDistThreshold", uiPtr->lineEdit_4->text());
-	}
-	else
-	{
-		settings.setValue("PostElongDistChecked", false);
-		settings.setValue("PostElongDistThreshold", "-1");
-	}
-	// ------------------------------- //
-
-
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 /* ====================== END of [User Interface Configuration Buttons] ======================= */
@@ -512,7 +492,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_maskGeneration();                         // mask generation
 				this->pa_objFilter();                              // object filter
 				this->pa_objBasedMST();                            // object-based MST node connecting
-				this->pa_postElongation();                         // post elongation set up
 				// ---------------------------------------------------------- //
 			}
 		}
@@ -535,7 +514,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_imgEnhancement();                          // image enhancement
 				this->pa_objFilter();                               // object filter
 				this->pa_objBasedMST();                             // object-based MST node connecting 
-				this->pa_postElongation();                          // post elongation set up
 				// ---------------------------------------------------------- //
 			}
 		}
@@ -618,8 +596,10 @@ void FragTraceControlPanel::traceButtonClicked()
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+#ifdef __IMAGE_VOLUME_PREPARATION_DEBUG__
+	cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+	cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+#endif
 
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
@@ -641,8 +621,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 																 this->volumeAdjustedCoords[4], this->volumeAdjustedCoords[5], originalDims);
 		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
 
+#ifdef __IMAGE_VOLUME_PREPARATION_DEBUG__
 		// ------- For debug purpose ------- //
-		/*unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
+		unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
 		memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
 
 		V3DLONG saveDims[4];
@@ -657,8 +638,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 
 		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
 		const char* saveNameC2 = saveName2.c_str();
-		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
+		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);
 		// --------------------------------- //
+#endif
 
 		if (this->traceManagerPtr == nullptr)
 		{
@@ -790,14 +772,6 @@ void FragTraceControlPanel::pa_objBasedMST()
 	}
 }
 
-void FragTraceControlPanel::pa_postElongation()
-{
-	if (uiPtr->groupBox_5->isChecked())
-		this->paramsFromUI.insert({"labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()) });
-	else
-		this->paramsFromUI.insert({ "labeledDistThreshold", -1 });
-}
-
 void FragTraceControlPanel::markerMonitor()
 {
 	if (this->markerMonitorSwitch)
@@ -919,7 +893,6 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 void FragTraceControlPanel::fillUpParamsForm()
 {
-	this->thisCallback->getParamsFromFragTraceUI("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()));
 	this->thisCallback->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
 	this->thisCallback->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
 }

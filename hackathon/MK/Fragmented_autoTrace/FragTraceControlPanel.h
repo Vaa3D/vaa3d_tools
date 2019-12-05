@@ -69,7 +69,6 @@ private:
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
-	void pa_postElongation();
 	/* =========== END of [Parameter Collecting Functions] ========== */
 
 
