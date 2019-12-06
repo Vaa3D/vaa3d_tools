@@ -571,8 +571,10 @@ void FragTraceControlPanel::traceButtonClicked()
 		trees.push_back(cleaned_newlyTracedPart);
 
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
-		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5);
-		this->tracedTree = finalProfiledTree.tree;
+		//profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5); // This line might be causing problem:
+																												 //   1. Structural error that causes image block reading freezed when moving/zomming.
+																												 //   2. Scailing error on final traced tree?? (compressed in z direction) - not confirmed. 
+		this->tracedTree = combinedProfiledTree.tree;
 		//this->tracedTree = combinedProfiledTree.tree;
 		this->scaleTracedTree();
 		this->thisCallback->setSWCTeraFly(this->tracedTree);
@@ -596,7 +598,7 @@ void FragTraceControlPanel::traceButtonClicked()
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-#ifdef __IMAGE_VOLUME_PREPARATION_DEBUG__
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
 	cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
 #endif
@@ -861,6 +863,12 @@ void FragTraceControlPanel::scaleTracedTree()
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << "  -- Scaling back to real world dimension:" << endl;
+	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+#endif
+
 	this->tracedTree = scaledShiftedTree;
 }
 
@@ -883,6 +891,12 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
 	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
+
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << "  -- Scaling to local volume dimension:" << endl;
+	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+#endif
 
 	return shiftScaleBackTree;
 }
