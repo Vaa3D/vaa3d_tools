@@ -17,7 +17,7 @@
 
 enum workMode { axon, dendriticTree };
 
-class FragTraceManager: public QWidget
+class FragTraceManager : public QWidget
 {
 	Q_OBJECT
 

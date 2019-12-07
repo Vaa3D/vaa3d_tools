@@ -11,6 +11,7 @@
 #include <v3d_interface.h>
 
 #include "FragTraceControlPanel.h"
+#include "FragmentEditor.h"
 
 class FragmentedAutoTracePlugin : public QObject, public V3DPluginInterface2_1
 {
@@ -27,7 +28,8 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
 private:
-	FragTraceControlPanel* instancePtr;
+	FragTraceControlPanel* UIinstancePtr;
+	FragmentEditor* fragEditorPtr;
 };
 
 #endif

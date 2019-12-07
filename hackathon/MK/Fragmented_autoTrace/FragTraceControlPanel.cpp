@@ -546,12 +546,12 @@ void FragTraceControlPanel::traceButtonClicked()
 		//cout << this->volumeAdjustedCoords[0] << " " << this->volumeAdjustedCoords[2] << " " << this->volumeAdjustedCoords[4] << endl;
 		this->tracedTree = NeuronStructUtil::swcShift(this->tracedTree, this->volumeAdjustedCoords[0] - 1, this->volumeAdjustedCoords[2] - 1, this->volumeAdjustedCoords[4] - 1);
 	} 
-	this->scaleTracedTree();
 
 	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
 	NeuronTree finalTree;
 	if (existingTree.listNeuron.isEmpty())
 	{
+		this->scaleTracedTree();
 		profiledTree tracedProfiledTree(this->tracedTree);
 		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
 
@@ -562,8 +562,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		vector<NeuronTree> trees;
 		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
 		trees.push_back(scaledBackExistingTree);
-		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
-		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 4, 8);
+		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(this->tracedTree, scaledBackExistingTree, 4, 8);
 		profiledTree newlyTracedPartProfiled(newlyTracedPart);
 		
 		NeuronTree cleaned_newlyTracedPart;
