@@ -12,6 +12,7 @@ double compute_marker_pca_hp(vector<location> markers,V3DLONG r,double &pc1,doub
     double xm,ym,zm;//均值
     int size=markers.size();
 //    qDebug()<<"----*****------------";
+    if(size<=3) return 0;
     for(int i=0;i<size;i++){
         xm+=markers[i].x;
         ym+=markers[i].y;
@@ -217,7 +218,7 @@ bool p1data_to_image3d(unsigned char* p1data,V3DLONG* sz,unsigned char*** &image
     V3DLONG sz0=sz[0],sz1=sz[1],sz2=sz[2];
 
     image3d=new unsigned char**[sz2];
-    qDebug()<<"1->3 sz2,sz1,sz0:"<<sz2<<sz1<<sz0;
+    //qDebug()<<"1->3 sz2,sz1,sz0:"<<sz2<<sz1<<sz0;
     for(int i=0;i<sz2;i++){
         image3d[i]=new unsigned char*[sz1];
         for(int j=0;j<sz1;j++){
@@ -237,7 +238,7 @@ bool p1data_to_image3d(unsigned char* p1data,V3DLONG* sz,unsigned char*** &image
 }
 
 //找到所有与soma估计半径表面相交的分支上的点
-void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,vector<location> &points,NeuronSWC &soma,double &radius_threshold){
+void SWCTree::count_branch_location(NeuronTree nt,QList<CellAPO> &markers,vector<location> &points,NeuronSWC &soma,double &radius_threshold){
 
     V3DLONG size=nt.listNeuron.size();
 //    NeuronSWC soma;
@@ -302,8 +303,10 @@ void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,ve
     location point0=location(soma.x,soma.y,soma.z);
     points.push_back(point0);
     //用于meanshift中显示soma平移后的位置
-    ImageMarker *marker;
-    marker=new ImageMarker();
+    //ImageMarker *marker;
+    CellAPO *marker;
+    //marker=new ImageMarker();
+    marker=new CellAPO();
     marker->x=soma.x+1;
     marker->y=soma.y+1;
     marker->z=soma.z+1;
@@ -317,8 +320,9 @@ void SWCTree::count_branch_location(NeuronTree nt,QList<ImageMarker> &markers,ve
         node=locations[j];
         location point=location(node.x,node.y,node.z);
         points.push_back(point);
-        ImageMarker *marker;
-        marker=new ImageMarker();
+        //ImageMarker *marker;
+        CellAPO *marker;
+        marker=new CellAPO();
         marker->x=node.x+1;
         marker->y=node.y+1;
         marker->z=node.z+1;

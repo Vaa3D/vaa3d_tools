@@ -81,7 +81,7 @@ struct SWCTree{
 
     vector<Branch> branchs;//存放从soma出来的所有分支
     vector<NeuronSWC> locations;
-    void count_branch_location(NeuronTree t,QList<ImageMarker> &markers,vector<location> &points,NeuronSWC &soma,double &max_radius);
+    void count_branch_location(NeuronTree t,QList<CellAPO> &markers,vector<location> &points,NeuronSWC &soma,double &max_radius);
 
 };
 
@@ -94,7 +94,7 @@ bool mean_shift_soma_location_hp(unsigned char*** image3d,NeuronSWC &soma,V3DLON
 bool find_soma(NeuronTree n,NeuronSWC &soma,double &radius);
 //找到输入参数目录下的所有swc文件和v3draw文件
 void find_files(QString path,vector<QString> &swcfiles,vector<QString> &v3drawfiles);
-
+void find_all_swc(QString path,vector<QString> &swcfiles);
 bool find_corresponding_file(QString dir,QString &swcfile,QString &v3drawfile);
 
 #endif // BRANCH_COUNT_SOMA_H

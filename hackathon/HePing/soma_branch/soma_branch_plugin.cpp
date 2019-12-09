@@ -74,23 +74,27 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
             qDebug()<<"file can't open!";
         }
         V3DLONG size=infiles.size();
-        if(size==1){//所有文件在同一个文件夹下
+        if(size==2){//所有文件在同一个文件夹下,或文件在两个文件夹下 swc v3draw
             // -i directory(v3draw,swc)
             vector<QString> swcfiles;
             vector<QString> v3drawfiles;
+            qDebug()<<infiles[0]<<infiles[1];
             QString dir=infiles[0];
-            find_files(infiles[0],swcfiles,v3drawfiles);
+            QString dirV3draw=infiles[1];
+            //find_files(infiles[0],swcfiles,v3drawfiles);
+            find_all_swc(dir,swcfiles);
+            qDebug()<<swcfiles.size();
             for(int i=0;i<swcfiles.size();i++){//所有的swc文件处理, id_x_y_z
                 QString imgfile;
-
                 QString swcfilepath=dir+"\\"+swcfiles[i];
                 NeuronTree nt=readSWC_file(swcfilepath);
                 if(nt.listNeuron.size()<50)continue;
                 bool flag=false;
-                flag=find_corresponding_file(dir,swcfiles[i],imgfile);
+                //qDebug()<<"____*****______";
+                flag=find_corresponding_file(dirV3draw,swcfiles[i],imgfile);
                 if(flag){//找到
                     const char* v3drawfile=imgfile.toStdString().c_str();
-
+                    qDebug()<<imgfile.toStdString().c_str();
                     unsigned char* p1data=0;
                     unsigned char*** imag3d=0;
                     NeuronSWC soma;
@@ -98,14 +102,15 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
                     int datatype=0;
                     double radius=0;
                     SWCTree t;
-                    QList<ImageMarker> markers;
+                    //QList<ImageMarker> markers;
+                    QList<CellAPO> markers;
                     vector<location> points;
                     double pc1=0,pc2=0,pc3=0;
                     double pc13=0;
                     simple_loadimage_wrapper(callback,v3drawfile,p1data,sz,datatype);//读取v3draw
                     p1data_to_image3d(p1data,sz,imag3d);
                     find_soma(nt,soma,radius);//是否要坐标变换
-                    if(radius<10)radius=10;
+//                    if(radius<10)radius=10;先不用半径限制
                     qDebug()<<"radius:"<<radius;
                     location blocko(soma.x-128,soma.y-128,soma.z-64);
                     soma.x=128;
@@ -124,8 +129,9 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
                     datafile<<pc13<<endl;
 
                     qDebug()<<"branch num:"<<markers.size()-1;//已添加移动后soma的位置
-                    branchNumfile<<markers.size()-1<<endl;
-                    writeMarker_file(apofile+"//"+swcfiles[i]+".marker",markers);
+                    branchNumfile<<swcfiles[i].toStdString()<<" "<<markers.size()-1<<endl;
+                    //writeMarker_file(apofile+"//"+swcfiles[i]+".marker",markers);
+                    writeAPO_file(apofile+"//"+swcfiles[i]+".apo",markers);
                     for(int i=0;i<sz[2];i++){
                         for(int j=0;j<sz[1];j++){
                              delete[]imag3d[i][j];
@@ -136,111 +142,15 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
                     qDebug()<<"--------------";
 
                 }
-                else
+                else{
+                    qDebug()<<"can't find swc file"<<swcfiles[i]<<"corresponding v3draw!";
                     continue;
+                }
+
     }
         }
     else{
 
-
-
-
-
-
-//                for(int k=0;k<v3drawfiles.size();k++){//所有V3DRAW，x_y_z
-
-//                    if(v3drawfiles[k].contains(QString::number(cord[1]*2)+"_"+QString::number(cord[2]*2)+"_"+QString::number(cord[3]*2),Qt::CaseSensitive)==true){
-//                        qDebug()<<v3drawfiles[k];
-
-//                    QStringList drawf=v3drawfiles[k].split(QRegExp("[_|\\.]"));
-//                    qDebug()<<drawf;
-//                    vector<V3DLONG> cordd;
-//                    //一个V3DRAW文件坐标获取
-//                    for(int l=0;l<drawf.size();l++ ){
-//                        string tmpdraw=drawf[l].toStdString();
-//                        V3DLONG num2=0;
-//                        bool flag2=false;
-//                        //x,y,z
-//                        for(int ii=0;ii<tmpdraw.length();ii++){
-//                            if(tmpdraw[ii]>='0'&&tmpdraw[ii]<='9'){
-//                                num2=num2*10+(tmpdraw[ii]-'0');
-//                            }
-//                            else {
-//                                flag2=true;
-//                                break;}
-//                        }
-//                        if(flag2==true){
-//                            flag2=false;
-//                        }
-//                        else{
-//                            cordd.push_back(num2);
-//                            qDebug()<<num2;
-//                        }
-
-//                    }
- //                   if((cord[1]==cordd[0]/2)&& (cord[2]==cordd[1]/2 && cord[3]==cordd[2]/2)){//x
-                        //找到两个文件
-
-//                        //QString imgfile=dir+"\\"+v3drawfiles[k];
-//                        const char* v3drawfile=imgfile.toStdString().c_str();
-
-//                        unsigned char* p1data=0;
-//                        unsigned char*** imag3d=0;
-//                        NeuronSWC soma;
-//                        V3DLONG sz[4]={0,0,0,0};
-//                        int datatype=0;
-//                        double radius=0;
-//                        SWCTree t;
-//                        QList<ImageMarker> markers;
-//                        vector<location> points;
-//                        double pc1=0,pc2=0,pc3=0;
-//                        double pc13=0;
-//                        simple_loadimage_wrapper(callback,v3drawfile,p1data,sz,datatype);//读取v3draw
-//                        p1data_to_image3d(p1data,sz,imag3d);
-//                        find_soma(nt,soma,radius);//是否要坐标变换
-//                        if(radius<10)radius=10;
-//                        qDebug()<<"radius:"<<radius;
-//                        location blocko(soma.x-128,soma.y-128,soma.z-64);
-//                        soma.x=128;
-//                        soma.y=128;
-//                        soma.z=64;
-//                        mean_shift_soma_location_hp(imag3d,soma,sz[0],sz[1],sz[2],radius,45);
-//                        soma.x+=blocko.x;
-//                        soma.y+=blocko.y;
-//                        soma.z+=blocko.z;
-
-//                        t.count_branch_location(nt,markers,points,soma,radius);
-//                        V3DLONG max_r=(V3DLONG)(radius+1);
-//                        pc13=compute_marker_pca_hp(points,max_r,pc1,pc2,pc3);
-
-//                        qDebug()<<"sigma1/sigma2:"<<pc13;
-//                        datafile<<pc13<<endl;
-
-//                        qDebug()<<"branch num:"<<markers.size()-1;//已添加移动后soma的位置
-//                        branchNumfile<<markers.size()-1<<endl;
-//                        writeMarker_file(apofile+"//"+swcfiles[i]+".marker",markers);
-//                        for(int i=0;i<sz[2];i++){
-//                            for(int j=0;j<sz[1];j++){
-//                                 delete[]imag3d[i][j];
-//                               }
-//                                delete[]imag3d[i];
-//                            }
-//                           delete[] imag3d;
-//                        qDebug()<<"--------------";
-//                        break;
-
-//                    }
-//        //            else continue;
-//                }
-
-
-
-//            }
-//            datafile.close();
-//            branchNumfile.close();
-
-
-//        }
 //        for(int i=0;i<size;i++){
 //            QString swcfile=infiles[i];
 //            NeuronTree nt=readSWC_file(swcfile);
@@ -312,13 +222,13 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
             qDebug()<<"XDim,YDim,ZDim:"<<sz[0]<<sz[1]<<sz[2];
             p1data_to_image3d(p1data,sz,imag3d);
             find_soma(nt,soma,radius);
-            if(radius<15)radius=15;
+            if(radius<10)radius=10;
             qDebug()<<"radius:"<<radius;
             qDebug()<<"founded soma location!";
             //qDebug()<<"22:"<<imag3d[0][0][0];
             mean_shift_soma_location_hp(imag3d,soma,sz[0],sz[1],sz[2],radius,45);
             SWCTree t;
-            QList<ImageMarker> markers;
+            QList<CellAPO> markers;
             vector<location> points;
             double pc1=0,pc2=0,pc3=0;
             double pc13=0;
@@ -340,7 +250,7 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
     //        else qDebug()<<"no!";
             qDebug()<<"branch num:"<<markers.size()-1;//已添加移动后soma的位置
             branchNumfile<<markers.size()-1<<endl;
-            writeMarker_file(apofile+"//"+eswcfile+".marker",markers);
+            writeAPO_file(apofile+"//"+eswcfile+".marker",markers);
             for(int i=0;i<sz[2];i++){
                 for(int j=0;j<sz[1];j++){
                     delete[]imag3d[i][j];
@@ -405,7 +315,8 @@ bool BranchCount::dofunc(const QString & func_name, const V3DPluginArgList & inp
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("branch_count:input /i directory(v3draw,swc) "
+                "or /i swc v3draw,then you can get branch num neighbor soma!");
 	}
 	else return false;
 
