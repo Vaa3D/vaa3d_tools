@@ -304,7 +304,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
-    if(!tmpfolder.isEmpty())
+    if(!tmpfolder.isEmpty() && !P.resume)
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -317,7 +317,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     QString finaloutputswc;
     if(P.global_name)
         finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
-    if(QFileInfo(finaloutputswc).exists())
+    if(QFileInfo(finaloutputswc).exists() && !P.resume)
         system(qPrintable(QString("rm %1").arg(finaloutputswc.toStdString().c_str())));
 
     LandmarkList newTargetList;
@@ -640,7 +640,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             else
             {
                 p2.outswc_file =swcString;
-                proc_app2_wp(callback, p2, versionStr);
+                proc_app2(callback, p2, versionStr);
             }
         }
         else
@@ -683,7 +683,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                     }else
                     {
                         p2.landmarks.push_back(RootNewLocation);
-                        proc_app2_wp(callback, p2, versionStr);
+                        proc_app2(callback, p2, versionStr);
                         p2.landmarks.clear();
                     }
 
@@ -745,7 +745,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                     }else
                     {
                         p2.landmarks.push_back(RootNewLocation);
-                        proc_app2_wp(callback, p2, versionStr);
+                        proc_app2(callback, p2, versionStr);
                         p2.landmarks.clear();
                     }
                     vector<MyMarker*> inputswc = readSWC_file(poutswc_file.toStdString());
@@ -1158,7 +1158,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         else
         {
             p2.outswc_file =swcString;
-            proc_app2_wp(callback, p2, versionStr);
+            proc_app2(callback, p2, versionStr);
         }
     }
     else
@@ -1206,7 +1206,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 }else
                 {
                     p2.landmarks.push_back(RootNewLocation);
-                    proc_app2_wp(callback, p2, versionStr);
+                    proc_app2(callback, p2, versionStr);
                     p2.landmarks.clear();
                 }
 
@@ -1520,7 +1520,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     total4DImage->setRezZ(3.0);//set the flg for 3d crawler
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".tif");
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
@@ -1541,20 +1541,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-
-    if(!ifs_swc && P.soma)
+    if(!ifs_swc && P.soma && total4DImage->getZDim()>=64&&0)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
-//        QString imageUnetString = imageSaveString;//change by wp
 
-///*change by wp
+
 #if  defined(Q_OS_LINUX)
     QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
             .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
     system(qPrintable(cmd_predict));
 #endif
-//*/
 
 
 //        V3DPluginArgItem arg;
@@ -1598,33 +1595,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }else
         P.length_thresh = 5;
 
-<<<<<<< HEAD
-
-     /*yong
-
-=======
-//python predict3DUnetPP.py x_12486_y_41608_z_2774.tif result.tif UNetPP.h5 256 256 128
->>>>>>> edb0dd08d1b721be7450eaf6c1dc2a625103615f
-        if(1)
-        {
-            P.length_thresh = 5;
-            QString imageUnetString = imageSaveString + "unet.tif";
-
-#if defined(Q_OS_LINUX)
-    QString cmd_predict = QString("/home/braincenter12/anaconda3/envs/py36/bin/python3.6 /home/braincenter12/Desktop/wpkenan/yong/predict3DUnetPP.py %1 %2 /home/braincenter12/Desktop/wpkenan/yong/UNetPP.h5 %3 %4 %5")
-            .arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str()).arg(mysz[0]).arg(mysz[1]).arg(mysz[2]);
-    system(qPrintable(cmd_predict));
-#endif
-            int datatype;
-            if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
-            {
-                cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
-                return false;
-            }
-            total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-        }else
-            P.length_thresh = 5;
-        */
 
     PARA_APP1 p1;
     PARA_APP2 p2;
@@ -1681,6 +1651,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     mean_shift_fun fun_obj;
     fun_obj.pushNewData<unsigned char>((unsigned char*)total1dData, mysz);
 
+
     vector<MyMarker*> tileswc_file;
     if(P.method == app1 || P.method == app2)
     {
@@ -1689,7 +1660,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         else
             qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-        cout << "wp_rootlist size1" << inputRootList.size() << endl;
 
         if(inputRootList.size() <1)
         {
@@ -1701,12 +1671,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             else
             {
                 p2.outswc_file =swcString;
-                proc_app2_wp(callback, p2, versionStr);
+                proc_app2(callback, p2, versionStr);
             }
         }
         else
-        {   cout << "wp_rootlist size2" << inputRootList.size() << endl;
-	
+        {
             for(int i = 0; i < inputRootList.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + (".swc");
@@ -1735,14 +1704,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     seedsToSave.append(outputMarker);
 
 
-
-
                     vector<V3DLONG> poss_landmark;
-                    double windowradius = 30;
-
+                    double windowradius = 10;
+                    cout << windowradius << " " << mysz[0] << " " << mysz[0]*mysz[1] << endl;
                     poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
+
+                    cout << "wp_debug: " << __FUNCTION__ << ": " << __LINE__ << ": " << poss_landmark[0] << endl;
+
+
                     marklist_tmp.clear();
                     vector<float> mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
+                    cout << "wp_debug: " << __FUNCTION__ << ": " << __LINE__ << ": " << mass_center[2] << endl;
                     RootNewLocation.x = mass_center[0]+1;
                     RootNewLocation.y = mass_center[1]+1;
                     RootNewLocation.z = mass_center[2]+1;
@@ -1754,6 +1726,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                     QString marker_name = imageSaveString + ".marker";
                     writeMarker_file(marker_name, seedsToSave);
+                    return 0;
 
                 }
 
@@ -1805,29 +1778,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         p2.bkg_thresh = imgAve +0.7*td ;
 
                         p2.landmarks.push_back(RootNewLocation);
-			if(!ifs_swc && P.soma){
-				cout << "in first" << endl;
-				for(int wp_i=1;wp_i<P.listLandmarks.size();wp_i++){
-					LocationSimple wpNewLocation;
-					wpNewLocation.x=P.listLandmarks[wp_i].x-total4DImage->getOriginX();
-					wpNewLocation.y=P.listLandmarks[wp_i].y-total4DImage->getOriginY();
-					wpNewLocation.z=P.listLandmarks[wp_i].z-total4DImage->getOriginZ();
-                    cout << wpNewLocation.x << " " << wpNewLocation.y << " " << wpNewLocation.z << endl;
-                    if(wpNewLocation.x>=0&&wpNewLocation.y>=0&&wpNewLocation.z>=0&&wpNewLocation.x<total4DImage->getOriginX()&&wpNewLocation.y<total4DImage->getOriginY()&&wpNewLocation.z<total4DImage->getOriginZ()){
-                        p2.landmarks.push_back(wpNewLocation);
-                    }
-
-				}
-				
-				//LocationSimple wpNewLocation;
-				//wpNewLocation.x=RootNewLocation.x-96;
-				//wpNewLocation.y=RootNewLocation.y+87;
-				//wpNewLocation.z=RootNewLocation.z+8;
-				
-				//p2.landmarks.push_back(wpNewLocation);
-			}
-			cout << "P.listLandmarks.size()" << P.listLandmarks.size() << endl;
-			
 
                        // if(P.global_name && ifs_swc)
                         if(0)
@@ -1873,8 +1823,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             count++;
                             soma_tile = false;
                             num_tips = 0;
-			    cout << "in_do_while p2.landmarks.size()" << p2.landmarks.size() << endl; 
-                            proc_app2_wp(callback, p2, versionStr);
+                            proc_app2(callback, p2, versionStr);
     //                        if(ifs_swc)
     //                        {
     //                            NeuronTree nt_app2 = readSWC_file(poutswc_file);
@@ -1921,7 +1870,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             soma_tile = false;
                             num_tips = 0;
                             p2.bkg_thresh -=2;
-                            proc_app2_wp(callback, p2, versionStr);
+                            proc_app2(callback, p2, versionStr);
                             inputswc = readSWC_file(poutswc_file.toStdString());
                             for(V3DLONG d = 0; d < inputswc.size(); d++)
                             {
@@ -2083,6 +2032,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+    int conf_th = 130;
     //assign all sub_trees
     QVector<int> visit(nt.listNeuron.size(),0);
 
@@ -2121,7 +2071,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else{
         for(int i=0; i<nt.listNeuron.size();i++)
         {
-            if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
+            if(nt.listNeuron[i].type>conf_th && nt.listNeuron[i].pn ==-1 && visit[i]==0)  //was 130
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2144,7 +2094,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             }
 
             int diff_radius;
-            if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
+            if(nt.listNeuron[i].type<=conf_th && nt.listNeuron[i].radius<2 && visit[i]==0)
             {
                 int count=0;
                 int pre_sum=0;
@@ -2168,7 +2118,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
 
-            if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
+            if(nt.listNeuron[i].type>conf_th && visit[i]==0 && childs[i].size()==1)
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2212,7 +2162,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
-            if(curr.type >130) continue;
+            if(curr.type >conf_th) continue;
             LocationSimple newTip;
             bool check_tip = false;
             if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
@@ -3443,7 +3393,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             system(qPrintable(cmd_tremap));
         #else
             v3d_msg("The OS is not Linux or Mac. Do nothing.");
-            return false;
+            return;
         #endif
 
         }else
@@ -5174,7 +5124,7 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
     if(inputRootList.size() <1)
     {
         p2.outswc_file =swcString;
-        proc_app2_wp(callback, p2, versionStr);
+        proc_app2(callback, p2, versionStr);
     }
     else
     {
@@ -5206,7 +5156,7 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
             if(!flag)
             {
                 p2.landmarks.push_back(RootNewLocation);
-                proc_app2_wp(callback, p2, versionStr);
+                proc_app2(callback, p2, versionStr);
                 p2.landmarks.clear();
                 vector<MyMarker*> inputswc = readSWC_file(poutswc_file.toStdString());
 
@@ -5614,7 +5564,7 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
         p2.zc1 = p2.p4dImage->getZDim()-1;
 
         p2.outswc_file =swcString;
-        proc_app2_wp(callback, p2, versionStr);
+        proc_app2(callback, p2, versionStr);
         nt = readSWC_file(swcString);
     }
     else

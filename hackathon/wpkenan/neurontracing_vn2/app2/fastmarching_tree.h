@@ -244,7 +244,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
                                          double bkg_thresh = 20,
                                          bool is_break_accept = false)
 {
-    cout << "wp20190521_3" << endl;
+//    cout << "wp20190521_3" << endl;
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
@@ -1251,7 +1251,7 @@ template<class T> void phi_parent_state(
 		int j = (min_ind/sz0) % sz1; 
 		int k = (min_ind/sz01) % sz2;
 
-        cout << "wp20190521" << endl;
+//        cout << "wp20190521" << endl;
 		int w, h, d;
 		for(int kk = -1; kk <= 1; kk++)
 		{
@@ -1471,7 +1471,7 @@ template<class T> bool fastmarching_tree_wp(
 	double bkg_thresh = 20,
 	bool is_break_accept = false)
 {//wp
-    cout << "wp20190521" << endl;
+//    cout << "wp20190521" << endl;
 	for(int i=0;i<roots.size();i++){
 		cout << roots[i].x << endl;
 	}

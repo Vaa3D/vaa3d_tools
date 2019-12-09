@@ -224,6 +224,7 @@ bool readSWC_file(string swc_file, vector<MyMarker> & outmarkers)
 
 bool readSWC_file(string swc_file, vector<MyMarker*> & swc)
 {//debug by guochanghao, fix for reading failure after 7 values
+    swc.clear();
     ifstream ifs(swc_file.c_str());
 
     if(ifs.fail())
@@ -255,12 +256,21 @@ bool readSWC_file(string swc_file, vector<MyMarker*> & swc)
         ave_count_each_line_num+=count_each_line_num;
 //        cout<<line<<": "<<count_each_line_num<<endl;
     }
-    ave_count_each_line_num/=num_valid_line;
-    cout<<"ave_count_each_line_num:"<<ave_count_each_line_num<<endl;
+
+    if(num_valid_line==0){ return true;}
+
+    ave_count_each_line_num=ave_count_each_line_num/num_valid_line;
+//    cout<<"ave_count_each_line_num:"<<ave_count_each_line_num<<endl;
     if(ave_count_each_line_num-(int)ave_count_each_line_num==0)
-    {qDebug("Each line has the same number of parameters."); ifs.close();}
+    {
+//        qDebug("Each line has the same number of parameters.");
+        ifs.close();
+    }
     else
-    {qDebug("ave_count_each_line_num is not integer."); ifs.close(); return false;}
+    {
+        qDebug(QString("ave_count_each_line_num is not integer. ave_count_each_line_num=%1").arg(ave_count_each_line_num).toStdString().c_str());
+        ifs.close(); return false;
+    }
 
 
     ifs.open(swc_file.c_str());
@@ -441,12 +451,21 @@ bool readESWC_file(string swc_file, vector<MyMarkerX*> & swc)
         ave_count_each_line_num+=count_each_line_num;
 //        cout<<line<<": "<<count_each_line_num<<endl;
     }
+
+    if(num_valid_line==0){ return true;}
+
     ave_count_each_line_num/=num_valid_line;
-    cout<<"ave_count_each_line_num:"<<ave_count_each_line_num<<endl;
+//    cout<<"ave_count_each_line_num:"<<ave_count_each_line_num<<endl;
     if(ave_count_each_line_num-(int)ave_count_each_line_num==0)
-    {qDebug("Each line has the same number of parameters."); ifs.close();}
+    {
+//        qDebug("Each line has the same number of parameters.");
+        ifs.close();
+    }
     else
-    {qDebug("ave_count_each_line_num is not integer."); ifs.close(); return false;}
+    {
+        qDebug(QString("ave_count_each_line_num is not integer. ave_count_each_line_num=%1").arg(ave_count_each_line_num).toStdString().c_str());
+        ifs.close(); return false;
+    }
 
 
     ifs.open(swc_file.c_str());

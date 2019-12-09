@@ -8,7 +8,6 @@
 #include "v3d_message.h"
 
 #include "Fragmented_Auto-trace_plugin.h"
-#include "FragTraceControlPanel.h"
 
 using namespace std;
 
@@ -32,15 +31,10 @@ QStringList FragmentedAutoTracePlugin::funclist() const
 
 void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("start_tracing"))
+	if (menu_name == tr("settings"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
-		//panelPtr->~FragTraceControlPanel();
-	}
-	else if (menu_name == tr("settings"))
-	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
-		this->instancePtr = panelPtr;
+		this->UIinstancePtr = panelPtr;
 		callback.changeFragTraceStatus(true);
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
 		callback.changeFragTraceStatus(false);
@@ -61,8 +55,12 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 
 	if (func_name == tr("hotKey"))
 	{
-		string inputParam = input.at(1).type.toStdString();
-		cout << this->instancePtr->tracedTree.listNeuron.size() << endl;
+		if (this->UIinstancePtr != nullptr)
+		{
+			this->fragEditorPtr = new FragmentEditor(parent, &callback);
+			string inputParam = input.at(1).type.toStdString();
+			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
+		}
 		//QString inputParamQ = inparas.at(0);
 		//string inputParam = inputParamQ.toStdString();
 		//cout << inputParam << endl;

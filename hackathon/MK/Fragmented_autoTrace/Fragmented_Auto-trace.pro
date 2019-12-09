@@ -1,10 +1,7 @@
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-unix:!macx {
-    QMAKE_CXXFLAGS += -std=c++11
-    QMAKE_CXXFLAGS += /MP
-}
+QMAKE_CXXFLAGS += /MP
 #CONFIG	+= x86_64
 
 VAA3DPATH = ../../../../v3d_external/v3d_main
@@ -32,15 +29,20 @@ win32: {
 
 FORMS += fragmentedTraceUI.ui
 
+RESOURCES += FragTracer_Resource.qrc
+
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
+HEADERS += FragTracer_Define.h
+HEADERS += FragmentEditor.h
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= Fragmented_Auto-trace_plugin.cpp
 SOURCES += FragTraceControlPanel.cpp
 SOURCES += FragTraceManager.cpp
+SOURCES += FragmentEditor.cpp
 
 unix:!macx {
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lNeuronStructNavigator

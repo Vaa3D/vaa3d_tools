@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "NeuronGeoGrapher.h"
+#include "NeuronStructNavigator_Define.h"
 
 using namespace std;
 
@@ -445,6 +446,32 @@ boost::container::flat_map<double, vector<connectedComponent>> NeuronGeoGrapher:
 		for (vector<connectedComponent>::iterator it2 = outputMap.at(it->first).begin(); it2 != outputMap.at(it->first).end(); ++it2)
 			ChebyshevCenter_connComp(*it2);
 	}
+
+#ifdef __SHELL_CONNECTED_COMPONENT_DEBUG__
+	NeuronTree connShellTreeDebug;
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = outputMap.begin(); it != outputMap.end(); ++it)
+	{
+		for (vector<connectedComponent>::iterator compIt = it->second.begin(); compIt != it->second.end(); ++compIt)
+		{
+			//cout << compIt->ChebyshevCenter[0] << " " << compIt->ChebyshevCenter[1] << " " << compIt->ChebyshevCenter[2] << endl;
+			for (map<int, set<vector<int>>>::iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+			{
+				for (set<vector<int>>::iterator coordIt = sliceIt->second.begin(); coordIt != sliceIt->second.end(); ++coordIt)
+				{
+					NeuronSWC node;
+					node.x = coordIt->at(0);
+					node.y = coordIt->at(1);
+					node.z = coordIt->at(2);
+					node.type = it->first;
+					node.parent = -1;
+					connShellTreeDebug.listNeuron.push_back(node);
+				}
+			}
+		}
+	}
+	QString connectedCompShellSaveNameQ = "D:\\Work\\FragTrace\\connShellDebug.swc";
+	writeSWC_file(connectedCompShellSaveNameQ, connShellTreeDebug);
+#endif
 
 	return outputMap;
 }

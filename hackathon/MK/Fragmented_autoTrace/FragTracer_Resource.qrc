@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/segEditingIcons">
+    <file>resources/segment_editing/redo.png</file>
+    <file>resources/segment_editing/undo.png</file>
+  </qresource>
+</RCC>

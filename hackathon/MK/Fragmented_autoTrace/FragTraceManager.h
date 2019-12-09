@@ -17,7 +17,7 @@
 
 enum workMode { axon, dendriticTree };
 
-class FragTraceManager: public QWidget
+class FragTraceManager : public QWidget
 {
 	Q_OBJECT
 
@@ -154,9 +154,11 @@ private:
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 
-	vector<connectedComponent> peripheralSignalBlobs;
+	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
-	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree);
+	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
+	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
+	NeuronTree getSmoothedPeriDenTree();
 /* ==================================================================== */
 };
 

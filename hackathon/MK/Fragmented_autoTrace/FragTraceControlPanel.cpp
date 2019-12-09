@@ -159,13 +159,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	// ------------------------------- //
 
 
-	// ------- Segment Post-processing ------- //
-	if (callOldSettings.value("PostElongDistChecked") == true)
-	{
-		uiPtr->lineEdit_4->setEnabled(true);
-		uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
-	}
-		
+	// ------- Segment Post-processing ------- //		
 	this->listViewBlankAreas = new QStandardItemModel(this);
 	uiPtr->listView->setModel(listViewBlankAreas);
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -456,20 +450,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	// ------------------------------- //
 
 
-	// ------- Post Elongation ------- //
-	if (uiPtr->groupBox_5->isChecked())
-	{
-		settings.setValue("PostElongDistChecked", true);
-		settings.setValue("PostElongDistThreshold", uiPtr->lineEdit_4->text());
-	}
-	else
-	{
-		settings.setValue("PostElongDistChecked", false);
-		settings.setValue("PostElongDistThreshold", "-1");
-	}
-	// ------------------------------- //
-
-
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 /* ====================== END of [User Interface Configuration Buttons] ======================= */
@@ -512,7 +492,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_maskGeneration();                         // mask generation
 				this->pa_objFilter();                              // object filter
 				this->pa_objBasedMST();                            // object-based MST node connecting
-				this->pa_postElongation();                         // post elongation set up
 				// ---------------------------------------------------------- //
 			}
 		}
@@ -535,7 +514,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->pa_imgEnhancement();                          // image enhancement
 				this->pa_objFilter();                               // object filter
 				this->pa_objBasedMST();                             // object-based MST node connecting 
-				this->pa_postElongation();                          // post elongation set up
 				// ---------------------------------------------------------- //
 			}
 		}
@@ -568,12 +546,12 @@ void FragTraceControlPanel::traceButtonClicked()
 		//cout << this->volumeAdjustedCoords[0] << " " << this->volumeAdjustedCoords[2] << " " << this->volumeAdjustedCoords[4] << endl;
 		this->tracedTree = NeuronStructUtil::swcShift(this->tracedTree, this->volumeAdjustedCoords[0] - 1, this->volumeAdjustedCoords[2] - 1, this->volumeAdjustedCoords[4] - 1);
 	} 
-	this->scaleTracedTree();
 
 	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
 	NeuronTree finalTree;
 	if (existingTree.listNeuron.isEmpty())
 	{
+		this->scaleTracedTree();
 		profiledTree tracedProfiledTree(this->tracedTree);
 		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
 
@@ -584,8 +562,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		vector<NeuronTree> trees;
 		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
 		trees.push_back(scaledBackExistingTree);
-		NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
-		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(scaledBackTracedTree, scaledBackExistingTree, 4, 8);
+		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(this->tracedTree, scaledBackExistingTree, 4, 8);
 		profiledTree newlyTracedPartProfiled(newlyTracedPart);
 		
 		NeuronTree cleaned_newlyTracedPart;
@@ -593,8 +570,10 @@ void FragTraceControlPanel::traceButtonClicked()
 		trees.push_back(cleaned_newlyTracedPart);
 
 		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
-		profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5);
-		this->tracedTree = finalProfiledTree.tree;
+		//profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5); // This line might be causing problem:
+																												 //   1. Structural error that causes image block reading freezed when moving/zomming.
+																												 //   2. Scailing error on final traced tree?? (compressed in z direction) - not confirmed. 
+		this->tracedTree = combinedProfiledTree.tree;
 		//this->tracedTree = combinedProfiledTree.tree;
 		this->scaleTracedTree();
 		this->thisCallback->setSWCTeraFly(this->tracedTree);
@@ -618,8 +597,10 @@ void FragTraceControlPanel::traceButtonClicked()
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-	//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-	//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+	cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+#endif
 
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
@@ -641,8 +622,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 																 this->volumeAdjustedCoords[4], this->volumeAdjustedCoords[5], originalDims);
 		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
 
+#ifdef __IMAGE_VOLUME_PREPARATION_DEBUG__
 		// ------- For debug purpose ------- //
-		/*unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
+		unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
 		memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
 
 		V3DLONG saveDims[4];
@@ -657,8 +639,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 
 		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
 		const char* saveNameC2 = saveName2.c_str();
-		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
+		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);
 		// --------------------------------- //
+#endif
 
 		if (this->traceManagerPtr == nullptr)
 		{
@@ -790,14 +773,6 @@ void FragTraceControlPanel::pa_objBasedMST()
 	}
 }
 
-void FragTraceControlPanel::pa_postElongation()
-{
-	if (uiPtr->groupBox_5->isChecked())
-		this->paramsFromUI.insert({"labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()) });
-	else
-		this->paramsFromUI.insert({ "labeledDistThreshold", -1 });
-}
-
 void FragTraceControlPanel::markerMonitor()
 {
 	if (this->markerMonitorSwitch)
@@ -887,6 +862,12 @@ void FragTraceControlPanel::scaleTracedTree()
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << "  -- Scaling back to real world dimension:" << endl;
+	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+#endif
+
 	this->tracedTree = scaledShiftedTree;
 }
 
@@ -910,6 +891,12 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
 	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
 
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << "  -- Scaling to local volume dimension:" << endl;
+	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+#endif
+
 	return shiftScaleBackTree;
 }
 /* ================ END of [Result and Scaling Functions] ================ */
@@ -919,7 +906,6 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 void FragTraceControlPanel::fillUpParamsForm()
 {
-	this->thisCallback->getParamsFromFragTraceUI("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()));
 	this->thisCallback->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
 	this->thisCallback->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
 }
