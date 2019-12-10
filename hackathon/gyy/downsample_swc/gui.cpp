@@ -12,22 +12,22 @@ DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
     connect(res_input, SIGNAL(valueChanged(int)), res_input, SLOT(setValue(int)));
     connect(res_output, SIGNAL(valueChanged(int)), res_output, SLOT(setValue(int)));
 
-    input_file_Btn = new QPushButton(tr("input file"));
+    input_file_Btn = new QPushButton(tr("Input a file"));
     file_edit = new QLineEdit(tr("Select a file !"));
     hbox1 = new QHBoxLayout();
     hbox1 -> addWidget(input_file_Btn);
     hbox1 -> addWidget(file_edit);
     connect(input_file_Btn, SIGNAL(clicked(bool)), this, SLOT(selectFiles()));
 
-    input_folder_Btn = new QPushButton(tr("output file"));
+    input_folder_Btn = new QPushButton(tr("Input a folder"));
     folder_edit = new QLineEdit(tr("Select a folder !"));
     hbox2 = new QHBoxLayout();
     hbox2 -> addWidget(input_folder_Btn);
     hbox2 -> addWidget(folder_edit);
     connect(input_folder_Btn, SIGNAL(clicked(bool)), this, SLOT(selectFiles()));
 
-    saveBtn = new QPushButton(tr("save files"));
-    files_save = new QLineEdit(tr("..."));
+    saveBtn = new QPushButton(tr("Save files"));
+    files_save = new QLineEdit(tr("Select a file or folder to save files !"));
     hbox_save = new QHBoxLayout();
     hbox_save -> addWidget(saveBtn);
     hbox_save -> addWidget(files_save);
@@ -44,10 +44,10 @@ DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
     connect(cancel, SIGNAL(clicked(bool)), this, SLOT(reject()));
 
     gridLayout = new QGridLayout();
-    gridLayout -> addWidget(new QLabel("the highest resolution is number 1 !"), 0, 0);
-    gridLayout -> addWidget(new QLabel("the resolution of the imported files"), 1, 0);
+    gridLayout -> addWidget(new QLabel("The highest resolution is number 1 !"), 0, 0);
+    gridLayout -> addWidget(new QLabel("The resolution of the imported files"), 1, 0);
     gridLayout -> addWidget(res_input, 1, 1);
-    gridLayout -> addWidget(new QLabel("the resolution of the exported files"), 2, 0);
+    gridLayout -> addWidget(new QLabel("The resolution of the exported files"), 2, 0);
     gridLayout -> addWidget(res_output, 2, 1);
 
     gridLayout -> addLayout(hbox1, 3, 0);
@@ -56,7 +56,7 @@ DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
     gridLayout -> addLayout(hbox3, 6, 0);
 
     this -> setLayout(gridLayout);
-    this -> setWindowTitle("downSample files");
+    this -> setWindowTitle("DownSample files");
 }
 
 void DownsampleDialog:: selectFiles()
@@ -64,7 +64,7 @@ void DownsampleDialog:: selectFiles()
     QPushButton *button = (QPushButton *) sender();
     if(button == input_file_Btn)
     {
-        file = QFileDialog :: getOpenFileName(NULL,tr("select a file"),"D:\\","files(*.eswc *.swc *.apo)");
+        file = QFileDialog :: getOpenFileName(NULL,tr("Select a file"),"D:\\","files(*.eswc *.swc *.apo)");
         file_edit->setText(file);
         qDebug()<<__LINE__<<" : "<<file.toStdString().c_str();
         if(file.isEmpty())
@@ -72,16 +72,21 @@ void DownsampleDialog:: selectFiles()
             file_edit->setText("Select a file !");
             v3d_msg("File is empty ! Input again !");
         }
+        files="";
+        folder_edit->setText("Select a folder !");
+
     }
     else if(button == input_folder_Btn)
     {
-        files = QFileDialog::getExistingDirectory(NULL, tr("select a folder"),"D:\\");
+        files = QFileDialog::getExistingDirectory(NULL, tr("Select a folder"),"D:\\");
         folder_edit->setText(files);
         if(files.isEmpty())
         {
             folder_edit->setText("Select a folder !");
             v3d_msg("Folder is empty ! Input again !");
         }
+        file="";
+        file_edit->setText("Select a file !");
     }
 }
 
@@ -97,7 +102,7 @@ void DownsampleDialog:: saveFiles()
             files_save->setText(fileSave);
             if(fileSave.isEmpty())
             {
-                files_save->setText("...");
+                files_save->setText("Select a file or folder to save files !");
                 v3d_msg("Please input a file to save again !");
             }
         }
@@ -107,9 +112,14 @@ void DownsampleDialog:: saveFiles()
             files_save->setText(folderSave);
             if(folderSave.isEmpty())
             {
-                files_save->setText("...");
+                files_save->setText("Select a file or folder to save files !");
                 v3d_msg("Please input a folder to save again !");
             }
+        }
+        else if(file == "" && files == "")
+        {
+            v3d_msg("Please input files first !");
+            //files_save->setText("Select a file or folder to save files !");
         }
     }
 }
