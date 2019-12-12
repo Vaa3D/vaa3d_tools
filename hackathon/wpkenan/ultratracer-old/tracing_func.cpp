@@ -1542,19 +1542,37 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
 //    if(!ifs_swc && P.soma)
-    if (!ifs_swc && P.soma && total4DImage->getZDim() >= 64&&0)
-    {
-        P.length_thresh = 5;
-        QString imageUnetString = imageSaveString + "unet.v3draw";
-//        QString imageUnetString = imageSaveString;//change by wp
+    if (!ifs_swc && P.soma && total4DImage->getZDim() >= 64)
+        {
+            P.length_thresh = 5;
+            QString imageUnetString = imageSaveString + "unet.v3draw";
+    //        QString imageUnetString = imageSaveString;//change by wp
 
-///*change by wp
+
+            QString brainid,id,xyz,unetFolder;
+            xyz=QString("%1_%2_%3").arg(start_x).arg(start_y).arg(start_z);
+            id=imageSaveString.section('/',-2,-2).section('_',0,0);
+            brainid=imageSaveString.section('/',-4,-4);
+            unetFolder=imageSaveString.section('/',0,-4)+"/unet";
+
+
+            cout << xyz.toStdString().data() << endl;
+            cout << id.toStdString().data() << endl;
+            cout << brainid.toStdString().data() << endl;
+            cout << unetFolder.toStdString().data() << endl;
+
+    //        if(Q)
+    //        return 0;
 #if  defined(Q_OS_LINUX)
-    QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
-            .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
-    system(qPrintable(cmd_predict));
+//    QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
+//            .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
+//    system(qPrintable(cmd_predict));
+        QFile::copy(unetFolder+QString("/%1_%2.v3draw").arg(brainid).arg(id),imageUnetString);
 #endif
-//*/
+
+
+//            return 0;
+
 
 
 //        V3DPluginArgItem arg;

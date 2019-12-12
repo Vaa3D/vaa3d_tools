@@ -78,5 +78,5 @@ SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp \
 HEADERS += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
-TARGET	= $$qtLibraryTarget(wp_ultratracer_not_unet)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/wpkenanPlugin/wp_ultratracer_not_unet/
+TARGET	= $$qtLibraryTarget(wp_ultratracer_unet_by_workstation)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/wpkenanPlugin/wp_ultratracer_unet_by_workstation/

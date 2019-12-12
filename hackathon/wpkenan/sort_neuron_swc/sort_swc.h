@@ -377,6 +377,7 @@ QList<V3DLONG> DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG newrootid, V3D
 
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
+    cout << "wp_SortSWC" << endl;
     // node name list of
     QList<V3DLONG> nlist;
     for(int i=0; i<neurons.size(); i++){
@@ -548,7 +549,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
         S.type = neurons.at(oripos).type;
         result.append(S);
         cnt++;
-        qDebug()<<QString("New root %1:").arg(i)<<S.x<<S.y<<S.z;
+        qDebug()<<QString("wp New root %1:").arg(i)<<S.x<<S.y<<S.z;
 
         for (V3DLONG ii=offset+1;ii<(sorted_size);ii++)
         {
@@ -579,7 +580,8 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
     }
 
     if ((sorted_size)<siz) {
-        v3d_msg("Error!");
+            cout << "wp_error" << endl;
+//        v3d_msg("Error!");
         return false;
     }
 
