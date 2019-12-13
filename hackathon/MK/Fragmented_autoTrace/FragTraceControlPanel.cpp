@@ -871,15 +871,35 @@ void FragTraceControlPanel::scaleTracedTree()
 
 	float imgOri[3];
 	float factor = pow(2, this->thisCallback->getTeraflyResLevel() - 1);
-	if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
+	cout << "  -- scaling factor = " << factor << endl;
+	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
 	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
 	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
 	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
 	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
-	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();*/
+
+	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+
+	float xScalingFactor, yScalingFactor, zScalingFactor;
+	if (this->thisCallback->getXlockStatus()) {}
+	else xScalingFactor = imgRes[0] / imgDims[0];
+	if (this->thisCallback->getYlockStatus()) {}
+	else yScalingFactor = imgRes[1] / imgDims[1];
+	if (this->thisCallback->getZlockStatus()) {}
+	else zScalingFactor = imgRes[2] / imgDims[2];
+
+	v3dhandleList handleList = this->thisCallback->getImageWindowList();
+	for (QList<void*>::iterator it = handleList.begin(); it != handleList.end(); ++it)
+	{
+		QString title = this->thisCallback->getImageName(*it);
+		qDebug() << title;
+	}
 
 	//NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
-	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, factor, factor, factor);
+	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, xScalingFactor, yScalingFactor, zScalingFactor);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
@@ -906,16 +926,29 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 	float imgOri[3];
 	float factor = pow(2, this->thisCallback->getTeraflyResLevel() - 1);
-	if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
+	cout << "  -- scaling factor = " << factor << endl;
+	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
 	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
 	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
 	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
 	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
-	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();*/
+
+	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+
+	float xScalingFactor, yScalingFactor, zScalingFactor;
+	if (this->thisCallback->getXlockStatus()) {}
+	else xScalingFactor = imgDims[0] / imgRes[0];
+	if (this->thisCallback->getYlockStatus()) {}
+	else yScalingFactor = imgDims[1] / imgRes[1];
+	if (this->thisCallback->getZlockStatus()) {}
+	else zScalingFactor = imgDims[2] / imgRes[2];
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
 	//NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
-	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, 1 / factor, 1 / factor, 1 / factor);
+	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, xScalingFactor, yScalingFactor, zScalingFactor);
 
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << "  -- Scaling to local volume dimension:" << endl;
