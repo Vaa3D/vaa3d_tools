@@ -272,7 +272,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -1263,6 +1263,45 @@
                      <iconset>
                       <normalon>:/segEditingIcons/resources/segment_editing/redo.png</normalon>
                      </iconset>
+                    </property>
+                   </widget>
+                   <widget class="QPushButton" name="pushButton_12">
+                    <property name="geometry">
+                     <rect>
+                      <x>110</x>
+                      <y>10</y>
+                      <width>40</width>
+                      <height>40</height>
+                     </rect>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>40</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Erase</string>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QPushButton:checked{background-color: rgb(150, 150, 150);}</string>
+                    </property>
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset>
+                      <normalon>:/segEditingIcons/resources/segment_editing/remove.png</normalon>
+                     </iconset>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>33</width>
+                      <height>33</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </widget>

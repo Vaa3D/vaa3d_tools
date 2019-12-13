@@ -65,9 +65,15 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 		//string inputParam = inputParamQ.toStdString();
 		//cout << inputParam << endl;
 	}
-	else if (func_name == tr("func2"))
+	else if (func_name == tr("mouse_click"))
 	{
-		v3d_msg("To be implemented.");
+		if (this->UIinstancePtr != nullptr)
+		{
+			this->fragEditorPtr = new FragmentEditor(parent, &callback);
+			string inputParam = input.at(1).type.toStdString();
+			//cout << inputParam << endl;
+			//system("pause");
+		}
 	}
 	else if (func_name == tr("help"))
 	{

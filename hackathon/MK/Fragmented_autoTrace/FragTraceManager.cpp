@@ -24,7 +24,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
 	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
 	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
@@ -96,7 +96,7 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
 	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
 	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[2] / 2);

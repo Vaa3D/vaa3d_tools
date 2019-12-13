@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 #include <qstringlist.h>
 #include <qsettings.h>
@@ -261,6 +262,17 @@ void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
 			uiPtr->lineEdit_3->setEnabled(true);
 			uiPtr->pushButton_6->setEnabled(true);
 		}
+	}
+}
+
+void FragTraceControlPanel::buttonClicked()
+{
+	QObject* signalSender = sender();
+	QString buttonName = signalSender->objectName();
+
+	if (buttonName == "pushButton_12")
+	{
+
 	}
 }
 
@@ -560,6 +572,7 @@ void FragTraceControlPanel::traceButtonClicked()
 	else
 	{
 		vector<NeuronTree> trees;
+		cout << endl << "Scailing existing tree to local coords first: " << endl;
 		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
 		trees.push_back(scaledBackExistingTree);
 		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(this->tracedTree, scaledBackExistingTree, 4, 8);
@@ -575,6 +588,7 @@ void FragTraceControlPanel::traceButtonClicked()
 																												 //   2. Scailing error on final traced tree?? (compressed in z direction) - not confirmed. 
 		this->tracedTree = combinedProfiledTree.tree;
 		//this->tracedTree = combinedProfiledTree.tree;
+		cout << endl << "Scaling combined tree back to real world coords: " << endl;
 		this->scaleTracedTree();
 		this->thisCallback->setSWCTeraFly(this->tracedTree);
 	}
@@ -598,8 +612,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-	cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
-	cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+	cout << " -- Displaying image local coords: x(" << volumeAdjustedCoords[0] << "-" << volumeAdjustedCoords[1] << ") y(" << volumeAdjustedCoords[2] << "-" << volumeAdjustedCoords[3] << ") z(" << volumeAdjustedCoords[4] << "-" << volumeAdjustedCoords[5] << ")" << endl;
+	cout << " -- Whole image block dimension: " << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+	cout << " -- Displaying image global coords: x(" << globalCoords[0] << "-" << globalCoords[1] << ") y(" << globalCoords[2] << "-" << globalCoords[3] << ") z(" << globalCoords[4] << "-" << globalCoords[5] << ")" << endl;
 #endif
 
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
@@ -855,17 +870,23 @@ void FragTraceControlPanel::scaleTracedTree()
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
 	float imgOri[3];
-	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
-	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
-	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+	float factor = pow(2, this->thisCallback->getTeraflyResLevel() - 1);
+	if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
+	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
+	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
+	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
 
-	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
+	//NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
+	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, factor, factor, factor);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << "  -- Scaling back to real world dimension:" << endl;
 	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
 	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
 #endif
 
 	this->tracedTree = scaledShiftedTree;
@@ -884,17 +905,23 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
 	float imgOri[3];
-	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
-	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
-	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+	float factor = pow(2, this->thisCallback->getTeraflyResLevel() - 1);
+	if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
+	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
+	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
+	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
-	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
+	//NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
+	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, 1 / factor, 1 / factor, 1 / factor);
 
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << "  -- Scaling to local volume dimension:" << endl;
 	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
 	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
 #endif
 
 	return shiftScaleBackTree;
