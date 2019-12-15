@@ -554,7 +554,9 @@ NeuronTree get_off_signal_fun(QList<int> tip_list,NeuronTree sort_swc,int range)
         QPair<MyMarker,MyMarker> two_marker=QPair<MyMarker,MyMarker>(tip,tip_pn); //two_marker.first=tip;two_marker.second=tip_pn;
         MyMarker new_tip=off_signal_node(two_marker,range);
         NeuronSWC new_line;
-        new_line.x=new_tip.x; new_line.y=new_tip.y; new_line.z=new_tip.z;
+        new_line.x=new_tip.x;
+        new_line.y=new_tip.y;
+        new_line.z=new_tip.z;
         new_line.pn=sorted_listneuron.at(tip_list.at(i)).n;
         new_line.type=sorted_listneuron.at(tip_list.at(i)).type;
         new_line.radius=sorted_listneuron.at(tip_list.at(i)).radius;
@@ -992,6 +994,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
         mysz[3] = nChannel;
         cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
         unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+        cout<<"============================test1"<<endl;
         //set threshold
         //1. block_background
         double num_intensity[256]={0};
@@ -1005,6 +1008,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
                            num_intensity[int(data1d_crop[id])]++;
                        }}}}
        //1. 0.99 threshold
+        cout<<"============================test2"<<endl;
        double sum_num=0;
        int index=0;
        if (sizeof (num_intensity)!=0)//0.99 threshold
@@ -1024,6 +1028,7 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        // find tips
        int croped_swc_tip_index1;
        croped_swc_tip_index1=find_tip(nt_input1,mysz[0],mysz[1],mysz[2]);
+       cout<<"============================test3"<<endl;
        int tip_n=nt_input1.listNeuron.at(croped_swc_tip_index1).n;
 
        QList<NeuronSWC> sorted_swc;
@@ -1037,12 +1042,12 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
        }
        nt_input.listNeuron=sorted_swc;
        nt_input.hashNeuron=hash_nt;
-
+cout<<"============================test4"<<endl;
        // find tips
        int croped_swc_tip_index;
        croped_swc_tip_index=find_tip(nt_input,mysz[0],mysz[1],mysz[2]);
 
-
+cout<<"============================test5"<<endl;
        //2.branch background
 
        QList<int> rollback_nodes=find_tip_and_itschild_length(nt_input,max_length_threshold,croped_swc_tip_index);//20 um
@@ -1117,6 +1122,33 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
            }
            //writeMarker_file(qs_output,imagemarks);
        }
+
+       //write pruned swc in block
+       QString record_block_swc_name = input_folder+name_nrrd+".pruned.swc";
+       QList<NeuronSWC> pruned_swc_block;
+       if(nodes_tobe_pruned.size()!=0){
+           for(int i=0;i<sorted_swc.size();i++){
+               int numm=0;
+               for(int j=0;j<nodes_tobe_pruned.size();j++){
+                   if (i==nodes_tobe_pruned.at(j)) numm++;}
+               if(numm==0){
+                   NeuronSWC ori;
+                   ori.x=sorted_swc.at(i).x;
+                   ori.y=sorted_swc.at(i).y;
+                   ori.z=sorted_swc.at(i).z;
+                   ori.type=sorted_swc.at(i).type;
+                   ori.radius=1;
+                   ori.pn=sorted_swc.at(i).pn;
+                   ori.n=sorted_swc.at(i).n;
+                   pruned_swc_block.push_back(ori);
+               }
+           }
+           NeuronTree record_block_tree=neuronlist_2_neurontree(pruned_swc_block);
+           writeESWC_file(record_block_swc_name,record_block_tree);
+       }
+
+
+
        //find swc nodes based on terafly coodinates.
        QStringList block_name;
        for(int k=0;k<4;k++) block_name.append(all_swc.at(i).split("_")[k]);
@@ -2697,7 +2729,7 @@ void mean_shift_oyq(const V3DPluginArgList & input, V3DPluginArgList & output, V
     unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
 
 
-    QString qs_output = folder+"/"+flag1+"_shift.marker";
+    QString qs_output = folder+"/"+flag1+"_shift"+QString::number(radius)+".marker";
     QList <ImageMarker> imagemarks;
 
     QList <ImageMarker> marker=readMarker_file(input_marker);

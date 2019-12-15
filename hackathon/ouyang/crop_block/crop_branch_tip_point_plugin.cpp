@@ -4,6 +4,9 @@
  */
  
 #include <vector>
+#include "v3d_message.h"
+#include <iostream>
+#include <fstream>
 #include "crop_branch_tip_point_plugin.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(crop_branch_tip_point, crop_block);
@@ -11,7 +14,7 @@ Q_EXPORT_PLUGIN2(crop_branch_tip_point, crop_block);
 QStringList crop_block::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+        <<tr("CheckSWC_plugin")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -26,10 +29,19 @@ QStringList crop_block::funclist() const
 
 void crop_block::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    if (menu_name == tr("CheckSWC_plugin"))
+    {
+        int flag = CheckSWC(callback,parent);
+        if (flag == 1)
+        {
+            cout<<endl;
+            cout<<"********************"<<endl;
+            cout<<"*CheckSWC finished!*"<<endl;
+            cout<<"********************"<<endl;
+        }
+        else
+        {   v3d_msg("menu flag != 1"); return;}
+    }
 	else if (menu_name == tr("menu2"))
 	{
 		v3d_msg("To be implemented.");
