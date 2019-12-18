@@ -29,7 +29,6 @@ public:
 
 private:
 	FragTraceControlPanel* UIinstancePtr;
-	FragmentEditor* fragEditorPtr;
 };
 
 #endif

@@ -1280,11 +1280,14 @@
                       <height>40</height>
                      </size>
                     </property>
+                    <property name="cursor">
+                     <cursorShape>ArrowCursor</cursorShape>
+                    </property>
                     <property name="toolTip">
                      <string>Erase</string>
                     </property>
                     <property name="styleSheet">
-                     <string notr="true">QPushButton:checked{background-color: rgb(150, 150, 150);}</string>
+                     <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
                     </property>
                     <property name="text">
                      <string/>
@@ -1802,8 +1805,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>697</x>
-     <y>765</y>
+     <x>712</x>
+     <y>762</y>
     </hint>
     <hint type="destinationlabel">
      <x>781</x>
@@ -1850,8 +1853,8 @@
    <slot>saveSegStepsResultChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>247</x>
-     <y>762</y>
+     <x>308</x>
+     <y>759</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1867,7 +1870,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>213</x>
-     <y>423</y>
+     <y>374</y>
     </hint>
     <hint type="destinationlabel">
      <x>1</x>
@@ -1915,7 +1918,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>453</x>
-     <y>734</y>
+     <y>607</y>
     </hint>
     <hint type="destinationlabel">
      <x>354</x>
@@ -1931,7 +1934,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>560</x>
-     <y>734</y>
+     <y>607</y>
     </hint>
     <hint type="destinationlabel">
      <x>470</x>
@@ -1971,6 +1974,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_12</sender>
+   <signal>clicked()</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>eraseButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>193</x>
+     <y>307</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>799</x>
+     <y>187</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>saveSettingsClicked()</slot>
@@ -1982,5 +2001,6 @@
   <slot>blankAreaClicked()</slot>
   <slot>multiSomaTraceChecked(bool)</slot>
   <slot>refreshSomaCoords()</slot>
+  <slot>eraseButtonClicked()</slot>
  </slots>
 </ui>

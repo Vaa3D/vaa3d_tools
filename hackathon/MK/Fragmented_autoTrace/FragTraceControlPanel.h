@@ -5,6 +5,8 @@
 
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
+#include "FragmentEditor.h"
+#include "TeraflyCommunicator.h"
 
 class FragTraceControlPanel : public QDialog
 {
@@ -35,7 +37,8 @@ signals:
 	void switchOnSegPipe(); // currently not in action
 
 public slots:
-    /* =========== User Interface Configuration Buttons ============ */
+    /* =========== User Interface Buttons ============ */
+	// ------- Configuration ------- //
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
@@ -44,25 +47,33 @@ public slots:
 	void saveSettingsClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
+	// ---------------------------- //
+
+	// ------- Post Editing ------- //
+	void eraseButtonClicked();
+	// ---------------------------- //
     /* ======= END of [User Interface Configuration Buttons] ======= */
 
 	// ********************************************************************** //
 	void traceButtonClicked(); // ==> THIS IS WHERE THE TRACING PROCESS STARTS
 	// ********************************************************************** //
 
+	// ------- Receive traced tree emitted from FragTraceManager ------- //
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
+	// ----------------------------------------------------------------- //
 
 private:
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
+	FragmentEditor* fragEditorPtr;
+
 
 	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
 	/* ================================================= */
-
 
 
 	/* =============== Parameter Collecting Functions =============== */
@@ -73,7 +84,6 @@ private:
 	/* =========== END of [Parameter Collecting Functions] ========== */
 
 
-
 	/* ======= Tracing Volume Preparation ======= */
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
@@ -82,7 +92,7 @@ private:
 	int* globalCoords;         // global coordinates of [displaying image boundaries] in whole brain scale, currently not used.
 	int* displayingDims;
 
-	void teraflyTracePrep(workMode mode);
+	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
 	/* ========================================== */
 
 	

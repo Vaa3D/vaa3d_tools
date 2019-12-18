@@ -27,6 +27,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 	// ------- Set up user interface ------- //
 	uiPtr->setupUi(this);
+	// ------------------------------------- //
 
 	// ------- Adding widgets not provided in Qt Designer ------- //
 	this->doubleSpinBox = new QDoubleSpinBox(uiPtr->frame_7);
@@ -170,12 +171,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
 
+	this->fragEditorPtr = new FragmentEditor(parent, callback);
+
 	this->show();
 }
 
 
-
-/* =========================== User Interface Configuration Buttons =========================== */
+/* =========================== User Interface Buttons =========================== */
 void FragTraceControlPanel::imgFmtChecked(bool checked)
 {
 	QObject* signalSender = sender();
@@ -464,8 +466,21 @@ void FragTraceControlPanel::saveSettingsClicked()
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
-/* ====================== END of [User Interface Configuration Buttons] ======================= */
 
+void FragTraceControlPanel::eraseButtonClicked()
+{
+	if (uiPtr->pushButton_12->isChecked())
+	{
+		this->fragEditorPtr->test("checked!");
+		this->thisCallback->setEraseCursor(true);
+	}
+	else
+	{
+		this->fragEditorPtr->test("unChecked!");
+		this->thisCallback->setEraseCursor(false);
+	}
+}
+/* ====================== END of [User Interface Buttons] ======================= */
 
 
 /* ============================== TRACING INITIALIZING FUNCTION =============================== */
@@ -610,6 +625,9 @@ void FragTraceControlPanel::traceButtonClicked()
 /* =========================== TRACING VOLUME PREPARATION =========================== */
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
+	// This method prepares the image data for FragTraceManager to trace.
+	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
+
 	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << " -- Displaying image local coords: x(" << volumeAdjustedCoords[0] << "-" << volumeAdjustedCoords[1] << ") y(" << volumeAdjustedCoords[2] << "-" << volumeAdjustedCoords[3] << ") z(" << volumeAdjustedCoords[4] << "-" << volumeAdjustedCoords[5] << ")" << endl;
@@ -904,6 +922,11 @@ void FragTraceControlPanel::scaleTracedTree()
 	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
 	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
 #endif
+
+	//terafly::CViewer* currCiewerPtr = terafly::CViewer::getCurrent();
+	//int XDim = currCiewerPtr->getXDim();
+	//cout << XDim << endl;
+	//system("pause");
 
 	this->tracedTree = scaledShiftedTree;
 }
