@@ -235,7 +235,7 @@ inline T NeuronGeoGrapher::getPiAngle(const vector<T>& vector1, const vector<T>&
 	T angle = acos(dot / sqrt(sq1 * sq2));
 
 	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
-	else return angle / PI;
+	else return angle / PI_MK;
 }
 
 template<class T>

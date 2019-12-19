@@ -8,6 +8,7 @@
 #include <qspinbox.h>
 #include <qtimer.h>
 
+#include "TeraflyCommunicator.h"
 #include "FragTraceControlPanel.h"
 #include "FragTracer_Define.h"
 
@@ -172,6 +173,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->setWindowTitle(windowTitleQ);  
 
 	this->fragEditorPtr = new FragmentEditor(parent, callback);
+
+	
 
 	this->show();
 }

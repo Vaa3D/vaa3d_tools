@@ -293,7 +293,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree branchBrokenTree = TreeGrower::branchBreak(profiledSpikeRootStrightTree);
 
 		// Remove hooking and sharp-angled segment ends
-		float angleThre = (float(2) / float(3)) * PI;
+		float angleThre = (float(2) / float(3)) * PI_MK;
 		profiledTree branchBrokenProfiledTree(branchBrokenTree);
 		profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
 
@@ -947,7 +947,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 		profiledTree noDotProfiledTree(NeuronStructUtil::singleDotRemove(iteredConnectedProfiledTree.tree, this->minNodeNum));
 		periIteredconnectedTreeMap.insert({ it->first, noDotProfiledTree });
 
-		float angleThre = (float(2) / float(3)) * PI;
+		float angleThre = (float(2) / float(3)) * PI_MK;
 		profiledTree noHookProfiledTree = TreeGrower::itered_removeHookingHeadTail(noDotProfiledTree, angleThre);
 		periNoHookTreeMap.insert({ it->first, noHookProfiledTree });
 

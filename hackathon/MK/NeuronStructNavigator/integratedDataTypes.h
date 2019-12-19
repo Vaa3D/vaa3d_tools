@@ -29,8 +29,8 @@
 using namespace std;
 using namespace integratedDataStructures;
 
-#ifndef PI
-#define PI 3.1415926
+#ifndef PI_MK
+#define PI_MK 3.1415926 // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
 #endif
 
 #ifndef NODE_TILE_LENGTH
