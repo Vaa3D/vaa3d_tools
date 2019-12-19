@@ -552,8 +552,8 @@ int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent)
 
     // 找block的中心点
     vector<MyMarker> Block_Markerset;
-    MyMarker Block_Marker;
-    LandmarkList curlist;
+    ImageMarker Block_Marker;
+    QList <ImageMarker> curlist;
     LocationSimple s;
     for(set<TBlock>::iterator it = blcok_flag.begin(); it!= blcok_flag.end(); it++)//遍历有swc的block
     {
@@ -561,17 +561,13 @@ int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent)
         Block_Marker.x=((double)(*it).tx-0.5)*BoxX;
         Block_Marker.y=((double)(*it).ty-0.5)*BoxY;
         Block_Marker.z=((double)(*it).tz-0.5)*BoxZ;
-        Block_Markerset.push_back(Block_Marker);
-//        cout<< "Block_Marker.t  " << (*it).t  ;
-//        cout<< "  Block_Marker.x  " << Block_Marker.x  ;
-//        cout<< "  Block_Marker.y  " << Block_Marker.y  ;
-//        cout<< "  Block_Marker.z  " << Block_Marker.z << endl ;
+        //Block_Markerset.push_back(Block_Marker);
         s.x= Block_Marker.x;
         s.y= Block_Marker.y;
         s.z= Block_Marker.z;
         s.radius=1;
         s.color = random_rgba8(255);
-        curlist << s;
+        curlist.append(Block_Marker);
     }
 
     v3d_msg(QString("save %1 markers").arg(curlist.size()),0);
@@ -580,9 +576,10 @@ int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent)
     QString default_name = info.baseName()+"_for_sub.marker";
     outimg_dir = QFileDialog::getExistingDirectory(0,
                                   "Choose a dir to save file " );
-    QString outimg_file = outimg_dir + "\\" + default_name;
+    QString outimg_file = outimg_dir + "/" + default_name;
+    cout<<"name : "<< outimg_file.toStdString() <<endl;
+    //writeMarker_file(outimg_file,curlist);
     writeMarker_file(outimg_file,curlist);
-
 
     return 1;
 }

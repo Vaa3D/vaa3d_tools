@@ -7,7 +7,7 @@
 #define __SHIFT_MASK_IMAGE_PLUGIN_H__
 
 #include <QtGui>
-#include <v3d_interface.h>
+//#include <v3d_interface.h>
 #include "shift_mask2D.h"
 
 class shift_mask2D : public QObject, public V3DPluginInterface2_1
