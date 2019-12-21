@@ -1,22 +1,19 @@
 #ifndef TERAFLYCOMMUNICATOR_H
 #define TERAFLYCOMMUNICATOR_H
 
-#include "CViewer.h"
-#include "CPlugin.h"
-#include "PMain.h"
+#include <QtCore>
 
-class TeraflyCommunicator : public QWidget
+class TeraflyCommunicator
 {
-	Q_OBJECT
 
 public:
-	static terafly::CViewer* currCViewerPtr;
+	
+	virtual void getCViewerInstanceTest(TeraflyCommunicator*& myCommunicator) = 0;
 
-
-	void test();
+	
 
 };
 
-
+Q_DECLARE_INTERFACE(TeraflyCommunicator, "MK.teraflyInterfaceTest1/1.0");
 
 #endif

@@ -174,8 +174,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 	this->fragEditorPtr = new FragmentEditor(parent, callback);
 
-	
-
 	this->show();
 }
 
@@ -267,17 +265,6 @@ void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
 			uiPtr->lineEdit_3->setEnabled(true);
 			uiPtr->pushButton_6->setEnabled(true);
 		}
-	}
-}
-
-void FragTraceControlPanel::buttonClicked()
-{
-	QObject* signalSender = sender();
-	QString buttonName = signalSender->objectName();
-
-	if (buttonName == "pushButton_12")
-	{
-
 	}
 }
 
@@ -476,6 +463,9 @@ void FragTraceControlPanel::eraseButtonClicked()
 	{
 		this->fragEditorPtr->test("checked!");
 		this->thisCallback->setEraseCursor(true);
+		TeraflyCommunicator* myCommunicator;
+		myCommunicator->getCViewerInstanceTest(myCommunicator);
+		
 	}
 	else
 	{

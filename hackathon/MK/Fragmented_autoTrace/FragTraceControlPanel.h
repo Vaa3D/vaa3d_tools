@@ -43,7 +43,6 @@ public slots:
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
 	void saveSegStepsResultChecked(bool checked);
-	void buttonClicked();
 	void saveSettingsClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
