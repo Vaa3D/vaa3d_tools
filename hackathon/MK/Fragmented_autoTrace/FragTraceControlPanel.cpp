@@ -8,13 +8,12 @@
 #include <qspinbox.h>
 #include <qtimer.h>
 
-#include "TeraflyCommunicator.h"
 #include "FragTraceControlPanel.h"
 #include "FragTracer_Define.h"
 
 using namespace std;
 
-FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent)
+FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* interfaceTest) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent), interfaceTest(interfaceTest)
 {
 	// ------- Initialization ------- //
 	this->traceManagerPtr = nullptr;
@@ -463,8 +462,8 @@ void FragTraceControlPanel::eraseButtonClicked()
 	{
 		this->fragEditorPtr->test("checked!");
 		this->thisCallback->setEraseCursor(true);
-		TeraflyCommunicator* myCommunicator;
-		myCommunicator->getCViewerInstanceTest(myCommunicator);
+		
+		cout << this->interfaceTest->getCviewerWinTitle() << endl;
 		
 	}
 	else

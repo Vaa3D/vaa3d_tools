@@ -2,18 +2,19 @@
 #define _FRAGTRACECONTROLPANEL_H_
 
 #include "v3d_interface.h"
+#include "INeuronAssembler.h"
 
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
 #include "FragmentEditor.h"
-#include "TeraflyCommunicator.h"
 
 class FragTraceControlPanel : public QDialog
 {
 	Q_OBJECT
 
 public:
-	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
+	//FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
+	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* interfaceTest);
 
 	// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
@@ -66,7 +67,7 @@ private:
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
-
+	INeuronAssembler* interfaceTest;
 
 	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;

@@ -50,14 +50,12 @@ HEADERS += FragTraceManager.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
 HEADERS += FragTracer_Define.h
 HEADERS += FragmentEditor.h
-HEADERS += TeraflyCommunicator.h
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= Fragmented_Auto-trace_plugin.cpp
 SOURCES += FragTraceControlPanel.cpp
 SOURCES += FragTraceManager.cpp
 SOURCES += FragmentEditor.cpp
-SOURCes += TeraflyCommunicator.cpp
 
 unix:!macx {
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lNeuronStructNavigator
