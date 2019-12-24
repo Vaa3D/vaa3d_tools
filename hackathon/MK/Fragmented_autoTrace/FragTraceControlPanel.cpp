@@ -461,7 +461,7 @@ void FragTraceControlPanel::eraseButtonClicked()
 	if (uiPtr->pushButton_12->isChecked())
 	{
 		this->fragEditorPtr->test("checked!");
-		this->thisCallback->setEraseCursor(true);
+		this->interfaceTest->segEditing_setCursor("erase");
 		
 		cout << this->interfaceTest->getCviewerWinTitle() << endl;
 		
@@ -469,7 +469,7 @@ void FragTraceControlPanel::eraseButtonClicked()
 	else
 	{
 		this->fragEditorPtr->test("unChecked!");
-		this->thisCallback->setEraseCursor(false);
+		this->interfaceTest->segEditing_setCursor("restore");
 	}
 }
 /* ====================== END of [User Interface Buttons] ======================= */
