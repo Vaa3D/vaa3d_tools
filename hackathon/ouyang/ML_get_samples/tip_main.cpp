@@ -859,8 +859,8 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
    mysz[2] = 1;
    mysz[3] = 3;
-   QString mipoutpuut = output_2d_dir +flag1+".tif";
-   simple_saveimage_wrapper(callback,mipoutpuut.toStdString().c_str(),(unsigned char *)data1d_2D,mysz,1);
+   QString mipoutput = output_2d_dir +flag1+".tif";
+   simple_saveimage_wrapper(callback,mipoutput.toStdString().c_str(),(unsigned char *)data1d_2D,mysz,1);
    if(data1d_crop) {delete [] data1d_crop; data1d_crop=0;}
    if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
    if(data1d_2D) {delete [] data1d_2D; data1d_2D=0;}
@@ -868,6 +868,68 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    if(label_mip) {delete [] label_mip; label_mip=0;}
    //listNeuron.clear();
 }
+
+
+void get_3d_mask(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_swc=infiles.at(0);
+    QString input_image=infiles.at(1);
+    QString output_2d_dir=outfiles.at(0);
+    double  margin=atof(inparas.at(0));
+    if(!output_2d_dir.endsWith("/")){
+        output_2d_dir = output_2d_dir+"/";
+    }
+    cout<<"+++++++++++"<<endl;
+    QStringList list=input_swc.split("/");
+    QString flag=list.last();
+
+    qDebug()<<input_image;
+    qDebug()<<input_swc;
+    qDebug("number:%s",qPrintable(flag));
+    NeuronTree nt_crop_sorted1=readSWC_file(input_swc);
+    NeuronTree nt_crop_sorted=revise_radius(nt_crop_sorted1,1);
+
+    Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
+    int nChannel = p4dImage->getCDim();
+
+    V3DLONG mysz[4];
+    mysz[0] = p4dImage->getXDim();
+    mysz[1] = p4dImage->getYDim();
+    mysz[2] = p4dImage->getZDim();
+    mysz[3] = nChannel;
+    cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
+    unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+    //printf("+++++++++++:%p\n",p4dImage);
+
+   V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
+   //unsigned char* data1d_mask = 0;
+   //data1d_mask = new unsigned char [pagesz];
+   //memset(data1d_mask,0,pagesz*sizeof(unsigned char));
+   //QList<int> mark_others;
+   //ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2],margin, mark_others,false);
+
+
+   unsigned char* total1dData_mask_for_high = 0;
+   total1dData_mask_for_high = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
+   unsigned char* high_mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
+   memset(total1dData_mask_for_high,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
+   ComputemaskImage(nt_crop_sorted, total1dData_mask_for_high, mysz[0], mysz[1], mysz[2],margin);
+   double total_signal_cube_high=0,ave_signal_all_mask_high=0;
+   int nt_num_high=0;
+   for(V3DLONG j=0;j<mysz[0]*mysz[1]*mysz[2];++j) high_mask[j] = (total1dData_mask_for_high[j] == 0)?0:data1d_crop[j];
+
+   QString mipoutput = output_2d_dir +flag+"_3Dmask.tif";
+   simple_saveimage_wrapper(callback,mipoutput.toStdString().c_str(),(unsigned char *)high_mask,mysz,1);
+
+   if(data1d_crop) {delete [] data1d_crop; data1d_crop=0;}
+   if(total1dData_mask_for_high) {delete [] total1dData_mask_for_high; total1dData_mask_for_high=0;}
+   if(high_mask) {delete [] high_mask; high_mask=0;}
+}
+
 
 void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback){
 
