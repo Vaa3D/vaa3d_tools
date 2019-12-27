@@ -487,6 +487,7 @@ void MorphoHub_MainWindow::contentValueChange(QTreeWidgetItem *item,int column)
             }
         }
     }
+    //qDebug()<<"cliked content "<<contentTreewidget->currentItem()->text(contentTreewidget->currentColumn());
 }
 
 void MorphoHub_MainWindow::cellSortColumn(int c)
@@ -510,13 +511,28 @@ void MorphoHub_MainWindow::popAction_3Dview_slot()
     QTableWidget *levelTable=datatablelist.at(curtabindex);
     if(levelTable!=NULL)
     {
-        QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
-
-        qDebug()<<"swc path:"<<curPathSWC;
+        QTreeWidgetItem* tempqtreeitem=contentTreewidget->currentItem();
+        QString parentSpaceName="WorkingSpace";
+        if(tempqtreeitem != NULL)
+        {
+            if(tempqtreeitem->parent()!= NULL)
+            {
+                parentSpaceName=tempqtreeitem->parent()->text(0);
+            }
+            else
+            {
+                parentSpaceName=contentTreewidget->currentItem()->text(contentTreewidget->currentColumn());
+            }
+        }
+    //    qDebug()<<"content "<<parentSpaceName;
+        QString curPathSWC = this->dbpath+"/"+parentSpaceName+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+        //QString curPathSWC = this->dbpath+"/"+this->contentTreewidget->currentItem()->text(this->contentTreewidget->currentColumn())+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+        //iscurReconExist();
+        //qDebug()<<"swc path:"<<curPathSWC;
         QFileInfo curSWCBase(curPathSWC);
         if(curSWCBase.exists())
         {
-            qDebug()<<"path "<<curPathSWC;
+            //qDebug()<<"path "<<curPathSWC;
             V3dR_MainWindow * surface_win = MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
 //            MorphoHubcallback->open3DViewerForLinkerFile(curPathSWC);
 //                new3DWindow = MorphoHubcallback->open3DViewerForSingleSurfaceFile(curPathSWC);
@@ -524,6 +540,35 @@ void MorphoHub_MainWindow::popAction_3Dview_slot()
                 MorphoHubcallback->setWindowDataTitle(surface_win,curSWCBase.baseName());
         }
     }
+}
+
+bool MorphoHub_MainWindow::iscurReconExist()
+{
+    bool outflag=false;
+    QTreeWidgetItem* tempqtreeitem=contentTreewidget->currentItem();
+    QString parentSpaceName="WorkingSpace";
+    if(tempqtreeitem != NULL)
+    {
+        if(tempqtreeitem->parent()!= NULL)
+        {
+            parentSpaceName=tempqtreeitem->parent()->text(0);
+        }
+        else
+        {
+            parentSpaceName=contentTreewidget->currentItem()->text(contentTreewidget->currentColumn());
+        }
+    }
+//    qDebug()<<"content "<<parentSpaceName;
+    QString curPathSWC = this->dbpath+"/"+parentSpaceName+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+    QFileInfo curSWCBase(curPathSWC);
+//    qDebug()<<"swc path:"<<curPathSWC;
+    if(curSWCBase.exists())
+    {
+//        qDebug()<<"path "<<curPathSWC;
+//        qDebug()<<"move in";
+        outflag=true;
+    }
+    return outflag;
 }
 
 void MorphoHub_MainWindow::ondataTab_customContextmenuRequested(const QPoint &pos)
@@ -564,7 +609,20 @@ void MorphoHub_MainWindow::seeIn3Dview_slot(int row, int column)
             QString levelid=levelTable->item(row,4)->text();
             QString parentdir=levelTable->item(row,6)->text();
             QString clickedName=levelTable->item(row,7)->text();
-            QString curPathSWC = this->dbpath+"/"+contentTreewidget->currentItem()->text(contentTreewidget->currentColumn())+"/"+levelid+"/"+parentdir+"/"+clickedName+".ano";
+            QTreeWidgetItem* tempqtreeitem=contentTreewidget->currentItem();
+            QString parentSpaceName="WorkingSpace";
+            if(tempqtreeitem != NULL)
+            {
+                if(tempqtreeitem->parent()!= NULL)
+                {
+                    parentSpaceName=tempqtreeitem->parent()->text(0);
+                }
+                else
+                {
+                    parentSpaceName=contentTreewidget->currentItem()->text(contentTreewidget->currentColumn());
+                }
+            }
+        QString curPathSWC = this->dbpath+"/"+parentSpaceName+"/"+levelid+"/"+parentdir+"/"+clickedName+".ano";
 
             QFileInfo curSWCBase(curPathSWC);
             if(curSWCBase.exists())
@@ -1273,7 +1331,7 @@ void MorphoHub_MainWindow::checkAction_slot()
     }
     else
     {
-        if(curRecon.alreadyInit())
+        if(curRecon.alreadyInit()&&iscurReconExist())
         {
             levelControlDialog=new MainDialog(this->originparent);
             levelControlDialog->setAnnotator(curOperator);//
@@ -1284,6 +1342,11 @@ void MorphoHub_MainWindow::checkAction_slot()
             levelControlDialog->setModal(true);
             levelControlDialog->show();
             levelControlDialog->setGeometry(100,100,600,600);
+        }
+        else
+        {
+            QMessageBox::warning(this,"File Not Found","Please retry or update the table!");
+            return;
         }
     }
 }
@@ -1301,7 +1364,7 @@ void MorphoHub_MainWindow::commitAction_slot()
     }
     else
     {
-        if(curRecon.alreadyInit())
+        if(curRecon.alreadyInit()&&iscurReconExist())
         {
             toLogWindow("Go to Commit page.");
             levelControlDialog=new MainDialog(this->dbpath,this->originparent);
@@ -1316,6 +1379,11 @@ void MorphoHub_MainWindow::commitAction_slot()
             levelControlDialog->setGeometry(100,100,600,600);
             //this->raise();
         }
+        else
+        {
+            QMessageBox::warning(this,"File Not Found","Please retry or update the table!");
+            return;
+        }
     }
 }
 
@@ -1329,7 +1397,7 @@ void MorphoHub_MainWindow::skipAction_slot()
     }
     else
     {
-        if(curRecon.alreadyInit())
+        if(curRecon.alreadyInit()&&iscurReconExist())
         {
             levelControlDialog=new MainDialog(this->dbpath,this->originparent);
             levelControlDialog->setAnnotator(curOperator);//
@@ -1341,6 +1409,11 @@ void MorphoHub_MainWindow::skipAction_slot()
             levelControlDialog->setModal(true);
             levelControlDialog->show();
             levelControlDialog->setGeometry(100,100,600,600);
+        }
+        else
+        {
+            QMessageBox::warning(this,"File Not Found","Please retry or update the table!");
+            return;
         }
     }
 }
@@ -1355,7 +1428,7 @@ void MorphoHub_MainWindow::rollbackAction_slot()
     }
     else
     {
-        if(curRecon.alreadyInit())
+        if(curRecon.alreadyInit()&&iscurReconExist())
         {
             levelControlDialog=new MainDialog(this->dbpath,this->originparent);
             levelControlDialog->setAnnotator(curOperator);//
@@ -1367,6 +1440,11 @@ void MorphoHub_MainWindow::rollbackAction_slot()
             levelControlDialog->setModal(true);
             levelControlDialog->show();
             levelControlDialog->setGeometry(100,100,600,600);
+        }
+        else
+        {
+            QMessageBox::warning(this,"File Not Found","Please retry or update the table!");
+            return;
         }
     }
 }

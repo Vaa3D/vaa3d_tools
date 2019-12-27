@@ -80,6 +80,7 @@ private:
     void createToolBar();
     void updateStatusBar(const QString& showtext);
     void setMainLayout();
+
     /*..............Database basic action............*/
     QAction *NewDBAction;
     QAction *SetDBAction;
@@ -119,6 +120,7 @@ private:
     /****************Protocol functions*************************/
     void setProtocolFunctionEnabled(bool en);
     ReconstructionInfo curRecon;//This is current reconstruction. you can get info from here.
+    bool iscurReconExist();
     /*..............Protocol actions............*/
     QAction *commitAction;
     QAction *checkAction;
