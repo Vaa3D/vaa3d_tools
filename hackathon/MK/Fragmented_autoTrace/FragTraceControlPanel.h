@@ -67,7 +67,7 @@ private:
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
-	INeuronAssembler* interfaceTest;
+	INeuronAssembler* CViewerPortal;
 
 	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;

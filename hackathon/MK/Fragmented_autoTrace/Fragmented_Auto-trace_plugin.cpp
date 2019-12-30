@@ -46,11 +46,11 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	}
 }
 
-void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent, INeuronAssembler& interfaceTest)
+void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent, INeuronAssembler& castCViewerPtr)
 {
 	if (menu_name == tr("settings"))
 	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, &interfaceTest);
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, &castCViewerPtr);
 		this->UIinstancePtr = panelPtr;
 		callback.changeFragTraceStatus(true);		
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.

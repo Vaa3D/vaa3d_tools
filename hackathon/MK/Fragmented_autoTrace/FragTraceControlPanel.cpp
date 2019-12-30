@@ -13,7 +13,7 @@
 
 using namespace std;
 
-FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* interfaceTest) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent), interfaceTest(interfaceTest)
+FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* castCviewerPtr) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent), CViewerPortal(castCviewerPtr)
 {
 	// ------- Initialization ------- //
 	this->traceManagerPtr = nullptr;
@@ -239,7 +239,7 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 void FragTraceControlPanel::refreshSomaCoords()
 {
 	this->markerMonitorSwitch = false;
-	thisCallback->refreshSelectedMarkers();
+	CViewerPortal->refreshSelectedMarkers();
 	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
 	this->somaMap.clear();
 	this->localSomaMap.clear();
@@ -461,15 +461,15 @@ void FragTraceControlPanel::eraseButtonClicked()
 	if (uiPtr->pushButton_12->isChecked())
 	{
 		this->fragEditorPtr->test("checked!");
-		this->interfaceTest->segEditing_setCursor("erase");
+		this->CViewerPortal->segEditing_setCursor("erase");
 		
-		cout << this->interfaceTest->getCviewerWinTitle() << endl;
+		cout << this->CViewerPortal->getCviewerWinTitle() << endl;
 		
 	}
 	else
 	{
 		this->fragEditorPtr->test("unChecked!");
-		this->interfaceTest->segEditing_setCursor("restore");
+		this->CViewerPortal->segEditing_setCursor("restore");
 	}
 }
 /* ====================== END of [User Interface Buttons] ======================= */
@@ -804,7 +804,7 @@ void FragTraceControlPanel::markerMonitor()
 	{
 		map<int, ImageMarker> newMarkerMap;
 		map<int, ImageMarker> oldMarkerMap;
-		thisCallback->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
+		CViewerPortal->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
 		if (this->selectedMarkerList.size() > 0)
 		{
 			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
@@ -880,8 +880,8 @@ void FragTraceControlPanel::scaleTracedTree()
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
 	float imgOri[3];
-	float factor = pow(2, abs(5 - this->thisCallback->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << endl;
+	float factor = pow(2, abs(5 - this->CViewerPortal->getTeraflyResLevel()));
+	cout << "  -- scaling factor = " << factor << endl;
 	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
 	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
 	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
@@ -936,8 +936,8 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
 	float imgOri[3];
-	float factor = pow(2, abs(5 - this->thisCallback->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << factor << " " << this->thisCallback->getTeraflyResLevel() << endl;
+	float factor = pow(2, abs(5 - this->CViewerPortal->getTeraflyResLevel()));
+	cout << "  -- scaling factor = " << factor << " " << this->CViewerPortal->getTeraflyResLevel() << endl;
 	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
 	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
 	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
@@ -980,8 +980,8 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 
 void FragTraceControlPanel::fillUpParamsForm()
 {
-	this->thisCallback->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
-	this->thisCallback->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
+	this->CViewerPortal->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
+	this->CViewerPortal->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
 }
 
 
