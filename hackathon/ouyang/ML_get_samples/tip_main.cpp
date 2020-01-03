@@ -3213,15 +3213,18 @@ NeuronTree revise_radius(NeuronTree inputtree,float radius){
     QList<NeuronSWC> swc_line=inputtree.listNeuron;
     for(int i=0;i<swc_line.size();i++){
 
-        NeuronSWC s;
-        s.x=swc_line.at(i).x;
-        s.y=swc_line.at(i).y;
-        s.z=swc_line.at(i).z;
-        s.type=swc_line.at(i).type;
-        s.radius=radius;
-        s.pn=swc_line.at(i).pn;
-        s.n=swc_line.at(i).n;
-        result.push_back(s);
+        if(swc_line.at(i).type==2)
+        {
+            NeuronSWC s;
+            s.x=swc_line.at(i).x;
+            s.y=swc_line.at(i).y;
+            s.z=swc_line.at(i).z;
+            s.type=swc_line.at(i).type;
+            s.radius=radius;
+            s.pn=swc_line.at(i).pn;
+            s.n=swc_line.at(i).n;
+            result.push_back(s);
+        }
     }
     NeuronTree result1;
     QHash <int, int>  hashNeuron;
