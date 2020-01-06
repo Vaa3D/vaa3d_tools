@@ -46,15 +46,15 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	}
 }
 
-void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent, INeuronAssembler& castCViewerPtr)
+void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent, INeuronAssembler& castCViewer)
 {
 	if (menu_name == tr("settings"))
 	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, &castCViewerPtr);
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, &castCViewer);
 		this->UIinstancePtr = panelPtr;
-		callback.changeFragTraceStatus(true);		
+		castCViewer.changeFragTraceStatus(true);		
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
-		callback.changeFragTraceStatus(false);
+		castCViewer.changeFragTraceStatus(false);
 	}
 	else
 	{
@@ -75,6 +75,7 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 		if (this->UIinstancePtr != nullptr)
 		{
 			string inputParam = input.at(1).type.toStdString();
+			this->UIinstancePtr->markerMonitorSwitch = false;
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
 		//QString inputParamQ = inparas.at(0);

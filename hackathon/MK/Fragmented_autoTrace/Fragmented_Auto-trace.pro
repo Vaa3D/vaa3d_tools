@@ -18,14 +18,9 @@ INCLUDEPATH += ./
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 INCLUDEPATH += $$VAA3DPATH/v3d
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
-INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun/customary_structs
 INCLUDEPATH += $$VAA3DPATH/neuron_editing
 INCLUDEPATH += $$VAA3DPATH/common_lib/include
 INCLUDEPATH += $$VAA3DPATH/3drenderer
-INCLUDEPATH += $$VAA3DPATH/terafly/src/control
-INCLUDEPATH += $$VAA3DPATH/terafly/src/presentation
-INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager
-INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/iomanager
 
 win32: {
     BOOSTPATH = $$(BOOST_PATH)

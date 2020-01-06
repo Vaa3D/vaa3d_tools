@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <boost\algorithm\string.hpp>
+
 #include <qstringlist.h>
 #include <qsettings.h>
 #include <qfileinfo.h>
@@ -173,9 +175,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 	this->fragEditorPtr = new FragmentEditor(parent, callback);
 
+	this->CViewerPortal->sendCastNAUI2PMain(this);
+
 	this->show();
 }
-
 
 /* =========================== User Interface Buttons =========================== */
 void FragTraceControlPanel::imgFmtChecked(bool checked)
@@ -231,6 +234,7 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 	if (checked)
 	{
 		this->refreshSomaCoords();
+		this->markerMonitorSwitch = true;
 		this->markerMonitor();
 	}
 	else this->markerMonitorSwitch = false;
@@ -238,13 +242,11 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 
 void FragTraceControlPanel::refreshSomaCoords()
 {
-	this->markerMonitorSwitch = false;
 	CViewerPortal->refreshSelectedMarkers();
 	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
 	this->somaMap.clear();
 	this->localSomaMap.clear();
 	this->somaDisplayNameMap.clear();
-	this->markerMonitorSwitch = true;
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -602,11 +604,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
 
-	if (uiPtr->groupBox_15->isChecked())
+	/*if (uiPtr->groupBox_15->isChecked())
 	{
 		this->markerMonitorSwitch = true;
 		this->markerMonitor();
-	}
+	}*/
 
 	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
@@ -620,7 +622,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	// This method prepares the image data for FragTraceManager to trace.
 	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
 
-	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
+	this->volumeAdjusted = CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << " -- Displaying image local coords: x(" << volumeAdjustedCoords[0] << "-" << volumeAdjustedCoords[1] << ") y(" << volumeAdjustedCoords[2] << "-" << volumeAdjustedCoords[3] << ") z(" << volumeAdjustedCoords[4] << "-" << volumeAdjustedCoords[5] << ")" << endl;
 	cout << " -- Whole image block dimension: " << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
@@ -804,7 +806,7 @@ void FragTraceControlPanel::markerMonitor()
 	{
 		map<int, ImageMarker> newMarkerMap;
 		map<int, ImageMarker> oldMarkerMap;
-		CViewerPortal->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
+		this->CViewerPortal->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
 		if (this->selectedMarkerList.size() > 0)
 		{
 			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
@@ -859,7 +861,7 @@ void FragTraceControlPanel::markerMonitor()
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 			markerIt->second.on = true;
 
-		QTimer::singleShot(50, this, SLOT(markerMonitor()));
+		QTimer::singleShot(50, this, SLOT(markerMonitor())); 
 	}
 }
 /* ====================== END of [Parameter Collecting Functions] ====================== */
@@ -879,30 +881,24 @@ void FragTraceControlPanel::scaleTracedTree()
 	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
-	float imgOri[3];
-	float factor = pow(2, abs(5 - this->CViewerPortal->getTeraflyResLevel()));
+	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
 	cout << "  -- scaling factor = " << factor << endl;
-	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
-	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
-	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
-	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
-	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
-	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();*/
+	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1<< endl;
+	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
 
-	v3dhandle handle = this->thisCallback->currentImageWindow();
-	QString imageTitle = this->thisCallback->getImageName(handle);
-	//qDebug() << imageTitle;
-	QStringList splitWhole = imageTitle.split("[");
-	QStringList xSplit = splitWhole[1].split(",");
-	QString xOriginQ = xSplit[0];
-	QStringList ySplit = splitWhole[2].split(",");
-	QString yOriginQ = ySplit[0];
-	QStringList zSplit = splitWhole[3].split(",");
-	QString zOriginQ = zSplit[0];
-
-	imgOri[0] = xOriginQ.toFloat() * factor;
-	imgOri[1] = yOriginQ.toFloat() * factor;
-	imgOri[2] = zOriginQ.toFloat() * factor;
+	float imgOri[3];
+	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
+	vector<string> splitWhole;
+	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
+	vector<string> xSplit;
+	boost::split(xSplit, splitWhole[1], boost::is_any_of(","));
+	imgOri[0] = stof(xSplit[0]) * factor - 1;
+	vector<string> ySplit;
+	boost::split(ySplit, splitWhole[2], boost::is_any_of(","));
+	imgOri[1] = stof(ySplit[0]) * factor - 1;
+	vector<string> zSplit;
+	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
+	imgOri[2] = stof(zSplit[0]) * factor - 1;
 
 	//NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, factor, factor, factor);
@@ -914,11 +910,6 @@ void FragTraceControlPanel::scaleTracedTree()
 	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
 	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
 #endif
-
-	//terafly::CViewer* currCiewerPtr = terafly::CViewer::getCurrent();
-	//int XDim = currCiewerPtr->getXDim();
-	//cout << XDim << endl;
-	//system("pause");
 
 	this->tracedTree = scaledShiftedTree;
 }
@@ -935,30 +926,24 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
 
+	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
+	cout << "  -- scaling factor = " << factor << endl;
+	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1 << endl;
+	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
+
 	float imgOri[3];
-	float factor = pow(2, abs(5 - this->CViewerPortal->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << factor << " " << this->CViewerPortal->getTeraflyResLevel() << endl;
-	/*if (this->thisCallback->getXlockStatus()) imgOri[0] = this->globalCoords[0];
-	else imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
-	if (this->thisCallback->getYlockStatus()) imgOri[1] = this->globalCoords[2];
-	else imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
-	if (this->thisCallback->getZlockStatus()) imgOri[2] = this->globalCoords[4];
-	else imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();*/
-
-	v3dhandle handle = this->thisCallback->currentImageWindow();
-	QString imageTitle = this->thisCallback->getImageName(handle);
-	qDebug() << imageTitle;
-	QStringList splitWhole = imageTitle.split("[");
-	QStringList xSplit = splitWhole[1].split(",");
-	QString xOriginQ = xSplit[0];
-	QStringList ySplit = splitWhole[2].split(",");
-	QString yOriginQ = ySplit[0];
-	QStringList zSplit = splitWhole[3].split(",");
-	QString zOriginQ = zSplit[0];
-
-	imgOri[0] = xOriginQ.toFloat() * factor;
-	imgOri[1] = yOriginQ.toFloat() * factor;
-	imgOri[2] = zOriginQ.toFloat() * factor;
+	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
+	vector<string> splitWhole;
+	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
+	vector<string> xSplit;
+	boost::split(xSplit, splitWhole[1], boost::is_any_of(","));
+	imgOri[0] = stof(xSplit[0]) * factor - 1;
+	vector<string> ySplit;
+	boost::split(ySplit, splitWhole[2], boost::is_any_of(","));
+	imgOri[1] = stof(ySplit[0]) * factor - 1;
+	vector<string> zSplit;
+	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
+	imgOri[2] = stof(zSplit[0]) * factor - 1;
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
 	//NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
@@ -975,8 +960,28 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 }
 /* ================ END of [Result and Scaling Functions] ================ */
 
+void FragTraceControlPanel::getNAVersionNum()
+{
+	cout << endl << endl << "  --- Neuron Assembler: v" << MAINVERSION_NUM << "." << SUBVERSION_NUM << "." << PATCHVERSION_NUM << endl << endl;
+}
 
-
+void FragTraceControlPanel::switchMarkerMonitor_fromPMain(bool on_off)
+{
+	if (on_off)
+	{
+		if (uiPtr->groupBox_15->isChecked())
+		{
+			if (this->markerMonitorSwitch) return;
+			else
+			{
+				this->refreshSomaCoords();
+				this->markerMonitorSwitch = true;
+				this->markerMonitor();
+			}
+		}	
+	}
+	else this->markerMonitorSwitch = false;
+}
 
 void FragTraceControlPanel::fillUpParamsForm()
 {

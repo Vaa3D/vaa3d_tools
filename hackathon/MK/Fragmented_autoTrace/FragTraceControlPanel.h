@@ -3,14 +3,16 @@
 
 #include "v3d_interface.h"
 #include "INeuronAssembler.h"
+#include "IPMain4NeuronAssembler.h"
 
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
 #include "FragmentEditor.h"
 
-class FragTraceControlPanel : public QDialog
+class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 {
 	Q_OBJECT
+	Q_INTERFACES(IPMain4NeuronAssembler)
 
 public:
 	//FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
@@ -26,6 +28,7 @@ public:
 	/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
 	map<string, NeuronTree> tracedTrees;
+	map<int, string> scalingRatioMap;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
 	/* ============================================ */
@@ -34,8 +37,10 @@ public:
 
 	vector<string> blankAreas; // will be abandoned
 
-signals:
-	void switchOnSegPipe(); // currently not in action
+	bool markerMonitorSwitch;
+
+	virtual void getNAVersionNum();
+	virtual void switchMarkerMonitor_fromPMain(bool on_off);
 
 public slots:
     /* =========== User Interface Buttons ============ */
@@ -97,7 +102,7 @@ private:
 
 	
 
-	bool markerMonitorSwitch;
+	
 	QList<ImageMarker> selectedMarkerList;
 	QList<ImageMarker> selectedLocalMarkerList;
 	map<int, ImageMarker> somaMap;
@@ -115,6 +120,13 @@ private:
 private slots:
 	void markerMonitor();
 	void refreshSomaCoords();
+
+
+
+// ~~~~~~~~~ DEPRECATED FUNCTIONS ~~~~~~~~~ //
+signals:
+	void switchOnSegPipe();
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
 
 
