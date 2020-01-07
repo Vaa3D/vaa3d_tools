@@ -40,7 +40,8 @@ public:
 	bool markerMonitorSwitch;
 
 	virtual void getNAVersionNum();
-	virtual void switchMarkerMonitor_fromPMain(bool on_off);
+	virtual void switchMarkerMonitor_fromPMain(bool on_off); 
+	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList);
 
 public slots:
     /* =========== User Interface Buttons ============ */

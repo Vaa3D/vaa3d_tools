@@ -986,6 +986,13 @@ void FragTraceControlPanel::switchMarkerMonitor_fromPMain(bool on_off)
 	else this->markerMonitorSwitch = false;
 }
 
+void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList)
+{
+	for (QList<ImageMarker>::const_iterator it = selectedMarkerList.begin(); it != selectedMarkerList.end(); ++it)
+		cout << it->x << " " << it->y << " " << it->z << endl;
+	cout << endl;
+}
+
 void FragTraceControlPanel::fillUpParamsForm()
 {
 	this->CViewerPortal->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
