@@ -604,11 +604,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
 
-	/*if (uiPtr->groupBox_15->isChecked())
+	if (uiPtr->groupBox_15->isChecked())
 	{
 		this->markerMonitorSwitch = true;
-		this->markerMonitor();
-	}*/
+		QTimer::singleShot(100, this, SLOT(markerMonitor()));
+	}
 
 	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
@@ -861,6 +861,9 @@ void FragTraceControlPanel::markerMonitor()
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 			markerIt->second.on = true;
 
+		// Note, it tends to crash if the time interval is too short.
+		// Possible reason: Even though CViewer and PMain try to swtich off marker monitor whenever the image block is changed, 
+		//                  this mechanism can still be slower then the [QTimer::singleShot] interval since it comes from the PMain interface outside the plugin dll.
 		QTimer::singleShot(50, this, SLOT(markerMonitor())); 
 	}
 }
