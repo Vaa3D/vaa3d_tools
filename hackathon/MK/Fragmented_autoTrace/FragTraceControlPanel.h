@@ -37,11 +37,8 @@ public:
 
 	vector<string> blankAreas; // will be abandoned
 
-	bool markerMonitorSwitch;
-
-	virtual void getNAVersionNum();
-	virtual void switchMarkerMonitor_fromPMain(bool on_off); 
-	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList);
+	virtual void getNAVersionNum(); 
+	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
 
 public slots:
     /* =========== User Interface Buttons ============ */
@@ -103,12 +100,13 @@ private:
 
 	
 
-	
+	QList<ImageMarker> updatedMarkerList;
 	QList<ImageMarker> selectedMarkerList;
 	QList<ImageMarker> selectedLocalMarkerList;
 	map<int, ImageMarker> somaMap;
 	map<int, ImageMarker> localSomaMap;
 	map<int, string> somaDisplayNameMap;
+	void updateMarkerMonitor();
 
 
 
@@ -118,8 +116,7 @@ private:
 
 
 
-private slots:
-	void markerMonitor();
+private slots:	
 	void refreshSomaCoords();
 
 

@@ -75,7 +75,6 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 		if (this->UIinstancePtr != nullptr)
 		{
 			string inputParam = input.at(1).type.toStdString();
-			this->UIinstancePtr->markerMonitorSwitch = false;
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
 		//QString inputParamQ = inparas.at(0);

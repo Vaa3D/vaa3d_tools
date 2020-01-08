@@ -23,8 +23,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->volumeAdjustedCoords = new int[6];
 	this->globalCoords = new int[6];
 	this->displayingDims = new int[3];
-
-	this->markerMonitorSwitch = false;
 	// ------------------------------ //
 
 	// ------- Set up user interface ------- //
@@ -231,22 +229,18 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
 
-	if (checked)
-	{
-		this->refreshSomaCoords();
-		this->markerMonitorSwitch = true;
-		this->markerMonitor();
-	}
-	else this->markerMonitorSwitch = false;
+	if (checked) this->refreshSomaCoords();
 }
 
 void FragTraceControlPanel::refreshSomaCoords()
-{
-	CViewerPortal->refreshSelectedMarkers();
-	for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
+{	
 	this->somaMap.clear();
 	this->localSomaMap.clear();
 	this->somaDisplayNameMap.clear();
+	this->selectedMarkerList.clear();
+	this->selectedLocalMarkerList.clear();
+	this->updateMarkerMonitor();
+	this->CViewerPortal->refreshSelectedMarkers();
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -480,8 +474,6 @@ void FragTraceControlPanel::eraseButtonClicked()
 /* ============================== TRACING INITIALIZING FUNCTION =============================== */
 void FragTraceControlPanel::traceButtonClicked()
 {
-	this->markerMonitorSwitch = false;
-
 	QSettings currSettings("SEU-Allen", "Fragment tracing");
 	if (currSettings.value("savePath").isNull())
 	{
@@ -603,12 +595,6 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
-
-	if (uiPtr->groupBox_15->isChecked())
-	{
-		this->markerMonitorSwitch = true;
-		QTimer::singleShot(100, this, SLOT(markerMonitor()));
-	}
 
 	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
@@ -800,72 +786,62 @@ void FragTraceControlPanel::pa_objBasedMST()
 	}
 }
 
-void FragTraceControlPanel::markerMonitor()
+void FragTraceControlPanel::updateMarkerMonitor()
 {
-	if (this->markerMonitorSwitch)
+	map<int, ImageMarker> newMarkerMap;
+	map<int, ImageMarker> oldMarkerMap;	
+	if (this->selectedMarkerList.size() > 0)
 	{
-		map<int, ImageMarker> newMarkerMap;
-		map<int, ImageMarker> oldMarkerMap;
-		this->CViewerPortal->getSelectedMarkerList(this->selectedMarkerList, this->selectedLocalMarkerList);
-		if (this->selectedMarkerList.size() > 0)
+		for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
 		{
-			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
-			{
-				it->selected = true;
-				it->on = false;
-				newMarkerMap.insert({ it->n, *it });
-			}
-			oldMarkerMap = this->somaMap;
-
-			for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
-				if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
-			
-			for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
-				if (newMarkerMap.find(it2->first) == newMarkerMap.end()) this->somaMap[it2->first].selected = false;
+			it->selected = true;
+			it->on = false;
+			newMarkerMap.insert({ it->n, *it });
 		}
-		else
-		{
-			if (this->somaListViewer->rowCount() > 0)
-				for (int rowi = 0; rowi < this->somaListViewer->rowCount(); ++rowi) this->somaListViewer->removeRow(rowi);
-			oldMarkerMap = this->somaMap;
-			this->somaMap.clear();
-		}
+		oldMarkerMap = this->somaMap;
 
-		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
-		{
-			if (markerIt->second.selected && !markerIt->second.on)
-			{
-				int markerGlobalX = int(markerIt->second.x);
-				int markerGlobalY = int(markerIt->second.y);
-				int markerGlobalZ = int(markerIt->second.z);
-				string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
-				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
-				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
-				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
-				this->somaListViewer->appendRow(newItemPtr);
-			}
-			else if (!markerIt->second.selected)
-			{
-				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
-				this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
-				this->somaMap.erase(this->somaMap.find(markerIt->first));
-				QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
-				if (!matchedList.isEmpty())
-				{
-					int rowNum = (*matchedList.begin())->row();
-					this->somaListViewer->removeRow(rowNum);
-				}			
-			}
-		}
+		for (map<int, ImageMarker>::iterator it1 = newMarkerMap.begin(); it1 != newMarkerMap.end(); ++it1)
+			if (oldMarkerMap.find(it1->first) == oldMarkerMap.end()) this->somaMap.insert({ it1->first, it1->second });
 
-		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
-			markerIt->second.on = true;
-
-		// Note, it tends to crash if the time interval is too short.
-		// Possible reason: Even though CViewer and PMain try to swtich off marker monitor whenever the image block is changed, 
-		//                  this mechanism can still be slower then the [QTimer::singleShot] interval since it comes from the PMain interface outside the plugin dll.
-		QTimer::singleShot(50, this, SLOT(markerMonitor())); 
+		for (map<int, ImageMarker>::iterator it2 = oldMarkerMap.begin(); it2 != oldMarkerMap.end(); ++it2)
+			if (newMarkerMap.find(it2->first) == newMarkerMap.end()) this->somaMap[it2->first].selected = false;
 	}
+	else
+	{
+		if (this->somaListViewer->rowCount() > 0)
+			for (int rowi = this->somaListViewer->rowCount() - 1; rowi >= 0; --rowi) this->somaListViewer->removeRow(rowi);
+		this->somaMap.clear();
+	}
+
+	for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+	{
+		if (markerIt->second.selected && !markerIt->second.on)
+		{
+			int markerGlobalX = int(markerIt->second.x);
+			int markerGlobalY = int(markerIt->second.y);
+			int markerGlobalZ = int(markerIt->second.z);
+			string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+			this->somaDisplayNameMap.insert({ markerIt->first, displayName });
+			QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+			QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
+			this->somaListViewer->appendRow(newItemPtr);
+		}
+		else if (!markerIt->second.selected)
+		{
+			QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+			this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
+			this->somaMap.erase(this->somaMap.find(markerIt->first));
+			QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
+			if (!matchedList.isEmpty())
+			{
+				int rowNum = (*matchedList.begin())->row();
+				this->somaListViewer->removeRow(rowNum);
+			}
+		}
+	}
+
+	for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+		markerIt->second.on = true;
 }
 /* ====================== END of [Parameter Collecting Functions] ====================== */
 
@@ -968,29 +944,18 @@ void FragTraceControlPanel::getNAVersionNum()
 	cout << endl << endl << "  --- Neuron Assembler: v" << MAINVERSION_NUM << "." << SUBVERSION_NUM << "." << PATCHVERSION_NUM << endl << endl;
 }
 
-void FragTraceControlPanel::switchMarkerMonitor_fromPMain(bool on_off)
+void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList)
 {
-	if (on_off)
-	{
-		if (uiPtr->groupBox_15->isChecked())
-		{
-			if (this->markerMonitorSwitch) return;
-			else
-			{
-				this->refreshSomaCoords();
-				this->markerMonitorSwitch = true;
-				this->markerMonitor();
-			}
-		}	
-	}
-	else this->markerMonitorSwitch = false;
-}
+	//for (QList<ImageMarker>::const_iterator it = selectedMarkerList.begin(); it != selectedMarkerList.end(); ++it)
+	//	cout << it->n << ": " << it->x << " " << it->y << " " << it->z << endl;
+	//cout << endl;
 
-void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList)
-{
-	for (QList<ImageMarker>::const_iterator it = selectedMarkerList.begin(); it != selectedMarkerList.end(); ++it)
-		cout << it->x << " " << it->y << " " << it->z << endl;
-	cout << endl;
+	if (this->selectedMarkerList != selectedMarkerList)
+	{
+		this->selectedMarkerList = selectedMarkerList;
+		this->selectedLocalMarkerList = selectedLocalMarkerList;
+		this->updateMarkerMonitor();
+	}
 }
 
 void FragTraceControlPanel::fillUpParamsForm()
