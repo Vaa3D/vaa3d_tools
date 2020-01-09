@@ -33,28 +33,10 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 {
 	if (menu_name == tr("settings"))
 	{
-		/*FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
 		this->UIinstancePtr = panelPtr;
-		callback.changeFragTraceStatus(true);
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
-		callback.changeFragTraceStatus(false);*/
-	}
-	else
-	{
-		v3d_msg(tr("This plugin can be called from v3dr_glwidget with hot key Alt+F. Thus it can work like a standard feature in Vaa3D."
-			"\n\nDevelopment in progress, MK, 2018-12-3"));
-	}
-}
-
-void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent, INeuronAssembler& castCViewer)
-{
-	if (menu_name == tr("settings"))
-	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, &castCViewer);
-		this->UIinstancePtr = panelPtr;
-		castCViewer.changeFragTraceStatus(true);		
-		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
-		castCViewer.changeFragTraceStatus(false);
+		if (this->UIinstancePtr->CViewerPortal != nullptr) this->UIinstancePtr->CViewerPortal->changeFragTraceStatus(false);
 	}
 	else
 	{

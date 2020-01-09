@@ -14,9 +14,10 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 	Q_OBJECT
 	Q_INTERFACES(IPMain4NeuronAssembler)
 
+	friend class FragmentedAutoTracePlugin;
+
 public:
-	//FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
-	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* interfaceTest);
+	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 
 	// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
@@ -37,11 +38,14 @@ public:
 
 	vector<string> blankAreas; // will be abandoned
 
+	/* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum(); 
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
+	/* ============================================= */
+
 
 public slots:
-    /* =========== User Interface Buttons ============ */
+    /* ================== User Interface Buttons =================== */
 	// ------- Configuration ------- //
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
@@ -57,13 +61,16 @@ public slots:
 	// ---------------------------- //
     /* ======= END of [User Interface Configuration Buttons] ======= */
 
+
 	// ********************************************************************** //
 	void traceButtonClicked(); // ==> THIS IS WHERE THE TRACING PROCESS STARTS
 	// ********************************************************************** //
 
+
 	// ------- Receive traced tree emitted from FragTraceManager ------- //
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 	// ----------------------------------------------------------------- //
+
 
 private:
 	V3DPluginCallback2* thisCallback;
@@ -72,11 +79,23 @@ private:
 	FragmentEditor* fragEditorPtr;
 	INeuronAssembler* CViewerPortal;
 
+
 	/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
 	/* ================================================= */
+
+
+	/* ======= Marker Detection ======= */
+	QList<ImageMarker> updatedMarkerList;
+	QList<ImageMarker> selectedMarkerList;
+	QList<ImageMarker> selectedLocalMarkerList;
+	map<int, ImageMarker> somaMap;
+	map<int, ImageMarker> localSomaMap;
+	map<int, string> somaDisplayNameMap;
+	void updateMarkerMonitor();
+	/* ================================ */
 
 
 	/* =============== Parameter Collecting Functions =============== */
@@ -98,22 +117,10 @@ private:
 	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
 	/* ========================================== */
 
-	
-
-	QList<ImageMarker> updatedMarkerList;
-	QList<ImageMarker> selectedMarkerList;
-	QList<ImageMarker> selectedLocalMarkerList;
-	map<int, ImageMarker> somaMap;
-	map<int, ImageMarker> localSomaMap;
-	map<int, string> somaDisplayNameMap;
-	void updateMarkerMonitor();
-
-
 
 	void fillUpParamsForm(); // This is for future parameter learning project.
 
 	void blankArea(); // will be abandoned in newer version
-
 
 
 private slots:	

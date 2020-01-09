@@ -15,8 +15,13 @@
 
 using namespace std;
 
-FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, INeuronAssembler* castCviewerPtr) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent), CViewerPortal(castCviewerPtr)
+FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent)
 {
+	// ------- CViewer instance acquisition ------- //
+	this->CViewerPortal = thisCallback->castCViewer;
+	this->CViewerPortal->changeFragTraceStatus(true);
+	// -------------------------------------------- //
+
 	// ------- Initialization ------- //
 	this->traceManagerPtr = nullptr;
 	this->volumeAdjusted = false;
