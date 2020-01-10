@@ -35,7 +35,6 @@ public:
 	workMode mode;                // tracing axon or dendrite
 
 
-
 /* =========================== Parameters =========================== */
 	// ------- Image Enhancement ------- //
 	bool ada;
@@ -83,16 +82,17 @@ public:
 
 
 
-	// ======= Crucial Intermediate Result ======= //
+// ======= Crucial Intermediate Result ======= //
 	vector<connectedComponent> signalBlobs;   // All segmented blobs are stored here.
 	vector<connectedComponent> signalBlobs2D; // not used
-	// =========================================== //
+// =========================================== //
 
 
 
-	// *********************************************************************************************** //
+// **************************************************************************************************** //
 	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
-	// *********************************************************************************************** //
+// **************************************************************************************************** //
+
 
 
 /* ================= Result Finalization ================= */

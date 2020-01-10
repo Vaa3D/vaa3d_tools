@@ -2,6 +2,7 @@
 
 #include "../../../../vaa3d_tools/hackathon/ouyang/ML_get_samples/tip_main.cpp"
 #include "../../../../vaa3d_tools/hackathon/yimin/old_vr_codes/Vaa3DVR(ver 0.1)/vrminimal/matrix.h"
+//#include "basic_surf_objs.cpp"
 using namespace std;
 
 
@@ -335,4 +336,336 @@ QList<int> get_branch(NeuronTree nt){
 
     return(ori_branch_list);
 }
+
+
+
+bool writeMarker_file(const QString & filename, LandmarkList & listMarker)
+{
+    FILE * fp = fopen(filename.toLatin1(), "wt");
+    if (!fp)
+    {
+        return false;
+    }
+
+    fprintf(fp, "##x,y,z,radius,shape,name,comment, color_r,color_g,color_b\n");
+
+    for (int i=0;i<listMarker.size(); i++)
+    {
+        LocationSimple  p_pt;
+        p_pt = listMarker[i];
+        fprintf(fp, "%5.3f, %5.3f, %5.3f, %d, %d, %s, %s, %d,%d,%d\n",
+                // 090617 RZC: marker file is 1-based
+                p_pt.x,
+                p_pt.y,
+                p_pt.z,
+                int(p_pt.radius), p_pt.shape,
+                //qPrintable(p_pt.name), qPrintable(p_pt.comment),
+                p_pt.color.r,p_pt.color.g,p_pt.color.b);
+    }
+
+    fclose(fp);
+    return true;
+}
+
+int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString inimg_file = callback.getPathTeraFly();
+    QString file_name = inimg_file;
+    QFileInfo info(file_name);
+
+    //*************the default size of block;
+    int BoxX = 90;
+    int BoxY = 90;
+    int BoxZ = 90;
+
+    //************set update the dialog
+    QDialog * dialog = new QDialog();
+
+    QGridLayout * layout = new QGridLayout();
+
+    //*************set spinbox
+    QSpinBox * block_X = new QSpinBox();
+    block_X->setRange(0,5000000);      //???
+    block_X->setValue(BoxX);  //???
+
+    QSpinBox * block_Y = new QSpinBox();
+    block_Y->setRange(0,5000000);      //???
+    block_Y->setValue(BoxY);  //???
+
+    QSpinBox * block_Z = new QSpinBox();
+    block_Z->setRange(0,5000000);      //???
+    block_Z->setValue(BoxZ);  //???
+
+    layout->addWidget(new QLabel("X of block"),0,0);
+    layout->addWidget(block_X, 0,1,1,5);
+
+    layout->addWidget(new QLabel("Y of block"),1,0);
+    layout->addWidget(block_Y, 1,1,1,5);
+
+    layout->addWidget(new QLabel("Z of block"),2,0);
+    layout->addWidget(block_Z, 2,1,1,5);
+
+
+    QHBoxLayout * hbox2 = new QHBoxLayout();
+    QPushButton * ok = new QPushButton(" ok ");
+    ok->setDefault(true);
+    QPushButton * cancel = new QPushButton("cancel");
+    hbox2->addWidget(cancel);
+    hbox2->addWidget(ok);
+
+    layout->addLayout(hbox2,6,0,1,6);
+    dialog->setLayout(layout);
+    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+    //**************run the dialog
+    if(dialog->exec() != QDialog::Accepted)
+    {
+        if (dialog)
+        {
+                delete dialog;
+                dialog=0;
+                cout<<"delete dialog"<<endl;
+        }
+        return -1;
+    }
+
+    //***************get the dialog return values
+    BoxX = block_X->value(); //   block的大小
+    BoxY = block_Y->value();
+    BoxZ = block_Z->value();
+
+    if (dialog) {delete dialog; dialog=0;}
+
+    V3DLONG *sz = new V3DLONG[4];
+    callback.getDimTeraFly(inimg_file.toStdString(),sz);
+    cout<<"sz[0]:"<<sz[0]<<" sz[1]:"<<sz[1]<<" sz[2]:"<<sz[2]<<endl;
+
+
+    int num_along_x=ceil((float)sz[0]/BoxX);
+    int num_along_y=ceil((float)sz[1]/BoxY);
+    int num_along_z=ceil((float)sz[2]/BoxZ);
+    int NumberOfBlock=num_along_x*num_along_y*num_along_z; // block的总个数
+    cout<<"num along x is "<< num_along_x << endl;
+    cout<<"num along y is "<< num_along_y << endl;
+    cout<<"num along z is "<< num_along_z << endl;
+    cout<<"NumberOfBlock is "<< NumberOfBlock << endl;
+
+    std::set <TBlock> blcok_flag;  //set容器可以不重复地添加元素
+
+
+    vector<MyMarker*> outMarker; outMarker.clear();
+
+    QStringList swc_list;
+
+    NeuronTree nt = callback.getSWCTeraFly();
+    int swcInWindows=0;
+    if(nt.listNeuron.size()!=0)
+    {   swcInWindows=1;}
+    else
+    {
+        swcInWindows=0;
+        swc_list=QFileDialog::getOpenFileNames(0,"Choose ESWC or SWC","D:\\",QObject::tr("*.swc"));
+        if(swc_list.isEmpty()){return 0;}
+        int input_as_swc;//0 for eswc, 1 for swc
+        if(swc_list.at(0).endsWith(".eswc"))
+        {   input_as_swc=0;}
+        else{   input_as_swc=1;}
+        if(input_as_swc)
+        {
+            for(int i=0;i<swc_list.size();i++)
+            {
+                if(!swc_list.at(i).endsWith(".swc"))
+                {
+                    swc_list.removeAt(i);
+                }
+            }
+            for(int i=0;i<swc_list.size();i++)
+            {
+                cout<<swc_list.at(i).toUtf8().data()<<endl;
+            }
+
+            for(int i=0;i<swc_list.size();i++)
+            {
+                vector<MyMarker*> temp_swc;temp_swc.clear();
+                readSWC_file(swc_list.at(i).toStdString(),temp_swc);
+                cout<<"i :"<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
+                for(int j=0;j<temp_swc.size();j++)
+                {
+
+                    TBlock temT; //定义临时存放标记的变量
+
+                    temT.tx = ceil(temp_swc.at(j)->x/BoxX);
+                    temT.ty = ceil(temp_swc.at(j)->y/BoxY);
+                    temT.tz = ceil(temp_swc.at(j)->z/BoxZ);
+                    temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+
+                    if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+                    else
+                    {
+                       blcok_flag.insert(temT); //把swc对应的blcok标号记下
+                    }
+                }
+            }
+        }
+        else
+        {
+            //0 for eswc
+            for(int i=0;i<swc_list.size();i++)
+            {
+                if(!swc_list.at(i).endsWith(".swc"))
+                {
+                    swc_list.removeAt(i);
+                }
+            }
+            for(int i=0;i<swc_list.size();i++)
+            {
+                cout<<swc_list.at(i).toUtf8().data()<<endl;
+            }
+
+            for(int i=0;i<swc_list.size();i++)
+            {
+                vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
+                readESWC_file(swc_list.at(i).toStdString(),temp_eswc);
+                cout<<"i :"<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
+                for(int j=0;j<temp_eswc.size();j++)
+                {
+                    TBlock temT; //定义临时存放标记的变量
+
+                    temT.tx = ceil(temp_eswc.at(j)->x/BoxX);
+                    temT.ty = ceil(temp_eswc.at(j)->y/BoxY);
+                    temT.tz = ceil(temp_eswc.at(j)->z/BoxZ);
+                    temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+
+                    if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+                    else
+                    {
+                       blcok_flag.insert(temT); //把swc对应的blcok标号记下
+                    }
+                }
+            }
+
+        }
+
+     }
+
+
+    // 找block的中心点
+    vector<MyMarker> Block_Markerset;
+    ImageMarker Block_Marker;
+    QList <ImageMarker> curlist;
+    LocationSimple s;
+    for(set<TBlock>::iterator it = blcok_flag.begin(); it!= blcok_flag.end(); it++)//遍历有swc的block
+    {
+
+        Block_Marker.x=((double)(*it).tx-0.5)*BoxX;
+        Block_Marker.y=((double)(*it).ty-0.5)*BoxY;
+        Block_Marker.z=((double)(*it).tz-0.5)*BoxZ;
+        //Block_Markerset.push_back(Block_Marker);
+        s.x= Block_Marker.x;
+        s.y= Block_Marker.y;
+        s.z= Block_Marker.z;
+        s.radius=1;
+        s.color = random_rgba8(255);
+        curlist.append(Block_Marker);
+    }
+
+    v3d_msg(QString("save %1 markers").arg(curlist.size()),0);
+
+    QString outimg_dir = "";
+    QString default_name = info.baseName()+"_for_sub.marker";
+    outimg_dir = QFileDialog::getExistingDirectory(0,
+                                  "Choose a dir to save file " );
+    QString outimg_file = outimg_dir + "/" + default_name;
+    cout<<"name : "<< outimg_file.toStdString() <<endl;
+    //writeMarker_file(outimg_file,curlist);
+    writeMarker_file(outimg_file,curlist);
+
+    return 1;
+}
+bool readSWC_file(string swc_file, vector<MyMarker*> & swc)
+{//debug by guochanghao, fix for reading failure after 7 values
+    ifstream ifs(swc_file.c_str());
+
+    if(ifs.fail())
+    {
+        cout<<"open swc file : "<< swc_file <<" error"<<endl;
+        return false;
+    }
+
+    map<int, MyMarker*> marker_map;
+    map<MyMarker*, int> parid_map;
+    string line;
+    float ave_count_each_line_num = 0.0;
+    int num_valid_line = 0;
+    while(getline(ifs, line))
+    {
+        int count_each_line_num = 0;
+        stringstream ss(line);
+        string tmp;
+        bool skipToNextLine = false;
+
+        while(getline(ss,tmp,' '))
+        {
+            if(tmp.at(0) == '#'){skipToNextLine=true; break;}
+//            cout<<tmp<<" ";
+            count_each_line_num++;
+        }
+        if(skipToNextLine){continue;}
+        num_valid_line++;
+        ave_count_each_line_num+=count_each_line_num;
+//        cout<<line<<": "<<count_each_line_num<<endl;
+    }
+    ave_count_each_line_num/=num_valid_line;
+    cout<<"ave_count_each_line_num:"<<ave_count_each_line_num<<endl;
+    if(ave_count_each_line_num-(int)ave_count_each_line_num==0)
+    {qDebug("Each line has the same number of parameters."); ifs.close();}
+    else
+    {qDebug("ave_count_each_line_num is not integer."); ifs.close(); return false;}
+
+
+    ifs.open(swc_file.c_str());
+    while(ifs.good())
+    {
+        if(ifs.peek() == '#'){ifs.ignore(1000,'\n'); continue;}
+        MyMarker *  marker = new MyMarker;
+        int my_id = -1 ; ifs >> my_id;
+        if(my_id == -1) break;
+        if(marker_map.find(my_id) != marker_map.end())
+        {
+            cerr<<"Duplicate Node. This is a graph file. Please read it as a graph."<<endl; return false;
+        }
+        marker_map[my_id] = marker;
+
+        ifs>> marker->type;
+        ifs>> marker->x;
+        ifs>> marker->y;
+        ifs>> marker->z;
+        ifs>> marker->radius;
+
+        int par_id = -1; ifs >> par_id;
+        parid_map[marker] = par_id;
+        if(1)
+        {//readSWC_file这个函数直接读swc文件有问题，后面seg_id等不读。跳过。
+            int temp_for_;
+            for(int i=ave_count_each_line_num-7; i>0; i--)
+            {
+                ifs>>temp_for_;
+            }
+        }
+        swc.push_back(marker);
+    }
+
+
+    ifs.close();
+    vector<MyMarker*>::iterator it = swc.begin();
+    while(it != swc.end())
+    {
+        MyMarker * marker = *it;
+        marker->parent = marker_map[parid_map[marker]];
+        it++;
+    }
+    return true;
+}
+
 

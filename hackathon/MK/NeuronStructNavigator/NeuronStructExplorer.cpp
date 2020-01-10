@@ -1123,7 +1123,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
 				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)));
 				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
-				if (turnAngle > PI / 4)
+				if (turnAngle > PI_MK / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
 					//cout << nearestPair.first << " " << nearestPair.second << " ";
@@ -1146,7 +1146,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
 				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
 				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
-				if (turnAngle > PI / 4)
+				if (turnAngle > PI_MK / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
 					//cout << nearestPair.first << " " << nearestPair.second << " ";
@@ -1169,7 +1169,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)));
 				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
 				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
-				if (turnAngle > PI / 4)
+				if (turnAngle > PI_MK / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
 					//cout << nearestPair.first << " " << nearestPair.second << " ";

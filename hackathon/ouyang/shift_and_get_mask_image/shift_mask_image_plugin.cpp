@@ -3,7 +3,7 @@
  * 2018-12-16 : by YourName
  */
  
-#include "v3d_message.h"
+#include "../../../../v3d_external/v3d_main/basic_c_fun/v3d_message.h"
 #include <vector>
 #include "shift_mask_image_plugin.h"
 using namespace std;

@@ -24,7 +24,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
 	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
 	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
@@ -96,7 +96,7 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
 	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Current image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
 	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
 	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
@@ -293,7 +293,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree branchBrokenTree = TreeGrower::branchBreak(profiledSpikeRootStrightTree);
 
 		// Remove hooking and sharp-angled segment ends
-		float angleThre = (float(2) / float(3)) * PI;
+		float angleThre = (float(2) / float(3)) * PI_MK;
 		profiledTree branchBrokenProfiledTree(branchBrokenTree);
 		profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
 
@@ -947,7 +947,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 		profiledTree noDotProfiledTree(NeuronStructUtil::singleDotRemove(iteredConnectedProfiledTree.tree, this->minNodeNum));
 		periIteredconnectedTreeMap.insert({ it->first, noDotProfiledTree });
 
-		float angleThre = (float(2) / float(3)) * PI;
+		float angleThre = (float(2) / float(3)) * PI_MK;
 		profiledTree noHookProfiledTree = TreeGrower::itered_removeHookingHeadTail(noDotProfiledTree, angleThre);
 		periNoHookTreeMap.insert({ it->first, noHookProfiledTree });
 

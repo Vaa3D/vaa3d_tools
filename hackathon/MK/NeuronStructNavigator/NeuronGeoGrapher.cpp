@@ -200,12 +200,12 @@ segUnit NeuronGeoGrapher::segmentStraighten(const segUnit& inputSeg)
 		nodeHeadDistSqr = (it->x - inputSeg.nodes.begin()->x) * (it->x - inputSeg.nodes.begin()->x) +
 			(it->y - inputSeg.nodes.begin()->y) * (it->y - inputSeg.nodes.begin()->y) +
 			(it->z - inputSeg.nodes.begin()->z) * (it->z - inputSeg.nodes.begin()->z);
-		nodeHeadRadAngle = PI - acos(nodeDeviation / sqrt(segDistSqr * nodeHeadDistSqr));
+		nodeHeadRadAngle = PI_MK - acos(nodeDeviation / sqrt(segDistSqr * nodeHeadDistSqr));
 		nodeToMainDist = sqrt(nodeHeadDistSqr) * sin(nodeHeadRadAngle);
 		nodeToMainDistSum = nodeToMainDistSum + nodeToMainDist;
-		cout << "       d(node-main):" << nodeToMainDist << " radian/pi:" << (radAngle / PI) << " turning cost:" << (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI) << " " << it->x << " " << it->y << " " << it->z << endl;
+		cout << "       d(node-main):" << nodeToMainDist << " radian/pi:" << (radAngle / PI_MK) << " turning cost:" << (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI_MK) << " " << it->x << " " << it->y << " " << it->z << endl;
 
-		if ((radAngle / PI) < 0.6) // Detecting sharp turns and distance outliers => a) obviously errorneous depth situation
+		if ((radAngle / PI_MK) < 0.6) // Detecting sharp turns and distance outliers => a) obviously errorneous depth situation
 		{
 			profiledNode sharp;
 			sharp.x = it->x; sharp.y = it->y; sharp.z = it->z;
@@ -216,7 +216,7 @@ segUnit NeuronGeoGrapher::segmentStraighten(const segUnit& inputSeg)
 			sharp.previousSqr = sq1; sharp.nextSqr = sq2; sharp.innerProduct = dot;
 			sharp.radAngle = radAngle;
 			sharp.index = int(it - inputSeg.nodes.begin());
-			sharp.turnCost = (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI);
+			sharp.turnCost = (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI_MK);
 
 			pickedNode.push_back(sharp);
 			turnCostSum = turnCostSum + sharp.turnCost;
@@ -258,7 +258,7 @@ segUnit NeuronGeoGrapher::segmentStraighten(const segUnit& inputSeg)
 			double radAngle_2 = acos(dot2 / sqrt(sq1_2 * sq2_2));
 			cout << "2nd rad Angle:" << radAngle_2 << " [" << it->x << " " << it->y << " " << it->z << "]" << endl;
 
-			if ((radAngle_2 / PI) * 180 > 75)
+			if ((radAngle_2 / PI_MK) * 180 > 75)
 			{
 				if (sqrt(sq1_2) > (1 / 10) * sqrt(sq2_2))
 				{

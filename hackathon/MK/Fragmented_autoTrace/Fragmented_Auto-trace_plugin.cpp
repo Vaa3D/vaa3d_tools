@@ -35,9 +35,8 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
 		this->UIinstancePtr = panelPtr;
-		callback.changeFragTraceStatus(true);
 		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
-		callback.changeFragTraceStatus(false);
+		if (this->UIinstancePtr->CViewerPortal != nullptr) this->UIinstancePtr->CViewerPortal->changeFragTraceStatus(false);
 	}
 	else
 	{
@@ -57,7 +56,6 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 	{
 		if (this->UIinstancePtr != nullptr)
 		{
-			this->fragEditorPtr = new FragmentEditor(parent, &callback);
 			string inputParam = input.at(1).type.toStdString();
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
@@ -65,9 +63,14 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 		//string inputParam = inputParamQ.toStdString();
 		//cout << inputParam << endl;
 	}
-	else if (func_name == tr("func2"))
+	else if (func_name == tr("mouse_click"))
 	{
-		v3d_msg("To be implemented.");
+		if (this->UIinstancePtr != nullptr)
+		{
+			string inputParam = input.at(1).type.toStdString();
+			//cout << inputParam << endl;
+			//system("pause");
+		}
 	}
 	else if (func_name == tr("help"))
 	{

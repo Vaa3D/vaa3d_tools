@@ -523,7 +523,7 @@ inline NeuronTree NeuronStructUtil::randNodes(float cubeLength, float density)
 
 inline NeuronTree NeuronStructUtil::sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density)
 {
-	int targetNum = int((4 / 3) * PI * radius * radius * radius * density);
+	int targetNum = int((4 / 3) * PI_MK * radius * radius * radius * density);
 	int nodeCount = 1;
 	NeuronTree outputTree;
 	while (nodeCount <= targetNum)

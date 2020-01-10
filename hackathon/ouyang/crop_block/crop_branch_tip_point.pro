@@ -16,7 +16,6 @@ HEADERS	+= crop_branch_tip_point_plugin.h \
     crop_block_func.h
 SOURCES	+= crop_branch_tip_point_plugin.cpp \
     crop_block_func.cpp
-
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 #HEADERS	+= $$VAA3DPATH/../vaa3d_tools/hackathon/ouyang/ML_get_samples/tip_main.h

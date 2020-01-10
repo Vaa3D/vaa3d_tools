@@ -41,6 +41,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output);
 void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz,unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip,QList<int>mark_other_nodes,bool mark_other_nodes_or_not);
 void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_3d_mask(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 int find_tip(NeuronTree nt, long sz0, long sz1, long sz2);

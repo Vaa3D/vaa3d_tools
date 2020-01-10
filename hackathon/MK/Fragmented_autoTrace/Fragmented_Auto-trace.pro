@@ -9,7 +9,6 @@ IMGMANAGERPATH = ../v3d_imgManagerMK
 STATSLEARNERPATH = ../StatsLearner
 V3DTOOLPATH = ../../../released_plugins/v3d_plugins
 
-INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
@@ -17,10 +16,19 @@ INCLUDEPATH += ../NeuronStructNavigator
 INCLUDEPATH += $$STATSLEARNERPATH
 INCLUDEPATH += ./
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
+INCLUDEPATH += $$VAA3DPATH/v3d
+INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/neuron_editing
+INCLUDEPATH += $$VAA3DPATH/common_lib/include
+INCLUDEPATH += $$VAA3DPATH/3drenderer
+
 win32: {
     BOOSTPATH = $$(BOOST_PATH)
+    QTPATH = $$(QTDIR)
+
     INCLUDEPATH += $$BOOSTPATH
+    INCLUDEPATH += $$QTPATH/demos/shared
+    INCLUDEPATH += $$QTPATH/include/QtOpenGL
     LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
 
     LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK

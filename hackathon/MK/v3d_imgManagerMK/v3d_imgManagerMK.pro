@@ -9,7 +9,6 @@ QT       -= gui
 TARGET = v3d_imgManagerMK
 TEMPLATE = lib
 CONFIG	+= qt plugin warn_off
-QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CXXFLAGS += /MP
 
 DEFINES += V3D_IMGMANAGERMK_LIBRARY
@@ -42,13 +41,14 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/io
 INCLUDEPATH += ../v3dSource
 
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
 #LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
 
 SOURCES += ./ImgManager.cpp
 SOURCES += ./processManager.cpp
+SOURCES += ./integratedDataStructures.cpp
 SOURCES += ./imgAnalyzer/ImgAnalyzer.cpp
 SOURCES += ./imgProcessor/ImgProcessor.cpp
-SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
@@ -73,10 +73,13 @@ win32: {
 
 	SOURCES += ../v3dSource/mg_utilities.cpp
 	SOURCES += ../v3dSource/stackutil.cpp
+	SOURCES += ../basic_4dimage.cpp
 }
 
 HEADERS += ./ImgManager.h
 HEADERS += ./processManager.h
+HEADERS += ./integratedDataStructures.h
+HEADERS += ./v3d_imgManagerMK_Define.h
 HEADERS += ./imgAnalyzer/ImgAnalyzer.h
 HEADERS += ./imgProcessor/ImgProcessor.h
 HEADERS += ../NeuronStructNavigator/NeuronStructUtilities.h

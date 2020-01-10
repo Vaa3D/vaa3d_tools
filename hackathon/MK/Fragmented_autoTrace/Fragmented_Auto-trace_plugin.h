@@ -9,6 +9,7 @@
 #include <QtGui>
 
 #include <v3d_interface.h>
+#include "INeuronAssembler.h"
 
 #include "FragTraceControlPanel.h"
 #include "FragmentEditor.h"
@@ -16,7 +17,7 @@
 class FragmentedAutoTracePlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
-	Q_INTERFACES(V3DPluginInterface2_1);
+	Q_INTERFACES(V3DPluginInterface2_1)
 
 public:
 	float getPluginVersion() const {return 1.1f;}
@@ -29,7 +30,6 @@ public:
 
 private:
 	FragTraceControlPanel* UIinstancePtr;
-	FragmentEditor* fragEditorPtr;
 };
 
 #endif
