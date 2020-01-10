@@ -1,15 +1,12 @@
-#include "gui.h"
+#include "downsample_gui.h"
 
 DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
 {
-    res_input = new QSpinBox();
-    res_input -> setRange(1, 7);
-    res_input -> setValue(1);
 
     res_output = new QSpinBox();
-    res_output -> setRange(1, 7);
-    res_output -> setValue(6);
-    connect(res_input, SIGNAL(valueChanged(int)), res_input, SLOT(setValue(int)));
+    res_output -> setRange(1, 100);
+    res_output -> setValue(32);
+
     connect(res_output, SIGNAL(valueChanged(int)), res_output, SLOT(setValue(int)));
 
     input_file_Btn = new QPushButton(tr("Input a file"));
@@ -44,16 +41,14 @@ DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
     connect(cancel, SIGNAL(clicked(bool)), this, SLOT(reject()));
 
     gridLayout = new QGridLayout();
-    gridLayout -> addWidget(new QLabel("The highest resolution is number 1 !"), 0, 0);
-    gridLayout -> addWidget(new QLabel("The resolution of the imported files"), 1, 0);
-    gridLayout -> addWidget(res_input, 1, 1);
-    gridLayout -> addWidget(new QLabel("The resolution of the exported files"), 2, 0);
-    gridLayout -> addWidget(res_output, 2, 1);
+    gridLayout -> addWidget(new QLabel("The adjacent resolutions is number 2 !"), 0, 0);
+    gridLayout -> addWidget(new QLabel("The resolution of the exported files"), 1, 0);
+    gridLayout -> addWidget(res_output, 1, 1);
 
-    gridLayout -> addLayout(hbox1, 3, 0);
-    gridLayout -> addLayout(hbox2, 4, 0);
-    gridLayout -> addLayout(hbox_save, 5, 0);
-    gridLayout -> addLayout(hbox3, 6, 0);
+    gridLayout -> addLayout(hbox1, 2, 0);
+    gridLayout -> addLayout(hbox2, 3, 0);
+    gridLayout -> addLayout(hbox_save, 4, 0);
+    gridLayout -> addLayout(hbox3, 5, 0);
 
     this -> setLayout(gridLayout);
     this -> setWindowTitle("DownSample files");

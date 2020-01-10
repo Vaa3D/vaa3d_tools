@@ -16,7 +16,6 @@ public:
     QString files = "";
     QString fileSave = "";
     QString folderSave = "";
-    QSpinBox * res_input;
     QSpinBox * res_output;
     QHBoxLayout * hbox1;
     QHBoxLayout * hbox2;

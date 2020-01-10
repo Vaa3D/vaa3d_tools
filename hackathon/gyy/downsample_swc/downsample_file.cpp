@@ -3,7 +3,7 @@
 #include <iostream>
 #include <QDir>
 #include <QDebug>
-#include "gui.cpp"
+#include "downsample_gui.cpp"
 #include <basic_surf_objs.h>
 #include <windows.h>
 #include <direct.h>
@@ -18,7 +18,7 @@ void downSample_Files(QWidget *parent)
     if(dialog.exec()!=QDialog::Accepted)return;
     dialog.update();
 
-    double down =(((double) dialog.res_output->value())/dialog.res_input->value());
+    double down =(double) dialog.res_output->value();
     cout<<"Downsample: down = "<< down <<endl;
     if(down < 1)
     {
