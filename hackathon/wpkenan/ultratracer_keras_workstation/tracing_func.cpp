@@ -1559,10 +1559,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         int datatype;
         if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
         {
-            cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
-            //return false;
-        }
-        else{
             if(!simple_loadimage_wrapper(callback, imageSaveString.toStdString().c_str(), total1dData, in_sz, datatype)){
                 return false;
             }
