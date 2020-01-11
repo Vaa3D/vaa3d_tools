@@ -20,6 +20,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	// ------- CViewer instance acquisition ------- //
 	this->CViewerPortal = thisCallback->castCViewer;
 	this->CViewerPortal->changeFragTraceStatus(true);
+	this->CViewerPortal->editingModeInit();
+	this->CViewerPortal->setEraserSize(0);
 	// -------------------------------------------- //
 
 	// ------- Initialization ------- //
@@ -463,9 +465,6 @@ void FragTraceControlPanel::eraseButtonClicked()
 	{
 		this->fragEditorPtr->test("checked!");
 		this->CViewerPortal->segEditing_setCursor("erase");
-		
-		cout << this->CViewerPortal->getCviewerWinTitle() << endl;
-		
 	}
 	else
 	{

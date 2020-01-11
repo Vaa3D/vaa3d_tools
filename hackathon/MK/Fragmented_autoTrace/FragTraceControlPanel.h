@@ -1,6 +1,7 @@
 #ifndef _FRAGTRACECONTROLPANEL_H_
 #define _FRAGTRACECONTROLPANEL_H_
 
+#include "v3d_compile_full.h"
 #include "v3d_interface.h"
 #include "INeuronAssembler.h"
 #include "IPMain4NeuronAssembler.h"
