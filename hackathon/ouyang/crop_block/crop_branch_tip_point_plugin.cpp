@@ -64,10 +64,14 @@ bool crop_block::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     {
         crop_bt_block(input,output,callback);
     }
-    else if (func_name == tr("get_defined_block"))
+    if (func_name == tr("get_defined_block"))
 	{
-        crop_defined_block(input,output,callback);;
+        crop_defined_block(input,output,callback);
 	}
+    if (func_name == tr("get_block_markerfile"))
+    {
+        CheckSWC_func(input,output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

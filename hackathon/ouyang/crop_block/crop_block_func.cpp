@@ -583,6 +583,159 @@ int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent)
 
     return 1;
 }
+
+
+void CheckSWC_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_swc=infiles.at(0);
+    QString input_image=infiles.at(1);
+    QString output_dir=outfiles.at(0);
+    //double  margin=atof(inparas.at(0));
+    if(!output_dir.endsWith("/")){
+        output_dir = output_dir+"/";
+    }
+    cout<<"+++++++++++"<<endl;
+    QStringList list=input_swc.split("/");
+    QString flag=list.last();
+
+    qDebug()<<input_image;
+    qDebug()<<input_swc;
+    qDebug("number:%s",qPrintable(flag));
+
+    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+
+
+    QString file_name = input_image;
+    QFileInfo info(file_name);
+
+    //*************the default size of block;
+    int BoxX = 90;
+    int BoxY = 90;
+    int BoxZ = 90;
+
+    V3DLONG *sz = new V3DLONG[4];
+    callback.getDimTeraFly(input_image.toStdString(),sz);
+    cout<<"sz[0]:"<<sz[0]<<" sz[1]:"<<sz[1]<<" sz[2]:"<<sz[2]<<endl;
+
+
+    int num_along_x=ceil((float)sz[0]/BoxX);
+    int num_along_y=ceil((float)sz[1]/BoxY);
+    int num_along_z=ceil((float)sz[2]/BoxZ);
+    int NumberOfBlock=num_along_x*num_along_y*num_along_z; // block的总个数
+    cout<<"num along x is "<< num_along_x << endl;
+    cout<<"num along y is "<< num_along_y << endl;
+    cout<<"num along z is "<< num_along_z << endl;
+    cout<<"NumberOfBlock is "<< NumberOfBlock << endl;
+
+    std::set <TBlock> blcok_flag;  //set容器可以不重复地添加元素
+
+
+    vector<MyMarker*> outMarker; outMarker.clear();
+
+    QString swc_list;
+
+
+    //int swcInWindows=0;
+    //if(nt_crop_sorted.listNeuron.size()!=0)
+    //{   swcInWindows=1;}
+    //else
+    //{
+    //   swcInWindows=0;
+        swc_list=input_swc;
+        int input_as_swc;//0 for eswc, 1 for swc
+        if(swc_list.endsWith(".eswc"))
+        {   input_as_swc=0;}
+        else{   input_as_swc=1;}
+        if(input_as_swc)
+        {
+            //for(int i=0;i<swc_list.size();i++)
+            //{
+                vector<MyMarker*> temp_swc;temp_swc.clear();
+                readSWC_file(input_swc.toStdString(),temp_swc);
+                //cout<<"i :"<<i<<" temp_swc.size:"<<temp_swc.size()<<endl;
+                for(int j=0;j<temp_swc.size();j++)
+                {
+
+                    TBlock temT; //定义临时存放标记的变量
+
+                    temT.tx = ceil(temp_swc.at(j)->x/BoxX);
+                    temT.ty = ceil(temp_swc.at(j)->y/BoxY);
+                    temT.tz = ceil(temp_swc.at(j)->z/BoxZ);
+                    temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+
+                    if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+                    else
+                    {
+                       blcok_flag.insert(temT); //把swc对应的blcok标号记下
+                    }
+                }
+            //}
+        }
+        else
+        {
+            //0 for eswc
+            //for(int i=0;i<swc_list.size();i++)
+            //{
+                vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
+                readESWC_file(input_swc.toStdString(),temp_eswc);
+                //cout<<"i :"<<i<<" temp_eswc.size:"<<temp_eswc.size()<<endl;
+                for(int j=0;j<temp_eswc.size();j++)
+                {
+                    TBlock temT; //定义临时存放标记的变量
+
+                    temT.tx = ceil(temp_eswc.at(j)->x/BoxX);
+                    temT.ty = ceil(temp_eswc.at(j)->y/BoxY);
+                    temT.tz = ceil(temp_eswc.at(j)->z/BoxZ);
+                    temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+
+                    if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+                    else
+                    {
+                       blcok_flag.insert(temT); //把swc对应的blcok标号记下
+                    }
+                }
+            //}
+
+        }
+
+
+    // 找block的中心点
+    vector<MyMarker> Block_Markerset;
+    ImageMarker Block_Marker;
+    QList <ImageMarker> curlist;
+    LocationSimple s;
+    for(set<TBlock>::iterator it = blcok_flag.begin(); it!= blcok_flag.end(); it++)//遍历有swc的block
+    {
+
+        Block_Marker.x=((double)(*it).tx-0.5)*BoxX;
+        Block_Marker.y=((double)(*it).ty-0.5)*BoxY;
+        Block_Marker.z=((double)(*it).tz-0.5)*BoxZ;
+        //Block_Markerset.push_back(Block_Marker);
+        s.x= Block_Marker.x;
+        s.y= Block_Marker.y;
+        s.z= Block_Marker.z;
+        s.radius=1;
+        s.color = random_rgba8(255);
+        curlist.append(Block_Marker);
+    }
+
+    v3d_msg(QString("save %1 markers").arg(curlist.size()),0);
+
+    QString outimg_dir = "";
+    QString default_name = info.baseName()+"_for_sub.marker";
+    outimg_dir =output_dir;
+    QString outimg_file = outimg_dir + default_name;
+    cout<<"name : "<< outimg_file.toStdString() <<endl;
+    //writeMarker_file(outimg_file,curlist);
+    writeMarker_file(outimg_file,curlist);
+
+}
+
+
 bool readSWC_file(string swc_file, vector<MyMarker*> & swc)
 {//debug by guochanghao, fix for reading failure after 7 values
     ifstream ifs(swc_file.c_str());

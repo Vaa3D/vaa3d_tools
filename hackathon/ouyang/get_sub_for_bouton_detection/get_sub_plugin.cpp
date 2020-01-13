@@ -1,4 +1,4 @@
-/* get_sub_plugin.cpp
+﻿/* get_sub_plugin.cpp
  * This is a test plugin, you can use it as a demo.
  * 2018-10-16 : by guochanghao
  */
@@ -144,14 +144,10 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
 bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("get_sub_terafly_and_swc"))
 	{
-		v3d_msg("To be implemented.");
+        get_terafly_blocks(input,output,callback);
 	}
 	else if (func_name == tr("func2"))
 	{
@@ -1476,8 +1472,309 @@ int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 }
 
-//程序可以在terafly模式下同时挖出子图和子swc
+
 //步骤：打开一张terafly图。如果terafly窗口里没有marker，将提示选择一个marker文件。选择保存子图和子swc的目录。如果terafly窗口里没有swc，将提示选择一个或多个swc或eswc文件。将以marker为中心挖出一个以x_radius，y_radius，z_radius为半径的子图以及swc。
+void get_terafly_blocks(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_swc=infiles.at(0);
+    QString input_image=infiles.at(1);
+    //QString input_marker=infiles.at(2);
+    QString output_dir=outfiles.at(0);//all blocks
+    //QString output_marker=outfiles.at(1);//marker file
+    //double  margin=atof(inparas.at(0));
+    if(!output_dir.endsWith("/")){
+        output_dir = output_dir+"/";
+    }
+
+    QStringList list=input_swc.split("/");
+    QString flag=list.last();
+
+    qDebug()<<input_image;
+    qDebug()<<input_swc;
+    qDebug("number:%s",qPrintable(flag));
+
+    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+
+    QString file_name = input_image;
+    QFileInfo info(file_name);
+
+
+    //QList <ImageMarker> terafly_landmarks = readMarker_file(input_marker);
+
+    int x_radius = 50;
+    int y_radius = 50;
+    int z_radius = 50;
+
+
+    //*************the default size of block;
+    int BoxX = 90;
+    int BoxY = 90;
+    int BoxZ = 90;
+
+    V3DLONG *sz = new V3DLONG[4];
+    callback.getDimTeraFly(input_image.toStdString(),sz);
+    cout<<"sz[0]:"<<sz[0]<<" sz[1]:"<<sz[1]<<" sz[2]:"<<sz[2]<<endl;
+
+
+    int num_along_x=ceil((float)sz[0]/BoxX);
+    int num_along_y=ceil((float)sz[1]/BoxY);
+    int num_along_z=ceil((float)sz[2]/BoxZ);
+    int NumberOfBlock=num_along_x*num_along_y*num_along_z; // block的总个数
+    cout<<"num along x is "<< num_along_x << endl;
+    cout<<"num along y is "<< num_along_y << endl;
+    cout<<"num along z is "<< num_along_z << endl;
+    cout<<"NumberOfBlock is "<< NumberOfBlock << endl;
+
+    std::set <TBlock> blcok_flag;  //set容器可以不重复地添加元素
+
+
+    vector<MyMarker*> outMarker; outMarker.clear();
+
+    QString swc_list;
+
+    swc_list=input_swc;
+    int input_as_swc;//0 for eswc, 1 for swc
+    if(swc_list.endsWith(".eswc")) input_as_swc=0;
+    else{input_as_swc=1;}
+    if(input_as_swc)
+    {
+        vector<MyMarker*> temp_swc;temp_swc.clear();
+        readSWC_file(input_swc.toStdString(),temp_swc);
+        for(int j=0;j<temp_swc.size();j++)
+        {
+            TBlock temT; //定义临时存放标记的变量
+            temT.tx = ceil(temp_swc.at(j)->x/BoxX);
+            temT.ty = ceil(temp_swc.at(j)->y/BoxY);
+            temT.tz = ceil(temp_swc.at(j)->z/BoxZ);
+            temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+            if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+            else
+            {
+                blcok_flag.insert(temT); //把swc对应的blcok标号记下
+            }
+        }
+        //}
+    }
+    else
+    {
+        vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
+        readESWC_file(input_swc.toStdString(),temp_eswc);
+        for(int j=0;j<temp_eswc.size();j++)
+        {
+            TBlock temT; //定义临时存放标记的变量
+            temT.tx = ceil(temp_eswc.at(j)->x/BoxX);
+            temT.ty = ceil(temp_eswc.at(j)->y/BoxY);
+            temT.tz = ceil(temp_eswc.at(j)->z/BoxZ);
+            temT.t = num_along_x*temT.ty*(temT.tz-1)+num_along_x*(temT.ty-1)+temT.tx; //当前点对应的block标号
+            if(temT.t >= NumberOfBlock){  cout<<"flase,exceed NumberOfBlock";}
+            else
+            {
+                blcok_flag.insert(temT); //把swc对应的blcok标号记下
+            }
+        }
+    }
+
+    // 找block的中心点
+    vector<MyMarker> Block_Markerset;
+    ImageMarker Block_Marker;
+    QList <ImageMarker> curlist;
+    LocationSimple s;
+    for(set<TBlock>::iterator it = blcok_flag.begin(); it!= blcok_flag.end(); it++)//遍历有swc的block
+    {
+
+        Block_Marker.x=((double)(*it).tx-0.5)*BoxX;
+        Block_Marker.y=((double)(*it).ty-0.5)*BoxY;
+        Block_Marker.z=((double)(*it).tz-0.5)*BoxZ;
+        //Block_Markerset.push_back(Block_Marker);
+        s.x= Block_Marker.x;
+        s.y= Block_Marker.y;
+        s.z= Block_Marker.z;
+        s.radius=1;
+        s.color = random_rgba8(255);
+        curlist.append(Block_Marker);
+    }
+
+    v3d_msg(QString("save %1 markers").arg(curlist.size()),0);
+
+    QString outimg_dir = "";
+    QString default_name = info.baseName()+"_for_sub.marker";
+    outimg_dir=output_dir;
+    QString outimg_file = outimg_dir + default_name;
+    cout<<"name : "<< outimg_file.toStdString() <<endl;
+    writeMarker_file(outimg_file,curlist);
+
+
+
+    QString all_swc_file = output_dir + info.baseName() +"_all_swc.swc";
+
+    vector<MyMarker*> outMarker1; outMarker1.clear();
+    vector<MyMarker*> outMarker2; outMarker2.clear();
+
+
+    QString swc_list1=input_swc;
+
+    NeuronTree nt = nt_crop_sorted;
+    int input_as_swc1;//0 for eswc, 1 for swc
+    if(swc_list1.endsWith(".eswc")) input_as_swc1=0;
+    else{input_as_swc1=1;}
+    if(input_as_swc1)
+    {
+        vector<MyMarker*> temp_swc_all1;
+
+        vector<MyMarker*> temp_swc;temp_swc.clear();
+        readSWC_file(swc_list1.toStdString(),temp_swc);
+        for(int j=0;j<temp_swc.size();j++)
+        {
+            temp_swc_all1.push_back(temp_swc.at(j));
+        }
+
+        cout<<"temp_swc_all1.size:"<<temp_swc_all1.size()<<endl;
+        outMarker1=temp_swc_all1;
+        cout<<"outMarker1.size:"<<outMarker1.size()<<endl;
+        QString all_swc_file = output_dir + info.baseName() +"_all_swc.swc";
+        saveSWC_file1(all_swc_file.toStdString(),outMarker1);
+
+        vector<MyMarker*> temp_swc_all2;
+
+        vector<MyMarker*> temp_swc1;temp_swc1.clear();
+        readSWC_file(swc_list1.toStdString(),temp_swc1);
+
+        for(int j=0;j<temp_swc1.size();j++)
+        {
+            temp_swc_all2.push_back(temp_swc1.at(j));
+        }
+
+        cout<<"temp_swc_all2.size:"<<temp_swc_all2.size()<<endl;
+        outMarker2=temp_swc_all2;
+    }
+    else
+    {
+        //0 for eswc
+        vector<MyMarkerX*> temp_swc_all1;
+
+        vector<MyMarkerX*> temp_eswc;temp_eswc.clear();
+        readESWC_file(swc_list1.toStdString(),temp_eswc);
+        for(int j=0;j<temp_eswc.size();j++)
+        {
+            temp_swc_all1.push_back(temp_eswc.at(j));
+        }
+
+        cout<<"temp_swc_all1.size:"<<temp_swc_all1.size()<<endl;
+        vectorMyMarkerX2vectorMyMarker(temp_swc_all1,outMarker1);
+        cout<<"outMarker1.size:"<<outMarker1.size()<<endl;
+        saveSWC_file1(all_swc_file.toStdString(),outMarker1);
+
+        vector<MyMarkerX*> temp_swc_all2;
+
+        vector<MyMarkerX*> temp_eswc1;temp_eswc1.clear();
+        readESWC_file(swc_list1.toStdString(),temp_eswc1);
+
+        for(int j=0;j<temp_eswc1.size();j++)
+        {
+            temp_swc_all2.push_back(temp_eswc1.at(j));
+        }
+
+        cout<<"temp_swc_all2.size:"<<temp_swc_all2.size()<<endl;
+        vectorMyMarkerX2vectorMyMarker(temp_swc_all2,outMarker2);
+    }
+
+    QList <ImageMarker> terafly_landmarks=curlist;
+    double time_counter=1, process1 = 0, entire_time=terafly_landmarks.size();
+    for(V3DLONG m=0;m<terafly_landmarks.size();m++)
+    {
+        double process2 = (time_counter++)*1000.0/entire_time;
+        if(process2-process1 >=1)
+        {cout<<"\r"<<(int)process2/10.0<<"%   "<<endl; cout.flush(); process1 = process2;}
+
+        LocationSimple t;
+        t.x = terafly_landmarks[m].x;
+        t.y = terafly_landmarks[m].y;
+        t.z = terafly_landmarks[m].z;
+
+        V3DLONG im_cropped_sz[4];
+
+        unsigned char * im_cropped = 0;
+        V3DLONG pagesz;
+        double l_x = x_radius;
+        double l_y = y_radius;
+        double l_z = z_radius;
+
+        V3DLONG xb = t.x-l_x;
+        V3DLONG xe = t.x+l_x-1;
+        V3DLONG yb = t.y-l_y;
+        V3DLONG ye = t.y+l_y-1;
+        V3DLONG zb = t.z-l_z;
+        V3DLONG ze = t.z+l_z-1;
+        pagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
+        im_cropped_sz[0] = xe-xb+1;
+        im_cropped_sz[1] = ye-yb+1;
+        im_cropped_sz[2] = ze-zb+1;
+        im_cropped_sz[3] = 1;
+
+        try {im_cropped = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
+//        cout<<"xb:"<<xb<<" xe:"<<xe<<" yb:"<<yb<<" ye:"<<ye<<" zb:"<<zb<<" ze:"<<ze<<endl;
+
+        im_cropped = callback.getSubVolumeTeraFly(input_image.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
+
+        QString tmpstr = "";
+        tmpstr.append("_x").append(QString("%1").arg(terafly_landmarks[m].x));
+        tmpstr.append("_y").append(QString("%1").arg(terafly_landmarks[m].y));
+        tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[m].z));
+
+        QString default_name = info.baseName()+"_TeraSub"+tmpstr+".tif";
+        QString save_path_img = output_dir+"/"+default_name;
+
+        simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+        if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+
+
+        vector<MyMarker*> swc_sub, swc_notsub; swc_sub.clear(); swc_notsub.clear();
+        vector<MyMarker*> swc_tmp; swc_tmp.clear();
+        vector<MyMarker*> swc; swc.clear();
+        if(1)
+        {
+            swc = NeuronTree2vectorofMyMarker(nt);
+            swc_tmp = NeuronTree2vectorofMyMarker(nt);
+        }
+        else
+        {
+            swc = outMarker1;
+            swc_tmp = outMarker2;
+        }
+        for (V3DLONG i=0; i<swc.size(); i++)
+        {
+            MyMarker * curr_m = swc.at(i);
+            MyMarker * curr_m_tmp = swc_tmp.at(i);
+            if(curr_m->x>=xb&&curr_m->x<=xe&&curr_m->y>=yb&&curr_m->y<=ye&&curr_m->z>=zb&&curr_m->z<=ze)
+            {
+                curr_m_tmp->x=swc_tmp.at(i)->x;
+                curr_m_tmp->y=swc_tmp.at(i)->y;
+                curr_m_tmp->z=swc_tmp.at(i)->z;
+                swc_sub.push_back(curr_m_tmp);
+            }
+        }
+        QString save_path_swc = output_dir+"/"+ info.baseName()+"_TeraSub"+tmpstr+".swc";
+
+        saveSWC_file1(save_path_swc.toStdString(),swc_sub);
+        readSWC_file(save_path_swc.toStdString(),swc_sub);
+        for (V3DLONG i=0; i<swc_sub.size(); i++)
+        {
+            swc_sub[i]->x -= xb;
+            swc_sub[i]->y -= yb;
+            swc_sub[i]->z -= zb;
+        }
+        saveSWC_file1(save_path_swc.toStdString(),swc_sub);
+
+    }
+}
+
+
+
 int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
 {
     QString inimg_file = callback.getPathTeraFly();

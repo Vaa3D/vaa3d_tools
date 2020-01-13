@@ -31,6 +31,7 @@ QList<int> get_tips(NeuronTree nt, bool include_root);
 int CheckSWC(V3DPluginCallback2 &callback, QWidget *parent);
 bool writeMarker_file(const QString & filename, LandmarkList & listMarker);
 bool readSWC_file(string swc_file, vector<MyMarker*> & swc);
+void CheckSWC_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 #endif // CROP_BLOCK_FUNC_H
 
 
