@@ -1,4 +1,4 @@
-#ifndef MANAGESERVER_H
+﻿#ifndef MANAGESERVER_H
 #define MANAGESERVER_H
 #include <QtNetwork>
 #include <QRegExp>
@@ -19,7 +19,7 @@ public:
 public slots:
     void readManage();
     void resetfileserver();
-//    void ondisconnect();
+    void ondisconnect();
 
 protected:
 signals:
@@ -41,7 +41,7 @@ private:
 public slots:
     void makeMessageServer(ManageSocket *managesocket,QString anofile_name);
     void messageserver_ondeltete(QString);
-private:
+public:
     QMap <QString ,MessageServer* > Map_File_MessageServer;
 public:
 

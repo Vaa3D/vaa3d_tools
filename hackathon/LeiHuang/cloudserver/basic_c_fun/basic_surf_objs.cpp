@@ -39,7 +39,7 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #include "v3d_message.h"
 
 #include <QString>
-#include <QFile>
+
 QList <CellAPO> readAPO_file(const QString& filename)
 {
     QList <CellAPO> mylist;
@@ -47,6 +47,9 @@ QList <CellAPO> readAPO_file(const QString& filename)
 	QFile qf(filename);
 	if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
+#ifndef DISABLE_V3D_MSG
+		v3d_msg(QString("open file [%1] failed!").arg(filename));
+#endif
 		return mylist;
 	}
 
@@ -146,6 +149,7 @@ bool writeAPO_file(const QString& filename, const QList <CellAPO> & listCell)
 //		fprintf(fp, "%ld, %s, %s,%s, %ld,%ld,%ld, %5.3f,%5.3f,%5.3f,%5.3f,%5.3f,,,,%d,%d,%d\n",  
         fprintf(fp, "%ld, %s, %s,%s, %5.3f,%5.3f,%5.3f, %5.3f,%5.3f,%5.3f,%5.3f,%5.3f,,,,%d,%d,%d\n", //change from V3DLONG type to float, 20121212, by PHC
 				p_pt->n, //i+1,
+
 				qPrintable(p_pt->orderinfo),
 				qPrintable(p_pt->name),
 				qPrintable(p_pt->comment),

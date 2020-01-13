@@ -1,4 +1,4 @@
-#ifndef MESSAGESERVER_H
+﻿#ifndef MESSAGESERVER_H
 #define MESSAGESERVER_H
 
 #include <QtNetwork>
@@ -10,19 +10,25 @@
 #include <QReadWriteLock>
 //#include "basic_surf_objs.h"
 #include "messagesocket.h"
-
+//#include "basic_c_fun/neuron_format_converter.h"
+#include "neuron_editing/neuron_format_converter.h"
 class MessageServer:public QTcpServer
 {
     Q_OBJECT
 public:
     explicit MessageServer(QString filename,Global_Parameters *parameters,QObject *parent=0);
 protected:
-
+public:
+        Global_Parameters *global_parameters;
 private:
     void incomingConnection(int socketDesc);
 
-    Global_Parameters *global_parameters;
+
     QString filename;
+
+    QList<NeuronTree> sketchedNTList;
+    int sketchNum;
+//    float m_globalScale;
 
 
 
@@ -38,6 +44,7 @@ public slots:
 signals:
     void MessageServerSignal_sendtoall(const QString &msg);
     void MessageServerDeleted(QString);
+
 };
 
 
