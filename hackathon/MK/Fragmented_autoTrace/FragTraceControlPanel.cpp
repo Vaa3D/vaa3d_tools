@@ -22,6 +22,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->CViewerPortal->changeFragTraceStatus(true);
 	this->CViewerPortal->editingModeInit();
 	this->CViewerPortal->setEraserSize(0);
+	this->CViewerPortal->sendCastNAUI2PMain(this);
 	// -------------------------------------------- //
 
 	// ------- Initialization ------- //
@@ -179,8 +180,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->setWindowTitle(windowTitleQ);  
 
 	this->fragEditorPtr = new FragmentEditor(parent, callback);
-
-	this->CViewerPortal->sendCastNAUI2PMain(this);
 
 	this->show();
 }
