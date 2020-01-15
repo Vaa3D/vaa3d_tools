@@ -41,7 +41,11 @@ public:
 
 	/* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum(); 
+	
+	virtual bool markerMonitorStatus() { return this->uiPtr->groupBox_15->isChecked(); }
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
+
+	NeuronTree localTree;
 	/* ============================================= */
 
 

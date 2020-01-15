@@ -21,7 +21,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->CViewerPortal = thisCallback->castCViewer;
 	this->CViewerPortal->changeFragTraceStatus(true);
 	this->CViewerPortal->editingModeInit();
-	this->CViewerPortal->setEraserSize(0);
 	this->CViewerPortal->sendCastNAUI2PMain(this);
 	// -------------------------------------------- //
 
@@ -245,8 +244,8 @@ void FragTraceControlPanel::refreshSomaCoords()
 	this->somaDisplayNameMap.clear();
 	this->selectedMarkerList.clear();
 	this->selectedLocalMarkerList.clear();
-	this->updateMarkerMonitor();
 	this->CViewerPortal->refreshSelectedMarkers();
+	this->updateMarkerMonitor();
 }
 
 void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
@@ -462,7 +461,9 @@ void FragTraceControlPanel::eraseButtonClicked()
 {
 	if (uiPtr->pushButton_12->isChecked())
 	{
-		this->fragEditorPtr->test("checked!");
+		this->CViewerPortal->getLocalCurves(this->localTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\test.swc", this->localTree);
+		this->CViewerPortal->setEraserSize(0);
 		this->CViewerPortal->segEditing_setCursor("erase");
 	}
 	else
