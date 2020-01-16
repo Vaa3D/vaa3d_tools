@@ -19,4 +19,4 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 
 TARGET	= $$qtLibraryTarget(get_sub)
-DESTDIR	= $$VAA3DPATH/bin/plugins/Guo/get_sub/
+DESTDIR	= $$VAA3DPATH/bin/plugins/Ouyang/get_sub/

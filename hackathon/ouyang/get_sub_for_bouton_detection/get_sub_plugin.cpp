@@ -1472,7 +1472,6 @@ int get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 }
 
-
 //步骤：打开一张terafly图。如果terafly窗口里没有marker，将提示选择一个marker文件。选择保存子图和子swc的目录。如果terafly窗口里没有swc，将提示选择一个或多个swc或eswc文件。将以marker为中心挖出一个以x_radius，y_radius，z_radius为半径的子图以及swc。
 void get_terafly_blocks(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
