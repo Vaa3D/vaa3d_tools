@@ -234,7 +234,7 @@ inline T NeuronGeoGrapher::getPiAngle(const vector<T>& vector1, const vector<T>&
 	T sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	T angle = acos(dot / sqrt(sq1 * sq2));
 
-	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
 	else return angle / PI_MK;
 }
 
@@ -246,7 +246,7 @@ inline T NeuronGeoGrapher::getRadAngle(const vector<T>& vector1, const vector<T>
 	T sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	T angle = acos(dot / sqrt(sq1 * sq2));
 
-	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
 	else return angle;
 }
 

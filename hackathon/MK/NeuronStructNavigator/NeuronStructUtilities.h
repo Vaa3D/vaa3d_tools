@@ -114,6 +114,7 @@ public:
 
 	// Returns the corresponding string key with the given node or marker.
 	static inline string getNodeTileKey(const NeuronSWC& inputNode);
+	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
 	
 	// Node - tile profiling functions
@@ -334,6 +335,15 @@ inline NeuronTree NeuronStructUtil::segTerminalize(const profiledTree& inputProf
 	}
 
 	return outputTree;
+}
+
+inline string NeuronStructUtil::getNodeTileKey(const float inputNodeCoords[], float nodeTileLength)
+{
+	string xLabel = to_string(int((inputNodeCoords[0]) / nodeTileLength));
+	string yLabel = to_string(int((inputNodeCoords[1]) / nodeTileLength));
+	string zLabel = to_string(int((inputNodeCoords[2]) / nodeTileLength / zRATIO));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
 }
 
 inline string NeuronStructUtil::getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength)

@@ -23,6 +23,8 @@
 #include <deque>
 #include <string>
 
+#include "v_neuronswc.h"
+
 #include "basic_surf_objs.h"
 #include "integratedDataStructures.h"
 
@@ -87,7 +89,7 @@ namespace integratedDataTypes
 
 
 	/********* Segment Unit Data Structure *********/
-	struct segUnit
+	struct segUnit : public V_NeuronSWC
 	{
 		segUnit() : to_be_deleted(false) {};
 		//segUnit(const segUnit& sourceSegUnit) {};

@@ -461,14 +461,12 @@ void FragTraceControlPanel::eraseButtonClicked()
 {
 	if (uiPtr->pushButton_12->isChecked())
 	{
-		this->CViewerPortal->getLocalCurves(this->localTree);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\test.swc", this->localTree);
+		//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\test.swc", this->localTree);
 		this->CViewerPortal->setEraserSize(0);
 		this->CViewerPortal->segEditing_setCursor("erase");
 	}
 	else
 	{
-		this->fragEditorPtr->test("unChecked!");
 		this->CViewerPortal->segEditing_setCursor("restore");
 	}
 }
@@ -962,13 +960,19 @@ void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& sel
 	}
 }
 
+vector<V_NeuronSWC> FragTraceControlPanel::eraserSegProcess(const vector<V_NeuronSWC>& currSegDisplay, const float nodeCoords[])
+{
+	cout << "test1" << endl;
+	system("pause");
+	this->fragEditorPtr->inputV_NeuronSWCs = currSegDisplay;
+	return this->fragEditorPtr->erasingProcess(nodeCoords);
+}
+
 void FragTraceControlPanel::fillUpParamsForm()
 {
 	this->CViewerPortal->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
 	this->CViewerPortal->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
 }
-
-
 
 void FragTraceControlPanel::blankArea()
 {
