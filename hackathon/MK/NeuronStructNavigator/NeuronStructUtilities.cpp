@@ -879,6 +879,34 @@ NeuronTree NeuronStructUtil::nodeSpheresGen(float sphereRadius, float density, f
 
 
 
+/* =========================================== Miscellaneous =========================================== */
+profiledTree NeuronStructUtil::v_NeuronSWC_list2profiledTree(const V_NeuronSWC_list& inputV_NeuronSWC_list)
+{
+	vector<NeuronTree> segTrees;
+	for (vector<V_NeuronSWC>::const_iterator segIt = inputV_NeuronSWC_list.seg.begin(); segIt != inputV_NeuronSWC_list.seg.end(); ++segIt)
+	{
+		NeuronTree newTree;
+		for (vector<V_NeuronSWC_unit>::const_iterator unitIt = segIt->row.begin(); unitIt != segIt->row.end(); ++unitIt)
+		{
+			NeuronSWC newNode;
+			newNode.n = unitIt->data[0];
+			newNode.x = unitIt->data[2];
+			newNode.y = unitIt->data[3];
+			newNode.z = unitIt->data[4];
+			newNode.parent = unitIt->data[6];
+			newTree.listNeuron.push_back(newNode);
+		}
+		segTrees.push_back(newTree);
+	}
+	NeuronTree outputTree = NeuronStructUtil::swcCombine(segTrees);
+	profiledTree outputProfiledTree(outputTree);
+
+	return outputProfiledTree;
+}
+/* ======================================= END of [Miscellaneous] ====================================== */
+
+
+
 /* =================================== Volumetric SWC sampling methods =================================== */
 void NeuronStructUtil::sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance)
 {
