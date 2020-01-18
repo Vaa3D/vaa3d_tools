@@ -12,16 +12,17 @@ FragmentEditor::FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : 
 	
 }
 
-vector<V_NeuronSWC> FragmentEditor::erasingProcess(const float nodeCoords[])
+void FragmentEditor::erasingProcess(const float nodeCoords[])
 {
-	V_NeuronSWC_list displayedSegList;
-	displayedSegList.seg = this->inputV_NeuronSWCs;
 	
-	profiledTree profiledInputTree = NeuronStructUtil::v_NeuronSWC_list2profiledTree(displayedSegList);
-	//cout << profiledInputTree.tree.listNeuron.size() << endl;
-	//cout << endl << nodeCoords[0] << " " << nodeCoords[1] << " " << nodeCoords[2] << endl;
+	for (vector<V_NeuronSWC>::iterator segIt = this->inputV_NeuronSWCs.begin(); segIt != this->inputV_NeuronSWCs.end(); ++segIt)
+	{
+		cout << segIt->row.size() << endl;
+	}
 	
-	int inputCoordTileX = int(nodeCoords[0] / NODE_TILE_LENGTH);
+
+	
+	/*int inputCoordTileX = int(nodeCoords[0] / NODE_TILE_LENGTH);
 	int inputCoordTileY = int(nodeCoords[1] / NODE_TILE_LENGTH);
 	int inputCoordTileZ = int(nodeCoords[2] / NODE_TILE_LENGTH / zRATIO);
 	string centralTileKey = to_string(inputCoordTileX) + "_" + to_string(inputCoordTileY) + "_" + to_string(inputCoordTileZ);
@@ -54,7 +55,6 @@ vector<V_NeuronSWC> FragmentEditor::erasingProcess(const float nodeCoords[])
 	system("pause");
 	displayedSegList = NeuronTree__2__V_NeuronSWC_list(&profiledInputTree.tree);
 	cout << "test2" << endl;
-	system("pause");
+	system("pause");*/
 
-	return displayedSegList.seg;
 }

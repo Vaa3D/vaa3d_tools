@@ -26,6 +26,27 @@
 
 using namespace std;
 
+integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC) : to_be_deleted(false)
+{
+	this->segID = inputV_NeuronSWC.row.begin()->seg_id;
+	this->head = (inputV_NeuronSWC.row.end() - 1)->n;
+	this->tails.push_back(inputV_NeuronSWC.row.begin()->n);
+	for (vector<V_NeuronSWC_unit>::const_iterator unitIt = inputV_NeuronSWC.row.begin(); unitIt != inputV_NeuronSWC.row.end() - 1; ++unitIt)
+	{
+		NeuronSWC node;
+		node.x = unitIt->data[2];
+		node.y = unitIt->data[3];
+		node.z = unitIt->data[4];
+		node.type = unitIt->data[1];
+		node.n = unitIt->data[0];
+		node.parent = unitIt->data[6];
+
+		this->nodes.push_front(node);
+	}
+
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+}
+
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
 {
 	this->getSegDistance(connOrt);
@@ -119,11 +140,11 @@ void integratedDataTypes::segPairProfile::segsAngleDiff12(connectOrientation con
 	this->segsAngleDiff = NeuronGeoGrapher::getPiAngle(dispVec1, dispVec2);
 }
 
-integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
+integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float nodeTileLength, float segTileLength)
 {
 	this->tree = inputTree;
 	this->segTileSize = segTileLength;
-	this->nodeTileSize = NODE_TILE_LENGTH;
+	this->nodeTileSize = nodeTileLength;
 
 	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileSize);
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);

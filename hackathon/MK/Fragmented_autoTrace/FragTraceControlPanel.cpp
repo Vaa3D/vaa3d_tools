@@ -960,10 +960,10 @@ void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& sel
 	}
 }
 
-vector<V_NeuronSWC> FragTraceControlPanel::eraserSegProcess(const vector<V_NeuronSWC>& currSegDisplay, const float nodeCoords[])
+void FragTraceControlPanel::eraserSegProcess(const vector<V_NeuronSWC>& currSegDisplay, const float nodeCoords[])
 {
 	this->fragEditorPtr->inputV_NeuronSWCs = currSegDisplay;
-	return this->fragEditorPtr->erasingProcess(nodeCoords);
+	this->fragEditorPtr->erasingProcess(nodeCoords);
 }
 
 void FragTraceControlPanel::fillUpParamsForm()

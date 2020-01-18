@@ -92,6 +92,8 @@ namespace integratedDataTypes
 	struct segUnit : public V_NeuronSWC
 	{
 		segUnit() : to_be_deleted(false) {};
+		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
+		segUnit(const QList<NeuronSWC>& inputSeg);
 		//segUnit(const segUnit& sourceSegUnit) {};
 
 		int segID;
@@ -99,7 +101,7 @@ namespace integratedDataTypes
 		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
 		QList<NeuronSWC> nodes;                    // segment nodes
 		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
-		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist		
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
 		map<int, boost::container::flat_map<int, map<string, double>>> segSmoothnessMap;
@@ -139,7 +141,8 @@ namespace integratedDataTypes
 		// Will be implemented later.
 
 		profiledTree() {};
-		profiledTree(const NeuronTree& inputTree, float segTileLength = SEGtileXY_LENGTH);
+		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
+		profiledTree(const vector<segUnit>& inputSegUnits, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);

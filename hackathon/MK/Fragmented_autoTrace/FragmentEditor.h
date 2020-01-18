@@ -17,7 +17,7 @@ public:
 	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback);
 
 	vector<V_NeuronSWC> inputV_NeuronSWCs;
-	vector<V_NeuronSWC> erasingProcess(const float nodeCoords[]);
+	void erasingProcess(const float nodeCoords[]);
 
 private:
 	V3DPluginCallback2* thisCallback;

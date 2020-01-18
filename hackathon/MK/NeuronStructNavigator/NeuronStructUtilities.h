@@ -161,9 +161,6 @@ public:
 	/***************************** Miscellaneous ******************************/ 
 	// Generates linker file for swc
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
-
-	// Converts V_NeuronSWC_list to profiledTree
-	static profiledTree v_NeuronSWC_list2profiledTree(const V_NeuronSWC_list& inputV_NeuronSWC_list);
 	/**************************************************************************/
 
 
