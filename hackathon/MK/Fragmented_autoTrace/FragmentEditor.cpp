@@ -7,29 +7,41 @@
 using namespace std;
 using namespace integratedDataTypes;
 
-FragmentEditor::FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : thisCallback(callback)
+map<int, set<int>> FragmentEditor::erasingProcess(const float nodeCoords[])
 {
-	
-}
-
-void FragmentEditor::erasingProcess(const float nodeCoords[])
-{
-	
-	for (vector<V_NeuronSWC>::iterator segIt = this->inputV_NeuronSWCs.begin(); segIt != this->inputV_NeuronSWCs.end(); ++segIt)
-	{
-		cout << segIt->row.size() << endl;
-	}
-	
+	//profiledTree profiledInputTree(*(this->inputTreePtr));
+	profiledTree profiledInputTree(this->originalTree);
+	profiledInputTree.generateNodeID2segIDMap();
 
 	
-	/*int inputCoordTileX = int(nodeCoords[0] / NODE_TILE_LENGTH);
+	int inputCoordTileX = int(nodeCoords[0] / NODE_TILE_LENGTH);
 	int inputCoordTileY = int(nodeCoords[1] / NODE_TILE_LENGTH);
-	int inputCoordTileZ = int(nodeCoords[2] / NODE_TILE_LENGTH / zRATIO);
+	int inputCoordTileZ = int(nodeCoords[2] / (NODE_TILE_LENGTH / zRATIO));
 	string centralTileKey = to_string(inputCoordTileX) + "_" + to_string(inputCoordTileY) + "_" + to_string(inputCoordTileZ);
 	
-	vector<int> centralTileNodes = profiledInputTree.nodeTileMap.at(centralTileKey);
-	cout << centralTileNodes.size() << endl;
-	set<int> involvedNodeIDs;
+	map<int, set<int>> outputEditingSegInfo;
+	if (profiledInputTree.nodeTileMap.find(centralTileKey) != profiledInputTree.nodeTileMap.end())
+	{
+		vector<int> centralTileNodes = profiledInputTree.nodeTileMap.at(centralTileKey);
+		for (vector<int>::iterator it = centralTileNodes.begin(); it != centralTileNodes.end(); ++it)
+		{
+			if ((profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).x - nodeCoords[0]) * (profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).x - nodeCoords[0]) +
+				(profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).y - nodeCoords[1]) * (profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).y - nodeCoords[1]) +
+				(profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).z - nodeCoords[2]) * (profiledInputTree.tree.listNeuron.at(profiledInputTree.node2LocMap.at(*it)).z - nodeCoords[2]) <= 100)
+			{
+				if (outputEditingSegInfo.find(profiledInputTree.node2segMap.find(*it)->second) == outputEditingSegInfo.end())
+				{
+					set<int> newSet;
+					newSet.insert(*it);
+					outputEditingSegInfo.insert({ profiledInputTree.node2segMap.find(*it)->second, newSet });
+				}
+				else outputEditingSegInfo.at(profiledInputTree.node2segMap.find(*it)->second).insert(*it);
+			}
+		}
+	}
+
+	return outputEditingSegInfo;
+	/*set<int> involvedNodeIDs;
 	vector<ptrdiff_t> delLocs;
 	
 	for (vector<int>::iterator it = centralTileNodes.begin(); it != centralTileNodes.end(); ++it)

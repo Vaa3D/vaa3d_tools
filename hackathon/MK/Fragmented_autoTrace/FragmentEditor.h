@@ -14,10 +14,11 @@ class FragmentEditor : public QWidget
 	Q_OBJECT;
 
 public:
-	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback);
+	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : thisCallback(callback) {};
 
-	vector<V_NeuronSWC> inputV_NeuronSWCs;
-	void erasingProcess(const float nodeCoords[]);
+	const NeuronTree* inputTreePtr;
+	NeuronTree originalTree;
+	map<int, set<int>> erasingProcess(const float nodeCoords[]);
 
 private:
 	V3DPluginCallback2* thisCallback;

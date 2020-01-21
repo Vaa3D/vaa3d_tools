@@ -89,10 +89,9 @@ namespace integratedDataTypes
 
 
 	/********* Segment Unit Data Structure *********/
-	struct segUnit : public V_NeuronSWC
+	struct segUnit
 	{
 		segUnit() : to_be_deleted(false) {};
-		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		//segUnit(const segUnit& sourceSegUnit) {};
 
@@ -142,7 +141,6 @@ namespace integratedDataTypes
 
 		profiledTree() {};
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
-		profiledTree(const vector<segUnit>& inputSegUnits, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);
@@ -150,22 +148,23 @@ namespace integratedDataTypes
 		NeuronTree tree;
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
-
 		map<string, vector<int>> nodeTileMap; // tile label -> node ID
-		map<int, segUnit> segs; // key = seg ID
+		
+		map<int, segUnit> segs;								   // key = seg ID
+		boost::container::flat_multimap<int, int> node2segMap; // node ID -> seg ID
+		map<string, vector<int>> segHeadMap;				   // tile label -> seg ID
+		map<string, vector<int>> segTailMap;				   // tile label -> seg ID
+		void generateNodeID2segIDMap();
 
-		map<string, vector<int>> segHeadMap;   // tile label -> seg ID
-		map<string, vector<int>> segTailMap;   // tile label -> seg ID
+		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
+		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster
+		boost::container::flat_map<int, int> headSeg2ClusterMap;						  // segment ID -> the cluster in which the segment head is located
+		boost::container::flat_map<int, int> tailSeg2ClusterMap;						  // segment ID -> the cluster in which the segment tail is located
 
-		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label
-		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label
-		boost::container::flat_map<int, int> headSeg2ClusterMap;
-		boost::container::flat_map<int, int> tailSeg2ClusterMap;
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;
-
-		boost::container::flat_set<int> spikeRootIDs;
-		boost::container::flat_set<int> smoothedNodeIDs;
+		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
+		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);

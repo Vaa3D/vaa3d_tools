@@ -51,8 +51,9 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			newSeg.head = nodeIt->n;
 			newSeg.nodes.push_back(*nodeIt);
 			vector<size_t> childLocs = node2childLocMap.find(nodeIt->n)->second;
-				// In NeuronStructUtilities::node2loc_node2childLocMap, 
-				// if a segment is only with a head, its childLocs will also be assigned as empty set.
+			
+			// In NeuronStructUtilities::node2loc_node2childLocMap, 
+			// if a segment is only with a head, its childLocs will also be assigned as empty set.
 			if (childLocs.empty()) 
 			{
 				newSeg.tails.push_back(nodeIt->n);

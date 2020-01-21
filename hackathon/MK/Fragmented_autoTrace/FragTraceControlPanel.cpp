@@ -464,6 +464,9 @@ void FragTraceControlPanel::eraseButtonClicked()
 		//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\test.swc", this->localTree);
 		this->CViewerPortal->setEraserSize(0);
 		this->CViewerPortal->segEditing_setCursor("erase");
+		NeuronTree originalTree;
+		this->CViewerPortal->getOriginalNeuronTree(originalTree);
+		this->fragEditorPtr->originalTree = originalTree;
 	}
 	else
 	{
@@ -960,10 +963,10 @@ void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& sel
 	}
 }
 
-void FragTraceControlPanel::eraserSegProcess(const vector<V_NeuronSWC>& currSegDisplay, const float nodeCoords[])
+void FragTraceControlPanel::eraserSegProcess(const NeuronTree* inputTreePtr, const float nodeCoords[], map<int, set<int>>& seg2Bedited)
 {
-	this->fragEditorPtr->inputV_NeuronSWCs = currSegDisplay;
-	this->fragEditorPtr->erasingProcess(nodeCoords);
+	this->fragEditorPtr->inputTreePtr = inputTreePtr;
+	seg2Bedited = this->fragEditorPtr->erasingProcess(nodeCoords);
 }
 
 void FragTraceControlPanel::fillUpParamsForm()
