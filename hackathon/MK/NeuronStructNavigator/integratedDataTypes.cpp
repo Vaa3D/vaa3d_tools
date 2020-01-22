@@ -26,6 +26,38 @@
 
 using namespace std;
 
+integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC) : to_be_deleted(false)
+{
+	for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+	{
+		NeuronSWC node;
+		node.n = nodeIt->n;
+		node.x = nodeIt->x;
+		node.y = nodeIt->y;
+		node.z = nodeIt->z;
+		node.type = nodeIt->type;
+		node.parent = nodeIt->parent;
+		this->nodes.push_front(node);
+	}
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+
+	this->head = this->nodes.begin()->n;
+	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end()) this->tails.push_back(nodeIt->n);
+	
+	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
+}
+
+integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false)
+{
+	this->nodes = inputSeg;
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+
+	this->head = this->nodes.begin()->n;
+	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end()) this->tails.push_back(nodeIt->n);
+}
+
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
 {
 	this->getSegDistance(connOrt);
@@ -130,6 +162,8 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 
 	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
 	//cout << "segs num: " << this->segs.size() << endl;
+
+	NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
 	
 	vector<segUnit> allSegs;
 	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
@@ -139,21 +173,6 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 	}
 	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
 	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
-}
-
-void integratedDataTypes::profiledTree::generateNodeID2segIDMap()
-{
-	if (this->tree.listNeuron.isEmpty() || this->segs.empty())
-	{
-		cerr << "This profiledTree is not yet initialized. Do nothing and return." << endl;
-		return;
-	}
-
-	for (map<int, segUnit>::iterator segIt = this->segs.begin(); segIt != this->segs.end(); ++segIt)
-	{
-		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
-			this->node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
-	}
 }
 
 void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)

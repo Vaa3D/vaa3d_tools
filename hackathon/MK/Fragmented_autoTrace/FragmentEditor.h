@@ -5,7 +5,9 @@
 
 #include <v3d_interface.h>
 
-#include "integratedDataTypes.h"
+#ifndef Q_MOC_RUN
+#include "NeuronStructUtilities.h"
+#endif
 
 using namespace std;
 
@@ -18,7 +20,10 @@ public:
 
 	const NeuronTree* inputTreePtr;
 	NeuronTree originalTree;
-	map<int, set<int>> erasingProcess(const float nodeCoords[]);
+	vector<V_NeuronSWC> inputSegList;
+	map<int, segUnit> segMap;
+	boost::container::flat_multimap<int, int> node2segMap;
+	map<int, set<int>> erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
 
 private:
 	V3DPluginCallback2* thisCallback;

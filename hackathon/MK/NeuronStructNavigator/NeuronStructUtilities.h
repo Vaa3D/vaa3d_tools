@@ -125,6 +125,9 @@ public:
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	
+	// Node - segment profiling functions
+	static inline void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
 	/**************************************************************************/
 
 
@@ -462,6 +465,15 @@ inline void NeuronStructUtil::nodeTileMapGen(const QList<NeuronSWC>& inputNodeLi
 			newSet.push_back(*it);
 			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
 		}
+	}
+}
+
+inline void NeuronStructUtil::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
 	}
 }
 

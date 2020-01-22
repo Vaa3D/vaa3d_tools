@@ -93,6 +93,7 @@ namespace integratedDataTypes
 	{
 		segUnit() : to_be_deleted(false) {};
 		segUnit(const QList<NeuronSWC>& inputSeg);
+		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 		//segUnit(const segUnit& sourceSegUnit) {};
 
 		int segID;
@@ -154,7 +155,6 @@ namespace integratedDataTypes
 		boost::container::flat_multimap<int, int> node2segMap; // node ID -> seg ID
 		map<string, vector<int>> segHeadMap;				   // tile label -> seg ID
 		map<string, vector<int>> segTailMap;				   // tile label -> seg ID
-		void generateNodeID2segIDMap();
 
 		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
 		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster

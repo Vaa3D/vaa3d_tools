@@ -45,7 +45,7 @@ public:
 	virtual bool markerMonitorStatus() { return this->uiPtr->groupBox_15->isChecked(); }
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
 
-	virtual void eraserSegProcess(const NeuronTree* inputTreePtr, const float nodeCoords[], map<int, set<int>>& seg2Bedited);
+	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[], map<int, set<int>>& seg2Bedited);
 	/* ============================================= */
 
 

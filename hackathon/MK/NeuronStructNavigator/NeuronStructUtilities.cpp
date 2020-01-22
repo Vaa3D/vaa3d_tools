@@ -485,6 +485,11 @@ void NeuronStructUtil::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC
 
 
 
+/* ====================================== Neuron Struct Profiling Methods ====================================== */
+/* ================================= END of [Neuron Struct Profiling Methods] ================================== */
+
+
+
 /* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
 vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree& inputTree)
 {
