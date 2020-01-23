@@ -467,6 +467,8 @@ void FragTraceControlPanel::eraseButtonClicked()
 		NeuronTree originalTree;
 		this->CViewerPortal->getOriginalNeuronTree(originalTree);
 		this->fragEditorPtr->originalTree = originalTree;
+		this->fragEditorPtr->segMap.clear();
+		this->fragEditorPtr->node2segMap.clear();
 	}
 	else
 	{

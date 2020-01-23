@@ -21,6 +21,7 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 				if (it->parent > -1) it->parent += nodeCount;
 			}
 			this->segMap.insert({ convertedSegUnit.segID, convertedSegUnit });
+			cout << " -- new segment added: ID(" << convertedSegUnit.segID << ") size(" << convertedSegUnit.nodes.size() << ") " << endl;
 			nodeCount += convertedSegUnit.nodes.size();
 		}
 	}
@@ -44,12 +45,13 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 	map<int, set<int>> outputEditingSegInfo;
 	if (nodeTileMap.find(centralTileKey) != nodeTileMap.end())
 	{
+		cout << endl;
 		vector<int> centralTileNodes = nodeTileMap.at(centralTileKey);
 		for (vector<int>::iterator it = centralTileNodes.begin(); it != centralTileNodes.end(); ++it)
 		{
 			if ((currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) +
-				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) <= 100)
+				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * zRATIO * zRATIO <= 25)
 			{
 				if (outputEditingSegInfo.find(this->node2segMap.find(*it)->second) == outputEditingSegInfo.end())
 				{
@@ -60,6 +62,16 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 				else outputEditingSegInfo.at(this->node2segMap.find(*it)->second).insert(*it);
 			}
 		}
+	}
+
+	for (map<int, set<int>>::iterator it = outputEditingSegInfo.begin(); it != outputEditingSegInfo.end(); ++it)
+	{
+		cout << " -- segment to be deleted: ID(" << it->first << ") size(" << this->segMap.at(it->first).nodes.size() << ")" << endl;
+		for (set<int>::iterator nodeIt = it->second.begin(); nodeIt != it->second.end(); ++nodeIt)
+			cout << "    -- node coords: x(" << currentTree.listNeuron.at(node2LocMap.at(*nodeIt)).x << ") y("
+											 << currentTree.listNeuron.at(node2LocMap.at(*nodeIt)).y << ") z("
+											 << currentTree.listNeuron.at(node2LocMap.at(*nodeIt)).z << ")" << endl;
+		cout << endl;
 	}
 
 	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
@@ -75,9 +87,9 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 		vector<ptrdiff_t> delLocs;
 		for (set<int>::const_iterator nodeIt = editIt->second.begin(); nodeIt != editIt->second.end(); ++nodeIt)
 		{
-			for (vector<size_t>::iterator tailIt = targetSegUnit.seg_childLocMap.at(*nodeIt).begin(); tailIt != targetSegUnit.seg_childLocMap.at(*nodeIt).end(); ++tailIt)
+			for (vector<size_t>::iterator childIt = targetSegUnit.seg_childLocMap.at(*nodeIt).begin(); childIt != targetSegUnit.seg_childLocMap.at(*nodeIt).end(); ++childIt)
 			{
-				targetSegUnit.nodes[*tailIt].parent = -1;
+				targetSegUnit.nodes[*childIt].parent = -1;
 				delLocs.push_back(targetSegUnit.seg_nodeLocMap.at(*nodeIt));
 			}
 		}
@@ -85,8 +97,26 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 		for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
 			targetSegUnit.nodes.erase(targetSegUnit.nodes.begin() + *delIt);
 
-		segUnit trimmedSegUnit(targetSegUnit.nodes);
-		V_NeuronSWC newV_NeuronSWC = trimmedSegUnit.convert2V_NeuronSWC();
-		displayingSegs.seg.push_back(newV_NeuronSWC);
+		map<int, size_t> node2LocMap;
+		map<int, vector<size_t>> node2childLocMap;
+		NeuronStructUtil::node2loc_node2childLocMap(targetSegUnit.nodes, node2LocMap, node2childLocMap);
+		vector<QList<NeuronSWC>> nodeLists;
+		QList<NeuronSWC> nodeList;
+		for (QList<NeuronSWC>::iterator it = targetSegUnit.nodes.begin(); it != targetSegUnit.nodes.end(); ++it)
+		{
+			nodeList.push_back(*it);
+			if (node2childLocMap.find(it->n) == node2childLocMap.end())
+			{
+				nodeLists.push_back(nodeList);
+				nodeList.clear();
+			}
+		}
+
+		for (vector<QList<NeuronSWC>>::iterator listIt = nodeLists.begin(); listIt != nodeLists.end(); ++listIt)
+		{
+			segUnit trimmedSegUnit(*listIt);
+			V_NeuronSWC newV_NeuronSWC = trimmedSegUnit.convert2V_NeuronSWC();
+			displayingSegs.seg.push_back(newV_NeuronSWC);
+		}
 	}
 }
