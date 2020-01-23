@@ -43,7 +43,14 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC) : to_
 
 	this->head = this->nodes.begin()->n;
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
-		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end()) this->tails.push_back(nodeIt->n);
+	{
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
+		{
+			this->tails.push_back(nodeIt->n);
+			vector<size_t> emptyTailSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+		}
+	}
 	
 	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
 }
@@ -55,7 +62,58 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 
 	this->head = this->nodes.begin()->n;
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
-		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end()) this->tails.push_back(nodeIt->n);
+	{
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
+		{
+			this->tails.push_back(nodeIt->n);
+			vector<size_t> emptyTailSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+		}
+	}
+}
+
+V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC()
+{
+	V_NeuronSWC outputV_NeuronSWC;
+	outputV_NeuronSWC.to_be_deleted = this->to_be_deleted;
+	int paNodeID = this->head;
+	this->rc_nodeRegister2V_NeuronSWC(outputV_NeuronSWC, paNodeID, paNodeID);
+
+	return outputV_NeuronSWC;
+}
+
+void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID)
+{
+	int currentPaID = parentID;
+	while (1)
+	{
+		V_NeuronSWC_unit newNodeV;
+		newNodeV.n = this->nodes.size() - sbjV_NeuronSWC.row.size();
+		newNodeV.x = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).x;
+		newNodeV.y = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).y;
+		newNodeV.z = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).z;
+		newNodeV.type = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).type;		
+		newNodeV.seg_id = this->segID;		
+
+		if (this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent == -1) newNodeV.parent = -1;
+		else
+		{
+			if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() > 1)
+				newNodeV.parent = branchRootID;
+			else if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() == 1)
+				newNodeV.parent = newNodeV.n + 1;
+		}
+		sbjV_NeuronSWC.row.insert(sbjV_NeuronSWC.row.begin(), newNodeV);
+
+		if (this->seg_childLocMap.at(currentPaID).size() == 1) currentPaID = this->nodes.at(*this->seg_childLocMap.at(currentPaID).begin()).n;
+		else if (this->seg_childLocMap.at(currentPaID).size() == 0) return;
+		else if (this->seg_childLocMap.at(currentPaID).size() > 1)
+		{
+			for (vector<size_t>::iterator tailsIt = this->seg_childLocMap.at(currentPaID).begin(); tailsIt != this->seg_childLocMap.at(currentPaID).end(); ++tailsIt)
+				this->rc_nodeRegister2V_NeuronSWC(sbjV_NeuronSWC, this->nodes.at(*tailsIt).n, newNodeV.n);
+			return;
+		}	
+	}
 }
 
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
