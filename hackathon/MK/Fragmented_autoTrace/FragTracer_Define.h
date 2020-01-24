@@ -15,5 +15,7 @@
 //#define __DENDRITE_TREEFORMING_PERIPHERALSIGNAL_DEBUG__
 #define __AXON_TREEFORMING_DEBUG__
 
+//#define __ERASER_DEBUG__
+
 
 #endif

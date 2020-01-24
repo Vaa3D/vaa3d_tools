@@ -57,6 +57,21 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 		if (this->UIinstancePtr != nullptr)
 		{
 			string inputParam = input.at(1).type.toStdString();
+			
+			if (!inputParam.compare("shift_e"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+					this->UIinstancePtr->eraseButtonClicked();
+				}
+				else if (!this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(true);
+					this->UIinstancePtr->eraseButtonClicked();
+				}
+			}
+
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
 		//QString inputParamQ = inparas.at(0);

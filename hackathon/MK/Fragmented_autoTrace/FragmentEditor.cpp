@@ -1,3 +1,4 @@
+#include "FragTracer_Define.h"
 #include "FragmentEditor.h"
 
 using namespace std;
@@ -21,10 +22,18 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 				if (it->parent > -1) it->parent += nodeCount;
 			}
 			this->segMap.insert({ convertedSegUnit.segID, convertedSegUnit });
-			cout << " -- new segment added: ID(" << convertedSegUnit.segID << ") size(" << convertedSegUnit.nodes.size() << ") " << endl;
+			//cout << " -- new segment added: ID(" << convertedSegUnit.segID << ") size(" << convertedSegUnit.nodes.size() << ") " << endl;
 			nodeCount += convertedSegUnit.nodes.size();
 		}
 	}
+
+#ifdef __ERASER_DEBUG__
+	for (map<int, segUnit>::iterator it = this->segMap.begin(); it != this->segMap.end(); ++it)
+	{
+		cout << "ID(" << it->first << ") " << it->second.to_be_deleted << " size(" << it->second.nodes.size() << ") -- ";
+		cout << "ID(" << it->first << ") " << displayingSegs.seg.at(it->first).to_be_deleted << " size(" << displayingSegs.seg.at(it->first).row.size() << ")" << endl;
+	}
+#endif
 
 	NeuronTree currentTree;
 	for (map<int, segUnit>::iterator segMapIt = this->segMap.begin(); segMapIt != this->segMap.end(); ++segMapIt)
@@ -51,13 +60,14 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 		{
 			if ((currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) +
-				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * zRATIO * zRATIO <= 25)
+				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * zRATIO * zRATIO <= 64)
 			{
 				if (outputEditingSegInfo.find(this->node2segMap.find(*it)->second) == outputEditingSegInfo.end())
 				{
 					set<int> newSet;
 					newSet.insert(*it);
 					outputEditingSegInfo.insert({ this->node2segMap.find(*it)->second, newSet });
+					this->segMap[this->node2segMap.find(*it)->second].to_be_deleted = true;
 				}
 				else outputEditingSegInfo.at(this->node2segMap.find(*it)->second).insert(*it);
 			}
@@ -66,6 +76,7 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 
 	for (map<int, set<int>>::iterator it = outputEditingSegInfo.begin(); it != outputEditingSegInfo.end(); ++it)
 	{
+		displayingSegs.seg[it->first].to_be_deleted = true;
 		cout << " -- segment to be deleted: ID(" << it->first << ") size(" << this->segMap.at(it->first).nodes.size() << ")" << endl;
 		for (set<int>::iterator nodeIt = it->second.begin(); nodeIt != it->second.end(); ++nodeIt)
 			cout << "    -- node coords: x(" << currentTree.listNeuron.at(node2LocMap.at(*nodeIt)).x << ") y("
