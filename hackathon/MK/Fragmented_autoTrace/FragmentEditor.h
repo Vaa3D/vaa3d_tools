@@ -18,12 +18,10 @@ class FragmentEditor : public QWidget
 public:
 	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : thisCallback(callback) {};
 
-	const NeuronTree* inputTreePtr;
-	NeuronTree originalTree;
 	vector<V_NeuronSWC> inputSegList;
 	map<int, segUnit> segMap;
 	boost::container::flat_multimap<int, int> node2segMap;
-	map<int, set<int>> erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
+	void erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
 
 private:
 	V3DPluginCallback2* thisCallback;

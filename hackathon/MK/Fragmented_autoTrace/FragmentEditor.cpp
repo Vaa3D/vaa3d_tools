@@ -4,7 +4,7 @@
 using namespace std;
 using namespace integratedDataTypes;
 
-map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
 {
 	int nodeCount = 0;
 	for (map<int, segUnit>::iterator countIt = this->segMap.begin(); countIt != this->segMap.end(); ++countIt)
@@ -87,7 +87,7 @@ map<int, set<int>> FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSe
 
 	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
 
-	return outputEditingSegInfo;
+	//return outputEditingSegInfo;
 }
 
 void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& seg2BeditedInfo)
