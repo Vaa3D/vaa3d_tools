@@ -39,7 +39,7 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	for (map<int, segUnit>::iterator segMapIt = this->segMap.begin(); segMapIt != this->segMap.end(); ++segMapIt)
 		if (!segMapIt->second.to_be_deleted) currentTree.listNeuron.append(segMapIt->second.nodes);
 	NeuronStructUtil::nodeSegMapGen(this->segMap, this->node2segMap);
-	cout << currentTree.listNeuron.size() << " " << this->segMap.size() << " " << displayingSegs.seg.size() << endl;
+	//cout << currentTree.listNeuron.size() << " " << this->segMap.size() << " " << displayingSegs.seg.size() << endl;
 
 	boost::container::flat_map<string, vector<int>> nodeTileMap;
 	NeuronStructUtil::nodeTileMapGen(currentTree, nodeTileMap);
@@ -58,6 +58,12 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 		vector<int> centralTileNodes = nodeTileMap.at(centralTileKey);
 		for (vector<int>::iterator it = centralTileNodes.begin(); it != centralTileNodes.end(); ++it)
 		{
+			float localCoords[3], windowCoords[3];
+			localCoords[0] = currentTree.listNeuron.at(node2LocMap.at(*it)).x;
+			localCoords[1] = currentTree.listNeuron.at(node2LocMap.at(*it)).y;
+			localCoords[2] = currentTree.listNeuron.at(node2LocMap.at(*it)).z;
+			thisCallback->castCViewer->convertLocalCoord2windowCoord(localCoords, windowCoords);
+			cout << " --- converted window coords: " << windowCoords[0] << " " << windowCoords[1] << " " << windowCoords[2] << endl;
 			if ((currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * zRATIO * zRATIO <= 64)

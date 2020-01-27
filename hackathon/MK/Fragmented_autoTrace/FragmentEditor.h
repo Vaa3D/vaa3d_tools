@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <v3d_interface.h>
+#include "INeuronAssembler.h"
 
 #ifndef Q_MOC_RUN
 #include "NeuronStructUtilities.h"
