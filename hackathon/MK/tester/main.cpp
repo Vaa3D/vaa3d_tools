@@ -20,7 +20,7 @@
 #include "integratedDataTypes.h"
 #include "TreeGrower.h"
 
-#include "C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
+#include "..\..\..\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
 
 using namespace std;
 using namespace boost;

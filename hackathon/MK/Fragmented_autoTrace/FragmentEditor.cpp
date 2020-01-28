@@ -115,7 +115,10 @@ float FragmentEditor::getErasingRange(const int teraflyResLevel, const int zoomL
 
 			break;
 		case 2:
-			//outputRange = float((eraserSize + 5 - (zoomLevel / 4) * 2) * (eraserSize + 5 - (zoomLevel / 4) * 2));
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2));
+			else
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2));
 			break;
 		case 3:
 
@@ -131,11 +134,11 @@ float FragmentEditor::getErasingRange(const int teraflyResLevel, const int zoomL
 
 
 
-	if (eraserSize == 0) return 4;
-	else if (eraserSize == 1) return 9;
-	else if (eraserSize == 2) return 16;
-	else if (eraserSize == 3) return 25;
-	else if (eraserSize == -1) return 1;
+	if (eraserSize == 0) return 9;
+	else if (eraserSize == 1) return 16;
+	else if (eraserSize == 2) return 25;
+	else if (eraserSize == 3) return 36;
+	else if (eraserSize == -1) return 4;
 	else if (eraserSize == -2) return 1;
 
 	//return outputRange;
