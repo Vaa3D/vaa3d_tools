@@ -74,9 +74,6 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
-		//QString inputParamQ = inparas.at(0);
-		//string inputParam = inputParamQ.toStdString();
-		//cout << inputParam << endl;
 	}
 	else if (func_name == tr("mouse_click"))
 	{

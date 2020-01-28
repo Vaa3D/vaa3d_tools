@@ -20,7 +20,7 @@
 #include "integratedDataTypes.h"
 #include "TreeGrower.h"
 
-#include "D:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
+#include "C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
 
 using namespace std;
 using namespace boost;
@@ -28,18 +28,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "sharpAngleSmooth";
+	//string funcName = "sharpAngleSmooth";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -175,7 +175,8 @@ int main(int argc, char* argv[])
 		float density = stof(paras.at(4));
 		vector<float> originVec = { originX, originY, originZ };
 
-		NeuronTree sphere = NeuronStructUtil::sphereRandNodes(radius, originX, originY, originZ, density);
+		NeuronTree sphere = NeuronStructUtil::circleRandNodes(radius, originX, originY, originZ, density);
+		writeSWC_file(QString::fromStdString(paras.at(6)), sphere);
 		SWCtester mySWCtester;
 		QList<NeuronSWC> outputList = mySWCtester.polarCoordShellPeeling(sphere.listNeuron, originVec, radius);
 		NeuronTree outputTree;

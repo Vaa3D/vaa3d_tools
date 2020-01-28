@@ -152,7 +152,9 @@ public:
 
 	// Generates a spherical root node cluster with specified origin, radius, and node density.
 	// The total amount of nodes = (4 / 3) * PI * radius^3 * density.
-	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
+	static inline NeuronTree sphereRandNodes(const float radius, const float centerX, const float centerY, const float centerZ, const float density);
+
+	static inline NeuronTree circleRandNodes(const float radius, const float centerX, const float centerY, const float centerZ, const float density);
 
 	// Generates multiple root node clusters with specified origin, radius, and node density.
 	// Each cluster center is separated by stepX, stepY, and stepZ. xRange, yRange, and zRange specify the space range.
@@ -570,6 +572,35 @@ inline NeuronTree NeuronStructUtil::sphereRandNodes(float radius, float centerX,
 		++nodeCount;
 	}
 	
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::circleRandNodes(const float radius, const float centerX, const float centerY, const float centerZ, const float density)
+{
+	int targetNum = int(PI_MK * radius * radius * density);
+	int nodeCount = 1;
+	NeuronTree outputTree;
+	while (nodeCount <= targetNum)
+	{
+		float randomX = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerX - radius);
+		float randomY = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerY - radius);
+		float randomZ = centerZ;
+
+		float dist = sqrtf((randomX - centerX) * (randomX - centerX) + (randomY - centerY) * (randomY - centerY));
+		if (dist > radius) continue;
+
+		NeuronSWC newNode;
+		newNode.n = nodeCount;
+		newNode.x = randomX;
+		newNode.y = randomY;
+		newNode.z = centerZ;
+		newNode.type = 2;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+
+		++nodeCount;
+	}
+
 	return outputTree;
 }
 
