@@ -28,7 +28,7 @@ private:
 	V3DPluginCallback2* thisCallback;
 	INeuronAssembler* CViewerPortal;
 
-	float getErasingRange(const int teraflyResLevel, const int zoomLevel, const int eraserSize);
+	float getErasingRange(const int teraflyResPow, const int zoomLevel, const int eraserSize);
 	void erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& seg2BeditedInfo);
 };
 

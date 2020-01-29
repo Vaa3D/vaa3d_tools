@@ -38,7 +38,7 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	NeuronTree currentTree;
 	for (map<int, segUnit>::iterator segMapIt = this->segMap.begin(); segMapIt != this->segMap.end(); ++segMapIt)
 		if (!segMapIt->second.to_be_deleted) currentTree.listNeuron.append(segMapIt->second.nodes);
-	NeuronStructUtil::nodeSegMapGen(this->segMap, this->node2segMap);
+	NeuronStructUtil::nodeSegMapGen(this->segMap, this->node2segMap); // It might need to be optimized later, slow after several clicks in the same erasing cycle.
 	//cout << currentTree.listNeuron.size() << " " << this->segMap.size() << " " << displayingSegs.seg.size() << endl;
 
 	boost::container::flat_map<string, vector<int>> nodeTileMap;
@@ -54,9 +54,10 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	map<int, set<int>> outputEditingSegInfo;
 	if (nodeTileMap.find(centralTileKey) != nodeTileMap.end())
 	{
-		cout << "Res(" << CViewerPortal->getTeraflyResLevel() << ") Zoom(" << CViewerPortal->getZoomingFactor() << ") EraserSize(" << CViewerPortal->getEraserSize() << ")" << endl;
+		int currResLevel = this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel();
+		cout << "Res(" << currResLevel << ") Zoom(" << CViewerPortal->getZoomingFactor() << ") EraserSize(" << CViewerPortal->getEraserSize() << ")" << endl;
 		cout << endl;
-		float eraseRange = this->getErasingRange(CViewerPortal->getTeraflyResLevel(), CViewerPortal->getZoomingFactor(), CViewerPortal->getEraserSize());
+		float eraseRange = this->getErasingRange(currResLevel, CViewerPortal->getZoomingFactor(), CViewerPortal->getEraserSize());
 		cout << "  ---- RANGE = " << eraseRange << endl;
 		
 		vector<int> centralTileNodes = nodeTileMap.at(centralTileKey);
@@ -102,46 +103,51 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	//return outputEditingSegInfo;
 }
 
-float FragmentEditor::getErasingRange(const int teraflyResLevel, const int zoomLevel, const int eraserSize)
+float FragmentEditor::getErasingRange(const int teraflyResPow, const int zoomLevel, const int eraserSize)
 {
 	float outputRange;
 	float zoomLevelFloat = zoomLevel;
-	switch (teraflyResLevel)
+	switch (teraflyResPow)
 	{
 		case 0:
-
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2)) / 1.4;
+			else
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4)) * 1.2;
 			break;
 		case 1:
-
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2)) / 1.6;
+			else
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4)) * 1.2;
 			break;
 		case 2:
 			if (zoomLevel <= 0)
 				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2));
 			else
-				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2));
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4)) * 2;
 			break;
 		case 3:
-
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2)) / 2;
+			else
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4));
 			break;
 		case 4:
-
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2)) / 4;
+			else
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4)) * 0.6;
 			break;
 		case 5:
-
+			if (zoomLevel <= 0)
+				outputRange = float((eraserSize + 6 - (zoomLevelFloat / 4) * 2) * (eraserSize + 6 - (zoomLevelFloat / 4) * 2)) / 8;
+			else
+				outputRange = float((1.25 * zoomLevelFloat + 0.5 * eraserSize) * (1.25 * zoomLevelFloat + 0.5 * eraserSize)) / ((zoomLevelFloat / 4) * (zoomLevelFloat / 4) * (zoomLevelFloat / 4)) * 0.5;
 			break;
 	}
 
-
-
-
-	if (eraserSize == 0) return 9;
-	else if (eraserSize == 1) return 16;
-	else if (eraserSize == 2) return 25;
-	else if (eraserSize == 3) return 36;
-	else if (eraserSize == -1) return 4;
-	else if (eraserSize == -2) return 1;
-
-	//return outputRange;
+	return outputRange;
 }
 
 void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& seg2BeditedInfo)
