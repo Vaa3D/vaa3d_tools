@@ -6,6 +6,7 @@
 #include "INeuronAssembler.h"
 #include "IPMain4NeuronAssembler.h"
 
+#include "FragTracer_Define.h"
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
 #include "FragmentEditor.h"
@@ -40,7 +41,7 @@ public:
 	vector<string> blankAreas; // will be abandoned
 
 	/* ======= Terafly Communicating Methods ======= */
-	virtual void getNAVersionNum(); 
+	virtual void getNAVersionNum();
 	
 	virtual bool markerMonitorStatus() { return this->uiPtr->groupBox_15->isChecked(); }
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);

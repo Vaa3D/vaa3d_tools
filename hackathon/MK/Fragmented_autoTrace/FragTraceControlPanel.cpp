@@ -11,7 +11,6 @@
 #include <qtimer.h>
 
 #include "FragTraceControlPanel.h"
-#include "FragTracer_Define.h"
 
 using namespace std;
 
@@ -944,6 +943,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 }
 /* ================ END of [Result and Scaling Functions] ================ */
 
+/* =================== Terafly Communicating Methods =================== */
 void FragTraceControlPanel::getNAVersionNum()
 {
 	cout << endl << endl << "  --- Neuron Assembler: v" << MAINVERSION_NUM << "." << SUBVERSION_NUM << "." << PATCHVERSION_NUM << endl << endl;
@@ -967,6 +967,7 @@ void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, c
 {
 	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords, mouseX, mouseY);
 }
+/* =============== END of [Terafly Communicating Methods] =============== */
 
 void FragTraceControlPanel::fillUpParamsForm()
 {

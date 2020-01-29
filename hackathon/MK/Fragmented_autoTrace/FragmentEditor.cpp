@@ -55,7 +55,7 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	if (nodeTileMap.find(centralTileKey) != nodeTileMap.end())
 	{
 		int currResLevel = this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel();
-		cout << "Res(" << currResLevel << ") Zoom(" << CViewerPortal->getZoomingFactor() << ") EraserSize(" << CViewerPortal->getEraserSize() << ")" << endl;
+		cout << "ResDownsamplePow(" << currResLevel << ") Zoom(" << CViewerPortal->getZoomingFactor() << ") EraserSize(" << CViewerPortal->getEraserSize() << ")" << endl;
 		cout << endl;
 		float eraseRange = this->getErasingRange(currResLevel, CViewerPortal->getZoomingFactor(), CViewerPortal->getEraserSize());
 		cout << "  ---- RANGE = " << eraseRange << endl;
@@ -67,13 +67,10 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 			localCoords[0] = currentTree.listNeuron.at(node2LocMap.at(*it)).x;
 			localCoords[1] = currentTree.listNeuron.at(node2LocMap.at(*it)).y;
 			localCoords[2] = currentTree.listNeuron.at(node2LocMap.at(*it)).z;
-			CViewerPortal->convertLocalCoord2windowCoord(localCoords, windowCoords);
-			//cout << " --- converted window coords: " << windowCoords[0] << " " << windowCoords[1] << endl;
 			
 			if ((currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).x - nodeCoords[0]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).y - nodeCoords[1]) +
 				(currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * (currentTree.listNeuron.at(node2LocMap.at(*it)).z - nodeCoords[2]) * zRATIO * zRATIO <= eraseRange)
-			//if (sqrtf((float(mouseX) - windowCoords[0]) * (float(mouseX) - windowCoords[0]) + (float(mouseY) - windowCoords[1]) * (float(mouseY) - windowCoords[1])) <= 35)
 			{
 				if (outputEditingSegInfo.find(this->node2segMap.find(*it)->second) == outputEditingSegInfo.end())
 				{
@@ -99,8 +96,6 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const floa
 	}
 
 	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
-
-	//return outputEditingSegInfo;
 }
 
 float FragmentEditor::getErasingRange(const int teraflyResPow, const int zoomLevel, const int eraserSize)

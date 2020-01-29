@@ -34,6 +34,7 @@ using namespace integratedDataStructures;
 class ImgProcessor 
 {
 public:
+	ImgProcessor() = default;
 	virtual ~ImgProcessor() = default;
 
 	/***************** Basic Image Operations *****************/
