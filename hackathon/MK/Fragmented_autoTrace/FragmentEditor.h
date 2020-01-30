@@ -19,6 +19,8 @@ class FragmentEditor : public QWidget
 public:
 	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : thisCallback(callback), CViewerPortal(callback->castCViewer) {};
 
+	void updateCViewerPortal() { this->CViewerPortal = thisCallback->castCViewer; }
+
 	vector<V_NeuronSWC> inputSegList;
 	map<int, segUnit> segMap;
 	boost::container::flat_multimap<int, int> node2segMap;

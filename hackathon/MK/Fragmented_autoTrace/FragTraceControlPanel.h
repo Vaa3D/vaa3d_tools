@@ -17,6 +17,7 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 	Q_INTERFACES(IPMain4NeuronAssembler)
 
 	friend class FragmentedAutoTracePlugin;
+	//friend class CViewer;
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
@@ -42,7 +43,9 @@ public:
 
 	/* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum();
-	
+
+	virtual void updateCViewerPortal();
+
 	virtual bool markerMonitorStatus() { return this->uiPtr->groupBox_15->isChecked(); }
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
 

@@ -612,7 +612,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	// This method prepares the image data for FragTraceManager to trace.
 	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
 
-	this->volumeAdjusted = CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
+	this->volumeAdjusted = this->CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
 	cout << " -- Displaying image local coords: x(" << volumeAdjustedCoords[0] << "-" << volumeAdjustedCoords[1] << ") y(" << volumeAdjustedCoords[2] << "-" << volumeAdjustedCoords[3] << ") z(" << volumeAdjustedCoords[4] << "-" << volumeAdjustedCoords[5] << ")" << endl;
 	cout << " -- Whole image block dimension: " << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
@@ -947,6 +947,12 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 void FragTraceControlPanel::getNAVersionNum()
 {
 	cout << endl << endl << "  --- Neuron Assembler: v" << MAINVERSION_NUM << "." << SUBVERSION_NUM << "." << PATCHVERSION_NUM << endl << endl;
+}
+
+void FragTraceControlPanel::updateCViewerPortal()
+{
+	this->CViewerPortal = this->thisCallback->castCViewer;
+	this->fragEditorPtr->updateCViewerPortal();
 }
 
 void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList)
