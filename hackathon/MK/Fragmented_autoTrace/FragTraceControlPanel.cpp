@@ -18,9 +18,12 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 {
 	// ------- CViewer instance acquisition ------- //
 	this->CViewerPortal = thisCallback->castCViewer;
-	this->CViewerPortal->changeFragTraceStatus(true);
-	this->CViewerPortal->editingModeInit();
-	this->CViewerPortal->sendCastNAUI2PMain(this);
+	if (this->CViewerPortal != nullptr)
+	{
+		this->CViewerPortal->changeFragTraceStatus(true);
+		this->CViewerPortal->editingModeInit();
+		this->CViewerPortal->sendCastNAUI2PMain(this);
+	}
 	// -------------------------------------------- //
 
 	// ------- Initialization ------- //
@@ -52,19 +55,16 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	{
 		uiPtr->checkBox->setChecked(true);
 		uiPtr->checkBox_2->setChecked(false);
-		uiPtr->checkBox_3->setChecked(false);
 	}
 	else if (callOldSettings.value("stack") == true)
 	{
 		uiPtr->checkBox->setChecked(false);
 		uiPtr->checkBox_2->setChecked(true);
-		uiPtr->checkBox_3->setChecked(false);
 	}
 	else if (callOldSettings.value("series") == true)
 	{
 		uiPtr->checkBox->setChecked(false);
 		uiPtr->checkBox_2->setChecked(false);
-		uiPtr->checkBox_3->setChecked(true);
 	}
 
 	if (callOldSettings.value("wholeBlock") == true)
@@ -193,17 +193,12 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 		if (checkBoxName == "checkBox")
 		{
 			uiPtr->checkBox_2->setChecked(false);
-			uiPtr->checkBox_3->setChecked(false);
+			uiPtr->pushButton_2->setEnabled(true);
 		}
 		else if (checkBoxName == "checkBox_2")
 		{
 			uiPtr->checkBox->setChecked(false);
-			uiPtr->checkBox_3->setChecked(false);
-		}
-		else if (checkBoxName == "checkBox_3")
-		{
-			uiPtr->checkBox->setChecked(false);
-			uiPtr->checkBox_2->setChecked(false);
+			uiPtr->pushButton_2->setEnabled(false);
 		}
 	}
 }
@@ -233,7 +228,31 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
 
-	if (checked) this->refreshSomaCoords();
+	if (checked)
+	{
+		if (uiPtr->checkBox->isChecked()) this->refreshSomaCoords();
+		else if (uiPtr->checkBox_2->isChecked())
+		{
+			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+			qDebug() << imageName;
+			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+			this->thisCallback->set3DViewerMarkerDetectorStatus(true, currMainWindow);
+			LandmarkList markList = this->thisCallback->getLandmark(currImgWindow);
+			for (QList<LocationSimple>::iterator it = markList.begin(); it != markList.end(); ++it)
+				cout << it->name << " " << it->x << " " << it->y << " " << it->z << endl;
+		}
+	}
+	else
+	{
+		if (uiPtr->checkBox_2->isChecked())
+		{
+			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+			this->thisCallback->set3DViewerMarkerDetectorStatus(false, currMainWindow);
+		}
+	}
 }
 
 void FragTraceControlPanel::refreshSomaCoords()
@@ -243,7 +262,13 @@ void FragTraceControlPanel::refreshSomaCoords()
 	this->somaDisplayNameMap.clear();
 	this->selectedMarkerList.clear();
 	this->selectedLocalMarkerList.clear();
-	this->CViewerPortal->refreshSelectedMarkers();
+
+	if (uiPtr->checkBox->isChecked())
+	{
+		if (this->CViewerPortal != nullptr) this->CViewerPortal->refreshSelectedMarkers();
+		else return;
+	}
+
 	this->updateMarkerMonitor();
 }
 
@@ -339,19 +364,11 @@ void FragTraceControlPanel::saveSettingsClicked()
 	{
 		settings.setValue("terafly", true);
 		settings.setValue("stack", false);
-		settings.setValue("series", false);
 	}
 	else if (uiPtr->checkBox_2->isChecked())
 	{
 		settings.setValue("terafly", false);
 		settings.setValue("stack", true);
-		settings.setValue("series", false);
-	}
-	else if (uiPtr->checkBox_3->isChecked())
-	{
-		settings.setValue("terafly", false);
-		settings.setValue("stack", false);
-		settings.setValue("series", true);
 	}
 
 	if (uiPtr->radioButton->isChecked())
