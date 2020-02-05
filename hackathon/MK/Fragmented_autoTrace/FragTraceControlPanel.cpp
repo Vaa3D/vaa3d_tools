@@ -268,6 +268,13 @@ void FragTraceControlPanel::refreshSomaCoords()
 		if (this->CViewerPortal != nullptr) this->CViewerPortal->refreshSelectedMarkers();
 		else return;
 	}
+	else if (uiPtr->checkBox_2->isChecked())
+	{
+		v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+		QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+		V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+		this->thisCallback->refreshSelectedMarkers(currMainWindow);
+	}
 
 	this->updateMarkerMonitor();
 }

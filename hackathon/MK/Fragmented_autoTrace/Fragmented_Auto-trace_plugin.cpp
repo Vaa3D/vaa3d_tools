@@ -75,6 +75,20 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
 	}
+	else if (func_name == tr("3DViewer_marker_click"))
+	{
+		v3dhandle currImgWindow = callback.currentImageWindow();
+		QString imageName = callback.getImageName(callback.currentImageWindow());
+		V3dR_MainWindow* currMainWindow = callback.find3DViewerByName(imageName);
+		QList<ImageMarker> currMarkerListFrom3Dviewer = callback.send3DviewerMarkerList(currMainWindow);
+
+		if (this->UIinstancePtr->selectedMarkerList != currMarkerListFrom3Dviewer)
+		{
+			this->UIinstancePtr->selectedMarkerList = currMarkerListFrom3Dviewer;
+			this->UIinstancePtr->selectedLocalMarkerList = currMarkerListFrom3Dviewer;
+			this->UIinstancePtr->updateMarkerMonitor();
+		}
+	}
 	else if (func_name == tr("mouse_click"))
 	{
 		if (this->UIinstancePtr != nullptr)
