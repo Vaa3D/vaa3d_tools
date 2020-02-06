@@ -97,6 +97,7 @@ private:
 
 
 	/* ======= Marker Detection ======= */
+	int surType;
 	QList<ImageMarker> updatedMarkerList;
 	QList<ImageMarker> selectedMarkerList;
 	QList<ImageMarker> selectedLocalMarkerList;

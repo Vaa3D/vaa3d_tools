@@ -235,12 +235,8 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 		{
 			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
 			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
-			qDebug() << imageName;
 			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
 			this->thisCallback->set3DViewerMarkerDetectorStatus(true, currMainWindow);
-			LandmarkList markList = this->thisCallback->getLandmark(currImgWindow);
-			for (QList<LocationSimple>::iterator it = markList.begin(); it != markList.end(); ++it)
-				cout << it->name << " " << it->x << " " << it->y << " " << it->z << endl;
 		}
 	}
 	else
@@ -824,7 +820,7 @@ void FragTraceControlPanel::updateMarkerMonitor()
 		{
 			it->selected = true;
 			it->on = false;
-			newMarkerMap.insert({ it->n, *it });
+			newMarkerMap.insert({ it->name.toInt(), *it });
 		}
 		oldMarkerMap = this->somaMap;
 
@@ -848,7 +844,16 @@ void FragTraceControlPanel::updateMarkerMonitor()
 			int markerGlobalX = int(markerIt->second.x);
 			int markerGlobalY = int(markerIt->second.y);
 			int markerGlobalZ = int(markerIt->second.z);
-			string displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+			string displayName;
+			if (uiPtr->checkBox->isChecked())
+				displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+			else if (uiPtr->checkBox_2->isChecked())
+			{
+				if (this->surType == 1)
+					displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				else if (this->surType == 5)
+					displayName = "point cloud " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+			}
 			this->somaDisplayNameMap.insert({ markerIt->first, displayName });
 			QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
 			QStandardItem* newItemPtr = new QStandardItem(displayNameQ);

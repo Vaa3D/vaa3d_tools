@@ -164,7 +164,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Image stack (*.tif, *.v3draw)</string>
+             <string>Image stack (basic 3D viewer)</string>
             </property>
            </widget>
           </widget>
@@ -253,7 +253,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -921,7 +921,7 @@
                  </font>
                 </property>
                 <property name="title">
-                 <string>Marker List / Multiple Dendritic Tracing</string>
+                 <string>Marker / Point Cloud Monitor</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
