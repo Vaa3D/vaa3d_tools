@@ -192,13 +192,19 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 	{
 		if (checkBoxName == "checkBox")
 		{
+			this->updateCViewerPortal();
 			uiPtr->checkBox_2->setChecked(false);
 			uiPtr->pushButton_2->setEnabled(true);
+			this->refreshSomaCoords();
+			uiPtr->groupBox_15->setChecked(false);
 		}
 		else if (checkBoxName == "checkBox_2")
 		{
+			this->CViewerPortal = nullptr;
 			uiPtr->checkBox->setChecked(false);
 			uiPtr->pushButton_2->setEnabled(false);
+			this->refreshSomaCoords();
+			uiPtr->groupBox_15->setChecked(false);
 		}
 	}
 }
@@ -236,6 +242,7 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
 			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
 			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+			this->thisCallback->sendQPluginLoaderPtrBack(currMainWindow, this->thisCallback->FragTracerQPluginPtr);		
 			this->thisCallback->set3DViewerMarkerDetectorStatus(true, currMainWindow);
 		}
 	}
