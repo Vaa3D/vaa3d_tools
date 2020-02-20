@@ -931,6 +931,19 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_14">
                  <item>
+                  <widget class="QRadioButton" name="radioButton_6">
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Trace connected axons indicated by markers</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QRadioButton" name="radioButton_5">
                    <property name="font">
                     <font>
@@ -939,7 +952,7 @@
                     </font>
                    </property>
                    <property name="text">
-                    <string>Trace dendritic areas with listed markers</string>
+                    <string>Trace dendritic areas with somas labeled by markers</string>
                    </property>
                   </widget>
                  </item>

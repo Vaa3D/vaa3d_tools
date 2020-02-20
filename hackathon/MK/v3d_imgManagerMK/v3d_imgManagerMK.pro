@@ -82,7 +82,6 @@ HEADERS += ./integratedDataStructures.h
 HEADERS += ./v3d_imgManagerMK_Define.h
 HEADERS += ./imgAnalyzer/ImgAnalyzer.h
 HEADERS += ./imgProcessor/ImgProcessor.h
-HEADERS += ../NeuronStructNavigator/NeuronStructUtilities.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h

@@ -3,7 +3,7 @@
 
 #define Main_Version_Num 1
 #define Sub_Version_Num 2
-#define Patch_Num 8
+#define Patch_Num 9
 
 //#define __SEGEND_CLUSTER_PRINTOUT__
 //#define __SEGEND_CLUSTER_DEBUG__

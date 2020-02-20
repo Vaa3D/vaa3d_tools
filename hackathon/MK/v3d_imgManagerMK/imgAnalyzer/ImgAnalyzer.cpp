@@ -48,8 +48,8 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 
 	}
 
-	/***************** testing block *****************/
-	/*V3DLONG mipDims[4];
+#ifdef MIP_DEBUG
+	V3DLONG mipDims[4];
 	mipDims[0] = dims[0];
 	mipDims[1] = dims[1];
 	mipDims[2] = 1;
@@ -57,7 +57,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 	string testSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testMIP.tif";
 	const char* testSaveNameC = testSaveName.c_str();
 	ImgManager::saveimage_wrapper(testSaveNameC, maxIP1D, mipDims, 1);*/
-	/************ END of [testing block] ************/
+#endif
 
 	// ------- END [Enter this selection block only when MIP image is not provided] -------
 

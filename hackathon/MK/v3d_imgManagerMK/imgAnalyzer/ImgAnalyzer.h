@@ -13,7 +13,7 @@
 using namespace std;
 using namespace integratedDataStructures;
 
-class ImgAnalyzer : public ImgProcessor
+class ImgAnalyzer
 {	
 public:
 	ImgAnalyzer() : blobMergingReport(false) {};

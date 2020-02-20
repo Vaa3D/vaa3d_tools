@@ -34,72 +34,69 @@ using namespace integratedDataStructures;
 class ImgProcessor 
 {
 public:
-	ImgProcessor() = default;
-	virtual ~ImgProcessor() = default;
-
 	/***************** Basic Image Operations *****************/
-	template<class T>
+	template<typename T>
 	static inline T getPixValue(const T inputImgPtr[], const int imgDims[], const int x, const int y, const int z = 1);
 
-	template<class T> // Between 2 input images, pixel-wisely pick the one with greater value. 
+	template<typename T> // Between 2 input images, pixel-wisely pick the one with greater value. 
 	static inline void imgMax(const T inputPtr1[], const T inputPtr2[], T outputPtr[], const int imgDims[]);
 
-	template<class T> // Same as above, vector version overload.
+	template<typename T> // Same as above, vector version overload.
 	static inline void imgMax(const vector<T>* inputImgPtr1, const T inputImgPtr2[], T outputImgPtr[], const int imgDims[]);
 
-	template<class T> // Subtracts the input image with a constant.
+	template<typename T> // Subtracts the input image with a constant.
 	static inline void imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
 
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 
-	template<class T> // Cops image with specified ROI coordinates. (xlb = x lower bound; yhb = y higher bound, and so on)
+	template<typename T> // Cops image with specified ROI coordinates. (xlb = x lower bound; yhb = y higher bound, and so on)
 	static inline void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
 		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
-	template<class T> // Inverts 8-bit images, i.e., dynamic range = [0, 255].
+	template<typename T> // Inverts 8-bit images, i.e., dynamic range = [0, 255].
 	static inline void invert8bit(T input1D[], T output1D[]);
 
-	template<class T1, class T2> // -> to be revised into 3D general form
+	template<typename T1, typename T2> // -> to be revised into 3D general form
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
-	template<class T> // Slices input image stack into a series of 2D slices.
+	template<typename T> // Slices input image stack into a series of 2D slices.
 	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
 
 
-	template<class T> // Ordinary downsampling method for 2D images with given downsampling factor for both x and y dimensions.
+	template<typename T> // Ordinary downsampling method for 2D images with given downsampling factor for both x and y dimensions.
 	static inline void imgDownSample2D(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
-	template<class T> // Ordinary downsampling method for 3D images with given downsampling factor set for x, y, and z dimensions.
+	template<typename T> // Ordinary downsampling method for 3D images with given downsampling factor set for x, y, and z dimensions.
 	static inline void imgDownSample(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
 
-	template<class T> // Maximum downsampling method for 2D images with given downsampling factor for both x and y dimensions.
+	template<typename T> // Maximum downsampling method for 2D images with given downsampling factor for both x and y dimensions.
 	static inline void imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
-	template<class T> // Maximum downsampling method for 3D images with given dowmsampling factor set for x, y, and z dimensions.
+	template<typename T> // Maximum downsampling method for 3D images with given dowmsampling factor set for x, y, and z dimensions.
 	static inline void imgDownSampleMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
 
-	template<class T> // Produces MIP image for the input image slice series.
+	template<typename T> // Produces MIP image for the input image slice series.
 	static inline void maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[]);
 
 
-	template<class T> // Converts 1D vector of a 2D image into 2D array.
+	template<typename T> // Converts 1D vector of a 2D image into 2D array.
 	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
 
-	template<class T> // Converts 2D image aray into 1D array.
+	template<typename T> // Converts 2D image aray into 1D array.
 	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot be guaranteed a constant here.
 	/**********************************************************/
 
 
 
 	/***************** Image Statistics *****************/
-	template<class T> // Gets basic stats (sum, mean, std, var, median) out of the input image.
+	template<typename T> // Gets basic stats (sum, mean, std, var, median) out of the input image.
 	static inline map<string, float> getBasicStats(const T inputImgPtr[], const int imgDims[]);
 
-	template<class T> // Gets basic stats (sum, mean, std, var, median) out of the input image with all 0 value pixel/voxel excluded.
+	template<typename T> // Gets basic stats (sum, mean, std, var, median) out of the input image with all 0 value pixel/voxel excluded.
 	static inline map<string, float> getBasicStats_no0(const T inputImgPtr[], const int imgDims[]);
 
-	template<class T> // Outputs a map representing the input image histogram with bins as the keys and frequencies as the values.
+	template<typename T> // Outputs a map representing the input image histogram with bins as the keys and frequencies as the values.
 	static inline map<int, size_t> histQuickList(const T inputImgPtr[], const int imgDims[]);
 
 	// Gets basic stats (sum, mean, std, var, median) out of the histogram of the input image.
@@ -112,31 +109,31 @@ public:
 
 
 	/***************** Image Processing/Filtering *****************/
-	template<class T> // Thresholds the input image with specified thresholding value.
+	template<typename T> // Thresholds the input image with specified thresholding value.
 	static inline void simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T> // Thresholds out all values that are HIGHER than the specified thresholding value.
+	template<typename T> // Thresholds out all values that are HIGHER than the specified thresholding value.
 	static inline void simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T> // > threshold => 255; <= threshold => 0
+	template<typename T> // > threshold => 255; <= threshold => 0
 	static inline void imgMasking(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T> // Adaptive thresholding with specified stepsize and samping rate.
+	template<typename T> // Adaptive thresholding with specified stepsize and samping rate.
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 
-	template<class T> // Gamma correction with cut off intensity using stepped multiplying factor, i.e., 4 => (4 - cutoff) * 4; 10 => (10 - cutoff) * 10, etc.
+	template<typename T> // Gamma correction with cut off intensity using stepped multiplying factor, i.e., 4 => (4 - cutoff) * 4; 10 => (10 - cutoff) * 10, etc.
 	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
 
-	template<class T> // NOT IN USE; MAY BE DEPRECATED LATER.
+	template<typename T> // NOT IN USE; MAY BE DEPRECATED LATER.
 	static inline void gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
-	template<class T> // Reversed gamma correction; will be re-implemented.
+	template<typename T> // Reversed gamma correction; will be re-implemented.
 	static inline void reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 255);
 
 	// Histogram equalization on 8 bit input images.
 	// nonZero = true => only use non zero values to equalize; nonZero = false => use all values to equalize.
-	template<class T>  
+	template<typename T>  
 	static inline void histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero = true);
 	/**************************************************************/
 
@@ -167,14 +164,14 @@ public:
 };
 
 // ========================================= BASIC IMAGE OPERATION =========================================
-template<class T>
+template<typename T>
 inline T ImgProcessor::getPixValue(const T inputImgPtr[], const int imgDims[], const int x, const int y, const int z)
 {
 	size_t pix1Dindex = size_t((z - 1) * imgDims[0] * imgDims[1] + (y - 1) * imgDims[0] + x);
 	return inputImgPtr[pix1Dindex];
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor)
 {
 	size_t totalPixNum = size_t(imgDims[0] * imgDims[1] * imgDims[2]);
@@ -196,7 +193,7 @@ inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], con
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::cropImg(const T InputImagePtr[], T OutputImagePtr[], 
 	const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[])
 {
@@ -214,7 +211,7 @@ inline void ImgProcessor::cropImg(const T InputImagePtr[], T OutputImagePtr[],
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgMax(const T inputPtr1[], const T inputPtr2[], T outputPtr[], const int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -225,7 +222,7 @@ inline void ImgProcessor::imgMax(const T inputPtr1[], const T inputPtr2[], T out
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgMax(const vector<T>* inputImgPtr1, const T inputImgPtr2[], T outputImgPtr[], const int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -236,7 +233,7 @@ inline void ImgProcessor::imgMax(const vector<T>* inputImgPtr1, const T inputImg
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::invert8bit(T input[], T output[])
 {
 	int length = sizeof(input) / sizeof(input[0]);
@@ -246,7 +243,7 @@ inline void ImgProcessor::invert8bit(T input[], T output[])
 	}
 }
 
-template<class T1, class T2>
+template<typename T1, typename T2>
 inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLength)
 {
 	for (int j = 0; j < yLength; ++j)
@@ -258,7 +255,7 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[])
 {
 	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
@@ -268,7 +265,7 @@ inline void ImgProcessor::maxIPSeries(const vector<vector<T>> inputSlicePtrs, T 
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[])
 {
 	for (int k = 0; k < imgDims[2]; ++k)
@@ -287,7 +284,7 @@ inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[])
 {
 	for (int j = 0; j < imgDims[1]; ++j)
@@ -297,7 +294,7 @@ inline void ImgProcessor::slice1Dvector2_2Darray(const vector<T>& inputSliceVec,
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[])
 {
 	size_t outi = 0;
@@ -311,7 +308,7 @@ inline void ImgProcessor::slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const 
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgDownSample2D(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor)
 {
 	long int outi = 0;
@@ -328,7 +325,7 @@ inline void ImgProcessor::imgDownSample2D(const T inputImgPtr[], T outputImgPtr[
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgDownSample(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[])
 {
 	long int outi = 0;
@@ -349,7 +346,7 @@ inline void ImgProcessor::imgDownSample(const T inputImgPtr[], T outputImgPtr[],
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor)
 {
 	long int outi = 0;
@@ -379,7 +376,7 @@ inline void ImgProcessor::imgDownSample2DMax(const T inputImgPtr[], T outputImgP
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgDownSampleMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[])
 {
 	long int outi = 0;
@@ -419,7 +416,7 @@ inline void ImgProcessor::imgDownSampleMax(const T inputImgPtr[], T outputImgPtr
 
 
 // ==================================== IMAGE STATISTICS ====================================
-template<class T>
+template<typename T>
 inline map<string, float> ImgProcessor::getBasicStats(const T inputImgPtr[], const int imgDims[])
 {
 	map<string, float> basicStats;
@@ -456,7 +453,7 @@ inline map<string, float> ImgProcessor::getBasicStats(const T inputImgPtr[], con
 	return basicStats;
 }
 
-template<class T>
+template<typename T>
 inline map<string, float> ImgProcessor::getBasicStats_no0(const T inputImgPtr[], const int imgDims[])
 {
 	map<string, float> basicStats;
@@ -502,7 +499,7 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(const T inputImgPtr[],
 	return basicStats;
 }
 
-template<class T>
+template<typename T>
 inline map<int, size_t> ImgProcessor::histQuickList(const T inputImgPtr[], const int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -519,7 +516,7 @@ inline map<int, size_t> ImgProcessor::histQuickList(const T inputImgPtr[], const
 
 
 // ================================== IMAGE PROCESSING/FILTERING ==================================
-template<class T>
+template<typename T>
 inline void ImgProcessor::simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -534,7 +531,7 @@ inline void ImgProcessor::simpleThresh(const T inputImgPtr[], T outputImgPtr[], 
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -549,7 +546,7 @@ inline void ImgProcessor::simpleThresh_reverse(const T inputImgPtr[], T outputIm
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -564,7 +561,7 @@ inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], co
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -583,7 +580,7 @@ inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outpu
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -602,7 +599,7 @@ inline void ImgProcessor::gammaCorrect_old(const T inputImgPtr[], T outputImgPtr
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -621,7 +618,7 @@ inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(const T inputImgP
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero)
 {
 	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
@@ -648,7 +645,7 @@ inline void ImgProcessor::histEqual_unit8(const T inputImgPtr[], T outputImgPtr[
 	}
 }
 
-template<class T>
+template<typename T>
 inline void ImgProcessor::simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate)
 {
 	int sampCount = 0, sampSum = 0; 
