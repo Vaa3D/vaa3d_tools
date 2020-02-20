@@ -7,11 +7,13 @@
 QT       -= gui
 
 TARGET = NeuronStructNavigator
-CONFIG	+= qt plugin warn_off
+CONFIG += qt plugin warn_off
+CONFIG += staticlib
 QMAKE_CXXFLAGS += /MP
 TEMPLATE = lib
 
 DEFINES += NEURONSTRUCTNAVIGATOR_LIBRARY
+DEFINES += _CRT_SECURE_NO_WARNINGS
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -45,17 +47,6 @@ win32 {
     LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
     LIBS += -L$$QTPATH/lib
 }
-unix:!macx {
-    DESTDIR = ../../../../v3d_external/v3d_main/common_lib/lib
-    INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
-    INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
-    LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
-    LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
-}
-
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
-#LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
-
 
 SOURCES += ./NeuronStructExplorer.cpp
 SOURCES += ./NeuronStructUtilities.cpp
