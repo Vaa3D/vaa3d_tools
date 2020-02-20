@@ -226,10 +226,12 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 			uiPtr->groupBox_6->setEnabled(true);
 			uiPtr->groupBox_6->setChecked(true);
 		}
+		else if (checkName == "radioButton_5") uiPtr->radioButton_6->setChecked(false);
+		else if (checkName == "radioButton_6") uiPtr->radioButton_5->setChecked(false);
 	}
 }
 
-void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker List / Multiple Dendritic Tracing]
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker / Point Cloud Monitor]
 {
 	QObject* signalSender = sender();
 	QString checkName = signalSender->objectName();
