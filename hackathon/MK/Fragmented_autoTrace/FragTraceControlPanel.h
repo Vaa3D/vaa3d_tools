@@ -113,6 +113,7 @@ private:
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
+	void pa_axonContinuous();
 	/* =========== END of [Parameter Collecting Functions] ========== */
 
 

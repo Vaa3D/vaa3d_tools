@@ -67,12 +67,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->checkBox_2->setChecked(false);
 	}
 
-	if (callOldSettings.value("wholeBlock") == true)
+	if (callOldSettings.value("wholeBlock") == true) // axon mode
 	{
 		uiPtr->radioButton->setChecked(true);
 		uiPtr->radioButton_2->setChecked(false);
 		uiPtr->radioButton_3->setChecked(false);
 		uiPtr->groupBox_6->setEnabled(true);
+		uiPtr->radioButton_5->setEnabled(false);
 	}
 	else if (callOldSettings.value("dendrite") == true)
 	{
@@ -220,14 +221,21 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 		{
 			uiPtr->groupBox_6->setEnabled(false);
 			uiPtr->groupBox_6->setChecked(false);
+			uiPtr->groupBox_5->setChecked(false);
+			uiPtr->groupBox_5->setEnabled(false);
+			uiPtr->frame_16->setEnabled(false);
+			uiPtr->radioButton_5->setEnabled(true);
+
 		}
 		else if (checkName == "radioButton")
 		{
 			uiPtr->groupBox_6->setEnabled(true);
 			uiPtr->groupBox_6->setChecked(true);
+			uiPtr->radioButton_5->setChecked(false);
+			uiPtr->radioButton_5->setEnabled(false);
+			uiPtr->groupBox_5->setEnabled(true);
+			uiPtr->frame_16->setEnabled(true);
 		}
-		else if (checkName == "radioButton_5") uiPtr->radioButton_6->setChecked(false);
-		else if (checkName == "radioButton_6") uiPtr->radioButton_5->setChecked(false);
 	}
 }
 
@@ -532,12 +540,14 @@ void FragTraceControlPanel::traceButtonClicked()
 			{				
 				this->teraflyTracePrep(axon);	   	  // terafly image block preparation
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
+				this->traceManagerPtr->axonMarkerAllowance = false;
 
 				// ------------------- collect parameters ------------------- //
 				this->pa_imgEnhancement();                         // image enhancement				
 				this->pa_maskGeneration();                         // mask generation
 				this->pa_objFilter();                              // object filter
 				this->pa_objBasedMST();                            // object-based MST node connecting
+				this->pa_axonContinuous();
 				// ---------------------------------------------------------- //
 			}
 		}
@@ -805,6 +815,16 @@ void FragTraceControlPanel::pa_objFilter()
 	}
 }
 
+void FragTraceControlPanel::pa_axonContinuous()
+{
+	if (uiPtr->groupBox_15->isChecked() && uiPtr->groupBox_5->isChecked())
+	{
+		this->traceManagerPtr->continuousAxon = true;
+		this->traceManagerPtr->axonMarkers.clear();
+		
+	}
+}
+
 void FragTraceControlPanel::pa_objBasedMST()
 {
 	if (uiPtr->groupBox_8->isChecked())
@@ -829,7 +849,10 @@ void FragTraceControlPanel::updateMarkerMonitor()
 		{
 			it->selected = true;
 			it->on = false;
-			newMarkerMap.insert({ it->name.toInt(), *it });
+			//if (uiPtr->radioButton_5->isChecked() || uiPtr->groupBox_5->isChecked())
+			//	newMarkerMap.insert({ newMarkerMap.size() + 1, *it });
+			//else 
+				newMarkerMap.insert({ it->name.toInt(), *it });
 		}
 		oldMarkerMap = this->somaMap;
 

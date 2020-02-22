@@ -57,12 +57,15 @@ public:
 	// ------- Object Classification ------- //
 	bool objFilter;
 	bool voxelSize, actualSize;
+	bool continuousAxon;
 	int voxelCount;
+	int axonMarkerAllowance;
 
 	vector<NeuronTree> tracedMultipleDendriticTrees;
 	vector<int> currDisplayingBlockCenter;
 	map<int, ImageMarker> selectedSomaMap;
 	map<int, ImageMarker> selectedLocalSomaMap;
+	QList<ImageMarker> axonMarkers;
 	// ------------------------------------- //
 
 	// ------- Fragment Connection ------- //

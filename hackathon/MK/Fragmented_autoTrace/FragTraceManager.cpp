@@ -716,6 +716,15 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		QString skeletonTreeNameQ = this->finalSaveRootQ + "\\axonSkeleton.swc";
 		writeSWC_file(skeletonTreeNameQ, outputProfiledTree.tree);
 #endif
+
+		if (this->continuousAxon)
+		{
+			for (QList<ImageMarker>::iterator it = this->axonMarkers.begin(); it != this->axonMarkers.end(); ++it)
+			{
+				cout << it->n << ": " << it->x << " " << it->y << " " << it->z << endl;
+			}
+			cout << endl;
+		}
 		
 		return true;
 		// ------------------------------------------------------------- //

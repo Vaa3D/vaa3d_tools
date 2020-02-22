@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>805</width>
-    <height>986</height>
+    <width>858</width>
+    <height>984</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -238,6 +238,9 @@
       </item>
       <item>
        <widget class="QTabWidget" name="tabWidget">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="maximumSize">
          <size>
           <width>10000</width>
@@ -270,8 +273,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>729</width>
-               <height>586</height>
+               <width>782</width>
+               <height>584</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -794,8 +797,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>729</width>
-               <height>586</height>
+               <width>782</width>
+               <height>584</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
@@ -810,7 +813,7 @@
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>300</height>
+                  <height>200</height>
                  </size>
                 </property>
                 <property name="font">
@@ -905,7 +908,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>350</height>
+                  <height>400</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -929,41 +932,198 @@
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_14">
+                <layout class="QVBoxLayout" name="verticalLayout_19">
                  <item>
-                  <widget class="QRadioButton" name="radioButton_6">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
+                  <widget class="QFrame" name="frame_18">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
                    </property>
-                   <property name="text">
-                    <string>Trace connected axons indicated by markers</string>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="radioButton_5">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Trace dendritic areas with somas labeled by markers</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QListView" name="listView_2">
-                   <property name="selectionMode">
-                    <enum>QAbstractItemView::MultiSelection</enum>
-                   </property>
-                   <property name="selectionRectVisible">
-                    <bool>true</bool>
-                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                    <item>
+                     <widget class="QListView" name="listView_2">
+                      <property name="minimumSize">
+                       <size>
+                        <width>280</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>280</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="selectionMode">
+                       <enum>QAbstractItemView::MultiSelection</enum>
+                      </property>
+                      <property name="selectionRectVisible">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QScrollArea" name="scrollArea_5">
+                      <property name="maximumSize">
+                       <size>
+                        <width>440</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="widgetResizable">
+                       <bool>true</bool>
+                      </property>
+                      <widget class="QWidget" name="scrollAreaWidgetContents_3">
+                       <property name="geometry">
+                        <rect>
+                         <x>0</x>
+                         <y>0</y>
+                         <width>423</width>
+                         <height>268</height>
+                        </rect>
+                       </property>
+                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                        <item>
+                         <widget class="QRadioButton" name="radioButton_5">
+                          <property name="font">
+                           <font>
+                            <family>Calibri</family>
+                            <pointsize>10</pointsize>
+                            <weight>50</weight>
+                            <bold>false</bold>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>Trace dendritic areas with somas labeled by markers</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="Line" name="line_2">
+                          <property name="font">
+                           <font>
+                            <pointsize>10</pointsize>
+                           </font>
+                          </property>
+                          <property name="frameShadow">
+                           <enum>QFrame::Sunken</enum>
+                          </property>
+                          <property name="lineWidth">
+                           <number>1</number>
+                          </property>
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QGroupBox" name="groupBox_5">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="font">
+                           <font>
+                            <weight>50</weight>
+                            <bold>false</bold>
+                           </font>
+                          </property>
+                          <property name="title">
+                           <string>Trace axons indicated with markers</string>
+                          </property>
+                          <property name="checkable">
+                           <bool>true</bool>
+                          </property>
+                          <property name="checked">
+                           <bool>false</bool>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_14">
+                           <item>
+                            <widget class="QFrame" name="frame_16">
+                             <property name="maximumSize">
+                              <size>
+                               <width>400</width>
+                               <height>50</height>
+                              </size>
+                             </property>
+                             <property name="font">
+                              <font>
+                               <pointsize>11</pointsize>
+                              </font>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_5">
+                              <item>
+                               <widget class="QLabel" name="label_6">
+                                <property name="font">
+                                 <font>
+                                  <family>Calibri</family>
+                                  <pointsize>10</pointsize>
+                                  <weight>50</weight>
+                                  <bold>false</bold>
+                                 </font>
+                                </property>
+                                <property name="text">
+                                 <string>Range allowance (in local scale): </string>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_6">
+                                <property name="font">
+                                 <font>
+                                  <weight>50</weight>
+                                  <bold>false</bold>
+                                 </font>
+                                </property>
+                                <property name="value">
+                                 <number>10</number>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <spacer name="horizontalSpacer_11">
+                                <property name="orientation">
+                                 <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                 <size>
+                                  <width>56</width>
+                                  <height>20</height>
+                                 </size>
+                                </property>
+                               </spacer>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                          </layout>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="verticalSpacer_3">
+                          <property name="orientation">
+                           <enum>Qt::Vertical</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>368</width>
+                            <height>99</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </widget>
+                     </widget>
+                    </item>
+                   </layout>
                   </widget>
                  </item>
                  <item>
@@ -974,7 +1134,7 @@
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
                    </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_5">
+                   <layout class="QHBoxLayout" name="horizontalLayout_7">
                     <item>
                      <spacer name="horizontalSpacer_6">
                       <property name="orientation">
@@ -1002,6 +1162,8 @@
                      </widget>
                     </item>
                    </layout>
+                   <zorder>pushButton_9</zorder>
+                   <zorder>frame_15</zorder>
                   </widget>
                  </item>
                 </layout>
@@ -1028,8 +1190,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>729</width>
-               <height>586</height>
+               <width>782</width>
+               <height>584</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1135,8 +1297,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>729</width>
-               <height>586</height>
+               <width>782</width>
+               <height>584</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
