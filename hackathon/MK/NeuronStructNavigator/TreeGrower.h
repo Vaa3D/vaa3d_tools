@@ -23,6 +23,8 @@
 #ifndef TREEGROWER_H
 #define TREEGROWER_H
 
+#include <memory>
+
 #include <boost/config.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -47,7 +49,7 @@ public:
 	/************** Constructors and Basic Data/Function Members ****************/	
 	TreeGrower() = default;
 	TreeGrower(NeuronStructExplorer* baseExplorerPtr) : explorerPtr(baseExplorerPtr) {};
-	//~TreeGrower() { delete explorerPtr; }
+
 	NeuronStructExplorer* explorerPtr;
 	
 	vector<polarNeuronSWC> polarNodeList;

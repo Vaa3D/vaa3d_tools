@@ -60,7 +60,7 @@ public:
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
-protected:
+private:
 	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
 	// NOTE, this method is only the 1st step of constructing seg-end cluster profile. Those information stored in profiledTree::segHeadClusters and profiledTree::segTailClusters are not correct yet

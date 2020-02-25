@@ -58,16 +58,16 @@ public:
 	// ----------------- Basic Operations ----------------- //
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
 
-	template<class T>
+	template<typename T>
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb);
 
-	template<class T>
+	template<typename T>
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
 
-	template<class T>
+	template<typename T>
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
 	
-	template<class T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
+	template<typename T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
 	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
 
 	// Align inputTree with refTree.
@@ -90,7 +90,7 @@ public:
 
 	// When using SWC root nodes to represent signals, this method can be used to reduce node density.
 	// -- NOTE, this method can only be used when all nodes are roots. 
-	template<class T>
+	template<typename T>
 	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink);
 
 	// This method creates interpolated nodes in between each pair of 2 adjacent nodes on the input tree. 
@@ -186,7 +186,7 @@ inline connectOrientation NeuronStructUtil::getConnOrientation(connectOrientatio
 	else if (orit1 == tail && orit2 == tail) return tail_tail;
 }
 
-template<class T>
+template<typename T>
 inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 {
 	T xMin = 10000, xMax = 0, yMin = 10000, yMax = 0, zMin = 10000, zMax = 0;
@@ -213,7 +213,7 @@ inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 	return boundaries;
 }
 
-template<class T>
+template<typename T>
 inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale)
 {
 	NeuronTree outputTree;
@@ -230,7 +230,7 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, T xSca
 	return outputTree;
 }
 
-template<class T>
+template<typename T>
 inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift)
 {
 	NeuronTree outputTree;
@@ -247,7 +247,7 @@ inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, T xShi
 	return outputTree;
 }
 
-template<class T>
+template<typename T>
 inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb)
 {
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
@@ -257,7 +257,7 @@ inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& o
 	}
 }
 
-template<class T>
+template<typename T>
 inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
