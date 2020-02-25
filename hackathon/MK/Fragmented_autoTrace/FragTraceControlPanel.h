@@ -103,6 +103,7 @@ private:
 	QList<ImageMarker> selectedLocalMarkerList;
 	map<int, ImageMarker> somaMap;
 	map<int, ImageMarker> localSomaMap;
+	map<int, ImageMarker> localAxonMarkerMap;
 	map<int, string> somaDisplayNameMap;
 	void updateMarkerMonitor();
 	/* ================================ */

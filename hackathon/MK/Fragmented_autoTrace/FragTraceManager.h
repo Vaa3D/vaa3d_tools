@@ -24,6 +24,7 @@ class FragTraceManager : public QWidget
 public:
 	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
+	//~FragTraceManager();
 	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
 	QString finalSaveRootQ;       // Save path for the traced result, acquired from UI.
@@ -65,7 +66,7 @@ public:
 	vector<int> currDisplayingBlockCenter;
 	map<int, ImageMarker> selectedSomaMap;
 	map<int, ImageMarker> selectedLocalSomaMap;
-	QList<ImageMarker> axonMarkers;
+	map<int, ImageMarker> localAxonMarkerMap;
 	// ------------------------------------- //
 
 	// ------- Fragment Connection ------- //
@@ -118,8 +119,8 @@ private:
 /* ======= FragTraceManager Fascilities ======= */
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
-	TreeGrower fragTraceTreeGrower;
 	NeuronStructExplorer fragTraceTreeManager;
+	TreeGrower* fragTraceTreeGrowerPtr;
 /* ============================================ */
 
 	int numProcs;

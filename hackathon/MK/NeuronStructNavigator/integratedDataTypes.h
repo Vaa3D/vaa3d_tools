@@ -80,7 +80,7 @@ namespace integratedDataTypes
 
 	struct topoCharacter
 	{
-		topoCharacter() {};
+		topoCharacter() = default;
 		topoCharacter(NeuronSWC centerNode, int streamLength = 10) : topoCenter(centerNode) {};
 		NeuronSWC topoCenter;
 		deque<NeuronSWC> upstream;
@@ -145,7 +145,7 @@ namespace integratedDataTypes
 		// With reinitialization function provided, this struct needs copy control constructors. 
 		// Will be implemented later.
 
-		profiledTree() {};
+		profiledTree() = default;
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
@@ -180,7 +180,14 @@ namespace integratedDataTypes
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	/******************************************************************/
 
-	
+	/***************** segEnd Cluster Tree *****************/
+	struct segEndClusterUnit
+	{
+		int clusterLabel;
+		boost::container::flat_set<int> headSegs;
+		boost::container::flat_set<int> tailSegs;
+	};
+	/*******************************************************/
 }
 
 #endif

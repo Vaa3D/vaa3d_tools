@@ -61,11 +61,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->checkBox->setChecked(false);
 		uiPtr->checkBox_2->setChecked(true);
 	}
-	else if (callOldSettings.value("series") == true)
-	{
-		uiPtr->checkBox->setChecked(false);
-		uiPtr->checkBox_2->setChecked(false);
-	}
 
 	if (callOldSettings.value("wholeBlock") == true) // axon mode
 	{
@@ -73,6 +68,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->radioButton_2->setChecked(false);
 		uiPtr->radioButton_3->setChecked(false);
 		uiPtr->groupBox_6->setEnabled(true);
+		uiPtr->groupBox_5->setEnabled(true);
 		uiPtr->radioButton_5->setEnabled(false);
 	}
 	else if (callOldSettings.value("dendrite") == true)
@@ -275,6 +271,7 @@ void FragTraceControlPanel::refreshSomaCoords()
 	this->somaDisplayNameMap.clear();
 	this->selectedMarkerList.clear();
 	this->selectedLocalMarkerList.clear();
+	this->localAxonMarkerMap.clear();
 
 	if (uiPtr->checkBox->isChecked())
 	{
@@ -586,13 +583,17 @@ void FragTraceControlPanel::traceButtonClicked()
 	{
 		this->traceManagerPtr->selectedSomaMap.clear();
 		this->traceManagerPtr->selectedLocalSomaMap.clear();
+		this->traceManagerPtr->localAxonMarkerMap.clear();
 	}
+
+	/***************** TRACING PROCESS STARTS HERE *****************/
 	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
 	{
 		// Newly traced tree will be stored in this->tracedTree.
 		v3d_msg(QString("The process has been terminated."));
 		return;
 	}
+	/***************************************************************/
 
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
@@ -642,7 +643,6 @@ void FragTraceControlPanel::traceButtonClicked()
 	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
 /* ============================================================================================ */
-
 
 
 /* =========================== TRACING VOLUME PREPARATION =========================== */
@@ -725,7 +725,6 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	}
 }
 /* ================================================================================== */
-
 
 
 /* ========================= Parameter Collecting Functions ========================= */
@@ -820,8 +819,22 @@ void FragTraceControlPanel::pa_axonContinuous()
 	if (uiPtr->groupBox_15->isChecked() && uiPtr->groupBox_5->isChecked())
 	{
 		this->traceManagerPtr->continuousAxon = true;
-		this->traceManagerPtr->axonMarkers.clear();
-		
+		this->traceManagerPtr->localAxonMarkerMap.clear();		
+		for (map<int, ImageMarker>::iterator somaIt = this->somaMap.begin(); somaIt != this->somaMap.end(); ++somaIt)
+		{
+			ImageMarker localMarker;
+			for (QList<ImageMarker>::iterator it = this->selectedLocalMarkerList.begin(); it != this->selectedLocalMarkerList.end(); ++it)
+			{
+				if (somaIt->first == it->n)
+				{
+					localMarker = *it;
+					this->localAxonMarkerMap.insert({ somaIt->first, localMarker });
+					break;
+				}
+			}
+		}
+
+		this->traceManagerPtr->localAxonMarkerMap = this->localAxonMarkerMap;
 	}
 }
 
@@ -845,14 +858,24 @@ void FragTraceControlPanel::updateMarkerMonitor()
 	map<int, ImageMarker> oldMarkerMap;	
 	if (this->selectedMarkerList.size() > 0)
 	{
-		for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
+		// When trace dendritic area or trace continuous axon is on, markers need to be labeled before being passed to [FragTraceManager].
+		if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->groupBox_5->isEnabled() && uiPtr->groupBox_5->isChecked()))
 		{
-			it->selected = true;
-			it->on = false;
-			//if (uiPtr->radioButton_5->isChecked() || uiPtr->groupBox_5->isChecked())
-			//	newMarkerMap.insert({ newMarkerMap.size() + 1, *it });
-			//else 
+			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
+			{
+				it->selected = true;
+				it->on = false;
+				newMarkerMap.insert({ it->n, *it });
+			}
+		}
+		else // For monitor purpose through Object Manager only, use [ImageMarker.name] to label markers instead.
+		{
+			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
+			{
+				it->selected = true;
+				it->on = false;
 				newMarkerMap.insert({ it->name.toInt(), *it });
+			}
 		}
 		oldMarkerMap = this->somaMap;
 
@@ -869,38 +892,80 @@ void FragTraceControlPanel::updateMarkerMonitor()
 		this->somaMap.clear();
 	}
 
-	for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+	// When trace dendritic area or trace continuous axon is on, markers need to be labeled before being passed to [FragTraceManager].
+	if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->groupBox_5->isEnabled() && uiPtr->groupBox_5->isChecked()))
 	{
-		if (markerIt->second.selected && !markerIt->second.on)
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 		{
-			int markerGlobalX = int(markerIt->second.x);
-			int markerGlobalY = int(markerIt->second.y);
-			int markerGlobalZ = int(markerIt->second.z);
-			string displayName;
-			if (uiPtr->checkBox->isChecked())
-				displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
-			else if (uiPtr->checkBox_2->isChecked())
+			if (markerIt->second.selected && !markerIt->second.on)
 			{
-				if (this->surType == 1)
-					displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
-				else if (this->surType == 5)
-					displayName = "point cloud " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				int markerGlobalX = int(markerIt->second.x);
+				int markerGlobalY = int(markerIt->second.y);
+				int markerGlobalZ = int(markerIt->second.z);
+				string displayName;
+				if (uiPtr->checkBox->isChecked())
+					displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				else if (uiPtr->checkBox_2->isChecked())
+				{
+					if (this->surType == 1)
+						displayName = "marker " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+					else if (this->surType == 5)
+						displayName = "point cloud " + to_string(markerIt->first + 1) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				}
+				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
+				this->somaListViewer->appendRow(newItemPtr);
 			}
-			this->somaDisplayNameMap.insert({ markerIt->first, displayName });
-			QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
-			QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
-			this->somaListViewer->appendRow(newItemPtr);
-		}
-		else if (!markerIt->second.selected)
-		{
-			QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
-			this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
-			this->somaMap.erase(this->somaMap.find(markerIt->first));
-			QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
-			if (!matchedList.isEmpty())
+			else if (!markerIt->second.selected)
 			{
-				int rowNum = (*matchedList.begin())->row();
-				this->somaListViewer->removeRow(rowNum);
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
+				this->somaMap.erase(this->somaMap.find(markerIt->first));
+				QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
+				if (!matchedList.isEmpty())
+				{
+					int rowNum = (*matchedList.begin())->row();
+					this->somaListViewer->removeRow(rowNum);
+				}
+			}
+		}
+	}
+	else // For monitor purpose through Object Manager only, use [ImageMarker.name] to label markers instead.
+	{
+		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
+		{
+			if (markerIt->second.selected && !markerIt->second.on)
+			{
+				int markerGlobalX = int(markerIt->second.x);
+				int markerGlobalY = int(markerIt->second.y);
+				int markerGlobalZ = int(markerIt->second.z);
+				string displayName;
+				if (uiPtr->checkBox->isChecked())
+					displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";			
+				else if (uiPtr->checkBox_2->isChecked())
+				{
+					if (this->surType == 1)
+						displayName = "marker " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+					else if (this->surType == 5)
+						displayName = "point cloud " + to_string(markerIt->first) + ": (Z" + to_string(markerGlobalZ) + ", X" + to_string(markerGlobalX) + ", Y" + to_string(markerGlobalY) + ")";
+				}
+				this->somaDisplayNameMap.insert({ markerIt->first, displayName });
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				QStandardItem* newItemPtr = new QStandardItem(displayNameQ);
+				this->somaListViewer->appendRow(newItemPtr);
+			}
+			else if (!markerIt->second.selected)
+			{
+				QString displayNameQ = QString::fromStdString(this->somaDisplayNameMap.at(markerIt->first));
+				this->somaDisplayNameMap.erase(this->somaDisplayNameMap.find(markerIt->first));
+				this->somaMap.erase(this->somaMap.find(markerIt->first));
+				QList<QStandardItem*> matchedList = this->somaListViewer->findItems(displayNameQ);
+				if (!matchedList.isEmpty())
+				{
+					int rowNum = (*matchedList.begin())->row();
+					this->somaListViewer->removeRow(rowNum);
+				}
 			}
 		}
 	}
@@ -909,7 +974,6 @@ void FragTraceControlPanel::updateMarkerMonitor()
 		markerIt->second.on = true;
 }
 /* ====================== END of [Parameter Collecting Functions] ====================== */
-
 
 
 /* =================== Result and Scaling Functions =================== */
@@ -1004,6 +1068,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 }
 /* ================ END of [Result and Scaling Functions] ================ */
 
+
 /* =================== Terafly Communicating Methods =================== */
 void FragTraceControlPanel::getNAVersionNum()
 {
@@ -1035,6 +1100,7 @@ void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, c
 	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords, mouseX, mouseY);
 }
 /* =============== END of [Terafly Communicating Methods] =============== */
+
 
 void FragTraceControlPanel::fillUpParamsForm()
 {

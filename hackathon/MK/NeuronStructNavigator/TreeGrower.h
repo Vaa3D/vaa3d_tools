@@ -41,10 +41,15 @@ typedef boost::property<boost::edge_weight_t, double> weights;
 typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
-class TreeGrower: public NeuronStructExplorer
+class TreeGrower
 {
 public:
 	/************** Constructors and Basic Data/Function Members ****************/	
+	TreeGrower() = default;
+	TreeGrower(NeuronStructExplorer* baseExplorerPtr) : explorerPtr(baseExplorerPtr) {};
+	//~TreeGrower() { delete explorerPtr; }
+	NeuronStructExplorer* explorerPtr;
+	
 	vector<polarNeuronSWC> polarNodeList;
 	
 	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;  // radius -> polarNeuronSWC's location on [polarNodeList]

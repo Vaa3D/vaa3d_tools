@@ -30,7 +30,6 @@ public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
 	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
-	virtual ~NeuronStructExplorer() = default;
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
 	map<string, map<string, profiledTree>> treeSeriesDataBase;

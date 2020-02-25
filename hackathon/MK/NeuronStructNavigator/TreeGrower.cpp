@@ -32,8 +32,15 @@ using namespace integratedDataTypes;
 profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
-	this->getSegHeadTailClusters(outputProfiledTree, distThreshold);
-	this->getClusterSegPairs(outputProfiledTree);
+
+	if (this->explorerPtr == nullptr)
+	{
+		cerr << "No underlying NeuronStructExplorer found. Do nothing and return." << endl;
+		return outputProfiledTree;
+	}
+	
+	this->explorerPtr->getSegHeadTailClusters(outputProfiledTree, distThreshold);
+	this->explorerPtr->getClusterSegPairs(outputProfiledTree);
 
 	vector<int> newSegIDs;
 	set<int> connectedSegIDs;
@@ -77,7 +84,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
 
-				/*NeuronTree segTree1, segTree2;
+#ifdef __CONNECTED_SEGPAIR_DEBUG__
+				NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
 				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
 				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
@@ -85,7 +93,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				trees.push_back(segTree2);
 				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
 				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
-				writeSWC_file(saveFullName, segPairTree);*/
+				writeSWC_file(saveFullName, segPairTree);
+#endif
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
@@ -123,7 +132,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
 
-				/*NeuronTree segTree1, segTree2;
+#ifdef __CONNECTED_SEGPAIR_DEBUG__
+				NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
 				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
 				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
@@ -131,7 +141,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				trees.push_back(segTree2);
 				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
 				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
-				writeSWC_file(saveFullName, segPairTree);*/
+				writeSWC_file(saveFullName, segPairTree);
+#endif
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
@@ -169,7 +180,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
 				if (overlapCheck < 0) continue;
 
-				/*NeuronTree segTree1, segTree2;
+#ifdef __CONNECTED_SEGPAIR_DEBUG__
+				NeuronTree segTree1, segTree2;
 				vector<NeuronTree> trees;
 				segTree1.listNeuron.append(it->second.begin()->seg1Ptr->nodes);
 				segTree2.listNeuron.append(it->second.begin()->seg2Ptr->nodes);
@@ -177,7 +189,8 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				trees.push_back(segTree2);
 				NeuronTree segPairTree = NeuronStructUtil::swcCombine(trees);
 				QString saveFullName = "C:\\Users\\hsienchik\\Desktop\\segPairDebug\\" + QString::number(it->second.begin()->seg1Ptr->segID) + "_" + QString::number(it->second.begin()->seg2Ptr->segID) + ".swc";
-				writeSWC_file(saveFullName, segPairTree);*/
+				writeSWC_file(saveFullName, segPairTree);
+#endif
 
 				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;

@@ -62,9 +62,11 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	}
 	imgSlices.clear();
 
+	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
-	this->fragTraceTreeGrower.treeDataBase.clear();
+	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
+	//this->fragTraceTreeGrower.treeDataBase.clear();
 
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
@@ -134,9 +136,11 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	}
 	imgSlices.clear();
 
+	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
-	this->fragTraceTreeGrower.treeDataBase.clear();
+	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
+	//this->fragTraceTreeGrower.treeDataBase.clear();
 
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
@@ -154,6 +158,12 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	this->progressBarDiagPtr->setCancelButtonText("Abort");
 	// *************************************************************************************************************** //
 }
+
+/*FragTraceManager::~FragTraceManager()
+{
+	delete fragTraceTreeGrowerPtr;
+	delete progressBarDiagPtr;
+}*/
 
 
 
@@ -655,6 +665,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 
 	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
 	this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
+	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
 
 	if (mode == axon)
 	{		
@@ -719,10 +730,9 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 
 		if (this->continuousAxon)
 		{
-			for (QList<ImageMarker>::iterator it = this->axonMarkers.begin(); it != this->axonMarkers.end(); ++it)
-			{
-				cout << it->n << ": " << it->x << " " << it->y << " " << it->z << endl;
-			}
+			cout << " -- selected axon markers:" << endl;
+			for (map<int, ImageMarker>::iterator it = localAxonMarkerMap.begin(); it != localAxonMarkerMap.end(); ++it)
+				cout << it->first << ": (" << it->second.x << ", " << it->second.y << ", " << it->second.z << ")" << endl;
 			cout << endl;
 		}
 		
@@ -747,9 +757,9 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 #endif
 
 			vector<int> origin = this->currDisplayingBlockCenter;
-			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
-			this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
-			profiledTree dendriticProfiledTree(this->fragTraceTreeGrower.dendriticTree_shellCentroid()); // Dendritic tree is generated here.
+			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrowerPtr->polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
+			this->fragTraceTreeGrowerPtr->radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrowerPtr->polarNodeList);
+			profiledTree dendriticProfiledTree(this->fragTraceTreeGrowerPtr->dendriticTree_shellCentroid()); // Dendritic tree is generated here.
 			for (QList<NeuronSWC>::iterator nodeIt = dendriticProfiledTree.tree.listNeuron.begin(); nodeIt != dendriticProfiledTree.tree.listNeuron.end(); ++nodeIt)
 				nodeIt->type = 16;
 			objSkeletonProfiledTree = dendriticProfiledTree.tree;
@@ -768,7 +778,6 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		else
 		{
 			map<string, profiledTree> dendriticTreesMap;
-			this->fragTraceTreeGrower.treeDataBase.clear();
 			set<connectedComponent> processedConnComp;
 			int compLoc = -1;
 			for (map<int, ImageMarker>::iterator it = this->selectedLocalSomaMap.begin(); it != this->selectedLocalSomaMap.end(); ++it)
@@ -813,12 +822,12 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				writeSWC_file(denBlobSaveNameQ, denBlobTree);
 #endif
 
-				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrower.polarNodeList, origin);
-				this->fragTraceTreeGrower.radiusShellMap_loc.clear();
-				this->fragTraceTreeGrower.radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrower.polarNodeList);
+				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrowerPtr->polarNodeList, origin);
+				this->fragTraceTreeGrowerPtr->radiusShellMap_loc.clear();
+				this->fragTraceTreeGrowerPtr->radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrowerPtr->polarNodeList);
 
 				string treeName = "dendriticTree" + to_string(dendriticTreesMap.size() + 1);
-				profiledTree dendriticProfiledTree(this->fragTraceTreeGrower.dendriticTree_shellCentroid());				
+				profiledTree dendriticProfiledTree(this->fragTraceTreeGrowerPtr->dendriticTree_shellCentroid());
 				for (QList<NeuronSWC>::iterator nodeIt = dendriticProfiledTree.tree.listNeuron.begin(); nodeIt != dendriticProfiledTree.tree.listNeuron.end(); ++nodeIt)
 					nodeIt->type = 16 + dendriticTreesMap.size();
 				dendriticTreesMap.insert({ treeName, dendriticProfiledTree });
@@ -897,7 +906,7 @@ vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree
 	vector<connectedComponent> compList, peripheralComponents;
 	map<double, set<ptrdiff_t>> pickedComponentsMap;
 
-	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = this->fragTraceTreeGrower.radius2shellConnCompMap.begin(); it != this->fragTraceTreeGrower.radius2shellConnCompMap.end(); ++it)
+	for (boost::container::flat_map<double, vector<connectedComponent>>::iterator it = this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.begin(); it != this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.end(); ++it)
 	{
 		set<ptrdiff_t> newSet;
 		pickedComponentsMap.insert(pair<double, set<ptrdiff_t>>(it->first, newSet));
@@ -911,17 +920,17 @@ vector<connectedComponent> FragTraceManager::getPeripheralBlobs(const NeuronTree
 		dist = round(dist);
 		if (dist <= 10) continue;
 
-		if (this->fragTraceTreeGrower.radius2shellConnCompMap.find(dist) != this->fragTraceTreeGrower.radius2shellConnCompMap.end())
+		if (this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.find(dist) != this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.end())
 		{
-			for (vector<connectedComponent>::iterator compIt = this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin(); compIt != this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).end(); ++compIt)
+			for (vector<connectedComponent>::iterator compIt = this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.at(dist).begin(); compIt != this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.at(dist).end(); ++compIt)
 			{
-				if (pickedComponentsMap.at(dist).find(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin()) != pickedComponentsMap.at(dist).end())
+				if (pickedComponentsMap.at(dist).find(compIt - this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.at(dist).begin()) != pickedComponentsMap.at(dist).end())
 					continue;
 
 				if (nodeIt->x == compIt->ChebyshevCenter[0] && nodeIt->y == compIt->ChebyshevCenter[1] && nodeIt->z == compIt->ChebyshevCenter[2])
 				{
 					compList.push_back(*compIt);
-					pickedComponentsMap.at(dist).insert(compIt - this->fragTraceTreeGrower.radius2shellConnCompMap.at(dist).begin());
+					pickedComponentsMap.at(dist).insert(compIt - this->fragTraceTreeGrowerPtr->radius2shellConnCompMap.at(dist).begin());
 					goto COMPONENT_PICKED;
 				}
 			}
@@ -997,7 +1006,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree tmpTree = inputProfiledTree; 
-	profiledTree outputProfiledTree = this->fragTraceTreeGrower.itered_connectSegsWithinClusters(tmpTree, distThreshold);
+	profiledTree outputProfiledTree = this->fragTraceTreeGrowerPtr->itered_connectSegsWithinClusters(tmpTree, distThreshold);
 	
 	bool typeAssigned = false;
 	int assignedType;
