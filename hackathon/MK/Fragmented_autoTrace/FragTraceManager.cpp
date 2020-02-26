@@ -62,11 +62,12 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	}
 	imgSlices.clear();
 
+	//cout << "NeuronStructExplorer's address in FragTraceManager:" << &fragTraceTreeManager << endl;
+	//system("pause");
 	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
-	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
-	//this->fragTraceTreeGrower.treeDataBase.clear();
+	this->fragTraceTreeManager.treeDataBase.clear();
 
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
@@ -136,11 +137,12 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	}
 	imgSlices.clear();
 
+	//cout << "NeuronStructExplorer's address in FragTraceManager:" << &fragTraceTreeManager << endl;
+	//system("pause");
 	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
-	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
-	//this->fragTraceTreeGrower.treeDataBase.clear();
+	this->fragTraceTreeManager.treeDataBase.clear();
 
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
@@ -235,7 +237,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
 		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
 
-		NeuronTree MSTbranchBreakTree = TreeGrower::branchBreak(objSkeletonProfiledTree);
+		NeuronTree MSTbranchBreakTree = TreeTrimmer::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
 		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 
@@ -245,8 +247,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree iteredConnectedTree = this->segConnectAmongTrees(downSampledProfiledTree, 10);
 
 		// Profiled segment shape/morphology
-		NeuronStructExplorer::segMorphProfile(iteredConnectedTree, 3);
-		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
+		this->fragTraceTreeManager.segMorphProfile(iteredConnectedTree, 3);
+		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
 
 		NeuronTree noDotTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
 		//if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
@@ -254,6 +256,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		profiledTree noDotProfiledTree(noDotTree);
 		profiledTree iteredConnectedTree2 = this->segConnectAmongTrees(noDotProfiledTree, 10);
+		this->fragTraceTreeManager.treeDataBase.insert({ "tracedBlock_axon", iteredConnectedTree2 });
 
 		finalOutputTree = iteredConnectedTree2.tree;
 
@@ -294,18 +297,18 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree dnSampledProfiledTree(floatingExcludedTree);
 
 		// Remove spikes
-		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(dnSampledProfiledTree, 2);
+		profiledTree spikeRemovedProfiledTree = TreeTrimmer::itered_spikeRemoval(dnSampledProfiledTree, 2);
 
 		// Straighten up sharp angles caused by spikes
 		profiledTree profiledSpikeRootStrightTree = this->straightenSpikeRoots(spikeRemovedProfiledTree);
 
 		// Break branches
-		NeuronTree branchBrokenTree = TreeGrower::branchBreak(profiledSpikeRootStrightTree);
+		NeuronTree branchBrokenTree = TreeTrimmer::branchBreak(profiledSpikeRootStrightTree);
 
 		// Remove hooking and sharp-angled segment ends
 		float angleThre = (float(2) / float(3)) * PI_MK;
 		profiledTree branchBrokenProfiledTree(branchBrokenTree);
-		profiledTree hookRemovedProfiledTree = TreeGrower::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
+		profiledTree hookRemovedProfiledTree = TreeTrimmer::itered_removeHookingHeadTail(branchBrokenProfiledTree, angleThre);
 
 		// Combine main dendritic tree with peripheral dendritic tree
 		vector<NeuronTree> allTrees;
@@ -317,14 +320,16 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(completeProfiledTree, 10);
 
 		// Profiled segment shape/morphology
-		NeuronStructExplorer::segMorphProfile(iteredConnectedProfiledTree, 3);
-		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
+		this->fragTraceTreeManager.segMorphProfile(iteredConnectedProfiledTree, 3);
+		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
 
 		// Smooth out sharp angles along each segment using 3 node window
-		profiledTree noJumpProfiledTree = TreeGrower::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
+		profiledTree noJumpProfiledTree = TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
 
 		// 2nd time removing floating tiny segments
 		NeuronTree smallSegsCleanedUpTree = NeuronStructUtil::singleDotRemove(noJumpProfiledTree, this->minNodeNum);
+		profiledTree cleanedUpProfiledTree(smallSegsCleanedUpTree);
+		this->fragTraceTreeManager.treeDataBase.insert({ "tracedBlock_dendrite", cleanedUpProfiledTree });
 
 		// Finalized dendritic tree
 		finalOutputTree = smallSegsCleanedUpTree;
@@ -665,7 +670,6 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 
 	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
 	this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
-	this->fragTraceTreeGrowerPtr->explorerPtr->treeDataBase.clear();
 
 	if (mode == axon)
 	{		
@@ -955,7 +959,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 	int periCount = 0;
 	for (map<string, profiledTree>::iterator it = periRawDenTreeMap.begin(); it != periRawDenTreeMap.end(); ++it)
 	{
-		profiledTree periMSTprofiledTree(TreeGrower::branchBreak(it->second));
+		profiledTree periMSTprofiledTree(TreeTrimmer::branchBreak(it->second));
 		periMSTtreeMap.insert({ it->first, periMSTprofiledTree });
 
 		profiledTree periDnSampledProfiledTree = NeuronStructUtil::treeDownSample(periMSTprofiledTree, 3);
@@ -966,12 +970,12 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 		periIteredconnectedTreeMap.insert({ it->first, noDotProfiledTree });
 
 		float angleThre = (float(2) / float(3)) * PI_MK;
-		profiledTree noHookProfiledTree = TreeGrower::itered_removeHookingHeadTail(noDotProfiledTree, angleThre);
+		profiledTree noHookProfiledTree = TreeTrimmer::itered_removeHookingHeadTail(noDotProfiledTree, angleThre);
 		periNoHookTreeMap.insert({ it->first, noHookProfiledTree });
 
-		NeuronStructExplorer::segMorphProfile(noHookProfiledTree, 3);
-		profiledTree angleSmoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(noHookProfiledTree, 1.2);
-		profiledTree noJumpProfiledTree = TreeGrower::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
+		this->fragTraceTreeManager.segMorphProfile(noHookProfiledTree, 3);
+		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(noHookProfiledTree, 1.2);
+		profiledTree noJumpProfiledTree = TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
 		periNoJumpSmoothedTreeMap.insert({ it->first, noJumpProfiledTree });
 
 		for (QList<NeuronSWC>::iterator nodeIt = periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.begin(); nodeIt != periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.end(); ++nodeIt)

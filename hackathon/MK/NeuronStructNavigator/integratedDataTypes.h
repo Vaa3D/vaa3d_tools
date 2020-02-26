@@ -183,9 +183,14 @@ namespace integratedDataTypes
 	/***************** segEnd Cluster Tree *****************/
 	struct segEndClusterUnit
 	{
+		segEndClusterUnit() { this->parentCluster = nullptr; }
+
 		int clusterLabel;
 		boost::container::flat_set<int> headSegs;
 		boost::container::flat_set<int> tailSegs;
+
+		segEndClusterUnit* parentCluster;
+		map<int, segEndClusterUnit*> childClusterMap;
 	};
 	/*******************************************************/
 }

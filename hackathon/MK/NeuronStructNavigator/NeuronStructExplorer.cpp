@@ -940,7 +940,6 @@ void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)
 						segPairs.push_back(newSegPair);
 					}
 				}
-
 				inputProfiledTree.cluster2segPairMap.insert(pair<int, vector<segPairProfile>>(clusterIt->first, segPairs));
 			}
 		}

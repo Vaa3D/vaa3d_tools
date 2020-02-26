@@ -11,6 +11,7 @@
 #include "ImgProcessor.h"
 #include "processManager.h"
 #include "TreeGrower.h"
+#include "TreeTrimmer.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #endif

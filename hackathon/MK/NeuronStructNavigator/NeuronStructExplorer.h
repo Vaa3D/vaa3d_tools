@@ -74,7 +74,7 @@ private:
 
 public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
-	static void getClusterSegPairs(profiledTree& inputProfiledTree);
+	void getClusterSegPairs(profiledTree& inputProfiledTree);
 	//--------------------------------------------------------------- //
 	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
