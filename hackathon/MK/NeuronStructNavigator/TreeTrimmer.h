@@ -10,13 +10,12 @@
 class TreeTrimmer
 {
 public:
+	/************** Constructors and Basic Data/Function Members ****************/
 	TreeTrimmer() { this->sharedExplorerPtr = nullptr; }
 	TreeTrimmer(NeuronStructExplorer* baseExplorerPtr) { this->sharedExplorerPtr = make_shared<NeuronStructExplorer*>(baseExplorerPtr); }
 
 	shared_ptr<NeuronStructExplorer*> sharedExplorerPtr;
-
-
-	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints);
+	/****************************************************************************/
 
 
 	/************************* Minor Tree Trimming / Refining *************************/
@@ -39,6 +38,9 @@ public:
 	// Breaks any node-node length that is greater than [distThre].
 	static inline NeuronTree treeCut(NeuronTree& inputTree, double distThre = 10);
 	/**********************************************************************************/
+
+	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints);
+
 };
 
 inline NeuronTree TreeTrimmer::treeCut(NeuronTree& inputTree, double distThre)

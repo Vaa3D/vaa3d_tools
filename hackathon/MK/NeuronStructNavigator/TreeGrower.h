@@ -52,7 +52,7 @@ public:
 	TreeGrower() { this->sharedExplorerPtr = nullptr; }
 	TreeGrower(NeuronStructExplorer* baseExplorerPtr) { this->sharedExplorerPtr = make_shared<NeuronStructExplorer*>(baseExplorerPtr); }
 
-	// IMPORTANT: Use a shared_ptr here to avoid dangling pointers. But maybe a reference is already enough here? Feb, 2020, MK
+	// IMPORTANT: Use a shared_ptr here to avoid dangling pointers. 
 	shared_ptr<NeuronStructExplorer*> sharedExplorerPtr;
 	
 	vector<polarNeuronSWC> polarNodeList;
