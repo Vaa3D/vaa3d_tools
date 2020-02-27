@@ -834,6 +834,7 @@ void FragTraceControlPanel::pa_axonContinuous()
 			}
 		}
 
+		this->traceManagerPtr->axonMarkerAllowance = uiPtr->spinBox_6->value();
 		this->traceManagerPtr->localAxonMarkerMap = this->localAxonMarkerMap;
 	}
 }

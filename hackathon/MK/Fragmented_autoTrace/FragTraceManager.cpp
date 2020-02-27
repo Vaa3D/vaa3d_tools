@@ -65,6 +65,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	//cout << "NeuronStructExplorer's address in FragTraceManager:" << &fragTraceTreeManager << endl;
 	//system("pause");
 	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
+	this->fragTraceTreeTrimmerPtr = new TreeTrimmer(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
 	this->fragTraceTreeManager.treeDataBase.clear();
@@ -140,6 +141,7 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	//cout << "NeuronStructExplorer's address in FragTraceManager:" << &fragTraceTreeManager << endl;
 	//system("pause");
 	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
+	this->fragTraceTreeTrimmerPtr = new TreeTrimmer(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
 	this->fragTraceTreeManager.treeDataBase.clear();
@@ -248,7 +250,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		// Profiled segment shape/morphology
 		this->fragTraceTreeManager.segMorphProfile(iteredConnectedTree, 3);
-		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
+		profiledTree angleSmoothedTree = this->fragTraceTreeTrimmerPtr->itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
 
 		NeuronTree noDotTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
 		//if (this->minNodeNum > 0) finalOutputTree = NeuronStructUtil::singleDotRemove(iteredConnectedTree.tree, this->minNodeNum);
@@ -321,10 +323,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		// Profiled segment shape/morphology
 		this->fragTraceTreeManager.segMorphProfile(iteredConnectedProfiledTree, 3);
-		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
+		profiledTree angleSmoothedTree = this->fragTraceTreeTrimmerPtr->itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
 
 		// Smooth out sharp angles along each segment using 3 node window
-		profiledTree noJumpProfiledTree = TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
+		profiledTree noJumpProfiledTree = this->fragTraceTreeTrimmerPtr->segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
 
 		// 2nd time removing floating tiny segments
 		NeuronTree smallSegsCleanedUpTree = NeuronStructUtil::singleDotRemove(noJumpProfiledTree, this->minNodeNum);
@@ -734,9 +736,21 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 
 		if (this->continuousAxon)
 		{
+			set<vector<float>> probes;
 			cout << " -- selected axon markers:" << endl;
 			for (map<int, ImageMarker>::iterator it = localAxonMarkerMap.begin(); it != localAxonMarkerMap.end(); ++it)
+			{
 				cout << it->first << ": (" << it->second.x << ", " << it->second.y << ", " << it->second.z << ")" << endl;
+				vector<float> probe;
+				probe.push_back(it->second.x);
+				probe.push_back(it->second.y);
+				probe.push_back(it->second.z);
+				probes.insert(probe);
+			}
+			cout << endl;
+
+			set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(outputProfiledTree, probes, axonMarkerAllowance);
+			for (auto clusterID : seedCluster) cout << clusterID << " ";
 			cout << endl;
 		}
 		
@@ -974,8 +988,8 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 		periNoHookTreeMap.insert({ it->first, noHookProfiledTree });
 
 		this->fragTraceTreeManager.segMorphProfile(noHookProfiledTree, 3);
-		profiledTree angleSmoothedTree = TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(noHookProfiledTree, 1.2);
-		profiledTree noJumpProfiledTree = TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
+		profiledTree angleSmoothedTree = this->fragTraceTreeTrimmerPtr->itered_segSharpAngleSmooth_lengthDistRatio(noHookProfiledTree, 1.2);
+		profiledTree noJumpProfiledTree = this->fragTraceTreeTrimmerPtr->segSharpAngleSmooth_distThre_3nodes(angleSmoothedTree);
 		periNoJumpSmoothedTreeMap.insert({ it->first, noJumpProfiledTree });
 
 		for (QList<NeuronSWC>::iterator nodeIt = periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.begin(); nodeIt != periNoJumpSmoothedTreeMap.at(it->first).tree.listNeuron.end(); ++nodeIt)

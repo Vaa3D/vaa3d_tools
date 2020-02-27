@@ -122,6 +122,7 @@ private:
 	ImgAnalyzer fragTraceImgAnalyzer;
 	NeuronStructExplorer fragTraceTreeManager;
 	TreeGrower* fragTraceTreeGrowerPtr;
+	TreeTrimmer* fragTraceTreeTrimmerPtr;  
 /* ============================================ */
 
 	int numProcs;

@@ -126,19 +126,20 @@ profiledTree TreeTrimmer::spikeRemoval(const profiledTree& inputProfiledTree, in
 	return processingProfiledTree;
 }
 
-profiledTree TreeTrimmer::itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum)
+profiledTree TreeTrimmer::itered_spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
 	cout << "removing spikes.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
-	profiledTree cleanedTree = TreeTrimmer::spikeRemoval(inputProfiledTree, spikeNodeNum);
+	profiledTree originalProfiledTree = inputProfiledTree;
+	profiledTree cleanedTree = TreeTrimmer::spikeRemoval(originalProfiledTree, spikeNodeNum);
 	//cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
-	while (cleanedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
+	while (cleanedTree.tree.listNeuron.size() != originalProfiledTree.tree.listNeuron.size())
 	{
-		inputProfiledTree = cleanedTree;
+		originalProfiledTree = cleanedTree;
 
 		++iterCount;
 		cout << "  iteration " << iterCount << " " << endl;
-		cleanedTree = TreeTrimmer::spikeRemoval(inputProfiledTree, spikeNodeNum);
+		cleanedTree = TreeTrimmer::spikeRemoval(originalProfiledTree, spikeNodeNum);
 		//cout << "    spike number: " << cleanedTree.spikeRootIDs.size() << endl;
 	}
 	cout << endl;
@@ -198,18 +199,19 @@ profiledTree TreeTrimmer::removeHookingHeadTail(const profiledTree& inputProfile
 	return outputProfiledTree;
 }
 
-profiledTree TreeTrimmer::itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre)
+profiledTree TreeTrimmer::itered_removeHookingHeadTail(const profiledTree& inputProfiledTree, float radAngleThre)
 {
 	cout << "removing hooks.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
-	profiledTree hookRemovedTree = TreeTrimmer::removeHookingHeadTail(inputProfiledTree, radAngleThre);
-	while (hookRemovedTree.tree.listNeuron.size() != inputProfiledTree.tree.listNeuron.size())
+	profiledTree originalProfiledTree = inputProfiledTree;
+	profiledTree hookRemovedTree = TreeTrimmer::removeHookingHeadTail(originalProfiledTree, radAngleThre);
+	while (hookRemovedTree.tree.listNeuron.size() != originalProfiledTree.tree.listNeuron.size())
 	{
-		inputProfiledTree = hookRemovedTree;
+		originalProfiledTree = hookRemovedTree;
 
 		++iterCount;
 		cout << "  iteration " << iterCount << " " << endl;
-		hookRemovedTree = TreeTrimmer::removeHookingHeadTail(inputProfiledTree, radAngleThre);
+		hookRemovedTree = TreeTrimmer::removeHookingHeadTail(originalProfiledTree, radAngleThre);
 	}
 	cout << endl;
 
@@ -244,20 +246,21 @@ profiledTree TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(const profiledTree
 	return outputProfiledTree;
 }
 
-profiledTree TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(profiledTree& inputProfiledTree, double ratio)
+profiledTree TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio)
 {
 	cout << "smoothing angles.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
 
-	profiledTree angleSmoothedTree = TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, ratio);
+	profiledTree originalProfiledTree = inputProfiledTree;
+	profiledTree angleSmoothedTree = TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(originalProfiledTree, ratio);
 	while (angleSmoothedTree.smoothedNodeIDs.size() > 0)
 	{
 		NeuronStructExplorer::segMorphProfile(angleSmoothedTree);
-		inputProfiledTree = angleSmoothedTree;
+		originalProfiledTree = angleSmoothedTree;
 
 		++iterCount;
 		cout << "  iteration " << iterCount << " " << endl;
-		angleSmoothedTree = TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, ratio);
+		angleSmoothedTree = TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(originalProfiledTree, ratio);
 	}
 	cout << endl;
 

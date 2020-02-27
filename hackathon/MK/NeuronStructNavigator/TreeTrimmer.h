@@ -18,27 +18,29 @@ public:
 	/****************************************************************************/
 
 
+
 	/************************* Minor Tree Trimming / Refining *************************/
-	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
-	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
-	static profiledTree itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum = 3);
-
-	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
-	static profiledTree itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre);
-
-	static profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);
-	static profiledTree itered_segSharpAngleSmooth_lengthDistRatio(profiledTree& inputProfiledTree, double ratio);
-
-	static profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
-
 	// Breaks all branches in [inputProfiledTree].
 	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
 	static NeuronTree branchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 
 	// Breaks any node-node length that is greater than [distThre].
 	static inline NeuronTree treeCut(NeuronTree& inputTree, double distThre = 10);
+
+	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
+	static profiledTree itered_spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
+
+	static profiledTree itered_removeHookingHeadTail(const profiledTree& inputProfiledTree, float radAngleThre);
+	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
+
+	profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
+	profiledTree itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio);
+private:
+	profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);	
 	/**********************************************************************************/
 
+public:
 	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints);
 
 };

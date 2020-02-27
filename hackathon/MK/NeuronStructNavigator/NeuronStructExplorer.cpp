@@ -127,6 +127,14 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 	return segs;
 }
 
+void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+{
+	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
+
+	this->segmentList.clear();
+	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
+}
+
 map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head)
 {
 	if (head)
@@ -946,12 +954,52 @@ void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)
 	}
 }
 
-void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+set<int> NeuronStructExplorer::segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance)
 {
-	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
+	if (inputProfiledTree.segs.empty()) profiledTreeReInit(inputProfiledTree);
+	if (inputProfiledTree.segHeadClusters.empty() || inputProfiledTree.segTailClusters.empty())
+		this->getSegHeadTailClusters(inputProfiledTree);
 
-	this->segmentList.clear();
-	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
+	set<int> outputSet;
+	for (auto& probe : inputProbes)
+	{
+		for (auto& segHeadCluster : inputProfiledTree.segHeadClusters)
+		{
+			for (auto& segID : segHeadCluster.second)
+			{
+				int segHead = inputProfiledTree.segs.at(segID).head;
+				float headDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).x - probe.at(0)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).y - probe.at(1)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).z - probe.at(2)));
+				if (headDist <= rangeAllowance)
+				{
+					outputSet.insert(segHeadCluster.first);
+					break;
+				}
+			}
+		}
+
+		for (auto& segTailCluster : inputProfiledTree.segTailClusters)
+		{
+			for (auto& segID : segTailCluster.second)
+			{
+				vector<int> segTails = inputProfiledTree.segs.at(segID).tails;
+				for (auto& tailID : segTails)
+				{
+					float tailDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).x - probe.at(0)) +
+										   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).y - probe.at(1)) +
+										   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).z - probe.at(2)));
+					if (tailDist <= rangeAllowance)
+					{
+						outputSet.insert(segTailCluster.first);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return outputSet;
 }
 /* =============================== END of [Constructors and Basic Data/Function Members] =============================== */
 

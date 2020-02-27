@@ -32,7 +32,7 @@ public:
 	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
-	map<string, map<string, profiledTree>> treeSeriesDataBase;
+	map<string, map<string, profiledTree>> treeDataBases;
 	
 	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
 	inline void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
@@ -76,6 +76,10 @@ public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
 	void getClusterSegPairs(profiledTree& inputProfiledTree);
 	//--------------------------------------------------------------- //
+	/* ------------------------------------------------------------------------- */
+
+	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
+	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance);
 	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
 
