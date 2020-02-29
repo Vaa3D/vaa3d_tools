@@ -247,8 +247,7 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 		{
 			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
 			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
-			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
-			this->thisCallback->sendQPluginLoaderPtrBack(currMainWindow, this->thisCallback->FragTracerQPluginPtr);		
+			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);	
 			this->thisCallback->set3DViewerMarkerDetectorStatus(true, currMainWindow);
 		}
 	}
