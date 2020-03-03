@@ -18,9 +18,14 @@ void downSample_Files(QWidget *parent)
     if(dialog.exec()!=QDialog::Accepted)return;
     dialog.update();
 
-    double down =(double) dialog.res_output->value();
-    cout<<"Downsample: down = "<< down <<endl;
-    if(down < 1)
+    double down_x =(double) dialog.res_output_x->value();
+    double down_y =(double) dialog.res_output_y->value();
+    double down_z =(double) dialog.res_output_z->value();
+
+    cout<<"Downsample: down_x = "<< down_x <<endl;
+    cout<<"Downsample: down_y = "<< down_y <<endl;
+    cout<<"Downsample: down_z = "<< down_z <<endl;
+    if(down_x < 1 || down_y < 1 || down_z < 1)
     {
         v3d_msg("This is a Downsample plugin !");
         return;
@@ -31,11 +36,11 @@ void downSample_Files(QWidget *parent)
         if(dialog.file.endsWith(".eswc")||dialog.file.endsWith(".swc"))
         {
             qDebug()<<__LINE__<<" : "<<dialog.fileSave.toStdString().c_str();
-            DownsampleDialog :: downsampleEswc(dialog.file, dialog.fileSave, down);
+            DownsampleDialog :: downsampleEswc(dialog.file, dialog.fileSave, down_x, down_y, down_z);
         }
         else if(dialog.file.endsWith(".apo"))
         {
-            DownsampleDialog :: downsampleApo(dialog.file, dialog.fileSave, down);
+            DownsampleDialog :: downsampleApo(dialog.file, dialog.fileSave, down_x, down_y, down_z);
         }
     }
     //input a folder
@@ -57,11 +62,11 @@ void downSample_Files(QWidget *parent)
             qDebug()<<"savefile2 : "<<fileSaveName.toStdString().c_str();
             if(file1.endsWith(".eswc")||file1.endsWith(".swc") )
             {
-                DownsampleDialog :: downsampleEswc(file1, fileSaveName, down);
+                DownsampleDialog :: downsampleEswc(file1, fileSaveName, down_x, down_y, down_z);
             }
             else if(file1.endsWith(".apo"))
             {
-                DownsampleDialog :: downsampleApo(file1, fileSaveName, down);
+                DownsampleDialog :: downsampleApo(file1, fileSaveName, down_x, down_y, down_z);
             }
             else
                 continue;

@@ -16,7 +16,9 @@ public:
     QString files = "";
     QString fileSave = "";
     QString folderSave = "";
-    QSpinBox * res_output;
+    QSpinBox * res_output_x;
+    QSpinBox * res_output_y;
+    QSpinBox * res_output_z;
     QHBoxLayout * hbox1;
     QHBoxLayout * hbox2;
     QPushButton * input_file_Btn;
@@ -30,8 +32,8 @@ public:
     QPushButton * ok;
     QPushButton * cancel;
     QGridLayout * gridLayout;
-    static void downsampleEswc(const QString file, QString saveName, double down);
-    static void downsampleApo(const QString file, QString saveName, double down);
+    static void downsampleEswc(const QString file, QString saveName, double down_x, double down_y, double down_z);
+    static void downsampleApo(const QString file, QString saveName, double down_x, double down_y, double down_z);
     static QString nameSaveFile(const QString file);
 
 public:
