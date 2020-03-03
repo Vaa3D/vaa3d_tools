@@ -43,10 +43,6 @@ using namespace integratedDataStructures;
 #define SEGtileXY_LENGTH 30
 #endif
 
-#ifndef radANGLE_THRE
-#define radANGLE_THRE 0.25
-#endif
-
 #ifndef zRATIO
 #define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
 //#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
