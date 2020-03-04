@@ -17,5 +17,5 @@
 
 //#define __ERASER_DEBUG__
 
-
+#define __CONTINUOUS_AXON_SEGEND_CLUSTER_DEBUG__
 #endif

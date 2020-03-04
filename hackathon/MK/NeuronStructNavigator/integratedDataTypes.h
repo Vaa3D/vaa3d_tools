@@ -31,22 +31,11 @@
 using namespace std;
 using namespace integratedDataStructures;
 
-#ifndef PI_MK
-#define PI_MK 3.1415926 // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
-#endif
-
-#ifndef NODE_TILE_LENGTH
-#define NODE_TILE_LENGTH 100
-#endif
-
-#ifndef SEGtileXY_LENGTH
-#define SEGtileXY_LENGTH 30
-#endif
-
-#ifndef zRATIO
-#define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
-//#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
-#endif
+const double PI_MK            = 3.1415926535897932; // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
+const float  NODE_TILE_LENGTH = 100;
+const float  SEGtileXY_LENGTH = 30;
+const float  zRATIO           = 5; // This is the ratio of z resolution to x and y in fMOST images.
+//const float  zRATIO            = (0.28 / 0.1144);
 
 namespace integratedDataTypes
 {

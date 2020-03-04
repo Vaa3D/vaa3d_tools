@@ -1102,6 +1102,7 @@ void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, c
 /* =============== END of [Terafly Communicating Methods] =============== */
 
 
+
 void FragTraceControlPanel::fillUpParamsForm()
 {
 	this->CViewerPortal->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));

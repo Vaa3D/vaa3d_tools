@@ -262,6 +262,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		finalOutputTree = iteredConnectedTree2.tree;
 
+#ifdef __CONTINUOUS_AXON_SEGEND_CLUSTER_DEBUG__
+		
+#endif
+
 #ifdef __AXON_TREEFORMING_DEBUG__
 		QString branchBreakTreeName = this->finalSaveRootQ + "\\axonBranchBreakTree.swc";
 		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);

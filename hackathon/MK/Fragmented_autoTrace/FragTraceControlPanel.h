@@ -17,7 +17,7 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 	Q_INTERFACES(IPMain4NeuronAssembler)
 
 	friend class FragmentedAutoTracePlugin;
-	//friend class CViewer;
+	friend class FragTraceTester;
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
@@ -128,6 +128,7 @@ private:
 
 	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
 	/* ========================================== */
+
 
 
 	void fillUpParamsForm(); // This is for future parameter learning project.

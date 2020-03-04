@@ -22,6 +22,8 @@ class FragTraceManager : public QWidget
 {
 	Q_OBJECT
 
+	friend class FragTraceTester;
+
 public:
 	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
@@ -86,18 +88,15 @@ public:
 /* ====================== END of [Parameters] ======================= */
 
 
-
 // ======= Crucial Intermediate Result ======= //
 	vector<connectedComponent> signalBlobs;   // All segmented blobs are stored here.
 	vector<connectedComponent> signalBlobs2D; // not used
 // =========================================== //
 
 
-
 // **************************************************************************************************** //
 	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
 // **************************************************************************************************** //
-
 
 
 /* ================= Result Finalization ================= */
@@ -110,10 +109,8 @@ signals:
 /* ======================================================= */
 
 
-
 public slots:
 	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
-
 
 
 private:
@@ -123,6 +120,7 @@ private:
 	NeuronStructExplorer fragTraceTreeManager;
 	TreeGrower* fragTraceTreeGrowerPtr;
 	TreeTrimmer* fragTraceTreeTrimmerPtr;  
+	FragTraceTester* testerPtr;
 /* ============================================ */
 
 	int numProcs;
@@ -131,13 +129,11 @@ private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	
 
-
 /* =================== Image Enhancement =================== */
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 /* ========================================================= */
-
 
 
 /* =================== Image Segmentation =================== */
@@ -153,7 +149,6 @@ private:
 	// -- Each signal blob is represented by its centroid
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 /* ========================================================== */
-
 	
 
 /* =================== Final Traced Tree Generation =================== */
