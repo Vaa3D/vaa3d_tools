@@ -10,7 +10,7 @@ class FragTraceTester
 {
 public:
 	FragTraceTester() = default;
-	FragTraceTester(FragTraceControlPanel* controlPanelPtr) { this->sharedcontrolPanelPtr = make_shared<NeuronStructExplorer*>(controlPanelPtr); }
+	FragTraceTester(FragTraceControlPanel* controlPanelPtr) { this->sharedcontrolPanelPtr = make_shared<FragTraceControlPanel*>(controlPanelPtr); }
 
 	// IMPORTANT: Use a shared_ptr here to avoid dangling pointers. 
 	shared_ptr<FragTraceControlPanel*> sharedcontrolPanelPtr;
