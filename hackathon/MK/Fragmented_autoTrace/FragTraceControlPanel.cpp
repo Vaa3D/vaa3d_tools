@@ -29,7 +29,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 	// ------- Initialization ------- //
 	this->traceManagerPtr = nullptr;
-	this->testerPtr = nullptr;
 	this->volumeAdjusted = false;
 	this->volumeAdjustedCoords = new int[6];
 	this->globalCoords = new int[6];
@@ -178,8 +177,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 	this->fragEditorPtr = new FragmentEditor(parent, callback);
 
-#ifdef __CONTINUOUS_AXON_SEGEND_CLUSTER_DEBUG__
-	this->testerPtr = new FragTraceTester(this);
+#ifdef __ACTIVATE_TESTER__
+	FragTraceTester::instance(this);
 #endif
 
 	this->show();

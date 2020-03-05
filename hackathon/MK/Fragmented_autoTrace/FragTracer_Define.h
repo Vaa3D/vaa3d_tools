@@ -18,4 +18,6 @@
 //#define __ERASER_DEBUG__
 
 #define __CONTINUOUS_AXON_SEGEND_CLUSTER_DEBUG__
+
+#define __ACTIVATE_TESTER__
 #endif

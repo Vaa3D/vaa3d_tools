@@ -88,7 +88,6 @@ private:
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
 	INeuronAssembler* CViewerPortal;
-	FragTraceTester* testerPtr;
 /* =================================================== */
 
 

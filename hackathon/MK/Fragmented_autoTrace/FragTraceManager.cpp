@@ -6,8 +6,9 @@
 #include <boost/container/flat_set.hpp>
 
 #include "FragTracer_Define.h"
-#include "processManager.h"
 #include "FragTraceManager.h"
+#include "processManager.h"
+#include "FragTraceTester.h"
 #include "FeatureExtractor.h"
 
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
@@ -737,7 +738,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		QString skeletonTreeNameQ = this->finalSaveRootQ + "\\axonSkeleton.swc";
 		writeSWC_file(skeletonTreeNameQ, outputProfiledTree.tree);
 #endif
-
+		if (FragTraceTester::getInstance() != nullptr) FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this);
 		if (this->continuousAxon)
 		{
 			set<vector<float>> probes;

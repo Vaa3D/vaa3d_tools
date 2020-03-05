@@ -9,11 +9,16 @@
 class FragTraceTester
 {
 public:
-	FragTraceTester() = default;
-	FragTraceTester(FragTraceControlPanel* controlPanelPtr) { this->sharedcontrolPanelPtr = make_shared<FragTraceControlPanel*>(controlPanelPtr); }
+	FragTraceTester(FragTraceControlPanel* controlPanelPtr) { this->sharedControlPanelPtr = make_shared<FragTraceControlPanel*>(controlPanelPtr); }
 
-	// IMPORTANT: Use a shared_ptr here to avoid dangling pointers. 
-	shared_ptr<FragTraceControlPanel*> sharedcontrolPanelPtr;
+	static FragTraceTester* testerInstance;
+	static FragTraceTester* instance(FragTraceControlPanel* controlPanelPtr);
+	static FragTraceTester* getInstance();
+	static void uninstance();
+	static bool isInstantiated() { return testerInstance != nullptr; }
+
+	shared_ptr<FragTraceControlPanel*> sharedControlPanelPtr;
+	shared_ptr<FragTraceManager*> sharedTraceManagerPtr;
 
 	profiledTree segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ);
 	void scale(profiledTree& inputProfiledTree);

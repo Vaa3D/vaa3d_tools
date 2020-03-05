@@ -2,12 +2,32 @@
 
 using namespace std;
 
+FragTraceTester* FragTraceTester::testerInstance = nullptr;
+
+FragTraceTester* FragTraceTester::instance(FragTraceControlPanel* controlPanelPtr)
+{
+	FragTraceTester::testerInstance = new FragTraceTester(controlPanelPtr);
+	return FragTraceTester::testerInstance;
+}
+
+FragTraceTester* FragTraceTester::getInstance()
+{
+	if (FragTraceTester::testerInstance != nullptr) return FragTraceTester::testerInstance;
+	else return nullptr;
+}
+
+void FragTraceTester::uninstance()
+{
+	if (FragTraceTester::testerInstance != nullptr) delete FragTraceTester::testerInstance;
+	FragTraceTester::testerInstance = nullptr;
+}
+
 profiledTree FragTraceTester::segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ)
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
 	if (outputProfiledTree.segs.empty()) profiledTreeReInit(outputProfiledTree);
 	if (outputProfiledTree.segHeadClusters.empty() || outputProfiledTree.segTailClusters.empty())
-		(*this->sharedcontrolPanelPtr)->traceManagerPtr->fragTraceTreeManager.getSegHeadTailClusters(outputProfiledTree);
+		(*this->sharedControlPanelPtr)->traceManagerPtr->fragTraceTreeManager.getSegHeadTailClusters(outputProfiledTree);
 
 	for (auto& headSegIt : outputProfiledTree.headSeg2ClusterMap)
 	{
@@ -32,22 +52,22 @@ profiledTree FragTraceTester::segEndClusterCheck(const profiledTree& inputProfil
 void FragTraceTester::scale(profiledTree& inputProfiledTree)
 {
 	float imgDims[3];
-	imgDims[0] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getXDim();
-	imgDims[1] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getYDim();
-	imgDims[2] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getZDim();
+	imgDims[0] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getXDim();
+	imgDims[1] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getYDim();
+	imgDims[2] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getZDim();
 
 	float imgRes[3];
-	imgRes[0] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getRezX();
-	imgRes[1] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getRezY();
-	imgRes[2] = (*this->sharedcontrolPanelPtr)->thisCallback->getImageTeraFly()->getRezZ();
+	imgRes[0] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getRezX();
+	imgRes[1] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getRezY();
+	imgRes[2] = (*this->sharedControlPanelPtr)->thisCallback->getImageTeraFly()->getRezZ();
 
-	float factor = pow(2, abs((*this->sharedcontrolPanelPtr)->CViewerPortal->getTeraflyTotalResLevel() - 1 - (*this->sharedcontrolPanelPtr)->CViewerPortal->getTeraflyResLevel()));
+	float factor = pow(2, abs((*this->sharedControlPanelPtr)->CViewerPortal->getTeraflyTotalResLevel() - 1 - (*this->sharedControlPanelPtr)->CViewerPortal->getTeraflyResLevel()));
 	//cout << "  -- scaling factor = " << factor << endl;
 	//cout << "  -- current resolutionl level = " << (*this->sharedcontrolPanelPtr)->CViewerPortal->getTeraflyResLevel() + 1 << endl;
 	//cout << "  -- total res levels: " << (*this->sharedcontrolPanelPtr)->CViewerPortal->getTeraflyTotalResLevel() << endl;
 
 	float imgOri[3];
-	string currWinTitle = (*this->sharedcontrolPanelPtr)->CViewerPortal->getCviewerWinTitle();
+	string currWinTitle = (*this->sharedControlPanelPtr)->CViewerPortal->getCviewerWinTitle();
 	vector<string> splitWhole;
 	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
 	vector<string> xSplit;
