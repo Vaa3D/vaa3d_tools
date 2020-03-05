@@ -782,6 +782,11 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrowerPtr->polarNodeList, origin);  // Converts NeuronSWC list to polarNeuronSWC list.
 			this->fragTraceTreeGrowerPtr->radiusShellMap_loc = NeuronGeoGrapher::getShellByRadius_loc(this->fragTraceTreeGrowerPtr->polarNodeList);
 			profiledTree dendriticProfiledTree(this->fragTraceTreeGrowerPtr->dendriticTree_shellCentroid()); // Dendritic tree is generated here.
+			if (dendriticProfiledTree.tree.listNeuron.empty())
+			{
+				cerr << "No connected components captured. Do nothing and return." << endl;
+				return false;
+			}
 			for (QList<NeuronSWC>::iterator nodeIt = dendriticProfiledTree.tree.listNeuron.begin(); nodeIt != dendriticProfiledTree.tree.listNeuron.end(); ++nodeIt)
 				nodeIt->type = 16;
 			objSkeletonProfiledTree = dendriticProfiledTree.tree;
@@ -850,6 +855,11 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 
 				string treeName = "dendriticTree" + to_string(dendriticTreesMap.size() + 1);
 				profiledTree dendriticProfiledTree(this->fragTraceTreeGrowerPtr->dendriticTree_shellCentroid());
+				if (dendriticProfiledTree.tree.listNeuron.empty())
+				{
+					cerr << "No connected components captured. Do nothing and return." << endl;
+					return false;
+				}
 				for (QList<NeuronSWC>::iterator nodeIt = dendriticProfiledTree.tree.listNeuron.begin(); nodeIt != dendriticProfiledTree.tree.listNeuron.end(); ++nodeIt)
 					nodeIt->type = 16 + dendriticTreesMap.size();
 				dendriticTreesMap.insert({ treeName, dendriticProfiledTree });

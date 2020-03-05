@@ -211,26 +211,32 @@ void integratedDataTypes::segPairProfile::segsAngleDiff12(connectOrientation con
 
 integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float nodeTileLength, float segTileLength)
 {
-	this->tree = inputTree;
-	this->segTileSize = segTileLength;
-	this->nodeTileSize = nodeTileLength;
-
-	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
-	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
-
-	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
-	//cout << "segs num: " << this->segs.size() << endl;
-
-	NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
+	this->tree.listNeuron.clear();
 	
-	vector<segUnit> allSegs;
-	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
+	if (inputTree.listNeuron.empty()) cerr << "The input tree is empty, profiledTree cannot be initialized." << endl;
+	else
 	{
-		//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
-		allSegs.push_back(it->second);
+		this->tree = inputTree;
+		this->segTileSize = segTileLength;
+		this->nodeTileSize = nodeTileLength;
+
+		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+
+		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
+		//cout << "segs num: " << this->segs.size() << endl;
+
+		NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
+
+		vector<segUnit> allSegs;
+		for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
+		{
+			//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
+			allSegs.push_back(it->second);
+		}
+		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
+		this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 	}
-	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
-	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 }
 
 void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
