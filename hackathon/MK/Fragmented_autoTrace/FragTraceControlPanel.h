@@ -22,26 +22,26 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 
-	// ======= Saving path for results / intermediate results ======= //
+// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
 	QString adaSaveRoot;
 	QString histMaskRoot;
-	// ============================================================== //
+// ============================================================== //
 
 
-	/* ======= Result and Scaling Functions ======= */ 
+/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
 	map<string, NeuronTree> tracedTrees;
 	map<int, string> scalingRatioMap;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
-	/* ============================================ */
+/* ============================================ */
 
 	map<string, float> paramsFromUI;
 
 	vector<string> blankAreas; // will be abandoned
 
-	/* ======= Terafly Communicating Methods ======= */
+/* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum();
 
 	virtual void updateCViewerPortal();
@@ -50,11 +50,11 @@ public:
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
 
 	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[], const int mouseX, const int mouseY);
-	/* ============================================= */
+/* ============================================= */
 
 
 public slots:
-    /* ================== User Interface Buttons =================== */
+/* ================== User Interface Buttons =================== */
 	// ------- Configuration ------- //
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
@@ -68,35 +68,38 @@ public slots:
 	// ------- Post Editing ------- //
 	void eraseButtonClicked();
 	// ---------------------------- //
-    /* ======= END of [User Interface Configuration Buttons] ======= */
+/* ======= END of [User Interface Configuration Buttons] ======= */
 
 
-	// ********************************************************************** //
+// ***************************************************************************** //
 	void traceButtonClicked(); // ==> THIS IS WHERE THE TRACING PROCESS STARTS
-	// ********************************************************************** //
+// ***************************************************************************** //
 
 
-	// ------- Receive traced tree emitted from FragTraceManager ------- //
+// -------------- Receive traced tree emitted from FragTraceManager -------------- //
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
-	// ----------------------------------------------------------------- //
+// ------------------------------------------------------------------------------- //
 
 
 private:
+/* ============== Member Class Pointers ============== */
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
 	INeuronAssembler* CViewerPortal;
+	FragTraceTester* testerPtr;
+/* =================================================== */
 
 
-	/* =============== Additional Widget =============== */
+/* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
-	/* ================================================= */
+/* ================================================= */
 
 
-	/* ======= Marker Detection ======= */
+/* ============== Marker Detection ============== */
 	int surType;
 	QList<ImageMarker> updatedMarkerList;
 	QList<ImageMarker> selectedMarkerList;
@@ -106,19 +109,19 @@ private:
 	map<int, ImageMarker> localAxonMarkerMap;
 	map<int, string> somaDisplayNameMap;
 	void updateMarkerMonitor();
-	/* ================================ */
+/* ============================================== */
 
 
-	/* =============== Parameter Collecting Functions =============== */
+/* =============== Parameter Collecting Functions =============== */
 	void pa_imgEnhancement();
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
 	void pa_axonContinuous();
-	/* =========== END of [Parameter Collecting Functions] ========== */
+/* =========== END of [Parameter Collecting Functions] ========== */
 
 
-	/* ======= Tracing Volume Preparation ======= */
+/* ======= Tracing Volume Preparation ======= */
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
 	bool volumeAdjusted;
@@ -127,7 +130,7 @@ private:
 	int* displayingDims;
 
 	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
-	/* ========================================== */
+/* ========================================== */
 
 
 

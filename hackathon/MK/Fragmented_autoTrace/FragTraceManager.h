@@ -38,7 +38,6 @@ public:
 
 	workMode mode;                // tracing axon or dendrite
 
-
 /* =========================== Parameters =========================== */
 	// ------- Image Enhancement ------- //
 	bool ada;
@@ -120,7 +119,6 @@ private:
 	NeuronStructExplorer fragTraceTreeManager;
 	TreeGrower* fragTraceTreeGrowerPtr;
 	TreeTrimmer* fragTraceTreeTrimmerPtr;  
-	FragTraceTester* testerPtr;
 /* ============================================ */
 
 	int numProcs;

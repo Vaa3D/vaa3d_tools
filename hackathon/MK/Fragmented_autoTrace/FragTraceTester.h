@@ -17,9 +17,6 @@ public:
 
 	profiledTree segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ);
 	void scale(profiledTree& inputProfiledTree);
-
-
-
 };
 
 #endif
