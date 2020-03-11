@@ -29,6 +29,30 @@
 #include "NeuronStructNavigator_Define.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
+void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
+{
+	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else
+	{
+		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
+		return;
+	}
+}
+
+void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength)
+{
+	if (replace)
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else this->treeEntry(inputTree, treeName, segTileLength);
+}
+
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
 {
 	// -- This method profiles all segments in a given input tree.
@@ -881,6 +905,46 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 	}
 	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tiled_tailEndTest.swc", testTree.tree);
 #endif
+}
+
+bool NeuronStructExplorer::__segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath)
+{
+	profiledTree inputCopy = inputProfiledTree;
+	int clusterCount = 1;
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segTailClusters.begin(); it != inputCopy.segTailClusters.end(); ++it)
+	{
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(*inputCopy.segs.at(*it2).tails.begin())].type = it->first % 9;
+		}
+		++clusterCount;
+	}
+	clusterCount = 1;
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segHeadClusters.begin(); it != inputCopy.segHeadClusters.end(); ++it)
+	{
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(inputCopy.segs.at(*it2).head)].type = it->first % 9;
+		}
+		++clusterCount;
+	}
+
+	profiledTree terminals(inputCopy.tree);
+	NeuronTree terminalTree;
+	for (QList<NeuronSWC>::iterator it = terminals.tree.listNeuron.begin(); it != terminals.tree.listNeuron.end(); ++it)
+	{
+		if (it->parent == -1 || terminals.node2childLocMap.find(it->n) == terminals.node2childLocMap.end())
+		{
+			NeuronSWC newNode = *it;
+			newNode.parent = -1;
+			terminalTree.listNeuron.push_back(newNode);
+		}
+	}
+
+	QString saveNameQ = QString::fromStdString(segEndTestFullPath);
+	writeSWC_file(saveNameQ, terminalTree);
+
+	return true;
 }
 
 void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)

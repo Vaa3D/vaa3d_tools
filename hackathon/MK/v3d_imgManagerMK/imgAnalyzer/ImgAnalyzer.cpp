@@ -3,7 +3,7 @@
 #include "ImgAnalyzer.h"
 
 /* ======================================= Image Segmentation/Detection ======================================= */
-vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
+vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int dims[], const int distThre, unsigned char maxIP1D[])
 {
 	// -- This method finds connected components from a given 2D or 3D image.
 	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
@@ -27,7 +27,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 		}
 		
 		cout << "scanning slices.. ";
-		for (vector<unsigned char**>::iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
+		for (vector<unsigned char**>::const_iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
 		{
 			cout << ptrdiff_t(it - inputSlicesVector.begin() + 1) << " ";
 			size_t currSliceI = 0;
@@ -82,7 +82,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 	int islandCount = 0;
 	cout << "  -- white pixel number: " << whitePixAddress.size() << endl << endl;
 	cout << "Processing each slice to identify connected components: ";
-	for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
+	for (vector<unsigned char**>::const_iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
 	{
 		int sliceNum = int(sliceIt - inputSlicesVector.begin());
 		cout << sliceNum << " ";
@@ -679,7 +679,7 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 	return outputSectionalCentroids;
 }
 
-boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd)
+boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(const vector<int>& dim1, const vector<int>& dim2, const vector<int>& sectionalDim, const int secDimStart, const int secDimEnd)
 {
 	// -- This method finds connected components (2D) on each section and their corresponding centroids on that sectional plane.
 

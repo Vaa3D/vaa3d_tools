@@ -105,7 +105,7 @@ inline void integratedDataStructures::morphStructElement2D::printOutStructEle()
 	}
 }	
 
-inline void integratedDataStructures::ChebyshevCenter(set<vector<int>> allCoords, float center[])
+void integratedDataStructures::ChebyshevCenter(set<vector<int>> allCoords, float center[])
 {
 	float lengthSum = 1000000;
 	for (set<vector<int>>::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)

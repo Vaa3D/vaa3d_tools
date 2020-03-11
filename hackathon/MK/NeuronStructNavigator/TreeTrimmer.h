@@ -18,7 +18,6 @@ public:
 	/****************************************************************************/
 
 
-
 	/************************* Minor Tree Trimming / Refining *************************/
 	// Breaks all branches in [inputProfiledTree].
 	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
@@ -27,14 +26,19 @@ public:
 	// Breaks any node-node length that is greater than [distThre].
 	static inline NeuronTree treeCut(NeuronTree& inputTree, double distThre = 10);
 
-	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
+	// Removes short spikes on segments. The spike length criterion is predefined by users in node count measure.
+	// The iterative wrapper should be called to process thoroughly.
 	static profiledTree itered_spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 
+	// Removes hooking ends of segments. The criterion is the angle formed within the last 3 nodes.
+	// The iterative wrapper should be called in order to remove hooks completely since new angles are being formed while removing sharp angles.
 	static profiledTree itered_removeHookingHeadTail(const profiledTree& inputProfiledTree, float radAngleThre);
 	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
 
+
 	profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
+
 	profiledTree itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio);
 private:
 	profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);	
@@ -42,7 +46,6 @@ private:
 
 public:
 	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints);
-
 };
 
 inline NeuronTree TreeTrimmer::treeCut(NeuronTree& inputTree, double distThre)

@@ -102,14 +102,14 @@ public:
 
 	/****************** Polar Coordinate System Operations *****************/
 	template<typename T> // Converts NeuronSWC to polarNeuronSWC with specified origin.
-	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
+	static polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
+
+	template<typename T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
+	static void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
 
 	// Converts polarNeuronSWC to NeuronSWC.
 	static inline NeuronSWC polar2CartesianNode(const polarNeuronSWC& inputPolarNode);
-
-	template<typename T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
-	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
-
+	
 	// Convert polarNeuronSWC list to NeuronSWC list.
 	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
 
@@ -284,7 +284,7 @@ T NeuronGeoGrapher::get3nodesFormingAngle(const NeuronSWC& angularNode, const Ne
 }
 
 template<typename T>
-inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin)
+polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin)
 {
 	polarNeuronSWC newPolarNode;
 	newPolarNode.ID = inputNode.n;
@@ -319,6 +319,14 @@ inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inp
 	return newPolarNode;
 }
 
+template<typename T>
+void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin)
+{
+	outputPolarNodeList.clear();
+	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+		outputPolarNodeList.push_back(NeuronGeoGrapher::CartesianNode2Polar(*nodeIt, origin));
+}
+
 inline NeuronSWC NeuronGeoGrapher::polar2CartesianNode(const polarNeuronSWC& inputPolarNode)
 {
 	NeuronSWC newNode;
@@ -337,14 +345,6 @@ inline void NeuronGeoGrapher::polarNodeList2nodeList(const vector<polarNeuronSWC
 	outputNodeList.clear();
 	for (vector<polarNeuronSWC>::const_iterator polarNodeIt = inputPolarNodeList.begin(); polarNodeIt != inputPolarNodeList.end(); ++polarNodeIt)
 		outputNodeList.push_back(NeuronGeoGrapher::polar2CartesianNode(*polarNodeIt));
-}
-
-template<typename T>
-inline void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin)
-{
-	outputPolarNodeList.clear();
-	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
-		outputPolarNodeList.push_back(NeuronGeoGrapher::CartesianNode2Polar(*nodeIt, origin));
 }
 
 inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList)

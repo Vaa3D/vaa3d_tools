@@ -89,6 +89,9 @@ namespace integratedDataTypes
 		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist		
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
+		// [segSmoothnessMap] profiles smooth measures node by node through the whole segment.
+		// Each node carries a map in which key is measuring range (with node centered) and value is a map of different measures.
+		// node ID -> <measuring range -> <measure name -> value>>
 		map<int, boost::container::flat_map<int, map<string, double>>> segSmoothnessMap;
 
 		bool to_be_deleted;
