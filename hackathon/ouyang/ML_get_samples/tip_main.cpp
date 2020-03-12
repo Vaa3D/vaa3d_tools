@@ -1,4 +1,3 @@
-
 #include "tip_main.h"
 #include <stdio.h>
 #include <iostream>
@@ -945,9 +944,9 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
     if(!input_folder.endsWith("/")){
         input_folder = input_folder+"/";
     }
-    if(!input_swc_folder.endsWith("/")){
-        input_swc_folder = input_swc_folder+"/";
-    }
+    //if(!input_swc_folder.endsWith("/")){
+     //   input_swc_folder = input_swc_folder+"/";
+    //}
     //if(!output_2d_dir.endsWith("/")){
     //    output_2d_dir = output_2d_dir+"/";
     //}
@@ -996,30 +995,30 @@ void prune_terminal_nodes(const V3DPluginArgList & input, V3DPluginArgList & out
 
     //1.1 read terafly swc
 
-    QDir dir_terafly_swc(input_swc_folder);
+//    QDir dir_terafly_swc(input_swc_folder);
 
-    QStringList namelist1=dir_terafly_swc.entryList();
+//    QStringList namelist1=dir_terafly_swc.entryList();
 
-    QStringList all_terafly_swc;
-    for(int i=0;i<namelist1.size();++i)
-    {
-        if(namelist1.at(i).endsWith(".ano.eswc")) all_terafly_swc.push_back(namelist1.at(i));
-        else if(namelist1.at(i).endsWith(".ano.swc")) all_terafly_swc.push_back(namelist1.at(i));
-    }
-    QString name=all_swc.at(0).split("_")[1]+"_"+all_swc.at(0).split("_")[2];
-    //QString terafly_swc_path=input_swc_folder+name+".ano.swc";
-    NeuronTree terafly_nt_input;
-    if(all_terafly_swc.size()>0){
-        for (int i=0;i<all_terafly_swc.size();i++){
-            if (all_terafly_swc.at(i).split("/").last().split(".")[0]==name)
-            {
-                terafly_nt_input=readSWC_file(input_swc_folder+"/"+all_terafly_swc.at(i));
-                printf("swc_path=======================:%s \n",qPrintable(all_terafly_swc.at(i)));
-            }
-        }
-    }
+//    QStringList all_terafly_swc;
+//    for(int i=0;i<namelist1.size();++i)
+//    {
+//        if(namelist1.at(i).endsWith(".ano.eswc")) all_terafly_swc.push_back(namelist1.at(i));
+//        else if(namelist1.at(i).endsWith(".ano.swc")) all_terafly_swc.push_back(namelist1.at(i));
+//    }
+//    QString name=all_swc.at(0).split("_")[1]+"_"+all_swc.at(0).split("_")[2];
+//    //QString terafly_swc_path=input_swc_folder+name+".ano.swc";
+//    NeuronTree terafly_nt_input;
+//    if(all_terafly_swc.size()>0){
+//        for (int i=0;i<all_terafly_swc.size();i++){
+//            if (all_terafly_swc.at(i).split("/").last().split(".")[0]==name)
+//            {
+//                terafly_nt_input=readSWC_file(input_swc_folder+"/"+all_terafly_swc.at(i));
+//                printf("swc_path=======================:%s \n",qPrintable(all_terafly_swc.at(i)));
+//            }
+//        }
+//    }
 
-
+    terafly_nt_input=readSWC_file(input_swc_folder);
     QList<int> plist;
     QList<int> alln;
     int N=terafly_nt_input.listNeuron.size();
@@ -1652,7 +1651,6 @@ cout<<"=========================================================================
         S_ori.z 	= croped.listNeuron.at(croped_swc_tip_index).z;
         S_ori.r 	= 1;
         S_ori.pn 	= -1;
-
         S_mean.n 	= 2;
         S_mean.type= 2;
         S_mean.x 	= mass_center[0];
@@ -1660,7 +1658,6 @@ cout<<"=========================================================================
         S_mean.z 	= mass_center[2];
         S_mean.r 	= 1;
         S_mean.pn 	= 1;
-
         S_re.n 	= 3;
         S_re.type= 4;
         S_re.x 	= center.x;
@@ -1670,9 +1667,7 @@ cout<<"=========================================================================
         S_re.pn 	= 2;
         tip_nodes.append(S_ori);tip_nodes.append(S_mean);tip_nodes.append(S_re);
         r_and_index[0]=5;r_and_index[1]=5;r_and_index[2]=5;
-
         //r_and_index=calculate_R(data1d_crop,tip_nodes,ave_signal_image_mask,5,mysz,3,20,false);
-
 //prediction index 1:number of foreground pixels
         map<int,float> index_ratio=ratio_r(data1d_crop,tip_nodes,5,ave_signal_all_mask,mysz);
         printf("ratio_ori:%f\n ratio_mean:%f\n ratio_re:%f\n",index_ratio[0],index_ratio[1],index_ratio[2]);
@@ -1707,7 +1702,6 @@ cout<<"=========================================================================
         QString saveName1 = output_2d_dir +num_cnt+"_high" +".nrrd";
         qDebug("--------------------------nrrd name:%s",qPrintable(saveName1));
         //simple_saveimage_wrapper(callback, saveName1.toStdString().c_str(), high_mask , mysz, 1);
-
         map<int,float> index_ratio_high=ratio_r(data1d_crop,tip_nodes,5,ave_signal_all_mask_high,mysz);
         printf("ratio_ori_high=================:%f\n ratio_mean_high================:%f\n ratio_re_high========================:%f\n",index_ratio_high[0],index_ratio_high[1],index_ratio_high[2]);
 //score
@@ -1716,16 +1710,13 @@ cout<<"=========================================================================
         fore_score_ori=index_ratio[0] / (index_ratio[0] + index_ratio[1] + index_ratio[2]);
         fore_score_mean=index_ratio[1] / (index_ratio[0] + index_ratio[1] + index_ratio[2]);
         fore_score_re=index_ratio[2] / (index_ratio[0] + index_ratio[1] + index_ratio[2]);
-
         high_score_ori=index_ratio_high[0] / (index_ratio_high[0] + index_ratio_high[1] + index_ratio_high[2]);
         high_score_mean=index_ratio_high[1] / (index_ratio_high[0] + index_ratio_high[1] + index_ratio_high[2]);
         high_score_re=index_ratio_high[2] / (index_ratio_high[0] + index_ratio_high[1] + index_ratio_high[2]);
-
         double score_result_ori=0,score_result_mean=0,score_result_re=0;
         score_result_ori=(fore_score_ori*0.4+high_score_ori*0.6) * 100;
         score_result_mean=(fore_score_mean*0.4+high_score_mean*0.6) * 100;
         score_result_re=(fore_score_re*0.4+high_score_re*0.6) * 100;
-
         double max_score=0;
         max_score= (score_result_ori >= max_score) ? score_result_ori : max_score;
         max_score= (score_result_mean >= max_score) ? score_result_mean : max_score;
@@ -1744,19 +1735,16 @@ cout<<"=========================================================================
         rel.z = center.z;
         rel.color.a = 0;
         if(max_score == score_result_re && mark_or_not){
-
             rel.color.b = 255;
             rel.color.g = 255;
             rel.color.r = 255;
             mark_or_not=0;
         }
         else {
-
             rel.color.b = 0;
             rel.color.g = 255;
             rel.color.r = 0;
         }
-
         rel.comment=QString("%1").arg(score_result_re);
         rel.radius=r_and_index[2];
         imagemarks.push_back(rel);
@@ -1770,7 +1758,6 @@ cout<<"=========================================================================
         ori_center.z = croped.listNeuron.at(croped_swc_tip_index).z+1;
         ori_center.color.a = 0;
         /*if(max_score == score_result_ori && mark_or_not){
-
             ori_center.color.b = 255;
             ori_center.color.g = 255;
             ori_center.color.r = 255;
@@ -1793,7 +1780,6 @@ cout<<"=========================================================================
         mean.z = mass_center[2]+1;
         mean.color.a = 0;
         /*if(max_score == score_result_mean && mark_or_not){
-
             mean.color.b = 255;
             mean.color.g = 255;
             mean.color.r = 255;
@@ -1815,7 +1801,6 @@ cout<<"=========================================================================
         mean_second.z = mass_center2[2]+1;
         mean_second.color.a = 0;
         /*if(max_score == score_result_mean && mark_or_not){
-
             mean.color.b = 255;
             mean.color.g = 255;
             mean.color.r = 255;
@@ -1846,9 +1831,7 @@ cout<<"=========================================================================
 
 /*
 //record result:generate and write file
-
         QString out_result =QString(outfiles.at(0))+"/"+QString("tip.csv");
-
         QDir tempdir;//QDir for creating work directory
         QFile *tempfile=new QFile;
         tempdir.setCurrent(output_2d_dir);//QDir for creating work directory
@@ -1872,13 +1855,11 @@ cout<<"=========================================================================
                 v3d_msg("Can not open the current recording file!Please check!");
                 return;
             }
-
             QTextStream myfile(&file);
             //myfile<<"# generated by tip relocation plugin"<<endl;
             //myfile<<"1.Number of tip,2.Score of original tip,3.Score of mean_shift,4.Score of relocation"<<endl;
             myfile << QString(flag1+"_"+output_num).toStdString().c_str() <<"," << QString::number(score_result_ori,'f',2).toStdString().c_str()
                    << ","<< QString::number(score_result_mean,'f',2).toStdString().c_str()<< ","<< QString::number(score_result_re,'f',2).toStdString().c_str()<<endl;
-
             file.close();
         }
 */
@@ -2871,7 +2852,7 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
     }
     for(int i=0; i<N; i++){
         if(plist.count(nt.listNeuron.at(i).n)==0){ori_tip_list.append(i);}
-    } 
+    }
 
     //delete the fake tips(distance between tip and branch node is less than 10)
     QVector<QVector<V3DLONG> > childs;
