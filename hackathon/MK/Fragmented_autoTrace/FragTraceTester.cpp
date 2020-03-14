@@ -4,6 +4,12 @@ using namespace std;
 
 FragTraceTester* FragTraceTester::testerInstance = nullptr;
 
+FragTraceTester::FragTraceTester(FragTraceControlPanel* controlPanelPtr)
+{
+	this->sharedControlPanelPtr = make_shared<FragTraceControlPanel*>(controlPanelPtr);
+	this->sharedTraceManagerPtr = nullptr;
+}
+
 FragTraceTester* FragTraceTester::instance(FragTraceControlPanel* controlPanelPtr)
 {
 	FragTraceTester::testerInstance = new FragTraceTester(controlPanelPtr);

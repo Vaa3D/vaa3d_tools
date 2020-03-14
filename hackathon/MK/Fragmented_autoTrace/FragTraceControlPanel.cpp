@@ -706,6 +706,9 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		if (this->traceManagerPtr == nullptr)
 		{
 			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
+#ifdef __ACTIVATE_TESTER__
+			FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
+#endif
 			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
 			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
 			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
@@ -724,7 +727,12 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	else
 	{
 		if (this->traceManagerPtr == nullptr)
+		{
 			this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, mode);
+#ifdef __ACTIVATE_TESTER__
+			FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
+#endif
+		}
 		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
 }
