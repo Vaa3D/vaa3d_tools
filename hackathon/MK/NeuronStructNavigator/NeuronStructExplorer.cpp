@@ -1021,8 +1021,7 @@ void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)
 set<int> NeuronStructExplorer::segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance)
 {
 	if (inputProfiledTree.segs.empty()) profiledTreeReInit(inputProfiledTree);
-	if (inputProfiledTree.segHeadClusters.empty() || inputProfiledTree.segTailClusters.empty())
-		this->getSegHeadTailClusters(inputProfiledTree);
+	this->getSegHeadTailClusters(inputProfiledTree, rangeAllowance);
 
 	set<int> outputSet;
 	for (auto& probe : inputProbes)

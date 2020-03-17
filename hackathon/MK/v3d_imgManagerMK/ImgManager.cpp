@@ -138,7 +138,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
 
 			slicePtr->~Image4DSimple();
-			operator delete(slicePtr);
+			delete slicePtr;
 		}
 
 		this->imgDatabase.insert({ caseID, currImgCase });
@@ -178,7 +178,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		}		
 
 		slicePtr->~Image4DSimple();
-		operator delete(slicePtr);
+		delete slicePtr;
 
 		this->imgDatabase.insert({ caseID, currImgCase });
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;

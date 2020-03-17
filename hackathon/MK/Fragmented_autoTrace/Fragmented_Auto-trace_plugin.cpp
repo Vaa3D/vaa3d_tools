@@ -33,9 +33,8 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 {
 	if (menu_name == tr("settings"))
 	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
-		this->UIinstancePtr = panelPtr;
-		panelPtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
+		this->UIinstancePtr = new FragTraceControlPanel(parent, &callback);
+		this->UIinstancePtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
 		if (this->UIinstancePtr->CViewerPortal != nullptr) this->UIinstancePtr->CViewerPortal->changeFragTraceStatus(false);
 	}
 	else

@@ -184,6 +184,17 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->show();
 }
 
+FragTraceControlPanel::~FragTraceControlPanel()
+{
+	// QObject organizes construction and desttruction by themsleves.
+	// Therefore -- 
+	//   1. Vaa3D's plugin (anythinig inherited from QObject classes) doesn't need to explicitly delete pointers before finishing runtime.
+	//   2. Fragtracer plugin is guaranteed of only 1 instance existing (controled in v3dr_glwidget, [Alt + F]).
+	//      No need to provide copy constructor and assignment operator.
+
+	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
+}
+
 /* =========================== User Interface Buttons =========================== */
 void FragTraceControlPanel::imgFmtChecked(bool checked)
 {
@@ -677,38 +688,24 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		croppedDims[1] = this->volumeAdjustedCoords[3] - this->volumeAdjustedCoords[2] + 1;
 		croppedDims[2] = this->volumeAdjustedCoords[5] - this->volumeAdjustedCoords[4] + 1;
 		unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
-		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, this->volumeAdjustedCoords[0], this->volumeAdjustedCoords[1], 
-																 this->volumeAdjustedCoords[2], this->volumeAdjustedCoords[3], 
+		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, this->volumeAdjustedCoords[0], this->volumeAdjustedCoords[1],
+																 this->volumeAdjustedCoords[2], this->volumeAdjustedCoords[3],
 																 this->volumeAdjustedCoords[4], this->volumeAdjustedCoords[5], originalDims);
-		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
+		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);	
 
-#ifdef __IMAGE_VOLUME_PREPARATION_DEBUG__
-		// ------- For debug purpose ------- //
-		unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
-		memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
-
-		V3DLONG saveDims[4];
-		saveDims[0] = croppedDims[0];
-		saveDims[1] = croppedDims[1];
-		saveDims[2] = croppedDims[2];
-		saveDims[3] = 1;
-
-		string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
-		const char* saveNameC = saveName.c_str();
-		ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
-
-		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
-		const char* saveNameC2 = saveName2.c_str();
-		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);
-		// --------------------------------- //
-#endif
+		// ------- Debug ------- //
+		/*if (FragTraceTester::isInstantiated()) 
+		{
+			string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
+			FragTraceTester::getInstance()->imgVolumeCheck(croppedImg4DSimplePtr, saveName);
+		}*/
+		// --------------------- //
 
 		if (this->traceManagerPtr == nullptr)
 		{
 			this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, mode);
-#ifdef __ACTIVATE_TESTER__
-			FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
-#endif
+			if (FragTraceTester::isInstantiated())
+				FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
 			this->traceManagerPtr->partialVolumeLowerBoundaries[0] = this->volumeAdjustedCoords[0] - 1;
 			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
 			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
@@ -729,9 +726,8 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		if (this->traceManagerPtr == nullptr)
 		{
 			this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, mode);
-#ifdef __ACTIVATE_TESTER__
-			FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
-#endif
+			if (FragTraceTester::isInstantiated())
+				FragTraceTester::getInstance()->sharedTraceManagerPtr = make_shared<FragTraceManager*>(this->traceManagerPtr);
 		}
 		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
@@ -1021,7 +1017,6 @@ void FragTraceControlPanel::scaleTracedTree()
 	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
 	imgOri[2] = stof(zSplit[0]) * factor - 1;
 
-	//NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, factor, factor, factor);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 
@@ -1067,7 +1062,6 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	imgOri[2] = stof(zSplit[0]) * factor - 1;
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
-	//NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
 	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, 1 / factor, 1 / factor, 1 / factor);
 
 #ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__

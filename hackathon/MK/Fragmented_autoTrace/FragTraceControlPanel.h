@@ -21,6 +21,7 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
+	~FragTraceControlPanel();
 
 // ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
