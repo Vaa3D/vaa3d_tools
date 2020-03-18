@@ -26,6 +26,7 @@
 #include "neuron_format_converter.h"
 
 #include "NeuronStructExplorer.h"
+#include "NeuronStructNavigatingTester.h"
 #include "NeuronStructNavigator_Define.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
@@ -276,6 +277,7 @@ void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTre
 		headSegNum = headSegNum + it1->second.size();
 	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it2 = inputProfiledTree.segTailClusters.begin(); it2 != inputProfiledTree.segTailClusters.end(); ++it2)
 		tailSegNum = tailSegNum + it2->second.size();
+
 #ifdef __SEGEND_CLUSTER_PRINTOUT__
 	cout << "head segment number: " << headSegNum << " -- tail segment number: " << tailSegNum << endl;
 	cout << "head segment map number: " << inputProfiledTree.headSeg2ClusterMap.size() << " -- tail segment map number: " << inputProfiledTree.tailSeg2ClusterMap.size() << endl;
@@ -603,7 +605,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
 	// -- This method clusters segment heads and tails tile by tile -> clusters in 1 tile are independent of those in neighboring tiles.
-	// NOTE: Nodes are confined within their own tiles. Therefore, cluster merging correctness is irrelevant in this method and doesn't provide any information for that matter.
+	// NOTE: Nodes are confined within their own tiles. Therefore, the correctness of cluster groups is irrelevant here and doesn't provide any information for that matter.
 	// Therefore, the information stored in [inputProfiledTree::segHeadClusters] and [inputProfiledTree::segTailClusters] are not in their final form and not correct.
 
 	inputProfiledTree.segHeadClusters.clear(); 

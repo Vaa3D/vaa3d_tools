@@ -1,4 +1,5 @@
 #include "TreeTrimmer.h"
+#include "NeuronStructNavigatingTester.h"
 
 //map<int, profiledTree> TreeTrimmer::trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints)
 //{
@@ -279,12 +280,12 @@ profiledTree TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(const profiledTree
 			if (nodeIt->second.at("distance") > distThre)
 			{
 				NeuronSWC currPaNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->first)).parent));
-				NeuronSWC currChildNode = segIt->second.nodes.at(*segIt->second.seg_childLocMap.at(nodeIt->first).begin());
-				NeuronSWC centerNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->first));
+				NeuronSWC currChildNode = segIt->second.nodes.at(int(*segIt->second.seg_childLocMap.at(nodeIt->first).begin()));
+				NeuronSWC centerNode = segIt->second.nodes.at(int(segIt->second.seg_nodeLocMap.at(nodeIt->first)));
 				if (abs(currPaNode.x - centerNode.x) + abs(currPaNode.y - centerNode.y) + abs(currPaNode.z - centerNode.z) >
 					abs(currChildNode.x - centerNode.x) + abs(currChildNode.y - centerNode.y) + abs(currChildNode.z - centerNode.z))
-					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->first)].parent = -1;
-				else outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(currChildNode.n)].parent = -1;
+					outputProfiledTree.tree.listNeuron[int(outputProfiledTree.node2LocMap.at(nodeIt->first))].parent = -1;
+				else outputProfiledTree.tree.listNeuron[int(outputProfiledTree.node2LocMap.at(currChildNode.n))].parent = -1;
 			}
 		}
 	}

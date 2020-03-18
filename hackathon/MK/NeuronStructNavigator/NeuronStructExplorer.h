@@ -26,6 +26,8 @@
 
 class NeuronStructExplorer
 {
+	friend class Tester;
+
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	

@@ -47,6 +47,8 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 
 class TreeGrower
 {
+	friend class Tester;
+
 public:
 	/************** Constructors and Basic Data/Function Members ****************/	
 	TreeGrower() { this->sharedExplorerPtr = nullptr; }

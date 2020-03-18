@@ -4,6 +4,8 @@
 
 #include <boost/container/flat_set.hpp>
 
+#include "NeuronStructNavigatingTester.h"
+
 #include "FragTracer_Define.h"
 #include "FragTraceManager.h"
 #include "processManager.h"
@@ -273,6 +275,40 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::noFloatingTinyFrag, finalOutputTree, savingPrefixQ);
 		}
 		// --------------------- //
+
+		/* ------- SegEnd Cluster Debug ------- */
+		using NSlibTester = NeuronStructNavigator::Tester;
+		NSlibTester::instance(&(this->fragTraceTreeManager));
+		this->fragTraceTreeManager.getSegHeadTailClusters(iteredConnectedTree2, 10);
+		map<int, set<vector<float>>> segEndClusterNodeMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(iteredConnectedTree2);
+		set<int> clusterIDs;
+		for (auto& mapIt : segEndClusterNodeMap) clusterIDs.insert(mapIt.first);
+		map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(clusterIDs);
+		for (auto& cluster : clusterColorMap) FragTraceTester::getInstance()->pushMarkers(segEndClusterNodeMap.at(cluster.first), cluster.second);
+		NSlibTester::uninstance();
+		/* ------------------------------------ */
+
+		if (this->continuousAxon)
+		{
+			set<vector<float>> probes;
+			//cout << " -- selected axon markers:" << endl;
+			for (map<int, ImageMarker>::iterator it = localAxonMarkerMap.begin(); it != localAxonMarkerMap.end(); ++it)
+			{
+				//cout << it->first << ": (" << it->second.x << ", " << it->second.y << ", " << it->second.z << ")" << endl;
+				vector<float> probe;
+				probe.push_back(it->second.x);
+				probe.push_back(it->second.y);
+				probe.push_back(it->second.z);
+				probes.insert(probe);
+			}
+			//cout << endl;
+
+			set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(iteredConnectedTree2, probes, axonMarkerAllowance);
+			map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(seedCluster);
+			map<int, set<vector<float>>> clusterMarkerMap = FragTraceTester::getInstance()->clusterSegEndMarkersGen(seedCluster, iteredConnectedTree2);
+			for (auto& markerCluster : clusterMarkerMap)
+				FragTraceTester::getInstance()->pushMarkers(markerCluster.second, clusterColorMap.at(markerCluster.first));			
+		}
 	}
 	else if (this->mode == dendriticTree)
 	{
@@ -720,35 +756,6 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		}
 		// --------------------- //
 		
-		if (this->continuousAxon)
-		{
-			set<vector<float>> probes;
-			cout << " -- selected axon markers:" << endl;
-			for (map<int, ImageMarker>::iterator it = localAxonMarkerMap.begin(); it != localAxonMarkerMap.end(); ++it)
-			{
-				cout << it->first << ": (" << it->second.x << ", " << it->second.y << ", " << it->second.z << ")" << endl;
-				vector<float> probe;
-				probe.push_back(it->second.x);
-				probe.push_back(it->second.y);
-				probe.push_back(it->second.z);
-				probes.insert(probe);
-			}
-			cout << endl;
-
-			set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(outputProfiledTree, probes, axonMarkerAllowance);
-			set<vector<float>> testingMarkerCoords;
-			vector<float> test1(3), test2(3), test3(3);
-			test1 = { 100, 100, 100 };
-			test2 = { 150, 150, 150 };
-			test3 = { 200, 200, 200 };
-			testingMarkerCoords.insert(test1);
-			testingMarkerCoords.insert(test2);
-			testingMarkerCoords.insert(test3);
-			FragTraceTester::getInstance()->pushMarkers(testingMarkerCoords);
-			//for (auto clusterID : seedCluster) cout << clusterID << " ";
-			//cout << endl;
-		}
-		
 		return true;
 	}
 	// ************************************************************************************************* //
@@ -1040,7 +1047,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 {
 	profiledTree tmpTree = inputProfiledTree; 
 	profiledTree outputProfiledTree = this->fragTraceTreeGrowerPtr->itered_connectSegsWithinClusters(tmpTree, distThreshold);
-	
+
 	bool typeAssigned = false;
 	int assignedType;
 	cout << "  looking through existing segments";

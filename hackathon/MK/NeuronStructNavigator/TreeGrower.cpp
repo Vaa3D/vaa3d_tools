@@ -23,6 +23,7 @@
 
 #include "NeuronStructUtilities.h"
 #include "TreeGrower.h"
+#include "NeuronStructNavigatingTester.h"
 #include "NeuronStructNavigator_Define.h"
 
 using namespace std;

@@ -9,6 +9,8 @@
 
 class TreeTrimmer
 {
+	friend class Tester;
+
 public:
 	/************** Constructors and Basic Data/Function Members ****************/
 	TreeTrimmer() { this->sharedExplorerPtr = nullptr; }

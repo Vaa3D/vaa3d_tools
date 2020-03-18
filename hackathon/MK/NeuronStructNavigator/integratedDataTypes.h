@@ -130,9 +130,6 @@ namespace integratedDataTypes
 	/********* Complete Profile Data Structure for NeuronTree *********/
 	struct profiledTree
 	{
-		// With reinitialization function provided, this struct needs copy control constructors. 
-		// Will be implemented later.
-
 		profiledTree() = default;
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;

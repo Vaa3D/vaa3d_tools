@@ -9,8 +9,6 @@
 class FragTraceTester
 {
 public:
-	FragTraceTester(FragTraceControlPanel* controlPanelPtr);
-
 	static FragTraceTester* testerInstance;
 	static FragTraceTester* instance(FragTraceControlPanel* controlPanelPtr);
 	static FragTraceTester* getInstance();
@@ -32,9 +30,14 @@ public:
 	inline void denTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 	inline void generalTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 
-	void pushMarkers(const set<vector<float>>& markerCoords) { (*this->sharedControlPanelPtr)->CViewerPortal->pushMarkersfromTester(markerCoords); }
+	map<int, set<vector<float>>> clusterSegEndMarkersGen(const set<int>& clusterIDs, const profiledTree& inputProfiledTree);
+	map<int, RGBA8> clusterColorGen_RGB(const set<int>& clusterIDs);
+	void pushMarkers(const set<vector<float>>& markerCoords, RGBA8 color) { (*this->sharedControlPanelPtr)->CViewerPortal->pushMarkersfromTester(markerCoords, color); }
 	profiledTree segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ);
 	void scale(profiledTree& inputProfiledTree);
+
+private:
+	FragTraceTester(FragTraceControlPanel* controlPanelPtr);
 };
 
 inline void FragTraceTester::generalTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ)

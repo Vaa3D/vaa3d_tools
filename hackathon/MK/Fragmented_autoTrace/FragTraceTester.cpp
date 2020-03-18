@@ -60,6 +60,70 @@ void FragTraceTester::saveIntermediateImgSlices(const string& regImgName, const 
 	}
 }
 
+map<int, set<vector<float>>> FragTraceTester::clusterSegEndMarkersGen(const set<int>& clusterIDs, const profiledTree& inputProfiledTree)
+{
+	map<int, set<vector<float>>> outputMap;
+	for (set<int>::const_iterator setIDit = clusterIDs.begin(); setIDit != clusterIDs.end(); ++setIDit)
+	{
+		set<vector<float>> outputMarkerCoords;
+		for (auto& segHeadID : inputProfiledTree.segHeadClusters.at(*setIDit))
+		{
+			vector<float> newMarker(3);
+			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(segHeadID).head));
+			newMarker = { headNode.x, headNode.y, headNode.z };
+			outputMarkerCoords.insert(newMarker);
+		}
+
+		for (auto& segTailID : inputProfiledTree.segTailClusters.at(*setIDit))
+		{
+			for (vector<int>::const_iterator tailIt = inputProfiledTree.segs.at(segTailID).tails.begin(); tailIt != inputProfiledTree.segs.at(segTailID).tails.end(); ++tailIt)
+			{
+				vector<float> newMarker(3);
+				const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*tailIt));
+				newMarker = { tailNode.x, tailNode.y, tailNode.z };
+				outputMarkerCoords.insert(newMarker);
+			}
+		}
+		outputMap.insert({ *setIDit, outputMarkerCoords });
+	}
+
+	return outputMap;
+}
+
+map<int, RGBA8> FragTraceTester::clusterColorGen_RGB(const set<int>& clusterIDs)
+{
+	map<int, RGBA8> clusterColorMap;
+	int colorR = 10, colorG = 10, colorB = 10;
+	for (auto& clusterID : clusterIDs)
+	{
+		RGBA8 newColor;
+		if (clusterID % 3 == 0)
+		{
+			newColor.r = colorR % 255;
+			newColor.g = 0;
+			newColor.b = 0;
+			colorR += 10;
+		}
+		else if (clusterID % 3 == 1)
+		{
+			newColor.r = 0;
+			newColor.g = colorG % 255;
+			newColor.b = 0;
+			colorG += 10;
+		}
+		else if (clusterID % 3 == 2)
+		{			
+			newColor.r = 0;
+			newColor.g = 0;
+			newColor.b = colorB % 255;
+			colorB += 10;
+		}
+		clusterColorMap.insert({ clusterID, newColor });
+	}
+
+	return clusterColorMap;
+}
+
 profiledTree FragTraceTester::segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ)
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
