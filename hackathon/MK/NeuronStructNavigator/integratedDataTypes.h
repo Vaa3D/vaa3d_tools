@@ -168,6 +168,8 @@ namespace integratedDataTypes
 	/***************** segEnd Cluster Tree *****************/
 	struct segEndClusterUnit
 	{
+		// This struct has pointer data members. Need to provide copy control constructors later.
+
 		segEndClusterUnit() { this->parentCluster = nullptr; }
 
 		int clusterLabel;

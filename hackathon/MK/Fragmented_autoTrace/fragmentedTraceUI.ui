@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>858</width>
-    <height>984</height>
+    <width>851</width>
+    <height>861</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -273,8 +273,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>782</width>
-               <height>584</height>
+               <width>786</width>
+               <height>461</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -283,13 +283,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>280</height>
+                  <height>200</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>330</height>
+                  <height>250</height>
                  </size>
                 </property>
                 <property name="font">
@@ -307,13 +307,13 @@
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>130</height>
+                     <height>50</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>170</height>
+                     <height>100</height>
                     </size>
                    </property>
                    <property name="font">
@@ -336,6 +336,12 @@
                        <size>
                         <width>0</width>
                         <height>45</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>50</height>
                        </size>
                       </property>
                       <property name="frameShape">
@@ -453,90 +459,6 @@
                       </layout>
                      </widget>
                     </item>
-                    <item>
-                     <widget class="QFrame" name="frame_6">
-                      <property name="minimumSize">
-                       <size>
-                        <width>300</width>
-                        <height>50</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>680</width>
-                        <height>50</height>
-                       </size>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_3">
-                       <item>
-                        <widget class="QCheckBox" name="checkBox_4">
-                         <property name="maximumSize">
-                          <size>
-                           <width>220</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                         <property name="text">
-                          <string>Save results from this step?</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_2">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>300</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>300</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_5">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>50</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>80</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                         <property name="font">
-                          <font>
-                           <family>Calibri</family>
-                           <pointsize>10</pointsize>
-                          </font>
-                         </property>
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -545,7 +467,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>60</height>
+                     <height>40</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -592,13 +514,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>250</height>
+                  <height>100</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>250</height>
+                  <height>150</height>
                  </size>
                 </property>
                 <property name="font">
@@ -616,13 +538,13 @@
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>120</height>
+                     <height>80</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>150</height>
+                     <height>100</height>
                     </size>
                    </property>
                    <property name="font">
@@ -649,7 +571,7 @@
                       <property name="maximumSize">
                        <size>
                         <width>16777215</width>
-                        <height>100</height>
+                        <height>50</height>
                        </size>
                       </property>
                       <property name="frameShape">
@@ -686,90 +608,6 @@
                       </widget>
                      </widget>
                     </item>
-                    <item>
-                     <widget class="QFrame" name="frame_8">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>50</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>80</height>
-                       </size>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_4">
-                       <item>
-                        <widget class="QCheckBox" name="checkBox_5">
-                         <property name="maximumSize">
-                          <size>
-                           <width>220</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                         <property name="text">
-                          <string>Save results from this step?</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_3">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>300</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>300</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_6">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="minimumSize">
-                          <size>
-                           <width>50</width>
-                           <height>30</height>
-                          </size>
-                         </property>
-                         <property name="maximumSize">
-                          <size>
-                           <width>80</width>
-                           <height>16777215</height>
-                          </size>
-                         </property>
-                         <property name="font">
-                          <font>
-                           <family>Calibri</family>
-                           <pointsize>10</pointsize>
-                          </font>
-                         </property>
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -797,23 +635,23 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>782</width>
-               <height>584</height>
+               <width>775</width>
+               <height>461</height>
               </rect>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout">
+             <layout class="QVBoxLayout" name="verticalLayout_18">
               <item>
                <widget class="QGroupBox" name="groupBox_13">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>150</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>200</height>
+                  <height>150</height>
                  </size>
                 </property>
                 <property name="font">
@@ -834,7 +672,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>200</height>
+                     <height>70</height>
                     </size>
                    </property>
                    <property name="font">
@@ -849,53 +687,32 @@
                    <property name="checkable">
                     <bool>false</bool>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_22">
+                   <layout class="QHBoxLayout" name="horizontalLayout_3">
                     <item>
-                     <widget class="QFrame" name="frame_20">
-                      <property name="maximumSize">
+                     <widget class="QRadioButton" name="radioButton_4">
+                      <property name="text">
+                       <string>In voxel count:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spinBox_14"/>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_15">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
                        <size>
-                        <width>16777215</width>
-                        <height>70</height>
+                        <width>419</width>
+                        <height>20</height>
                        </size>
                       </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_16">
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_4">
-                         <property name="text">
-                          <string>In voxel count:</string>
-                         </property>
-                         <property name="checked">
-                          <bool>true</bool>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QSpinBox" name="spinBox_14"/>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_15">
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>419</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
-                       </item>
-                      </layout>
-                      <zorder>radioButton_4</zorder>
-                      <zorder>spinBox_14</zorder>
-                      <zorder>horizontalSpacer_15</zorder>
-                     </widget>
+                     </spacer>
                     </item>
                    </layout>
                   </widget>
@@ -908,7 +725,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>400</height>
+                  <height>300</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -932,7 +749,7 @@
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_19">
+                <layout class="QVBoxLayout" name="verticalLayout_17">
                  <item>
                   <widget class="QFrame" name="frame_18">
                    <property name="frameShape">
@@ -941,7 +758,7 @@
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
                    </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                   <layout class="QHBoxLayout" name="horizontalLayout_4">
                     <item>
                      <widget class="QListView" name="listView_2">
                       <property name="minimumSize">
@@ -953,7 +770,7 @@
                       <property name="maximumSize">
                        <size>
                         <width>280</width>
-                        <height>16777215</height>
+                        <height>200</height>
                        </size>
                       </property>
                       <property name="selectionMode">
@@ -969,7 +786,7 @@
                       <property name="maximumSize">
                        <size>
                         <width>440</width>
-                        <height>16777215</height>
+                        <height>200</height>
                        </size>
                       </property>
                       <property name="widgetResizable">
@@ -980,11 +797,11 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>423</width>
-                         <height>268</height>
+                         <width>416</width>
+                         <height>185</height>
                         </rect>
                        </property>
-                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                       <layout class="QVBoxLayout" name="verticalLayout">
                         <item>
                          <widget class="QRadioButton" name="radioButton_5">
                           <property name="font">
@@ -1022,6 +839,12 @@
                          <widget class="QGroupBox" name="groupBox_5">
                           <property name="enabled">
                            <bool>false</bool>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>16777215</width>
+                            <height>100</height>
+                           </size>
                           </property>
                           <property name="font">
                            <font>
@@ -1188,8 +1011,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>782</width>
-               <height>584</height>
+               <width>786</width>
+               <height>461</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1295,8 +1118,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>782</width>
-               <height>584</height>
+               <width>786</width>
+               <height>461</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -1461,187 +1284,6 @@
                      <bool>true</bool>
                     </property>
                    </widget>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="groupBox_7">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>150</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Area To Be Left Blank</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-                <layout class="QGridLayout" name="gridLayout">
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_9">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>X:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_5">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="2">
-                  <widget class="QLabel" name="label_10">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Y:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="3">
-                  <widget class="QLineEdit" name="lineEdit_6">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="4">
-                  <widget class="QLabel" name="label_12">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Z:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="5">
-                  <widget class="QLineEdit" name="lineEdit_7">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="6">
-                  <spacer name="horizontalSpacer_5">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>62</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="0" column="7" colspan="2">
-                  <widget class="QLabel" name="label_13">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>radius:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="9">
-                  <widget class="QLineEdit" name="lineEdit_8">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="10" rowspan="2">
-                  <widget class="QListView" name="listView"/>
-                 </item>
-                 <item row="1" column="1" colspan="5">
-                  <spacer name="horizontalSpacer_4">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>284</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="1" column="6" colspan="2">
-                  <widget class="QPushButton" name="pushButton_7">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Add</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="8" colspan="2">
-                  <widget class="QPushButton" name="pushButton_8">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Delete</string>
-                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -1937,70 +1579,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_6</sender>
-   <signal>clicked()</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>browseSavePathClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>712</x>
-     <y>762</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>781</x>
-     <y>618</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_5</sender>
-   <signal>clicked()</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>browseSavePathClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>697</x>
-     <y>443</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>778</x>
-     <y>231</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_4</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>saveSegStepsResultChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>172</x>
-     <y>438</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>8</x>
-     <y>379</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_5</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>saveSegStepsResultChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>308</x>
-     <y>759</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>4</x>
-     <y>617</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>radioButton_4</sender>
    <signal>clicked(bool)</signal>
    <receiver>FragmentedTraceUI</receiver>
@@ -2045,38 +1623,6 @@
     <hint type="destinationlabel">
      <x>4</x>
      <y>80</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_7</sender>
-   <signal>clicked()</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>blankAreaClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>453</x>
-     <y>607</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>354</x>
-     <y>908</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_8</sender>
-   <signal>clicked()</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>blankAreaClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>560</x>
-     <y>607</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>470</x>
-     <y>907</y>
     </hint>
    </hints>
   </connection>

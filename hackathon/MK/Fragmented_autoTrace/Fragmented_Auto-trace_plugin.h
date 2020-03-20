@@ -12,7 +12,6 @@
 #include "INeuronAssembler.h"
 
 #include "FragTraceControlPanel.h"
-#include "FragmentEditor.h"
 
 class FragmentedAutoTracePlugin : public QObject, public V3DPluginInterface2_1
 {

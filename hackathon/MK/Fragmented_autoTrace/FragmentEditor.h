@@ -17,7 +17,7 @@ class FragmentEditor : public QWidget
 	Q_OBJECT;
 
 public:
-	FragmentEditor(QWidget* parent, V3DPluginCallback2* callback) : thisCallback(callback), CViewerPortal(callback->castCViewer) {};
+	FragmentEditor(V3DPluginCallback2* callback) : thisCallback(callback), CViewerPortal(callback->castCViewer) {};
 
 	void updateCViewerPortal() { this->CViewerPortal = thisCallback->castCViewer; }
 

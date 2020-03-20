@@ -1032,10 +1032,10 @@ set<int> NeuronStructExplorer::segEndClusterProbe(profiledTree& inputProfiledTre
 		{
 			for (auto& segID : segHeadCluster.second)
 			{
-				int segHead = inputProfiledTree.segs.at(segID).head;
-				float headDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).x - probe.at(0)) +
-									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).y - probe.at(1)) +
-									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segHead)).z - probe.at(2)));
+				int headID = inputProfiledTree.segs.at(segID).head;
+				float headDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).x - probe.at(0)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).y - probe.at(1)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).z - probe.at(2)));
 				if (headDist <= rangeAllowance)
 				{
 					outputSet.insert(segHeadCluster.first);

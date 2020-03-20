@@ -95,21 +95,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->spinBox->setValue(callOldSettings.value("ada_stepsize").toInt());
 		uiPtr->spinBox_2->setValue(callOldSettings.value("ada_rate").toInt());
 		uiPtr->spinBox_9->setValue(callOldSettings.value("cutoffIntensity").toInt());
-
-		if (callOldSettings.value("ada_saveCheck") == true)
-		{
-			uiPtr->checkBox_4->setChecked(true);
-			uiPtr->lineEdit_2->setEnabled(true);
-			uiPtr->pushButton_5->setEnabled(true);
-		}
-		else
-		{
-			uiPtr->checkBox_4->setChecked(false);
-			uiPtr->lineEdit_2->setEnabled(false);
-			uiPtr->pushButton_5->setEnabled(false);
-		}
 	}
-	uiPtr->lineEdit_2->setText(callOldSettings.value("ada_savePath").toString());
 	if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
 	else uiPtr->checkBox_6->setChecked(false);
 	// ------------------------------------------ //
@@ -123,22 +109,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		{
 			uiPtr->groupBox_6->setChecked(true);
 			this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
-
-			if (callOldSettings.value("histThre_saveCheck") == true)
-			{
-				uiPtr->checkBox_5->setChecked(true);
-				uiPtr->lineEdit_3->setEnabled(true);
-				uiPtr->pushButton_6->setEnabled(true);
-			}
-			else
-			{
-				uiPtr->checkBox_5->setChecked(false);
-				uiPtr->lineEdit_3->setEnabled(false);
-				uiPtr->pushButton_6->setEnabled(false);
-			}
 		}
 	}
-	uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
 	// ---------------------------------------- //
 
 
@@ -150,10 +122,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
 		}
 	}
+	// --------------------------------------- //
 
+
+	// ------- Marker / Point Cloud Monitor Group Box ------- //
 	this->somaListViewer = new QStandardItemModel(this);
 	uiPtr->listView_2->setModel(this->somaListViewer);
-	// --------------------------------------- //
+	// ------------------------------------------------------ //
 
 
 	// ------- Object-based MST ------- //
@@ -165,17 +140,15 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	// ------------------------------- //
 
 
-	// ------- Segment Post-processing ------- //		
-	this->listViewBlankAreas = new QStandardItemModel(this);
-	uiPtr->listView->setModel(listViewBlankAreas);
+	// ------- Result Saving Path ------- //		
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
-	// --------------------------------------- //
+	// ---------------------------------- //
 
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
 
-	this->fragEditorPtr = new FragmentEditor(parent, callback);
+	this->fragEditorPtr = new FragmentEditor(callback);
 
 #ifdef __ACTIVATE_TESTER__
 	FragTraceTester::instance(this);
@@ -193,6 +166,7 @@ FragTraceControlPanel::~FragTraceControlPanel()
 	//      No need to provide copy constructor and assignment operator.
 
 	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
+	if (this->CViewerPortal != nullptr) this->CViewerPortal = nullptr;
 }
 
 /* =========================== User Interface Buttons =========================== */
@@ -304,54 +278,6 @@ void FragTraceControlPanel::refreshSomaCoords()
 	this->updateMarkerMonitor();
 }
 
-void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
-{
-	QObject* signalSender = sender();
-	QString checkBoxName = signalSender->objectName();
-
-	if (checked)
-	{
-		if (checkBoxName == "checkBox_4")
-		{
-			uiPtr->lineEdit_2->setEnabled(true);
-			uiPtr->pushButton_5->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_5")
-		{
-			uiPtr->lineEdit_3->setEnabled(true);
-			uiPtr->pushButton_6->setEnabled(true);
-		}
-	}
-}
-
-void FragTraceControlPanel::blankAreaClicked()
-{
-	QObject* signalSender = sender();
-	QString pushButtonName = signalSender->objectName();
-	
-	if (pushButtonName == "pushButton_7")
-	{
-		if (uiPtr->lineEdit_5->text() == "" || uiPtr->lineEdit_6->text() == "" || uiPtr->lineEdit_7->text() == "" || uiPtr->lineEdit_8->text() == "")
-		{
-			v3d_msg("One or more parameters weren't specified. Please double check.");
-			return;
-		}
-
-		QString blankAreaName;
-		blankAreaName = "(" + uiPtr->lineEdit_5->text() + ", " + uiPtr->lineEdit_6->text() + ", " + uiPtr->lineEdit_7->text() + ") radius = " + uiPtr->lineEdit_8->text();
-		QStandardItem* newItem = new QStandardItem(blankAreaName);
-		listViewBlankAreas->appendRow(newItem);
-	}
-	else if (pushButtonName == "pushButton_8")
-	{
-		QModelIndexList selectedArea = uiPtr->listView->selectionModel()->selectedRows();
-		if (selectedArea.empty()) return;
-
-		int rowNum = selectedArea.begin()->row();
-		listViewBlankAreas->removeRow(rowNum);
-	}
-}
-
 void FragTraceControlPanel::browseSavePathClicked()
 {
 	QObject* signalSender = sender();
@@ -366,24 +292,6 @@ void FragTraceControlPanel::browseSavePathClicked()
 		currSettings.setValue("savePath", this->saveSWCFullName);
 
 		uiPtr->lineEdit->setText(this->saveSWCFullName);
-	}
-	else if (browseButtonName == "pushButton_5")
-	{
-		this->adaSaveRoot = QFileDialog::getExistingDirectory(0, QObject::tr("Save intermediate result (adaptive thresholding)"));
-
-		QSettings currSettings("SEU-Allen", "Fragment tracing");
-		currSettings.setValue("ada_savePath", this->adaSaveRoot);
-
-		uiPtr->lineEdit_2->setText(this->adaSaveRoot);
-	}
-	else if (browseButtonName == "pushButton_6")
-	{
-		this->histMaskRoot = QFileDialog::getExistingDirectory(0, QObject::tr("Save intermediate result (histogram-based mask generation)"));
-
-		QSettings currSettings("SEU-Allen", "Fragment tracing");
-		currSettings.setValue("histThre_savePath", this->histMaskRoot);
-
-		uiPtr->lineEdit_3->setText(this->histMaskRoot);
 	}
 }
 
@@ -431,16 +339,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada_stepsize", uiPtr->spinBox->value());
 		settings.setValue("ada_rate", uiPtr->spinBox_2->value());
 		settings.setValue("cutoffIntensity", uiPtr->spinBox_9->value());
-		if (uiPtr->checkBox_4->isChecked())
-		{
-			settings.setValue("ada_saveCheck", true);
-			settings.setValue("ada_savePath", uiPtr->lineEdit_2->text());
-		}
-		else
-		{
-			settings.setValue("ada_saveCheck", false);
-			settings.setValue("ada_savePath", "");
-		}
 		settings.setValue("ada_imgName", uiPtr->groupBox_3->title());
 	}
 	else
@@ -461,16 +359,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	{
 		settings.setValue("histThre", true);
 		settings.setValue("histThre_std", this->doubleSpinBox->value());
-		if (uiPtr->checkBox_5->isChecked())
-		{
-			settings.setValue("histThre_saveCheck", true);
-			settings.setValue("histThre_savePath", uiPtr->lineEdit_3->text());
-		}
-		else
-		{
-			settings.setValue("histThre_saveCheck", false);
-			settings.setValue("histThre_savePath", "");
-		}
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 	// ----------------------------------------- //
@@ -590,8 +478,7 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 	
 	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
-
-	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
+	this->connect(this->traceManagerPtr, SIGNAL(getExistingFinalTree(NeuronTree&)), this, SLOT(sendExistingNeuronTree(NeuronTree&)));
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
 	
 	if (this->somaListViewer->rowCount() == 0)
@@ -611,7 +498,7 @@ void FragTraceControlPanel::traceButtonClicked()
 	/***************************************************************/
 
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
-
+	this->disconnect(this->traceManagerPtr, SIGNAL(getExistingFinalTree(NeuronTree&)), this, SLOT(sendExistingNeuronTree(NeuronTree&)));
 
 	if (this->volumeAdjusted) 
 	{
@@ -637,7 +524,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		trees.push_back(scaledBackExistingTree);
 		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(this->tracedTree, scaledBackExistingTree, 4, 8);
 		profiledTree newlyTracedPartProfiled(newlyTracedPart);
-		
+
 		NeuronTree cleaned_newlyTracedPart;
 		if (this->traceManagerPtr->minNodeNum > 0) cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
 		trees.push_back(cleaned_newlyTracedPart);
@@ -731,6 +618,52 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		}
 		else this->traceManagerPtr->reinit(currBlockImg4DSimplePtr, mode);
 	}
+
+	this->sendImgParams();
+}
+
+void FragTraceControlPanel::sendImgParams()
+{
+	float imgDims[3];
+	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
+	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
+	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
+
+	float imgRes[3];
+	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
+	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
+	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
+
+	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
+	cout << "  -- scaling factor = " << factor << endl;
+	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1 << endl;
+	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
+
+	float imgOri[3];
+	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
+	vector<string> splitWhole;
+	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
+	vector<string> xSplit;
+	boost::split(xSplit, splitWhole[1], boost::is_any_of(","));
+	imgOri[0] = stof(xSplit[0]) * factor - 1;
+	vector<string> ySplit;
+	boost::split(ySplit, splitWhole[2], boost::is_any_of(","));
+	imgOri[1] = stof(ySplit[0]) * factor - 1;
+	vector<string> zSplit;
+	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
+	imgOri[2] = stof(zSplit[0]) * factor - 1;
+
+	this->traceManagerPtr->scalingFactor = factor;
+	this->traceManagerPtr->imgOrigin[0] = imgOri[0];
+	this->traceManagerPtr->imgOrigin[1] = imgOri[1];
+	this->traceManagerPtr->imgOrigin[2] = imgOri[2];
+
+#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
+	cout << "  -- Scaling back to real world dimension:" << endl;
+	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
+	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
+#endif
 }
 /* ================================================================================== */
 
@@ -746,13 +679,6 @@ void FragTraceControlPanel::pa_imgEnhancement()
 		this->traceManagerPtr->simpleAdaStepsize = uiPtr->spinBox->value();
 		this->traceManagerPtr->simpleAdaRate = uiPtr->spinBox_2->value();
 		this->traceManagerPtr->cutoffIntensity = uiPtr->spinBox_9->value();
-		if (uiPtr->checkBox_4->isChecked())
-		{
-			this->traceManagerPtr->saveAdaResults = true;
-			this->traceManagerPtr->simpleAdaSaveDirQ = uiPtr->lineEdit_2->text();
-			this->traceManagerPtr->simpleAdaSaveDirQ.replace(QString(" "), QString("_"));
-		}
-		else this->traceManagerPtr->saveAdaResults = false;
 	}
 	else this->traceManagerPtr->ada = false;
 
@@ -768,13 +694,6 @@ void FragTraceControlPanel::pa_maskGeneration()
 		this->traceManagerPtr->histThreImgName = uiPtr->groupBox_6->title().toStdString();
 		this->traceManagerPtr->imgThreSeq.push_back(this->traceManagerPtr->histThreImgName);
 		this->traceManagerPtr->stdFold = this->doubleSpinBox->value();
-		if (uiPtr->checkBox_5->isChecked())
-		{
-			this->traceManagerPtr->saveHistThreResults = true;
-			this->traceManagerPtr->histThreSaveDirQ = uiPtr->lineEdit_3->text();
-			this->traceManagerPtr->histThreSaveDirQ.replace(QString(" "), QString("_"));
-		}
-		else this->traceManagerPtr->saveHistThreResults = false;
 	}
 	else this->traceManagerPtr->histThre = false;
 }
@@ -1114,27 +1033,4 @@ void FragTraceControlPanel::fillUpParamsForm()
 {
 	this->CViewerPortal->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
 	this->CViewerPortal->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
-}
-
-void FragTraceControlPanel::blankArea()
-{
-	if (this->listViewBlankAreas->rowCount() != 0)
-	{
-		this->traceManagerPtr->blankArea = true;
-		for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
-		{
-			QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
-			QString thisAreaQString = thisArea->text();
-			QStringList spaceSplits = thisAreaQString.split(" ");
-			this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
-			QStringList rightParanSplits = thisAreaQString.split(")");
-			QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
-			this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
-			rightParanBlankSplits[0].replace("(", "");
-			rightParanBlankSplits[0].replace(",", "");
-			rightParanBlankSplits[1].replace(",", "");
-			this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
-			this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
-		}
-	}
 }

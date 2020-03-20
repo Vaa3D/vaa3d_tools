@@ -71,10 +71,10 @@ public:
 	// NOTE: This is the framework under which segment connection/elongation takes place. The algorithmic requirements of connecting shall be integrated here.
 	//       Since segments can only be connected 1 at a time, therefore, this operation is completed with a iterative process - TreeGrower::itered_connectSegsWithinClusters.
 private:
-	profiledTree connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold = 5);
+	profiledTree connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold = 5) const;
 
 public:
-	profiledTree itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+	profiledTree itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold = 5) const;
 	/****************************************************************************/
 
 

@@ -22,11 +22,10 @@ class FragTraceControlPanel : public QDialog, public IPMain4NeuronAssembler
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 	~FragTraceControlPanel();
+	map<string, float> paramsFromUI;
 
 // ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
-	QString adaSaveRoot;
-	QString histMaskRoot;
 // ============================================================== //
 
 
@@ -38,9 +37,6 @@ public:
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
 /* ============================================ */
 
-	map<string, float> paramsFromUI;
-
-	vector<string> blankAreas; // will be abandoned
 
 /* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum();
@@ -60,10 +56,8 @@ public slots:
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
-	void saveSegStepsResultChecked(bool checked);
 	void saveSettingsClicked();
 	void browseSavePathClicked();
-	void blankAreaClicked();
 	// ---------------------------- //
 
 	// ------- Post Editing ------- //
@@ -77,24 +71,24 @@ public slots:
 // ***************************************************************************** //
 
 
-// -------------- Receive traced tree emitted from FragTraceManager -------------- //
+// -------------- Receive and send tree between FragTraceManager -------------- //
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
-// ------------------------------------------------------------------------------- //
+	void sendExistingNeuronTree(NeuronTree& existingTree_in_Manager) { existingTree_in_Manager = this->tracedTree; }
+// ---------------------------------------------------------------------------- //
 
 
 private:
 /* ============== Member Class Pointers ============== */
 	V3DPluginCallback2* thisCallback;
+	INeuronAssembler* CViewerPortal;
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
-	INeuronAssembler* CViewerPortal;
 /* =================================================== */
 
 
 /* =============== Additional Widget =============== */
 	QDoubleSpinBox* doubleSpinBox;
-	QStandardItemModel* listViewBlankAreas;
 	QStandardItemModel* somaListViewer;
 /* ================================================= */
 
@@ -130,24 +124,16 @@ private:
 	int* displayingDims;
 
 	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
+	void sendImgParams();
 /* ========================================== */
-
-
-
-	void fillUpParamsForm(); // This is for future parameter learning project.
-
-	void blankArea(); // will be abandoned in newer version
 
 
 private slots:	
 	void refreshSomaCoords();
 
 
-
-// ~~~~~~~~~ DEPRECATED FUNCTIONS ~~~~~~~~~ //
-signals:
-	void switchOnSegPipe();
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+private:
+	void fillUpParamsForm(); // This is for future parameter learning project.
 };
 
 

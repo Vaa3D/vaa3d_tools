@@ -12,6 +12,8 @@
 #include "FragTraceTester.h"
 #include "FeatureExtractor.h"
 
+using NSlibTester = NeuronStructNavigator::Tester;
+
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
 	char* numProcsC;
@@ -91,6 +93,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
+	this->callback = callback;
+
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
 	string numProcsString(numProcsC);
@@ -198,7 +202,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 
 		if (this->gammaCorrection)
 		{
-			this->gammaCorrect("ada_cutoff", dims, "gammaCorrected");
+			//this->gammaCorrect("ada_cutoff", dims, "gammaCorrected");
+			this->myImgProcessor.gammaCorrect("ada_cutoff", "gammaCorrected", this->fragTraceImgManager.imgDatabase);
 			this->histThreImg3D("gammaCorrected", dims, this->histThreImgName);   // -> still needs this with gamma?
 			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 		}
@@ -248,8 +253,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree downSampledProfiledTree = NeuronStructUtil::treeDownSample(objBranchBreakTree, 2);
 
 		// Iterative segment elongation/connection
-		profiledTree iteredConnectedTree = this->segConnectAmongTrees(downSampledProfiledTree, 10);
-
+		profiledTree iteredConnectedTree = this->segConnect_withingCurrBlock(downSampledProfiledTree, 10);
+		
 		// Profiled segment shape/morphology
 		this->fragTraceTreeManager.segMorphProfile(iteredConnectedTree, 3);
 		profiledTree angleSmoothedTree = this->fragTraceTreeTrimmerPtr->itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedTree, 1.2);
@@ -259,10 +264,15 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		//else finalOutputTree = iteredConnectedTree.tree;
 
 		profiledTree noDotProfiledTree(noDotTree);
-		profiledTree iteredConnectedTree2 = this->segConnectAmongTrees(noDotProfiledTree, 10);
+		profiledTree iteredConnectedTree2 = this->segConnect_withingCurrBlock(noDotProfiledTree, 10);
+		
 		this->fragTraceTreeManager.treeDataBase.insert({ "tracedBlock_axon", iteredConnectedTree2 });
 
 		finalOutputTree = iteredConnectedTree2.tree;
+		this->getExistingFinalTree(this->existingTree);
+		NeuronTree scaledBackExistingTree = this->myFragPostProcessor.treeScaleBack(this->existingTree, this->scalingFactor, this->imgOrigin);
+		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(finalOutputTree, scaledBackExistingTree, 4, 8);
+		profiledTree newlyTracedPartProfiled(newlyTracedPart);
 
 		// ------- Debug ------- //
 		if (FragTraceTester::isInstantiated())
@@ -276,17 +286,17 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		}
 		// --------------------- //
 
-		/* ------- SegEnd Cluster Debug ------- */
-		using NSlibTester = NeuronStructNavigator::Tester;
+		// ------- SegEnd Cluster Debug ------- //
 		NSlibTester::instance(&(this->fragTraceTreeManager));
 		this->fragTraceTreeManager.getSegHeadTailClusters(iteredConnectedTree2, 10);
 		map<int, set<vector<float>>> segEndClusterNodeMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(iteredConnectedTree2);
 		set<int> clusterIDs;
 		for (auto& mapIt : segEndClusterNodeMap) clusterIDs.insert(mapIt.first);
 		map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(clusterIDs);
-		for (auto& cluster : clusterColorMap) FragTraceTester::getInstance()->pushMarkers(segEndClusterNodeMap.at(cluster.first), cluster.second);
+		for (auto& cluster : clusterColorMap) 
+			FragTraceTester::getInstance()->pushMarkers(segEndClusterNodeMap.at(cluster.first), cluster.second);
 		NSlibTester::uninstance();
-		/* ------------------------------------ */
+		// ------------------------------------ //
 
 		if (this->continuousAxon)
 		{
@@ -303,11 +313,13 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 			}
 			//cout << endl;
 
-			set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(iteredConnectedTree2, probes, axonMarkerAllowance);
-			map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(seedCluster);
-			map<int, set<vector<float>>> clusterMarkerMap = FragTraceTester::getInstance()->clusterSegEndMarkersGen(seedCluster, iteredConnectedTree2);
+			set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(newlyTracedPartProfiled, probes, axonMarkerAllowance);
+			//map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(seedCluster);
+			map<int, set<vector<float>>> clusterMarkerMap = FragTraceTester::getInstance()->clusterSegEndMarkersGen(seedCluster, newlyTracedPartProfiled);
+			RGBA8 color;
+			color.r = 255; color.g = 255; color.b = 255;
 			for (auto& markerCluster : clusterMarkerMap)
-				FragTraceTester::getInstance()->pushMarkers(markerCluster.second, clusterColorMap.at(markerCluster.first));			
+				FragTraceTester::getInstance()->pushMarkers(markerCluster.second, color);			
 		}
 	}
 	else if (this->mode == dendriticTree)
@@ -350,8 +362,8 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree completeProfiledTree(NeuronStructUtil::swcCombine(allTrees));
 
 		// Iteratively connect segments within seg-end clusters
-		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(completeProfiledTree, 10);
-
+		profiledTree iteredConnectedProfiledTree = this->segConnect_withingCurrBlock(completeProfiledTree, 10);
+		
 		// Profiled segment shape/morphology
 		this->fragTraceTreeManager.segMorphProfile(iteredConnectedProfiledTree, 3);
 		profiledTree angleSmoothedTree = this->fragTraceTreeTrimmerPtr->itered_segSharpAngleSmooth_lengthDistRatio(iteredConnectedProfiledTree, 1.2);
@@ -1004,7 +1016,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 		profiledTree periDnSampledProfiledTree = NeuronStructUtil::treeDownSample(periMSTprofiledTree, 3);
 		periDnSampledTreeMap.insert({ it->first, periDnSampledProfiledTree });
 
-		profiledTree iteredConnectedProfiledTree = this->segConnectAmongTrees(periDnSampledProfiledTree, 3);
+		profiledTree iteredConnectedProfiledTree = this->segConnect_withingCurrBlock(periDnSampledProfiledTree, 3);
 		profiledTree noDotProfiledTree(NeuronStructUtil::singleDotRemove(iteredConnectedProfiledTree.tree, this->minNodeNum));
 		periIteredconnectedTreeMap.insert({ it->first, noDotProfiledTree });
 
@@ -1043,7 +1055,7 @@ NeuronTree FragTraceManager::getSmoothedPeriDenTree()
 	return periTree;
 }
 
-profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
+profiledTree FragTraceManager::segConnect_withingCurrBlock(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree tmpTree = inputProfiledTree; 
 	profiledTree outputProfiledTree = this->fragTraceTreeGrowerPtr->itered_connectSegsWithinClusters(tmpTree, distThreshold);
@@ -1076,7 +1088,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 			}
 
 			typeAssigned = false;
-			assignedType =16;
+			assignedType = 16;
 		}
 	}
 	cout << endl;

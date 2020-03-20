@@ -30,7 +30,7 @@ using namespace std;
 using namespace integratedDataTypes;
 
 /* =========================== Segment Forming / Elongation =========================== */
-profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold)
+profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold) const
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
 
@@ -227,7 +227,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 	return outputProfiledTree;
 }
 
-profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold)
+profiledTree TreeGrower::itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold) const
 {
 	cout << "analyzing seg end clusters..." << endl;
 	cout << " -- iteration 1 " << endl;
