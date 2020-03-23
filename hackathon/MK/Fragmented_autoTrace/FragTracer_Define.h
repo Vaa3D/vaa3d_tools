@@ -7,7 +7,5 @@
 
 #define __ACTIVATE_TESTER__
 
-#define __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-
 //#define __ERASER_DEBUG__
 #endif

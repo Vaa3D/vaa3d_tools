@@ -18,6 +18,11 @@ public:
 	shared_ptr<FragTraceControlPanel*> sharedControlPanelPtr;
 	shared_ptr<FragTraceManager*> sharedTraceManagerPtr;
 
+	// These 3 pointers get assigned from FragTraceControlPanel and are pointing to FragTraceControlPanel's own arrays. 
+	// No need to delete when finishing FragTraceTester instance.
+	float *imgDims, *imgRes, *imgOrigin; 
+	void printOutVolInfo();
+	void printOutImgInfo();
 	void imgVolumeCheck(const Image4DSimple* inputImage, const string& saveName);
 	void saveIntermediateImgSlices(const string& regImgName, const QString& prefixQ, V3DLONG dims[]);
 
@@ -33,8 +38,6 @@ public:
 	map<int, set<vector<float>>> clusterSegEndMarkersGen(const set<int>& clusterIDs, const profiledTree& inputProfiledTree);
 	map<int, RGBA8> clusterColorGen_RGB(const set<int>& clusterIDs);
 	void pushMarkers(const set<vector<float>>& markerCoords, RGBA8 color) { (*this->sharedControlPanelPtr)->CViewerPortal->pushMarkersfromTester(markerCoords, color); }
-	profiledTree segEndClusterCheck(const profiledTree& inputProfiledTree, QString savePathQ);
-	void scale(profiledTree& inputProfiledTree);
 
 private:
 	FragTraceTester(FragTraceControlPanel* controlPanelPtr);

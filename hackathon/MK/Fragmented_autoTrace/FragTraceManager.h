@@ -38,9 +38,16 @@ public:
 
 	vector<string> imgEnhanceSeq; // Image Enhancement steps specified by the user, acquired from UI.
 	vector<string> imgThreSeq;    // Image Thresholding steps specified by the user, acquired from UI.
+	workMode mode;                // tracing axon or dendrite
+
+	// ------- Partial Volume Tracing ------- //
+	bool partialVolumeTracing;
 	vector<int> partialVolumeLowerBoundaries;
 
-	workMode mode;                // tracing axon or dendrite
+	// This is an array directly assgigned from FragTraceControlPanel. 
+	// There are 6 elements: xlb, xhb, ylb, yhb, zlb, zhb.
+	int* volumeAdjustedBounds; 
+	// -------------------------------------- //
 
 	// ------- Image Enhancement ------- //
 	bool ada;
@@ -119,7 +126,6 @@ private:
 /* =================== Image Enhancement =================== */
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 /* ========================================================= */
 
 
@@ -139,6 +145,7 @@ private:
 	
 
 /* =================== Traced Tree Generating and Polishing =================== */
+	bool treeAssembly(NeuronTree& FINALOUTPUT_TREE, NeuronTree& PRE_FINALOUTPUT_TREE);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 
@@ -150,7 +157,7 @@ private:
 
 	// This method performs itered-cluster based connecting first. 
 	// Then change types if segments are connected to alredy typed existing segments. Duplicated nodes are also removed.
-	profiledTree segConnect_withingCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
+	profiledTree segConnect_withinCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
 /* ============================================================================ */
 
 	

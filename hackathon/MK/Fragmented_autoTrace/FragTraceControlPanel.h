@@ -33,8 +33,6 @@ public:
 	NeuronTree tracedTree;
 	map<string, NeuronTree> tracedTrees;
 	map<int, string> scalingRatioMap;
-	void scaleTracedTree();
-	NeuronTree treeScaleBack(const NeuronTree& inputTree);
 /* ============================================ */
 
 
@@ -73,14 +71,14 @@ public slots:
 
 // -------------- Receive and send tree between FragTraceManager -------------- //
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
-	void sendExistingNeuronTree(NeuronTree& existingTree_in_Manager) { existingTree_in_Manager = this->tracedTree; }
+	void sendExistingNeuronTree(NeuronTree& existingTree_in_Manager) { existingTree_in_Manager = thisCallback->getSWCTeraFly(); }
 // ---------------------------------------------------------------------------- //
 
 
 private:
 /* ============== Member Class Pointers ============== */
-	V3DPluginCallback2* thisCallback;
-	INeuronAssembler* CViewerPortal;
+	V3DPluginCallback2* thisCallback; // DO NOT DELETE! -> created and sent from v3d_plugin_loader.
+	INeuronAssembler* CViewerPortal;  // DO NOT DELETE! -> This is the base class interface of CViewer!
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;

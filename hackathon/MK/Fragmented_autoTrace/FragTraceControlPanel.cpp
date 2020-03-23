@@ -48,7 +48,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->doubleSpinBox->setRange(-5, 5);
 	//----------------------------------------------------------- //
 
-
 	QSettings callOldSettings("SEU-Allen", "Fragment tracing");
 
 	// ------- Image Format and Work Mode ------- //
@@ -87,7 +86,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	}
 	// ------------------------------------------ //
 
-
 	// ------- Image Enhancement Group Box ------- //
 	if (callOldSettings.value("ada") == true)
 	{
@@ -99,7 +97,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
 	else uiPtr->checkBox_6->setChecked(false);
 	// ------------------------------------------ //
-
 
 	// ------- Mask Generation Group Box ------- //
 	if (callOldSettings.value("dendrite") == true) uiPtr->groupBox_6->setChecked(false);
@@ -113,7 +110,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	}
 	// ---------------------------------------- //
 
-
 	// ------- Object Filter Group Box ------- //
 	if (callOldSettings.value("objFilter") == true)
 	{
@@ -124,12 +120,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	}
 	// --------------------------------------- //
 
-
 	// ------- Marker / Point Cloud Monitor Group Box ------- //
 	this->somaListViewer = new QStandardItemModel(this);
 	uiPtr->listView_2->setModel(this->somaListViewer);
 	// ------------------------------------------------------ //
-
 
 	// ------- Object-based MST ------- //
 	if (callOldSettings.value("MST") == true)
@@ -138,7 +132,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
 	}
 	// ------------------------------- //
-
 
 	// ------- Result Saving Path ------- //		
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -149,7 +142,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->setWindowTitle(windowTitleQ);  
 
 	this->fragEditorPtr = new FragmentEditor(callback);
-
 #ifdef __ACTIVATE_TESTER__
 	FragTraceTester::instance(this);
 #endif
@@ -165,8 +157,24 @@ FragTraceControlPanel::~FragTraceControlPanel()
 	//   2. Fragtracer plugin is guaranteed of only 1 instance existing (controled in v3dr_glwidget, [Alt + F]).
 	//      No need to provide copy constructor and assignment operator.
 
+	if (this->volumeAdjustedCoords != nullptr)
+	{
+		delete[] this->volumeAdjustedCoords;
+		this->volumeAdjustedCoords = nullptr;
+	}
+	if (this->globalCoords != nullptr)
+	{
+		delete[] this->globalCoords;
+		this->globalCoords = nullptr;
+	}
+	if (this->displayingDims != nullptr)
+	{
+		delete[] this->displayingDims;
+		this->displayingDims = nullptr;
+	}
+
 	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
-	if (this->CViewerPortal != nullptr) this->CViewerPortal = nullptr;
+	//if (this->CViewerPortal != nullptr) this->CViewerPortal = nullptr;
 }
 
 /* =========================== User Interface Buttons =========================== */
@@ -331,7 +339,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	// ----------------------------------------- //
 
-
 	// ------- Image Enhancement Group Box ------- //
 	if (uiPtr->groupBox_3->isChecked())
 	{
@@ -353,7 +360,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	else settings.setValue("gamma", false);
 	// ----------------------------------------- //
 
-
 	// ------- Mask Generation Group Box ------- //
 	if (uiPtr->groupBox_6->isChecked())
 	{
@@ -362,7 +368,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 	// ----------------------------------------- //
-
 
 	// ------- Object Filter Group Box ------- //
 	if (uiPtr->radioButton_4->isChecked())
@@ -373,7 +378,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
 	else settings.setValue("objFilter", false);
 	// --------------------------------------- //
-
 
 	// ------- Object-base MST ------- //
 	if (uiPtr->groupBox_8->isChecked())
@@ -388,7 +392,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 	// ------------------------------- //
-
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
@@ -423,59 +426,54 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 	
 	cout << "Fragment tracing procedure initiated." << endl;
-		
-	if (this->isVisible())
+	if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked()) // AXON TRACING
 	{
-		if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked()) // AXON TRACING
+		cout << " --> axon tracing, acquiring image information.." << endl;
+		QString rootQ = "";
+		if (uiPtr->lineEdit->text() != "") // final result save place
 		{
-			cout << " --> axon tracing, acquiring image information.." << endl;
-			QString rootQ = "";
-			if (uiPtr->lineEdit->text() != "") // final result save place
-			{
-				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
-				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
-			}
-
-			if (uiPtr->checkBox->isChecked()) // terafly format
-			{				
-				this->teraflyTracePrep(axon);	   	  // terafly image block preparation
-				this->traceManagerPtr->finalSaveRootQ = rootQ;
-				this->traceManagerPtr->axonMarkerAllowance = false;
-
-				// ------------------- collect parameters ------------------- //
-				this->pa_imgEnhancement();                         // image enhancement				
-				this->pa_maskGeneration();                         // mask generation
-				this->pa_objFilter();                              // object filter
-				this->pa_objBasedMST();                            // object-based MST node connecting
-				this->pa_axonContinuous();
-				// ---------------------------------------------------------- //
-			}
-		}
-		else if (!uiPtr->radioButton->isChecked() && uiPtr->radioButton_2->isChecked()) // DENDRITE TRACING
-		{
-			cout << " --> dendritic tree tracing, acquiring image information.." << endl;
-			QString rootQ = "";
-			if (uiPtr->lineEdit->text() != "") // final result save place
-			{
-				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
-				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
-			}
-
-			if (uiPtr->checkBox->isChecked()) // terafly format
-			{
-				this->teraflyTracePrep(dendriticTree); // terafly image block preparation
-				this->traceManagerPtr->finalSaveRootQ = rootQ;
-
-				// ------------------- collect parameters ------------------- //
-				this->pa_imgEnhancement();                          // image enhancement
-				this->pa_objFilter();                               // object filter
-				this->pa_objBasedMST();                             // object-based MST node connecting 
-				// ---------------------------------------------------------- //
-			}
+			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
+			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
 		}
 
-		this->fillUpParamsForm();
+		if (uiPtr->checkBox->isChecked()) // terafly format
+		{				
+			this->teraflyTracePrep(axon);	   	  // terafly image block preparation
+			this->traceManagerPtr->finalSaveRootQ = rootQ;
+			this->traceManagerPtr->axonMarkerAllowance = false;
+
+			// ------------------- collect parameters ------------------- //
+			this->pa_imgEnhancement();                         // image enhancement				
+			this->pa_maskGeneration();                         // mask generation
+			this->pa_objFilter();                              // object filter
+			this->pa_objBasedMST();                            // object-based MST node connecting
+			this->pa_axonContinuous();
+			// ---------------------------------------------------------- //
+		}
 	}
+	else if (!uiPtr->radioButton->isChecked() && uiPtr->radioButton_2->isChecked()) // DENDRITE TRACING
+	{
+		cout << " --> dendritic tree tracing, acquiring image information.." << endl;
+		QString rootQ = "";
+		if (uiPtr->lineEdit->text() != "") // final result save place
+		{
+			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
+			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+		}
+
+		if (uiPtr->checkBox->isChecked()) // terafly format
+		{
+			this->teraflyTracePrep(dendriticTree); // terafly image block preparation
+			this->traceManagerPtr->finalSaveRootQ = rootQ;
+
+			// ------------------- collect parameters ------------------- //
+			this->pa_imgEnhancement();                          // image enhancement
+			this->pa_objFilter();                               // object filter
+			this->pa_objBasedMST();                             // object-based MST node connecting 
+			// ---------------------------------------------------------- //
+		}
+	}
+	this->fillUpParamsForm();
 	
 	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 	this->connect(this->traceManagerPtr, SIGNAL(getExistingFinalTree(NeuronTree&)), this, SLOT(sendExistingNeuronTree(NeuronTree&)));
@@ -495,54 +493,16 @@ void FragTraceControlPanel::traceButtonClicked()
 		v3d_msg(QString("The process has been terminated."));
 		return;
 	}
+	this->thisCallback->setSWCTeraFly(this->tracedTree);
 	/***************************************************************/
+
+	// Save final result here.
+	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), this->tracedTree);
+
+	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 	this->disconnect(this->traceManagerPtr, SIGNAL(getExistingFinalTree(NeuronTree&)), this, SLOT(sendExistingNeuronTree(NeuronTree&)));
-
-	if (this->volumeAdjusted) 
-	{
-		//cout << this->volumeAdjustedCoords[0] << " " << this->volumeAdjustedCoords[2] << " " << this->volumeAdjustedCoords[4] << endl;
-		this->tracedTree = NeuronStructUtil::swcShift(this->tracedTree, this->volumeAdjustedCoords[0] - 1, this->volumeAdjustedCoords[2] - 1, this->volumeAdjustedCoords[4] - 1);
-	} 
-
-	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
-	NeuronTree finalTree;
-	if (existingTree.listNeuron.isEmpty())
-	{
-		this->scaleTracedTree();
-		profiledTree tracedProfiledTree(this->tracedTree);
-		this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
-
-		finalTree = this->tracedTree; // this is still the tree before iteratively connected by TreeGrower::itered_connectSegsWithinClusters
-	}
-	else
-	{
-		vector<NeuronTree> trees;
-		cout << endl << "Scailing existing tree to local coords first: " << endl;
-		NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
-		trees.push_back(scaledBackExistingTree);
-		NeuronTree newlyTracedPart = TreeGrower::swcSamePartExclusion(this->tracedTree, scaledBackExistingTree, 4, 8);
-		profiledTree newlyTracedPartProfiled(newlyTracedPart);
-
-		NeuronTree cleaned_newlyTracedPart;
-		if (this->traceManagerPtr->minNodeNum > 0) cleaned_newlyTracedPart = NeuronStructUtil::singleDotRemove(newlyTracedPartProfiled, this->traceManagerPtr->minNodeNum);
-		trees.push_back(cleaned_newlyTracedPart);
-
-		profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
-		//profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 5); // This line might be causing problem:
-																												 //   1. Structural error that causes image block reading freezed when moving/zomming.
-																												 //   2. Scailing error on final traced tree?? (compressed in z direction) - not confirmed. 
-		this->tracedTree = combinedProfiledTree.tree;
-		//this->tracedTree = combinedProfiledTree.tree;
-		cout << endl << "Scaling combined tree back to real world coords: " << endl;
-		this->scaleTracedTree();
-		this->thisCallback->setSWCTeraFly(this->tracedTree);
-	}
-
-	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
-
-	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 }
 /* ============================================================================================ */
 
@@ -554,11 +514,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
 
 	this->volumeAdjusted = this->CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
-#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-	cout << " -- Displaying image local coords: x(" << volumeAdjustedCoords[0] << "-" << volumeAdjustedCoords[1] << ") y(" << volumeAdjustedCoords[2] << "-" << volumeAdjustedCoords[3] << ") z(" << volumeAdjustedCoords[4] << "-" << volumeAdjustedCoords[5] << ")" << endl;
-	cout << " -- Whole image block dimension: " << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-	cout << " -- Displaying image global coords: x(" << globalCoords[0] << "-" << globalCoords[1] << ") y(" << globalCoords[2] << "-" << globalCoords[3] << ") z(" << globalCoords[4] << "-" << globalCoords[5] << ")" << endl;
-#endif
+	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->printOutVolInfo();
 
 	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
 	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
@@ -604,9 +560,10 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 			this->traceManagerPtr->partialVolumeLowerBoundaries[1] = this->volumeAdjustedCoords[2] - 1;
 			this->traceManagerPtr->partialVolumeLowerBoundaries[2] = this->volumeAdjustedCoords[4] - 1;
 		}
-
 		delete[] currBlock1Dptr;
 		delete[] croppedBlock1Dptr;		
+
+		this->traceManagerPtr->partialVolumeTracing = true;
 	}
 	else
 	{
@@ -624,20 +581,34 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 
 void FragTraceControlPanel::sendImgParams()
 {
+	this->traceManagerPtr->volumeAdjustedBounds = this->volumeAdjustedCoords;
+	if (!this->volumeAdjusted)
+	{
+		this->traceManagerPtr->volumeAdjustedBounds[0] = 1;
+		this->traceManagerPtr->volumeAdjustedBounds[1] = 256;
+		this->traceManagerPtr->volumeAdjustedBounds[2] = 1;
+		this->traceManagerPtr->volumeAdjustedBounds[3] = 256;
+		this->traceManagerPtr->volumeAdjustedBounds[4] = 1;
+		this->traceManagerPtr->volumeAdjustedBounds[5] = 256;
+	}
+
 	float imgDims[3];
 	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
 	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
 	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
+	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->imgDims = imgDims;
 
 	float imgRes[3];
 	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
 	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
 	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
+	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->imgRes = imgRes;
 
 	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << factor << endl;
+	cout << " -- Image volume scaling information: " << endl;
+	cout << endl << "  -- scaling factor = " << factor << endl;
 	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1 << endl;
-	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
+	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl << endl;
 
 	float imgOri[3];
 	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
@@ -652,18 +623,14 @@ void FragTraceControlPanel::sendImgParams()
 	vector<string> zSplit;
 	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
 	imgOri[2] = stof(zSplit[0]) * factor - 1;
+	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->imgOrigin = imgOri;
+
+	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->printOutImgInfo();
 
 	this->traceManagerPtr->scalingFactor = factor;
 	this->traceManagerPtr->imgOrigin[0] = imgOri[0];
 	this->traceManagerPtr->imgOrigin[1] = imgOri[1];
 	this->traceManagerPtr->imgOrigin[2] = imgOri[2];
-
-#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-	cout << "  -- Scaling back to real world dimension:" << endl;
-	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
-	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
-	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
-#endif
 }
 /* ================================================================================== */
 
@@ -902,97 +869,6 @@ void FragTraceControlPanel::updateMarkerMonitor()
 		markerIt->second.on = true;
 }
 /* ====================== END of [Parameter Collecting Functions] ====================== */
-
-
-/* =================== Result and Scaling Functions =================== */
-void FragTraceControlPanel::scaleTracedTree()
-{	
-	float imgDims[3];
-	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
-	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
-	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
-
-	float imgRes[3];
-	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
-	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
-	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
-
-	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << factor << endl;
-	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1<< endl;
-	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
-
-	float imgOri[3];
-	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
-	vector<string> splitWhole;
-	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
-	vector<string> xSplit;
-	boost::split(xSplit, splitWhole[1], boost::is_any_of(","));
-	imgOri[0] = stof(xSplit[0]) * factor - 1;
-	vector<string> ySplit;
-	boost::split(ySplit, splitWhole[2], boost::is_any_of(","));
-	imgOri[1] = stof(ySplit[0]) * factor - 1;
-	vector<string> zSplit;
-	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
-	imgOri[2] = stof(zSplit[0]) * factor - 1;
-
-	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, factor, factor, factor);
-	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
-
-#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-	cout << "  -- Scaling back to real world dimension:" << endl;
-	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
-	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
-	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
-#endif
-
-	this->tracedTree = scaledShiftedTree;
-}
-
-NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
-{
-	float imgDims[3];
-	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
-	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
-	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
-
-	float imgRes[3];
-	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
-	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
-	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
-
-	float factor = pow(2, abs(this->CViewerPortal->getTeraflyTotalResLevel() - 1 - this->CViewerPortal->getTeraflyResLevel()));
-	cout << "  -- scaling factor = " << factor << endl;
-	cout << "  -- current resolutionl level = " << this->CViewerPortal->getTeraflyResLevel() + 1 << endl;
-	cout << "  -- total res levels: " << this->CViewerPortal->getTeraflyTotalResLevel() << endl;
-
-	float imgOri[3];
-	string currWinTitle = this->CViewerPortal->getCviewerWinTitle();
-	vector<string> splitWhole;
-	boost::split(splitWhole, currWinTitle, boost::is_any_of("["));
-	vector<string> xSplit;
-	boost::split(xSplit, splitWhole[1], boost::is_any_of(","));
-	imgOri[0] = stof(xSplit[0]) * factor - 1;
-	vector<string> ySplit;
-	boost::split(ySplit, splitWhole[2], boost::is_any_of(","));
-	imgOri[1] = stof(ySplit[0]) * factor - 1;
-	vector<string> zSplit;
-	boost::split(zSplit, splitWhole[3], boost::is_any_of(","));
-	imgOri[2] = stof(zSplit[0]) * factor - 1;
-
-	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
-	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, 1 / factor, 1 / factor, 1 / factor);
-
-#ifdef __IMAGE_VOLUME_PREPARATION_PRINTOUT__
-	cout << "  -- Scaling to local volume dimension:" << endl;
-	cout << "      image dims: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
-	cout << "      image res: " << imgRes[0] << " " << imgRes[1] << " " << imgRes[2] << endl;
-	cout << "      image origin: " << imgOri[0] << " " << imgOri[1] << " " << imgOri[2] << endl;
-#endif
-
-	return shiftScaleBackTree;
-}
-/* ================ END of [Result and Scaling Functions] ================ */
 
 
 /* =================== Terafly Communicating Methods =================== */

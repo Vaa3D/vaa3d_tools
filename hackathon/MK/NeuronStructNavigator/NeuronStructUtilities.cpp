@@ -112,7 +112,6 @@ segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const
 /* ===================================================================================================== */
 
 
-
 /* ===================================== Neuron Struct Processing ====================================== */
 NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
@@ -367,6 +366,8 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 
 NeuronTree NeuronStructUtil::singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove)
 {
+	if (shortSegRemove <= 0) return inputProfiledTree.tree;
+
 	NeuronTree outputTree;
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
@@ -548,7 +549,6 @@ void NeuronStructUtil::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC
 /* ===================================== END of [Neuron Struct Processing] ===================================== */
 
 
-
 /* ====================================== Neuron Struct Profiling Methods ====================================== */
 void NeuronStructUtil::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
 {
@@ -600,7 +600,6 @@ void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNo
 	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
 }
 /* ================================= END of [Neuron Struct Profiling Methods] ================================== */
-
 
 
 /* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
@@ -970,7 +969,6 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 	return outputTree;
 }
 /* =============================== END of [SWC <-> ImgAnalyzer::connectedComponents] =============================== */
-
 
 
 /* =========================================== Miscellaneous =========================================== */

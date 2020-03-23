@@ -42,7 +42,6 @@ public:
 	/********************************************************************************/
 
 
-
 	/*************************** Segment Operations ***************************/
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 
@@ -51,7 +50,6 @@ public:
 	// NOTE, currently it only supports simple unilateral segment. Forked segment connection will result in throwing error message!!
 	static segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
 	/**************************************************************************/
-
 
 
 	/************************ Neuron Struct Processing ************************/
@@ -105,7 +103,6 @@ public:
 	/**************************************************************************/
 	
 
-
 	/******************* Neuron Struct Profiling Methods **********************/
 	// These profiling methods are put to make them available to NeuronTree struct. 
 	// Users don't need to always initialize a integratedFataType::profiledTree to get all these node-tile node-loc maps.
@@ -131,7 +128,6 @@ public:
 	/**************************************************************************/
 
 
-
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
 	// Identify the connectivity of every node in the input swc and generate connected component data from it.
 	static vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
@@ -143,7 +139,6 @@ public:
 	// Convert connected component data type into swc format.
 	static NeuronTree blobs2tree(const vector<connectedComponent>& inputConnCompList, bool usingRadius2compNum = false);
 	/**************************************************************************/
-
 
 
 	/***************** Artificial SWC for Developing Purposes *****************/
@@ -162,12 +157,10 @@ public:
 	/**************************************************************************
 	
 	
-	
 	/***************************** Miscellaneous ******************************/ 
 	// Generates linker file for swc
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
 	/**************************************************************************/
-
 
 
 	/* ~~~~~~~~~~~~~~~ Sampling Methods for Simulated Volumetric Patch Generation ~~~~~~~~~~~~~~~ */
