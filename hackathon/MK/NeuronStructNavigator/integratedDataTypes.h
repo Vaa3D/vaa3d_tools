@@ -96,10 +96,10 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 
-		V_NeuronSWC convert2V_NeuronSWC();
+		V_NeuronSWC convert2V_NeuronSWC() const;
 
 	private:
-		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID);
+		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
 	};
 	/***********************************************/
 
@@ -172,7 +172,7 @@ namespace integratedDataTypes
 
 		segEndClusterUnit() { this->parentCluster = nullptr; }
 
-		int clusterLabel;
+		int ID;
 		boost::container::flat_set<int> headSegs;
 		boost::container::flat_set<int> tailSegs;
 

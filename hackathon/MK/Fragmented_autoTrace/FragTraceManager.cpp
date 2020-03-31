@@ -25,25 +25,24 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	this->partialVolumeTracing = false;
 	this->partialVolumeLowerBoundaries = { 0, 0, 0 };
 
-	int dims[3];
-	dims[0] = inputImg4DSimplePtr->getXDim();
-	dims[1] = inputImg4DSimplePtr->getYDim();
-	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
-	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
-	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
-	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
+	displayImgDim[0] = inputImg4DSimplePtr->getXDim();
+	displayImgDim[1] = inputImg4DSimplePtr->getYDim();
+	displayImgDim[2] = inputImg4DSimplePtr->getZDim();
+	cout << " -- Displaying image block dimensions: " << displayImgDim[0] << " " << displayImgDim[1] << " " << displayImgDim[2] << endl;
+	this->currDisplayingBlockCenter.push_back(displayImgDim[0] / 2);
+	this->currDisplayingBlockCenter.push_back(displayImgDim[1] / 2);
+	this->currDisplayingBlockCenter.push_back(displayImgDim[2] / 2);
 	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
-	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
+	unsigned char* img1Dptr = new unsigned char[displayImgDim[0] * displayImgDim[1] * displayImgDim[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
 	
 	vector<vector<unsigned char>> imgSlices;
-	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);
+	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, displayImgDim);
 	registeredImg inputRegisteredImg;
 	inputRegisteredImg.imgAlias = "currBlockSlices"; // This is the original images.
-	inputRegisteredImg.dims[0] = dims[0];
-	inputRegisteredImg.dims[1] = dims[1];
-	inputRegisteredImg.dims[2] = dims[2];
+	inputRegisteredImg.dims[0] = displayImgDim[0];
+	inputRegisteredImg.dims[1] = displayImgDim[1];
+	inputRegisteredImg.dims[2] = displayImgDim[2];
 	delete[] img1Dptr;
 
 	int sliceNum = 0;
@@ -56,9 +55,9 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 		else if (sliceNum / 1000 == 0) sliceName = "0" + to_string(sliceNum) + ".tif";
 		else sliceName = to_string(sliceNum) + ".tif";
 
-		unsigned char* slicePtr = new unsigned char[dims[0] * dims[1]];
+		unsigned char* slicePtr = new unsigned char[displayImgDim[0] * displayImgDim[1]];
 		for (int i = 0; i < sliceIt->size(); ++i) slicePtr[i] = sliceIt->at(i);
-		myImg1DPtr my1Dslice(new unsigned char[dims[0] * dims[1]]);
+		myImg1DPtr my1Dslice(new unsigned char[displayImgDim[0] * displayImgDim[1]]);
 		memcpy(my1Dslice.get(), slicePtr, sliceIt->size());
 		inputRegisteredImg.slicePtrs.insert({ sliceName, my1Dslice });
 		delete[] slicePtr;
@@ -94,8 +93,6 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
-	this->callback = callback;
-
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
 	string numProcsString(numProcsC);
@@ -104,25 +101,25 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	this->mode = mode;
 	this->partialVolumeTracing = false;
 
-	int dims[3];
-	dims[0] = inputImg4DSimplePtr->getXDim();
-	dims[1] = inputImg4DSimplePtr->getYDim();
-	dims[2] = inputImg4DSimplePtr->getZDim();
-	cout << " -- Displaying image block dimensions: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
-	this->currDisplayingBlockCenter.push_back(dims[0] / 2);
-	this->currDisplayingBlockCenter.push_back(dims[1] / 2);
-	this->currDisplayingBlockCenter.push_back(dims[2] / 2);
+	int displayImgDim[3];
+	displayImgDim[0] = inputImg4DSimplePtr->getXDim();
+	displayImgDim[1] = inputImg4DSimplePtr->getYDim();
+	displayImgDim[2] = inputImg4DSimplePtr->getZDim();
+	cout << " -- Displaying image block dimensions: " << displayImgDim[0] << " " << displayImgDim[1] << " " << displayImgDim[2] << endl;
+	this->currDisplayingBlockCenter.push_back(displayImgDim[0] / 2);
+	this->currDisplayingBlockCenter.push_back(displayImgDim[1] / 2);
+	this->currDisplayingBlockCenter.push_back(displayImgDim[2] / 2);
 	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
-	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
+	unsigned char* img1Dptr = new unsigned char[displayImgDim[0] * displayImgDim[1] * displayImgDim[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
 
 	vector<vector<unsigned char>> imgSlices;
-	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, dims);
+	ImgProcessor::imgStackSlicer(img1Dptr, imgSlices, displayImgDim);
 	registeredImg inputRegisteredImg;
 	inputRegisteredImg.imgAlias = "currBlockSlices"; // This is the original images.
-	inputRegisteredImg.dims[0] = dims[0];
-	inputRegisteredImg.dims[1] = dims[1];
-	inputRegisteredImg.dims[2] = dims[2];
+	inputRegisteredImg.dims[0] = displayImgDim[0];
+	inputRegisteredImg.dims[1] = displayImgDim[1];
+	inputRegisteredImg.dims[2] = displayImgDim[2];
 	delete[] img1Dptr;
 
 	int sliceNum = 0;
@@ -135,9 +132,9 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 		else if (sliceNum / 1000 == 0) sliceName = "0" + to_string(sliceNum) + ".tif";
 		else sliceName = to_string(sliceNum) + ".tif";
 
-		unsigned char* slicePtr = new unsigned char[dims[0] * dims[1]];
+		unsigned char* slicePtr = new unsigned char[displayImgDim[0] * displayImgDim[1]];
 		for (int i = 0; i < sliceIt->size(); ++i) slicePtr[i] = sliceIt->at(i);
-		myImg1DPtr my1Dslice(new unsigned char[dims[0] * dims[1]]);
+		myImg1DPtr my1Dslice(new unsigned char[displayImgDim[0] * displayImgDim[1]]);
 		memcpy(my1Dslice.get(), slicePtr, sliceIt->size());
 		inputRegisteredImg.slicePtrs.insert({ sliceName, my1Dslice });
 		delete[] slicePtr;
@@ -148,8 +145,8 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 
 	//cout << "NeuronStructExplorer's address in FragTraceManager:" << &fragTraceTreeManager << endl;
 	//system("pause");
-	this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
-	this->fragTraceTreeTrimmerPtr = new TreeTrimmer(&fragTraceTreeManager);
+	//this->fragTraceTreeGrowerPtr = new TreeGrower(&fragTraceTreeManager);
+	//this->fragTraceTreeTrimmerPtr = new TreeTrimmer(&fragTraceTreeManager);
 	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
 	this->fragTraceTreeManager.treeDataBase.clear();
@@ -171,11 +168,26 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	// *************************************************************************************************************** //
 }
 
-/*FragTraceManager::~FragTraceManager()
+FragTraceManager::~FragTraceManager()
 {
-	delete fragTraceTreeGrowerPtr;
-	delete progressBarDiagPtr;
-}*/
+	if (!this->segEndClusterChains.empty())
+	{
+		for (auto& chain : this->segEndClusterChains) this->myFragPostProcessor.rc_clusterChain_cleanUp(chain.second);
+		this->segEndClusterChains.clear();
+	}
+	
+	if (fragTraceTreeGrowerPtr != nullptr)
+	{
+		delete fragTraceTreeGrowerPtr;
+		fragTraceTreeGrowerPtr = nullptr;
+	}
+
+	if (fragTraceTreeTrimmerPtr != nullptr)
+	{
+		delete fragTraceTreeTrimmerPtr;
+		fragTraceTreeTrimmerPtr = nullptr;
+	}
+}
 
 
 // ***************** TRACING PROCESS CONTROLING FUNCTION ***************** //
@@ -193,7 +205,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	imgDims[1] = dims[1];
 	imgDims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size();
 
-	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
+	//if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
+	if (this->ada)
+		this->myImgProcessor.adaThresholding("currBlockSlices", this->adaImgName, this->fragTraceImgManager.imgDatabase, this->simpleAdaStepsize, this->simpleAdaRate);
 
 	if (this->cutoffIntensity != 0)
 	{
@@ -239,17 +253,33 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		}
 	}
 
-	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE;
-	this->treeAssembly(FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE);
+	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
+	this->treeAssembly(PRE_FINALOUTPUT_TREE);
 	
 	this->myFragPostProcessor.scalingFactor = this->scalingFactor;
 	this->myFragPostProcessor.imgOrigin = this->imgOrigin;
 	this->myFragPostProcessor.volumeAdjustedBounds = this->volumeAdjustedBounds;
 	if (this->partialVolumeTracing)
 		PRE_FINALOUTPUT_TREE = NeuronStructUtil::swcShift(PRE_FINALOUTPUT_TREE, this->volumeAdjustedBounds[0] - 1, this->volumeAdjustedBounds[2] - 1, this->volumeAdjustedBounds[4] - 1);
+	
 	this->getExistingFinalTree(this->existingTree);
-	FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
+	if (this->continuousAxon)
+	{
+		NeuronTree scaledBackExistingTree = this->myFragPostProcessor.treeScaleBack(existingTree, this->scalingFactor, this->imgOrigin);
+		NeuronTree newTreePart = TreeGrower::swcSamePartExclusion(PRE_FINALOUTPUT_TREE, scaledBackExistingTree, 4, 8);
+		CONTINUOUS_AXON_PREFINAL_TREE = axonGrow(newTreePart, scaledBackExistingTree);
+		vector<NeuronTree> trees = { scaledBackExistingTree, CONTINUOUS_AXON_PREFINAL_TREE };
+		FINALOUTPUT_TREE = this->myFragPostProcessor.scaleTree(NeuronStructUtil::swcCombine(trees), this->scalingFactor, this->imgOrigin);
 
+		if (FragTraceTester::isInstantiated())
+		{
+			QString prefixQ = this->finalSaveRootQ + "\\";
+			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::newTracedPart, newTreePart, prefixQ);
+		}
+	}
+	else
+		FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
+	
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
@@ -261,19 +291,17 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	emit emitTracedTree(FINALOUTPUT_TREE);
 }
 
-bool FragTraceManager::treeAssembly(NeuronTree& FINALOUTPUT_TREE, NeuronTree& PRE_FINALOUTPUT_TREE)
+bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 {
 	if (this->mode == axon)
 	{
 		// 1. Generated skeletons of segmented blobs.
 		profiledTree objSkeletonProfiledTree;
 		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
-		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
 
 		// 2. Break all branches.
 		NeuronTree MSTbranchBreakTree = TreeTrimmer::branchBreak(objSkeletonProfiledTree);
 		profiledTree objBranchBreakTree(MSTbranchBreakTree);
-		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 
 		// 3. Downsample the node density to reduce segment zig-zagging.
 		profiledTree downSampledProfiledTree = NeuronStructUtil::treeDownSample(objBranchBreakTree, 2);
@@ -305,52 +333,15 @@ bool FragTraceManager::treeAssembly(NeuronTree& FINALOUTPUT_TREE, NeuronTree& PR
 			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::axonDownSampled, downSampledProfiledTree.tree, savingPrefixQ);
 			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::iteredConnected, iteredConnectedTree.tree, savingPrefixQ);
 			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::angleSmooth_lengthDistRatio, angleSmoothedTree.tree, savingPrefixQ);
-			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::noFloatingTinyFrag, FINALOUTPUT_TREE, savingPrefixQ);
+			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::noFloatingTinyFrag, PRE_FINALOUTPUT_TREE, savingPrefixQ);
 		}
 		// --------------------- //
-
-		// ------- SegEnd Cluster Debug ------- //
-		/*NSlibTester::instance(&(this->fragTraceTreeManager));
-		this->fragTraceTreeManager.getSegHeadTailClusters(newlyTracedPartProfiled, 10);
-		map<int, set<vector<float>>> segEndClusterNodeMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(newlyTracedPartProfiled);
-		set<int> clusterIDs;
-		for (auto& mapIt : segEndClusterNodeMap) clusterIDs.insert(mapIt.first);
-		map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(clusterIDs);
-		for (auto& cluster : clusterColorMap)
-		FragTraceTester::getInstance()->pushMarkers(segEndClusterNodeMap.at(cluster.first), cluster.second);
-		NSlibTester::uninstance();*/
-		// ------------------------------------ //
-
-		/*if (this->continuousAxon)
-		{
-		set<vector<float>> probes;
-		//cout << " -- selected axon markers:" << endl;
-		for (map<int, ImageMarker>::iterator it = localAxonMarkerMap.begin(); it != localAxonMarkerMap.end(); ++it)
-		{
-		//cout << it->first << ": (" << it->second.x << ", " << it->second.y << ", " << it->second.z << ")" << endl;
-		vector<float> probe;
-		probe.push_back(it->second.x);
-		probe.push_back(it->second.y);
-		probe.push_back(it->second.z);
-		probes.insert(probe);
-		}
-		//cout << endl;
-
-		set<int> seedCluster = this->fragTraceTreeManager.segEndClusterProbe(newlyTracedPartProfiled, probes, axonMarkerAllowance);
-		//map<int, RGBA8> clusterColorMap = FragTraceTester::getInstance()->clusterColorGen_RGB(seedCluster);
-		map<int, set<vector<float>>> clusterMarkerMap = FragTraceTester::getInstance()->clusterSegEndMarkersGen(seedCluster, newlyTracedPartProfiled);
-		RGBA8 color;
-		color.r = 255; color.g = 255; color.b = 255;
-		for (auto& markerCluster : clusterMarkerMap)
-		FragTraceTester::getInstance()->pushMarkers(markerCluster.second, color);
-		}*/
 	}
 	else if (this->mode == dendriticTree)
 	{
 		// 1. Generate raw dendritic tree.
 		profiledTree profiledDenTree;
 		if (!this->generateTree(dendriticTree, profiledDenTree)) return false;
-		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", profiledDenTree });
 
 		// 2. Prepare peripheral dendritic signal tree.
 		NeuronTree periTree = this->getSmoothedPeriDenTree();
@@ -418,6 +409,36 @@ bool FragTraceManager::treeAssembly(NeuronTree& FINALOUTPUT_TREE, NeuronTree& PR
 		}
 		// --------------------- //
 	}
+}
+
+NeuronTree FragTraceManager::axonGrow(const NeuronTree& inputTree, const NeuronTree& scaledExistingTree)
+{
+	set<vector<float>> probes = this->myFragPostProcessor.getProbesFromLabeledExistingSegs(scaledExistingTree);
+	set<vector<float>> probes_marker = this->getAxonMarkerProbes();
+	probes.insert(probes_marker.begin(), probes_marker.end());
+	for (auto probe : probes)
+		cout << "(" << probe.at(0) << ", " << probe.at(1) << ", " << probe.at(2) << ") ";
+	cout << endl;
+
+	NeuronTree outputTree;
+	profiledTree inputProfiledTree(inputTree);
+	this->seedCluster = this->fragTraceTreeManager.segEndClusterProbe(inputProfiledTree, probes, this->axonMarkerAllowance);
+	if (this->seedCluster.empty())
+	{
+		cerr << "No seed cluster identified." << endl;
+		return outputTree;
+	}
+	cout << " -- SEED CLUSTERS: ";
+	for (auto id : this->seedCluster) cout << id << " ";
+	cout << endl;
+
+	this->myFragPostProcessor.getClusterChain(inputProfiledTree, this->seedCluster, this->segEndClusterChains);
+	outputTree = this->myFragPostProcessor.getTreeFromClusterChains(this->segEndClusterChains, inputProfiledTree);
+
+	if (FragTraceTester::isInstantiated())
+		FragTraceTester::getInstance()->clusterSegEndMarkersGen_axonChain(this->segEndClusterChains, inputProfiledTree);
+	
+	return outputTree;
 }
 // *********************************************************************** //
 
@@ -1101,7 +1122,7 @@ profiledTree FragTraceManager::segConnect_withinCurrBlock(const profiledTree& in
 	return outputProfiledTree;
 }
 
-NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold)
+NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold) const
 {
 	NeuronTree outputTree;
 	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)

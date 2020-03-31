@@ -59,28 +59,28 @@ public:
 	// Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. 
 	// If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
-	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5) const;
 
 private:
 	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
 	// NOTE, this method is only the 1st step of constructing seg-end cluster profile. Those information stored in profiledTree::segHeadClusters and profiledTree::segTailClusters are not correct yet
 	//       and need to go through this->mergeTileBasedSegClusters to reach its final form.  
-	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const;
 
 	// This method merges segment-end clusters with given distance threshold for the whole input profiledTree.
 	// Note, this method is has to be called after this->getTileBasedSegClusters, 
 	//		 where profiledTree::segHeadClusters and profiledTree::segTailClusters are stored with tiled-based seg-end clusters (not the final correct seg-end clusters) by this->getTileBasedSegClusters first.
-	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const;
 
 public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
-	void getClusterSegPairs(profiledTree& inputProfiledTree);
+	void getClusterSegPairs(profiledTree& inputProfiledTree) const;
 	//--------------------------------------------------------------- //
 	/* ------------------------------------------------------------------------- */
 
 	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
-	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance);
+	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
 
@@ -114,7 +114,7 @@ public:
 
 
 	/*************************** Debug Functions ***************************/
-	bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath);
+	bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath) const;
 
 	static void __segMorphProfiled_lengthDistRatio(profiledTree& inputProfiledTree, int range, double lengthDistRatio);
 	/***********************************************************************/
