@@ -205,7 +205,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	imgDims[1] = dims[1];
 	imgDims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size();
 
-	//if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
 	if (this->ada)
 		this->myImgProcessor.adaThresholding("currBlockSlices", this->adaImgName, this->fragTraceImgManager.imgDatabase, this->simpleAdaStepsize, this->simpleAdaRate);
 
@@ -268,6 +267,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree scaledBackExistingTree = this->myFragPostProcessor.treeScaleBack(existingTree, this->scalingFactor, this->imgOrigin);
 		NeuronTree newTreePart = TreeGrower::swcSamePartExclusion(PRE_FINALOUTPUT_TREE, scaledBackExistingTree, 4, 8);
 		CONTINUOUS_AXON_PREFINAL_TREE = axonGrow(newTreePart, scaledBackExistingTree);
+		CONTINUOUS_AXON_PREFINAL_TREE = NeuronStructUtil::singleDotRemove(CONTINUOUS_AXON_PREFINAL_TREE, this->minNodeNum);
 		vector<NeuronTree> trees = { scaledBackExistingTree, CONTINUOUS_AXON_PREFINAL_TREE };
 		FINALOUTPUT_TREE = this->myFragPostProcessor.scaleTree(NeuronStructUtil::swcCombine(trees), this->scalingFactor, this->imgOrigin);
 
@@ -435,8 +435,8 @@ NeuronTree FragTraceManager::axonGrow(const NeuronTree& inputTree, const NeuronT
 	this->myFragPostProcessor.getClusterChain(inputProfiledTree, this->seedCluster, this->segEndClusterChains);
 	outputTree = this->myFragPostProcessor.getTreeFromClusterChains(this->segEndClusterChains, inputProfiledTree);
 
-	if (FragTraceTester::isInstantiated())
-		FragTraceTester::getInstance()->clusterSegEndMarkersGen_axonChain(this->segEndClusterChains, inputProfiledTree);
+	//if (FragTraceTester::isInstantiated())
+	//	FragTraceTester::getInstance()->clusterSegEndMarkersGen_axonChain(this->segEndClusterChains, inputProfiledTree);
 	
 	return outputTree;
 }

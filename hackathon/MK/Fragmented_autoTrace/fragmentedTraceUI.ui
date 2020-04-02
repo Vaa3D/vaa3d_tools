@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -274,7 +274,7 @@
                <x>0</x>
                <y>0</y>
                <width>808</width>
-               <height>500</height>
+               <height>499</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -918,11 +918,6 @@
                      </widget>
                     </item>
                    </layout>
-                   <zorder>listView_2</zorder>
-                   <zorder>scrollArea_5</zorder>
-                   <zorder>radioButton_5</zorder>
-                   <zorder>radioButton_6</zorder>
-                   <zorder>verticalSpacer_3</zorder>
                   </widget>
                  </item>
                  <item>
@@ -988,7 +983,7 @@
                <x>0</x>
                <y>0</y>
                <width>808</width>
-               <height>500</height>
+               <height>499</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1095,7 +1090,7 @@
                <x>0</x>
                <y>0</y>
                <width>808</width>
-               <height>500</height>
+               <height>499</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">

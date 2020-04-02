@@ -133,13 +133,14 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->groupBox_8->setChecked(true);
 		uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
 	}
+	uiPtr->spinBox_7->setValue(callOldSettings.value("axonCluster_range").toInt());
 	// ------------------------------- //
 
 	// ------- Result Saving Path ------- //		
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 	// ---------------------------------- //
 
-	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
+	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
 
@@ -305,7 +306,7 @@ void FragTraceControlPanel::browseSavePathClicked()
 
 void FragTraceControlPanel::saveSettingsClicked()
 {
-	QSettings settings("SEU-Allen", "Fragment tracing");
+	QSettings settings("Allen-Neuronanatomy", "Fragment tracing");
 	
 	// ------- Image Format and Work Mode ------- //
 	if (uiPtr->checkBox->isChecked())
@@ -346,7 +347,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada_stepsize", uiPtr->spinBox->value());
 		settings.setValue("ada_rate", uiPtr->spinBox_2->value());
 		settings.setValue("cutoffIntensity", uiPtr->spinBox_9->value());
-		settings.setValue("ada_imgName", uiPtr->groupBox_3->title());
 	}
 	else
 	{
@@ -365,7 +365,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	{
 		settings.setValue("histThre", true);
 		settings.setValue("histThre_std", this->doubleSpinBox->value());
-		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 	// ----------------------------------------- //
 
@@ -377,6 +376,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
 	else settings.setValue("objFilter", false);
+	settings.setValue("axonCluster_range", uiPtr->spinBox_7->value());
 	// --------------------------------------- //
 
 	// ------- Object-base MST ------- //

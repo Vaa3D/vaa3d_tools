@@ -5,7 +5,7 @@
 #define SUBVERSION_NUM 0
 #define PATCHVERSION_NUM 0
 
-#define __ACTIVATE_TESTER__
+//#define __ACTIVATE_TESTER__
 
 //#define __ERASER_DEBUG__
 #endif
