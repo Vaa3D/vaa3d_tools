@@ -26,7 +26,7 @@ public:
 	void imgVolumeCheck(const Image4DSimple* inputImage, const string& saveName);
 	void saveIntermediateImgSlices(const string& regImgName, const QString& prefixQ, V3DLONG dims[]);
 
-	enum interResultType { combine,
+	enum interResultType { combine, newTracedPart,
 						   branchBreak, downSampled, iteredConnected, angleSmooth_lengthDistRatio, angleSmooth_distThre_3nodes, noFloatingTinyFrag, 
 						   axonCentroid, axonSkeleton,
 						   denBlob, denPeriBlob, denRaw, denDnSampledRaw, spikeRemove, spikeRootStraighten, hookRemove, denCentroid, denSkeleton };
@@ -35,12 +35,17 @@ public:
 	inline void denTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 	inline void generalTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 
-	map<int, set<vector<float>>> clusterSegEndMarkersGen(const set<int>& clusterIDs, const profiledTree& inputProfiledTree);
-	map<int, RGBA8> clusterColorGen_RGB(const set<int>& clusterIDs);
+	deque<map<int, pair<set<vector<float>>, RGBA8>>> clusterSegEndNodeMaps;
+	void clusterSegEndMarkersGen(profiledTree& inputProfiledTree, const float segClusterRange);
+	void clusterSegEndMarkersGen_withSeed(const set<int>& seedCluster, profiledTree& inputProfiledTree, const float segClusterRange);
+	void clusterSegEndMarkersGen_axonChain(const map<int, segEndClusterUnit*>& chains, const profiledTree& inputProfiledTree);
+	void clusterColorGen_RGB(const map<int, set<vector<float>>>& clusterSegEndMap);
 	void pushMarkers(const set<vector<float>>& markerCoords, RGBA8 color) { (*this->sharedControlPanelPtr)->CViewerPortal->pushMarkersfromTester(markerCoords, color); }
 
 private:
 	FragTraceTester(FragTraceControlPanel* controlPanelPtr);
+
+	void rc_markersGen_axonChain(const map<int, segEndClusterUnit*>& childClusters, const map<int, set<vector<float>>>& clusterSegEndMap, map<int, set<vector<float>>>& chainClusterSegEndMap);
 };
 
 inline void FragTraceTester::generalTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ)
@@ -93,6 +98,10 @@ inline void FragTraceTester::axonTreeFormingInterResults(interResultType resultT
 		break;
 	case axonSkeleton:
 		savePathQ += "axonSkeletonTree.swc";
+		writeSWC_file(savePathQ, tree);
+		break;
+	case newTracedPart:
+		savePathQ += "axon_newTracedTree.swc";
 		writeSWC_file(savePathQ, tree);
 		break;
 	default:
@@ -163,6 +172,10 @@ inline void FragTraceTester::denTreeFormingInterResults(interResultType resultTy
 		break;
 	case downSampled:
 		savePathQ += "denDownSampledTree.swc";
+		writeSWC_file(savePathQ, tree);
+		break;
+	case newTracedPart:
+		savePathQ += "denNewTracedTree.swc";
 		writeSWC_file(savePathQ, tree);
 		break;
 	default:

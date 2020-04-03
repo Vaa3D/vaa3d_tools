@@ -10,8 +10,8 @@ class FragTraceImgProcessor
 	friend class FragTraceTester;
 
 public:
-	void gammaCorrect(const string inputRegImgName, const string outputRegImgName, map<string, registeredImg>& imgDatabase);
-	
+	void gammaCorrect(const string inputRegImgName, const string outputRegImgName, map<string, registeredImg>& imgDatabase) const;
+	void adaThresholding(const string inputRegImgName, const string outputRegImgName, map<string, registeredImg>& imgDatabase, const int stepSize, const int sampleRate) const;
 };
 
 

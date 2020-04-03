@@ -1,6 +1,9 @@
+#include "NeuronStructNavigatingTester.h"
+
 #include "FragTraceTester.h"
 
 using namespace std;
+using NSlibTester = NeuronStructNavigator::Tester;
 
 FragTraceTester* FragTraceTester::testerInstance = nullptr;
 
@@ -79,66 +82,95 @@ void FragTraceTester::saveIntermediateImgSlices(const string& regImgName, const 
 	}
 }
 
-map<int, set<vector<float>>> FragTraceTester::clusterSegEndMarkersGen(const set<int>& clusterIDs, const profiledTree& inputProfiledTree)
+void FragTraceTester::clusterSegEndMarkersGen(profiledTree& inputProfiledTree, const float segClusterRange)
 {
-	map<int, set<vector<float>>> outputMap;
-	for (set<int>::const_iterator setIDit = clusterIDs.begin(); setIDit != clusterIDs.end(); ++setIDit)
-	{
-		set<vector<float>> outputMarkerCoords;
-		for (auto& segHeadID : inputProfiledTree.segHeadClusters.at(*setIDit))
-		{
-			vector<float> newMarker(3);
-			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(segHeadID).head));
-			newMarker = { headNode.x, headNode.y, headNode.z };
-			outputMarkerCoords.insert(newMarker);
-		}
-
-		for (auto& segTailID : inputProfiledTree.segTailClusters.at(*setIDit))
-		{
-			for (vector<int>::const_iterator tailIt = inputProfiledTree.segs.at(segTailID).tails.begin(); tailIt != inputProfiledTree.segs.at(segTailID).tails.end(); ++tailIt)
-			{
-				vector<float> newMarker(3);
-				const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*tailIt));
-				newMarker = { tailNode.x, tailNode.y, tailNode.z };
-				outputMarkerCoords.insert(newMarker);
-			}
-		}
-		outputMap.insert({ *setIDit, outputMarkerCoords });
-	}
-
-	return outputMap;
+	if (!NSlibTester::isInstantiated()) NSlibTester::instance(&(*this->sharedTraceManagerPtr)->fragTraceTreeManager);
+	(*this->sharedTraceManagerPtr)->fragTraceTreeManager.getSegHeadTailClusters(inputProfiledTree, segClusterRange);
+	map<int, set<vector<float>>> clusterSegEndMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(inputProfiledTree);
+	this->clusterColorGen_RGB(clusterSegEndMap);
+	NSlibTester::uninstance();
 }
 
-map<int, RGBA8> FragTraceTester::clusterColorGen_RGB(const set<int>& clusterIDs)
+void FragTraceTester::clusterSegEndMarkersGen_withSeed(const set<int>& seedCluster, profiledTree& inputProfiledTree, const float segClusterRange)
 {
-	map<int, RGBA8> clusterColorMap;
+	if (!NSlibTester::isInstantiated()) NSlibTester::instance(&(*this->sharedTraceManagerPtr)->fragTraceTreeManager);
+	(*this->sharedTraceManagerPtr)->fragTraceTreeManager.getSegHeadTailClusters(inputProfiledTree, segClusterRange);
+	map<int, set<vector<float>>> clusterSegEndMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(inputProfiledTree);
+	map<int, set<vector<float>>> seedClusterSegEndMap;
+	for (set<int>::const_iterator it = seedCluster.begin(); it != seedCluster.end(); ++it)
+		seedClusterSegEndMap.insert({ *it, clusterSegEndMap.at(*it) });
+	this->clusterColorGen_RGB(seedClusterSegEndMap);
+	NSlibTester::uninstance();
+
+	RGBA8 seedClusterColor;
+	seedClusterColor.r = 255;
+	seedClusterColor.g = 255;
+	seedClusterColor.b = 255;
+	for (map<int, set<vector<float>>>::iterator it = seedClusterSegEndMap.begin(); it != seedClusterSegEndMap.end(); ++it)
+		this->clusterSegEndNodeMaps.back()[it->first].second = seedClusterColor;
+}
+
+void FragTraceTester::clusterSegEndMarkersGen_axonChain(const map<int, segEndClusterUnit*>& chains, const profiledTree& inputProfiledTree)
+{
+	if (!NSlibTester::isInstantiated()) NSlibTester::instance(&(*this->sharedTraceManagerPtr)->fragTraceTreeManager);
+	map<int, set<vector<float>>> clusterSegEndMap = NSlibTester::getInstance()->getSegEndClusterNodeMap(inputProfiledTree);
+	NSlibTester::uninstance();
+
+	map<int, set<vector<float>>> chainClusterSegEndMap;
+	for (map<int, segEndClusterUnit*>::const_iterator it = chains.begin(); it != chains.end(); ++it)
+	{
+		chainClusterSegEndMap.insert({ it->first, clusterSegEndMap.at(it->second->ID) });
+		this->rc_markersGen_axonChain(it->second->childClusterMap, clusterSegEndMap, chainClusterSegEndMap);
+	}
+	this->clusterColorGen_RGB(chainClusterSegEndMap);
+
+	RGBA8 seedClusterColor;
+	seedClusterColor.r = 255;
+	seedClusterColor.g = 255;
+	seedClusterColor.b = 255;
+	for (map<int, set<vector<float>>>::iterator it = chainClusterSegEndMap.begin(); it != chainClusterSegEndMap.end(); ++it)
+		this->clusterSegEndNodeMaps.back()[it->first].second = seedClusterColor;
+}
+
+void FragTraceTester::rc_markersGen_axonChain(const map<int, segEndClusterUnit*>& childClusters, const map<int, set<vector<float>>>& clusterSegEndMap, map<int, set<vector<float>>>& chainClusterSegEndMap)
+{
+	for (map<int, segEndClusterUnit*>::const_iterator it = childClusters.begin(); it != childClusters.end(); ++it)
+	{
+		chainClusterSegEndMap.insert({ it->first, clusterSegEndMap.at(it->first) });
+		if (it->second->childClusterMap.empty()) continue;
+		else this->rc_markersGen_axonChain(it->second->childClusterMap, clusterSegEndMap, chainClusterSegEndMap);
+	}
+}
+
+void FragTraceTester::clusterColorGen_RGB(const map<int, set<vector<float>>>& clusterSegEndMap)
+{
+	map<int, pair<set<vector<float>>, RGBA8>> clusterSegEndNodeMap;
 	int colorR = 10, colorG = 10, colorB = 10;
-	for (auto& clusterID : clusterIDs)
+	for (auto& cluster : clusterSegEndMap)
 	{
 		RGBA8 newColor;
-		if (clusterID % 3 == 0)
+		if (cluster.first % 3 == 0)
 		{
 			newColor.r = colorR % 255;
 			newColor.g = 0;
 			newColor.b = 0;
 			colorR += 10;
 		}
-		else if (clusterID % 3 == 1)
+		else if (cluster.first % 3 == 1)
 		{
 			newColor.r = 0;
 			newColor.g = colorG % 255;
 			newColor.b = 0;
 			colorG += 10;
 		}
-		else if (clusterID % 3 == 2)
+		else if (cluster.first % 3 == 2)
 		{			
 			newColor.r = 0;
 			newColor.g = 0;
 			newColor.b = colorB % 255;
 			colorB += 10;
 		}
-		clusterColorMap.insert({ clusterID, newColor });
+		clusterSegEndNodeMap.insert({ cluster.first, pair<set<vector<float>>, RGBA8>(cluster.second, newColor) });
 	}
-
-	return clusterColorMap;
+	this->clusterSegEndNodeMaps.push_back(clusterSegEndNodeMap);
 }

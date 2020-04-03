@@ -68,7 +68,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->radioButton_2->setChecked(false);
 		uiPtr->radioButton_3->setChecked(false);
 		uiPtr->groupBox_6->setEnabled(true);
-		uiPtr->groupBox_5->setEnabled(true);
+		uiPtr->groupBox_7->setEnabled(true);
 		uiPtr->radioButton_5->setEnabled(false);
 	}
 	else if (callOldSettings.value("dendrite") == true)
@@ -77,6 +77,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->radioButton_2->setChecked(true);
 		uiPtr->radioButton_3->setChecked(false);
 		uiPtr->groupBox_6->setEnabled(false);
+		uiPtr->groupBox_7->setEnabled(false);
+		uiPtr->radioButton_5->setEnabled(true);
 	}
 	else if (callOldSettings.value("bouton") == true)
 	{
@@ -131,13 +133,14 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->groupBox_8->setChecked(true);
 		uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
 	}
+	uiPtr->spinBox_7->setValue(callOldSettings.value("axonCluster_range").toInt());
 	// ------------------------------- //
 
 	// ------- Result Saving Path ------- //		
 	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 	// ---------------------------------- //
 
-	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
+	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
 
@@ -215,29 +218,27 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 		{
 			uiPtr->groupBox_6->setEnabled(false);
 			uiPtr->groupBox_6->setChecked(false);
-			uiPtr->groupBox_5->setChecked(false);
-			uiPtr->groupBox_5->setEnabled(false);
-			uiPtr->frame_16->setEnabled(false);
+			uiPtr->groupBox_7->setChecked(false);
+			uiPtr->groupBox_7->setEnabled(false);
 			uiPtr->radioButton_5->setEnabled(true);
+			uiPtr->radioButton_6->setEnabled(false);
+			uiPtr->radioButton_6->setChecked(false);
 
 		}
 		else if (checkName == "radioButton")
 		{
 			uiPtr->groupBox_6->setEnabled(true);
 			uiPtr->groupBox_6->setChecked(true);
+			uiPtr->groupBox_7->setEnabled(true);
 			uiPtr->radioButton_5->setChecked(false);
 			uiPtr->radioButton_5->setEnabled(false);
-			uiPtr->groupBox_5->setEnabled(true);
-			uiPtr->frame_16->setEnabled(true);
+			uiPtr->radioButton_6->setEnabled(true);
 		}
 	}
 }
 
 void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker / Point Cloud Monitor]
 {
-	QObject* signalSender = sender();
-	QString checkName = signalSender->objectName();
-
 	if (checked)
 	{
 		if (uiPtr->checkBox->isChecked()) this->refreshSomaCoords();
@@ -305,7 +306,7 @@ void FragTraceControlPanel::browseSavePathClicked()
 
 void FragTraceControlPanel::saveSettingsClicked()
 {
-	QSettings settings("SEU-Allen", "Fragment tracing");
+	QSettings settings("Allen-Neuronanatomy", "Fragment tracing");
 	
 	// ------- Image Format and Work Mode ------- //
 	if (uiPtr->checkBox->isChecked())
@@ -346,7 +347,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada_stepsize", uiPtr->spinBox->value());
 		settings.setValue("ada_rate", uiPtr->spinBox_2->value());
 		settings.setValue("cutoffIntensity", uiPtr->spinBox_9->value());
-		settings.setValue("ada_imgName", uiPtr->groupBox_3->title());
 	}
 	else
 	{
@@ -365,7 +365,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	{
 		settings.setValue("histThre", true);
 		settings.setValue("histThre_std", this->doubleSpinBox->value());
-		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 	// ----------------------------------------- //
 
@@ -377,6 +376,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
 	else settings.setValue("objFilter", false);
+	settings.setValue("axonCluster_range", uiPtr->spinBox_7->value());
 	// --------------------------------------- //
 
 	// ------- Object-base MST ------- //
@@ -440,7 +440,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		{				
 			this->teraflyTracePrep(axon);	   	  // terafly image block preparation
 			this->traceManagerPtr->finalSaveRootQ = rootQ;
-			this->traceManagerPtr->axonMarkerAllowance = false;
+			this->traceManagerPtr->continuousAxon = false;
 
 			// ------------------- collect parameters ------------------- //
 			this->pa_imgEnhancement();                         // image enhancement				
@@ -465,6 +465,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			this->teraflyTracePrep(dendriticTree); // terafly image block preparation
 			this->traceManagerPtr->finalSaveRootQ = rootQ;
+			this->traceManagerPtr->continuousAxon = false;
 
 			// ------------------- collect parameters ------------------- //
 			this->pa_imgEnhancement();                          // image enhancement
@@ -494,6 +495,17 @@ void FragTraceControlPanel::traceButtonClicked()
 		return;
 	}
 	this->thisCallback->setSWCTeraFly(this->tracedTree);
+	// ------- SegEnd Cluster Debug ------- //
+	if (FragTraceTester::isInstantiated())
+	{
+		for (auto& clusterMap : FragTraceTester::getInstance()->clusterSegEndNodeMaps)
+		{
+			for (const auto& cluster : clusterMap)
+				FragTraceTester::getInstance()->pushMarkers(cluster.second.first, cluster.second.second);
+		}
+		FragTraceTester::getInstance()->clusterSegEndNodeMaps.clear();
+	}
+	// ------------------------------------ //
 	/***************************************************************/
 
 	// Save final result here.
@@ -710,7 +722,7 @@ void FragTraceControlPanel::pa_objFilter()
 
 void FragTraceControlPanel::pa_axonContinuous()
 {
-	if (uiPtr->groupBox_15->isChecked() && uiPtr->groupBox_5->isChecked())
+	if (uiPtr->groupBox_7->isChecked())
 	{
 		this->traceManagerPtr->continuousAxon = true;
 		this->traceManagerPtr->localAxonMarkerMap.clear();		
@@ -728,7 +740,7 @@ void FragTraceControlPanel::pa_axonContinuous()
 			}
 		}
 
-		this->traceManagerPtr->axonMarkerAllowance = uiPtr->spinBox_6->value();
+		this->traceManagerPtr->axonMarkerAllowance = uiPtr->spinBox_7->value();
 		this->traceManagerPtr->localAxonMarkerMap = this->localAxonMarkerMap;
 	}
 }
@@ -754,7 +766,7 @@ void FragTraceControlPanel::updateMarkerMonitor()
 	if (this->selectedMarkerList.size() > 0)
 	{
 		// When trace dendritic area or trace continuous axon is on, markers need to be labeled before being passed to [FragTraceManager].
-		if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->groupBox_5->isEnabled() && uiPtr->groupBox_5->isChecked()))
+		if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->radioButton_6->isEnabled() && uiPtr->radioButton_6->isChecked()))
 		{
 			for (QList<ImageMarker>::iterator it = this->selectedMarkerList.begin(); it != this->selectedMarkerList.end(); ++it)
 			{
@@ -788,7 +800,7 @@ void FragTraceControlPanel::updateMarkerMonitor()
 	}
 
 	// When trace dendritic area or trace continuous axon is on, markers need to be labeled before being passed to [FragTraceManager].
-	if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->groupBox_5->isEnabled() && uiPtr->groupBox_5->isChecked()))
+	if ((uiPtr->radioButton_5->isEnabled() && uiPtr->radioButton_5->isChecked()) || (uiPtr->radioButton_6->isEnabled() && uiPtr->radioButton_6->isChecked()))
 	{
 		for (map<int, ImageMarker>::iterator markerIt = this->somaMap.begin(); markerIt != this->somaMap.end(); ++markerIt)
 		{

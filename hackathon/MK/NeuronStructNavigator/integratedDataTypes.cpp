@@ -72,7 +72,7 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 	}
 }
 
-V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC()
+V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC() const
 {
 	V_NeuronSWC outputV_NeuronSWC;
 	outputV_NeuronSWC.to_be_deleted = this->to_be_deleted;
@@ -82,7 +82,7 @@ V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC()
 	return outputV_NeuronSWC;
 }
 
-void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID)
+void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const
 {
 	int currentPaID = parentID;
 	while (1)
@@ -109,7 +109,7 @@ void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV
 		else if (this->seg_childLocMap.at(currentPaID).size() == 0) return;
 		else if (this->seg_childLocMap.at(currentPaID).size() > 1)
 		{
-			for (vector<size_t>::iterator tailsIt = this->seg_childLocMap.at(currentPaID).begin(); tailsIt != this->seg_childLocMap.at(currentPaID).end(); ++tailsIt)
+			for (vector<size_t>::const_iterator tailsIt = this->seg_childLocMap.at(currentPaID).begin(); tailsIt != this->seg_childLocMap.at(currentPaID).end(); ++tailsIt)
 				this->rc_nodeRegister2V_NeuronSWC(sbjV_NeuronSWC, this->nodes.at(*tailsIt).n, newNodeV.n);
 			return;
 		}	

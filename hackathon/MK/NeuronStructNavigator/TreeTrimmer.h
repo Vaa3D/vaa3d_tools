@@ -39,15 +39,15 @@ public:
 	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
 
 
-	profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
+	profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5) const;
 
-	profiledTree itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio);
+	profiledTree itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio) const;
 private:
-	profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);	
+	profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio) const;	
 	/**********************************************************************************/
 
 public:
-	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints);
+	map<int, profiledTree> trimmedTree_segEndClusterBased(const profiledTree& inputProfiledTree, const map<int, ImageMarker>& axonGrowingPoints) const;
 };
 
 inline NeuronTree TreeTrimmer::treeCut(NeuronTree& inputTree, double distThre)

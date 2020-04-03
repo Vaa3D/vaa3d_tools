@@ -82,13 +82,17 @@ public:
 	string MSTtreeName;
 	int minNodeNum;
 	// ----------------------------------- //
+
+	enum imgProcSteps { gamma_Correction,
+						adaptiveThresholding, simpleThresholding, histBasedThresholding3D,
+						mask2swcBlobs };
 /* ====================== END of [Parameters from UI] ======================= */
 
 
 // ======= Constructors and Basic Member Functions ======= //
 	FragTraceManager() = default;
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
-	//~FragTraceManager();
+	~FragTraceManager();
 	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);	
 // ======================================================= //
 
@@ -110,8 +114,6 @@ signals:
 
 private:
 /* ======= FragTraceManager Fascilities ======= */
-	V3DPluginCallback2* callback;
-
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
 	NeuronStructExplorer fragTraceTreeManager;
@@ -145,12 +147,12 @@ private:
 	
 
 /* =================== Traced Tree Generating and Polishing =================== */
-	bool treeAssembly(NeuronTree& FINALOUTPUT_TREE, NeuronTree& PRE_FINALOUTPUT_TREE);
+	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
-	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
+	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold) const;
 	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
 	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
 	NeuronTree getSmoothedPeriDenTree();
@@ -158,6 +160,11 @@ private:
 	// This method performs itered-cluster based connecting first. 
 	// Then change types if segments are connected to alredy typed existing segments. Duplicated nodes are also removed.
 	profiledTree segConnect_withinCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
+
+	set<int> seedCluster;
+	inline set<vector<float>> getAxonMarkerProbes() const;
+	NeuronTree axonGrow(const NeuronTree& inputTree, const NeuronTree& scaledExistingTree);
+	map<int, segEndClusterUnit*> segEndClusterChains;
 /* ============================================================================ */
 
 	
@@ -165,6 +172,7 @@ public:
 	/* ================= Traced Tree Post Processing ================= */
 	float scalingFactor;
 	float imgOrigin[3];
+	int displayImgDim[3];
 
 	NeuronTree existingTree;
 	/* =============================================================== */
@@ -220,6 +228,21 @@ inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> sign
 
 	profiledTree profiledCenterTree(centerTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "centerTree", profiledCenterTree });
+}
+
+inline set<vector<float>> FragTraceManager::getAxonMarkerProbes() const
+{
+	set<vector<float>> probes;
+	for (map<int, ImageMarker>::const_iterator it = this->localAxonMarkerMap.begin(); it != this->localAxonMarkerMap.end(); ++it)
+	{
+		vector<float> probe;
+		probe.push_back(it->second.x);
+		probe.push_back(it->second.y);
+		probe.push_back(it->second.z);
+		probes.insert(probe);
+	}
+
+	return probes;
 }
 
 #endif

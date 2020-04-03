@@ -219,7 +219,7 @@ profiledTree TreeTrimmer::itered_removeHookingHeadTail(const profiledTree& input
 	return hookRemovedTree;
 }
 
-profiledTree TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio)
+profiledTree TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio) const
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
 	boost::container::flat_set<int> smoothedNodeIDs;
@@ -247,7 +247,7 @@ profiledTree TreeTrimmer::segSharpAngleSmooth_lengthDistRatio(const profiledTree
 	return outputProfiledTree;
 }
 
-profiledTree TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio)
+profiledTree TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, double ratio) const
 {
 	cout << "smoothing angles.." << endl << "  iteration 1 " << endl;
 	int iterCount = 1;
@@ -268,7 +268,7 @@ profiledTree TreeTrimmer::itered_segSharpAngleSmooth_lengthDistRatio(const profi
 	return angleSmoothedTree;
 }
 
-profiledTree TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre)
+profiledTree TreeTrimmer::segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre) const
 {
 	profiledTree outputProfiledTree = inputProfiledTree;
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
