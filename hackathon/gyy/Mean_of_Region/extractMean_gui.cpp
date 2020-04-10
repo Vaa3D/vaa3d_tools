@@ -9,7 +9,7 @@ ExtractMeanCenterDialog :: ExtractMeanCenterDialog(QWidget *parent): QDialog(par
     connect(rangeBox, SIGNAL(valueChanged(int)), rangeBox, SLOT(setValue(int)));
 
     openButton = new QPushButton(tr("Input a folder"));
-    openEdit = new QLineEdit(tr("Select a folder !"));
+    openEdit = new QLineEdit(tr("Select a tile folder !"));
     openHbox = new QHBoxLayout();
     openHbox -> addWidget(openButton);
     openHbox -> addWidget(openEdit);

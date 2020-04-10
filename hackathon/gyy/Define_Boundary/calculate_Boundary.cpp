@@ -83,6 +83,7 @@ void set_3channel_range_20_data(vector<vector<int>> range_data_vec, vector<vecto
 
 void set_3channel_filter_data(vector<vector<Point_class>> &point_3channel_vec)
 {
+    /*
     for(int m = 0; m < 1162; m ++)
     {
         for(int n = 0; n < 3; n ++)
@@ -132,6 +133,38 @@ void set_3channel_filter_data(vector<vector<Point_class>> &point_3channel_vec)
             }
         }
     }
+*/
+    for(int m = 0; m < 1162; m ++)
+    {
+        for(int n = 0; n < 3; n ++)
+        {
+            if(m == 0)
+            {
+                Point_class p1;
+                Point_class point_arr[2]={p1, point_3channel_vec[m+1][n]};
+                point_3channel_vec[m][n].set_filter_range(2);
+                point_3channel_vec[m][n].set_filter_data(point_arr);
+
+            }
+
+            else if(m == 1161)
+            {
+                Point_class p1;
+                Point_class point_arr[2]={p1, point_3channel_vec[m-1][n]};
+                point_3channel_vec[m][n].set_filter_range(2);
+                point_3channel_vec[m][n].set_filter_data(point_arr);
+                point_3channel_vec[m][n].set_filter_shift_data(point_3channel_vec[m-1][n]);
+            }
+
+            else
+            {
+                Point_class point_arr[2] = {point_3channel_vec[m-1][n], point_3channel_vec[m+1][n]};
+                point_3channel_vec[m][n].set_filter_data(point_arr);
+                point_3channel_vec[m][n].set_filter_shift_data(point_3channel_vec[m-1][n]);
+            }
+        }
+    }
+
 
 }
 
@@ -163,15 +196,15 @@ void set_3channel_filter_thres_data(vector<vector<Point_class>> &point_3channel_
 
 void set_3channel_flag(vector<vector<Point_class>> &point_3channel_vec)
 {
-    for(int m = 3; m < 1162; m ++)
+    for(int m = 2; m < 1162; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
-            point_3channel_vec[m][n].set_flag_data1(point_3channel_vec[m-3][n]);
+            point_3channel_vec[m][n].set_flag_data1(point_3channel_vec[m-2][n]);
         }
     }
 
-    for(int m = 0; m < 1156; m ++)
+    for(int m = 0; m < 1155; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
@@ -191,8 +224,11 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             count1[0] ++;
             if(count1[0] >= point_3channel_vec[0][0].flag_range)
             {
+
+                qDebug()<<__LINE__<<": m = "<<m;
                 pos1[0] = m - point_3channel_vec[0][0].flag_range+1+1;
-                if(m+50<1162)
+                qDebug()<<__LINE__<<": pos0 = "<<pos1[0];
+                if(m+50<1162 && m>10)
                     for(int n = m-10; n < m+20; n ++)
                     {
                         if(point_3channel_vec[n][1].flag_data1 == 1)
@@ -211,7 +247,6 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
                                             pos1[2] = k - point_3channel_vec[0][0].flag_range+1+1;
                                             break;
                                         }
-
                                     }
                                     else
                                         count1[2] = 0;
@@ -222,6 +257,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
                                     count1[1] = 0;
                                     pos1[0] = 1;
                                     pos1[1] = 1;
+                                    break;
                                 }
                             }
                         }
@@ -253,7 +289,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             if(count2[2] >= point_3channel_vec[0][0].flag_range)
             {
                 pos2[2] = m + point_3channel_vec[0][0].flag_range;
-                if(m-50>0)
+                if(m-50>0 && m+10<1161)
                     for(int n = m+10; n > m-20; n --)
                     {
                         if(point_3channel_vec[n][1].flag_data2 == 1)
@@ -283,6 +319,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
                                     count2[1] = 1;
                                     pos2[2] = 1162;
                                     pos2[1] = 1162;
+                                    break;
                                 }
                             }
                         }
@@ -340,7 +377,7 @@ int read_Excel_File(QString FileName, vector<vector<int>> &range_data_vec)
     qDebug()<<"Excel columns = "<<intCols;
 
     //Load data in batches
-    QString Range = "A2:C1163";
+    QString Range = "B2:D1163";
     cout<<"Excel Range: "<<Range.toStdString()<<endl;
 
     QAxObject *allExcelData = worksheet->querySubObject("Range(QString)", Range);
@@ -354,7 +391,7 @@ int read_Excel_File(QString FileName, vector<vector<int>> &range_data_vec)
     {
         QVariantList allExcelDaraList_i = allExcelDaraList[i].toList();
         vector<int> vec;
-        for(int j = 0; j < intCols; j ++)
+        for(int j = 0; j < intCols-1; j ++)
         {
             vec.push_back(allExcelDaraList_i[j].toInt());
         }
@@ -605,9 +642,9 @@ void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3c
             rows.append(point_3channel_vec[i-2][2].flag_data2);
             rows.append("");
 
-            rows.append((pos1[0]+pos2[0])/2);
-            rows.append((pos1[1]+pos2[1])/2);
-            rows.append((pos1[2]+pos2[2])/2);
+            rows.append((pos1[0]+pos2[0]+0.0)/2);
+            rows.append((pos1[1]+pos2[1]+0.0)/2);
+            rows.append((pos1[2]+pos2[2]+0.0)/2);
 
         }
 

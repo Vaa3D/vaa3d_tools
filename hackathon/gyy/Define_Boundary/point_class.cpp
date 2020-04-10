@@ -4,7 +4,7 @@
 Point_class::Point_class()
 {
     reference_range = 5;
-    filter_range = 5;
+    filter_range = 3;
     flag_range = 3;
     mean_SD_para = 3;
     range_20_data = 0;
@@ -16,10 +16,10 @@ Point_class::Point_class()
     flag_data2 = 0;
 }
 
-void Point_class:: set_filter_data(Point_class point_arr[4])
+void Point_class:: set_filter_data(Point_class point_arr[2])
 {
     double sum = range_20_data;
-    for(int i = 0; i < 4; i ++)
+    for(int i = 0; i < 2; i ++)
     {
         sum += point_arr[i].get_range_20_data();
     }
@@ -69,16 +69,6 @@ void Point_class:: set_filter_thres_data2(Point_class point_arr[5])
     filter_thres_data2 = mean_SD_para * SD - mean;
 }
 
-void Point_class:: copy_point_class(Point_class point)
-{
-    range_20_data = point.range_20_data;
-    filter_data = point.filter_data;
-    filter_shift_data = point.filter_shift_data;
-    filter_thres_data1 = point.filter_thres_data1;
-    filter_thres_data2 = point.filter_thres_data2;
-    flag_data1 = point.flag_data1;
-    flag_data2 = point.flag_data2;
-}
 
 void Point_class::set_flag_data1(Point_class point)
 {
@@ -103,4 +93,15 @@ Point_class & Point_class::operator = (const Point_class & point)
     flag_data2 = point.flag_data2;
 
     return *this;
+}
+
+void Point_class:: copy_point_class(Point_class point)
+{
+    range_20_data = point.range_20_data;
+    filter_data = point.filter_data;
+    filter_shift_data = point.filter_shift_data;
+    filter_thres_data1 = point.filter_thres_data1;
+    filter_thres_data2 = point.filter_thres_data2;
+    flag_data1 = point.flag_data1;
+    flag_data2 = point.flag_data2;
 }

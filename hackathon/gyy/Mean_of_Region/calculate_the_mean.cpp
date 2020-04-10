@@ -5,7 +5,7 @@
 #include <QDebug>
 
 using namespace std;
-bool calculate_mean(V3DPluginCallback2 &callback, vector<unsigned short *> & pdataMean, QFileInfoList imageList, V3DLONG rangeNum);
+bool calculate_mean(V3DPluginCallback2 &callback, unsigned short * (& pdataMean), QFileInfoList imageList, V3DLONG rangeNum, int countChannel);
 void saveMean_grayValue(QWidget *parent, vector<unsigned short *> & pdataMean, QDir dir, QString saveFileName, int z_size);
 
 bool export_mean_range(V3DPluginCallback2 &callback, QWidget *parent)
@@ -15,23 +15,36 @@ bool export_mean_range(V3DPluginCallback2 &callback, QWidget *parent)
     dialog.update();
 
     V3DLONG rangeNum = dialog.rangeBox -> value();
-
-    QDir dir(dialog.openFolderFiles);
-
-    QStringList filters;
-    filters << "*.tif";
-    QFileInfoList imageList = dir.entryInfoList(filters, QDir::Files);
-    vector<unsigned short *> pdataMean(imageList.size());
-    qDebug()<<"imageList.size = "<<imageList.size();
-
-    if(!calculate_mean(callback, pdataMean, imageList, rangeNum))
-    {
+    int countChannel = 0;
+    QDir tileDir(dialog.openFolderFiles);
+    if(!tileDir.exists())
         return false;
+    tileDir.setFilter(QDir::Dirs);
+    QFileInfoList channelList = tileDir.entryInfoList();
+    qDebug()<<"channelList.size = "<<channelList.size();
+
+    int sizeImg = 0;
+    vector<unsigned short *> pdataMean(channelList.size()-2);
+    for(int i = 2; i < channelList.size(); i ++)
+    {
+        countChannel ++;
+        QDir dir(channelList[i].filePath());
+        QStringList filters;
+        filters << "*.tif";
+        QFileInfoList imageList = dir.entryInfoList(filters, QDir::Files);
+
+        sizeImg = imageList.size();
+
+        if(!calculate_mean(callback, pdataMean[i-2], imageList, rangeNum, countChannel))
+        {
+            return false;
+        }
     }
+
     cout<<"Calculate Mean successful !"<<endl;
 
 
-    saveMean_grayValue(parent, pdataMean, dir, dialog.saveFolderFiles, imageList.size());
+    saveMean_grayValue(parent, pdataMean, tileDir, dialog.saveFolderFiles, sizeImg);
     cout<<"Save gray value successful !"<<endl;
     return 1;
 }
@@ -42,7 +55,7 @@ void saveMean_grayValue(QWidget *parent, vector<unsigned short *> & pdataMean, Q
 {
     qDebug()<<__LINE__;
     cout<<"dir: "<<dir.dirName().toStdString().c_str()<<endl;
-    QString excelName = saveFileName +"\\"+ dir.dirName() + "_Value.xlsx";
+    QString excelName = saveFileName +"\\"+ dir.dirName() + "_MeanValue.xlsx";
     cout<<"excelName: "<<excelName.toStdString()<<endl;
 
     QAxObject *excel = new QAxObject(parent);
@@ -67,7 +80,7 @@ void saveMean_grayValue(QWidget *parent, vector<unsigned short *> & pdataMean, Q
             rows.append("");
             for(V3DLONG j = 0; j < pdataMean.size(); j ++)
             {
-                QString name = "region_" + QString :: fromStdString(to_string((j+1)));
+                QString name = "C" + QString :: fromStdString(to_string((j+1)));
 //                cout<<"Range name: "<<name.toStdString().c_str()<<endl;
                 rows.append(name);
             }
@@ -111,7 +124,7 @@ void saveMean_grayValue(QWidget *parent, vector<unsigned short *> & pdataMean, Q
 
 
 
-bool calculate_mean(V3DPluginCallback2 &callback, vector<unsigned short *> & pdataMean, QFileInfoList imageList, V3DLONG rangeNum)
+bool calculate_mean(V3DPluginCallback2 &callback, unsigned short * (& pdataMean), QFileInfoList imageList, V3DLONG rangeNum, int countChannel)
 {
     vector<unsigned char *> data1d_vec(imageList.size());
     vector<V3DLONG *> in_sz_vec(imageList.size());
@@ -119,7 +132,7 @@ bool calculate_mean(V3DPluginCallback2 &callback, vector<unsigned short *> & pda
     vector<unsigned short *> data1d_copy(imageList.size());
     for(V3DLONG i = 0; i < imageList.size(); i++)
     {
-        cout<<"This is "<<i+1<<" image"<<endl;
+        cout<<"This is "<<i+1<<" image for tile "<<countChannel<<"."<<endl;
         in_sz_vec[i] = new V3DLONG[4];
         if(!simple_loadimage_wrapper(callback, imageList[i].filePath().toStdString().c_str(), data1d_vec[i], in_sz_vec[i], datatype_vec[i]))
         {
@@ -131,37 +144,31 @@ bool calculate_mean(V3DPluginCallback2 &callback, vector<unsigned short *> & pda
         memcpy(data1d_copy[i], data1d_vec[i], in_sz_vec[i][0]*in_sz_vec[i][1]*in_sz_vec[i][2]*in_sz_vec[i][3]*datatype_vec[i]);
     }
 
-    qDebug()<<__LINE__;
 
-    V3DLONG region_center_X[5] = {10, 485, 960, 1435, 1910};
-    V3DLONG region_center_Y[5] = {10, 485, 960, 1435, 1910};
+//    V3DLONG region_center_X[5] = {10, 485, 960, 1435, 1910};
+//    V3DLONG region_center_Y[5] = {10, 485, 960, 1435, 1910};
 
-    for(int i = 0; i < 5; i ++)
+    int region_center_X = 960, region_center_Y = 960;
+
+    if(pdataMean){delete []pdataMean; pdataMean = 0;}
+    pdataMean = new unsigned short[imageList.size()*1];
+    V3DLONG start_X = region_center_X-rangeNum/2;
+    V3DLONG start_Y = region_center_Y-rangeNum/2;
+    V3DLONG end_X = region_center_X+rangeNum/2-1;
+    V3DLONG end_Y = region_center_Y+rangeNum/2-1;
+
+    for(V3DLONG image_i = 0; image_i < imageList.size(); image_i ++)
     {
-        for(int j = 0; j < 5; j ++)
-        {
-            if(pdataMean[i*5+j]){delete []pdataMean[i*5+j]; pdataMean[i*5+j] = 0;}
-            pdataMean[i*5+j] = new unsigned short[imageList.size()*1];
-            V3DLONG start_X = region_center_X[i]-rangeNum/2;
-            V3DLONG start_Y = region_center_Y[j]-rangeNum/2;
-            V3DLONG end_X = region_center_X[i]+rangeNum/2-1;
-            V3DLONG end_Y = region_center_Y[j]+rangeNum/2-1;
-
-            for(V3DLONG image_i = 0; image_i < imageList.size(); image_i ++)
+        V3DLONG record = 0;
+        double values = 0, sum = 0;
+        for(V3DLONG mi = start_X; mi <= end_X; mi ++)
+            for(V3DLONG ni = start_Y; ni <= end_Y; ni ++)
             {
-                V3DLONG record = 0;
-                double values = 0, sum = 0;
-                for(V3DLONG mi = start_X; mi <= end_X; mi ++)
-                    for(V3DLONG ni = start_Y; ni <= end_Y; ni ++)
-                    {
-                        sum += data1d_copy[image_i][ni*in_sz_vec[image_i][0] + mi];
-                        record ++;
-                    }
-                values = sum/record;
-                pdataMean[5*i+j][image_i] = int(values+0.5);
+                sum += data1d_copy[image_i][ni*in_sz_vec[image_i][0] + mi];
+                record ++;
             }
-
-        }
+        values = sum/record;
+        pdataMean[image_i] = int(values+0.5);
     }
 }
     
