@@ -300,3 +300,24 @@ void integratedDataTypes::profiledTreeReInit(profiledTree& inputProfiledTree)
 	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
 	inputProfiledTree = tempTree;
 }
+
+integratedDataTypes::segEndClusterUnit::~segEndClusterUnit()
+{
+	for (map<int, segEndClusterUnit*>::iterator it = this->childClusterMap.begin(); it != this->childClusterMap.end(); ++it)
+		it->second->parentCluster = nullptr;
+
+	if (this->parentCluster != nullptr)
+		this->parentCluster->childClusterMap.erase(this->parentCluster->childClusterMap.find(this->ID));
+}
+
+void integratedDataTypes::cleanUp_segEndClusterChain_downStream(segEndClusterUnit* currCluster)
+{
+	if (currCluster->childClusterMap.empty())
+	{
+		delete currCluster;
+		return;
+	}
+
+	for (map<int, segEndClusterUnit*>::iterator it = currCluster->childClusterMap.begin(); it != currCluster->childClusterMap.end(); ++it)
+		integratedDataTypes::cleanUp_segEndClusterChain_downStream(it->second);
+}

@@ -172,7 +172,7 @@ FragTraceManager::~FragTraceManager()
 {
 	if (!this->segEndClusterChains.empty())
 	{
-		for (auto& chain : this->segEndClusterChains) this->myFragPostProcessor.rc_clusterChain_cleanUp(chain.second);
+		for (auto& chain : this->segEndClusterChains) integratedDataTypes::cleanUp_segEndClusterChain_downStream(chain.second);
 		this->segEndClusterChains.clear();
 	}
 	
@@ -289,6 +289,12 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	if (this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->close();
 
 	emit emitTracedTree(FINALOUTPUT_TREE);
+
+	if (!this->segEndClusterChains.empty())
+	{
+		for (auto& chain : this->segEndClusterChains) integratedDataTypes::cleanUp_segEndClusterChain_downStream(chain.second);
+		this->segEndClusterChains.clear();
+	}
 }
 
 bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)

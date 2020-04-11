@@ -106,7 +106,8 @@ namespace integratedDataTypes
 	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
 	{
-		// This struct has pointer data members. Need to provide copy control constructors later.
+		// This struct does not need copy/assignnebt control because [segUnit] is managed somewhere else.
+		// [segPairProfile] does not attempt to make any changes onto the memory to which the pointers in this struct point.
 
 		segPairProfile() : seg1Ptr(nullptr), seg2Ptr(nullptr) {};
 		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt = all_ort);
@@ -168,9 +169,14 @@ namespace integratedDataTypes
 	/***************** segEnd Cluster Tree *****************/
 	struct segEndClusterUnit
 	{
-		// This struct has pointer data members. Need to provide copy control constructors later.
+		// This data structure makes up a chain list of segment end clusters with pointers.
+		// To avoid memory violations due to mismanagement, copy and assignment are not allowed for [segEndClusterUnit],
+		// so that 1 [segEndClusterUnit*] is strictly mapping to only 1 memory space.
 
 		segEndClusterUnit() { this->parentCluster = nullptr; }
+		segEndClusterUnit(const segEndClusterUnit&) = delete;
+		segEndClusterUnit& operator=(const segEndClusterUnit&) = delete;
+		~segEndClusterUnit();
 
 		int ID;
 		boost::container::flat_set<int> headSegs;
@@ -179,6 +185,8 @@ namespace integratedDataTypes
 		segEndClusterUnit* parentCluster;
 		map<int, segEndClusterUnit*> childClusterMap;
 	};
+
+	void cleanUp_segEndClusterChain_downStream(segEndClusterUnit* currCluster);
 	/*******************************************************/
 }
 
