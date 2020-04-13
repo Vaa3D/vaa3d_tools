@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       -= gui
+QT -= gui
 
 TARGET = NeuronStructNavigator
 CONFIG += qt plugin warn_off
