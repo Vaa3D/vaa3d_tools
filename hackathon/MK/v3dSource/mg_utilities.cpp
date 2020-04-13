@@ -583,7 +583,7 @@ static inline int print_synonym(FILE *file, int i)
   if ((k = Parse[i].synonym) >= 0)
     { char *name = Parse[k].name;
       fprintf(file,"{%s}",name);
-      return (2 + strlen(name));
+      return int(2 + strlen(name));
     }
   return (0);
 }
