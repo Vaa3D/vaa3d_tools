@@ -26,6 +26,96 @@
 
 using namespace std;
 
+integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC) : to_be_deleted(false)
+{
+	for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+	{
+		NeuronSWC node;
+		node.n = nodeIt->n;
+		node.x = nodeIt->x;
+		node.y = nodeIt->y;
+		node.z = nodeIt->z;
+		node.type = nodeIt->type;
+		node.parent = nodeIt->parent;
+		this->nodes.push_front(node);
+	}
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+
+	this->head = this->nodes.begin()->n;
+	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
+	{
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
+		{
+			this->tails.push_back(nodeIt->n);
+			vector<size_t> emptyTailSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+		}
+	}
+	
+	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
+}
+
+integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false)
+{
+	this->nodes = inputSeg;
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+
+	this->head = this->nodes.begin()->n;
+	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
+	{
+		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
+		{
+			this->tails.push_back(nodeIt->n);
+			vector<size_t> emptyTailSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+		}
+	}
+}
+
+V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC() const
+{
+	V_NeuronSWC outputV_NeuronSWC;
+	outputV_NeuronSWC.to_be_deleted = this->to_be_deleted;
+	int paNodeID = this->head;
+	this->rc_nodeRegister2V_NeuronSWC(outputV_NeuronSWC, paNodeID, paNodeID);
+
+	return outputV_NeuronSWC;
+}
+
+void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const
+{
+	int currentPaID = parentID;
+	while (1)
+	{
+		V_NeuronSWC_unit newNodeV;
+		newNodeV.n = this->nodes.size() - sbjV_NeuronSWC.row.size();
+		newNodeV.x = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).x;
+		newNodeV.y = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).y;
+		newNodeV.z = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).z;
+		newNodeV.type = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).type;		
+		newNodeV.seg_id = this->segID;		
+
+		if (this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent == -1) newNodeV.parent = -1;
+		else
+		{
+			if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() > 1)
+				newNodeV.parent = branchRootID;
+			else if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() == 1)
+				newNodeV.parent = newNodeV.n + 1;
+		}
+		sbjV_NeuronSWC.row.insert(sbjV_NeuronSWC.row.begin(), newNodeV);
+
+		if (this->seg_childLocMap.at(currentPaID).size() == 1) currentPaID = this->nodes.at(*this->seg_childLocMap.at(currentPaID).begin()).n;
+		else if (this->seg_childLocMap.at(currentPaID).size() == 0) return;
+		else if (this->seg_childLocMap.at(currentPaID).size() > 1)
+		{
+			for (vector<size_t>::const_iterator tailsIt = this->seg_childLocMap.at(currentPaID).begin(); tailsIt != this->seg_childLocMap.at(currentPaID).end(); ++tailsIt)
+				this->rc_nodeRegister2V_NeuronSWC(sbjV_NeuronSWC, this->nodes.at(*tailsIt).n, newNodeV.n);
+			return;
+		}	
+	}
+}
+
 integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2), currConnOrt(connOrt)
 {
 	this->getSegDistance(connOrt);
@@ -119,26 +209,34 @@ void integratedDataTypes::segPairProfile::segsAngleDiff12(connectOrientation con
 	this->segsAngleDiff = NeuronGeoGrapher::getPiAngle(dispVec1, dispVec2);
 }
 
-integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
+integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float nodeTileLength, float segTileLength)
 {
-	this->tree = inputTree;
-	this->segTileSize = segTileLength;
-	this->nodeTileSize = NODE_TILE_LENGTH;
-
-	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileSize);
-	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
-
-	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
-	//cout << "segs num: " << this->segs.size() << endl;
+	this->tree.listNeuron.clear();
 	
-	vector<segUnit> allSegs;
-	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
+	if (inputTree.listNeuron.empty()) cerr << "The input tree is empty, profiledTree cannot be initialized." << endl;
+	else
 	{
-		//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
-		allSegs.push_back(it->second);
+		this->tree = inputTree;
+		this->segTileSize = segTileLength;
+		this->nodeTileSize = nodeTileLength;
+
+		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+
+		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
+		//cout << "segs num: " << this->segs.size() << endl;
+
+		NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
+
+		vector<segUnit> allSegs;
+		for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
+		{
+			//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
+			allSegs.push_back(it->second);
+		}
+		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
+		this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 	}
-	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
-	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 }
 
 void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
@@ -201,4 +299,25 @@ void integratedDataTypes::profiledTreeReInit(profiledTree& inputProfiledTree)
 {
 	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
 	inputProfiledTree = tempTree;
+}
+
+integratedDataTypes::segEndClusterUnit::~segEndClusterUnit()
+{
+	for (map<int, segEndClusterUnit*>::iterator it = this->childClusterMap.begin(); it != this->childClusterMap.end(); ++it)
+		it->second->parentCluster = nullptr;
+
+	if (this->parentCluster != nullptr)
+		this->parentCluster->childClusterMap.erase(this->parentCluster->childClusterMap.find(this->ID));
+}
+
+void integratedDataTypes::cleanUp_segEndClusterChain_downStream(segEndClusterUnit* currCluster)
+{
+	if (currCluster->childClusterMap.empty())
+	{
+		delete currCluster;
+		return;
+	}
+
+	for (map<int, segEndClusterUnit*>::iterator it = currCluster->childClusterMap.begin(); it != currCluster->childClusterMap.end(); ++it)
+		integratedDataTypes::cleanUp_segEndClusterChain_downStream(it->second);
 }

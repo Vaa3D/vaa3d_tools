@@ -7,8 +7,9 @@
 *          Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>
 * Date:    Mar 2016
 *
-* N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)
-* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016
+* N3DFix v2.0 is described in the following publication
+* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017
+* https://doi.org/10.1007/s12021-016-9308-7
 *
 *    Disclaimer
 *    ----------

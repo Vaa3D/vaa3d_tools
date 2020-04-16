@@ -43,39 +43,39 @@ public:
 
 
 	/*************************** Vector Geometry ***************************/
-	template<class T> // Get the vecotr formed by 2 NeuronSWC nodes.
+	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
-	template<class T> // Get the displacement vector of an input [segUnit] with specified orientation.
+	template<typename T> // Get the displacement vector of an input [segUnit] with specified orientation.
 	static inline vector<T> getSegDispVector(const segUnit& inputSeg, connectOrientation connOrt);
 
-	template<class T> // Get the unit displacement vector of an input segUnit with specified orientation.
+	template<typename T> // Get the unit displacement vector of an input segUnit with specified orientation.
 	static inline vector<T> getSegDispUnitVector(const segUnit& inputSeg, connectOrientation connOrt);
 
-	template<class T> // Get the unit displacement vector between 2 vectors
+	template<typename T> // Get the unit displacement vector between 2 vectors
 	static inline vector<T> getDispUnitVector(const vector<T>& endingLoc, const vector<T>& startingLoc);
 
 	// Get the vector between 2 NeuronSWC nodes with the vector's starting location (startNode). 
 	// The starting location in each dimension and its components are stored in pairs separately. 
-	template<class T> 
+	template<typename T> 
 	static inline vector<pair<T, T>> getVectorWithStartingLoc_btwn2nodes(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
-	template<class T> // Get cosine between 2 given vecotrs.
+	template<typename T> // Get cosine between 2 given vecotrs.
 	static inline T getVectorCosine(const vector<T>& vector1, const vector<T>& vector2);
 	
-	template<class T> // Get sine between 2 given vectors.
+	template<typename T> // Get sine between 2 given vectors.
 	static inline T getVectorSine(const vector<T>& vector1, const vector<T>& vector2);
 
-	template<class T> // Get the included angle of 2 given vectors in pi.
+	template<typename T> // Get the included angle of 2 given vectors in pi.
 	static inline T getPiAngle(const vector<T>& vector1, const vector<T>& vector2);
 
-	template<class T> // Get the included angle of 2 given vectors in radian.
+	template<typename T> // Get the included angle of 2 given vectors in radian.
 	static inline T getRadAngle(const vector<T>& vector1, const vector<T>& vector2);
 
-	template<class T> // Get the forming angle with 3 input nodes.
+	template<typename T> // Get the forming angle with 3 input nodes.
 	static T get3nodesFormingAngle(const NeuronSWC& angularNode, const NeuronSWC& endNode1, const NeuronSWC& endNode2);
 
-	template<class T> // Get the forming angle of a given node on a segment. (not implemented yet)
+	template<typename T> // Get the forming angle of a given node on a segment. (not implemented yet)
 	static T get3nodesFormingAngle(const NeuronSWC& angularNode, const segUnit& inputSeg);
 
 	// Find out the projection vector onto the given axial vector from the projecting vector.
@@ -85,7 +85,7 @@ public:
 
 
 	/*************************** Segment Geometry **************************/
-	template<class T> // Calculate the sum of turning angles from the segment head to tail.
+	template<typename T> // Calculate the sum of turning angles from the segment head to tail.
 	static inline T selfTurningRadAngleSum(const vector<vector<T>>& inputSegment);
 
 	// With specified pointing directions for each segments, returns the included angle between the 2 segments. 
@@ -101,15 +101,15 @@ public:
 
 
 	/****************** Polar Coordinate System Operations *****************/
-	template<class T> // Converts NeuronSWC to polarNeuronSWC with specified origin.
-	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
+	template<typename T> // Converts NeuronSWC to polarNeuronSWC with specified origin.
+	static polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
+
+	template<typename T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
+	static void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
 
 	// Converts polarNeuronSWC to NeuronSWC.
 	static inline NeuronSWC polar2CartesianNode(const polarNeuronSWC& inputPolarNode);
-
-	template<class T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
-	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
-
+	
 	// Convert polarNeuronSWC list to NeuronSWC list.
 	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
 
@@ -143,7 +143,7 @@ public:
 	/***********************************************************************/
 };
 
-template<class T>
+template<typename T>
 inline vector<T> NeuronGeoGrapher::getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode)
 {
 	vector<T> vec(3);
@@ -153,7 +153,7 @@ inline vector<T> NeuronGeoGrapher::getVector_NeuronSWC(const NeuronSWC& startNod
 	return vec;
 }
 
-template<class T>
+template<typename T>
 inline vector<T> NeuronGeoGrapher::getSegDispVector(const segUnit& inputSeg, connectOrientation connOrt)
 {
 	NeuronSWC headNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(inputSeg.head));
@@ -166,7 +166,7 @@ inline vector<T> NeuronGeoGrapher::getSegDispVector(const segUnit& inputSeg, con
 	return vec;
 }
 
-template<class T>
+template<typename T>
 inline vector<T> NeuronGeoGrapher::getSegDispUnitVector(const segUnit& inputSeg, connectOrientation connOrt)
 {
 	vector<T> segDispVec = NeuronGeoGrapher::getSegDispVector(inputSeg, connOrt);
@@ -180,7 +180,7 @@ inline vector<T> NeuronGeoGrapher::getSegDispUnitVector(const segUnit& inputSeg,
 	return outputVec;
 }
 
-template<class T>
+template<typename T>
 inline vector<T> NeuronGeoGrapher::getDispUnitVector(const vector<T>& endingLoc, const vector<T>& startingLoc)
 {
 	T disp = sqrt((endingLoc.at(0) - startingLoc.at(0)) * (endingLoc.at(0) - startingLoc.at(0)) +
@@ -194,7 +194,7 @@ inline vector<T> NeuronGeoGrapher::getDispUnitVector(const vector<T>& endingLoc,
 	return dispUnitVector;
 }
 
-template<class T>
+template<typename T>
 inline vector<pair<T, T>> NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes(const NeuronSWC& startNode, const NeuronSWC& endNode)
 {
 	vector<T> thisVector = NeuronGeoGrapher::getVector_NeuronSWC<T>(startNode, endNode);
@@ -207,7 +207,7 @@ inline vector<pair<T, T>> NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes(
 	return outputVectorPairs;
 }
 
-template<class T>
+template<typename T>
 inline T NeuronGeoGrapher::getVectorCosine(const vector<T>& vector1, const vector<T>& vector2)
 {
 	T dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
@@ -217,7 +217,7 @@ inline T NeuronGeoGrapher::getVectorCosine(const vector<T>& vector1, const vecto
 	return dot / sqrt(sq1 * sq2);
 }
 
-template<class T>
+template<typename T>
 inline T NeuronGeoGrapher::getVectorSine(const vector<T>& vector1, const vector<T>& vector2)
 {
 	T thisVectorCos = NeuronGeoGrapher::getVectorCosine<T>(vector1, vector2);
@@ -226,7 +226,7 @@ inline T NeuronGeoGrapher::getVectorSine(const vector<T>& vector1, const vector<
 	return thisVectorSin;
 }
 
-template<class T>
+template<typename T>
 inline T NeuronGeoGrapher::getPiAngle(const vector<T>& vector1, const vector<T>& vector2)
 {
 	T dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
@@ -234,11 +234,11 @@ inline T NeuronGeoGrapher::getPiAngle(const vector<T>& vector1, const vector<T>&
 	T sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	T angle = acos(dot / sqrt(sq1 * sq2));
 
-	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
 	else return angle / PI_MK;
 }
 
-template<class T>
+template<typename T>
 inline T NeuronGeoGrapher::getRadAngle(const vector<T>& vector1, const vector<T>& vector2)
 {
 	T dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
@@ -246,11 +246,11 @@ inline T NeuronGeoGrapher::getRadAngle(const vector<T>& vector1, const vector<T>
 	T sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	T angle = acos(dot / sqrt(sq1 * sq2));
 
-	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
 	else return angle;
 }
 
-template<class T>
+template<typename T>
 inline T NeuronGeoGrapher::selfTurningRadAngleSum(const vector<vector<T>>& inputSegment)
 {
 	T radAngleSum = 0;
@@ -273,7 +273,7 @@ inline T NeuronGeoGrapher::selfTurningRadAngleSum(const vector<vector<T>>& input
 	return radAngleSum;
 }
 
-template<class T>
+template<typename T>
 T NeuronGeoGrapher::get3nodesFormingAngle(const NeuronSWC& angularNode, const NeuronSWC& endNode1, const NeuronSWC& endNode2)
 {
 	vector<T> vector1 = NeuronGeoGrapher::getVector_NeuronSWC<T>(endNode1, angularNode);
@@ -283,8 +283,8 @@ T NeuronGeoGrapher::get3nodesFormingAngle(const NeuronSWC& angularNode, const Ne
 	return piAngle;
 }
 
-template<class T>
-inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin)
+template<typename T>
+polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin)
 {
 	polarNeuronSWC newPolarNode;
 	newPolarNode.ID = inputNode.n;
@@ -319,6 +319,14 @@ inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inp
 	return newPolarNode;
 }
 
+template<typename T>
+void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin)
+{
+	outputPolarNodeList.clear();
+	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+		outputPolarNodeList.push_back(NeuronGeoGrapher::CartesianNode2Polar(*nodeIt, origin));
+}
+
 inline NeuronSWC NeuronGeoGrapher::polar2CartesianNode(const polarNeuronSWC& inputPolarNode)
 {
 	NeuronSWC newNode;
@@ -337,14 +345,6 @@ inline void NeuronGeoGrapher::polarNodeList2nodeList(const vector<polarNeuronSWC
 	outputNodeList.clear();
 	for (vector<polarNeuronSWC>::const_iterator polarNodeIt = inputPolarNodeList.begin(); polarNodeIt != inputPolarNodeList.end(); ++polarNodeIt)
 		outputNodeList.push_back(NeuronGeoGrapher::polar2CartesianNode(*polarNodeIt));
-}
-
-template<class T>
-inline void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin)
-{
-	outputPolarNodeList.clear();
-	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
-		outputPolarNodeList.push_back(NeuronGeoGrapher::CartesianNode2Polar(*nodeIt, origin));
 }
 
 inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList)

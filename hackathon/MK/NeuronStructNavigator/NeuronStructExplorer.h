@@ -26,21 +26,21 @@
 
 class NeuronStructExplorer
 {
+	friend class Tester;
+
 public:
 	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
 	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
-	virtual ~NeuronStructExplorer() = default;
 
 	map<string, profiledTree> treeDataBase; // This is where all trees are stored and managed.
-	map<string, map<string, profiledTree>> treeSeriesDataBase;
+	map<string, map<string, profiledTree>> treeDataBases;
 	
 	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
-	inline void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
-	inline void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
+	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
+	void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
 	
 	V_NeuronSWC_list segmentList;
-
 	void segmentDecompose(NeuronTree* inputTreePtr); // This function is borrowed from Vaa3D code base.
 
 	/* --------------------------- segment profiling --------------------------- */
@@ -59,24 +59,28 @@ public:
 	// Segment end clustering method is not automatically called during integratedDataTypes::profiledTree::profiledTree initialization. 
 	// If the following method is called, profiledTree::segHeadClusters, profiledTree::segTailClusters, profiledTree::headSeg2ClusterMap, and profiledTree::tailSeg2ClusterMap will be populated.
 	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
-	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5) const;
 
-protected:
+private:
 	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
 	// NOTE, this method is only the 1st step of constructing seg-end cluster profile. Those information stored in profiledTree::segHeadClusters and profiledTree::segTailClusters are not correct yet
 	//       and need to go through this->mergeTileBasedSegClusters to reach its final form.  
-	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const;
 
 	// This method merges segment-end clusters with given distance threshold for the whole input profiledTree.
 	// Note, this method is has to be called after this->getTileBasedSegClusters, 
 	//		 where profiledTree::segHeadClusters and profiledTree::segTailClusters are stored with tiled-based seg-end clusters (not the final correct seg-end clusters) by this->getTileBasedSegClusters first.
-	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const;
 
 public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
-	static void getClusterSegPairs(profiledTree& inputProfiledTree);
+	void getClusterSegPairs(profiledTree& inputProfiledTree) const;
 	//--------------------------------------------------------------- //
+	/* ------------------------------------------------------------------------- */
+
+	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
+	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
 
@@ -110,7 +114,7 @@ public:
 
 
 	/*************************** Debug Functions ***************************/
-	inline bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath);
+	bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath) const;
 
 	static void __segMorphProfiled_lengthDistRatio(profiledTree& inputProfiledTree, int range, double lengthDistRatio);
 	/***********************************************************************/
@@ -141,30 +145,6 @@ public:
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
-
-inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
-{
-	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
-	{
-		profiledTree registeredTree(inputTree, segTileLength);
-		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
-	}
-	else
-	{
-		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
-		return;
-	}
-}
-
-inline void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength)
-{
-	if (replace)
-	{
-		profiledTree registeredTree(inputTree, segTileLength);
-		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
-	}
-	else this->treeEntry(inputTree, treeName, segTileLength);
-}
 
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)
 {
@@ -222,47 +202,5 @@ inline void NeuronStructExplorer::upstreamPath(const QList<NeuronSWC>& inputList
 
 	reverse(tracedList.begin(), tracedList.end());
 }
-
-/* =========================== Debug Functions =========================== */
-inline bool NeuronStructExplorer::__segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath)
-{
-	profiledTree inputCopy = inputProfiledTree;
-	int clusterCount = 1;
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segTailClusters.begin(); it != inputCopy.segTailClusters.end(); ++it)
-	{
-		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(*inputCopy.segs.at(*it2).tails.begin())].type = it->first % 9;
-		}
-		++clusterCount;
-	}
-	clusterCount = 1;
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segHeadClusters.begin(); it != inputCopy.segHeadClusters.end(); ++it)
-	{
-		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(inputCopy.segs.at(*it2).head)].type = it->first % 9;
-		}
-		++clusterCount;
-	}
-
-	profiledTree terminals(inputCopy.tree);
-	NeuronTree terminalTree;
-	for (QList<NeuronSWC>::iterator it = terminals.tree.listNeuron.begin(); it != terminals.tree.listNeuron.end(); ++it)
-	{
-		if (it->parent == -1 || terminals.node2childLocMap.find(it->n) == terminals.node2childLocMap.end())
-		{
-			NeuronSWC newNode = *it;
-			newNode.parent = -1;
-			terminalTree.listNeuron.push_back(newNode);
-		}
-	}
-
-	QString saveNameQ = QString::fromStdString(segEndTestFullPath);
-	writeSWC_file(saveNameQ, terminalTree);
-
-	return true;
-}
-/* ======================================================================= */
 
 #endif

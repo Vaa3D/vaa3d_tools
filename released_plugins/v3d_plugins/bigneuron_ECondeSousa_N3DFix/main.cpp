@@ -7,8 +7,9 @@
 *          Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>
 * Date:    Mar 2016
 *
-* N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)
-* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016
+* N3DFix v2.0 is described in the following publication
+* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017
+* https://doi.org/10.1007/s12021-016-9308-7
 *
 *    Disclaimer
 *    ----------
@@ -57,8 +58,9 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
     std::cout<<"           Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>           "<<std::endl;
     std::cout<<"  Date:    Mar 2016                                                  "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
-    std::cout<<" N3DFix v2.0 is described in the following publication (UNDER REVIEW)"<<std::endl;
-    std::cout<<" Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016   "<<std::endl;
+    std::cout<<" N3DFix v2.0 is described in the following publication"<<std::endl;
+    std::cout<<" Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017   "<<std::endl;
+    std::cout<<" https://doi.org/10.1007/s12021-016-9308-7                           "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
     std::cout<<"====================================================================="<<std::endl;
@@ -300,8 +302,8 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
         fprintf (fout, "# Eduardo Conde-Sousa <econdesousa@gmail.com>\n");
         fprintf (fout, "# Paulo Aguiar        <pauloaguiar@ineb.up.pt>\n");
         fprintf (fout, "#\n");
-        fprintf (fout, "# N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)");
-		fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016");
+        fprintf (fout, "# N3DFix v2.0 is described in the following publication");
+		fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017");
         fprintf (fout, "#\n");
         fprintf (fout, "#\n");
         fprintf (fout, "#\n");
@@ -377,8 +379,9 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
     std::cout<<"           Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>           "<<std::endl;
     std::cout<<"  Date:    Mar 2016                                                  "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
-    std::cout<<" N3DFix v2.0 is described in the following publication (UNDER REVIEW)"<<std::endl;
-    std::cout<<" Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016   "<<std::endl;
+    std::cout<<" N3DFix v2.0 is described in the following publication		     "<<std::endl;
+    std::cout<<" Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017   "<<std::endl;
+    std::cout<<" https://doi.org/10.1007/s12021-016-9308-7                           "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
     std::cout<<"                                                                     "<<std::endl;
     std::cout<<"====================================================================="<<std::endl;
@@ -766,8 +769,9 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output){
 	std::cout<<"           Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>                          "<<std::endl;
 	std::cout<<"  Date:    Mar 2016                                                                 "<<std::endl;
 	std::cout<<"                                                                                    "<<std::endl;
-	std::cout<<"  N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)            "<<std::endl;
-	std::cout<<"  Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016                 "<<std::endl;
+	std::cout<<"  N3DFix v2.0 is described in the following publication                             "<<std::endl;
+	std::cout<<"  Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2017                 "<<std::endl;
+	std::cout<<"  https://doi.org/10.1007/s12021-016-9308-7                                         "<<std::endl;    
 	std::cout<<"                                                                                    "<<std::endl;
     std::cout<<" HOW TO USE:\n";
     std::cout<<"-f <func name> : N3DFix\n";

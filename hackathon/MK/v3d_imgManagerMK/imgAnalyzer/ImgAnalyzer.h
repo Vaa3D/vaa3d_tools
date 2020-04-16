@@ -13,7 +13,7 @@
 using namespace std;
 using namespace integratedDataStructures;
 
-class ImgAnalyzer : public ImgProcessor
+class ImgAnalyzer
 {	
 public:
 	ImgAnalyzer() : blobMergingReport(false) {};
@@ -22,7 +22,7 @@ public:
 
 	/***************** Image Segmentation/Detection *****************/
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
-	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
+	vector<connectedComponent> findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int imgDims[], const int distThre, unsigned char* maxIP1D = nullptr);
 	
 	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]); // Generates 2D mask with input connected component list.
 	myImg1DPtr connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[]); // Generates 3D mask with input connected component list.
@@ -40,7 +40,7 @@ public:
 	boost::container::flat_set<deque<float>> getSectionalCentroids(const connectedComponent& inputConnComp);
 private:
 	// This method is called by ImgAnalyzer::getSectionalCentroids to complete the task.
-	boost::container::flat_set<deque<float>> connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd);
+	boost::container::flat_set<deque<float>> connCompSectionalProc(const vector<int>& dim1, const vector<int>& dim2, const vector<int>& sectionalDim, const int secDimStart, const int secDimEnd);
 	/**************************************************/
 
 

@@ -26,9 +26,34 @@
 #include "neuron_format_converter.h"
 
 #include "NeuronStructExplorer.h"
+#include "NeuronStructNavigatingTester.h"
 #include "NeuronStructNavigator_Define.h"
 
 /* ================================ Constructors and Basic Profiling Data/Function Members ================================ */
+void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
+{
+	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else
+	{
+		cerr << "This tree name has already existed. The tree will not be registered for further operations." << endl;
+		return;
+	}
+}
+
+void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength)
+{
+	if (replace)
+	{
+		profiledTree registeredTree(inputTree, segTileLength);
+		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
+	}
+	else this->treeEntry(inputTree, treeName, segTileLength);
+}
+
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
 {
 	// -- This method profiles all segments in a given input tree.
@@ -51,8 +76,9 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			newSeg.head = nodeIt->n;
 			newSeg.nodes.push_back(*nodeIt);
 			vector<size_t> childLocs = node2childLocMap.find(nodeIt->n)->second;
-				// In NeuronStructUtilities::node2loc_node2childLocMap, 
-				// if a segment is only with a head, its childLocs will also be assigned as empty set.
+			
+			// In NeuronStructUtilities::node2loc_node2childLocMap, 
+			// if a segment is only with a head, its childLocs will also be assigned as empty set.
 			if (childLocs.empty()) 
 			{
 				newSeg.tails.push_back(nodeIt->n);
@@ -124,6 +150,14 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 	}
 
 	return segs;
+}
+
+void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+{
+	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
+
+	this->segmentList.clear();
+	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
 }
 
 map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head)
@@ -235,7 +269,7 @@ void NeuronStructExplorer::__segMorphProfiled_lengthDistRatio(profiledTree& inpu
 	}
 }
 
-void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold)
+void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold) const
 {
 	this->getTileBasedSegClusters(inputProfiledTree, distThreshold);
 	int headSegNum = 0, tailSegNum = 0;
@@ -243,7 +277,9 @@ void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTre
 		headSegNum = headSegNum + it1->second.size();
 	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it2 = inputProfiledTree.segTailClusters.begin(); it2 != inputProfiledTree.segTailClusters.end(); ++it2)
 		tailSegNum = tailSegNum + it2->second.size();
+
 #ifdef __SEGEND_CLUSTER_PRINTOUT__
+	cout << "======= before merging clusters =======" << endl;
 	cout << "head segment number: " << headSegNum << " -- tail segment number: " << tailSegNum << endl;
 	cout << "head segment map number: " << inputProfiledTree.headSeg2ClusterMap.size() << " -- tail segment map number: " << inputProfiledTree.tailSeg2ClusterMap.size() << endl;
 #endif
@@ -267,15 +303,15 @@ void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTre
 #endif
 }
 
-void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
+void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const
 {
 	// -- This method merges head/tail clusters across tiles and reaches the final form and correctness of [inputProfiledTree]::segHeadClusters and [inputProfiledTree]::segTailClusters.
 	// -- Strategy: 1. Copy mergeable head clusters from source clusters to destined clusters. Their tail cluster counterparts are also copied over correspondingly.
 	//              2. Merge head and tail clusters that have segments in common.
 	//              3. Assign those tails from the tiles where no head exists by searching connectable heads in their neighboring tiles.
-	//                 -> Because tails are copied and merged by following head cluster's footstep. Those tails without heads in the tile will be missed out.
+	//                 -> Because tails are copied and merged by following head cluster's footstep, those tails without heads in the tile need to handled individually.
 	//                 -> Possible issues:
-	//                     a. There may be head clusters ought to be merged due to identified tails that join them together however is not recognized. 
+	//                     a. There may be head clusters ought to be merged due to being bridged by a left out tail cluster however are not recognized. 
 	//                        This is because the process handles head clusters first and separately. The reason of this approach is for efficiency purpose.
 	//              4. Merge tail clusters that have segments in common.
 	//                 -> This step is required because there is a tail cluster step after 1. and 2. Consequently, there could be duplicated clusters.
@@ -424,7 +460,10 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 
 
 	// ------------------------------------ Merge tail clusters ------------------------------------ //
-	// --------------------- Assign left-out tail clusters --------------------- //
+	// --------------------- Assign left-out tail clusters among tiles that have head clusters --------------------- //
+	// IMPORTANT NOTE: If a left out tail cluster happens to bridge from 1 head cluster to another, 
+	//				   this tail cluster will be merged into 1 of the 2 head clusters and the other 1 will be left out.
+	//                 However, this does not happen oftenly and the effect is insignificant. So far it can always be ignored.
 	headTile2ClusterMap.clear();
 	for (map<string, vector<int>>::iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
 	{
@@ -442,7 +481,9 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		for (vector<int>::iterator tailSegIt = tailTileIt->second.begin(); tailSegIt != tailTileIt->second.end(); ++tailSegIt)
 		{
 			if (labeledTailClusters.find(inputProfiledTree.tailSeg2ClusterMap.at(*tailSegIt)) != labeledTailClusters.end()) continue;
-			if (inputProfiledTree.segHeadClusters.at(inputProfiledTree.tailSeg2ClusterMap.at(*tailSegIt)).empty()) // Check if the tile doesn't have head clusters so that its tail clusters are left out in the previous process.
+
+			// Check if the tile doesn't have head clusters so that its tail clusters are left out in the previous process.
+			if (inputProfiledTree.segHeadClusters.at(inputProfiledTree.tailSeg2ClusterMap.at(*tailSegIt)).empty()) 
 			{
 				//cout << tailTileIt->first << endl;
 				vector<string> tileLabelStrings;
@@ -499,7 +540,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 			continue;
 		}
 	}
-	// ---------------- END of [Assign left-out tail clusters] ---------------- //
+	// ---------------- END of [Assign left-out tail clusters among tiles that have head clusters] ---------------- //
 
 	// ----------------- Merge clusters that have segments in common ----------------- // 
 	for (boost::container::flat_set<int>::iterator it = labeledTailClusters.begin(); it != labeledTailClusters.end(); ++it)
@@ -549,29 +590,28 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	}
 
 // ------- For debugging purpose -------
-#ifdef __SEGEND_CLUSTER_DEBUG__
-	profiledTree testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
+	/*if (!NSlibTester::isInstantiated()) 
 	{
-		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 9;
-		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].radius = it->second;
-	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\headEndTest.swc", testTree.tree);
-	testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, int>::iterator it = testTree.tailSeg2ClusterMap.begin(); it != testTree.tailSeg2ClusterMap.end(); ++it)
-	{
-		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 9;
-		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].radius = it->second;
-	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tailEndTest.swc", testTree.tree);
-#endif
+		NSlibTester::instance(this);
+		QString prefixQ = "D:\\Work\\FragTrace\\finalized";
+		//NSlibTester::getInstance()->checkSegHeadClusters(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkSegTailClusters(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkHeadSegID2cluslter(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkTailSegID2cluslter(inputProfiledTree, prefixQ);
+		NSlibTester::uninstance();
+	}*/
 }
 
-void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
+void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold) const
 {
 	// -- This method clusters segment heads and tails tile by tile -> clusters in 1 tile are independent of those in neighboring tiles.
-	// NOTE: Nodes are confined within their own tiles. Therefore, cluster merging correctness is irrelevant in this method and doesn't provide any information for that matter.
-	// Therefore, the information stored in [inputProfiledTree::segHeadClusters] and [inputProfiledTree::segTailClusters] are not in their final form and not correct.
+	//     1. Start grouping heads in each tile first. 
+	//     2. Group tails with with grouped heads.
+	//     3. Group tails with those tails that are grouped with heads in the previous step.
+	//     4. Finally, group tails that can only be grouped with themselves.
+	// NOTE: Nodes are confined within their own tiles. Therefore, the correctness of cluster groups is irrelevant here, 
+	//       and the result of this method doesn't provide any information for that matter.
+	//       Therefore, the information stored in [inputProfiledTree::segHeadClusters] and [inputProfiledTree::segTailClusters] are not in their final form and not correct.
 
 	inputProfiledTree.segHeadClusters.clear(); 
 	inputProfiledTree.segTailClusters.clear(); 
@@ -680,7 +720,7 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 				unlabeledTailSegs.erase(find(unlabeledTailSegs.begin(), unlabeledTailSegs.end(), *delIt));
 			// ---------- END of [tail - head] ---------- //
 
-			// --------------- tail - tail -------------- //
+			// --------------- tail - tails that are grouped with heads -------------- //
 			while (1)
 			{
 				for (vector<int>::iterator leftTailIt = unlabeledTailSegs.begin(); leftTailIt != unlabeledTailSegs.end(); ++leftTailIt)
@@ -705,9 +745,9 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			TAIL_SEG_ERASED:
 				continue;
 			}
-			// --------- END of [tail - tail] ---------- //
+			// --------- END of [tail - tail that are grouped with heads] ---------- //
 
-			// -------------- tails that need to have new tail clusters -------------- //
+			// -------------- tails that need to have their own tail clusters -------------- //
 			if (unlabeledTailSegs.size() != 0)
 			{
 				newClusterTails.clear();
@@ -753,7 +793,7 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 					}
 				}
 			}
-			// ------------ END of [tails that need to have new tail clusters] -------------- //
+			// ------------ END of [tails that need to have their own tail clusters] -------------- //
 
 			tailSegTiles.erase(find(tailSegTiles.begin(), tailSegTiles.end(), headSegTileIt->first)); // eliminate tail tiles that are processed
 		}
@@ -836,45 +876,59 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 	}
 
 // ------- For debugging purpose -------
-#ifdef __SEGEND_CLUSTER_DEBUG__
-	profiledTree testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = testTree.segHeadClusters.begin(); it != testTree.segHeadClusters.end(); ++it)
+	/*if (!NSlibTester::isInstantiated()) 
 	{
-		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(*it2).head)].type = it->first % 9;
-			testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(*it2).head)].radius = it->first;
-		}
-	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_headEndTest_clusterIndex.swc", testTree.tree);
-	testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = testTree.segTailClusters.begin(); it != testTree.segTailClusters.end(); ++it)
-	{
-		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(*it2).tails.begin())].type = it->first % 9;
-			testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(*it2).tails.begin())].radius = it->first;
-		}
-	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_tailEndTest_clusterIndex.swc", testTree.tree);
-	testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
-	{
-		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 9;
-		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].radius = it->second;
-	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_headEndTest.swc", testTree.tree);
-	testTree = inputProfiledTree;
-	for (boost::container::flat_map<int, int>::iterator it = testTree.tailSeg2ClusterMap.begin(); it != testTree.tailSeg2ClusterMap.end(); ++it)
-	{
-		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 9;
-		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].radius = it->second;
-	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_tailEndTest.swc", testTree.tree);
-#endif
+		NSlibTester::instance(this);
+		QString prefixQ = "D:\\Work\\FragTrace\\tiledBased";
+		//NSlibTester::getInstance()->checkSegHeadClusters(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkSegTailClusters(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkHeadSegID2cluslter(inputProfiledTree, prefixQ);
+		//NSlibTester::getInstance()->checkTailSegID2cluslter(inputProfiledTree, prefixQ);
+		NSlibTester::uninstance();
+	}*/
 }
 
-void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)
+bool NeuronStructExplorer::__segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath) const
+{
+	profiledTree inputCopy = inputProfiledTree;
+	int clusterCount = 1;
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segTailClusters.begin(); it != inputCopy.segTailClusters.end(); ++it)
+	{
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(*inputCopy.segs.at(*it2).tails.begin())].type = it->first % 9;
+		}
+		++clusterCount;
+	}
+	clusterCount = 1;
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputCopy.segHeadClusters.begin(); it != inputCopy.segHeadClusters.end(); ++it)
+	{
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			inputCopy.tree.listNeuron[inputCopy.node2LocMap.at(inputCopy.segs.at(*it2).head)].type = it->first % 9;
+		}
+		++clusterCount;
+	}
+
+	profiledTree terminals(inputCopy.tree);
+	NeuronTree terminalTree;
+	for (QList<NeuronSWC>::iterator it = terminals.tree.listNeuron.begin(); it != terminals.tree.listNeuron.end(); ++it)
+	{
+		if (it->parent == -1 || terminals.node2childLocMap.find(it->n) == terminals.node2childLocMap.end())
+		{
+			NeuronSWC newNode = *it;
+			newNode.parent = -1;
+			terminalTree.listNeuron.push_back(newNode);
+		}
+	}
+
+	QString saveNameQ = QString::fromStdString(segEndTestFullPath);
+	writeSWC_file(saveNameQ, terminalTree);
+
+	return true;
+}
+
+void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree) const
 {
 	boost::container::flat_map<int, vector<segPairProfile>> outputSegPairsMap;
 
@@ -939,19 +993,57 @@ void NeuronStructExplorer::getClusterSegPairs(profiledTree& inputProfiledTree)
 						segPairs.push_back(newSegPair);
 					}
 				}
-
 				inputProfiledTree.cluster2segPairMap.insert(pair<int, vector<segPairProfile>>(clusterIt->first, segPairs));
 			}
 		}
 	}
 }
 
-void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+set<int> NeuronStructExplorer::segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const
 {
-	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
+	if (inputProfiledTree.segs.empty()) profiledTreeReInit(inputProfiledTree);
+	this->getSegHeadTailClusters(inputProfiledTree, rangeAllowance);
 
-	this->segmentList.clear();
-	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
+	set<int> outputSet;
+	for (auto& probe : inputProbes)
+	{
+		for (auto& segHeadCluster : inputProfiledTree.segHeadClusters)
+		{
+			for (auto& segID : segHeadCluster.second)
+			{
+				int headID = inputProfiledTree.segs.at(segID).head;
+				float headDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).x - probe.at(0)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).y - probe.at(1)) +
+									   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(headID)).z - probe.at(2)));
+				if (headDist <= rangeAllowance)
+				{
+					outputSet.insert(segHeadCluster.first);
+					break;
+				}
+			}
+		}
+
+		for (auto& segTailCluster : inputProfiledTree.segTailClusters)
+		{
+			for (auto& segID : segTailCluster.second)
+			{
+				vector<int> segTails = inputProfiledTree.segs.at(segID).tails;
+				for (auto& tailID : segTails)
+				{
+					float tailDist = sqrtf((inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).x - probe.at(0)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).x - probe.at(0)) +
+										   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).y - probe.at(1)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).y - probe.at(1)) +
+										   (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).z - probe.at(2)) * (inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID)).z - probe.at(2)));
+					if (tailDist <= rangeAllowance)
+					{
+						outputSet.insert(segTailCluster.first);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return outputSet;
 }
 /* =============================== END of [Constructors and Basic Data/Function Members] =============================== */
 

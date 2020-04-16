@@ -19,9 +19,9 @@ using namespace std;
 
 namespace integratedDataStructures
 {
-	typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
+	using myImg1DPtr = boost::shared_array<unsigned char>; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
 														   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
-	typedef boost::shared_array<float> myImg1DfloatPtr;
+	using myImg1DfloatPtr = boost::shared_array<float>;
 
 	/***************** Structuering Element for 2D Morphological Operations *****************/
 	struct morphStructElement2D
@@ -105,7 +105,7 @@ inline void integratedDataStructures::morphStructElement2D::printOutStructEle()
 	}
 }	
 
-inline void integratedDataStructures::ChebyshevCenter(set<vector<int>> allCoords, float center[])
+void integratedDataStructures::ChebyshevCenter(set<vector<int>> allCoords, float center[])
 {
 	float lengthSum = 1000000;
 	for (set<vector<int>>::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)

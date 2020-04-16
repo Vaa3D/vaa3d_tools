@@ -112,7 +112,6 @@ segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const
 /* ===================================================================================================== */
 
 
-
 /* ===================================== Neuron Struct Processing ====================================== */
 NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
@@ -365,6 +364,72 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 	return outputTree;
 }
 
+NeuronTree NeuronStructUtil::singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove)
+{
+	if (shortSegRemove <= 0) return inputProfiledTree.tree;
+
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		//cout << "seg ID:" << segIt->first << " ";
+		if (segIt->second.nodes.size() <= shortSegRemove)
+		{
+			//cout << "not included" << endl;
+			continue;
+		}
+		else
+		{
+			//cout << "included" << endl;
+			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+				outputTree.listNeuron.push_back(*nodeIt);
+		}
+	}
+
+	return outputTree;
+}
+
+NeuronTree NeuronStructUtil::longConnCut(const profiledTree& inputProfiledTree, double distThre)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			if (nodeIt->parent == -1) outputTree.listNeuron.push_back(*nodeIt);
+			else
+			{
+				NeuronSWC paNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(nodeIt->parent));
+				double dist = sqrt((paNode.x - nodeIt->x) * (paNode.x - nodeIt->x) + (paNode.y - nodeIt->y) * (paNode.y - nodeIt->y) + (paNode.z - nodeIt->z) * (paNode.z - nodeIt->z) * zRATIO * zRATIO);
+				if (dist > distThre)
+				{
+					outputTree.listNeuron.push_back(*nodeIt);
+					(outputTree.listNeuron.end() - 1)->parent = -1;
+				}
+				else outputTree.listNeuron.push_back(*nodeIt);
+			}
+		}
+	}
+
+	return outputTree;
+}
+
+NeuronTree NeuronStructUtil::segTerminalize(const profiledTree& inputProfiledTree)
+{
+	NeuronTree outputTree;
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		outputTree.listNeuron.push_back(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(segIt->second.head)));
+		for (vector<int>::const_iterator tailIt = segIt->second.tails.begin(); tailIt != segIt->second.tails.end(); ++tailIt)
+		{
+			if (*tailIt == segIt->second.head) continue;
+			outputTree.listNeuron.push_back(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(*tailIt)));
+			outputTree.listNeuron.back().parent = -1;
+		}
+	}
+
+	return outputTree;
+}
+
 void NeuronStructUtil::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
 {
 	size_t maxNodeID = 0;
@@ -483,6 +548,58 @@ void NeuronStructUtil::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC
 }
 /* ===================================== END of [Neuron Struct Processing] ===================================== */
 
+
+/* ====================================== Neuron Struct Profiling Methods ====================================== */
+void NeuronStructUtil::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
+	}
+}
+
+void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
+{
+	// This method profiles node-location node-child_location of a given NeuronTree.
+	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
+	// However, any tip node will not have an entry in node2childLocMap.
+
+	nodeLocMap.clear();
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
+	//cout << " Node - Locations mapping done. size: " << nodeLocMap.size() << endl;
+
+	node2childLocMap.clear();
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+	{
+		int paID = it->parent;
+		if (paID == -1)
+		{
+			vector<size_t> childSet;
+			childSet.clear();
+			node2childLocMap.insert(pair<int, vector<size_t>>(it->n, childSet));
+		}
+		else
+		{
+			if (node2childLocMap.find(paID) != node2childLocMap.end())
+			{
+				node2childLocMap[paID].push_back(size_t(it - inputNodeList.begin()));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
+			else
+			{
+				vector<size_t> childSet;
+				childSet.clear();
+				childSet.push_back(size_t(it - inputNodeList.begin()));
+				node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
+		}
+	}
+	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
+}
+/* ================================= END of [Neuron Struct Profiling Methods] ================================== */
 
 
 /* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
@@ -852,7 +969,6 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 	return outputTree;
 }
 /* =============================== END of [SWC <-> ImgAnalyzer::connectedComponents] =============================== */
-
 
 
 /* =========================================== Miscellaneous =========================================== */

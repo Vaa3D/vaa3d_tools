@@ -1,6 +1,9 @@
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
+#include "v3d_interface.h"
+#include "INeuronAssembler.h"
+
 #include <qprogressbar.h>
 #include <qprogressdialog.h>
 #include <qtimer.h>
@@ -11,8 +14,12 @@
 #include "ImgProcessor.h"
 #include "processManager.h"
 #include "TreeGrower.h"
+#include "TreeTrimmer.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
+
+#include "FragTraceImgProcessor.h"
+#include "FragmentPostProcessor.h"
 #endif
 
 enum workMode { axon, dendriticTree };
@@ -21,27 +28,31 @@ class FragTraceManager : public QWidget
 {
 	Q_OBJECT
 
-public:
-	FragTraceManager() = default;
-	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
-	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
+	friend class FragTraceImgProcessor;
+	friend class FragmentPostProcessor;
+	friend class FragTraceTester;
 
+public:
+/* =========================== Parameters from UI =========================== */
 	QString finalSaveRootQ;       // Save path for the traced result, acquired from UI.
-	
+
 	vector<string> imgEnhanceSeq; // Image Enhancement steps specified by the user, acquired from UI.
 	vector<string> imgThreSeq;    // Image Thresholding steps specified by the user, acquired from UI.
-	vector<int> partialVolumeLowerBoundaries;
-
 	workMode mode;                // tracing axon or dendrite
 
+	// ------- Partial Volume Tracing ------- //
+	bool partialVolumeTracing;
+	vector<int> partialVolumeLowerBoundaries;
 
-/* =========================== Parameters =========================== */
+	// This is an array directly assgigned from FragTraceControlPanel. 
+	// There are 6 elements: xlb, xhb, ylb, yhb, zlb, zhb.
+	int* volumeAdjustedBounds; 
+	// -------------------------------------- //
+
 	// ------- Image Enhancement ------- //
 	bool ada;
 	string adaImgName;
 	int simpleAdaStepsize, simpleAdaRate, cutoffIntensity;
-	bool saveAdaResults;
-	QString simpleAdaSaveDirQ;
 
 	bool gammaCorrection;
 	// --------------------------------- //
@@ -50,19 +61,20 @@ public:
 	bool histThre;
 	string histThreImgName;
 	float stdFold;
-	bool saveHistThreResults;
-	QString histThreSaveDirQ;
 	// ---------------------------------- //
 
 	// ------- Object Classification ------- //
 	bool objFilter;
 	bool voxelSize, actualSize;
+	bool continuousAxon;
 	int voxelCount;
+	int axonMarkerAllowance;
 
 	vector<NeuronTree> tracedMultipleDendriticTrees;
 	vector<int> currDisplayingBlockCenter;
 	map<int, ImageMarker> selectedSomaMap;
 	map<int, ImageMarker> selectedLocalSomaMap;
+	map<int, ImageMarker> localAxonMarkerMap;
 	// ------------------------------------- //
 
 	// ------- Fragment Connection ------- //
@@ -71,15 +83,18 @@ public:
 	int minNodeNum;
 	// ----------------------------------- //
 
-	// ------- Blank Area Specification (to be deprecated) ------- //
-	bool blankArea;
-	vector<int> blankXs;
-	vector<int> blankYs;
-	vector<int> blankZs;
-	vector<int> blankRadius;
-	// ----------------------------------------------------------- //
-/* ====================== END of [Parameters] ======================= */
+	enum imgProcSteps { gamma_Correction,
+						adaptiveThresholding, simpleThresholding, histBasedThresholding3D,
+						mask2swcBlobs };
+/* ====================== END of [Parameters from UI] ======================= */
 
+
+// ======= Constructors and Basic Member Functions ======= //
+	FragTraceManager() = default;
+	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
+	~FragTraceManager();
+	void reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);	
+// ======================================================= //
 
 
 // ======= Crucial Intermediate Result ======= //
@@ -88,50 +103,32 @@ public:
 // =========================================== //
 
 
-
 // **************************************************************************************************** //
 	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
 // **************************************************************************************************** //
 
 
-
-/* ================= Result Finalization ================= */
-	// -- Connects existing trees.
-	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
-
 signals:
-	// -- Sends traced result back to FragTraceControlPanel
-	void emitTracedTree(NeuronTree tracedTree);
-/* ======================================================= */
-
-
-
-public slots:
-	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
-
-
+	void emitTracedTree(NeuronTree tracedTree); // -- Sends traced result back to FragTraceControlPanel
+	void getExistingFinalTree(NeuronTree& existingTree);
 
 private:
 /* ======= FragTraceManager Fascilities ======= */
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
-	TreeGrower fragTraceTreeGrower;
 	NeuronStructExplorer fragTraceTreeManager;
+	TreeGrower* fragTraceTreeGrowerPtr;
+	TreeTrimmer* fragTraceTreeTrimmerPtr;  
+
+	FragTraceImgProcessor myImgProcessor;
+	FragmentPostProcessor myFragPostProcessor;
 /* ============================================ */
-
-	int numProcs;
-	QProgressDialog* progressBarDiagPtr;
-
-	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	
-
 
 /* =================== Image Enhancement =================== */
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 /* ========================================================= */
-
 
 
 /* =================== Image Segmentation =================== */
@@ -147,19 +144,48 @@ private:
 	// -- Each signal blob is represented by its centroid
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 /* ========================================================== */
-
 	
 
-/* =================== Final Traced Tree Generation =================== */
-	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
+/* =================== Traced Tree Generating and Polishing =================== */
+	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE);
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
+	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
-	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold);
+	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold) const;
 	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
 	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
 	NeuronTree getSmoothedPeriDenTree();
-/* ==================================================================== */
+
+	// This method performs itered-cluster based connecting first. 
+	// Then change types if segments are connected to alredy typed existing segments. Duplicated nodes are also removed.
+	profiledTree segConnect_withinCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
+
+	set<int> seedCluster;
+	inline set<vector<float>> getAxonMarkerProbes() const;
+	NeuronTree axonGrow(const NeuronTree& inputTree, const NeuronTree& scaledExistingTree);
+	map<int, segEndClusterUnit*> segEndClusterChains;
+/* ============================================================================ */
+
+	
+public:
+	/* ================= Traced Tree Post Processing ================= */
+	float scalingFactor;
+	float imgOrigin[3];
+	int displayImgDim[3];
+
+	NeuronTree existingTree;
+	/* =============================================================== */
+
+
+private:
+	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
+	int numProcs;
+	QProgressDialog* progressBarDiagPtr;
+
+
+public slots:
+	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
@@ -202,6 +228,21 @@ inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> sign
 
 	profiledTree profiledCenterTree(centerTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "centerTree", profiledCenterTree });
+}
+
+inline set<vector<float>> FragTraceManager::getAxonMarkerProbes() const
+{
+	set<vector<float>> probes;
+	for (map<int, ImageMarker>::const_iterator it = this->localAxonMarkerMap.begin(); it != this->localAxonMarkerMap.end(); ++it)
+	{
+		vector<float> probe;
+		probe.push_back(it->second.x);
+		probe.push_back(it->second.y);
+		probe.push_back(it->second.z);
+		probes.insert(probe);
+	}
+
+	return probes;
 }
 
 #endif

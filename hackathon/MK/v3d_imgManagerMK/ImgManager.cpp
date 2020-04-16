@@ -138,7 +138,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
 
 			slicePtr->~Image4DSimple();
-			operator delete(slicePtr);
+			delete slicePtr;
 		}
 
 		this->imgDatabase.insert({ caseID, currImgCase });
@@ -178,10 +178,30 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		}		
 
 		slicePtr->~Image4DSimple();
-		operator delete(slicePtr);
+		delete slicePtr;
 
 		this->imgDatabase.insert({ caseID, currImgCase });
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
+	}
+}
+
+void ImgManager::imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = size_t(imgDims[0]) * size_t(imgDims[1]) * size_t(imgDims[2]) * size_t(inputImgPtrs.size());
+	size_t pixI = 0;
+	for (size_t l = 0; l < size_t(inputImgPtrs.size()); ++l)
+	{
+		for (size_t k = 0; k < size_t(imgDims[2]); ++k)
+		{
+			for (size_t j = 0; j < size_t(imgDims[1]); ++j)
+			{
+				for (size_t i = 0; i < size_t(imgDims[0]); ++i)
+				{
+					outputImgPtr[pixI] = inputImgPtrs.at(l)[size_t(imgDims[0] * imgDims[1]) * k + size_t(imgDims[0]) * j + size_t(i)];
+					++pixI;
+				}
+			}
+		}
 	}
 }
 /* ===================================== END of [I/O and Image Property Profile] ===================================== */

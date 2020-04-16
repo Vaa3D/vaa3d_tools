@@ -3,11 +3,19 @@
 DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
 {
 
-    res_output = new QSpinBox();
-    res_output -> setRange(1, 100);
-    res_output -> setValue(32);
+    res_output_x = new QSpinBox();
+    res_output_x -> setRange(1, 100);
+    res_output_x -> setValue(32);
+    res_output_y = new QSpinBox();
+    res_output_y -> setRange(1, 100);
+    res_output_y -> setValue(32);
+    res_output_z = new QSpinBox();
+    res_output_z -> setRange(1, 100);
+    res_output_z -> setValue(32);
 
-    connect(res_output, SIGNAL(valueChanged(int)), res_output, SLOT(setValue(int)));
+    connect(res_output_x, SIGNAL(valueChanged(int)), res_output_x, SLOT(setValue(int)));
+    connect(res_output_y, SIGNAL(valueChanged(int)), res_output_y, SLOT(setValue(int)));
+    connect(res_output_z, SIGNAL(valueChanged(int)), res_output_z, SLOT(setValue(int)));
 
     input_file_Btn = new QPushButton(tr("Input a file"));
     file_edit = new QLineEdit(tr("Select a file !"));
@@ -42,13 +50,17 @@ DownsampleDialog :: DownsampleDialog(QWidget *parent): QDialog(parent)
 
     gridLayout = new QGridLayout();
     gridLayout -> addWidget(new QLabel("The adjacent resolutions is number 2 !"), 0, 0);
-    gridLayout -> addWidget(new QLabel("The resolution of the exported files"), 1, 0);
-    gridLayout -> addWidget(res_output, 1, 1);
+    gridLayout -> addWidget(new QLabel("The x resolution of the exported files"), 1, 0);
+    gridLayout -> addWidget(res_output_x, 1, 1);
+    gridLayout -> addWidget(new QLabel("The y resolution of the exported files"), 2, 0);
+    gridLayout -> addWidget(res_output_y, 2, 1);
+    gridLayout -> addWidget(new QLabel("The z resolution of the exported files"), 3, 0);
+    gridLayout -> addWidget(res_output_z, 3, 1);
 
-    gridLayout -> addLayout(hbox1, 2, 0);
-    gridLayout -> addLayout(hbox2, 3, 0);
-    gridLayout -> addLayout(hbox_save, 4, 0);
-    gridLayout -> addLayout(hbox3, 5, 0);
+    gridLayout -> addLayout(hbox1, 4, 0);
+    gridLayout -> addLayout(hbox2, 5, 0);
+    gridLayout -> addLayout(hbox_save, 6, 0);
+    gridLayout -> addLayout(hbox3, 7, 0);
 
     this -> setLayout(gridLayout);
     this -> setWindowTitle("DownSample files");
@@ -119,16 +131,16 @@ void DownsampleDialog:: saveFiles()
     }
 }
 
-void DownsampleDialog:: downsampleEswc(const QString file, QString saveName, double down)
+void DownsampleDialog:: downsampleEswc(const QString file, QString saveName, double down_x, double down_y, double down_z)
 {
     qDebug()<<__LINE__<<" : "<<file.toStdString().c_str();
     NeuronTree nt = readSWC_file(file);
     qDebug()<<"nt size : "<<nt.listNeuron.size();
     for(V3DLONG i = 0; i < nt.listNeuron.size(); i ++)
     {
-        nt.listNeuron[i].x /= down;
-        nt.listNeuron[i].y /= down;
-        nt.listNeuron[i].z /= down;
+        nt.listNeuron[i].x /= down_x;
+        nt.listNeuron[i].y /= down_y;
+        nt.listNeuron[i].z /= down_z;
     }
     if(file.endsWith(".eswc"))
         writeESWC_file(saveName, nt);
@@ -136,15 +148,15 @@ void DownsampleDialog:: downsampleEswc(const QString file, QString saveName, dou
         writeSWC_file(saveName, nt);
 }
 
-void DownsampleDialog:: downsampleApo(const QString file, QString saveName, double down)
+void DownsampleDialog:: downsampleApo(const QString file, QString saveName, double down_x, double down_y, double down_z)
 {
     QList<CellAPO> marker_apo = readAPO_file(file);
     qDebug()<<"apo size : "<<marker_apo.size();
     for(V3DLONG i = 0; i < marker_apo.size(); i ++)
     {
-        marker_apo[i].x /= down;
-        marker_apo[i].y /= down;
-        marker_apo[i].z /= down;
+        marker_apo[i].x /= down_x;
+        marker_apo[i].y /= down_y;
+        marker_apo[i].z /= down_z;
     }
     writeAPO_file(saveName, marker_apo);
 }

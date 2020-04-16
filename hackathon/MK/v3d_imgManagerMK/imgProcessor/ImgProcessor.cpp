@@ -7,7 +7,7 @@
 *
 *  This library intends to fascilitate Vaa3D image operations in the lowest level.
 *  ImgProcessor class only takes array pointers as the input and as well outputs array pointers.
-*  It does not involve in any image I/O and only operates arrays in the memory.
+*  It does not involve in any image I/O class (eg, Image4DSimple) and only operates arrays in the memory.
 *
 *  Most ImgProcessor class methods are implemented as static template functions.
 *  A typical function call would need at least three input arguments:

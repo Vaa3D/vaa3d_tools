@@ -23,32 +23,19 @@
 #include <deque>
 #include <string>
 
+#include "v_neuronswc.h"
+
 #include "basic_surf_objs.h"
 #include "integratedDataStructures.h"
 
 using namespace std;
 using namespace integratedDataStructures;
 
-#ifndef PI_MK
-#define PI_MK 3.1415926 // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
-#endif
-
-#ifndef NODE_TILE_LENGTH
-#define NODE_TILE_LENGTH 100
-#endif
-
-#ifndef SEGtileXY_LENGTH
-#define SEGtileXY_LENGTH 30
-#endif
-
-#ifndef radANGLE_THRE
-#define radANGLE_THRE 0.25
-#endif
-
-#ifndef zRATIO
-#define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
-//#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
-#endif
+const double PI_MK            = 3.1415926535897932; // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
+const float  NODE_TILE_LENGTH = 100;
+const float  SEGtileXY_LENGTH = 30;
+const float  zRATIO           = 5; // This is the ratio of z resolution to x and y in fMOST images.
+//const float  zRATIO            = (0.28 / 0.1144);
 
 namespace integratedDataTypes
 {
@@ -78,7 +65,7 @@ namespace integratedDataTypes
 
 	struct topoCharacter
 	{
-		topoCharacter() {};
+		topoCharacter() = default;
 		topoCharacter(NeuronSWC centerNode, int streamLength = 10) : topoCenter(centerNode) {};
 		NeuronSWC topoCenter;
 		deque<NeuronSWC> upstream;
@@ -90,6 +77,8 @@ namespace integratedDataTypes
 	struct segUnit
 	{
 		segUnit() : to_be_deleted(false) {};
+		segUnit(const QList<NeuronSWC>& inputSeg);
+		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 		//segUnit(const segUnit& sourceSegUnit) {};
 
 		int segID;
@@ -97,19 +86,28 @@ namespace integratedDataTypes
 		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
 		QList<NeuronSWC> nodes;                    // segment nodes
 		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
-		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist		
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
+		// [segSmoothnessMap] profiles smooth measures node by node through the whole segment.
+		// Each node carries a map in which key is measuring range (with node centered) and value is a map of different measures.
+		// node ID -> <measuring range -> <measure name -> value>>
 		map<int, boost::container::flat_map<int, map<string, double>>> segSmoothnessMap;
 
 		bool to_be_deleted;
+
+		V_NeuronSWC convert2V_NeuronSWC() const;
+
+	private:
+		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
 	};
 	/***********************************************/
 
 	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
 	{
-		// This struct has pointer data members. Need to provide copy control constructors later.
+		// This struct does not need copy/assignnebt control because [segUnit] is managed somewhere else.
+		// [segPairProfile] does not attempt to make any changes onto the memory to which the pointers in this struct point.
 
 		segPairProfile() : seg1Ptr(nullptr), seg2Ptr(nullptr) {};
 		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt = all_ort);
@@ -133,11 +131,8 @@ namespace integratedDataTypes
 	/********* Complete Profile Data Structure for NeuronTree *********/
 	struct profiledTree
 	{
-		// With reinitialization function provided, this struct needs copy control constructors. 
-		// Will be implemented later.
-
-		profiledTree() {};
-		profiledTree(const NeuronTree& inputTree, float segTileLength = SEGtileXY_LENGTH);
+		profiledTree() = default;
+		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);
@@ -145,22 +140,22 @@ namespace integratedDataTypes
 		NeuronTree tree;
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
-
 		map<string, vector<int>> nodeTileMap; // tile label -> node ID
-		map<int, segUnit> segs; // key = seg ID
+		
+		map<int, segUnit> segs;								   // key = seg ID
+		boost::container::flat_multimap<int, int> node2segMap; // node ID -> seg ID
+		map<string, vector<int>> segHeadMap;				   // tile label -> seg ID
+		map<string, vector<int>> segTailMap;				   // tile label -> seg ID
 
-		map<string, vector<int>> segHeadMap;   // tile label -> seg ID
-		map<string, vector<int>> segTailMap;   // tile label -> seg ID
+		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
+		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster
+		boost::container::flat_map<int, int> headSeg2ClusterMap;						  // segment ID -> the cluster in which the segment head is located
+		boost::container::flat_map<int, int> tailSeg2ClusterMap;						  // segment ID -> the cluster in which the segment tail is located
 
-		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label
-		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label
-		boost::container::flat_map<int, int> headSeg2ClusterMap;
-		boost::container::flat_map<int, int> tailSeg2ClusterMap;
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;
-
-		boost::container::flat_set<int> spikeRootIDs;
-		boost::container::flat_set<int> smoothedNodeIDs;
+		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
+		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 
 		map<int, topoCharacter> topoList;
 		void addTopoUnit(int nodeID);
@@ -171,7 +166,28 @@ namespace integratedDataTypes
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	/******************************************************************/
 
-	
+	/***************** segEnd Cluster Tree *****************/
+	struct segEndClusterUnit
+	{
+		// This data structure makes up a chain list of segment end clusters with pointers.
+		// To avoid memory violations due to mismanagement, copy and assignment are not allowed for [segEndClusterUnit],
+		// so that 1 [segEndClusterUnit*] is strictly mapping to only 1 memory space.
+
+		segEndClusterUnit() { this->parentCluster = nullptr; }
+		segEndClusterUnit(const segEndClusterUnit&) = delete;
+		segEndClusterUnit& operator=(const segEndClusterUnit&) = delete;
+		~segEndClusterUnit();
+
+		int ID;
+		boost::container::flat_set<int> headSegs;
+		boost::container::flat_set<int> tailSegs;
+
+		segEndClusterUnit* parentCluster;
+		map<int, segEndClusterUnit*> childClusterMap;
+	};
+
+	void cleanUp_segEndClusterChain_downStream(segEndClusterUnit* currCluster);
+	/*******************************************************/
 }
 
 #endif

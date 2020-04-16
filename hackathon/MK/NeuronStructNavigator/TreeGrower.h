@@ -15,13 +15,17 @@
 *    c. Segment forming / elongating and other operations
 *    d. Dendritic tree and axonal tree forming
 *
-*  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  This class is composited with NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  The composition is achieved by using a shred_ptr pointing to the "base" NeuronStructExplorer's memory address. This design is due to the possibility of
+*  NeuronStructExplorer serving multiple other classes at the same time.
 *  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
 *
 ********************************************************************************/
 
 #ifndef TREEGROWER_H
 #define TREEGROWER_H
+
+#include <memory>
 
 #include <boost/config.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
@@ -41,10 +45,18 @@ typedef boost::property<boost::edge_weight_t, double> weights;
 typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
-class TreeGrower: public NeuronStructExplorer
+class TreeGrower
 {
+	friend class Tester;
+
 public:
 	/************** Constructors and Basic Data/Function Members ****************/	
+	TreeGrower() { this->sharedExplorerPtr = nullptr; }
+	TreeGrower(NeuronStructExplorer* baseExplorerPtr) { this->sharedExplorerPtr = make_shared<NeuronStructExplorer*>(baseExplorerPtr); }
+
+	// IMPORTANT: Use a shared_ptr here to avoid dangling pointers. 
+	shared_ptr<NeuronStructExplorer*> sharedExplorerPtr;
+	
 	vector<polarNeuronSWC> polarNodeList;
 	
 	boost::container::flat_map<double, boost::container::flat_set<int>> radiusShellMap_loc;  // radius -> polarNeuronSWC's location on [polarNodeList]
@@ -58,9 +70,11 @@ public:
 	// Connects segments that meet the predefined criteria in which their segment ends are in the same cluster with given distance threshold [destThreshold].
 	// NOTE: This is the framework under which segment connection/elongation takes place. The algorithmic requirements of connecting shall be integrated here.
 	//       Since segments can only be connected 1 at a time, therefore, this operation is completed with a iterative process - TreeGrower::itered_connectSegsWithinClusters.
-	profiledTree connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold = 5);
+private:
+	profiledTree connectSegsWithinClusters(const profiledTree& inputProfiledTree, float distThreshold = 5) const;
 
-	profiledTree itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+public:
+	profiledTree itered_connectSegsWithinClusters(profiledTree& inputProfiledTree, float distThreshold = 5) const;
 	/****************************************************************************/
 
 
@@ -82,56 +96,6 @@ public:
 	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	// ------------------------------------------------------- //
 	/****************************************************************************/
-
-
-
-	/************************* Tree Trimming / Refining *************************/
-	// Removes short spikes on segments. The skipe length criterion is predefined by users in node count measure.
-	static profiledTree spikeRemoval(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);	
-	static profiledTree itered_spikeRemoval(profiledTree& inputProfiledTree, int spikeNodeNum = 3);
-
-	static profiledTree removeHookingHeadTail(const profiledTree& inputProiledTree, float radAngleThre);
-	static profiledTree itered_removeHookingHeadTail(profiledTree& inputProfiledTree, float radAngleThre);
-
-	static profiledTree segSharpAngleSmooth_lengthDistRatio(const profiledTree& inputProfiledTree, const double ratio);
-	static profiledTree itered_segSharpAngleSmooth_lengthDistRatio(profiledTree& inputProfiledTree, double ratio);
-
-	static profiledTree segSharpAngleSmooth_distThre_3nodes(const profiledTree& inputProfiledTree, const double distThre = 5);
-
-	// Breaks all branches in [inputProfiledTree].
-	// Note, if [spikeRemove] == true, any short branches less than [spikeThre] in length will be removed as undesired spikes in stead of being recognized as branches.
-	static NeuronTree branchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
-
-	// Breaks any node-node length that is greater than [distThre].
-	static inline NeuronTree treeCut(NeuronTree& inputTree, double distThre = 10);
-	/****************************************************************************/
 };
-
-inline NeuronTree TreeGrower::treeCut(NeuronTree& inputTree, double distThre)
-{
-	NeuronTree outputTree;
-	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-	{
-		if (it->parent != -1)
-		{
-			double x1 = it->x;
-			double y1 = it->y;
-			double z1 = it->z;
-			int paID = it->parent;
-			double x2 = inputTree.listNeuron.at(paID - 1).x;
-			double y2 = inputTree.listNeuron.at(paID - 1).y;
-			double z2 = inputTree.listNeuron.at(paID - 1).z;
-			double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zRATIO * zRATIO * (z1 - z2) * (z1 - z2));
-			if (dist > distThre)
-			{
-				outputTree.listNeuron.push_back(*it);
-				(outputTree.listNeuron.end() - 1)->parent = -1;
-			}
-			else outputTree.listNeuron.push_back(*it);
-		}
-	}
-
-	return outputTree;
-}
 
 #endif

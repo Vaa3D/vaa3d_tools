@@ -19,8 +19,9 @@
 #include "FeatureExtractor.h"
 #include "integratedDataTypes.h"
 #include "TreeGrower.h"
+#include "TreeTrimmer.h"
 
-#include "D:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
+#include "..\..\..\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
 
 using namespace std;
 using namespace boost;
@@ -28,22 +29,25 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "sharpAngleSmooth";
+	//string funcName = "sharpAngleSmooth";
 	/************************************/
 
 	ImgTester myImgTester;
 	NeuronStructUtil myNeuronStructUtil;
+	NeuronStructExplorer myExplorer;
+	TreeTrimmer myTrimmer;
+
 	if (!funcName.compare("swcID"))
 	{
 		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
@@ -110,11 +114,12 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("spikeRemove_spikeRoots"))
 	{
+
 		//QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\spikeTest\\beforeSpikeRemove.swc";
 		NeuronTree beforeSpikeRemoveTree = readSWC_file(inputSWCFullNameQ);
 		profiledTree spikedProfiledTree(beforeSpikeRemoveTree);
-		profiledTree spikeRemovedProfiledTree = TreeGrower::itered_spikeRemoval(spikedProfiledTree);
+		profiledTree spikeRemovedProfiledTree = myTrimmer.itered_spikeRemoval(spikedProfiledTree);
 		//QString outputSWCfullName = QString::fromStdString(paras.at(1));
 		QString outputSWCfullName = "C:\\Users\\hsienchik\\Desktop\\spikeTest\\afterSpikeRemove.swc";
 		writeSWC_file(outputSWCfullName, spikeRemovedProfiledTree.tree);
@@ -163,7 +168,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 		profiledTree testTree(inputTree);
 		profiledTree outputTree = NeuronStructUtil::treeDownSample(testTree, 10);
-		profiledTree finalTree = TreeGrower::spikeRemoval(outputTree);
+		profiledTree finalTree = myTrimmer.spikeRemoval(outputTree);
 		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree.tree);
 	}
 	else if (!funcName.compare("polarTest"))
@@ -175,7 +180,8 @@ int main(int argc, char* argv[])
 		float density = stof(paras.at(4));
 		vector<float> originVec = { originX, originY, originZ };
 
-		NeuronTree sphere = NeuronStructUtil::sphereRandNodes(radius, originX, originY, originZ, density);
+		NeuronTree sphere = NeuronStructUtil::circleRandNodes(radius, originX, originY, originZ, density);
+		writeSWC_file(QString::fromStdString(paras.at(6)), sphere);
 		SWCtester mySWCtester;
 		QList<NeuronSWC> outputList = mySWCtester.polarCoordShellPeeling(sphere.listNeuron, originVec, radius);
 		NeuronTree outputTree;
@@ -356,7 +362,7 @@ int main(int argc, char* argv[])
 
 		//writeSWC_file(QString::fromStdString(paras.at(1)), myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
 		QString saveName = "C:\\Users\\hsienchik\\Desktop\\denDebug.swc";
-		writeSWC_file(saveName, myTreeGrower.treeDataBase.at("dendriticProfiledTree").tree);
+		writeSWC_file(saveName, myExplorer.treeDataBase.at("dendriticProfiledTree").tree);
 	}
 	else if (!funcName.compare("segMorphStats"))
 	{
@@ -385,9 +391,16 @@ int main(int argc, char* argv[])
 		QString inputSWCNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\angleLabeled.swc";
 		profiledTree inputProfiledTree(readSWC_file(inputSWCNameQ));
 		NeuronStructExplorer::segMorphProfile(inputProfiledTree);
-		profiledTree smoothedTree = TreeGrower::itered_segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, 1.2);
+		profiledTree smoothedTree = myTrimmer.itered_segSharpAngleSmooth_lengthDistRatio(inputProfiledTree, 1.2);
 		QString outputNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\angleSmoothTest.swc";
 		writeSWC_file(outputNameQ, smoothedTree.tree);
+	}
+	else if (!funcName.compare("marker2clusterTest"))
+	{
+		QString outputSWCName = QString::fromStdString(paras.at(0));
+		float density = QString::fromStdString(paras.at(0)).toFloat();
+		NeuronTree testSWC = NeuronStructUtil::nodeSpheresGen(10, 0.1, 10, 10, 10, 200, 200, 200);
+		writeSWC_file(outputSWCName, testSWC);
 	}
 	else if (!funcName.compare("MSTrelatedTest"))
 	{
@@ -443,7 +456,7 @@ int main(int argc, char* argv[])
 		profiledTree inputProfiledTree(inputTree);
 		profiledTree testTree = newGrowingTree.itered_connectSegsWithinClusters(inputProfiledTree, 5);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\connect.swc", testTree.tree);
-		newGrowingTree.getSegHeadTailClusters(inputProfiledTree);
+		myExplorer.getSegHeadTailClusters(inputProfiledTree);
 		int clusterCount = 1;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)
 		{
