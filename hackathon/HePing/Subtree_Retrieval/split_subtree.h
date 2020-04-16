@@ -15,6 +15,6 @@ struct Subtree: public NeuronTree{
     }
 };
 bool find_all_files(QString datadir,vector<QString> &swcfiles);
-bool SplitSubtree(NeuronTree nt,vector<bool> &selected,QString para,vector<Subtree> &tree);
+bool SplitSubtree(NeuronTree nt,vector<bool> &selected,QString para,int level,vector<Subtree> &tree);
 
 #endif // SPLIT_SUBTREE_H

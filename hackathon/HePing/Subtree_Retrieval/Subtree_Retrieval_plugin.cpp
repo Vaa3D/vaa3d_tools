@@ -74,28 +74,34 @@ bool SubtreeRetrieval::dofunc(const QString & func_name, const V3DPluginArgList 
             vector<bool> select_flag=vector<bool>(nt.listNeuron.size(),false);
             qDebug()<<filePath;
             vector<Subtree> sbtrees;
-            SplitSubtree(nt,select_flag,paramater,sbtrees);
-//            while(count(select_flag.begin(),select_flag.end(),false)>100){//存在没有被分割的结点
-//                qDebug()<<"*****************************";
-//                SplitSubtree(nt,select_flag,paramater,sbtrees);
-//            }
+            int level=1;
+            bool flag=SplitSubtree(nt,select_flag,paramater,level,sbtrees);
+            while(flag==true){//存在没有被分割的结点
+                qDebug()<<"*****************************";
+                order++;
+                flag=SplitSubtree(nt,select_flag,paramater,level,sbtrees);
+            }
             NeuronTree nt1;
             nt1.listNeuron.clear();
 
             for(int j=0;j<sbtrees.size();j++){
-                for(int k=0;k<sbtrees[j].listNeuron.size();k++){
-                    sbtrees[j].listNeuron[k].type=(j)%4+1;
-                    nt1.listNeuron.push_back(sbtrees[j].listNeuron[k]);
-                }
-                /*  每个subtree单独写成一个swc文件，方便统计每个subtree的特征
-
-                nt.listNeuron=sbtrees[j].listNeuron;
+                //  每个subtree单独写成一个swc文件，方便统计每个subtree的特征
+                nt1.listNeuron=sbtrees[j].listNeuron;
                 qDebug()<<outdir+"\\"+swcfiles[i]+"_"+QString::number(j)+".swc";
-                writeESWC_file(outdir+"\\"+swcfiles[i]+"_"+QString::number(j)+".swc",nt);
-                */
+                writeESWC_file(outdir+"\\"+swcfiles[i]+"_"+QString::number(j)+".swc",nt1);
+
+                //将每个subtree写入一个文件中
+//                for(int k=0;k<sbtrees[j].listNeuron.size();k++){
+//                    sbtrees[j].listNeuron[k].type=(j)%4+1;
+//                    nt1.listNeuron.push_back(sbtrees[j].listNeuron[k]);
+//                }
+
+
+
+
             }
             //将一个神经元的subtree用不同颜色表示，保存在一个文件中，是为了方便观察实验结果subtree的分割是否正确
-            writeESWC_file(outdir+"\\"+swcfiles[i]+"sbtree.swc",nt1);
+            //writeESWC_file(outdir+"\\"+swcfiles[i]+"sbtree.swc",nt1);
         }
 
 
