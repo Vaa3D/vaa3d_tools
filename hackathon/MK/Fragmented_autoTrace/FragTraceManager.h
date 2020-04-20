@@ -123,18 +123,9 @@ private:
 	FragTraceImgProcessor myImgProcessor;
 	FragmentPostProcessor myFragPostProcessor;
 /* ============================================ */
-	
-
-/* =================== Image Enhancement =================== */
-	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-/* ========================================================= */
 
 
-/* =================== Image Segmentation =================== */
-	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	
+/* =================== Image Segmentation =================== */	
 	// ------- Object Classification ------- //
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
 	// ------------------------------------- //

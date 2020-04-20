@@ -70,6 +70,19 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 					this->UIinstancePtr->eraseButtonClicked();
 				}
 			}
+			else if (!inputParam.compare("shift_c"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+					this->UIinstancePtr->connectButtonClicked();
+				}
+				else if (!this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(true);
+					this->UIinstancePtr->connectButtonClicked();
+				}
+			}
 
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
