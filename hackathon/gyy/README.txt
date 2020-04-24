@@ -45,7 +45,9 @@
 		 The MIP of adjacent tiles in overlapping area;
 		 A excel includes the X/Y and Z shift for two MIP images.
 		
-
+7. Calculate_Overlap2Img_Shift plugin:
+	Input: 2 adjacent images having overlapping area;
+	Output: XY_overlap and XY_shift value.
 
 
 
