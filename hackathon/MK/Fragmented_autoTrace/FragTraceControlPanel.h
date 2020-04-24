@@ -60,6 +60,7 @@ public slots:
 
 	// ------- Post Editing ------- //
 	void eraseButtonClicked();
+	void connectButtonClicked();
 	// ---------------------------- //
 /* ======= END of [User Interface Configuration Buttons] ======= */
 

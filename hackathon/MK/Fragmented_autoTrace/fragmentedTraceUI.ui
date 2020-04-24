@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>882</width>
-    <height>868</height>
+    <width>887</width>
+    <height>803</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -273,8 +273,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>808</width>
-               <height>499</height>
+               <width>813</width>
+               <height>435</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -635,8 +635,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>787</width>
-               <height>521</height>
+               <width>792</width>
+               <height>444</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -716,68 +716,6 @@
                     </item>
                    </layout>
                   </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="groupBox_7">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>70</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Continuous Axon Tracing</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_8">
-                 <item>
-                  <widget class="QLabel" name="label_7">
-                   <property name="font">
-                    <font>
-                     <family>Calibri</family>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Range allowance (in local scale): </string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QSpinBox" name="spinBox_7">
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="value">
-                    <number>10</number>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_12">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>444</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
                  </item>
                 </layout>
                </widget>
@@ -865,8 +803,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>431</width>
-                         <height>149</height>
+                         <width>435</width>
+                         <height>170</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout">
@@ -982,8 +920,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>808</width>
-               <height>499</height>
+               <width>813</width>
+               <height>435</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -992,7 +930,7 @@
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>300</height>
+                  <height>100</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1068,6 +1006,74 @@
                 </layout>
                </widget>
               </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_7">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>70</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Continuous Axon Tracing</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_8">
+                 <item>
+                  <widget class="QLabel" name="label_7">
+                   <property name="font">
+                    <font>
+                     <family>Calibri</family>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Range allowance (in local scale): </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="spinBox_7">
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="value">
+                    <number>10</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_12">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>444</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </item>
              </layout>
             </widget>
            </widget>
@@ -1089,8 +1095,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>808</width>
-               <height>499</height>
+               <width>813</width>
+               <height>435</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -1241,9 +1247,49 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset>
-                      <normalon>:/segEditingIcons/resources/segment_editing/remove.png</normalon>
-                     </iconset>
+                     <iconset resource="FragTracer_Resource.qrc">
+                      <normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</iconset>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>33</width>
+                      <height>33</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                   <widget class="QPushButton" name="pushButton_13">
+                    <property name="geometry">
+                     <rect>
+                      <x>160</x>
+                      <y>10</y>
+                      <width>40</width>
+                      <height>40</height>
+                     </rect>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>40</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                    <property name="cursor">
+                     <cursorShape>ArrowCursor</cursorShape>
+                    </property>
+                    <property name="toolTip">
+                     <string>Connect</string>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
+                    </property>
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="FragTracer_Resource.qrc">
+                      <normaloff>:/segEditingIcons/resources/segment_editing/connect.png</normaloff>:/segEditingIcons/resources/segment_editing/connect.png</iconset>
                     </property>
                     <property name="iconSize">
                      <size>
@@ -1460,8 +1506,8 @@
    <slot>saveSettingsClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>661</x>
-     <y>825</y>
+     <x>698</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1476,8 +1522,8 @@
    <slot>traceButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>738</x>
-     <y>825</y>
+     <x>775</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1492,8 +1538,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>815</x>
-     <y>777</y>
+     <x>852</x>
+     <y>720</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1508,44 +1554,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>815</x>
-     <y>825</y>
+     <x>852</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
      <y>329</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>imgFmtChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>79</x>
-     <y>78</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>80</x>
-     <y>3</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_2</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>imgFmtChecked(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>220</x>
-     <y>71</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>305</x>
-     <y>0</y>
     </hint>
    </hints>
   </connection>
@@ -1556,8 +1570,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>201</x>
-     <y>346</y>
+     <x>200</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
      <x>1</x>
@@ -1572,8 +1586,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>119</x>
-     <y>142</y>
+     <x>153</x>
+     <y>134</y>
     </hint>
     <hint type="destinationlabel">
      <x>8</x>
@@ -1588,8 +1602,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>60</x>
-     <y>112</y>
+     <x>94</x>
+     <y>109</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1620,8 +1634,8 @@
    <slot>refreshSomaCoords()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>776</x>
-     <y>677</y>
+     <x>792</x>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>796</x>
@@ -1636,8 +1650,8 @@
    <slot>eraseButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>197</x>
-     <y>305</y>
+     <x>208</x>
+     <y>293</y>
     </hint>
     <hint type="destinationlabel">
      <x>799</x>
@@ -1652,12 +1666,60 @@
    <slot>refreshSomaCoords()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>435</x>
-     <y>448</y>
+     <x>769</x>
+     <y>434</y>
     </hint>
     <hint type="destinationlabel">
      <x>845</x>
      <y>247</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>imgFmtChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>220</x>
+     <y>71</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>305</x>
+     <y>0</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>imgFmtChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>79</x>
+     <y>78</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>80</x>
+     <y>3</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_13</sender>
+   <signal>clicked()</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>connectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>241</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>882</x>
+     <y>146</y>
     </hint>
    </hints>
   </connection>
@@ -1674,5 +1736,6 @@
   <slot>refreshSomaCoords()</slot>
   <slot>eraseButtonClicked()</slot>
   <slot>markerFunctionToggled(bool)</slot>
+  <slot>connectButtonClicked()</slot>
  </slots>
 </ui>

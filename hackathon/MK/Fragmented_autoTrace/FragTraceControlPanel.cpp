@@ -400,17 +400,24 @@ void FragTraceControlPanel::eraseButtonClicked()
 {
 	if (uiPtr->pushButton_12->isChecked())
 	{
-		//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\test.swc", this->localTree);
 		this->CViewerPortal->setEraserSize(0);
 		this->CViewerPortal->segEditing_setCursor("erase");
-		
 		this->fragEditorPtr->segMap.clear();
 		this->fragEditorPtr->node2segMap.clear();
 	}
-	else
+	else this->CViewerPortal->segEditing_setCursor("restore");
+}
+
+void FragTraceControlPanel::connectButtonClicked()
+{
+	if (uiPtr->pushButton_13->isChecked())
 	{
-		this->CViewerPortal->segEditing_setCursor("restore");
+		this->CViewerPortal->segEditing_setCursor("connect");
+		this->fragEditorPtr->segMap.clear();
+		this->fragEditorPtr->node2segMap.clear();
 	}
+	else this->CViewerPortal->segEditing_setCursor("restore");
+
 }
 /* ====================== END of [User Interface Buttons] ======================= */
 
