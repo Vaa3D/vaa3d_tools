@@ -2,7 +2,7 @@
 	Input: A channel folder including different Z plains;
 	Output: XZ and YZ plains whose pixels is obtained by averaging the rangeNum x rangeNum region;
 	Pros:
-		1) Save 6 bit images;
+		1) Save 16 bit images;
 
 2. Export_GrayValue plugin:
 	Input: A folder including XZ and YZ plain images for 3 channel;
@@ -24,10 +24,33 @@
 	Pros:
 		1) Define point class and some member functions;
 		2) Find boundary according to three continue flag_1 and specific range for three channel;
+		3) Read and write excel file;
 
 5. Calculate_Z_Shift_between_tiles plugin:
 	Input: Three folder. 
-		Folder1 is an image stack for a channel;
-		Folder2 is another image stack for the same channel;
+		Folder1 is an image stack for a tile;
+		Folder2 is another image stack for another tile;
 		Folder3 is selected to place the result.
-	Output: An excel file whose content is the mean value in all regions.
+	Output: 14 excel files whose content are the mean value in all regions, respectively;
+	Pros:
+		1) Merge cells for excel file;
+		2) Set orientation according to input tiles.
+
+6. Center_overlap_region_projection plugin:
+	Input: Three folder. 
+		Folder1 is an image stack for a tile;
+		Folder2 is another image stack for another tile;
+		Folder3 is selected to place the result.
+	Output: A folder to place the results.
+		 The MIP of adjacent tiles in overlapping area;
+		 A excel includes the X/Y and Z shift for two MIP images.
+		
+
+
+
+
+
+
+
+
+

@@ -8,7 +8,7 @@ ExtractMeanCenterDialog :: ExtractMeanCenterDialog(QWidget *parent): QDialog(par
     rangeBox -> setSingleStep(2);
     connect(rangeBox, SIGNAL(valueChanged(int)), rangeBox, SLOT(setValue(int)));
 
-    openButton = new QPushButton(tr("Input a folder"));
+    openButton = new QPushButton(tr("Input folder"));
     openEdit = new QLineEdit(tr("Select a tile folder !"));
     openHbox = new QHBoxLayout();
     openHbox -> addWidget(openButton);
@@ -16,7 +16,7 @@ ExtractMeanCenterDialog :: ExtractMeanCenterDialog(QWidget *parent): QDialog(par
     connect(openButton, SIGNAL(clicked(bool)), this, SLOT(selectFolder()));
 
     saveButton = new QPushButton(tr("Save files"));
-    saveEdit = new QLineEdit(tr("Select a folder to save files !"));
+    saveEdit = new QLineEdit(tr("Select folder to save files !"));
     saveHbox = new QHBoxLayout();
     saveHbox -> addWidget(saveButton);
     saveHbox -> addWidget(saveEdit);
@@ -33,8 +33,8 @@ ExtractMeanCenterDialog :: ExtractMeanCenterDialog(QWidget *parent): QDialog(par
     connect(cancel, SIGNAL(clicked(bool)), this, SLOT(reject()));
 
     gridLayout = new QGridLayout();
-    gridLayout -> addWidget(new QLabel("The range number is even !"), 0, 0);
-    gridLayout -> addWidget(new QLabel("Input the number of center region !"), 1, 0);
+    gridLayout -> addWidget(new QLabel("The range width is even !"), 0, 0);
+    gridLayout -> addWidget(new QLabel("Input the width of center region !"), 1, 0);
     gridLayout -> addWidget(rangeBox, 1, 1);
 
     gridLayout -> addLayout(openHbox, 4, 0);
