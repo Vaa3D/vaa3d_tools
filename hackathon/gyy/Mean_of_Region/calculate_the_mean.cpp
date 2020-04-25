@@ -77,7 +77,7 @@ void saveMean_grayValue(QWidget *parent, vector<unsigned short *> & pdataMean, Q
         QList<QVariant> rows;
         if(i ==0)
         {
-            rows.append("");
+            rows.append("Z");
             for(V3DLONG j = 0; j < pdataMean.size(); j ++)
             {
                 QString name = "C" + QString :: fromStdString(to_string((j+1)));

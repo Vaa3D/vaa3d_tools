@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -1247,9 +1247,49 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset>
-                      <normalon>:/segEditingIcons/resources/segment_editing/remove.png</normalon>
-                     </iconset>
+                     <iconset resource="FragTracer_Resource.qrc">
+                      <normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</iconset>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>33</width>
+                      <height>33</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                   <widget class="QPushButton" name="pushButton_13">
+                    <property name="geometry">
+                     <rect>
+                      <x>160</x>
+                      <y>10</y>
+                      <width>40</width>
+                      <height>40</height>
+                     </rect>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>40</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                    <property name="cursor">
+                     <cursorShape>ArrowCursor</cursorShape>
+                    </property>
+                    <property name="toolTip">
+                     <string>Connect</string>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
+                    </property>
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="FragTracer_Resource.qrc">
+                      <normaloff>:/segEditingIcons/resources/segment_editing/connect.png</normaloff>:/segEditingIcons/resources/segment_editing/connect.png</iconset>
                     </property>
                     <property name="iconSize">
                      <size>
@@ -1466,8 +1506,8 @@
    <slot>saveSettingsClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>661</x>
-     <y>825</y>
+     <x>698</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1482,8 +1522,8 @@
    <slot>traceButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>738</x>
-     <y>825</y>
+     <x>775</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1498,8 +1538,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>815</x>
-     <y>777</y>
+     <x>852</x>
+     <y>720</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1514,8 +1554,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>815</x>
-     <y>825</y>
+     <x>852</x>
+     <y>768</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1530,8 +1570,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>201</x>
-     <y>346</y>
+     <x>200</x>
+     <y>322</y>
     </hint>
     <hint type="destinationlabel">
      <x>1</x>
@@ -1546,8 +1586,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>119</x>
-     <y>142</y>
+     <x>153</x>
+     <y>134</y>
     </hint>
     <hint type="destinationlabel">
      <x>8</x>
@@ -1562,8 +1602,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>60</x>
-     <y>112</y>
+     <x>94</x>
+     <y>109</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1594,8 +1634,8 @@
    <slot>refreshSomaCoords()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>776</x>
-     <y>677</y>
+     <x>792</x>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>796</x>
@@ -1610,8 +1650,8 @@
    <slot>eraseButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>197</x>
-     <y>305</y>
+     <x>208</x>
+     <y>293</y>
     </hint>
     <hint type="destinationlabel">
      <x>799</x>
@@ -1626,8 +1666,8 @@
    <slot>refreshSomaCoords()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>435</x>
-     <y>448</y>
+     <x>769</x>
+     <y>434</y>
     </hint>
     <hint type="destinationlabel">
      <x>845</x>
@@ -1667,6 +1707,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_13</sender>
+   <signal>clicked()</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>connectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>241</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>882</x>
+     <y>146</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>saveSettingsClicked()</slot>
@@ -1680,5 +1736,6 @@
   <slot>refreshSomaCoords()</slot>
   <slot>eraseButtonClicked()</slot>
   <slot>markerFunctionToggled(bool)</slot>
+  <slot>connectButtonClicked()</slot>
  </slots>
 </ui>

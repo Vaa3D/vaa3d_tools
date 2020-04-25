@@ -5,7 +5,6 @@
 #include <QDebug>
 #include "point_class.h"
 
-
 using namespace std;
 int read_Excel_File(QString FileName, vector<vector<int> > &range_data_vec);
 int write_Excel_File(QWidget *parent, QString saveName, vector<vector<Point_class>> point_3channel_vec, int pos1[3], int pos2[3]);
@@ -33,7 +32,6 @@ bool calculate_tile_bountary(V3DPluginCallback2 &callback, QWidget *parent)
         vector<vector<Point_class>> point_3channel_vec;
         cout<<"range_20_data_list = "<<range_20_data_list[i].fileName().toStdString()<<endl;
 
-        qDebug()<<__LINE__;
         set_3channel_range_20_data(range_data_vec, point_3channel_vec);
         cout<<"filter_data1 = "<<point_3channel_vec[0][0].filter_data<<endl;
         qDebug()<<__LINE__;
@@ -224,10 +222,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             count1[0] ++;
             if(count1[0] >= point_3channel_vec[0][0].flag_range)
             {
-
-                qDebug()<<__LINE__<<": m = "<<m;
                 pos1[0] = m - point_3channel_vec[0][0].flag_range+1+1;
-                qDebug()<<__LINE__<<": pos0 = "<<pos1[0];
                 if(m+50<1162 && m>10)
                     for(int n = m-10; n < m+20; n ++)
                     {
@@ -399,18 +394,20 @@ int read_Excel_File(QString FileName, vector<vector<int>> &range_data_vec)
     }
     cout<<"Read excel successful !"<<endl;
     workbook->dynamicCall("Close()");
+    excel->dynamicCall("Quit(void)");
+    delete excel;
     return 0;
 
 }
 
 int write_Excel_File(QWidget *parent, QString saveName, vector<vector<Point_class>> point_3channel_vec, int pos1[3], int pos2[3])
 {
-    QAxObject *excel = new QAxObject(parent);
-    excel -> setControl("Excel.Application"); // connect EXCEL control
-    excel -> setProperty("DisplayAlerts", true); // display window
-    QAxObject *workbooks = excel -> querySubObject("WorkBooks"); // obtain excel set
+    QAxObject *excel1 = new QAxObject(parent);
+    excel1 -> setControl("Excel.Application"); // connect EXCEL control
+    excel1 -> setProperty("DisplayAlerts", true); // display window
+    QAxObject *workbooks = excel1 -> querySubObject("WorkBooks"); // obtain excel set
     workbooks -> dynamicCall("Add"); // create a new excel
-    QAxObject *workbook = excel -> querySubObject("ActiveWorkBook"); // obtain current excel
+    QAxObject *workbook = excel1 -> querySubObject("ActiveWorkBook"); // obtain current excel
     workbook -> dynamicCall("SaveAs(const QString&, int, const QString&, const QString&, bool, bool)",
                             saveName, 51, QString(""), QString(""), false, false);
     //51xlsx, 56xls
@@ -422,8 +419,8 @@ int write_Excel_File(QWidget *parent, QString saveName, vector<vector<Point_clas
 
     workbook->dynamicCall("Save()");
     workbook->dynamicCall("Close(Boolean)", false);
-    excel->dynamicCall("Quit(void)");
-    delete excel;
+    excel1->dynamicCall("Quit(void)");
+    delete excel1;
     return 1;
 }
 
@@ -464,15 +461,15 @@ void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3c
             merge_range7->setProperty("MergeCells", true);
 
             rows.append("");
-            rows.append("filter");
+            rows.append("Mean intensity (M)");
             rows.append("");
             rows.append("");
             rows.append("");
-            rows.append("filter_shift");
+            rows.append("M_shift");
             rows.append("");
             rows.append("");
             rows.append("");
-            rows.append("Statical standard");
+            rows.append("Threshold");
             rows.append("");
             rows.append("");
             rows.append("");
@@ -480,7 +477,7 @@ void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3c
             rows.append("");
             rows.append("");
             rows.append("");
-            rows.append("Statical standard");
+            rows.append("Threshold");
             rows.append("");
             rows.append("");
             rows.append("");
@@ -694,5 +691,5 @@ void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3c
     excel_property -> setProperty("Value", var);
     excel_property -> setProperty("HorizontalAlignment", -4108);
 
-
 }
+
