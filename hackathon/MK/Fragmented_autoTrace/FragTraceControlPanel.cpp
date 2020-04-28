@@ -154,7 +154,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 FragTraceControlPanel::~FragTraceControlPanel()
 {
-	// QObject organizes construction and desttruction by themsleves.
+	// QObject organizes construction and destruction by themsleves.
 	// Therefore -- 
 	//   1. Vaa3D's plugin (anythinig inherited from QObject classes) doesn't need to explicitly delete pointers before finishing runtime.
 	//   2. Fragtracer plugin is guaranteed of only 1 instance existing (controled in v3dr_glwidget, [Alt + F]).
@@ -176,8 +176,9 @@ FragTraceControlPanel::~FragTraceControlPanel()
 		this->displayingDims = nullptr;
 	}
 
+	this->CViewerPortal->segEditing_setCursor("restore");
+
 	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
-	//if (this->CViewerPortal != nullptr) this->CViewerPortal = nullptr;
 }
 
 /* =========================== User Interface Buttons =========================== */
@@ -412,6 +413,7 @@ void FragTraceControlPanel::connectButtonClicked()
 {
 	if (uiPtr->pushButton_13->isChecked())
 	{
+		this->CViewerPortal->setConnectorSize(0);
 		this->CViewerPortal->segEditing_setCursor("connect");
 		this->fragEditorPtr->segMap.clear();
 		this->fragEditorPtr->node2segMap.clear();
@@ -916,9 +918,14 @@ void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& sel
 	}
 }
 
-void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[], const int mouseX, const int mouseY)
+void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
 {
-	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords, mouseX, mouseY);
+	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords);
+}
+
+void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+{
+	this->fragEditorPtr->connectingProcess(displayingSegs, nodeCoords);
 }
 /* =============== END of [Terafly Communicating Methods] =============== */
 

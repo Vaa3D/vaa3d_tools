@@ -8,6 +8,8 @@
 
 #ifndef Q_MOC_RUN
 #include "NeuronStructUtilities.h"
+#include "NeuronStructExplorer.h"
+#include "TreeTrimmer.h"
 #endif
 
 using namespace std;
@@ -24,11 +26,14 @@ public:
 	vector<V_NeuronSWC> inputSegList;
 	map<int, segUnit> segMap;
 	boost::container::flat_multimap<int, int> node2segMap;
-	void erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[], const int mouseX, const int mouseY);
+	void erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
+	void connectingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
 
 private:
 	V3DPluginCallback2* thisCallback;
 	INeuronAssembler* CViewerPortal;
+
+	NeuronStructExplorer editorExplorer;
 
 	// This method determines the cutting range for eraser function. 
 	// NOTE, currently the range is empirically determined, due to the inaccuracy of both [Renderer_gl1::findNearestNeuronNode_WinXY] and [terafly::myRengerer_gl1::get3Dpoint].

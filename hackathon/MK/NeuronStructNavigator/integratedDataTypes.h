@@ -98,6 +98,8 @@ namespace integratedDataTypes
 
 		V_NeuronSWC convert2V_NeuronSWC() const;
 
+		void reInit(segUnit& inputSegUnit);
+
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
 	};

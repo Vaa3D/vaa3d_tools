@@ -475,13 +475,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	}
 	
 	this->signalBlobs.clear();
-	ProcessManager myReporter(this->fragTraceImgAnalyzer.progressReading);
-	this->fragTraceImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
-	QTimer::singleShot(100, this, SLOT(blobProcessMonitor(myReporter)));
-	//this->blobProcessMonitor(myReporter);
-	std::thread testThread(myReporter);
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
-	testThread.join();
 
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
@@ -1000,29 +994,3 @@ NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfi
 	return outputTree;
 }
 /********************** END of [Final Traced Tree Generation] ***********************/
-
-
-
-bool FragTraceManager::blobProcessMonitor(ProcessManager& blobMonitor)
-{
-	cout << "test" << endl;
-	system("pause");
-	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
-	qApp->processEvents();
-
-	int progressBarValueInt = blobMonitor.readingFromClient;
-	while (progressBarValueInt <= 100)
-	{
-		if (this->progressBarDiagPtr->wasCanceled())
-		{
-			this->progressBarDiagPtr->setLabelText("Process aborted.");
-			v3d_msg("The process has been terminated.");
-			return false;
-		}
-
-		this->progressBarDiagPtr->setValue(progressBarValueInt);
-	}
-
-	return true;
-}

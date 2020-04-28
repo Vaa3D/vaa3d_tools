@@ -13,6 +13,7 @@ namespace NeuronStructNavigator
 	{
 	public:
 		static Tester* testerInstance;
+		static Tester* instance();
 		static Tester* instance(const NeuronStructExplorer* explorerPtr);
 		static Tester* instance(TreeGrower* growerPtr);
 		static Tester* instance(TreeTrimmer* trimmerPtr);
@@ -35,7 +36,10 @@ namespace NeuronStructNavigator
 		void checkTailSegID2cluslter(const profiledTree& inputProfiledTree, const QString& saveNamePrefixQ) const;
 		void assignRGBcolors(map<int, pair<boost::container::flat_set<int>, RGBA8>>& inputMap) const;
 
+		void printoutSegUnitInfo(const segUnit& inputSegUnit) const;
+
 	private:
+		Tester() {};
 		Tester(const NeuronStructExplorer* explorerPtr);
 		Tester(TreeGrower* growerPtr);
 		Tester(TreeTrimmer* trimmerPtr);
