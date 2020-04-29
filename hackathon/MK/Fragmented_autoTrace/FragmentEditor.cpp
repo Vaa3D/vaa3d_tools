@@ -13,7 +13,9 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 	for (vector<V_NeuronSWC>::iterator dSegIt = displayingSegs.seg.begin(); dSegIt != displayingSegs.seg.end(); ++dSegIt)
 	{
 		segUnit convertedSegUnit(*dSegIt);
-		convertedSegUnit.segID = int(dSegIt - displayingSegs.seg.begin());
+		// The segments in the tree traced by Neuron Assembler are not labeled.
+		// Therefore, dSegIt->row.begin()->seg_id cannot be used.
+		convertedSegUnit.segID = int(dSegIt - displayingSegs.seg.begin()); 
 		this->segMap.insert({ convertedSegUnit.segID, convertedSegUnit });
 	}
 
@@ -22,7 +24,7 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 	switch (connSize)
 	{
 	case 0:
-		searchRange = 5;
+		searchRange = 6;
 		break;
 	case 1:
 		searchRange = 10;
@@ -34,61 +36,41 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 		break;
 	}
 	cout << "search range = " << searchRange << endl;
-	int inputCoordTileX = int(nodeCoords[0] / searchRange);
-	int inputCoordTileY = int(nodeCoords[1] / searchRange);
-	int inputCoordTileZ = int(nodeCoords[2] / searchRange);
-	string centralTileKey = to_string(inputCoordTileX) + "_" + to_string(inputCoordTileY) + "_" + to_string(inputCoordTileZ);
-	set<string> tileNames;
-	for (int i = -1; i <= 1; ++i)
+
+	vector<pair<int, connectOrientation>> segConnOris;
+	for (auto& seg : this->segMap)
 	{
-		int tileX = int(nodeCoords[0] / searchRange) + i;
-		for (int j = -1; j <= 1; ++j)
+		int headLoc = seg.second.seg_nodeLocMap.at(seg.second.head);
+		int tailLoc = seg.second.seg_nodeLocMap.at(*seg.second.tails.begin());
+		if ((seg.second.nodes.at(headLoc).x - nodeCoords[0]) * (seg.second.nodes.at(headLoc).x - nodeCoords[0]) +
+			(seg.second.nodes.at(headLoc).y - nodeCoords[1]) * (seg.second.nodes.at(headLoc).y - nodeCoords[1]) +
+			(seg.second.nodes.at(headLoc).z - nodeCoords[2]) * (seg.second.nodes.at(headLoc).z - nodeCoords[2]) <= searchRange * searchRange)
 		{
-			int tileY = int(nodeCoords[1] / searchRange) + j;
-			for (int k = -1; k <= 1; ++k)
-			{
-				int tileZ = int(nodeCoords[2] / searchRange) + k;
-				string tileName = to_string(tileX) + "_" + to_string(tileY) + "_" + to_string(tileZ);
-				tileNames.insert(tileName);
-			}
+			if (!displayingSegs.seg.at(seg.first).to_be_deleted) segConnOris.push_back({ seg.first, head });
+		}
+		else if ((seg.second.nodes.at(tailLoc).x - nodeCoords[0]) * (seg.second.nodes.at(tailLoc).x - nodeCoords[0]) +
+				 (seg.second.nodes.at(tailLoc).y - nodeCoords[1]) * (seg.second.nodes.at(tailLoc).y - nodeCoords[1]) +
+				 (seg.second.nodes.at(tailLoc).z - nodeCoords[2]) * (seg.second.nodes.at(tailLoc).z - nodeCoords[2]) <= searchRange * searchRange)
+		{
+			if (!displayingSegs.seg.at(seg.first).to_be_deleted) segConnOris.push_back({ seg.first, tail });
 		}
 	}
 
-	boost::container::flat_set<int> segIDs;
-	for (map<int, segUnit>::iterator segIt = this->segMap.begin(); segIt != this->segMap.end(); ++segIt)
-	{
-		const NeuronSWC& headNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head));
-		const NeuronSWC& tailNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(*segIt->second.tails.begin()));
-		string tileKeyHead = NeuronStructUtil::getNodeTileKey_noZratio(headNode, searchRange);
-		string tileKeyTail = NeuronStructUtil::getNodeTileKey_noZratio(tailNode, searchRange);
-		if (tileNames.find(tileKeyHead) != tileNames.end() || tileNames.find(tileKeyTail) != tileNames.end())
-		{
-			if (!displayingSegs.seg.at(segIt->first).to_be_deleted) segIDs.insert(segIt->first);
-		}
-	}
-	for (auto& segID : segIDs) cout << segID << " ";
-	cout << endl;
-
-	if (segIDs.size() > 2)
+	if (segConnOris.size() > 2)
 	{
 		cout << "Only 2 segments allowed for this operation. Do nothing." << endl;
 		return;
 	}
-	else if (segIDs.size() == 2)
+	else if (segConnOris.size() == 2)
 	{
-		segPairProfile thisPair(this->segMap.at(*segIDs.begin()), this->segMap.at(*(segIDs.begin() + 1)));
-		double minDist = 1000;
+		cout << segConnOris.at(0).first << " " << segConnOris.at(1).first << endl;
 		connectOrientation ori;
-		for (auto& connOri : thisPair.connDistMap)
-		{
-			if (connOri.second < minDist)
-			{
-				minDist = connOri.second;
-				ori = connOri.first;
-			}
-		}
-		segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*thisPair.seg1Ptr, *thisPair.seg2Ptr, ori);
-		
+		if (segConnOris.at(0).second == head && segConnOris.at(1).second == head) ori = head_head;
+		else if (segConnOris.at(0).second == head && segConnOris.at(1).second == tail) ori = head_tail;
+		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == head) ori = tail_head;
+		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == tail) ori = tail_tail;
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(this->segMap.at(segConnOris.at(0).first), this->segMap.at(segConnOris.at(1).first), ori);
+	
 		// Rearranging nodes is necessary as [NeuronStructUtil::segUnitConnect_executer] does not take care of node hierarchy.
 		// The function only focuses on segment ends since it soley serves connecting purpose.
 		newSeg.nodes.begin()->n = 1;
@@ -108,8 +90,8 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 
 		V_NeuronSWC newDisplaySeg = newSeg.convert2V_NeuronSWC();
 		newDisplaySeg.to_be_deleted = false;
-		displayingSegs.seg[*segIDs.begin()].to_be_deleted = true;
-		displayingSegs.seg[*(segIDs.begin() + 1)].to_be_deleted = true;
+		displayingSegs.seg[segConnOris.at(0).first].to_be_deleted = true;
+		displayingSegs.seg[segConnOris.at(1).first].to_be_deleted = true;
 		displayingSegs.seg.push_back(newDisplaySeg);
 	}
 }

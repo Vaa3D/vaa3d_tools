@@ -546,6 +546,24 @@ void NeuronStructUtil::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC
 		}
 	}
 }
+
+QList<NeuronSWC> NeuronStructUtil::V_NeuronSWC2nodeList(const vector<V_NeuronSWC_unit>& inputV_NeuronSWC)
+{
+	QList<NeuronSWC> outputList;
+	for (vector<V_NeuronSWC_unit>::const_iterator it = inputV_NeuronSWC.cbegin(); it != inputV_NeuronSWC.cend(); ++it)
+	{
+		NeuronSWC newNode;
+		newNode.n = it->n;
+		newNode.x = it->x;
+		newNode.y = it->y;
+		newNode.z = it->z;
+		newNode.parent = it->parent;
+		newNode.type = it->type;
+		outputList.push_back(newNode);
+	}
+
+	return outputList;
+}
 /* ===================================== END of [Neuron Struct Processing] ===================================== */
 
 

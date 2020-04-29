@@ -223,7 +223,11 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 {
 	this->tree.listNeuron.clear();
 	
-	if (inputTree.listNeuron.empty()) cerr << "The input tree is empty, profiledTree cannot be initialized." << endl;
+	if (inputTree.listNeuron.empty())
+	{
+		cerr << "The input tree is empty, profiledTree cannot be initialized." << endl;
+		return;
+	}
 	else
 	{
 		this->tree = inputTree;
