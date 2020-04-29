@@ -72,6 +72,13 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 	}
 }
 
+void integratedDataTypes::segUnit::reInit(segUnit& inputSegUnit)
+{
+	segUnit reInitUnit(inputSegUnit.nodes);
+	reInitUnit.segID = inputSegUnit.segID;
+	inputSegUnit = reInitUnit;
+}
+
 V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC() const
 {
 	V_NeuronSWC outputV_NeuronSWC;
@@ -126,8 +133,11 @@ integratedDataTypes::segPairProfile::segPairProfile(const segUnit& inputSeg1, co
 		return;
 	}
 	
-	this->turning12(connOrt);
-	this->segsAngleDiff12(connOrt);
+	if (connOrt != all_ort)
+	{
+		this->turning12(connOrt);
+		this->segsAngleDiff12(connOrt);
+	}
 }
 
 void integratedDataTypes::segPairProfile::getSegDistance(connectOrientation connOrt)

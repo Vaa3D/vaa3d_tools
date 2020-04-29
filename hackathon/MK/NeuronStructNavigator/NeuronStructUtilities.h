@@ -111,7 +111,8 @@ public:
 	static void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
 	// Returns the corresponding string key with the given node or marker.
-	static inline string getNodeTileKey(const NeuronSWC& inputNode);
+	static inline string getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
 	
@@ -270,6 +271,24 @@ inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree
 			it->z = it->z / 2;
 		}
 	}
+}
+
+inline string NeuronStructUtil::getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / nodeTileLength));
+	string yLabel = to_string(int(inputNode.y / nodeTileLength));
+	string zLabel = to_string(int(inputNode.z / nodeTileLength / zRATIO));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructUtil::getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / nodeTileLength));
+	string yLabel = to_string(int(inputNode.y / nodeTileLength));
+	string zLabel = to_string(int(inputNode.z / nodeTileLength));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
 }
 
 inline string NeuronStructUtil::getNodeTileKey(const float inputNodeCoords[], float nodeTileLength)

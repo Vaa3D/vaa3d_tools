@@ -26,6 +26,12 @@ NeuronStructNavigator::Tester::Tester(TreeTrimmer* trimmerPtr)
 	this->sharedGrowerPtr = nullptr;
 }
 
+NeuronStructNavigator::Tester* NeuronStructNavigator::Tester::instance()
+{
+	NeuronStructNavigator::Tester::testerInstance = new NeuronStructNavigator::Tester();
+	return NeuronStructNavigator::Tester::testerInstance;
+}
+
 NeuronStructNavigator::Tester* NeuronStructNavigator::Tester::instance(const NeuronStructExplorer* explorerPtr)
 {
 	NeuronStructNavigator::Tester::testerInstance = new NeuronStructNavigator::Tester(explorerPtr);
@@ -298,4 +304,13 @@ void NeuronStructNavigator::Tester::assignRGBcolors(map<int, pair<boost::contain
 
 		mapPair.second.second = newColor;
 	}
+}
+
+void NeuronStructNavigator::Tester::printoutSegUnitInfo(const segUnit& inputSegUnit) const
+{
+	cout << "seg ID: " << inputSegUnit.segID << endl;
+	cout << "head node: " << inputSegUnit.head << endl << endl;
+	for (auto& node : inputSegUnit.nodes)
+		cout << "n:" << node.n << " parent:" << node.parent << endl;
+	cout << endl;
 }

@@ -1,12 +1,122 @@
+#include "NeuronStructNavigatingTester.h"
+
 #include "FragTracer_Define.h"
 #include "FragmentEditor.h"
 
 using namespace std;
 using namespace integratedDataTypes;
+using NSlibTester = NeuronStructNavigator::Tester;
 
-void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[], const int mouseX, const int mouseY)
+void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
 {
-	int nodeCount = 0;
+	vector<segUnit> segUnits;
+	for (vector<V_NeuronSWC>::iterator dSegIt = displayingSegs.seg.begin(); dSegIt != displayingSegs.seg.end(); ++dSegIt)
+	{
+		segUnit convertedSegUnit(*dSegIt);
+		convertedSegUnit.segID = int(dSegIt - displayingSegs.seg.begin());
+		this->segMap.insert({ convertedSegUnit.segID, convertedSegUnit });
+	}
+
+	int connSize = this->CViewerPortal->getConnectorSize();
+	int searchRange;
+	switch (connSize)
+	{
+	case 0:
+		searchRange = 5;
+		break;
+	case 1:
+		searchRange = 10;
+		break;
+	case -1:
+		searchRange = 3;
+		break;
+	default:
+		break;
+	}
+	cout << "search range = " << searchRange << endl;
+	int inputCoordTileX = int(nodeCoords[0] / searchRange);
+	int inputCoordTileY = int(nodeCoords[1] / searchRange);
+	int inputCoordTileZ = int(nodeCoords[2] / searchRange);
+	string centralTileKey = to_string(inputCoordTileX) + "_" + to_string(inputCoordTileY) + "_" + to_string(inputCoordTileZ);
+	set<string> tileNames;
+	for (int i = -1; i <= 1; ++i)
+	{
+		int tileX = int(nodeCoords[0] / searchRange) + i;
+		for (int j = -1; j <= 1; ++j)
+		{
+			int tileY = int(nodeCoords[1] / searchRange) + j;
+			for (int k = -1; k <= 1; ++k)
+			{
+				int tileZ = int(nodeCoords[2] / searchRange) + k;
+				string tileName = to_string(tileX) + "_" + to_string(tileY) + "_" + to_string(tileZ);
+				tileNames.insert(tileName);
+			}
+		}
+	}
+
+	boost::container::flat_set<int> segIDs;
+	for (map<int, segUnit>::iterator segIt = this->segMap.begin(); segIt != this->segMap.end(); ++segIt)
+	{
+		const NeuronSWC& headNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head));
+		const NeuronSWC& tailNode = segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(*segIt->second.tails.begin()));
+		string tileKeyHead = NeuronStructUtil::getNodeTileKey_noZratio(headNode, searchRange);
+		string tileKeyTail = NeuronStructUtil::getNodeTileKey_noZratio(tailNode, searchRange);
+		if (tileNames.find(tileKeyHead) != tileNames.end() || tileNames.find(tileKeyTail) != tileNames.end())
+		{
+			if (!displayingSegs.seg.at(segIt->first).to_be_deleted) segIDs.insert(segIt->first);
+		}
+	}
+	for (auto& segID : segIDs) cout << segID << " ";
+	cout << endl;
+
+	if (segIDs.size() > 2)
+	{
+		cout << "Only 2 segments allowed for this operation. Do nothing." << endl;
+		return;
+	}
+	else if (segIDs.size() == 2)
+	{
+		segPairProfile thisPair(this->segMap.at(*segIDs.begin()), this->segMap.at(*(segIDs.begin() + 1)));
+		double minDist = 1000;
+		connectOrientation ori;
+		for (auto& connOri : thisPair.connDistMap)
+		{
+			if (connOri.second < minDist)
+			{
+				minDist = connOri.second;
+				ori = connOri.first;
+			}
+		}
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*thisPair.seg1Ptr, *thisPair.seg2Ptr, ori);
+		
+		// Rearranging nodes is necessary as [NeuronStructUtil::segUnitConnect_executer] does not take care of node hierarchy.
+		// The function only focuses on segment ends since it soley serves connecting purpose.
+		newSeg.nodes.begin()->n = 1;
+		newSeg.nodes.begin()->parent = -1;
+		for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin() + 1; it != newSeg.nodes.end(); ++it)
+		{
+			it->n = int(it - newSeg.nodes.begin()) + 1;
+			it->parent = (it - 1)->n;
+		}
+		newSeg.reInit(newSeg);
+		newSeg.segID = displayingSegs.seg.size() + 1;
+		/*if (!NSlibTester::isInstantiated())
+		{
+			NSlibTester::instance();
+			NSlibTester::getInstance()->printoutSegUnitInfo(newSeg);
+		}*/
+
+		V_NeuronSWC newDisplaySeg = newSeg.convert2V_NeuronSWC();
+		newDisplaySeg.to_be_deleted = false;
+		displayingSegs.seg[*segIDs.begin()].to_be_deleted = true;
+		displayingSegs.seg[*(segIDs.begin() + 1)].to_be_deleted = true;
+		displayingSegs.seg.push_back(newDisplaySeg);
+	}
+}
+
+void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+{
+	int nodeCount = 0; // Erasing process is node-based operation. Count node number to monitor the process here.
 	for (map<int, segUnit>::iterator countIt = this->segMap.begin(); countIt != this->segMap.end(); ++countIt)
 		nodeCount += countIt->second.nodes.size();
 

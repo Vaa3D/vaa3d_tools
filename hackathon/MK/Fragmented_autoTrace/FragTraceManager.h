@@ -173,10 +173,6 @@ private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;
-
-
-public slots:
-	bool blobProcessMonitor(ProcessManager& blobMonitor); // This mechanism is not completed yet.
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
