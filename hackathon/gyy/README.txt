@@ -49,8 +49,12 @@
 	Input: 2 adjacent images having overlapping area;
 	Output: XY_overlap and XY_shift value.
 
-
-
+8. Calculate_Tiles_Overlap_Shift plugin:
+	Input: Three folder. 
+		Folder1 is an image stack for a tile;
+		Folder2 is another image stack for another tile;
+		Folder3 is selected to place the result.
+	Output: A excel file including XY_overlap and XY_shift value for 12 plane 
 
 
 

@@ -16,8 +16,11 @@ QString setExcelName(QString saveFolder, string s1, string s2, QString orientati
 bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *parent)
 {
     QString tileFolderFiles1 = QFileDialog::getExistingDirectory(NULL, "Select tile1 folder","D:\\");
+    qDebug()<<"Tile1: "<<tileFolderFiles1.toStdString().c_str();
     QString tileFolderFiles2 = QFileDialog :: getExistingDirectory(0, "Select tile2 folder", tileFolderFiles1);
+    qDebug()<<"Tile2: "<<tileFolderFiles2.toStdString().c_str();
     QString SaveFolder = QFileDialog :: getExistingDirectory(0, "Select folder to save", "D:\\");
+    qDebug()<<"SaveFolder: "<<SaveFolder.toStdString().c_str();
 
     QDir tileDir1(tileFolderFiles1);
     QDir tileDir2(tileFolderFiles2);
@@ -174,7 +177,11 @@ bool calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned s
                     {
                         for(int col = 0; col < 1920-ss; col ++)
                         {
-                            int diff = pdataPro1[i][(row+sz)*1920+col]-pdataPro2[i][row*1920+col+ss];
+                            int diff;
+                            if(orientation == "left")
+                                diff = pdataPro1[i][(row+sz)*1920+col]-pdataPro2[i][row*1920+col+ss];
+                            else
+                                diff = pdataPro2[i][(row+sz)*1920+col]-pdataPro1[i][row*1920+col+ss];
                             sum[sz*Z_shift_range+ss] += diff * diff;
                             count[sz*Z_shift_range+ss] +=1;
                         }
