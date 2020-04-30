@@ -2,6 +2,8 @@
 
 #include "ImgAnalyzer.h"
 
+using namespace std;
+
 /* ======================================= Image Segmentation/Detection ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int dims[], const int distThre, unsigned char maxIP1D[])
 {
