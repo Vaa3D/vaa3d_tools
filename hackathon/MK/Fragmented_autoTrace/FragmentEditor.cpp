@@ -27,7 +27,7 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 		searchRange = 6;
 		break;
 	case 1:
-		searchRange = 10;
+		searchRange = 12;
 		break;
 	case -1:
 		searchRange = 3;
@@ -59,18 +59,25 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 	if (segConnOris.size() > 2)
 	{
 		cout << "Only 2 segments allowed for this operation. Do nothing." << endl;
+		for (auto& segConn : segConnOris) cout << segConn.first << ":" << segConn.second << endl;
+		cout << endl;
 		return;
 	}
 	else if (segConnOris.size() == 2)
 	{
-		cout << segConnOris.at(0).first << " " << segConnOris.at(1).first << endl;
+		//out << segConnOris.at(0).first << ":" << segConnOris.at(0).second << " " << segConnOris.at(1).first << ":" << segConnOris.at(1).second << endl;
+		//for (auto& node : this->segMap.at(segConnOris.at(0).first).nodes) cout << node.n << " " << node.parent << endl;
+		//cout << "--" << endl;
+		//for (auto& node : this->segMap.at(segConnOris.at(1).first).nodes) cout << node.n << " " << node.parent << endl;
+		
 		connectOrientation ori;
 		if (segConnOris.at(0).second == head && segConnOris.at(1).second == head) ori = head_head;
 		else if (segConnOris.at(0).second == head && segConnOris.at(1).second == tail) ori = head_tail;
 		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == head) ori = tail_head;
 		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == tail) ori = tail_tail;
 		segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(this->segMap.at(segConnOris.at(0).first), this->segMap.at(segConnOris.at(1).first), ori);
-	
+		//cout << "connecting orientation: " << ori << endl;
+
 		// Rearranging nodes is necessary as [NeuronStructUtil::segUnitConnect_executer] does not take care of node hierarchy.
 		// The function only focuses on segment ends since it soley serves connecting purpose.
 		newSeg.nodes.begin()->n = 1;

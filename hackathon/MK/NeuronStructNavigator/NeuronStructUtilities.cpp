@@ -81,9 +81,10 @@ segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const
 			else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
 			endEditedNodes.push_back(newNode);
 		}
-		newSegNodes.append(segUnit1.nodes);
-		newSegNodes.begin()->parent = connTailID;
+		int editedSegSize = endEditedNodes.size();
 		newSegNodes.append(endEditedNodes);
+		newSegNodes.append(segUnit1.nodes);
+		newSegNodes[endEditedNodes.size()].parent = connTailID;
 		newSeg.nodes = newSegNodes;
 		break;
 	}

@@ -26,7 +26,7 @@
 
 using namespace std;
 
-integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC) : to_be_deleted(false)
+integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 {
 	for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
 	{
