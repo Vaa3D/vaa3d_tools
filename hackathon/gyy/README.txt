@@ -44,18 +44,17 @@
 	Output: A folder to place the results.
 		 The MIP of adjacent tiles in overlapping area;
 		 A excel includes the X/Y and Z shift for two MIP images.
-		
-7. Calculate_Overlap2Img_Shift plugin:
-	Input: 2 adjacent images having overlapping area;
-	Output: XY_overlap and XY_shift value.
 
-8. Calculate_Tiles_Overlap_Shift plugin:
+7. Calculate_Tiles_Overlap_Shift plugin:
 	Input: Three folder. 
 		Folder1 is an image stack for a tile;
 		Folder2 is another image stack for another tile;
 		Folder3 is selected to place the result.
-	Output: A excel file including XY_overlap and XY_shift value for 12 plane 
+	Output: A excel file including XY_overlap and XY_shift value for every plane.
 
+8. Channel_shift_in_Reslice_Images plugin:
+	Input: A folder that is an image stack for a tile;
+	Output: Do a YZ and XZ MIP images in the central signal and calculate XYZ shift using the traveling shift range methods.
 
 
 
