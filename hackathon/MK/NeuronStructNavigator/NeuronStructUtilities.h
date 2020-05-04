@@ -100,6 +100,10 @@ public:
 	static profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
 	static void rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchingNodeID, int interval);
 	// ---------------------------------------------------- //
+
+	// ------------------- Conversions -------------------- //
+	static QList<NeuronSWC> V_NeuronSWC2nodeList(const vector<V_NeuronSWC_unit>& inputV_NeuronSWC);
+	// ---------------------------------------------------- //
 	/**************************************************************************/
 	
 

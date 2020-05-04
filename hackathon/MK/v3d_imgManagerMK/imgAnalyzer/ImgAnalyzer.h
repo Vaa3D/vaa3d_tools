@@ -10,7 +10,6 @@
 
 #include "ImgProcessor.h"
 
-using namespace std;
 using namespace integratedDataStructures;
 
 class ImgAnalyzer
