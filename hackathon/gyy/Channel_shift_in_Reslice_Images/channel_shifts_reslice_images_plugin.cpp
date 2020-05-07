@@ -1,14 +1,14 @@
-/* calculate_overlap_shift_plugin.cpp
+/* channel_shifts_reslice_images_plugin.cpp
  * This is a test plugin, you can use it as a demo.
- * 2020-4-24 : by YourName
+ * 2020-4-29 : by YourName
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "calculate_overlap_shift_plugin.h"
-#include "calculate_2image_overlap_shift.cpp"
+#include "channel_shifts_reslice_images_plugin.h"
+#include "channel_shifts_for_reslicing.cpp"
 using namespace std;
-Q_EXPORT_PLUGIN2(calculate_overlap_shift, TestPlugin);
+Q_EXPORT_PLUGIN2(channel_shifts_reslice_images, TestPlugin);
  
 QStringList TestPlugin::menulist() const
 {
@@ -30,7 +30,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
 	if (menu_name == tr("menu1"))
 	{
-        calculate_2Img_overlap_shift(callback, parent);
+        channel_shifts_for_reslicing_image(callback, parent);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -39,7 +39,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2020-4-24"));
+			"Developed by YourName, 2020-4-29"));
 	}
 }
 

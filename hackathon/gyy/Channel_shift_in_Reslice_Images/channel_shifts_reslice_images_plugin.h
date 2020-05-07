@@ -1,10 +1,10 @@
-/* calculate_overlap_shift_plugin.h
+/* channel_shifts_reslice_images_plugin.h
  * This is a test plugin, you can use it as a demo.
- * 2020-4-24 : by YourName
+ * 2020-4-29 : by YourName
  */
  
-#ifndef __CALCULATE_OVERLAP_SHIFT_PLUGIN_H__
-#define __CALCULATE_OVERLAP_SHIFT_PLUGIN_H__
+#ifndef __CHANNEL_SHIFTS_RESLICE_IMAGES_PLUGIN_H__
+#define __CHANNEL_SHIFTS_RESLICE_IMAGES_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
