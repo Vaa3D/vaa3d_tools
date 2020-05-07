@@ -17,8 +17,7 @@ void FileServer::Socketdisconnect()
     if(--clientNum==0)
     {
 //        qDebug()<<"delete fileser in server";
-
-        this->deleteLater();
+//        this->deleteLater();
         emit fileserverdeleted();
     }
 }
@@ -44,7 +43,7 @@ void FileSocket_receive::readFile()
         if(this->bytesAvailable()>=sizeof (quint64)*2)
         {
             in>>totalsize>>filenamesize;
-            qDebug()<<totalsize <<"\t"<<filenamesize;
+//            qDebug()<<totalsize <<"\t"<<filenamesize;
             m_bytesreceived+=sizeof (quint64)*2;
         }
         if(this->bytesAvailable()+m_bytesreceived>=totalsize)

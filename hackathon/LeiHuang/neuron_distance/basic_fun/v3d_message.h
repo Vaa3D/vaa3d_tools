@@ -28,53 +28,19 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 
 
 
-/*
-v3d_basicdatatype.h: by Hanchuan Peng
-2010-05-19
-2011-02-15: add v3d_ in front of some basic data types 
-2012-04-10: add V3D_THREEBYTE to make the  V3D_FLOAT32 type has a default value of 4 instead of 3 when forced to convert to int
-*/
-#include "publicEnum.h"
-#ifndef __V3D_BASICDATATYPE_H__
-#define __V3D_BASICDATATYPE_H__
+//by Hanchuan Peng
+//090516
+//090604: add bool b_disp_QTDialog
 
-// be compatible with LP64(unix64) and LLP64(win64)
-typedef unsigned char        v3d_uint8;
-typedef unsigned short       v3d_uint16;
-typedef unsigned int         v3d_uint32;
-typedef unsigned long long   v3d_uint64;
-typedef          char        v3d_sint8;
-typedef          short       v3d_sint16;
-typedef          int         v3d_sint32;
-typedef          long long   v3d_sint64;
-typedef          float       v3d_float32;
-typedef          double      v3d_float64;
+#ifndef __V3D_MESSAGE_H__
+#define __V3D_MESSAGE_H__
 
-typedef void* v3dhandle;
+#include <QString>
 
-//2010-05-19: by Hanchuan Peng. add the MSVC specific version # (vc 2008 has a _MSC_VER=1500) and win64 macro. 
-//Note that _WIN32 seems always defined for any windows application.
-//For more info see page for example: http://msdn.microsoft.com/en-us/library/b0084kay%28VS.80%29.aspx
-
-#if defined(_MSC_VER) && (_WIN64)
-//#if defined(_MSC_VER) && defined(_WIN64) //correct?
-
-#define V3DLONG long long
-
-#else
-
-#define V3DLONG long
+void v3d_msg(const char *msg, bool b_disp_QTDialog=true);
+void v3d_msg(const QString & msg, bool b_disp_QTDialog=true);
+QString current_time_stamp();
 
 #endif
 
-#if defined (_MSC_VER)
-
-#define strcasecmp strcmpi
-
-#endif
-
-enum TimePackType {TIME_PACK_NONE,TIME_PACK_Z,TIME_PACK_C}; 
-
-
-#endif
 

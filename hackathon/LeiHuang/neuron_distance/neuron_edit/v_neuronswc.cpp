@@ -413,7 +413,7 @@ vector <V_NeuronSWC> decompose_V_NeuronSWC(V_NeuronSWC & in_swc)
 
 	// map swc's index --> vector's index & in/out link
 	Link_Map link_map = get_link_map(in_swc);
-//	qDebug("link_map is created.");
+	qDebug("link_map is created.");
 
 	vector <V_NeuronSWC> out_swc_segs;
 	out_swc_segs.clear();
@@ -633,9 +633,9 @@ vector <V_NeuronSWC> decompose_V_NeuronSWC(V_NeuronSWC & in_swc)
 			out_swc_segs.push_back(new_seg);
 		}
 	}
-//	cout << "	root point: " << rootCount << " || " << "branch point: " << branchCount << endl;
+	cout << "	root point: " << rootCount << " || " << "branch point: " << branchCount << endl;
 	duration = (clock() - timerStart) / double(CLOCKS_PER_SEC);
-//	cout << "Decompose time elapsed: " << duration << endl;
+	cout << "Decompose time elapsed: " << duration << endl;
 
 	/*int curHi = 1;
 	bool allHiAssigned = false;
@@ -894,6 +894,7 @@ V3DLONG find_seg_in_V_NeuronSWC_list(V_NeuronSWC_list & swc_list, double x, doub
 
 bool change_type_in_seg_of_V_NeuronSWC_list(V_NeuronSWC_list & swc_list, V3DLONG seg_id, int type)
 {
+    qDebug()<<"seg_id:"<<type<<" "<<swc_list.seg[seg_id].row.size();
 	if (seg_id<0 || seg_id>= swc_list.seg.size())	return false;
 
 	vector <V_NeuronSWC_unit> & row = (swc_list.seg[seg_id].row);

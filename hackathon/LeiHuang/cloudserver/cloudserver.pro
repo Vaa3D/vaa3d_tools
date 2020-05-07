@@ -1,6 +1,6 @@
 QT += gui
 QT += network
-
+#QT += widgets
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
@@ -40,8 +40,10 @@ HEADERS += \
     basic_c_fun/basic_surf_objs.h \
     basic_c_fun/v3d_message.h \
     basic_c_fun/v_neuronswc.h \
+    cropimage.h \
     customdebug.h \
     manage.h \
+    managesocket.h \
     messageserver.h \
     messagesocket.h \
     neuron_editing/apo_xforms.h \
@@ -50,6 +52,9 @@ HEADERS += \
     neuron_editing/neuron_sim_scores.h \
     neuron_editing/neuron_xforms.h \
     neuron_editing/v_neuronswc.h \
+    publicEnum.h \
     receive_file.h \
     send_file.h \
     basic_c_fun/v3d_basicdatatype.h
+
+

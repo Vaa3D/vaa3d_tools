@@ -20,7 +20,6 @@ struct clientproperty{
     bool online;
     int messageindex;
     int Creator_res;
-
 };
 
 struct Global_Parameters{
@@ -32,8 +31,6 @@ struct Global_Parameters{
 
     std::vector<clientproperty> clientsproperty;
     QReadWriteLock lock_clientsproperty;
-
-
 //    std::vector<QString> messagelist;
     QStringList messagelist;
     QReadWriteLock lock_messagelist;
@@ -48,19 +45,17 @@ struct Global_Parameters{
     QReadWriteLock lock_wholePoint;
 
     QMap <QString,quint64> Map_Ip_NumMessage;
-//    QList<NeuronTree> NeuronList;
-//    QReadWriteLock lock_NeuronList;
-
-//    int sketchNum;
-//    QReadWriteLock lock_sketchNum;
 
     QString filename;
-    QTimer *timer;
+    QTimer *timer;//auto save
 
     quint32 messageUsedIndex;
     QReadWriteLock lock_messageusedindex;
 
     float global_scale;
+
+    QMap <QString,int> *userInfo;
+    QReadWriteLock lock_userInfo;
 
 };
 
@@ -85,10 +80,11 @@ protected:
     void askmessageProcess();
     void resindexProcess(const QString &msg);
 
-    void segProcess(const QString &msg);
-    void deleteProcess(const QString &delsegpos);
-    void markerProcess(const QString &markermsg);
+    void segProcess(const QString &msg,int undoP=0);
+    void deleteProcess(const QString &delsegpos,int undoP=0);
+    void markerProcess(const QString &markermsg,int undoP=0);
     void delmarkerProcess(const QString &delmarkerpos);
+    void retypeProcess(const QString &retypeMSG);
 
     void creatorProcess(const QString msg);
 //    void dragnodeProcess(const QString &dragnodepos);
@@ -96,6 +92,7 @@ private:
     Global_Parameters *global_parameters;
     int socketId;
     quint16 nextblocksize;
+    QString id;
 
 
 public slots:
@@ -110,5 +107,6 @@ signals:
     void signal_delseg(QString);
     void signal_addmarker(QString);
     void signal_delmarker(QString);
+    void signal_retype(QString);
 };
 #endif // MESSAGESOCKET_H

@@ -4,11 +4,11 @@
  */
 
 #include <v3d_interface.h>
-#include "v3d_message.h"
-#include "basic_surf_objs.h"
+#include "basic_fun/v3d_message.h"
+#include "basic_fun/basic_surf_objs.h"
 #include "neuron_dist_func.h"
 #include "neuron_dist_gui.h"
-#include "neuron_sim_scores.h"
+#include "neuron_edit/neuron_sim_scores.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include "../swc_to_maskimage/filter_dialog.h"
 #include <vector>
