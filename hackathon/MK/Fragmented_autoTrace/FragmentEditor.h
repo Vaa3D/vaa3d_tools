@@ -44,8 +44,8 @@ private:
 	float getErasingRange(const int teraflyResPow, const int zoomLevel, const int eraserSize); // DEPRECATED
 
 	void erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& seg2BeditedInfo);
-
 	vector<float> getSegEndPointingVec(const segUnit& inputSeg, const int endNodeID, int nodeNum = 3);
+	NeuronSWC mostProbableBodyNode(const vector<float>& segEndPointingVec, const vector<NeuronSWC>& bodyNodes, const NeuronSWC& endNode);
 };
 
 

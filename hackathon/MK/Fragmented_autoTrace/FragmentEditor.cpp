@@ -2,6 +2,7 @@
 
 #include "FragTracer_Define.h"
 #include "FragmentEditor.h"
+#include "FragTraceTester.h"
 
 using namespace std;
 using namespace integratedDataTypes;
@@ -75,15 +76,8 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 		else if (segConnectOris.at(0).second == tail && segConnectOris.at(1).second == tail) connOri = tail_tail;
 		newSeg = NeuronStructUtil::segUnitConnect_end2end(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), connOri);
 	
-		newSeg.nodes.begin()->n = 1;
-		newSeg.nodes.begin()->parent = -1;
-		for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin() + 1; it != newSeg.nodes.end(); ++it)
-		{
-			it->n = int(it - newSeg.nodes.begin()) + 1;
-			it->parent = (it - 1)->n;
-		}
-		newSeg.reInit(newSeg);
-		newSeg.segID = displayingSegs.seg.size() + 1;
+		displayingSegs.seg[segConnectOris.at(0).first].to_be_deleted = true;
+		displayingSegs.seg[segConnectOris.at(1).first].to_be_deleted = true;
 	}
 	else if (connectCase == 3)
 	{
@@ -93,7 +87,13 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 		{
 			bodySegID = segConnectOris.at(1).first;
 			segEndNodeID = currDisplayProfiledTree.segs.at(segConnectOris.at(0).first).head;
-			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID);
+			const NeuronSWC& endNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(segEndNodeID));
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID, 4);
+			NeuronSWC connBodyNode = this->mostProbableBodyNode(segEndPointingVec, seg2includedNodeMap.at(segConnectOris.at(1).first), endNode);
+			newSeg = currDisplayProfiledTree.segs.at(segConnectOris.at(0).first);
+			newSeg.nodes.push_front(connBodyNode);
+
+			displayingSegs.seg[segConnectOris.at(0).first].to_be_deleted = true;
 		}
 		else if (segConnectOris.at(0).second == tail)
 		{
@@ -112,13 +112,25 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 			}
 
 		TAIL_FOUND_0:
-			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID);
+			const NeuronSWC& endNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(segEndNodeID));
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID, 4);
+			NeuronSWC connBodyNode = this->mostProbableBodyNode(segEndPointingVec, seg2includedNodeMap.at(segConnectOris.at(1).first), endNode);
+			newSeg = currDisplayProfiledTree.segs.at(segConnectOris.at(0).first);
+			newSeg.nodes.push_back(connBodyNode);
+
+			displayingSegs.seg[segConnectOris.at(0).first].to_be_deleted = true;
 		}
 		else if (segConnectOris.at(1).second == head)
 		{
 			bodySegID = segConnectOris.at(0).first;
 			segEndNodeID = currDisplayProfiledTree.segs.at(segConnectOris.at(1).first).head;
-			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID);
+			const NeuronSWC& endNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(segEndNodeID));
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID, 4);
+			NeuronSWC connBodyNode = this->mostProbableBodyNode(segEndPointingVec, seg2includedNodeMap.at(segConnectOris.at(0).first), endNode);
+			newSeg = currDisplayProfiledTree.segs.at(segConnectOris.at(1).first);
+			newSeg.nodes.push_front(connBodyNode);
+
+			displayingSegs.seg[segConnectOris.at(1).first].to_be_deleted = true;
 		}
 		else if (segConnectOris.at(1).second == tail)
 		{
@@ -137,11 +149,14 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 			}
 
 		TAIL_FOUND_1:
-			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID);
+			const NeuronSWC& endNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(segEndNodeID));
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID, 4);
+			NeuronSWC connBodyNode = this->mostProbableBodyNode(segEndPointingVec, seg2includedNodeMap.at(segConnectOris.at(0).first), endNode);
+			newSeg = currDisplayProfiledTree.segs.at(segConnectOris.at(1).first);
+			newSeg.nodes.push_back(connBodyNode);
+
+			displayingSegs.seg[segConnectOris.at(1).first].to_be_deleted = true;
 		}
-		
-
-
 	}
 	else if (connectCase == 4)
 	{
@@ -151,10 +166,18 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 
 	if (!newSeg.nodes.isEmpty())
 	{
+		newSeg.nodes.begin()->n = 1;
+		newSeg.nodes.begin()->parent = -1;
+		for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin() + 1; it != newSeg.nodes.end(); ++it)
+		{
+			it->n = int(it - newSeg.nodes.begin()) + 1;
+			it->parent = (it - 1)->n;
+		}
+		newSeg.reInit(newSeg);
+		newSeg.segID = displayingSegs.seg.size() + 1;
+
 		V_NeuronSWC newDisplaySeg = newSeg.convert2V_NeuronSWC();
-		newDisplaySeg.to_be_deleted = false;
-		displayingSegs.seg[segConnectOris.at(0).first].to_be_deleted = true;
-		displayingSegs.seg[segConnectOris.at(1).first].to_be_deleted = true;
+		newDisplaySeg.to_be_deleted = false;		
 		displayingSegs.seg.push_back(newDisplaySeg);
 	}
 }
@@ -185,10 +208,11 @@ vector<float> FragmentEditor::getSegEndPointingVec(const segUnit& inputSeg, cons
 			}
 			paNodeID = inputSeg.nodes.at(*inputSeg.seg_childLocMap.at(paNodeID).begin()).n;
 			++nodeCount;
-		}
+		}	
 		outputVec[0] = headNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
 		outputVec[1] = headNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
 		outputVec[2] = headNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+
 		return outputVec;
 	}
 	else
@@ -211,8 +235,27 @@ vector<float> FragmentEditor::getSegEndPointingVec(const segUnit& inputSeg, cons
 		outputVec[0] = tailNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
 		outputVec[1] = tailNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
 		outputVec[2] = tailNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+
 		return outputVec;
 	}
+}
+
+NeuronSWC FragmentEditor::mostProbableBodyNode(const vector<float>& segEndPointingVec, const vector<NeuronSWC>& bodyNodes, const NeuronSWC& endNode)
+{
+	float radAngle = 100000;
+	NeuronSWC outputNode;
+	for (vector<NeuronSWC>::const_iterator nodeIt = bodyNodes.begin(); nodeIt != bodyNodes.end(); ++nodeIt)
+	{
+		vector<float> bodyEndVec = NeuronGeoGrapher::getVector_NeuronSWC<float>(endNode, *nodeIt);
+		float currRadAngle = NeuronGeoGrapher::getRadAngle(bodyEndVec, segEndPointingVec);
+		if (currRadAngle < radAngle)
+		{
+			radAngle = currRadAngle;
+			outputNode = *nodeIt;
+		}
+	}
+
+	return outputNode;
 }
 
 void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)

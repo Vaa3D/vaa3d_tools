@@ -43,7 +43,7 @@ public:
 
 
 	/*************************** Vector Geometry ***************************/
-	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes.
+	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes. The vector = endNode - startNode.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
 	template<typename T> // Get the displacement vector of an input [segUnit] with specified orientation.
