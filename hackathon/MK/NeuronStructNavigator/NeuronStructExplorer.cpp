@@ -594,10 +594,9 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	{
 		NSlibTester::instance(this);
 		QString prefixQ = "D:\\Work\\FragTrace\\finalized";
-		//NSlibTester::getInstance()->checkSegHeadClusters(inputProfiledTree, prefixQ);
-		//NSlibTester::getInstance()->checkSegTailClusters(inputProfiledTree, prefixQ);
-		//NSlibTester::getInstance()->checkHeadSegID2cluslter(inputProfiledTree, prefixQ);
-		//NSlibTester::getInstance()->checkTailSegID2cluslter(inputProfiledTree, prefixQ);
+		NSlibTester::getInstance()->checkSegEndClusters(inputProfiledTree, prefixQ);
+		NSlibTester::getInstance()->checkHeadSegID2cluslter(inputProfiledTree, prefixQ);
+		NSlibTester::getInstance()->checkTailSegID2cluslter(inputProfiledTree, prefixQ);
 		NSlibTester::uninstance();
 	}*/
 }
@@ -1223,7 +1222,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, head_head);
+				segUnit connectedSeg = NeuronStructUtil::segUnitConnect_end2end(segUnit1, segUnit2, head_head);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(2))).to_be_deleted = true;
@@ -1246,7 +1245,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, head_tail);
+				segUnit connectedSeg = NeuronStructUtil::segUnitConnect_end2end(segUnit1, segUnit2, head_tail);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(2))).to_be_deleted = true;
@@ -1269,7 +1268,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					continue;
 				}
 
-				segUnit connectedSeg = NeuronStructUtil:: segUnitConnect_executer(segUnit1, segUnit2, tail_tail);
+				segUnit connectedSeg = NeuronStructUtil::segUnitConnect_end2end(segUnit1, segUnit2, tail_tail);
 				newSegs.insert({ maxInputSegID, connectedSeg });
 				currProfiledTree.segs.at(stoi(labelSplits.at(1))).to_be_deleted = true;
 				currProfiledTree.segs.at(stoi(labelSplits.at(3))).to_be_deleted = true;
@@ -1320,7 +1319,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1359,7 +1358,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1398,7 +1397,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -1437,7 +1436,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deleted = true;
 		currProfiledTree.segs[it->second].to_be_deleted = true;
-		segUnit newSeg = NeuronStructUtil:: segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
+		segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));

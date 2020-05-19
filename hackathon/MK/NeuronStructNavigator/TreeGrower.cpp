@@ -99,7 +99,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				writeSWC_file(saveFullName, segPairTree);
 #endif
 
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
@@ -147,7 +147,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				writeSWC_file(saveFullName, segPairTree);
 #endif
 
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
@@ -195,7 +195,7 @@ profiledTree TreeGrower::connectSegsWithinClusters(const profiledTree& inputProf
 				writeSWC_file(saveFullName, segPairTree);
 #endif
 
-				segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
+				segUnit newSeg = NeuronStructUtil::segUnitConnect_end2end(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
 				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
 				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });

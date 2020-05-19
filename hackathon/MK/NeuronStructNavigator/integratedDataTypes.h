@@ -40,7 +40,7 @@ const float  zRATIO           = 5; // This is the ratio of z resolution to x and
 namespace integratedDataTypes
 {
 	// Specification of segment orientations for any pair-wise segment operations.
-	enum connectOrientation { head_head, head_tail, tail_head, tail_tail, all_ort, head, tail };
+	enum connectOrientation { head_head, head_tail, tail_head, tail_tail, all_ort, head, tail, body };
 
 	struct profiledNode
 	{
@@ -135,6 +135,7 @@ namespace integratedDataTypes
 	{
 		profiledTree() = default;
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
+		profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);
@@ -156,6 +157,11 @@ namespace integratedDataTypes
 
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 
+		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap;
+		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;
+		void getSegEndClusterNodeMap();
+		void getSegEndClusterCentoirds();
+
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 
@@ -166,6 +172,8 @@ namespace integratedDataTypes
 	};
 
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
+	inline void segEndClusterCentroid(const set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
+	inline void segEndClusterCentroid(const boost::container::flat_set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
 	/******************************************************************/
 
 	/***************** segEnd Cluster Tree *****************/
@@ -190,6 +198,47 @@ namespace integratedDataTypes
 
 	void cleanUp_segEndClusterChain_downStream(segEndClusterUnit* currCluster);
 	/*******************************************************/
+}
+
+inline void integratedDataTypes::segEndClusterCentroid(const set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid)
+{
+	if (allCoords.empty())
+	{
+		segEndClusterCentroid.clear();
+		return;
+	}
+
+	float xSum = 0, ySum = 0, zSum = 0;
+	for (auto& coord : allCoords)
+	{
+		xSum += coord.at(0);
+		ySum += coord.at(1);
+		zSum += coord.at(2);
+	}
+	segEndClusterCentroid[0] = xSum / allCoords.size();
+	segEndClusterCentroid[1] = ySum / allCoords.size();
+	segEndClusterCentroid[2] = zSum / allCoords.size();
+}
+
+inline void integratedDataTypes::segEndClusterCentroid(const boost::container::flat_set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid)
+{
+	if (allCoords.empty())
+	{
+		segEndClusterCentroid.clear();
+		return;
+	}
+
+	segEndClusterCentroid.clear();
+	float xSum = 0, ySum = 0, zSum = 0;
+	for (auto& coord : allCoords)
+	{
+		xSum += coord.at(0);
+		ySum += coord.at(1);
+		zSum += coord.at(2);
+	}
+	segEndClusterCentroid.push_back(xSum / allCoords.size());
+	segEndClusterCentroid.push_back(ySum / allCoords.size());
+	segEndClusterCentroid.push_back(zSum / allCoords.size());
 }
 
 #endif

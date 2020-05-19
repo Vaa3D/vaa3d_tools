@@ -279,7 +279,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	}
 	else
 		FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
-	
+
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";

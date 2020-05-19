@@ -35,7 +35,7 @@
 using namespace boost;
 
 /* ======================================== Segment Operations ========================================= */
-segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
+segUnit NeuronStructUtil::segUnitConnect_end2end(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
 {
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
 		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");
@@ -110,6 +110,11 @@ segUnit NeuronStructUtil::segUnitConnect_executer(const segUnit& segUnit1, const
 
 	return newSeg;
 }
+
+/*segUnit NeuronStructUtil::segUnitConnect_end2body(const segUnit& endSegUnit, const segUnit& bodySegUnit, const NeuronSWC& endSegNode, const NeuronSWC& bodySegNode)
+{
+	
+}*/
 /* ===================================================================================================== */
 
 

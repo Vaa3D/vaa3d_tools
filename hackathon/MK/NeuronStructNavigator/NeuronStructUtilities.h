@@ -48,7 +48,9 @@ public:
 	// Generate a new segment that is connected with 2 input segments. Connecting orientation needs to be specified by connOrt.
 	// This method is a generalized method and is normally the final step of segment connecting process.
 	// NOTE, currently it only supports simple unilateral segment. Forked segment connection will result in throwing error message!!
-	static segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	static segUnit segUnitConnect_end2end(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	
+	//static segUnit segUnitConnect_end2body(const segUnit& endSegUnit, const segUnit& bodySegUnit, const NeuronSWC& endSegNode, const NeuronSWC& bodySegNode);
 	/**************************************************************************/
 
 

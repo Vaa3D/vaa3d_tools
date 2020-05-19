@@ -7,79 +7,74 @@ using namespace std;
 using namespace integratedDataTypes;
 using NSlibTester = NeuronStructNavigator::Tester;
 
-void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
-	vector<segUnit> segUnits;
-	for (vector<V_NeuronSWC>::iterator dSegIt = displayingSegs.seg.begin(); dSegIt != displayingSegs.seg.end(); ++dSegIt)
+	if (seg2includedNodeMap.size() > 2)
 	{
-		segUnit convertedSegUnit(*dSegIt);
-		// The segments in the tree traced by Neuron Assembler are not labeled.
-		// Therefore, dSegIt->row.begin()->seg_id cannot be used.
-		convertedSegUnit.segID = int(dSegIt - displayingSegs.seg.begin()); 
-		this->segMap.insert({ convertedSegUnit.segID, convertedSegUnit });
-	}
-
-	int connSize = this->CViewerPortal->getConnectorSize();
-	int searchRange;
-	switch (connSize)
-	{
-	case 0:
-		searchRange = 6;
-		break;
-	case 1:
-		searchRange = 12;
-		break;
-	case -1:
-		searchRange = 3;
-		break;
-	default:
-		break;
-	}
-	cout << "search range = " << searchRange << endl;
-
-	vector<pair<int, connectOrientation>> segConnOris;
-	for (auto& seg : this->segMap)
-	{
-		int headLoc = seg.second.seg_nodeLocMap.at(seg.second.head);
-		int tailLoc = seg.second.seg_nodeLocMap.at(*seg.second.tails.begin());
-		if ((seg.second.nodes.at(headLoc).x - nodeCoords[0]) * (seg.second.nodes.at(headLoc).x - nodeCoords[0]) +
-			(seg.second.nodes.at(headLoc).y - nodeCoords[1]) * (seg.second.nodes.at(headLoc).y - nodeCoords[1]) +
-			(seg.second.nodes.at(headLoc).z - nodeCoords[2]) * (seg.second.nodes.at(headLoc).z - nodeCoords[2]) <= searchRange * searchRange)
-		{
-			if (!displayingSegs.seg.at(seg.first).to_be_deleted) segConnOris.push_back({ seg.first, head });
-		}
-		else if ((seg.second.nodes.at(tailLoc).x - nodeCoords[0]) * (seg.second.nodes.at(tailLoc).x - nodeCoords[0]) +
-				 (seg.second.nodes.at(tailLoc).y - nodeCoords[1]) * (seg.second.nodes.at(tailLoc).y - nodeCoords[1]) +
-				 (seg.second.nodes.at(tailLoc).z - nodeCoords[2]) * (seg.second.nodes.at(tailLoc).z - nodeCoords[2]) <= searchRange * searchRange)
-		{
-			if (!displayingSegs.seg.at(seg.first).to_be_deleted) segConnOris.push_back({ seg.first, tail });
-		}
-	}
-
-	if (segConnOris.size() > 2)
-	{
-		cout << "Only 2 segments allowed for this operation. Do nothing." << endl;
-		for (auto& segConn : segConnOris) cout << segConn.first << ":" << segConn.second << endl;
-		cout << endl;
+		cout << "More than 2 segments included in the target circle. Do nothing." << endl;
 		return;
 	}
-	else if (segConnOris.size() == 2)
+	else if (seg2includedNodeMap.size() < 2)
 	{
-		//out << segConnOris.at(0).first << ":" << segConnOris.at(0).second << " " << segConnOris.at(1).first << ":" << segConnOris.at(1).second << endl;
-		//for (auto& node : this->segMap.at(segConnOris.at(0).first).nodes) cout << node.n << " " << node.parent << endl;
-		//cout << "--" << endl;
-		//for (auto& node : this->segMap.at(segConnOris.at(1).first).nodes) cout << node.n << " " << node.parent << endl;
-		
-		connectOrientation ori;
-		if (segConnOris.at(0).second == head && segConnOris.at(1).second == head) ori = head_head;
-		else if (segConnOris.at(0).second == head && segConnOris.at(1).second == tail) ori = head_tail;
-		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == head) ori = tail_head;
-		else if (segConnOris.at(0).second == tail && segConnOris.at(1).second == tail) ori = tail_tail;
-		segUnit newSeg = NeuronStructUtil::segUnitConnect_executer(this->segMap.at(segConnOris.at(0).first), this->segMap.at(segConnOris.at(1).first), ori);
-		//cout << "connecting orientation: " << ori << endl;
+		cout << "Not enough number of segments to proceed the operation. Do nothing." << endl;
+		return;
+	}
 
-		// Rearranging nodes is necessary as [NeuronStructUtil::segUnitConnect_executer] does not take care of node hierarchy.
-		// The function only focuses on segment ends since it soley serves connecting purpose.
+	/*for (auto& seg : seg2includedNodeMap)
+	{
+		cout << "segID: " << seg.first << " -- ";
+		for (auto& node : seg.second) cout << node.n << " ";
+		cout << endl;
+	}*/
+
+	profiledTree currDisplayProfiledTree(displayingSegs.seg);
+	vector<pair<int, connectOrientation>> segConnectOris;
+	int connectCase = 0;
+	for (map<int, vector<NeuronSWC>>::const_iterator segIt = seg2includedNodeMap.begin(); segIt != seg2includedNodeMap.end(); ++segIt)
+	{
+		const NeuronSWC& headNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(currDisplayProfiledTree.segs.at(segIt->first).head));
+		for (vector<NeuronSWC>::const_iterator nodeIt = segIt->second.begin(); nodeIt != segIt->second.end(); ++nodeIt)
+		{
+			if (nodeIt->x == headNode.x && nodeIt->y == headNode.y && nodeIt->z == headNode.z)
+			{
+				segConnectOris.push_back({ segIt->first, head });
+				++connectCase;
+				cout << " -- head" << endl;
+				goto END_SEG_FOUND;
+			}
+			else
+			{
+				for (vector<int>::const_iterator tailIt = currDisplayProfiledTree.segs.at(segIt->first).tails.begin(); tailIt != currDisplayProfiledTree.segs.at(segIt->first).tails.end(); ++tailIt)
+				{
+					const NeuronSWC& tailNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(*tailIt));
+					if (nodeIt->x == tailNode.x && nodeIt->y == tailNode.y && nodeIt->z == tailNode.z)
+					{
+						segConnectOris.push_back({ segIt->first, tail });
+						++connectCase;
+						cout << " -- tail" << endl;
+						goto END_SEG_FOUND;
+					}
+				}
+			}
+		}
+		segConnectOris.push_back({ segIt->first, body });
+		connectCase += 2;
+		cout << " -- body" << endl;
+
+	END_SEG_FOUND:
+		continue;
+	}
+
+	segUnit newSeg;
+	if (connectCase == 2)
+	{
+		connectOrientation connOri;
+		if (segConnectOris.at(0).second == head && segConnectOris.at(1).second == tail) connOri = head_tail;
+		else if (segConnectOris.at(0).second == tail && segConnectOris.at(1).second == head) connOri = tail_head;
+		else if (segConnectOris.at(0).second == head && segConnectOris.at(1).second == head) connOri = head_head;
+		else if (segConnectOris.at(0).second == tail && segConnectOris.at(1).second == tail) connOri = tail_tail;
+		newSeg = NeuronStructUtil::segUnitConnect_end2end(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), connOri);
+	
 		newSeg.nodes.begin()->n = 1;
 		newSeg.nodes.begin()->parent = -1;
 		for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin() + 1; it != newSeg.nodes.end(); ++it)
@@ -89,18 +84,157 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const f
 		}
 		newSeg.reInit(newSeg);
 		newSeg.segID = displayingSegs.seg.size() + 1;
-		/*if (!NSlibTester::isInstantiated())
+	}
+	else if (connectCase == 3)
+	{
+		vector<float> segEndPointingVec(3);
+		int bodySegID, segEndNodeID;
+		if (segConnectOris.at(0).second == head)
 		{
-			NSlibTester::instance();
-			NSlibTester::getInstance()->printoutSegUnitInfo(newSeg);
-		}*/
+			bodySegID = segConnectOris.at(1).first;
+			segEndNodeID = currDisplayProfiledTree.segs.at(segConnectOris.at(0).first).head;
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID);
+		}
+		else if (segConnectOris.at(0).second == tail)
+		{
+			bodySegID = segConnectOris.at(1).first;
+			for (auto& tail : currDisplayProfiledTree.segs.at(segConnectOris.at(0).first).tails)
+			{
+				const NeuronSWC& tailNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(tail));
+				for (vector<NeuronSWC>::const_iterator nodeIt = seg2includedNodeMap.at(segConnectOris.at(0).first).begin(); nodeIt != seg2includedNodeMap.at(segConnectOris.at(0).first).end(); ++nodeIt)
+				{
+					if (tailNode.x == nodeIt->x && tailNode.y == nodeIt->y && tailNode.z == nodeIt->z)
+					{
+						segEndNodeID = tail;
+						goto TAIL_FOUND_0;
+					}
+				}
+			}
 
+		TAIL_FOUND_0:
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), segEndNodeID);
+		}
+		else if (segConnectOris.at(1).second == head)
+		{
+			bodySegID = segConnectOris.at(0).first;
+			segEndNodeID = currDisplayProfiledTree.segs.at(segConnectOris.at(1).first).head;
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID);
+		}
+		else if (segConnectOris.at(1).second == tail)
+		{
+			bodySegID = segConnectOris.at(0).first;
+			for (auto& tail : currDisplayProfiledTree.segs.at(segConnectOris.at(1).first).tails)
+			{
+				const NeuronSWC& tailNode = currDisplayProfiledTree.tree.listNeuron.at(currDisplayProfiledTree.node2LocMap.at(tail));
+				for (vector<NeuronSWC>::const_iterator nodeIt = seg2includedNodeMap.at(segConnectOris.at(1).first).begin(); nodeIt != seg2includedNodeMap.at(segConnectOris.at(1).first).end(); ++nodeIt)
+				{
+					if (tailNode.x == nodeIt->x && tailNode.y == nodeIt->y && tailNode.z == nodeIt->z)
+					{
+						segEndNodeID = tail;
+						goto TAIL_FOUND_1;
+					}
+				}
+			}
+
+		TAIL_FOUND_1:
+			segEndPointingVec = this->getSegEndPointingVec(currDisplayProfiledTree.segs.at(segConnectOris.at(1).first), segEndNodeID);
+		}
+		
+
+
+	}
+	else if (connectCase == 4)
+	{
+		cout << "Segment body to segment body connection is prohibited." << endl;
+		return;
+	}
+
+	if (!newSeg.nodes.isEmpty())
+	{
 		V_NeuronSWC newDisplaySeg = newSeg.convert2V_NeuronSWC();
 		newDisplaySeg.to_be_deleted = false;
-		displayingSegs.seg[segConnOris.at(0).first].to_be_deleted = true;
-		displayingSegs.seg[segConnOris.at(1).first].to_be_deleted = true;
+		displayingSegs.seg[segConnectOris.at(0).first].to_be_deleted = true;
+		displayingSegs.seg[segConnectOris.at(1).first].to_be_deleted = true;
 		displayingSegs.seg.push_back(newDisplaySeg);
 	}
+}
+
+vector<float> FragmentEditor::getSegEndPointingVec(const segUnit& inputSeg, const int endNodeID, int nodeNum)
+{
+	vector<float> outputVec(3);
+	
+	if (inputSeg.nodes.isEmpty())
+	{
+		cout << "Invalid input segment unit. Return empty vector." << endl;
+		return outputVec;
+	}
+
+	if (endNodeID == inputSeg.head)
+	{
+		int nodeCount = 1, paNodeID = endNodeID, childNodeID;
+		const NeuronSWC& headNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(endNodeID));
+		while (nodeCount <= nodeNum)
+		{ 
+			if (inputSeg.seg_childLocMap.at(paNodeID).size() > 1 || 
+				inputSeg.seg_childLocMap.find(paNodeID) == inputSeg.seg_childLocMap.end())
+			{
+				outputVec[0] = headNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
+				outputVec[1] = headNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
+				outputVec[2] = headNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+				return outputVec;
+			}
+			paNodeID = inputSeg.nodes.at(*inputSeg.seg_childLocMap.at(paNodeID).begin()).n;
+			++nodeCount;
+		}
+		outputVec[0] = headNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
+		outputVec[1] = headNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
+		outputVec[2] = headNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+		return outputVec;
+	}
+	else
+	{
+		int nodeCount = 1, childNodeID = endNodeID, paNodeID;
+		const NeuronSWC& tailNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(endNodeID));
+		while (nodeCount <= nodeNum)
+		{
+			paNodeID = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(childNodeID)).parent;
+			++nodeCount;
+			if (inputSeg.seg_childLocMap.at(paNodeID).size() > 1 ||
+				inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).parent == -1)
+			{
+				outputVec[0] = tailNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
+				outputVec[1] = tailNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
+				outputVec[2] = tailNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+				return outputVec;
+			}
+		}
+		outputVec[0] = tailNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
+		outputVec[1] = tailNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;
+		outputVec[2] = tailNode.z - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).z;
+		return outputVec;
+	}
+}
+
+void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
+{
+	map<int, set<int>> outputEditingSegInfo;
+	for (map<int, vector<NeuronSWC>>::const_iterator segIt = seg2includedNodeMap.begin(); segIt != seg2includedNodeMap.end(); ++segIt)
+	{
+		displayingSegs.seg[segIt->first].to_be_deleted = true;
+
+		set<int> newSet;
+		outputEditingSegInfo.insert({ segIt->first, newSet });
+		for (vector<NeuronSWC>::const_iterator nodeIt = segIt->second.begin(); nodeIt != segIt->second.end(); ++nodeIt)
+		{
+			for (auto& Vnode : displayingSegs.seg.at(segIt->first).row)
+			{
+				if (Vnode.data[2] == nodeIt->x && Vnode.data[3] == nodeIt->y && Vnode.data[4] == nodeIt->z)
+					outputEditingSegInfo[segIt->first].insert(Vnode.data[0]);
+			}
+		}
+	}
+
+	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
 }
 
 void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
@@ -248,7 +382,7 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 {
 	for (map<int, set<int>>::const_iterator editIt = seg2BeditedInfo.begin(); editIt != seg2BeditedInfo.end(); ++editIt)
 	{
-		segUnit targetSegUnit(this->segMap.at(editIt->first).nodes);
+		segUnit targetSegUnit(displayingSegs.seg.at(editIt->first));
 		vector<ptrdiff_t> delLocs;
 		for (set<int>::const_iterator nodeIt = editIt->second.begin(); nodeIt != editIt->second.end(); ++nodeIt)
 		{

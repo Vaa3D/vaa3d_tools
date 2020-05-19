@@ -923,9 +923,40 @@ void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, c
 	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords);
 }
 
-void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
-	this->fragEditorPtr->connectingProcess(displayingSegs, nodeCoords);
+	this->fragEditorPtr->erasingProcess(displayingSegs, seg2includedNodeMap);
+}
+
+void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
+{
+	this->fragEditorPtr->connectingProcess(displayingSegs, seg2includedNodeMap);
+
+	/*if (!FragTraceTester::isInstantiated())
+	{
+		FragTraceTester::instance(this);
+		set<vector<float>> coords;
+		for (auto& segID : seg2includedNodeMap)
+		{
+			for (auto& node : segID.second)
+			{
+				vector<float> coord;
+				coord.push_back(node.x);
+				coord.push_back(node.y);
+				coord.push_back(node.z);
+				coords.insert(coord);
+			}
+		}
+
+		RGBA8 color;
+		color.r = 255;
+		color.g = 255;
+		color.b = 255;
+
+		FragTraceTester::getInstance()->pushMarkers(coords, color);
+
+		FragTraceTester::uninstance();
+	}*/
 }
 /* =============== END of [Terafly Communicating Methods] =============== */
 

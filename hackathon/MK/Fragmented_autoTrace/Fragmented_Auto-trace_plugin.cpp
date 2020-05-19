@@ -60,6 +60,12 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 			
 			if (!inputParam.compare("shift_e"))
 			{
+				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+					this->UIinstancePtr->connectButtonClicked();
+				}
+
 				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
 				{
 					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
@@ -73,6 +79,12 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 			}
 			else if (!inputParam.compare("shift_c"))
 			{
+				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+					this->UIinstancePtr->eraseButtonClicked();
+				}
+
 				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
 				{
 					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
