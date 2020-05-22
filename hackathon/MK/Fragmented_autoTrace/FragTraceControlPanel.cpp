@@ -176,7 +176,7 @@ FragTraceControlPanel::~FragTraceControlPanel()
 		this->displayingDims = nullptr;
 	}
 
-	this->CViewerPortal->segEditing_setCursor("restore");
+	if (this->CViewerPortal != nullptr) this->CViewerPortal->segEditing_setCursor("restore");
 
 	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
 }
@@ -419,7 +419,13 @@ void FragTraceControlPanel::connectButtonClicked()
 		this->fragEditorPtr->node2segMap.clear();
 	}
 	else this->CViewerPortal->segEditing_setCursor("restore");
+}
 
+void FragTraceControlPanel::exitNAeditingMode()
+{
+	uiPtr->pushButton_12->setChecked(false);
+	uiPtr->pushButton_13->setChecked(false);
+	this->CViewerPortal->segEditing_setCursor("restore");
 }
 /* ====================== END of [User Interface Buttons] ======================= */
 

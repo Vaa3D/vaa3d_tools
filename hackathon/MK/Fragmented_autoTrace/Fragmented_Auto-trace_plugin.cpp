@@ -96,6 +96,14 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 					this->UIinstancePtr->connectButtonClicked();
 				}
 			}
+			else if (!inputParam.compare("escape"))
+			{
+				this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+				this->UIinstancePtr->eraseButtonClicked();
+
+				this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+				this->UIinstancePtr->connectButtonClicked();
+			}
 
 			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}

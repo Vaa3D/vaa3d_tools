@@ -47,6 +47,7 @@ public:
 	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
 	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	virtual void connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
+	virtual void exitNAeditingMode();
 /* ============================================= */
 
 
