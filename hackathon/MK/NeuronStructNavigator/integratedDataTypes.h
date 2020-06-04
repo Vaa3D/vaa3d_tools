@@ -79,7 +79,6 @@ namespace integratedDataTypes
 		segUnit() : to_be_deleted(false) {};
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
-		//segUnit(const segUnit& sourceSegUnit) {};
 
 		int segID;
 		int head;                                  // segment head node ID

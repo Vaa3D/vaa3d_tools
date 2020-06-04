@@ -30,27 +30,44 @@ using NSlibTester = NeuronStructNavigator::Tester;
 
 integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 {
-	for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+	if ((inputV_NeuronSWC.row.end() - 1)->parent == -1)
 	{
-		NeuronSWC node;
-		node.n = nodeIt->data[0];
-		node.x = nodeIt->data[2];
-		node.y = nodeIt->data[3];
-		node.z = nodeIt->data[4];
-		node.type = nodeIt->data[1];
-		node.parent = nodeIt->data[6];
-		this->nodes.push_front(node);
+		for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+		{
+			NeuronSWC node;
+			node.n = nodeIt->data[0];
+			node.x = nodeIt->data[2];
+			node.y = nodeIt->data[3];
+			node.z = nodeIt->data[4];
+			node.type = nodeIt->data[1];
+			node.parent = nodeIt->data[6];
+			this->nodes.push_front(node);
+		}
 	}
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
-
+	else if (inputV_NeuronSWC.row.begin()->parent == -1) // [Alt + B] generated segment
+	{
+		for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+		{
+			NeuronSWC node;
+			node.n = nodeIt->data[0];
+			node.x = nodeIt->data[2];
+			node.y = nodeIt->data[3];
+			node.z = nodeIt->data[4];
+			node.type = nodeIt->data[1];
+			node.parent = nodeIt->data[6];
+			this->nodes.push_back(node);
+		}
+	}
 	this->head = this->nodes.begin()->n;
+	
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
 		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
 		{
 			this->tails.push_back(nodeIt->n);
-			vector<size_t> emptyTailSet;
-			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+			vector<size_t> emptyChildSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyChildSet });
 		}
 	}
 	

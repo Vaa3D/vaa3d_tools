@@ -3,9 +3,9 @@
 
 #define MAINVERSION_NUM 1
 #define SUBVERSION_NUM 2
-#define PATCHVERSION_NUM 2
+#define PATCHVERSION_NUM 4
 
-//#define __ACTIVATE_TESTER__
+#define __ACTIVATE_TESTER__
 
 //#define __ERASER_DEBUG__
 #endif

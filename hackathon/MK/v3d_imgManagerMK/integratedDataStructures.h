@@ -41,7 +41,7 @@ namespace integratedDataStructures
 		int xLength, yLength, radius;
 
 		unsigned char* structElePtr;
-		inline void printOutStructEle(); // Prints out the element row by row.
+		inline void printOutStructEle() const; // Prints out the element row by row.
 	};
 	/****************************************************************************************/
 
@@ -95,7 +95,7 @@ namespace integratedDataStructures
 	};
 }
 
-inline void integratedDataStructures::morphStructElement2D::printOutStructEle()
+inline void integratedDataStructures::morphStructElement2D::printOutStructEle() const
 {
 	for (int j = 0; j < this->radius * 2 + 1; ++j)
 	{

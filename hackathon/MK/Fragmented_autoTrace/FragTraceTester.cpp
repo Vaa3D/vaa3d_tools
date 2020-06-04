@@ -82,6 +82,20 @@ void FragTraceTester::saveIntermediateImgSlices(const string& regImgName, const 
 	}
 }
 
+void FragTraceTester::printOutEditSegInfo(const V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& segs2Bedited)
+{
+	for (auto& seg : segs2Bedited)
+	{
+		cout << "segment " << seg.first << ":" << endl;
+		for (auto& node : displayingSegs.seg.at(seg.first).row)
+		{
+			cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6];
+			if (seg.second.find(node.data[0]) != seg.second.end()) cout << " -> to be deleted" << endl;
+			else cout << endl;
+		}
+	}
+}
+
 void FragTraceTester::clusterSegEndMarkersGen(profiledTree& inputProfiledTree, const float segClusterRange)
 {
 	if (!NSlibTester::isInstantiated()) NSlibTester::instance(&(*this->sharedTraceManagerPtr)->fragTraceTreeManager);
