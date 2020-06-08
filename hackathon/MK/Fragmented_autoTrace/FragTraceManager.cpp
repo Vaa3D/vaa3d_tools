@@ -337,9 +337,9 @@ bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 			QString savingPrefixQ = this->finalSaveRootQ + "\\";
 			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::axonBranchBreak, objBranchBreakTree.tree, savingPrefixQ);
 			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::axonDownSampled, downSampledProfiledTree.tree, savingPrefixQ);
-			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::iteredConnected, iteredConnectedTree.tree, savingPrefixQ);
-			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::angleSmooth_lengthDistRatio, angleSmoothedTree.tree, savingPrefixQ);
-			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::noFloatingTinyFrag, PRE_FINALOUTPUT_TREE, savingPrefixQ);
+			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::iteredConnected, iteredConnectedTree.tree, savingPrefixQ);
+			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::angleSmooth_lengthDistRatio, angleSmoothedTree.tree, savingPrefixQ);
+			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::noFloatingTinyFrag, PRE_FINALOUTPUT_TREE, savingPrefixQ);
 		}
 		// --------------------- //
 	}
@@ -481,7 +481,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	if (this->finalSaveRootQ != "")
 	{
 		QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
-		writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
+		//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
 	}
 	profiledTree profiledSigTree(blob3Dtree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
@@ -616,8 +616,8 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 		if (FragTraceTester::isInstantiated())
 		{
 			QString savingPrefixQ = this->finalSaveRootQ + "\\";
-			FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::axonCentroid, finalCentroidTree, savingPrefixQ);
-			FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::axonSkeleton, outputProfiledTree.tree, savingPrefixQ);
+			//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::axonCentroid, finalCentroidTree, savingPrefixQ);
+			//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::axonSkeleton, outputProfiledTree.tree, savingPrefixQ);
 		}
 		// --------------------- //
 		
@@ -640,7 +640,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			if (FragTraceTester::isInstantiated())
 			{
 				QString savingPrefixQ = this->finalSaveRootQ + "\\";
-				FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denBlob, denBlobTree, savingPrefixQ);
+				//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denBlob, denBlobTree, savingPrefixQ);
 			}
 			// --------------------- //
 
@@ -667,7 +667,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			{
 				NeuronTree periBlobTree = NeuronStructUtil::blobs2tree(periBlobs);
 				QString savingPrefixQ = this->finalSaveRootQ + "\\";
-				FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denPeriBlob, periBlobTree, savingPrefixQ);
+				//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denPeriBlob, periBlobTree, savingPrefixQ);
 			}
 			// --------------------- //
 		}
@@ -716,7 +716,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				if (FragTraceTester::isInstantiated())
 				{
 					QString savingPrefixQ = this->finalSaveRootQ + "\\soma" + QString::number(it->first) + "_";
-					FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denBlob, denBlobTree, savingPrefixQ);
+					//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denBlob, denBlobTree, savingPrefixQ);
 				}
 
 				NeuronGeoGrapher::nodeList2polarNodeList(denBlobTree.listNeuron, this->fragTraceTreeGrowerPtr->polarNodeList, origin);
@@ -744,7 +744,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 				{
 					NeuronTree periBlobTree = NeuronStructUtil::blobs2tree(periBlobs);
 					QString savingPrefixQ = this->finalSaveRootQ + "\\soma" + QString::number(it->first) + "_";
-					FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denPeriBlob, periBlobTree, savingPrefixQ);
+					//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denPeriBlob, periBlobTree, savingPrefixQ);
 				}
 				// --------------------- //
 			}
@@ -801,7 +801,7 @@ map<string, profiledTree> FragTraceManager::generatePeriRawDenTree(const map<str
 		if (FragTraceTester::isInstantiated())
 		{
 			QString savingPrefixQ = this->finalSaveRootQ + "\\soma" + QString::number(somaCount) + "_";
-			FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denSkeleton, thisPeriProfiledTree.tree, savingPrefixQ);
+			//FragTraceTester::getInstance()->denTreeFormingInterResults(FragTraceTester::denSkeleton, thisPeriProfiledTree.tree, savingPrefixQ);
 		}
 		// --------------------- //
 	}
@@ -967,7 +967,7 @@ profiledTree FragTraceManager::segConnect_withinCurrBlock(const profiledTree& in
 	if (FragTraceTester::isInstantiated())
 	{
 		QString savingPrefixQ = this->finalSaveRootQ + "\\combinedTree.swc";
-		FragTraceTester::getInstance()->generalTreeFormingInterResults(FragTraceTester::combine, outputProfiledTree.tree, savingPrefixQ);
+		//FragTraceTester::getInstance()->generalTreeFormingInterResults(FragTraceTester::combine, outputProfiledTree.tree, savingPrefixQ);
 	}
 	// --------------------- //
 

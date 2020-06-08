@@ -126,8 +126,6 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 				this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
 				this->UIinstancePtr->connectButtonClicked();
 			}
-
-			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
 		}
 	}
 	else if (func_name == tr("3DViewer_marker_click"))
