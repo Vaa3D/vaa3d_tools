@@ -7,6 +7,9 @@
 #include <vector>
 #include "getNodeLength_plugin.h"
 #include "function.h"
+#include <fstream>
+#include <sstream>
+
 using namespace std;
 Q_EXPORT_PLUGIN2(getNodeLength, getNodeLengthPlugin);
  
@@ -22,7 +25,7 @@ QStringList getNodeLengthPlugin::funclist() const
 {
 	return QStringList()
         <<tr("getNodeLength")
-		<<tr("func2")
+        <<tr("getCurve")
 		<<tr("help");
 }
 
@@ -61,9 +64,45 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         getNodeLength(nt,maxR,dendritR,otherR,thre);
         writeSWC_file(swcfile.split(".").at(0)+"_result.swc",nt);
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("getCurve"))
 	{
-		v3d_msg("To be implemented.");
+        QString swcfile = infiles[0];
+        NeuronTree nt = readSWC_file(swcfile);
+        ofstream csvFile;
+        QStringList f = swcfile.split(".");//f.absoluteDir().absolutePath() + f.baseName() + "_result.csv";
+        f.pop_back();
+        csvFile.open((f.join(".") + "_result.csv").toStdString().c_str(),ios::out);
+        csvFile<<"thre"<<','<<"useratio"<<endl;
+
+        double useratio;
+        for(int i=1; i<=100; i++){
+            double threI = i*0.01;
+
+            if(threI>=0.98 && threI<1){
+                for(int j=0;j<=9;j++){
+                    double threJ = threI + j*0.001;
+                    if(threJ>=0.99 && threJ<1){
+                        for(int k=0; k<=9; k++){
+                            double thre = threJ + 0.0001*k;
+                            useratio = getNodeLength2(nt,100,1,1,thre);
+                            csvFile<<thre<<','<<useratio<<endl;
+                        }
+                    }else {
+                        double thre = threJ;
+                        useratio = getNodeLength2(nt,100,1,1,thre);
+                        csvFile<<thre<<','<<useratio<<endl;
+                    }
+
+                }
+            }else {
+                double thre = threI;
+                useratio = getNodeLength2(nt,100,1,1,thre);
+                csvFile<<thre<<','<<useratio<<endl;
+            }
+
+        }
+        csvFile.close();
+
 	}
 	else if (func_name == tr("help"))
 	{
