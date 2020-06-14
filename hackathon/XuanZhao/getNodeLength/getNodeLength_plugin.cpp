@@ -55,9 +55,10 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         QString swcfile = infiles[0];
         NeuronTree nt = readSWC_file(swcfile);
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
-        double dendritR = (inparas.size()>=2) ? atof(inparas[1]) : 0.9;
-        double otherR = (inparas.size()>=3) ? atof(inparas[2]) : 0.1;
-        getNodeLength(nt,maxR,dendritR,otherR);
+        double dendritR = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        double otherR = (inparas.size()>=3) ? atof(inparas[2]) : 1;
+        double thre = (inparas.size()>=4) ? atof(inparas[3]) : 1;
+        getNodeLength(nt,maxR,dendritR,otherR,thre);
         writeSWC_file(swcfile.split(".").at(0)+"_result.swc",nt);
 	}
 	else if (func_name == tr("func2"))

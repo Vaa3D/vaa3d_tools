@@ -1,6 +1,6 @@
 #include "function.h"
 
-void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR){
+void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double thre){
 
     cout<<"---------------in getNodeLength-----------------"<<endl;
 
@@ -113,7 +113,8 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR){
     cout<<"--------------length cal end---------------"<<endl;
 
     double maxLength = nodeLenth.at(roots.at(0));
-
+    double numofusefulnode=0;
+    double numofuselessnode=0;
     for(int i=0; i<pointNum; i++){
 //        cout<<"i: "<<i<<endl;
         nodeLenth.at(i) = (nodeLenth.at(i)/maxLength)*maxR;
@@ -124,15 +125,20 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR){
         tmp.n = listNeuron.at(i).n;
         tmp.parent = listNeuron.at(i).parent;
         tmp.type = listNeuron.at(i).type;
-//        if(nodeLenth.at(i) > 0.2*maxR){
-//            tmp.radius = 5;
-//        }else {
-//            tmp.radius = 1;
-//        }
-        tmp.radius = nodeLenth.at(i);
+        if(nodeLenth.at(i) > (1-thre)*maxR){
+            tmp.radius = 10;
+            numofusefulnode+=1;
+        }else {
+            tmp.radius = 1;
+            numofuselessnode+=1;
+        }
+//        tmp.radius = nodeLenth.at(i);
 
         listNeuron.replace(i,tmp);
     }
+    double useratio=numofusefulnode/(numofusefulnode+numofuselessnode);
+
+    cout<<"when key ratio is "<<thre<<",#percent="<<useratio<<endl;
 
 }
 
