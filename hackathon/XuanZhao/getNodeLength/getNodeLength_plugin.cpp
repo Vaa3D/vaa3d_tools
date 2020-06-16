@@ -26,6 +26,7 @@ QStringList getNodeLengthPlugin::funclist() const
 	return QStringList()
         <<tr("getNodeLength")
         <<tr("getCurve")
+        <<tr("getCurve2")
 		<<tr("help");
 }
 
@@ -104,6 +105,44 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         csvFile.close();
 
 	}
+    else if (func_name == tr("getCurve2")){
+        double thresholds[9] = {0.1,0.5,1.0,5.0,10.0,15.0,20.0,50.0,80.0};
+        QString dirPath = infiles[0];
+        const char* outFile = outfiles[0];
+        QStringList nameFilters;
+        nameFilters<<"*.swc";
+
+        QDir dir(dirPath);
+        QStringList swcFiles = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+
+        ofstream csvFile;
+        csvFile.open(outFile,ios::out);
+
+        csvFile<<" ";
+        for(int j=0; j<9; j++){
+            csvFile<<','<<thresholds[j];
+        }
+        csvFile<<endl;
+        double thres,ratio;
+        cout<<"file size: "<<swcFiles.size()<<endl;
+
+        for(int i=0; i<swcFiles.size(); i++){
+            QString swcFile = dirPath + '\\' + swcFiles[i];
+
+            NeuronTree nt = readSWC_file(swcFile);
+            csvFile<<QFileInfo(swcFile).baseName().toStdString().c_str();
+            for(int j=0; j<9; j++){
+                thres = thresholds[j];
+                ratio = getAxonNodeLength(nt,thres);
+                csvFile<<','<<ratio;
+                if(j==0){
+                    writeSWC_file(swcFile.split(".").at(0)+"_result.swc",nt);
+                }
+            }
+            csvFile<<endl;
+        }
+
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

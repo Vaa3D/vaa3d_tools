@@ -16,7 +16,9 @@ double dis(T node1, T node2){
 }
 
 void getNodeLength(NeuronTree &nt, int maxR, double dendritR, double otherR, double thre);
-double getNodeLength2(NeuronTree& nt,int maxR,double dendritR, double otherR,double thre);
+double getNodeLength2(NeuronTree& nt, int maxR, double axonR, double dendritR, double thre);
+
+double getAxonNodeLength(NeuronTree& in_nt, double thre);
 
 struct Branch{
     NeuronSWC head_point,end_point;
