@@ -1,10 +1,8 @@
 #include "randomforest.h"
 
+
 int getRandomNum(){
-    QTime time;
-    time  = QTime::currentTime();
-    qsrand(time.msec() + time.second()*1000);
-    int n = qrand();
+    int n = rand();
     return n;
 }
 
@@ -73,7 +71,7 @@ int DecisionTree::evaluate(QVector<float> record){
 
 QVector<QVector<float> > DecisionTree::randomlyPermuteAttribute(QVector<QVector<float> > &val, int m){
     int num = val.size() * 2;
-    qDebug()<<"in randomlyPermuteAttribute";
+//    qDebug()<<"in randomlyPermuteAttribute";
     for(int i=0; i<num; i++){
         int a = getRandomNum()%val.size();
         int b = getRandomNum()%val.size();
@@ -83,12 +81,12 @@ QVector<QVector<float> > DecisionTree::randomlyPermuteAttribute(QVector<QVector<
         arrA[m] = arrB[m];
         arrB[m] = temp;
     }
-    qDebug()<<"end randomlyPermuteAttribute";
+//    qDebug()<<"end randomlyPermuteAttribute";
     return val;
 }
 
 QVector<QVector<float> > DecisionTree::cloneData(QVector<QVector<float> > data){
-    qDebug()<<"start cloneData";
+//    qDebug()<<"start cloneData";
     QVector<QVector<float> > clone = QVector<QVector<float> >();
     if(data.isEmpty())
         return clone;
@@ -100,19 +98,27 @@ QVector<QVector<float> > DecisionTree::cloneData(QVector<QVector<float> > data){
         }
         clone.append(arrClone);
     }
-    qDebug()<<"end cloneData";
+//    qDebug()<<"end cloneData";
     return clone;
 }
 
 int DecisionTree::getMajorityClass(QVector<QVector<float> > data){
+
+//    qDebug()<<"getMajorityClass: data size:"<<data.size();
+
     int* counts = new int[this->forest->C];
-    for(QVector<float> record:data){
-        int Class = (int) record.back();
+    for(int i=0; i<this->forest->C; i++){
+        counts[i] = 0;
+    }
+    for(int i=0; i<data.size(); i++){
+        QVector<float>& record = data[i];
+        int Class = (int) record[this->forest->M];
         counts[Class-1]++;
     }
     int index = -99;
     int max = INT_MIN;
     for(int i=0; i<this->forest->C; i++){
+        qDebug()<<(i+1)<<" size: "<<counts[i];
         if(counts[i] > max){
             index = i + 1;
         }
@@ -123,7 +129,8 @@ int DecisionTree::getMajorityClass(QVector<QVector<float> > data){
 
 double DecisionTree::calcEntropy(QVector<double> ps){
     double e = 0;
-    for(double p:ps){
+    for(int i=0; i<ps.size(); i++){
+        double p = ps[i];
         if(p!=0)
             e += p*log(p)/log(2);
     }
@@ -159,10 +166,12 @@ void DecisionTree::bootStrapSample(QVector<QVector<float> > data, QVector<QVecto
     QVector<int> indexs = QVector<int>();
     for(int n=0; n<N; n++){
         indexs.append(getRandomNum()%N);
+
     }
     QVector<bool> isIn = QVector<bool>(N,false);
     for(int i=0; i<indexs.size(); i++){
         int index = indexs[i];
+//        qDebug()<<"index: "<<index;
         QVector<float> record = QVector<float>();
         for(int j=0; j<data.at(index).size(); j++){
             record.append(data[index][j]);
@@ -206,7 +215,15 @@ double DecisionTree::checkPosition(int m, int n, int nSub, double &lowestE, Tree
     if(e>lowestE){
         lowestE = e;
         parent->splitAttributeM = m;
-        parent->splitValue = parent->data.at(n).at(m);
+        parent->splitValue = parent->data[n][m];
+        for(int i=0; i<parent->left->data.size(); i++){
+            parent->left->data[i].clear();
+        }
+        parent->left->data.clear();
+        for(int i=0; i<parent->right->data.size(); i++){
+            parent->right->data[i].clear();
+        }
+        parent->right->data.clear();
         for(int j=0; j<lower.size(); j++){
             parent->left->data.append(lower[j]);
         }
@@ -219,7 +236,7 @@ double DecisionTree::checkPosition(int m, int n, int nSub, double &lowestE, Tree
 }
 
 int DecisionTree::getClass(QVector<float> record){
-    return (int) record.back();
+    return (int) record[this->forest->M];
 }
 
 int DecisionTree::checkIfLeaf(QVector<QVector<float> > data){
@@ -276,13 +293,18 @@ QVector<double> DecisionTree::getClassProbs(QVector<QVector<float> > data){
     double N = data.size();
 
     int* counts = new int[this->forest->C];
-    for(QVector<float> record:data){
+    for(int i=0; i<this->forest->C; i++){
+        counts[i] = 0;
+    }
+    for(int i=0; i<data.size(); i++){
+        QVector<float>& record = data[i];
         counts[this->getClass(record)-1]++;
     }
 
     QVector<double> ps = QVector<double>();
     for(int j=0; j<this->forest->C; j++){
         ps.append(counts[j]/N);
+//        qDebug()<<"in getClassProbs: "<<j<<" : "<<counts[j]/N;
     }
     delete counts;
     return ps;
@@ -310,8 +332,11 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
             return;
         }
 
+        qDebug()<<"-------------second stage----------------";
+
         int sameClass = 0;
-        for(int m:parent->attrArr){
+        for(int s=0; s<parent->attrArr.size(); s++){
+            int m = parent->attrArr[s];
             this->sortAtAttribute(parent->data,m);
             QVector<int> indexsToCheck = QVector<int>();
             for(int n=1; n<nSub; n++){
@@ -323,12 +348,14 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
             if(indexsToCheck.size() == 0)
                 sameClass++;
         }
+        qDebug()<<"sameClass: "<<sameClass;
         if(sameClass == parent->attrArr.size()){
             parent->isLeaf = true;
             parent->Class = this->getMajorityClass(parent->data);
             return;
         }
-        for(int m:parent->attrArr){
+        for(int s=0; s<parent->attrArr.size(); s++){
+            int m = parent->attrArr[s];
             this->sortAtAttribute(parent->data,m);
             QVector<int> indexsToCheck = QVector<int>();
             for(int n=1; n<nSub; n++){
@@ -339,12 +366,13 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
             }
             if(indexsToCheck.size() > MinSizeToCheckEach){
                 for(int i=0; i<indexsToCheck.size(); i+=IndexSkip){
-                    this->checkPosition(m,indexsToCheck.at(i),nSub,lowestE,parent,nTreeNum);
+                    this->checkPosition(m,indexsToCheck[i],nSub,lowestE,parent,nTreeNum);
                     if(lowestE == 0)
                         break;
                 }
             }else {
-                for(int index:indexsToCheck){
+                for(int i=0; i<indexsToCheck.size(); i++){
+                    int index = indexsToCheck[i];
                     this->checkPosition(m,index,nSub,lowestE,parent,nTreeNum);
                     if(lowestE == 0)
                         break;
@@ -354,18 +382,25 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
                 break;
         }
 
+        qDebug()<<"-------------thrid stage----------------";
+
         QVector<int>::iterator it = parent->attrArr.begin();
+        qDebug()<<"splitAttributeM: "<<parent->splitAttributeM;
         while (it != parent->attrArr.end()) {
             int attr = *it;
             if(attr == parent->splitAttributeM){
                 parent->attrArr.erase(it);//.remove(it);
+                break;
             }
             it++;
         }
+        qDebug()<<"--------delete end------------";
         for(int i=0; i<parent->attrArr.size(); i++){
             parent->left->attrArr.append(parent->attrArr[i]);
             parent->right->attrArr.append(parent->attrArr[i]);
         }
+
+        qDebug()<<"----------------------attrarr-----------------";
 
 
         if(parent->left->data.size() == 1){
@@ -385,6 +420,8 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
             }
         }
 
+        qDebug()<<"----------------------left-----------------";
+
         if(parent->right->data.size() == 1){
             parent->right->isLeaf = true;
             parent->right->Class = this->getClass(parent->right->data.at(0));
@@ -402,6 +439,8 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
             }
         }
 
+        qDebug()<<"-------------forth stage----------------";
+
         if(!parent->left->isLeaf){
             this->recursiveSplit(parent->left,nTreeNum);
         }
@@ -414,12 +453,31 @@ void DecisionTree::recursiveSplit(TreeNode* parent, int nTreeNum){
 
 TreeNode* DecisionTree::creatTree(QVector<QVector<float> > train, int nTree){
     TreeNode* root = new TreeNode();
-    root->data = this->cloneData(train);
+//    root->data = this->cloneData(train);
+    for(int i=0; i<train.size(); i++){
+        QVector<float> record = QVector<float>();
+        for(int j=0; j<train[i].size(); j++){
+            record.append(train[i][j]);
+        }
+        root->data.append(record);
+    }
     QVector<int> vars = this->getVarsToInclude();
     for(int i=0; i<vars.size(); i++){
         root->attrArr.append(vars[i]);
     }
     vars.clear();
+//    int n = 0, p =0;
+//    qDebug()<<"data size: "<<root->data.size()<<endl;
+//    for(int i=0; i<root->data.size(); i++){
+//        int c = this->getClass(root->data[i]);
+//        qDebug()<<"c: "<<c;
+//        if( c == 1)
+//            p++;
+//        else if(c == 2){
+//            n++;
+//        }
+//    }
+//    qDebug()<<nTree<<" : "<<" p: "<<p<<" n: "<<n;
     this->recursiveSplit(root,nTree);
     return root;
 }
@@ -455,14 +513,14 @@ QVector<int> DecisionTree::calculateClasses(QVector<QVector<float> > val, int nu
 
 void DecisionTree::calcTreeVariableImportanceAndError(QVector<QVector<float> > val, int nv){
     this->correct = this->calcTreeErrorRate(val,nv);
-    qDebug()<<"start calculateClasses";
+//    qDebug()<<"start calculateClasses";
     this->calculateClasses(val,nv);
 
-    qDebug()<<"end calculateClasses";
+//    qDebug()<<"end calculateClasses";
 
 
     for(int m=0; m<this->forest->M; m++){
-        qDebug()<<"m: "<<m<<endl;
+//        qDebug()<<"m: "<<m<<endl;
         QVector<QVector<float>> testData = this->cloneData(val);
         this->randomlyPermuteAttribute(testData,m);
         int correctAfterPermute = 0;
@@ -631,9 +689,9 @@ bool DecisionTree::readDesionTree(QString file){
 }
 
 void DecisionTree::flushData(TreeNode* node){
-    qDebug()<<"in flushData";
+//    qDebug()<<"in flushData";
     if(node){
-        qDebug()<<"data size: "<<node->data.size();
+//        qDebug()<<"data size: "<<node->data.size();
         for(int i=0; i<node->data.size(); i++){
             node->data[i].clear();
         }

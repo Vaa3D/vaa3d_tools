@@ -41,13 +41,16 @@ RandomForest* train(RandomForest* rf, V3DPluginCallback2* callback){
     BranchTree bt;
     bt.initialize(nt);
 
+    int p = 0, n =0;
+
     for(int i=0; i<bt.branchs.size(); i++){
         Branch& b =  bt.branchs.at(i);
 
         vector<V3DLONG> pointsIndex = vector<V3DLONG>();
         b.get_pointsIndex_of_branch(pointsIndex,nt);
 
-        if(pointsIndex.size()<3)
+        if(pointsIndex.size()<3 ||
+                (nt.listNeuron.at(pointsIndex.at(1)).type != 2 && nt.listNeuron.at(pointsIndex.at(1)).type != 3))
             continue;
 
         QVector<float> feature = QVector<float>();
@@ -65,13 +68,16 @@ RandomForest* train(RandomForest* rf, V3DPluginCallback2* callback){
 
         if(nt.listNeuron.at(pointsIndex.at(1)).type == 2){
             feature.append(1);
+            p++;
         }else if (nt.listNeuron.at(pointsIndex.at(1)).type == 3) {
             feature.append(2);
+            n++;
         }
 
         data.append(feature);
     }
 
+    cout<<"p: "<<p<<" n: "<<n<<endl;
     cout<<"-------------start to train randomforest-------"<<endl;
 
     int numTrees = 100;

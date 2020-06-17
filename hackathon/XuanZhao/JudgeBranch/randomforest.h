@@ -15,8 +15,10 @@
 #include <fstream>
 #include <iostream>
 
+#include <cstdlib> // Header file needed to use srand and rand
+#include <ctime>
+
 #define DOUBLE_MIN 2.225e-308
-#define INT_MIN 0x80000000
 
 int getRandomNum();
 
