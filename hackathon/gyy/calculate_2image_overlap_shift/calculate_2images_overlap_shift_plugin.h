@@ -1,10 +1,10 @@
-/* Center_Tile_Boundary_plugin.h
+/* calculate_2images_overlap_shift_plugin.h
  * This is a test plugin, you can use it as a demo.
- * 2020-4-10 : by YourName
+ * 2020-5-28 : by YourName
  */
  
-#ifndef __CENTER_TILE_BOUNDARY_PLUGIN_H__
-#define __CENTER_TILE_BOUNDARY_PLUGIN_H__
+#ifndef __CALCULATE_2IMAGES_OVERLAP_SHIFT_PLUGIN_H__
+#define __CALCULATE_2IMAGES_OVERLAP_SHIFT_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>

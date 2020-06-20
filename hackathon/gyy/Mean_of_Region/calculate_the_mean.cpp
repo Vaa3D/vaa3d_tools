@@ -148,7 +148,11 @@ bool calculate_mean(V3DPluginCallback2 &callback, unsigned short * (& pdataMean)
 //    V3DLONG region_center_X[5] = {10, 485, 960, 1435, 1910};
 //    V3DLONG region_center_Y[5] = {10, 485, 960, 1435, 1910};
 
-    int region_center_X = 960, region_center_Y = 960;
+//    int region_center_X = 960, region_center_Y = 960; //center
+    int region_center_X = 960, region_center_Y = 1773; //up
+//    int region_center_X = 960, region_center_Y = 147; //down
+//   int region_center_X = 1773, region_center_Y = 960; //left
+//    int region_center_X = 147, region_center_Y = 960; //right
 
     if(pdataMean){delete []pdataMean; pdataMean = 0;}
     pdataMean = new unsigned short[imageList.size()*1];

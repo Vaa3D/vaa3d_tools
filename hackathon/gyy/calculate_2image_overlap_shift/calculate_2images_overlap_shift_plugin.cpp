@@ -1,13 +1,14 @@
-/* Center_Tile_Boundary_plugin.cpp
+/* calculate_2images_overlap_shift_plugin.cpp
  * This is a test plugin, you can use it as a demo.
- * 2020-4-10 : by YourName
+ * 2020-5-28 : by YourName
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "Center_Tile_Boundary_plugin.h"
+#include "calculate_2images_overlap_shift_plugin.h"
+#include "calculate_shift_overlap.cpp"
 using namespace std;
-Q_EXPORT_PLUGIN2(Center_Tile_Boundary, TestPlugin);
+Q_EXPORT_PLUGIN2(calculate_2images_overlap_shift, TestPlugin);
  
 QStringList TestPlugin::menulist() const
 {
@@ -29,7 +30,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
 	if (menu_name == tr("menu1"))
 	{
-		v3d_msg("To be implemented.");
+        calculate_2image_overlap_shift(callback, parent);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -38,7 +39,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2020-4-10"));
+			"Developed by YourName, 2020-5-28"));
 	}
 }
 

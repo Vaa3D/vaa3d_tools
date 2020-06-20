@@ -50,12 +50,15 @@
 		Folder1 is an image stack for a tile;
 		Folder2 is another image stack for another tile;
 		Folder3 is selected to place the result.
-	Output: A excel file including XY_overlap and XY_shift value for every plane.
+	Output: A excel file including XY_overlap and XY_shift value for every plane after correcting.
 
 8. Channel_shift_in_Reslice_Images plugin:
 	Input: A folder that is an image stack for a tile;
 	Output: Do a YZ and XZ MIP images in the central signal and calculate XYZ shift using the traveling shift range methods.
 
-
+9. calculate_2image_overlap_shift plugin:
+	Input: 2 images that are different tiles;
+		Folder that is selected to place the result.
+	Output: A txt file including overlap and shift between those 2 images after correcting.
 
 
