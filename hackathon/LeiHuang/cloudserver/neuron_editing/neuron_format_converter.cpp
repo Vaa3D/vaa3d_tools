@@ -137,7 +137,7 @@ V_NeuronSWC_list NeuronTree__2__V_NeuronSWC_list(NeuronTree * nt)           //co
 	V_NeuronSWC_list editableNeuron;
 
 	editableNeuron.seg = cur_seg.decompose(); //////////////
-        qDebug("	editableNeuron.seg.size = %d", editableNeuron.seg.size());
+//        qDebug("	editableNeuron.seg.size = %d", editableNeuron.seg.size());
 	
 	editableNeuron.name = qPrintable(nt->name);
 	editableNeuron.file = qPrintable(nt->file);

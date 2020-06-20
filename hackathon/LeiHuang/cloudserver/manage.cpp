@@ -1,6 +1,10 @@
 ﻿#include "manage.h"
 #include <QtGlobal>
 #include "basic_c_fun/basic_surf_objs.h"
+#include <iostream>
+
+#define IMAGEDIR "image"
+//#include "cropimage.h"
 FileServer *fileserver=0;
 FileServer_send *fileserver_send=0;
 
@@ -13,12 +17,41 @@ ManageServer::ManageServer(QObject *parent)
     }else {
         qDebug()<<"ManageServer is not started ,please try again.";
     }
-    fileserver_send=new FileServer_send();
+
+    Map_File_MessageServer.clear();
+    userList.clear();
+    fileserver_send=new FileServer_send(this);//make server for load and down
+
+    if(!QDir("./userInfo").exists())
+        QDir("./").mkdir("userInfo");
+    if(!QDir("./v3draw").exists())
+        QDir("./").mkdir("v3draw");
+
+    QFile userInfoFile("./userInfo/userInfo.txt");
+    if(userInfoFile.exists())
+    {
+        if(userInfoFile.open(QIODevice::ReadOnly| QIODevice::Text))
+        {
+            while(!userInfoFile.atEnd())
+            {
+                QByteArray line = userInfoFile.readLine();
+                QStringList user=QString(line).split(" ",QString::SkipEmptyParts);
+                if(user.size()!=2)
+                {
+                    qDebug()<<"ERROR user info:"<<user;
+                    continue;
+                }
+                userList.insert(user.at(0).trimmed(),user.at(1).trimmed().toInt());
+            }
+        }
+    }
+    userInfoFile.close();
+
 }
 
 void ManageServer::incomingConnection(int socketDesc)
 {
-    ManageSocket *managesocket=new ManageSocket;
+    ManageSocket *managesocket=new ManageSocket(this);
     managesocket->setSocketDescriptor(socketDesc);
     qDebug()<<managesocket->peerAddress().toString()<<" connected ----";
     connect(managesocket,SIGNAL(makeMessageServer(ManageSocket *,QString)),
@@ -28,6 +61,7 @@ void ManageServer::incomingConnection(int socketDesc)
 void ManageServer::makeMessageServer(ManageSocket *managesocket,QString anofile_name)
 {
     QRegExp fileExp("(.*).ano");
+    qDebug()<<"makeMessageServer:"<<anofile_name;
     if(fileExp.indexIn(anofile_name)!=-1)
     {
         if(!Map_File_MessageServer.contains(anofile_name))
@@ -40,7 +74,7 @@ void ManageServer::makeMessageServer(ManageSocket *managesocket,QString anofile_
                 if(Map_File_MessageServer.value(filename)->serverPort()==messageport.toInt())
                     goto label;
             }
-
+            qDebug()<<"makeMessageServer:1";
             Global_Parameters *global_parameters=new Global_Parameters;
 
             global_parameters->clients.clear();
@@ -57,56 +91,65 @@ void ManageServer::makeMessageServer(ManageSocket *managesocket,QString anofile_
             global_parameters->global_scale=0;
 
             global_parameters->Map_Ip_NumMessage.clear();
+            global_parameters->userInfo=&userList;
+            global_parameters->messageUsedIndex=0;
 
-            MessageServer *messageserver=new MessageServer(anofile_name, global_parameters);
+
+            MessageServer *messageserver=new MessageServer(anofile_name, global_parameters,this);
+//            QThread *thread=new QThread(this);
+//            messageserver->moveToThread(thread);
+            //
+            qDebug()<<"makeMessageServer:2";
+//            connect(this,SIGNAL(userload(ForAUTOSave)),messageserver,SLOT(userLoad(ForAUTOSave)));
             if(!messageserver->listen(QHostAddress::Any,messageport.toInt()))
             {
+                std::cerr<<"can not make messageserver for "<<anofile_name.toStdString()<<endl;
+                messageserver->deleteLater();
+//                thread->deleteLater();
                 return;
             }else {
-                messageserver->global_parameters->lock_messagelist.lockForRead();
-                //写文件
-                QFile *f=new QFile("./clouddata/"+anofile_name+".txt");
-                if(f->open(QIODevice::WriteOnly|QIODevice::Truncate))
-                {
-                    QTextStream txtoutput(f);
-                    for(int i=0;i<messageserver->global_parameters->messagelist.size();i++)
-                    {
-                        txtoutput<<messageserver->global_parameters->messagelist.at(i)<<endl;
-                    }
-                    f->close();
-                }
-                delete f;
-                //设置变量
-                messageserver->global_parameters->Map_Ip_NumMessage[managesocket->peerAddress().toString()]=messageserver->global_parameters->messagelist.size();
-                messageserver->global_parameters->lock_messagelist.unlock();
 
-                fileserver_send->sendFile(managesocket->peerAddress().toString(),anofile_name);
-                 managesocket->write(QString(messageport+":messageport"+".\n").toUtf8());
-                 Map_File_MessageServer[anofile_name]=messageserver;
+                //timeout xinhao ->槽
+                ForAUTOSave forautosave;
+                forautosave.ip=managesocket->peerAddress().toString();//
+                forautosave.fileserver_send=fileserver_send;//
+                forautosave.managesocket=managesocket;//
+                forautosave.Map_File_MessageServer=&Map_File_MessageServer;//
+                forautosave.anofile_name=anofile_name;//
+                forautosave.messageport=messageport;//
+                connect(this,SIGNAL(userload(ForAUTOSave)),messageserver,SLOT(userLoad(ForAUTOSave)));
+                emit(userload(forautosave));
+                disconnect(this,SIGNAL(userload(ForAUTOSave)),messageserver,SLOT(userLoad(ForAUTOSave)));
+
                  connect(messageserver,SIGNAL(MessageServerDeleted(QString)),
                         this,SLOT(messageserver_ondeltete(QString)) );
+//                 connect(messageserver,SIGNAL(MessageServerDeleted(QString)),
+//                        thread,SLOT(quiet()) );
+//                 connect(thread,SIGNAL(finished()),thread,SLOT(deleteLater()) );
+
             }
         }else {
-            Map_File_MessageServer.value(anofile_name)->global_parameters->lock_messagelist.lockForRead();
 
-            QFile *f=new QFile("./clouddata/"+anofile_name+".txt");
-            if(f->open(QIODevice::WriteOnly|QIODevice::Truncate))
-            {
-                QTextStream txtoutput(f);
-                for(int i=0;i<Map_File_MessageServer.value(anofile_name)->global_parameters->messagelist.size();i++)
-                {
-                    txtoutput<<Map_File_MessageServer.value(anofile_name)->global_parameters->messagelist.at(i)<<endl;
-                }
-                f->close();
-            }
-            delete f;
-            //设置变量
-            Map_File_MessageServer.value(anofile_name)->global_parameters->
-                    Map_Ip_NumMessage[managesocket->peerAddress().toString()]=Map_File_MessageServer.value(anofile_name)->global_parameters->messagelist.size();
-            Map_File_MessageServer.value(anofile_name)->global_parameters->lock_messagelist.unlock();
-            fileserver_send->sendFile(managesocket->peerAddress().toString(),anofile_name);
-            QString messageport=QString::number(Map_File_MessageServer[anofile_name]->serverPort());
-            managesocket->write(QString(messageport+":messageport"+".\n").toUtf8());
+//            QMap<quint32 ,QString> map=Map_File_MessageServer.value(anofile_name)->autoSave();
+//            Map_File_MessageServer.value(anofile_name)->global_parameters-> Map_Ip_NumMessage[managesocket->peerAddress().toString()]=map.keys().at(0);
+//            fileserver_send->sendFile(managesocket->peerAddress().toString(),map.values().at(0));
+            QString messageport=QString::number(Map_File_MessageServer.value(anofile_name)->serverPort());
+//            managesocket->write(QString(messageport+":messageport"+".\n").toUtf8());
+
+            qDebug()<<"makeMessageServer:4";
+            ForAUTOSave forautosave;
+            forautosave.ip=managesocket->peerAddress().toString();//
+            forautosave.fileserver_send=fileserver_send;//
+            forautosave.managesocket=managesocket;//
+            forautosave.Map_File_MessageServer=&Map_File_MessageServer;//
+            forautosave.anofile_name=anofile_name;//
+            forautosave.messageport=messageport;//
+            connect(this,SIGNAL(userload(ForAUTOSave)),Map_File_MessageServer.value(anofile_name),SLOT(userLoad(ForAUTOSave)));
+            emit(userload(forautosave));
+            disconnect(this,SIGNAL(userload(ForAUTOSave)),Map_File_MessageServer.value(anofile_name),SLOT(userLoad(ForAUTOSave)));
+
+//            Map_File_MessageServer.value(anofile_name)->emitUserLoad(forautosave);
+            qDebug()<<"makeMessageServer:5";
         }
     }
 }
@@ -128,6 +171,7 @@ void ManageSocket::ondisconnect()
 {
     qDebug()<<this->peerAddress().toString()<<"disconnected";
     this->deleteLater();
+//    this=0;
 }
 
 void ManageSocket::readManage()
@@ -139,6 +183,8 @@ void ManageSocket::readManage()
     QRegExp LoadRex("(.*):load.\n");
     QRegExp FileDownRex("(.*):choose1.\n");
     QRegExp FileLoadRex("(.*):choose2.\n");
+    QRegExp ImageDownRex("(.*):choose3.\n");
+    QRegExp ImgBlockRex("(.*):imgblock.\n");
 
     while(this->canReadLine())
     {
@@ -159,11 +205,11 @@ void ManageSocket::readManage()
             QString port_receivefile="9998";
             if(fileserver==0)
             {
-                fileserver=new FileServer;
+                fileserver=new FileServer(this);
                 connect(fileserver,SIGNAL(fileserverdeleted()),this,SLOT(resetfileserver()));
                 if(!fileserver->listen(QHostAddress::Any,port_receivefile.toInt()))
                 {
-                    qDebug()<<"error:cannot start fileserver.";
+                    std::cerr<<"error:cannot start fileserver.";
                     return;
                 }
             }
@@ -178,14 +224,11 @@ void ManageSocket::readManage()
             this->write(QString(currentDir()+":currentDir_load."+"\n").toUtf8());
         }else if(FileDownRex.indexIn(manageMSG)!=-1)
         {
-            QString filename=FileDownRex.cap(1);
-            QString anopath="./clouddata/"+filename;
-//            FileSocket_send *filesocket=new FileSocket_send(this->peerAddress().toString(),"9998",anopath);
+            QString filename=FileDownRex.cap(1).trimmed();
+            fileserver_send->sendFile(this->peerAddress().toString(),filename);
         }else if(FileLoadRex.indexIn(manageMSG)!=-1)
         {
             QString filename=FileLoadRex.cap(1).trimmed();
-//            fileserver_send->sendFile(this->peerAddress().toString(),filename); //move to make messageserver
-//            qDebug()<<"load :"<<filename;
             emit makeMessageServer(this,filename);
         }
     }
@@ -202,19 +245,19 @@ QString currentDir()
     if(!rDir.cd("clouddata"))
     {
         rDir.mkdir("clouddata");
-        rDir.cd("clouddata");
     }
 
     QDir rootDir("./clouddata");
-    QFileInfoList list=rootDir.entryInfoList();
+    QFileInfoList list=rootDir.entryInfoList(QStringList()<<"*.ano",QDir::Files|QDir::NoDotAndDotDot);
+
     QStringList TEMPLIST;
     TEMPLIST.clear();
 
     for(unsigned i=0;i<list.size();i++)
     {
-        QRegExp anoRex("(.*).ano");
-        QRegExp eswcRex("(.*).ano.eswc");
-        QRegExp apoRex("(.*).ano.apo");
+        QRegExp anoRex("(.*).ano$");
+        QRegExp eswcRex("(.*).ano.eswc$");
+        QRegExp apoRex("(.*).ano.apo$");
         QFileInfo tmpFileInfo=list.at(i);
         if(!tmpFileInfo.isDir())
         {

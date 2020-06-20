@@ -23,32 +23,51 @@
 #include "NeuronGeoGrapher.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
+#include "NeuronStructNavigatingTester.h"
 
 using namespace std;
+using NSlibTester = NeuronStructNavigator::Tester;
 
 integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 {
-	for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+	if ((inputV_NeuronSWC.row.end() - 1)->parent == -1)
 	{
-		NeuronSWC node;
-		node.n = nodeIt->n;
-		node.x = nodeIt->x;
-		node.y = nodeIt->y;
-		node.z = nodeIt->z;
-		node.type = nodeIt->type;
-		node.parent = nodeIt->parent;
-		this->nodes.push_front(node);
+		for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+		{
+			NeuronSWC node;
+			node.n = nodeIt->data[0];
+			node.x = nodeIt->data[2];
+			node.y = nodeIt->data[3];
+			node.z = nodeIt->data[4];
+			node.type = nodeIt->data[1];
+			node.parent = nodeIt->data[6];
+			this->nodes.push_front(node);
+		}
 	}
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
-
+	else if (inputV_NeuronSWC.row.begin()->parent == -1) // [Alt + B] generated segment
+	{
+		for (vector<V_NeuronSWC_unit>::const_iterator nodeIt = inputV_NeuronSWC.row.begin(); nodeIt != inputV_NeuronSWC.row.end(); ++nodeIt)
+		{
+			NeuronSWC node;
+			node.n = nodeIt->data[0];
+			node.x = nodeIt->data[2];
+			node.y = nodeIt->data[3];
+			node.z = nodeIt->data[4];
+			node.type = nodeIt->data[1];
+			node.parent = nodeIt->data[6];
+			this->nodes.push_back(node);
+		}
+	}
 	this->head = this->nodes.begin()->n;
+	
+	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
 		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
 		{
 			this->tails.push_back(nodeIt->n);
-			vector<size_t> emptyTailSet;
-			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
+			vector<size_t> emptyChildSet;
+			seg_childLocMap.insert({ nodeIt->n, emptyChildSet });
 		}
 	}
 	
@@ -253,6 +272,51 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 	}
 }
 
+integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength, float segTileLength)
+{
+	if (inputV_NeuronSWC.empty())
+	{
+		cerr << "The input V_NeuronSWC list is empty, profiledTree cannot be initialized." << endl;
+		return;
+	}
+	else
+	{
+		this->segTileSize = segTileLength;
+		this->nodeTileSize = nodeTileLength;
+
+		vector<V_NeuronSWC> displayV_NeuronSWCcopy = inputV_NeuronSWC;
+		for (vector<V_NeuronSWC>::iterator it = displayV_NeuronSWCcopy.begin() + 1; it != displayV_NeuronSWCcopy.end(); ++it)
+		{
+			for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
+			{	
+				// In V_NeuronSWC_unit, all node information is stored in [data].
+				unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];  
+				unitIt->data[6] = unitIt->data[0] + 1;						
+			}
+			(it->row.end() - 1)->data[6] = -1;
+		}
+
+		vector<segUnit> allSegs;
+		for (vector<V_NeuronSWC>::iterator it = displayV_NeuronSWCcopy.begin(); it != displayV_NeuronSWCcopy.end(); ++it)
+		{
+			segUnit newSegUnit(*it);
+			
+			// segID starts from 0 instead of 1 => to be consistent with input vector<V_NeuronSWC>'s subscriptor. 
+			newSegUnit.segID = int(it - displayV_NeuronSWCcopy.begin()); 
+
+			this->segs.insert({ newSegUnit.segID, newSegUnit });
+			allSegs.push_back(newSegUnit);
+			this->tree.listNeuron.append(newSegUnit.nodes);
+		}
+
+		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+
+		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
+		this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
+	}
+}
+
 void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 {
 	if (nodeTileLength == NODE_TILE_LENGTH) return;
@@ -268,6 +332,75 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 			this->nodeTileSize = nodeTileLength;
 			return;
 		}
+	}
+}
+
+void integratedDataTypes::profiledTree::getSegEndClusterNodeMap()
+{
+	if (this->segHeadClusters.empty() && this->segTailClusters.empty())
+	{
+		cerr << "Segment end clusters are empty. Do nothing and return empty map." << endl;
+		return;
+	}
+
+	for (auto& headCluster : this->segHeadClusters)
+	{
+		boost::container::flat_set<vector<float>> headCoords;
+		for (auto& headSeg : headCluster.second)
+		{
+			const NeuronSWC headNode = this->tree.listNeuron.at(this->node2LocMap.at(this->segs.at(headSeg).head));
+			vector<float> headCoord = { headNode.x, headNode.y, headNode.z };
+			headCoords.insert(headCoord);
+		}
+
+		this->segEndClusterNodeMap.insert(pair<int, boost::container::flat_set<vector<float>>>(headCluster.first, headCoords));
+	}
+
+	for (auto& tailCluster : this->segTailClusters)
+	{
+		boost::container::flat_set<vector<float>> tailCoords;
+		for (auto& tailSeg : tailCluster.second)
+		{
+			for (auto& tailID : this->segs.at(tailSeg).tails)
+			{
+				const NeuronSWC tailNode = this->tree.listNeuron.at(this->node2LocMap.at(tailID));
+				vector<float> tailCoord = { tailNode.x, tailNode.y, tailNode.z };
+				tailCoords.insert(tailCoord);
+			}
+		}
+
+		if (this->segEndClusterNodeMap.find(tailCluster.first) == this->segEndClusterNodeMap.end()) 
+			this->segEndClusterNodeMap.insert(pair<int, boost::container::flat_set<vector<float>>>(tailCluster.first, tailCoords));
+		else this->segEndClusterNodeMap[tailCluster.first].insert(tailCoords.begin(), tailCoords.end());
+	}
+
+	// ------- For debug purpose ------- //
+	/*for (auto& cluster : this->segEndClusterNodeMap)
+	{
+		cout << "cluster " << cluster.first << ": " << endl;
+		for (auto& node : cluster.second)
+			cout << "(" << node.at(0) << ", " << node.at(1) << ", " << node.at(2) << ")  ";
+		cout << endl;
+	}*/
+}
+
+void integratedDataTypes::profiledTree::getSegEndClusterCentoirds()
+{
+	if (this->segEndClusterNodeMap.empty()) this->getSegEndClusterNodeMap();
+	
+	for (auto& segEndCluster : this->segEndClusterNodeMap)
+	{
+		vector<float> centroid(3);
+		this->segEndClusterCentroidMap.insert(pair<int, vector<float>>(segEndCluster.first, centroid));
+		integratedDataTypes::segEndClusterCentroid(segEndCluster.second, this->segEndClusterCentroidMap[segEndCluster.first]);
+	}
+
+	if (!NSlibTester::isInstantiated())
+	{
+		NSlibTester::instance();
+		NSlibTester::getInstance()->checkClusterNodeMap(*this, "D:\\Work\\FragTrace\\");
+		NSlibTester::getInstance()->checkClusterCentroidMap(*this, "D:\\Work\\FragTrace\\");
+		NSlibTester::uninstance();
 	}
 }
 

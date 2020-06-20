@@ -44,8 +44,9 @@ public:
 	virtual bool markerMonitorStatus() { return this->uiPtr->groupBox_15->isChecked(); }
 	virtual void sendSelectedMarkers2NA(const QList<ImageMarker>& selectedMarkerList, const QList<ImageMarker>& selectedLocalMarkerList);
 
-	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
-	virtual void connectSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[]);
+	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
+	virtual void connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
+	virtual void exitNAeditingMode();
 /* ============================================= */
 
 

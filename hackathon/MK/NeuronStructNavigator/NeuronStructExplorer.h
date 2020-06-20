@@ -136,7 +136,7 @@ public:
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ currently DEPRECATED ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-	// Like NeuronStructUtil::segUnitConnect_executer, this method currently only supports simple unilateral segments.
+	// Like NeuronStructUtil::segUnitConnect_end2end, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
 
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);

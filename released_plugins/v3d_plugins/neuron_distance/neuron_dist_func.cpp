@@ -25,7 +25,7 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 	SelectNeuronDlg * selectDlg = new SelectNeuronDlg(parent);
 	selectDlg->exec();
 
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1);
+    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1,selectDlg->name_nt1);
 	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
     message += QString("entire-structure-average:from neuron 1 to 2 = %1\n").arg(tmp_score.dist_12_allnodes);
     message += QString("entire-structure-average:from neuron 2 to 1 = %1\n").arg(tmp_score.dist_21_allnodes);
@@ -55,7 +55,7 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	QString name_nt2(inlist->at(1));
 	NeuronTree nt1 = readSWC_file(name_nt1);
 	NeuronTree nt2 = readSWC_file(name_nt2);
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres);
+    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,name_nt1,d_thres);
 
 	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
     cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;

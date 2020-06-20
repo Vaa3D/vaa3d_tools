@@ -40,6 +40,7 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #include "v_neuronswc.h"
 #include <iostream>
 #include "global_feature_compute.h"
+//#define USE_QT5
 
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p);

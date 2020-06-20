@@ -43,7 +43,7 @@ public:
 
 
 	/*************************** Vector Geometry ***************************/
-	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes.
+	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes. The vector = endNode - startNode.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
 	template<typename T> // Get the displacement vector of an input [segUnit] with specified orientation.
@@ -122,13 +122,13 @@ public:
 	// radius -> locations of those nodes on inputPolarNodeList that share the same radius.
 	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList, double thickness = 1);
 	
-	/********************** Polar Coord System Operations ***********************/
+	/* -------------------- Polar Coord System Operations --------------------- */
 	// Returns a map of radius to shell trees. [radiusShellMap_loc] = map of radius to locations of polarNeuronSWC on [inputPolarNodeList].
 	// Note, [radiusShellMap_loc] can be obtained through NeuronGeoGrapher::nodeList2polarNodeList.
 	static boost::container::flat_map<double, NeuronTree> radius2NeuronTreeMap(const boost::container::flat_map<double, boost::container::flat_set<int>>& radiusShellMap_loc, const vector<polarNeuronSWC>& inputPolarNodeList);
 
 	static boost::container::flat_map<double, vector<connectedComponent>> radius2connCompsShell(const boost::container::flat_map<double, NeuronTree>& inputRadius2TreeMap);
-	/****************************************************************************/
+	/* ------------------------------------------------------------------------ */
 	/***********************************************************************/
 
 

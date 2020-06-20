@@ -48,7 +48,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->doubleSpinBox->setRange(-5, 5);
 	//----------------------------------------------------------- //
 
-	QSettings callOldSettings("SEU-Allen", "Fragment tracing");
+	QSettings callOldSettings("Allen-Neuronanatomy", "Neuron Assembler");
 
 	// ------- Image Format and Work Mode ------- //
 	if (callOldSettings.value("terafly") == true)
@@ -176,7 +176,7 @@ FragTraceControlPanel::~FragTraceControlPanel()
 		this->displayingDims = nullptr;
 	}
 
-	this->CViewerPortal->segEditing_setCursor("restore");
+	if (this->CViewerPortal != nullptr) this->CViewerPortal->segEditing_setCursor("restore");
 
 	if (FragTraceTester::isInstantiated()) FragTraceTester::uninstance();
 }
@@ -298,7 +298,7 @@ void FragTraceControlPanel::browseSavePathClicked()
 		this->saveSWCFullName = QFileDialog::getSaveFileName(0, QObject::tr("Save auto-traced neuron"), "",
 			QObject::tr("Supported file extension (*.swc *.eswc)" ";;Neuron structure (*.swc)" ";;Extended neuron structure (*.eswc)"));
 
-		QSettings currSettings("SEU-Allen", "Fragment tracing");
+		QSettings currSettings("Allen-Neuronanatomy", "Neuron Assembler");
 		currSettings.setValue("savePath", this->saveSWCFullName);
 
 		uiPtr->lineEdit->setText(this->saveSWCFullName);
@@ -307,7 +307,7 @@ void FragTraceControlPanel::browseSavePathClicked()
 
 void FragTraceControlPanel::saveSettingsClicked()
 {
-	QSettings settings("Allen-Neuronanatomy", "Fragment tracing");
+	QSettings settings("Allen-Neuronanatomy", "Neuron Assembler");
 	
 	// ------- Image Format and Work Mode ------- //
 	if (uiPtr->checkBox->isChecked())
@@ -401,6 +401,7 @@ void FragTraceControlPanel::eraseButtonClicked()
 {
 	if (uiPtr->pushButton_12->isChecked())
 	{
+		uiPtr->pushButton_13->setChecked(false);
 		this->CViewerPortal->setEraserSize(0);
 		this->CViewerPortal->segEditing_setCursor("erase");
 		this->fragEditorPtr->segMap.clear();
@@ -413,13 +414,20 @@ void FragTraceControlPanel::connectButtonClicked()
 {
 	if (uiPtr->pushButton_13->isChecked())
 	{
+		uiPtr->pushButton_12->setChecked(false);
 		this->CViewerPortal->setConnectorSize(0);
 		this->CViewerPortal->segEditing_setCursor("connect");
 		this->fragEditorPtr->segMap.clear();
 		this->fragEditorPtr->node2segMap.clear();
 	}
 	else this->CViewerPortal->segEditing_setCursor("restore");
+}
 
+void FragTraceControlPanel::exitNAeditingMode()
+{
+	uiPtr->pushButton_12->setChecked(false);
+	uiPtr->pushButton_13->setChecked(false);
+	this->CViewerPortal->segEditing_setCursor("restore");
 }
 /* ====================== END of [User Interface Buttons] ======================= */
 
@@ -427,7 +435,7 @@ void FragTraceControlPanel::connectButtonClicked()
 /* ============================== TRACING INITIALIZING FUNCTION =============================== */
 void FragTraceControlPanel::traceButtonClicked()
 {
-	QSettings currSettings("SEU-Allen", "Fragment tracing");
+	QSettings currSettings("Allen-Neuronanatomy", "Neuron Assembler");
 	if (currSettings.value("savePath").isNull())
 	{
 		cerr << " ==> Result save path not specified. Do nothing and return." << endl;
@@ -918,14 +926,40 @@ void FragTraceControlPanel::sendSelectedMarkers2NA(const QList<ImageMarker>& sel
 	}
 }
 
-void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+void FragTraceControlPanel::eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
-	this->fragEditorPtr->erasingProcess(displayingSegs, nodeCoords);
+	this->fragEditorPtr->erasingProcess(displayingSegs, seg2includedNodeMap);
 }
 
-void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, const float nodeCoords[])
+void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
-	this->fragEditorPtr->connectingProcess(displayingSegs, nodeCoords);
+	this->fragEditorPtr->connectingProcess(displayingSegs, seg2includedNodeMap);
+
+	/*if (!FragTraceTester::isInstantiated())
+	{
+		FragTraceTester::instance(this);
+		set<vector<float>> coords;
+		for (auto& segID : seg2includedNodeMap)
+		{
+			for (auto& node : segID.second)
+			{
+				vector<float> coord;
+				coord.push_back(node.x);
+				coord.push_back(node.y);
+				coord.push_back(node.z);
+				coords.insert(coord);
+			}
+		}
+
+		RGBA8 color;
+		color.r = 255;
+		color.g = 255;
+		color.b = 255;
+
+		FragTraceTester::getInstance()->pushMarkers(coords, color);
+
+		FragTraceTester::uninstance();
+	}*/
 }
 /* =============== END of [Terafly Communicating Methods] =============== */
 

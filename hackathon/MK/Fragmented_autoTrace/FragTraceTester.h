@@ -31,6 +31,8 @@ public:
 						   axonCentroid, axonSkeleton,
 						   denBlob, denPeriBlob, denRaw, denDnSampledRaw, spikeRemove, spikeRootStraighten, hookRemove, denCentroid, denSkeleton };
 
+	void printOutEditSegInfo(const V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& segs2Bedited);
+
 	inline void axonTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 	inline void denTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);
 	inline void generalTreeFormingInterResults(interResultType resultType, const NeuronTree& tree, const QString prefixQ);

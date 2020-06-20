@@ -60,6 +60,12 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 			
 			if (!inputParam.compare("shift_e"))
 			{
+				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+					this->UIinstancePtr->connectButtonClicked();
+				}
+
 				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
 				{
 					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
@@ -71,8 +77,25 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 					this->UIinstancePtr->eraseButtonClicked();
 				}
 			}
+			else if (!inputParam.compare("shift_e_already"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+					this->UIinstancePtr->connectButtonClicked();
+				}
+
+				this->UIinstancePtr->uiPtr->pushButton_12->setChecked(true);
+				this->UIinstancePtr->eraseButtonClicked();
+			}
 			else if (!inputParam.compare("shift_c"))
 			{
+				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+					this->UIinstancePtr->eraseButtonClicked();
+				}
+
 				if (this->UIinstancePtr->uiPtr->pushButton_13->isChecked())
 				{
 					this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
@@ -84,8 +107,25 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 					this->UIinstancePtr->connectButtonClicked();
 				}
 			}
+			else if (!inputParam.compare("shift_c_already"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_12->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+					this->UIinstancePtr->eraseButtonClicked();
+				}
 
-			cout << this->UIinstancePtr->tracedTree.listNeuron.size() << endl;
+				this->UIinstancePtr->uiPtr->pushButton_13->setChecked(true);
+				this->UIinstancePtr->connectButtonClicked();
+			}
+			else if (!inputParam.compare("escape"))
+			{
+				this->UIinstancePtr->uiPtr->pushButton_12->setChecked(false);
+				this->UIinstancePtr->eraseButtonClicked();
+
+				this->UIinstancePtr->uiPtr->pushButton_13->setChecked(false);
+				this->UIinstancePtr->connectButtonClicked();
+			}
 		}
 	}
 	else if (func_name == tr("3DViewer_marker_click"))
@@ -135,14 +175,10 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 			}
 		}
 	}
-	else if (func_name == tr("mouse_click"))
+	else if (func_name == tr("bring_to_the_front"))
 	{
-		if (this->UIinstancePtr != nullptr)
-		{
-			string inputParam = input.at(1).type.toStdString();
-			//cout << inputParam << endl;
-			//system("pause");
-		}
+		this->UIinstancePtr->raise();
+		this->UIinstancePtr->activateWindow();
 	}
 	else if (func_name == tr("help"))
 	{
