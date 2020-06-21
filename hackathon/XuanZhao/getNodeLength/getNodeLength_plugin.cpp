@@ -5,6 +5,7 @@
  
 #include "v3d_message.h"
 #include <vector>
+#include "getnodelengthdialog.h"
 #include "getNodeLength_plugin.h"
 #include "function.h"
 #include <fstream>
@@ -34,7 +35,8 @@ void getNodeLengthPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 {
 	if (menu_name == tr("menu1"))
 	{
-		v3d_msg("To be implemented.");
+        getNodeLengthDialog a = getNodeLengthDialog(parent,callback);
+        a.exec();
 	}
 	else if (menu_name == tr("menu2"))
 	{

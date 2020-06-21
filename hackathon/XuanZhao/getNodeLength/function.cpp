@@ -128,13 +128,13 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
         tmp.parent = listNeuron.at(i).parent;
         tmp.type = listNeuron.at(i).type;
         if(nodeLenth.at(i) >= (1-thre)*maxR){
-            tmp.radius = 10;
+//            tmp.radius = 10;
             numofusefulnode+=1;
         }else {
-            tmp.radius = 1;
+//            tmp.radius = 1;
             numofuselessnode+=1;
         }
-//        tmp.radius = nodeLenth.at(i);
+        tmp.radius = nodeLenth.at(i);
 
         listNeuron.replace(i,tmp);
     }
