@@ -3,6 +3,9 @@
 #include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"
 //#include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/swc_convert.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.h"
+#include "marker_radius.h"
+#include "basic_memory.cpp"
+#include "compute_win_pca.h"
 
 bool Branch::get_r_pointsIndex_of_branch(vector<V3DLONG> &r_points, NeuronTree &nt)
 {
@@ -30,9 +33,15 @@ bool Branch::get_pointsIndex_of_branch(vector<V3DLONG> &points, NeuronTree &nt)
     return true;
 }
 
-bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& nt){
+bool Branch::caculateFeature(unsigned char *data1d, V3DLONG *sz, NeuronTree& nt){
 
     cout<<"------------in calculateFeature---------------"<<endl;
+
+    unsigned char *** data3d = 0;
+    if(!new3dpointer(data3d,sz[0],sz[1],sz[2],data1d)){
+        cout<<"Fail to allocate memory"<<endl;
+        return false;
+    }
 
     QList<NeuronSWC>& listNeuron = nt.listNeuron;
     distance = dis(listNeuron.at(headPointIndex),listNeuron.at(endPointIndex));
@@ -68,6 +77,14 @@ bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& n
     intensityMean += lastIntensity;
 
     Angle lastAngle = Angle(), curAngle = Angle();
+
+    double pc1 = 0, pc2 = 0, pc3 = 0;
+    int rx = 5, ry = 5, rz =5;
+    int pcaCount = 0;
+    if(compute_win3d_pca(data3d,sz[0],sz[1],sz[2],x,y,z,rx,ry,rz,pc1,pc2,pc3,1,false)){
+        sigma12 += pc1/pc2;
+        pcaCount++;
+    }
 
     count++;
 
@@ -120,17 +137,28 @@ bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& n
         gradientMean += abs(curIntensity - lastIntensity);
         lastIntensity = curIntensity;
         count++;
+
+        if(compute_win3d_pca(data3d,sz[0],sz[1],sz[2],x,y,z,rx,ry,rz,pc1,pc2,pc3,1,false)){
+            sigma12 += pc1/pc2;
+            pcaCount++;
+        }
+
         p1 = p2;
     }
 
 //    cout<<"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"<<endl;
 
     if(count>0)
-        intensityMean /= count;
+        intensityMean /= (double) count;
     if(length>0)
         angleChangeMean /= length;
     if(count - 1>0)
-        gradientMean /= (count-1);
+        gradientMean /= (double) (count-1);
+
+    if(pcaCount>0){
+        sigma12 /= (double) pcaCount;
+        sigma13 /= (double) pcaCount;
+    }
 
 //    cout<<"ccccccccccccccccccccccccccccccccccccccccccccc"<<endl;
 
@@ -181,13 +209,20 @@ bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& n
 
 //    cout<<"dddddddddddddddddddddddddddddddddddddddddddddddddddd"<<endl;
 
-    float imageMean = 0;
+    float imageMean = 0 , imageStd = 0;
     V3DLONG totalSz = sz[0]*sz[1]*sz[2];
     for(V3DLONG i=0; i<totalSz; i++){
         imageMean += data1d[i];
     }
     if(totalSz>0)
         imageMean /= (double) totalSz;
+
+    for(V3DLONG i=0; i<totalSz; i++){
+        imageStd += (data1d[i] - imageMean) * (data1d[i] - imageMean);
+    }
+
+    if(totalSz>0)
+        imageStd = sqrt(imageStd/(double) totalSz);
 
     if(imageMean>0){
         intensityRatioToGlobal = intensityMean/imageMean;
@@ -200,13 +235,21 @@ bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& n
     NeuronTree b1 = NeuronTree();
     for(int i=0; i<pointsIndex.size(); i++){
         NeuronSWC tmp = listNeuron.at(pointsIndex.at(i));
-        tmp.r = 1;
+//        tmp.r = 1;
         b1.listNeuron.push_back(tmp);
         b1.hashNeuron.insert(tmp.n,i);
     }
 //    cout<<"1111111111111111111111111111111"<<endl;
 
+    cout<<"imagemean: "<<imageMean<<" imagestd: "<<imageStd<<endl;
+
     vector<MyMarker*> markers1 = swc_convert(b1);
+    double thres = 40;
+    thres = (thres>(imageMean+0.5*imageStd))?thres:(imageMean+0.5*imageStd);
+    for(int i=0; i<markers1.size(); i++){
+        markers1[i]->radius = markerRadius(data1d,sz,*(markers1[i]),thres);
+//        cout<<i<<" : "<<markers1[i]->radius<<endl;
+    }
 
 //    cout<<"2222222222222222222222222222222"<<endl;
 
@@ -253,6 +296,8 @@ bool Branch::caculateFeature(unsigned char *data1d, long long *sz, NeuronTree& n
     }else {
         intensityRationToLocal = 0;
     }
+
+    delete3dpointer(data3d,sz[0],sz[1],sz[2]);
 
 //    cout<<"ffffffffffffffffffffffffffffffffffffffffffffffffff"<<endl;
 
