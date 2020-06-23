@@ -17,7 +17,7 @@ Q_EXPORT_PLUGIN2(getNodeLength, getNodeLengthPlugin);
 QStringList getNodeLengthPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+        <<tr("UtilityTree")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -26,6 +26,8 @@ QStringList getNodeLengthPlugin::funclist() const
 {
 	return QStringList()
         <<tr("getNodeLength")
+        <<tr("UtilityThreshold")
+        <<tr("getUtreeInfolder")
         <<tr("getCurve")
         <<tr("getCurve2")
 		<<tr("help");
@@ -33,10 +35,14 @@ QStringList getNodeLengthPlugin::funclist() const
 
 void getNodeLengthPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("UtilityTree"))
 	{
         getNodeLengthDialog a = getNodeLengthDialog(parent,callback);
         a.exec();
+//        a.setModal(false);
+//        a.show();
+//        a.setAttribute(Qt::WA_DeleteOnClose);
+//        dlg->setAttribute(Qt::WA_DelecteOnClose);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -65,8 +71,35 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         double otherR = (inparas.size()>=3) ? atof(inparas[2]) : 1;
         double thre = (inparas.size()>=4) ? atof(inparas[3]) : 1;
         getNodeLength(nt,maxR,dendritR,otherR,thre);
-        writeSWC_file(swcfile.split(".").at(0)+"_result.swc",nt);
+        writeSWC_file(swcfile.split(".").at(0)+"_max_"+QString::number(maxR)+"_result.swc",nt);
 	}
+    else if (func_name == tr("UtilityThreshold"))
+    {
+        QString swcfile = infiles[0];
+        NeuronTree nt = readSWC_file(swcfile);
+        int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
+        double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        getAxonUtilityTree(nt,maxR,thre);
+        writeSWC_file(swcfile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+    }
+    else if (func_name == tr("getUtreeInfolder")){
+        int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
+        double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        QString dirPath = infiles[0];
+        QStringList nameFilters;
+        nameFilters<<"*.swc";
+
+        QDir dir(dirPath);
+        QStringList swcFiles = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+
+        for(int i=0; i<swcFiles.size(); i++){
+            QString swcFile = dirPath + '\\' + swcFiles[i];
+            NeuronTree nt = readSWC_file(swcFile);
+            getAxonUtilityTree(nt,maxR,thre);
+            writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+        }
+
+    }
     else if (func_name == tr("getCurve"))
 	{
         QString swcfile = infiles[0];

@@ -127,14 +127,16 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
         tmp.n = listNeuron.at(i).n;
         tmp.parent = listNeuron.at(i).parent;
         tmp.type = listNeuron.at(i).type;
-        if(nodeLenth.at(i) >= (1-thre)*maxR){
+//        if(nodeLenth.at(i) >= (thre)){
 //            tmp.radius = 10;
-            numofusefulnode+=1;
-        }else {
+//            numofusefulnode+=1;
+//        }else {
 //            tmp.radius = 1;
-            numofuselessnode+=1;
-        }
+//            numofuselessnode+=1;
+//        }
         tmp.radius = nodeLenth.at(i);
+        if(tmp.radius<1)
+            tmp.radius=1;
 
         listNeuron.replace(i,tmp);
     }
@@ -289,7 +291,171 @@ double getNodeLength2(NeuronTree& nt,int maxR,double axonR, double dendritR, dou
     cout<<"when key ratio is "<<thre<<",#percent="<<useratio<<endl;
 
 }
+double getAxonUtilityTree(NeuronTree &in_nt, int maxR,double thre)
+{
+//    int maxR = 100;
 
+    NeuronTree nt;
+//    int index = 0;
+
+    for(int i=0; i<in_nt.listNeuron.size(); i++){
+        if(in_nt.listNeuron[i].type == 2){
+            NeuronSWC node = in_nt.listNeuron[i];
+            int prtIndex = in_nt.hashNeuron.value(node.parent);
+            if(in_nt.listNeuron[prtIndex].type != 2){
+                node.parent = -1;
+            }
+            nt.listNeuron.push_back(node);
+        }
+    }
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        nt.hashNeuron.insert(nt.listNeuron[i].n,i);
+    }
+
+    QList<NeuronSWC>& listNeuron =  nt.listNeuron;
+    QHash<int,int>& hN = nt.hashNeuron;
+    int pointNum = listNeuron.size();
+
+    SwcTree t;
+    t.initialize(nt);
+
+    vector<double> nodeLenth = vector<double>(pointNum,0);
+    vector<int> nodeLevel = vector<int>(pointNum,0);
+
+    for(int i=0; i<t.branchs.size(); i++){
+        vector<int> indexs = vector<int>();
+        t.branchs[i].get_points_of_branch(indexs,nt);
+//        cout<<"i: "<<i<<" level: "<<t.branchs[i].level<<endl;
+        for(int j=1; j<indexs.size(); j++){
+            nodeLevel[indexs[j]] = t.branchs[i].level;
+        }
+    }
+
+
+
+
+    vector<vector<int> > child = vector<vector<int> >(pointNum,vector<int>());
+    vector<int> roots = vector<int>();
+    for(int i=0; i<pointNum; i++){
+        const NeuronSWC& p = listNeuron[i];
+        V3DLONG prt = p.parent;
+        if(prt != -1 && hN.contains(prt)){
+            int prtIndex = hN.value(prt);
+            child[prtIndex].push_back(i);
+        }else {
+            roots.push_back(i);
+        }
+    }
+
+    vector<int> tips = vector<int>();
+
+    nodeLevel[roots[0]] = -1;
+
+    int maxLevel = t.get_max_level();
+    cout<<"maxLevel: "<<maxLevel<<endl;
+    double ratio = 1;
+
+    while (maxLevel>=0) {
+        cout<<"level: "<<maxLevel<<endl;
+        if(maxLevel<0)
+            break;
+        for(int i=0; i<pointNum; i++){
+            if(child[i].size() != 1 && nodeLevel[i] == maxLevel){
+                tips.push_back(i);
+            }
+        }
+
+
+        cout<<"tips size:"<<tips.size()<<endl;
+
+
+        for(int i=0; i<tips.size(); i++){
+            int temp = tips[i];
+            if(child[temp].size()>1){
+                if(listNeuron[temp].type == 2){
+                    ratio = 1;
+                }else {
+                    ratio = 0;
+                }
+                for(int j=0; j<child[temp].size(); j++){
+                    int cIndex = child[temp][j];
+                    nodeLenth[temp] += (dis(listNeuron[cIndex],listNeuron[temp])*ratio+nodeLenth[cIndex]);
+                }
+            }else if(child[temp].size() == 0){
+                if(listNeuron[temp].type == 2)
+                    nodeLenth[temp] = 1;
+                else
+                    nodeLenth[temp] = 0;
+            }
+            int prtIndex = hN.value(listNeuron[temp].parent);
+
+            while (child[prtIndex].size() == 1 && listNeuron[prtIndex].parent != -1) {
+                if(listNeuron[temp].type == 2){
+                    ratio = 1;
+                }else {
+                    ratio = 0;
+                }
+                nodeLenth[prtIndex] += (dis(listNeuron[temp],listNeuron[prtIndex])*ratio + nodeLenth[temp]);
+                temp = prtIndex;
+                prtIndex = hN.value(listNeuron[temp].parent);
+            }
+        }
+        cout<<"level end one-----------"<<endl;
+        tips.clear();
+        maxLevel--;
+    }
+
+    cout<<"start cal root length"<<endl;
+
+//    double max = 0;
+
+
+    for(int i=0; i<child[roots[0]].size(); i++){
+        int cIndex = child[roots[0]][i];
+//        if(max<nodeLenth.at(cIndex)){
+//            max = nodeLenth.at(cIndex);
+//        }
+        nodeLenth[roots[0]] += (dis(listNeuron[roots[0]],listNeuron[cIndex]) + nodeLenth[cIndex]);
+    }
+//    nodeLenth.at(roots.at(0)) = max + 1;
+
+    cout<<"--------------length cal end---------------"<<endl;
+
+    double maxLength = nodeLenth[roots[0]];
+    NeuronTree nt1 =NeuronTree();
+    int count = 0;
+    for(int i=0; i<pointNum; i++){
+//        cout<<"i: "<<i<<endl;
+        if(listNeuron[i].type == 2 || listNeuron[i].type == 1){
+            nodeLenth[i] = (nodeLenth[i]/maxLength)*maxR;
+            NeuronSWC tmp;
+            tmp.x = listNeuron[i].x;
+            tmp.y = listNeuron[i].y;
+            tmp.z = listNeuron[i].z;
+            tmp.n = listNeuron[i].n;
+            tmp.parent = listNeuron[i].parent;
+            tmp.type = listNeuron[i].type;
+            if(nodeLenth[i] >= thre){
+                tmp.radius = nodeLenth[i];
+                nt1.listNeuron.push_back(tmp);
+                nt1.hashNeuron.insert(tmp.n,count);
+                count++;
+            }
+        }
+
+//        listNeuron.replace(i,tmp);
+    }
+
+    in_nt.listNeuron.clear();
+    in_nt.hashNeuron.clear();
+    in_nt.deepCopy(nt1);
+
+//    double useratio = numofusefulnode/(double)(numofusefulnode+numofuselessnode);
+
+//    return useratio;
+
+//    cout<<"when key ratio is "<<thre<<",#percent="<<useratio<<endl;
+}
 double getAxonNodeLength(NeuronTree &in_nt, double thre){
     cout<<"---------------in getAxonNodeLength-----------------"<<endl;
 

@@ -12,7 +12,7 @@ getNodeLengthDialog::getNodeLengthDialog(QWidget* parent, V3DPluginCallback2& ca
 
     slider = new QSlider(Qt::Horizontal);
     slider->setMinimum(0);
-    slider->setMaximum(100);
+    slider->setMaximum(1000);
     slider->setValue(1);
 
     connect(slider,SIGNAL(valueChanged(int)),this,SLOT(setLineEditValue(int)));
@@ -31,6 +31,7 @@ getNodeLengthDialog::getNodeLengthDialog(QWidget* parent, V3DPluginCallback2& ca
 
     setLayout(layout);
     setWindowTitle(QObject::tr("set threshold"));
+//    setWindowFlags();
 }
 
 void getNodeLengthDialog::readSWC(){
@@ -39,7 +40,7 @@ void getNodeLengthDialog::readSWC(){
     nt = readSWC_file(swcPath);
 
     cur = callback->open3DViewerForSingleSurfaceFile(swcPath);
-
+    callback->setHideDisplayControlButton(cur);
 }
 
 void getNodeLengthDialog::setLineEditValue(int value){
@@ -53,12 +54,14 @@ void getNodeLengthDialog::setLineEditValue(int value){
     QList<NeuronTree>* trees =  callback->getHandleNeuronTrees_Any3DViewer(cur);
     cout<<"------------------------aaaaaaaaaaaaaaaaaa----------"<<endl;
     cout<<"tree size: "<<trees->size()<<endl;
+    double dpos=double(pos)/10;
+    cout<<"pos: "<<dpos<<endl;
     NeuronTree& t = (*trees)[0];
     for(int i=0; i<nt.listNeuron.size(); i++){
-        if(nt.listNeuron.at(i).r>=pos){
-            t.listNeuron[i].r = 10;
+        if(nt.listNeuron.at(i).r>=dpos){
+            t.listNeuron[i].r = 5;
         }else {
-            t.listNeuron[i].r = 1;
+            t.listNeuron[i].r = 0;
         }
     }
     callback->update_3DViewer(cur);
