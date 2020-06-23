@@ -57,7 +57,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         unsigned char* data1d = 0;
         V3DLONG* sz = 0;
-        datatype = 0;
+        int datatype = 0;
         simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
         enhanceImage(data1d,sz);
         simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),data1d,sz,datatype);
