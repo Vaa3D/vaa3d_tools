@@ -3,7 +3,7 @@
 
 #define MAINVERSION_NUM 1
 #define SUBVERSION_NUM 2
-#define PATCHVERSION_NUM 5
+#define PATCHVERSION_NUM 7
 
 #define __ACTIVATE_TESTER__
 

@@ -10,12 +10,9 @@ using NSlibTester = NeuronStructNavigator::Tester;
 
 void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
-	/*for (auto& seg : seg2includedNodeMap)
-	{
-		cout << "segID: " << seg.first << " -- ";
-		for (auto& node : seg.second) cout << node.n << " ";
-		cout << endl;
-	}*/
+	//set<int> segIDs;
+	//for (auto& idPair : seg2includedNodeMap) segIDs.insert(idPair.first);
+	//FragTraceTester::getInstance()->printOutEditSegInfo(displayingSegs, segIDs);
 
 	if (seg2includedNodeMap.size() != 2)
 	{
@@ -61,6 +58,8 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 		continue;
 	}
 
+	//vector<segUnit> segUnits = { currDisplayProfiledTree.segs.at(segConnectOris.at(0).first), currDisplayProfiledTree.segs.at(segConnectOris.at(1).first) };
+	//FragTraceTester::getInstance()->printOutEditSegInfo(segUnits);
 	segUnit newSeg;
 	int bodySegID, segEndNodeID;
 	if (connectCase == 2)
@@ -188,6 +187,8 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 
 vector<float> FragmentEditor::getSegEndPointingVec(const segUnit& inputSeg, const int endNodeID, int nodeNum)
 {
+	//FragTraceTester::getInstance()->printOutTerminalSegInfo(inputSeg);
+
 	vector<float> outputVec(3);
 	
 	if (inputSeg.nodes.isEmpty())
@@ -202,8 +203,7 @@ vector<float> FragmentEditor::getSegEndPointingVec(const segUnit& inputSeg, cons
 		const NeuronSWC& headNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(endNodeID));
 		while (nodeCount <= nodeNum)
 		{ 
-			if (inputSeg.seg_childLocMap.at(paNodeID).size() > 1 || 
-				inputSeg.seg_childLocMap.find(paNodeID) == inputSeg.seg_childLocMap.end())
+			if (inputSeg.seg_childLocMap.at(paNodeID).empty() || inputSeg.seg_childLocMap.at(paNodeID).size() > 1) // branching or segment tail
 			{
 				outputVec[0] = headNode.x - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).x;
 				outputVec[1] = headNode.y - inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(paNodeID)).y;

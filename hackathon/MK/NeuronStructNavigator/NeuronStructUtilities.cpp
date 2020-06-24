@@ -37,6 +37,8 @@ using namespace boost;
 /* ======================================== Segment Operations ========================================= */
 segUnit NeuronStructUtil::segUnitConnect_end2end(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
 {
+	// connecting FROM segUnit1 TO segUnit2.
+
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
 		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");
 
@@ -81,6 +83,7 @@ segUnit NeuronStructUtil::segUnitConnect_end2end(const segUnit& segUnit1, const 
 			else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
 			endEditedNodes.push_back(newNode);
 		}
+
 		int editedSegSize = endEditedNodes.size();
 		newSegNodes.append(endEditedNodes);
 		newSegNodes.append(segUnit1.nodes);
@@ -587,7 +590,7 @@ void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNo
 {
 	// This method profiles node-location node-child_location of a given NeuronTree.
 	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
-	// However, any tip node will not have an entry in node2childLocMap.
+	// However, any tip node WILL NOT have an entry in node2childLocMap.
 
 	nodeLocMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)

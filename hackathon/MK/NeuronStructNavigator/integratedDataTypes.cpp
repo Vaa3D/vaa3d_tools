@@ -54,12 +54,18 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 			node.y = nodeIt->data[3];
 			node.z = nodeIt->data[4];
 			node.type = nodeIt->data[1];
-			node.parent = nodeIt->data[6];
-			this->nodes.push_back(node);
+			node.parent = node.n + 1;
+			this->nodes.push_front(node);
 		}
+		this->nodes.begin()->parent = -1;
 	}
 	this->head = this->nodes.begin()->n;
 	
+	/******************************************************************************************************/
+	// Important Note: 
+	//   [segUnit.seg_childLocMap] does NOT have tail node registered freshly coming out of [NeuronStructUtil::node2loc_node2childLocMap].
+	//   Adding tail nodes into the map with empty child locations here for the purpose of 
+	//   avoiding memory violations by accessing non-existent pair in the map.
 	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
@@ -70,6 +76,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 			seg_childLocMap.insert({ nodeIt->n, emptyChildSet });
 		}
 	}
+	/******************************************************************************************************/
 	
 	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
 }
@@ -287,13 +294,27 @@ integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& input
 		vector<V_NeuronSWC> displayV_NeuronSWCcopy = inputV_NeuronSWC;
 		for (vector<V_NeuronSWC>::iterator it = displayV_NeuronSWCcopy.begin() + 1; it != displayV_NeuronSWCcopy.end(); ++it)
 		{
-			for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
-			{	
-				// In V_NeuronSWC_unit, all node information is stored in [data].
-				unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];  
-				unitIt->data[6] = unitIt->data[0] + 1;						
+			// In V_NeuronSWC_unit, all node information is stored in [data].
+			//if (it->row.begin()->data[6] == -1) reverse(it->row.begin(), it->row.end());
+
+			if ((it->row.end() - 1)->data[6] == -1)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
+				{
+					unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];
+					unitIt->data[6] = unitIt->data[0] + 1;
+				}
+				(it->row.end() - 1)->data[6] = -1;
 			}
-			(it->row.end() - 1)->data[6] = -1;
+			else if (it->row.begin()->data[6] == -1)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
+				{
+					unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];
+					unitIt->data[6] = unitIt->data[0] - 1;
+				}
+				it->row.begin()->data[6] = -1;
+			}
 		}
 
 		vector<segUnit> allSegs;
