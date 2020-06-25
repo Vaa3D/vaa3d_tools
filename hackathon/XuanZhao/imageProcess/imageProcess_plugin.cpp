@@ -22,7 +22,7 @@ QStringList TestPlugin::funclist() const
 {
 	return QStringList()
         <<tr("enhanceImage")
-		<<tr("func2")
+        <<tr("get_2d_image")
 		<<tr("help");
 }
 
@@ -54,17 +54,18 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         QString imgPath = infiles[0];
         QString imgNewPath = imgPath.split('.')[0] + "_result.v3draw";
+        qDebug()<<imgNewPath;
 
         unsigned char* data1d = 0;
-        V3DLONG* sz = 0;
+        V3DLONG sz[4] = {0,0,0,0};
         int datatype = 0;
         simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
         enhanceImage(data1d,sz);
         simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),data1d,sz,datatype);
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("get_2d_image"))
 	{
-		v3d_msg("To be implemented.");
+        get_2d_image(input,output,callback);
 	}
 	else if (func_name == tr("help"))
 	{
