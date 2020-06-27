@@ -6,13 +6,16 @@
 #include "v3d_message.h"
 #include <vector>
 #include "Retrace_plugin.h"
+
+#include "retracedialog.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(Retrace, RetracePlugin);
  
 QStringList RetracePlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+        <<tr("Retrace")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -27,9 +30,10 @@ QStringList RetracePlugin::funclist() const
 
 void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("Retrace"))
 	{
-		v3d_msg("To be implemented.");
+        RetraceDialog dlg = RetraceDialog(parent,callback);
+        dlg.exec();
 	}
 	else if (menu_name == tr("menu2"))
 	{
