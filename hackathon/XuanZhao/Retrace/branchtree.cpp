@@ -6,12 +6,12 @@ using namespace std;
 
 bool Branch::get_r_pointsIndex_of_branch(vector<V3DLONG> &r_points, NeuronTree &nt)
 {
-    qDebug()<<"headPointIndex: "<<headPointIndex<<" endPointIndex: "<<endPointIndex;
+//    qDebug()<<"headPointIndex: "<<headPointIndex<<" endPointIndex: "<<endPointIndex;
     int tmp = endPointIndex;
     r_points.push_back(tmp);
     while(tmp != headPointIndex)
     {
-        qDebug()<<"tmp: "<<tmp;
+//        qDebug()<<"tmp: "<<tmp;
         tmp = nt.hashNeuron.value(nt.listNeuron[tmp].parent);
         r_points.push_back(tmp);
     }

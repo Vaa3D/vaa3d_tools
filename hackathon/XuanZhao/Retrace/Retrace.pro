@@ -17,13 +17,15 @@ HEADERS	+= Retrace_plugin.h \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h \
     retracefunction.h \
     branchtree.h \
-    retracedialog.h
+    retracedialog.h \
+    swc_convert.h
 SOURCES	+= Retrace_plugin.cpp \
     app2.cpp \
     imgpreprocess.cpp \
     retracefunction.cpp \
     branchtree.cpp \
-    retracedialog.cpp
+    retracedialog.cpp \
+    swc_convert.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
@@ -31,7 +33,6 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$VAA3DPATH/v3d_main/neuron_editing/neuron_sim_scores.cpp
 SOURCES += $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.cpp
 SOURCES += $$VAA3DPATH/v3d_main/neuron_editing/global_feature_compute.cpp
-SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.cpp
 
 TARGET	= $$qtLibraryTarget(Retrace)
 DESTDIR	= $$VAA3DPATH/bin/plugins/Retrace/
