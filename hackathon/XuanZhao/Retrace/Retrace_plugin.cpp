@@ -9,6 +9,7 @@
 
 #include "retracedialog.h"
 #include "app2.h"
+//#include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Retrace, RetracePlugin);
@@ -18,6 +19,8 @@ QStringList RetracePlugin::menulist() const
 	return QStringList() 
         <<tr("Retrace")
         <<tr("app2Convenient")
+        <<tr("app2Terafly")
+        <<tr("app2TeraflyWithPara")
 		<<tr("about");
 }
 
@@ -67,22 +70,44 @@ void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         NeuronTree nt = readSWC_file(swcFile);
         v3dhandle curwin = callback.currentImageWindow();
         callback.setSWC(curwin,nt);
-//        QString imageName = callback.getImageName(curwin);
         callback.open3DWindow(curwin);
         callback.getView3DControl(curwin)->updateWithTriView();
-//        V3dR_MainWindow* cur3d =  callback.find3DViewerByName(imageName);
-//        QList <NeuronTree> * trees = callback.getHandleNeuronTrees_Any3DViewer(cur3d);
-//        trees->clear();
-//        for(int i=0; i<p.result.listNeuron.size(); i++){
-//            qDebug()<<"before i: "<<i<<" type: "<<p.result.listNeuron[i].type;
-//        }
-//        trees->append(p.result);
-//        for(int i=0; i<trees->at(0).listNeuron.size(); i++){
-//            qDebug()<<"after i: "<<i<<" type: "<<p.result.listNeuron[i].type;
-//        }
-//        callback.update_3DViewer(cur3d);
 
 	}
+    else if (menu_name == "app2Terafly") {
+        app2Terafly(2,false,callback);
+    }
+    else if (menu_name == "app2TeraflyWithPara") {
+
+        QDialog* dlg = new QDialog(parent);
+
+        QLineEdit* typeEdit = new QLineEdit("2");
+        QCheckBox* thresholdBox = new QCheckBox();
+        QGridLayout* layout = new QGridLayout;
+        layout->addWidget(new QLabel("type: "),1,1);
+        layout->addWidget(typeEdit,1,2);
+        layout->addWidget(new QLabel("SimpleThreshold "),2,1);
+        layout->addWidget(thresholdBox);
+
+        QPushButton* start = new QPushButton("Start");
+        QPushButton* cancel = new QPushButton("Cancel");
+
+        connect(start, SIGNAL(clicked()), dlg, SLOT(accept()));
+        connect(cancel, SIGNAL(clicked()), dlg, SLOT(reject()));
+        layout->addWidget(cancel,3,1);
+        layout->addWidget(start,3,2);
+
+        dlg->setLayout(layout);
+        int type;
+        bool threshold;
+
+        if(dlg->exec() != QDialog::Accepted) return;
+
+
+        type = typeEdit->text().toInt();
+        threshold = thresholdBox->isChecked();
+        app2Terafly(type,threshold,callback);
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "

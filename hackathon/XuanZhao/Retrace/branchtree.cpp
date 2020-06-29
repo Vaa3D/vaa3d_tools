@@ -62,7 +62,7 @@ bool BranchTree::initialize(NeuronTree t)
         V3DLONG tmp=queue.front();
         queue.erase(queue.begin());
         vector<V3DLONG>& child = children.at(tmp);
-        cout<<"child size: "<<child.size()<<endl;
+//        cout<<"child size: "<<child.size()<<endl;
         for(int i=0;i<child.size();++i)
         {
             Branch branch;
