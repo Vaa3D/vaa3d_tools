@@ -92,6 +92,8 @@ void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iIma
     }
 }
 
+XYZ getLineDirection(const vector<NeuronSWC> &points);
+
 bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result);
 
 //bool operator<(const Triple& p1, const Triple& p2);
@@ -121,6 +123,8 @@ void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres);
 
 NeuronTree retrace(QString apoPath, QString eswcPath, QString brainDir, int resolution, V3DPluginCallback2 &callback);
 
-void app2Terafly(int type, bool threshold, V3DPluginCallback2& callback);
+void app2Terafly(int type, bool threshold, int app2Th, V3DPluginCallback2& callback, QWidget *parent);
+
+void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& callback, QWidget *parent);
 
 #endif // RETRACEFUNCTION_H

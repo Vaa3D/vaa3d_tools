@@ -20,7 +20,9 @@ QStringList RetracePlugin::menulist() const
         <<tr("Retrace")
         <<tr("app2Convenient")
         <<tr("app2Terafly")
+        <<tr("app2MultiTerafly")
         <<tr("app2TeraflyWithPara")
+        <<tr("app2MultiTeraflyWithPara")
 		<<tr("about");
 }
 
@@ -75,38 +77,81 @@ void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 	}
     else if (menu_name == "app2Terafly") {
-        app2Terafly(2,false,callback);
+        app2Terafly(2,false,-1,callback,parent);
+    }
+    else if (menu_name == "app2MultiTerafly") {
+        app2MultiTerafly(2,false,-1,callback,parent);
     }
     else if (menu_name == "app2TeraflyWithPara") {
 
         QDialog* dlg = new QDialog(parent);
 
         QLineEdit* typeEdit = new QLineEdit("2");
+        QLineEdit* app2ThEdit = new QLineEdit("10");
         QCheckBox* thresholdBox = new QCheckBox();
         QGridLayout* layout = new QGridLayout;
         layout->addWidget(new QLabel("type: "),1,1);
         layout->addWidget(typeEdit,1,2);
-        layout->addWidget(new QLabel("SimpleThreshold "),2,1);
-        layout->addWidget(thresholdBox);
+        layout->addWidget(new QLabel("app2 threshold: "),2,1);
+        layout->addWidget(app2ThEdit,2,2);
+        layout->addWidget(new QLabel("SimpleThreshold "),3,1);
+        layout->addWidget(thresholdBox,3,2);
 
         QPushButton* start = new QPushButton("Start");
         QPushButton* cancel = new QPushButton("Cancel");
 
         connect(start, SIGNAL(clicked()), dlg, SLOT(accept()));
         connect(cancel, SIGNAL(clicked()), dlg, SLOT(reject()));
-        layout->addWidget(cancel,3,1);
-        layout->addWidget(start,3,2);
+        layout->addWidget(cancel,4,1);
+        layout->addWidget(start,4,2);
 
         dlg->setLayout(layout);
         int type;
         bool threshold;
+        int app2Th;
 
         if(dlg->exec() != QDialog::Accepted) return;
 
 
         type = typeEdit->text().toInt();
+        app2Th = app2ThEdit->text().toInt();
         threshold = thresholdBox->isChecked();
-        app2Terafly(type,threshold,callback);
+        app2Terafly(type,threshold,app2Th,callback,parent);
+    }
+    else if (menu_name == "app2MultiTeraflyWithPara") {
+        QDialog* dlg = new QDialog(parent);
+
+        QLineEdit* typeEdit = new QLineEdit("2");
+        QLineEdit* app2ThEdit = new QLineEdit("10");
+        QCheckBox* thresholdBox = new QCheckBox();
+        QGridLayout* layout = new QGridLayout;
+        layout->addWidget(new QLabel("type: "),1,1);
+        layout->addWidget(typeEdit,1,2);
+        layout->addWidget(new QLabel("app2 threshold: "),2,1);
+        layout->addWidget(app2ThEdit,2,2);
+        layout->addWidget(new QLabel("SimpleThreshold "),3,1);
+        layout->addWidget(thresholdBox,3,2);
+
+        QPushButton* start = new QPushButton("Start");
+        QPushButton* cancel = new QPushButton("Cancel");
+
+        connect(start, SIGNAL(clicked()), dlg, SLOT(accept()));
+        connect(cancel, SIGNAL(clicked()), dlg, SLOT(reject()));
+        layout->addWidget(cancel,4,1);
+        layout->addWidget(start,4,2);
+
+        dlg->setLayout(layout);
+        int type;
+        bool threshold;
+        int app2Th;
+
+        if(dlg->exec() != QDialog::Accepted) return;
+
+
+        type = typeEdit->text().toInt();
+        app2Th = app2ThEdit->text().toInt();
+        threshold = thresholdBox->isChecked();
+        app2MultiTerafly(type,threshold,app2Th,callback,parent);
     }
 	else
 	{

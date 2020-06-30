@@ -150,6 +150,28 @@ NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees){
     return merge;
 }
 
+XYZ getLineDirection(const vector<NeuronSWC> &points){
+    if(points.size() == 0 || points.size() == 1){
+        return XYZ(-1,-1,-1);
+    }
+
+    XYZ p0(points[0].x,points[0].y,points[0].z);
+    int count = 0;
+    float x = 0, y = 0, z = 0;
+    for(int i=1; i<points.size(); i++){
+        x += points[i].x;
+        y += points[i].y;
+        z += points[i].z;
+        count++;
+
+        if(count>=5){
+            break;
+        }
+    }
+    XYZ p1(x/count,y/count,z/count);
+    return p1-p0;
+}
+
 void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres){
     BranchTree tb = BranchTree();
     tb.initialize(target);
@@ -169,8 +191,18 @@ void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres){
         }
     }
 
+    vector<NeuronSWC> oriLine;
+    for(int i=0; i<ori.listNeuron.size(); i++){
+        oriLine.push_back(ori.listNeuron[i]);
+    }
+
+    XYZ p = getLineDirection(oriLine);
+    if(p == XYZ(-1,-1,-1))
+        return;
+
     vector<bool> branchDFlag = vector<bool>(tb.branchs.size(),false);
     double d[2];
+    double dire[2];
 
     for(int i=0; i<2; i++){
 
@@ -188,7 +220,7 @@ void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres){
             double pToSwc = dist_pt_to_swc(XYZ(p.x,p.y,p.z),&ori);
             d[i] += pToSwc;
             count++;
-            if(j > 3)
+            if(j >= 5)
                 break;
         }
         d[i] /= count;
@@ -196,11 +228,24 @@ void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres){
 
         qDebug()<<"count: "<<count<<" d: "<<d[i];
 
+        vector<NeuronSWC> points;
+        for(int j=0; j<pointsIndex.size(); j++){
+            points.push_back(target.listNeuron[pointsIndex[j]]);
+        }
+        XYZ p1 = getLineDirection(points);
+        if(p1 == XYZ(-1,-1,-1)){
+            dire[i] = -1;
+        }else {
+            dire[i] = dot(p,p1)/(norm(p)*norm(p1));
+        }
+
+
 //        if(d<thres){
 //            branchDFlag[level0Index[i]] = true;
 //        }
     }
-    int si = d[0]>d[1]?1:0;
+//    int si = d[0]>d[1]?1:0;
+    int si = dire[0]>dire[1] ? 0 : 1;
     branchDFlag[level0Index[si]] = true;
 
 
@@ -382,7 +427,10 @@ NeuronTree retrace(QString apoPath, QString eswcPath, QString brainDir, int reso
     return merge;
 }
 
-void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
+void app2Terafly(int type, bool threshold, int app2Th, V3DPluginCallback2 &callback, QWidget *parent){
+
+
+
     const Image4DSimple* image = callback.getImageTeraFly();
     qDebug()<<"x: "<<image->getXDim()<<" y: "<<image->getYDim()<<" z: "<<image->getZDim();
 
@@ -390,6 +438,9 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
     qDebug()<<"file name: "<<fileName;
     QStringList ls = fileName.split(',');
     qDebug()<<ls[2].split('[')[1]<<" "<<ls[3].split(']')[0]<<" "<<ls[4].split('[')[1]<<" "<<ls[5].split(']')[0]<<" "<<ls[6].split('[')[1]<<" "<<ls[7].split(']')[0];
+
+//    V3dR_MainWindow cur = callback.find3DViewerByName(fileName);
+
 
 
     int dim = ls[1].split('x')[1].toInt();
@@ -430,23 +481,48 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
 
     double times = sz[1]/(double) dim;
     NeuronTree nt = callback.getSWCTeraFly();
+    if(!nt.listNeuron.isEmpty()){
+        nt.hashNeuron.clear();
+        for(int i=0; i<nt.listNeuron.size(); i++){
+            nt.hashNeuron.insert(nt.listNeuron[i].n,i);
+        }
+    }
+
 
     double minD = INT_MAX;
     int minIndex = -1;
     LocationSimple& s = app2Markers[0];
-    for(int i=0; i<nt.listNeuron.size(); i++){
-        double d = dist_L2(XYZ(s.x-1, s.y-1 , s.z-1),XYZ(nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z));
-        if(d<minD){
-            minD = d;
-            minIndex = i;
+    if(!nt.listNeuron.isEmpty()){
+        for(int i=0; i<nt.listNeuron.size(); i++){
+            double d = dist_L2(XYZ(s.x-1, s.y-1 , s.z-1),XYZ(nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z));
+            if(d<minD){
+                minD = d;
+                minIndex = i;
+            }
         }
     }
+
+    NeuronTree nt1;
+    bool isDelete = false;
+
 
     if(minD<20 && minIndex != -1){
         s.x = nt.listNeuron[minIndex].x + 1;
         s.y = nt.listNeuron[minIndex].y + 1;
         s.z = nt.listNeuron[minIndex].z + 1;
+        isDelete = true;
+        NeuronSWC tmp = nt.listNeuron[minIndex];
+        int count = 0;
+        while(tmp.parent != -1){
+            nt1.listNeuron.append(tmp);
+            int prtIndex = nt.hashNeuron.value(tmp.parent);
+            tmp = nt.listNeuron[prtIndex];
+            count++;
+            if(count>10)
+                break;
+        }
     }
+    qDebug()<<"nt1 size:"<<nt1.listNeuron.size();
 
     LocationSimple m;
     m.x = s.x/times - x0;
@@ -474,7 +550,7 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
 
     imageCopy->setData(pdata,image->getXDim(),image->getYDim(),image->getZDim(),image->getCDim(),image->getDatatype());
     p.p4dImage = imageCopy;
-    p.bkg_thresh = -1;
+    p.bkg_thresh = app2Th;
     p.landmarks.append(m);
 
     for(int i=1; i<app2Markers.size(); i++){
@@ -485,10 +561,49 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
         p.landmarks.append(mm);
     }
 
-    p.xc0 = p.yc0 = p.zc0 = 0;
-    p.xc1 = p.p4dImage->getXDim()-1;
-    p.yc1 = p.p4dImage->getYDim()-1;
-    p.zc1 = p.p4dImage->getZDim()-1;
+
+    v3dhandle curwin = callback.currentImageWindow();
+    View3DControl * view3d = callback.getView3DControl(curwin);
+    V3DLONG in_sz0[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+    if(!view3d){
+        p.xc0 = p.yc0 = p.zc0 = 0;
+        p.xc1 = p.p4dImage->getXDim()-1;
+        p.yc1 = p.p4dImage->getYDim()-1;
+        p.zc1 = p.p4dImage->getZDim()-1;
+        qDebug()<<"no view 3d";
+    }else{
+        qDebug()<<" xc0: "<<view3d->xCut0()<<" xc1: "<<view3d->xCut1()
+               <<" yc0: "<<view3d->yCut0()<<" yc1: "<<view3d->yCut1()
+              <<" zc0: "<<view3d->zCut0()<<" zc1: "<<view3d->zCut1();
+        V3DLONG view3d_datasz0 = view3d->dataDim1();
+        V3DLONG view3d_datasz1 = view3d->dataDim2();
+        V3DLONG view3d_datasz2 = view3d->dataDim3();
+
+        qDebug()<<"view3d_datasz0： "<<view3d_datasz0<<" view3d_datasz1： "<<view3d_datasz1<<" view3d_datasz2： "<<view3d_datasz2;
+
+        p.xc0 = int(double(view3d->xCut0()) * in_sz0[0] / view3d_datasz0 + 0.5);
+        p.xc1 = int(double(view3d->xCut1()) * in_sz0[0] / view3d_datasz0 + 0.5);
+        if (p.xc1>in_sz0[0]-1) p.xc1 = in_sz0[0]-1;
+        //xc1 = in_sz0[0]-1;//for debug purpose. 130102
+
+        p.yc0 = int(double(view3d->yCut0()) * in_sz0[1] / view3d_datasz1 + 0.5);
+        p.yc1 = int(double(view3d->yCut1()) * in_sz0[1] / view3d_datasz1 + 0.5);
+        if (p.yc1>in_sz0[1]-1) p.yc1 = in_sz0[1]-1;
+
+        p.zc0 = int(double(view3d->zCut0()) * in_sz0[2] / view3d_datasz2 + 0.5);
+        p.zc1 = int(double(view3d->zCut1()) * in_sz0[2] / view3d_datasz2 + 0.5);
+        if (p.zc1>in_sz0[2]-1) p.zc1 = in_sz0[2]-1;
+
+    }
+
+    for(int i=0; i<p.landmarks.size(); i++){
+        const LocationSimple& mm = p.landmarks.at(i);
+        if(mm.x<p.xc0 || mm.x>p.xc1 || mm.y<p.yc0 || mm.y>p.yc1 || mm.z<p.zc0 || mm.z>p.zc1){
+            QMessageBox::information(parent,"info",QString("Please add white marker in the box, not in anywhere!"));
+            return;
+        }
+    }
+
     proc_app2(p);
 
     NeuronTree& result = p.result;
@@ -500,6 +615,9 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
     }
 
     qDebug()<<"NeuronTree size: "<<result.listNeuron.size();
+    if(result.listNeuron.isEmpty()){
+        return;
+    }
     result.hashNeuron.clear();
     for(int j=0; j<result.listNeuron.size(); j++){
         result.hashNeuron.insert(result.listNeuron[j].n,j);
@@ -513,7 +631,9 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
         result.hashNeuron.insert(result.listNeuron[j].n,j);
     }
 
-    deleteSameBranch(result,nt,5);
+    if(isDelete){
+        deleteSameBranch(result,nt1,5);
+    }
 
     sortListNeuron.clear();
     sortSWC(result.listNeuron,sortListNeuron);
@@ -545,4 +665,242 @@ void app2Terafly(int type, bool threshold, V3DPluginCallback2 &callback){
     if(imageCopy)
         delete imageCopy;
 
+}
+
+void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& callback, QWidget *parent){
+    const Image4DSimple* image = callback.getImageTeraFly();
+    qDebug()<<"x: "<<image->getXDim()<<" y: "<<image->getYDim()<<" z: "<<image->getZDim();
+
+    QString fileName = image->getFileName();
+    qDebug()<<"file name: "<<fileName;
+    QStringList ls = fileName.split(',');
+    qDebug()<<ls[2].split('[')[1]<<" "<<ls[3].split(']')[0]<<" "<<ls[4].split('[')[1]<<" "<<ls[5].split(']')[0]<<" "<<ls[6].split('[')[1]<<" "<<ls[7].split(']')[0];
+
+//    V3dR_MainWindow cur = callback.find3DViewerByName(fileName);
+
+
+
+    int dim = ls[1].split('x')[1].toInt();
+    qDebug()<<dim;
+
+    int x0 = ls[2].split('[')[1].toInt();
+    int x1 = ls[3].split(']')[0].toInt();
+    int y0 = ls[4].split('[')[1].toInt();
+    int y1 = ls[5].split(']')[0].toInt();
+    int z0 = ls[6].split('[')[1].toInt();
+    int z1 = ls[7].split(']')[0].toInt();
+
+    LandmarkList app2Markers;
+    LandmarkList markers = callback.getLandmarkTeraFly();
+    for(int i=0; i<markers.size(); i++){
+        qDebug()<<"i "<<i<<" x: "<<markers[i].x<<" y: "<<markers[i].y<<" z: "<<markers[i].z;
+
+        if(markers[i].color.r == 255 && markers[i].color.g == 255 && markers[i].color.b == 255){
+            app2Markers.append(markers[i]);
+        }
+    }
+
+    if(app2Markers.isEmpty()){
+        return;
+    }
+
+
+
+
+    QString path =callback.getPathTeraFly();
+    qDebug()<<"path: "<<path.toStdString().c_str();
+
+    V3DLONG* sz = 0;
+    callback.getDimTeraFly(path.toStdString(),sz);
+    for(int i=0; i<3; i++){
+        qDebug()<<i<<": "<<sz[i];
+    }
+
+    double times = sz[1]/(double) dim;
+    NeuronTree nt = callback.getSWCTeraFly();
+    if(!nt.listNeuron.isEmpty()){
+        nt.hashNeuron.clear();
+        for(int i=0; i<nt.listNeuron.size(); i++){
+            nt.hashNeuron.insert(nt.listNeuron[i].n,i);
+        }
+    }
+
+    const unsigned char* imageData = image->getRawData();
+    Image4DSimple* imageCopy = new Image4DSimple();
+    V3DLONG szNum = image->getTotalUnitNumber();
+    unsigned char* pdata = new unsigned char[szNum];
+    for(int i=0; i<szNum; i++){
+        pdata[i] = imageData[i];
+    }
+    if(threshold){
+        unsigned char* pdataThres = new unsigned char[szNum];
+        BinaryProcess(pdata,pdataThres,image->getXDim(),image->getYDim(),image->getZDim(),5,3);
+        for(int i=0; i<szNum; i++){
+            pdata[i] = pdataThres[i];
+        }
+        delete[] pdataThres;
+    }
+
+    imageCopy->setData(pdata,image->getXDim(),image->getYDim(),image->getZDim(),image->getCDim(),image->getDatatype());
+    paraApp2 p = paraApp2();
+    p.p4dImage = imageCopy;
+    p.bkg_thresh = app2Th;
+
+    v3dhandle curwin = callback.currentImageWindow();
+    View3DControl * view3d = callback.getView3DControl(curwin);
+    V3DLONG in_sz0[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+    if(!view3d){
+        p.xc0 = p.yc0 = p.zc0 = 0;
+        p.xc1 = p.p4dImage->getXDim()-1;
+        p.yc1 = p.p4dImage->getYDim()-1;
+        p.zc1 = p.p4dImage->getZDim()-1;
+        qDebug()<<"no view 3d";
+    }else{
+        qDebug()<<" xc0: "<<view3d->xCut0()<<" xc1: "<<view3d->xCut1()
+               <<" yc0: "<<view3d->yCut0()<<" yc1: "<<view3d->yCut1()
+              <<" zc0: "<<view3d->zCut0()<<" zc1: "<<view3d->zCut1();
+        V3DLONG view3d_datasz0 = view3d->dataDim1();
+        V3DLONG view3d_datasz1 = view3d->dataDim2();
+        V3DLONG view3d_datasz2 = view3d->dataDim3();
+
+        qDebug()<<"view3d_datasz0： "<<view3d_datasz0<<" view3d_datasz1： "<<view3d_datasz1<<" view3d_datasz2： "<<view3d_datasz2;
+
+        p.xc0 = int(double(view3d->xCut0()) * in_sz0[0] / view3d_datasz0 + 0.5);
+        p.xc1 = int(double(view3d->xCut1()) * in_sz0[0] / view3d_datasz0 + 0.5);
+        if (p.xc1>in_sz0[0]-1) p.xc1 = in_sz0[0]-1;
+        //xc1 = in_sz0[0]-1;//for debug purpose. 130102
+
+        p.yc0 = int(double(view3d->yCut0()) * in_sz0[1] / view3d_datasz1 + 0.5);
+        p.yc1 = int(double(view3d->yCut1()) * in_sz0[1] / view3d_datasz1 + 0.5);
+        if (p.yc1>in_sz0[1]-1) p.yc1 = in_sz0[1]-1;
+
+        p.zc0 = int(double(view3d->zCut0()) * in_sz0[2] / view3d_datasz2 + 0.5);
+        p.zc1 = int(double(view3d->zCut1()) * in_sz0[2] / view3d_datasz2 + 0.5);
+        if (p.zc1>in_sz0[2]-1) p.zc1 = in_sz0[2]-1;
+
+    }
+
+
+    vector<NeuronTree> app2NeuronTrees;
+    app2NeuronTrees.push_back(nt);
+    NeuronTree nt1 = NeuronTree();
+
+    for(int i=0; i<app2Markers.size(); i++){
+        double minD = INT_MAX;
+        int minIndex = -1;
+        LocationSimple& s = app2Markers[i];
+        if(!nt.listNeuron.isEmpty()){
+            for(int j=0; j<nt.listNeuron.size(); j++){
+                double d = dist_L2(XYZ(s.x-1, s.y-1 , s.z-1),XYZ(nt.listNeuron[j].x, nt.listNeuron[j].y, nt.listNeuron[j].z));
+                if(d<minD){
+                    minD = d;
+                    minIndex = i;
+                }
+            }
+        }
+
+
+        bool isDelete = false;
+        nt1.listNeuron.clear();
+
+
+        if(minD<20 && minIndex != -1){
+            s.x = nt.listNeuron[minIndex].x + 1;
+            s.y = nt.listNeuron[minIndex].y + 1;
+            s.z = nt.listNeuron[minIndex].z + 1;
+            isDelete = true;
+            NeuronSWC tmp = nt.listNeuron[minIndex];
+            int count = 0;
+            while(tmp.parent != -1){
+                nt1.listNeuron.append(tmp);
+                int prtIndex = nt.hashNeuron.value(tmp.parent);
+                tmp = nt.listNeuron[prtIndex];
+                count++;
+                if(count>10)
+                    break;
+            }
+        }
+        qDebug()<<"i: "<<i<<" nt1 size"<<nt1.listNeuron.size();
+
+        LocationSimple m;
+        m.x = s.x/times - x0;
+        m.y = s.y/times - y0;
+        m.z = s.z/times - z0;
+
+        qDebug()<<"x: "<<m.x<<" y: "<<m.y<<" z: "<<m.z;
+
+        if(m.x<p.xc0 || m.x>p.xc1 || m.y<p.yc0 || m.y>p.yc1 || m.z<p.zc0 || m.z>p.zc1){
+            continue;
+        }
+
+        if(!p.landmarks.isEmpty()){
+            p.landmarks.clear();
+        }
+
+        p.landmarks.append(m);
+
+        proc_app2(p);
+
+        NeuronTree& result = p.result;
+        for(int j=0; j<result.listNeuron.size(); j++){
+            result.listNeuron[j].x = (result.listNeuron[j].x + x0)*times;
+            result.listNeuron[j].y = (result.listNeuron[j].y + y0)*times;
+            result.listNeuron[j].z = (result.listNeuron[j].z + z0)*times;
+            result.listNeuron[j].type = type;
+        }
+
+        qDebug()<<"i: "<<i<<" NeuronTree size "<<result.listNeuron.size();
+        if(result.listNeuron.isEmpty()){
+            continue;
+        }
+        result.hashNeuron.clear();
+        for(int j=0; j<result.listNeuron.size(); j++){
+            result.hashNeuron.insert(result.listNeuron[j].n,j);
+        }
+        QList<NeuronSWC> sortListNeuron;
+        sortSWC(result.listNeuron,sortListNeuron);
+        result.listNeuron.clear();
+        result.listNeuron = sortListNeuron;
+        result.hashNeuron.clear();
+        for(int j=0; j<result.listNeuron.size(); j++){
+            result.hashNeuron.insert(result.listNeuron[j].n,j);
+        }
+
+        if(isDelete){
+            deleteSameBranch(result,nt1,5);
+        }
+
+        sortListNeuron.clear();
+        sortSWC(result.listNeuron,sortListNeuron);
+        result.listNeuron.clear();
+        result.listNeuron = sortListNeuron;
+        result.hashNeuron.clear();
+        for(int j=0; j<result.listNeuron.size(); j++){
+            result.hashNeuron.insert(result.listNeuron[j].n,j);
+        }
+
+
+
+        NeuronTree app2NeuronTree;
+        app2NeuronTree.deepCopy(result);
+
+        app2NeuronTrees.push_back(app2NeuronTree);
+    }
+
+    if(app2NeuronTrees.size() == 1)
+        return;
+
+    NeuronTree merge = mergeNeuronTrees(app2NeuronTrees);
+
+    qDebug()<<"merge end...";
+
+
+    callback.setSWCTeraFly(merge);
+
+    qDebug()<<"set end...";
+
+    nt = callback.getSWCTeraFly();
+    qDebug()<<"NeuronTree size: "<<nt.listNeuron.size();
+    if(imageCopy)
+        delete imageCopy;
 }
