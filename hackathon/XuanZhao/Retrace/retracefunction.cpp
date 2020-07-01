@@ -648,6 +648,17 @@ void app2Terafly(int type, bool threshold, int app2Th, V3DPluginCallback2 &callb
 
     NeuronTree app2NeuronTree;
     app2NeuronTree.deepCopy(result);
+
+    if(minD<30 && minIndex != -1){
+        for(int j=0; j<app2NeuronTree.listNeuron.size(); j++){
+            if(app2NeuronTree.listNeuron[j].parent == -1){
+                app2NeuronTree.listNeuron[j].x = nt.listNeuron[minIndex].x;
+                app2NeuronTree.listNeuron[j].y = nt.listNeuron[minIndex].y;
+                app2NeuronTree.listNeuron[j].z = nt.listNeuron[minIndex].z;
+            }
+        }
+    }
+
     app2NeuronTrees.push_back(nt);
     app2NeuronTrees.push_back(app2NeuronTree);
 
@@ -763,7 +774,7 @@ void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& 
         V3DLONG view3d_datasz1 = view3d->dataDim2();
         V3DLONG view3d_datasz2 = view3d->dataDim3();
 
-        qDebug()<<"view3d_datasz0： "<<view3d_datasz0<<" view3d_datasz1： "<<view3d_datasz1<<" view3d_datasz2： "<<view3d_datasz2;
+        qDebug()<<"view3d_datasz0: "<<view3d_datasz0<<" view3d_datasz1: "<<view3d_datasz1<<" view3d_datasz2: "<<view3d_datasz2;
 
         p.xc0 = int(double(view3d->xCut0()) * in_sz0[0] / view3d_datasz0 + 0.5);
         p.xc1 = int(double(view3d->xCut1()) * in_sz0[0] / view3d_datasz0 + 0.5);
@@ -785,16 +796,19 @@ void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& 
     app2NeuronTrees.push_back(nt);
     NeuronTree nt1 = NeuronTree();
 
+    double minD = INT_MAX;
+    int minIndex = -1;
+
     for(int i=0; i<app2Markers.size(); i++){
-        double minD = INT_MAX;
-        int minIndex = -1;
+        minD = INT_MAX;
+        minIndex = -1;
         LocationSimple& s = app2Markers[i];
         if(!nt.listNeuron.isEmpty()){
             for(int j=0; j<nt.listNeuron.size(); j++){
                 double d = dist_L2(XYZ(s.x-1, s.y-1 , s.z-1),XYZ(nt.listNeuron[j].x, nt.listNeuron[j].y, nt.listNeuron[j].z));
                 if(d<minD){
                     minD = d;
-                    minIndex = i;
+                    minIndex = j;
                 }
             }
         }
@@ -804,7 +818,7 @@ void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& 
         nt1.listNeuron.clear();
 
 
-        if(minD<20 && minIndex != -1){
+        if(minD<30 && minIndex != -1){
             s.x = nt.listNeuron[minIndex].x + 1;
             s.y = nt.listNeuron[minIndex].y + 1;
             s.z = nt.listNeuron[minIndex].z + 1;
@@ -884,6 +898,15 @@ void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& 
         NeuronTree app2NeuronTree;
         app2NeuronTree.deepCopy(result);
 
+        if(minD<30 && minIndex != -1){
+            for(int j=0; j<app2NeuronTree.listNeuron.size(); j++){
+                if(app2NeuronTree.listNeuron[j].parent == -1){
+                    app2NeuronTree.listNeuron[j].x = nt.listNeuron[minIndex].x;
+                    app2NeuronTree.listNeuron[j].y = nt.listNeuron[minIndex].y;
+                    app2NeuronTree.listNeuron[j].z = nt.listNeuron[minIndex].z;
+                }
+            }
+        }
         app2NeuronTrees.push_back(app2NeuronTree);
     }
 
