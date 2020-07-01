@@ -60,8 +60,10 @@ void getNodeLengthDialog::setLineEditValue(int value){
     for(int i=0; i<nt.listNeuron.size(); i++){
         if(nt.listNeuron.at(i).r>=dpos){
             t.listNeuron[i].r = 5;
+            t.listNeuron[i].type=1;
         }else {
-            t.listNeuron[i].r = 0;
+            t.listNeuron[i].r = 1;
+            t.listNeuron[i].type=2;
         }
     }
     callback->update_3DViewer(cur);
