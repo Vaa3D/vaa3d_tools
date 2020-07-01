@@ -137,6 +137,7 @@ void MessageSocket::loginProcess(const QString &name)
     id.clear();
     global_parameters->lock_clients.lockForWrite();
     global_parameters->clients[this]=name;
+    qDebug()<<global_parameters->clients[this];
     global_parameters->lock_clients.unlock();
 
     global_parameters->lock_userInfo.lockForWrite();
@@ -211,6 +212,7 @@ void MessageSocket::askmessageProcess()
 {
     global_parameters->lock_clients.lockForRead();
     QString user=global_parameters->clients.value(this);
+    qDebug()<<"askmessageProcess: "<<user;
     global_parameters->lock_clients.unlock();
     updateUserMessage(user);
 }
