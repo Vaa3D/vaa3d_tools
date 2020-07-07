@@ -16,6 +16,8 @@ using NSlibTester = NeuronStructNavigator::Tester;
 
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
+	this->finalSaveRootQ = "D:\\Work\\FragTrace";
+
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
 	string numProcsString(numProcsC);
@@ -93,6 +95,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 
 void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
+	this->finalSaveRootQ = "D:\\Work\\FragTrace";
+
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
 	string numProcsString(numProcsC);
@@ -271,20 +275,19 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		vector<NeuronTree> trees = { scaledBackExistingTree, CONTINUOUS_AXON_PREFINAL_TREE };
 		FINALOUTPUT_TREE = this->myFragPostProcessor.scaleTree(NeuronStructUtil::swcCombine(trees), this->scalingFactor, this->imgOrigin);
 
+		// ------- Debug ------- //
 		if (FragTraceTester::isInstantiated())
 		{
 			QString prefixQ = this->finalSaveRootQ + "\\";
-			FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::newTracedPart, newTreePart, prefixQ);
+			//FragTraceTester::getInstance()->axonTreeFormingInterResults(FragTraceTester::newTracedPart, newTreePart, prefixQ);
 		}
+		// --------------------- //
 	}
 	else
 		FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
 
-	if (this->finalSaveRootQ != "")
-	{
-		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
-		writeSWC_file(localSWCFullName, FINALOUTPUT_TREE);
-	}
+	QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
+	//writeSWC_file(localSWCFullName, FINALOUTPUT_TREE);
 	
 	if (this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->close();
 
@@ -478,11 +481,10 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
 
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
-	if (this->finalSaveRootQ != "")
-	{
-		QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
-		//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
-	}
+	
+	QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
+	//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
+	
 	profiledTree profiledSigTree(blob3Dtree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 

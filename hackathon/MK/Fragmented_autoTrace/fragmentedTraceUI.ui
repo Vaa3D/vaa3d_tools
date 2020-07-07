@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>887</width>
-    <height>803</height>
+    <height>768</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -274,7 +274,7 @@
                <x>0</x>
                <y>0</y>
                <width>813</width>
-               <height>435</height>
+               <height>452</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -635,8 +635,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>442</width>
-               <height>444</height>
+               <width>813</width>
+               <height>452</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -803,8 +803,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>431</width>
-                         <height>86</height>
+                         <width>440</width>
+                         <height>178</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout">
@@ -920,8 +920,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>451</width>
-               <height>195</height>
+               <width>813</width>
+               <height>452</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1096,214 +1096,241 @@
                <x>0</x>
                <y>0</y>
                <width>813</width>
-               <height>435</height>
+               <height>452</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
               <item>
-               <widget class="QFrame" name="frame_11">
+               <widget class="QGroupBox" name="groupBox_5">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>100</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>300</height>
+                  <height>100</height>
                  </size>
                 </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
+                <property name="title">
+                 <string>Segment Editing Functions</string>
                 </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_15">
+                <layout class="QHBoxLayout" name="horizontalLayout_5">
                  <item>
-                  <widget class="QFrame" name="frame_12">
+                  <widget class="QPushButton" name="pushButton_10">
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
-                     <height>150</height>
+                     <width>40</width>
+                     <height>40</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>10000</width>
-                     <height>200</height>
+                     <width>40</width>
+                     <height>40</height>
                     </size>
                    </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
+                   <property name="mouseTracking">
+                    <bool>true</bool>
                    </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
+                   <property name="toolTip">
+                    <string>Undo</string>
                    </property>
-                   <widget class="QPushButton" name="pushButton_10">
-                    <property name="geometry">
-                     <rect>
-                      <x>10</x>
-                      <y>10</y>
-                      <width>40</width>
-                      <height>40</height>
-                     </rect>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="mouseTracking">
-                     <bool>true</bool>
-                    </property>
-                    <property name="toolTip">
-                     <string>Undo</string>
-                    </property>
-                    <property name="whatsThis">
-                     <string/>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset>
-                      <normalon>:/segEditingIcons/resources/segment_editing/undo.png</normalon>
-                     </iconset>
-                    </property>
-                   </widget>
-                   <widget class="QPushButton" name="pushButton_11">
-                    <property name="geometry">
-                     <rect>
-                      <x>60</x>
-                      <y>10</y>
-                      <width>40</width>
-                      <height>40</height>
-                     </rect>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="mouseTracking">
-                     <bool>true</bool>
-                    </property>
-                    <property name="toolTip">
-                     <string>Redo</string>
-                    </property>
-                    <property name="whatsThis">
-                     <string/>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset>
-                      <normalon>:/segEditingIcons/resources/segment_editing/redo.png</normalon>
-                     </iconset>
-                    </property>
-                   </widget>
-                   <widget class="QPushButton" name="pushButton_12">
-                    <property name="geometry">
-                     <rect>
-                      <x>110</x>
-                      <y>10</y>
-                      <width>40</width>
-                      <height>40</height>
-                     </rect>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="cursor">
-                     <cursorShape>ArrowCursor</cursorShape>
-                    </property>
-                    <property name="toolTip">
-                     <string>Erase</string>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="FragTracer_Resource.qrc">
-                      <normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</iconset>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>33</width>
-                      <height>33</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                   <widget class="QPushButton" name="pushButton_13">
-                    <property name="geometry">
-                     <rect>
-                      <x>160</x>
-                      <y>10</y>
-                      <width>40</width>
-                      <height>40</height>
-                     </rect>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>40</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="cursor">
-                     <cursorShape>ArrowCursor</cursorShape>
-                    </property>
-                    <property name="toolTip">
-                     <string>Connect</string>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="FragTracer_Resource.qrc">
-                      <normaloff>:/segEditingIcons/resources/segment_editing/connect.png</normaloff>:/segEditingIcons/resources/segment_editing/connect.png</iconset>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>33</width>
-                      <height>33</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
+                   <property name="whatsThis">
+                    <string/>
+                   </property>
+                   <property name="autoFillBackground">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset>
+                     <normalon>:/segEditingIcons/resources/segment_editing/undo.png</normalon>
+                    </iconset>
+                   </property>
                   </widget>
                  </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_11">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="mouseTracking">
+                    <bool>true</bool>
+                   </property>
+                   <property name="toolTip">
+                    <string>Redo</string>
+                   </property>
+                   <property name="whatsThis">
+                    <string/>
+                   </property>
+                   <property name="autoFillBackground">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset>
+                     <normalon>:/segEditingIcons/resources/segment_editing/redo.png</normalon>
+                    </iconset>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_12">
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>ArrowCursor</cursorShape>
+                   </property>
+                   <property name="toolTip">
+                    <string>Erase</string>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="FragTracer_Resource.qrc">
+                     <normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</normaloff>:/segEditingIcons/resources/segment_editing/remove_new.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>33</width>
+                     <height>33</height>
+                    </size>
+                   </property>
+                   <property name="checkable">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_13">
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>ArrowCursor</cursorShape>
+                   </property>
+                   <property name="toolTip">
+                    <string>Connect</string>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="FragTracer_Resource.qrc">
+                     <normaloff>:/segEditingIcons/resources/segment_editing/connect.png</normaloff>:/segEditingIcons/resources/segment_editing/connect.png</iconset>
+                   </property>
+                   <property name="iconSize">
+                    <size>
+                     <width>33</width>
+                     <height>33</height>
+                    </size>
+                   </property>
+                   <property name="checkable">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_2">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>576</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
                 </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_9">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Segment Editing Preferences</string>
+                </property>
+                <widget class="QPushButton" name="pushButton_5">
+                 <property name="geometry">
+                  <rect>
+                   <x>10</x>
+                   <y>30</y>
+                   <width>40</width>
+                   <height>40</height>
+                  </rect>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Sequential segment retype</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QPushButton:checked{background-color: rgb(120, 120, 120);}</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="FragTracer_Resource.qrc">
+                   <normaloff>:/segEditingIcons/resources/segment_editing_preferences/changeType_associatedSegs.png</normaloff>:/segEditingIcons/resources/segment_editing_preferences/changeType_associatedSegs.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>38</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                </widget>
                </widget>
               </item>
               <item>
@@ -1325,78 +1352,6 @@
           </item>
          </layout>
         </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="QFrame" name="frame_4">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>45</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Calibri</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Choose path to save:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="lineEdit">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>30</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_4">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>30</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Calibri</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Browse</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
       <item>
@@ -1528,22 +1483,6 @@
     <hint type="destinationlabel">
      <x>765</x>
      <y>384</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_4</sender>
-   <signal>clicked()</signal>
-   <receiver>FragmentedTraceUI</receiver>
-   <slot>browseSavePathClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>852</x>
-     <y>720</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>785</x>
-     <y>484</y>
     </hint>
    </hints>
   </connection>

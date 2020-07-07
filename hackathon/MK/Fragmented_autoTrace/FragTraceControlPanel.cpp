@@ -136,10 +136,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	uiPtr->spinBox_7->setValue(callOldSettings.value("axonCluster_range").toInt());
 	// ------------------------------- //
 
-	// ------- Result Saving Path ------- //		
-	uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
-	// ---------------------------------- //
-
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
@@ -288,23 +284,6 @@ void FragTraceControlPanel::refreshSomaCoords()
 	this->updateMarkerMonitor();
 }
 
-void FragTraceControlPanel::browseSavePathClicked()
-{
-	QObject* signalSender = sender();
-	QString browseButtonName = signalSender->objectName();
-
-	if (browseButtonName == "pushButton_4")
-	{
-		this->saveSWCFullName = QFileDialog::getSaveFileName(0, QObject::tr("Save auto-traced neuron"), "",
-			QObject::tr("Supported file extension (*.swc *.eswc)" ";;Neuron structure (*.swc)" ";;Extended neuron structure (*.eswc)"));
-
-		QSettings currSettings("Allen-Neuronanatomy", "Neuron Assembler");
-		currSettings.setValue("savePath", this->saveSWCFullName);
-
-		uiPtr->lineEdit->setText(this->saveSWCFullName);
-	}
-}
-
 void FragTraceControlPanel::saveSettingsClicked()
 {
 	QSettings settings("Allen-Neuronanatomy", "Neuron Assembler");
@@ -393,8 +372,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 	// ------------------------------- //
-
-	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 
 void FragTraceControlPanel::eraseButtonClicked()
@@ -446,17 +423,10 @@ void FragTraceControlPanel::traceButtonClicked()
 	if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked()) // AXON TRACING
 	{
 		cout << " --> axon tracing, acquiring image information.." << endl;
-		QString rootQ = "";
-		if (uiPtr->lineEdit->text() != "") // final result save place
-		{
-			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
-			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
-		}
 
 		if (uiPtr->checkBox->isChecked()) // terafly format
 		{				
 			this->teraflyTracePrep(axon);	   	  // terafly image block preparation
-			this->traceManagerPtr->finalSaveRootQ = rootQ;
 			this->traceManagerPtr->continuousAxon = false;
 
 			// ------------------- collect parameters ------------------- //
@@ -471,17 +441,10 @@ void FragTraceControlPanel::traceButtonClicked()
 	else if (!uiPtr->radioButton->isChecked() && uiPtr->radioButton_2->isChecked()) // DENDRITE TRACING
 	{
 		cout << " --> dendritic tree tracing, acquiring image information.." << endl;
-		QString rootQ = "";
-		if (uiPtr->lineEdit->text() != "") // final result save place
-		{
-			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
-			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
-		}
 
 		if (uiPtr->checkBox->isChecked()) // terafly format
 		{
 			this->teraflyTracePrep(dendriticTree); // terafly image block preparation
-			this->traceManagerPtr->finalSaveRootQ = rootQ;
 			this->traceManagerPtr->continuousAxon = false;
 
 			// ------------------- collect parameters ------------------- //
@@ -524,9 +487,6 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 	// ------------------------------------ //
 	/***************************************************************/
-
-	// Save final result here.
-	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), this->tracedTree);
 
 	this->traceManagerPtr->partialVolumeLowerBoundaries = { 0, 0, 0 };
 
@@ -900,7 +860,7 @@ void FragTraceControlPanel::updateMarkerMonitor()
 /* ====================== END of [Parameter Collecting Functions] ====================== */
 
 
-/* =================== Terafly Communicating Methods =================== */
+/* =================== Terafly/Editing Communicating Methods =================== */
 void FragTraceControlPanel::getNAVersionNum()
 {
 	cout << endl << endl << "  --- Neuron Assembler: v" << MAINVERSION_NUM << "." << SUBVERSION_NUM << "." << PATCHVERSION_NUM << endl << endl;
@@ -961,7 +921,23 @@ void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, 
 		FragTraceTester::uninstance();
 	}*/
 }
-/* =============== END of [Terafly Communicating Methods] =============== */
+
+bool FragTraceControlPanel::changeAssociatedSegsClicked()
+{
+	if (uiPtr->pushButton_5->isChecked()) return true;
+	else return false;
+}
+
+void FragTraceControlPanel::signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const set<int>& retypedSegs, const int type)
+{
+	//for (auto& segID : retypedSegs) cout << segID << " ";
+	//cout << endl;
+
+	if (retypedSegs.empty()) return;
+
+	this->fragEditorPtr->sequencialTypeChanging(displayingSegs, retypedSegs, type);
+}
+/* =============== END of [Terafly/Editing Communicating Methods] =============== */
 
 
 

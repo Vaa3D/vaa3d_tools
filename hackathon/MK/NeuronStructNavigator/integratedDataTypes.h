@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -144,10 +144,13 @@ namespace integratedDataTypes
 		map<int, vector<size_t>> node2childLocMap;
 		map<string, vector<int>> nodeTileMap; // tile label -> node ID
 		
-		map<int, segUnit> segs;								   // key = seg ID
-		boost::container::flat_multimap<int, int> node2segMap; // node ID -> seg ID
-		map<string, vector<int>> segHeadMap;				   // tile label -> seg ID
-		map<string, vector<int>> segTailMap;				   // tile label -> seg ID
+		map<int, segUnit> segs;											  // key = seg ID
+		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap; // node coord key -> seg ID
+		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
+		map<string, vector<int>> segTailMap;							  // tile label -> seg ID
+		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
+		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
 
 		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
 		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster

@@ -47,6 +47,9 @@ public:
 	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	virtual void connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	virtual void exitNAeditingMode();
+
+	virtual bool changeAssociatedSegsClicked();
+	virtual void signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const set<int>& retypedSegs, const int type);
 /* ============================================= */
 
 
@@ -57,7 +60,7 @@ public slots:
 	void nestedChecks(bool checked);
 	void multiSomaTraceChecked(bool checked);
 	void saveSettingsClicked();
-	void browseSavePathClicked();
+	//void browseSavePathClicked();
 	// ---------------------------- //
 
 	// ------- Post Editing ------- //

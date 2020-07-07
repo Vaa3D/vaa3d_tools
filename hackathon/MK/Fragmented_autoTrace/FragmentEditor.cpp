@@ -345,3 +345,52 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 		}
 	}
 }
+
+void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type)
+{
+	set<int> segs2BtypeChanged;
+	int newType = displayingSegs.seg.at(*startingSegs.begin()).row.begin()->type;
+	
+	profiledTree currDisplayProfiledTree(displayingSegs.seg);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	
+	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
+
+	for (auto& seg : segs2BtypeChanged)
+	{
+		if (!currDisplayProfiledTree.segs.at(seg).to_be_deleted)
+		{
+			for (auto& node : displayingSegs.seg[seg].row)
+				node.type = type;
+		}
+	}
+}
+
+void FragmentEditor::rc_findConnectedSegs(const profiledTree& inputProfiledTree, const set<int>& seedSegs, set<int>& connectedSegs)
+{
+	set<int> newSegs;
+
+	for (set<int>::iterator segIt = seedSegs.begin(); segIt != seedSegs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = inputProfiledTree.segs.at(*segIt).nodes.begin(); nodeIt != inputProfiledTree.segs.at(*segIt).nodes.end(); ++nodeIt)
+		{
+			string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
+			pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(nodeCoordKey);
+			if (range.second - range.first == 1) continue;
+			else
+			{
+				for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+				{
+					if (seedSegs.find(it->second) == seedSegs.end() && connectedSegs.find(it->second) == connectedSegs.end())
+					{
+						newSegs.insert(it->second);
+						connectedSegs.insert(it->second);
+					}
+				}
+			}
+		}
+	}
+
+	if (newSegs.empty()) return;
+	else this->rc_findConnectedSegs(inputProfiledTree, newSegs, connectedSegs);
+}

@@ -266,8 +266,6 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
 		//cout << "segs num: " << this->segs.size() << endl;
 
-		NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
-
 		vector<segUnit> allSegs;
 		for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
 		{
@@ -352,6 +350,27 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 		{
 			this->nodeTileSize = nodeTileLength;
 			return;
+		}
+	}
+}
+
+void integratedDataTypes::profiledTree::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
+	}
+}
+
+void integratedDataTypes::profiledTree::nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
+			nodeCoordKey2segMap.insert(pair<string, int>(nodeCoordKey, segIt->first));
 		}
 	}
 }

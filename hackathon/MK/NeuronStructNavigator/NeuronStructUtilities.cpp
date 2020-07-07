@@ -577,15 +577,6 @@ QList<NeuronSWC> NeuronStructUtil::V_NeuronSWC2nodeList(const vector<V_NeuronSWC
 
 
 /* ====================================== Neuron Struct Profiling Methods ====================================== */
-void NeuronStructUtil::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
-{
-	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
-	{
-		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
-			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
-	}
-}
-
 void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
 {
 	// This method profiles node-location node-child_location of a given NeuronTree.

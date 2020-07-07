@@ -29,6 +29,7 @@ public:
 	boost::container::flat_multimap<int, int> node2segMap;
 	void erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	void connectingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
+	void sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type);
 
 private:
 	V3DPluginCallback2* thisCallback;
@@ -41,6 +42,7 @@ private:
 	vector<float> getSegEndPointingVec(const segUnit& inputSeg, const int endNodeID, int nodeNum = 3);
 	NeuronSWC mostProbableBodyNode(const vector<float>& segEndPointingVec, const vector<NeuronSWC>& bodyNodes, const NeuronSWC& endNode);
 	set<int> getNodeTypesInSeg(const V_NeuronSWC& inputVneuronSWC);
+	void rc_findConnectedSegs(const profiledTree& inputProfiledTree, const set<int>& seedSegs, set<int>& connectedSegs);
 };
 
 
