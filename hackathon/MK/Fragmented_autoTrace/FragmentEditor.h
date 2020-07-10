@@ -29,6 +29,9 @@ public:
 	boost::container::flat_multimap<int, int> node2segMap;
 	void erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	void connectingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
+
+	bool sequentialTypeToggled;
+	void sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const int seedSegID, const int type);
 	void sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type);
 
 private:

@@ -178,10 +178,18 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 			
 			if (connectCase == 3)
 				for (auto& node : displayingSegs.seg[bodySegID].row) node.data[1] = *nodeTypes.begin();
+
+			newDisplaySeg.to_be_deleted = false;
+			displayingSegs.seg.push_back(newDisplaySeg);
+
+			if (this->sequentialTypeToggled)
+				this->sequencialTypeChanging(displayingSegs, displayingSegs.seg.size() - 1, (displayingSegs.seg.end() - 1)->row.begin()->type);
 		}
-		
-		newDisplaySeg.to_be_deleted = false;		
-		displayingSegs.seg.push_back(newDisplaySeg);
+		else
+		{
+			newDisplaySeg.to_be_deleted = false;
+			displayingSegs.seg.push_back(newDisplaySeg);
+		}
 	}
 }
 
@@ -346,11 +354,28 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 	}
 }
 
+void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const int seedSegID, const int type)
+{
+	set<int> segs2BtypeChanged;
+	profiledTree currDisplayProfiledTree(displayingSegs.seg);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+
+	set<int> startingSegs = { seedSegID };
+	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
+
+	for (auto& seg : segs2BtypeChanged)
+	{
+		if (!currDisplayProfiledTree.segs.at(seg).to_be_deleted)
+		{
+			for (auto& node : displayingSegs.seg[seg].row)
+				node.type = type;
+		}
+	}
+}
+
 void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type)
 {
 	set<int> segs2BtypeChanged;
-	int newType = displayingSegs.seg.at(*startingSegs.begin()).row.begin()->type;
-	
 	profiledTree currDisplayProfiledTree(displayingSegs.seg);
 	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
 	

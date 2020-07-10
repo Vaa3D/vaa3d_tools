@@ -49,6 +49,7 @@ public:
 	virtual void exitNAeditingMode();
 
 	virtual bool changeAssociatedSegsClicked();
+	virtual void signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const int retypedSeg, const int type);
 	virtual void signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const set<int>& retypedSegs, const int type);
 /* ============================================= */
 
@@ -66,6 +67,7 @@ public slots:
 	// ------- Post Editing ------- //
 	void eraseButtonClicked();
 	void connectButtonClicked();
+	void sequentialTypeChangingToggled(bool toggle);
 	// ---------------------------- //
 /* ======= END of [User Interface Configuration Buttons] ======= */
 

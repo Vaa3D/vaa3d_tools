@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -1462,7 +1462,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>698</x>
-     <y>768</y>
+     <y>733</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1478,7 +1478,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>775</x>
-     <y>768</y>
+     <y>733</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1494,7 +1494,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>852</x>
-     <y>768</y>
+     <y>733</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1589,8 +1589,8 @@
    <slot>eraseButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>208</x>
-     <y>293</y>
+     <x>192</x>
+     <y>311</y>
     </hint>
     <hint type="destinationlabel">
      <x>799</x>
@@ -1653,12 +1653,28 @@
    <slot>connectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>241</x>
-     <y>275</y>
+     <x>239</x>
+     <y>311</y>
     </hint>
     <hint type="destinationlabel">
      <x>882</x>
      <y>146</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_5</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>sequentialTypeChangingToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>76</x>
+     <y>388</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>36</y>
     </hint>
    </hints>
   </connection>
@@ -1676,5 +1692,6 @@
   <slot>eraseButtonClicked()</slot>
   <slot>markerFunctionToggled(bool)</slot>
   <slot>connectButtonClicked()</slot>
+  <slot>sequentialTypeChangingToggled(bool)</slot>
  </slots>
 </ui>

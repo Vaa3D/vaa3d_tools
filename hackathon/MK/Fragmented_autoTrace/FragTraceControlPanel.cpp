@@ -141,6 +141,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	this->setWindowTitle(windowTitleQ);  
 
 	this->fragEditorPtr = new FragmentEditor(callback);
+	this->fragEditorPtr->sequentialTypeToggled = false;
 #ifdef __ACTIVATE_TESTER__
 	FragTraceTester::instance(this);
 #endif
@@ -400,11 +401,10 @@ void FragTraceControlPanel::connectButtonClicked()
 	else this->CViewerPortal->segEditing_setCursor("restore");
 }
 
-void FragTraceControlPanel::exitNAeditingMode()
+void FragTraceControlPanel::sequentialTypeChangingToggled(bool toggle)
 {
-	uiPtr->pushButton_12->setChecked(false);
-	uiPtr->pushButton_13->setChecked(false);
-	this->CViewerPortal->segEditing_setCursor("restore");
+	if (toggle) this->fragEditorPtr->sequentialTypeToggled = true;
+	else if (!toggle) this->fragEditorPtr->sequentialTypeToggled = false;
 }
 /* ====================== END of [User Interface Buttons] ======================= */
 
@@ -922,10 +922,22 @@ void FragTraceControlPanel::connectSegProcess(V_NeuronSWC_list& displayingSegs, 
 	}*/
 }
 
+void FragTraceControlPanel::exitNAeditingMode()
+{
+	uiPtr->pushButton_12->setChecked(false);
+	uiPtr->pushButton_13->setChecked(false);
+	this->CViewerPortal->segEditing_setCursor("restore");
+}
+
 bool FragTraceControlPanel::changeAssociatedSegsClicked()
 {
 	if (uiPtr->pushButton_5->isChecked()) return true;
 	else return false;
+}
+
+void FragTraceControlPanel::signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const int retypedSeg, const int type)
+{
+	this->fragEditorPtr->sequencialTypeChanging(displayingSegs, retypedSeg, type);
 }
 
 void FragTraceControlPanel::signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const set<int>& retypedSegs, const int type)
