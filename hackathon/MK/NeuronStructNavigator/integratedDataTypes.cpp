@@ -63,10 +63,10 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 	
 	/******************************************************************************************************/
 	// Important Note: 
-	//   [segUnit.seg_childLocMap] does NOT have tail node registered freshly coming out of [NeuronStructUtil::node2loc_node2childLocMap].
+	//   [segUnit.seg_childLocMap] does NOT have tail node registered freshly coming out of [NeuronStructExplorer::node2loc_node2childLocMap].
 	//   Adding tail nodes into the map with empty child locations here for the purpose of 
 	//   avoiding memory violations by accessing non-existent pair in the map.
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
 		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
@@ -84,7 +84,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false)
 {
 	this->nodes = inputSeg;
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 
 	this->head = this->nodes.begin()->n;
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
@@ -260,8 +260,8 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 		this->segTileSize = segTileLength;
 		this->nodeTileSize = nodeTileLength;
 
-		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
-		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
 		//cout << "segs num: " << this->segs.size() << endl;
@@ -328,8 +328,8 @@ integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& input
 			this->tree.listNeuron.append(newSegUnit.nodes);
 		}
 
-		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
-		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
 		this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
@@ -344,7 +344,7 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 		if (!this->nodeTileMap.empty())
 		{
 			this->nodeTileMap.clear();
-			NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+			NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
 		}
 		else
 		{

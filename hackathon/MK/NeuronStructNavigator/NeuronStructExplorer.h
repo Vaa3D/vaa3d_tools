@@ -39,11 +39,30 @@ public:
 	// Initialize a profiledTree with input NeuronTree and store it into [treeDataBase] with a specified name.
 	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH); 
 	void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
-	
+
+	/* ------------------------- neuron node profiling ------------------------- */
+	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
+	static void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
+
+	// Returns the corresponding string key with the given node or marker.
+	static inline string getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
+
+	// Node - tile profiling functions
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	/* -------------------- END of [neuron node profiling] --------------------- */
+
+	/* --------------------------- segment profiling --------------------------- */
 	V_NeuronSWC_list segmentList;
 	void segmentDecompose(NeuronTree* inputTreePtr); // This function is borrowed from Vaa3D code base.
 
-	/* --------------------------- segment profiling --------------------------- */
 	// Identifiy and profile all segments in a NeuronTree. This method is called when initializing a profiledTree with a NeuronTree.
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	
@@ -76,14 +95,13 @@ private:
 public:
 	// Returns a map where the key is the cluster label and the value is a vector carrying all possible pairs of segments in that cluster.
 	void getClusterSegPairs(profiledTree& inputProfiledTree) const;
-	//--------------------------------------------------------------- //
-	/* ------------------------------------------------------------------------- */
+	// --------------- END of [segment-end clustering] --------------- //
+	/* ----------------------- END of [segment profiling] ----------------------- */
 
 	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
 	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
 	/*****************************************************************************************/
-
 
 
 	/*********************** Tree - Subtree Operations **************************/
@@ -100,7 +118,6 @@ public:
 	/****************************************************************************/
 
 
-
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
 	// Computes the distance from every node to its nearest node in the given node lise.
 	// The output is a map of 4 measures: mean, std, var, median.
@@ -112,13 +129,11 @@ public:
 	/*****************************************************************************************/
 
 
-
 	/*************************** Debug Functions ***************************/
 	bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath) const;
 
 	static void __segMorphProfiled_lengthDistRatio(profiledTree& inputProfiledTree, int range, double lengthDistRatio);
 	/***********************************************************************/
-
 
 
 	/* ~~~~~~~~~~~ Distance-based SWC analysis ~~~~~~~~~~~ */
@@ -145,6 +160,150 @@ public:
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 };
+
+inline string NeuronStructExplorer::getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / nodeTileLength));
+	string yLabel = to_string(int(inputNode.y / nodeTileLength));
+	string zLabel = to_string(int(inputNode.z / nodeTileLength / zRATIO));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / nodeTileLength));
+	string yLabel = to_string(int(inputNode.y / nodeTileLength));
+	string zLabel = to_string(int(inputNode.z / nodeTileLength));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getNodeTileKey(const float inputNodeCoords[], float nodeTileLength)
+{
+	string xLabel = to_string(int((inputNodeCoords[0]) / nodeTileLength));
+	string yLabel = to_string(int((inputNodeCoords[1]) / nodeTileLength));
+	string zLabel = to_string(int((inputNodeCoords[2]) / nodeTileLength / zRATIO));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength)
+{
+	string xLabel = to_string(int((inputMarker.x - 1) / nodeTileLength));
+	string yLabel = to_string(int((inputMarker.y - 1) / nodeTileLength));
+	string zLabel = to_string(int((inputMarker.z - 1) / (nodeTileLength / zRATIO)));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(it->n);
+		else
+		{
+			vector<int> newSet;
+			newSet.push_back(it->n);
+			nodeTileMap.insert(pair<string, vector<int>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<int>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(it->n);
+		else
+		{
+			vector<int> newSet;
+			newSet.push_back(it->n);
+			nodeTileMap.insert(pair<string, vector<int>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructExplorer::nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
 
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)
 {

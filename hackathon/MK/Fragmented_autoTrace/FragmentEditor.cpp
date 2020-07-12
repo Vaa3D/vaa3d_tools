@@ -332,7 +332,7 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
-		NeuronStructUtil::node2loc_node2childLocMap(targetSegUnit.nodes, node2LocMap, node2childLocMap);
+		NeuronStructExplorer::node2loc_node2childLocMap(targetSegUnit.nodes, node2LocMap, node2childLocMap);
 		vector<QList<NeuronSWC>> nodeLists;
 		QList<NeuronSWC> nodeList;
 		for (QList<NeuronSWC>::iterator it = targetSegUnit.nodes.begin(); it != targetSegUnit.nodes.end(); ++it)

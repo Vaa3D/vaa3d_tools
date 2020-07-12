@@ -509,8 +509,8 @@ NeuronTree TreeGrower::dendriticTree_shellCentroid(double distThre)
 NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
 {
 	map<string, vector<NeuronSWC>> refGridSWCmap, sbjGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
-	NeuronStructUtil::nodeTileMapGen(subjectTree, sbjGridSWCmap, nodeTileLength);
+	NeuronStructExplorer::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
+	NeuronStructExplorer::nodeTileMapGen(subjectTree, sbjGridSWCmap, nodeTileLength);
 
 	NeuronTree outputTree;
 	for (map<string, vector<NeuronSWC>>::iterator sbjTileIt = sbjGridSWCmap.begin(); sbjTileIt != sbjGridSWCmap.end(); ++sbjTileIt)
@@ -538,7 +538,7 @@ NeuronTree TreeGrower::swcSamePartExclusion(const NeuronTree& subjectTree, const
 	}
 
 	map<string, vector<NeuronSWC>> outputGridSWCmap;
-	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
+	NeuronStructExplorer::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
 	boost::container::flat_set<int> nodeIDs;
 	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
 	{

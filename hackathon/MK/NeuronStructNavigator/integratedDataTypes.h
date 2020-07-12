@@ -143,6 +143,11 @@ namespace integratedDataTypes
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
 		map<string, vector<int>> nodeTileMap; // tile label -> node ID
+
+		NeuronTree sortedTree;
+		map<string, float> morphFeatureMap;
+		void sortTree();
+		void getMorphFeatures();
 		
 		map<int, segUnit> segs;											  // key = seg ID
 		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
@@ -159,8 +164,8 @@ namespace integratedDataTypes
 
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap;
-		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;
+		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all nodes' coordinates in the cluster
+		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster
 		void getSegEndClusterNodeMap();
 		void getSegEndClusterCentoirds();
 

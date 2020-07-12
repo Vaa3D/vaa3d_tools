@@ -121,6 +121,7 @@ segUnit NeuronStructUtil::segUnitConnect_end2end(const segUnit& segUnit1, const 
 /* ===================================================================================================== */
 
 
+
 /* ===================================== Neuron Struct Processing ====================================== */
 NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
@@ -300,8 +301,8 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 {
 	boost::container::flat_map<string, QList<NeuronSWC>> targetNodeTileMap;
 	boost::container::flat_map<string, QList<NeuronSWC>> refNodeTileMap;
-	NeuronStructUtil::nodeTileMapGen(targetTree, targetNodeTileMap);
-	NeuronStructUtil::nodeTileMapGen(refTree, refNodeTileMap);
+	NeuronStructExplorer::nodeTileMapGen(targetTree, targetNodeTileMap);
+	NeuronStructExplorer::nodeTileMapGen(refTree, refNodeTileMap);
 
 	if (type == 0)
 	{
@@ -369,6 +370,18 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 		else 
 			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
 	}
+
+	return outputTree;
+}
+
+bool NeuronStructUtil::isSorted(const NeuronTree& inputNeuronTree) // ~~ Not implemented yet ~~
+{
+	return true; 
+}
+
+NeuronTree NeuronStructUtil::sortTree(const NeuronTree& inputNeuronTree) // ~~ Not implemented yet ~~
+{
+	NeuronTree outputTree;
 
 	return outputTree;
 }
@@ -575,49 +588,6 @@ QList<NeuronSWC> NeuronStructUtil::V_NeuronSWC2nodeList(const vector<V_NeuronSWC
 }
 /* ===================================== END of [Neuron Struct Processing] ===================================== */
 
-
-/* ====================================== Neuron Struct Profiling Methods ====================================== */
-void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
-{
-	// This method profiles node-location node-child_location of a given NeuronTree.
-	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
-	// However, any tip node WILL NOT have an entry in node2childLocMap.
-
-	nodeLocMap.clear();
-	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
-		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
-	//cout << " Node - Locations mapping done. size: " << nodeLocMap.size() << endl;
-
-	node2childLocMap.clear();
-	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
-	{
-		int paID = it->parent;
-		if (paID == -1)
-		{
-			vector<size_t> childSet;
-			childSet.clear();
-			node2childLocMap.insert(pair<int, vector<size_t>>(it->n, childSet));
-		}
-		else
-		{
-			if (node2childLocMap.find(paID) != node2childLocMap.end())
-			{
-				node2childLocMap[paID].push_back(size_t(it - inputNodeList.begin()));
-				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
-			}
-			else
-			{
-				vector<size_t> childSet;
-				childSet.clear();
-				childSet.push_back(size_t(it - inputNodeList.begin()));
-				node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
-				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
-			}
-		}
-	}
-	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
-}
-/* ================================= END of [Neuron Struct Profiling Methods] ================================== */
 
 
 /* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
@@ -987,6 +957,7 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 	return outputTree;
 }
 /* =============================== END of [SWC <-> ImgAnalyzer::connectedComponents] =============================== */
+
 
 
 /* =========================================== Miscellaneous =========================================== */
