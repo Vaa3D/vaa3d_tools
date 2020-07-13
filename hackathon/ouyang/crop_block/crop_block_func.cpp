@@ -18,7 +18,7 @@ void crop_bt_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     QString output_dir_axon=outfiles.at(1);//needed only when seperate axon and dendrite nodes
     QString output_apo;
 
-    XYZ block_size=XYZ(100,100,100);
+    XYZ block_size=XYZ(50,50,50);
 
     int branch_or_tip_node=atoi(inparas.at(0));//1:branch;2:tip;3:both
     int tip_type=atoi(inparas.at(1));//1:seperate axon and dendrite;2:not seperate
