@@ -261,6 +261,7 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 		this->nodeTileSize = nodeTileLength;
 
 		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		// -- NeuronStructExplorer::node2loc_node2childLocMap does Not create entries in node2childLocMap for tip nodes (nodes without childs).
 		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
@@ -329,6 +330,7 @@ integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& input
 		}
 
 		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		// -- NeuronStructExplorer::node2loc_node2childLocMap does Not create entries in node2childLocMap for tip nodes (nodes without childs).
 		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);

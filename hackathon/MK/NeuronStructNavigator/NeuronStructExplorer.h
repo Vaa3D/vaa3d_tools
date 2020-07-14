@@ -41,6 +41,9 @@ public:
 	void treeEntry(const NeuronTree& inputTree, string treeName, bool replace, float segTileLength = SEGtileXY_LENGTH);
 
 	/* ------------------------- neuron node profiling ------------------------- */
+	// Return the root node of the input [NeuronTree]. If there are multiple root nodes, return the root node with the largest structure.
+	static NeuronSWC findRootNode(const NeuronTree& inputTree);
+
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
@@ -117,6 +120,12 @@ public:
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/****************************************************************************/
 
+
+	/************************** Morphological Features **************************/
+	static pair<NeuronSWC, NeuronSWC> getMaxEucliDistNode(const NeuronTree& inputTree);
+	static int getBranchNum(const NeuronTree& inputTree, bool onlyBifur = false);
+	static boost::container::flat_map<int, int> getOuterNodeBifurMap(const NeuronTree& inputTree, float outerFraction, bool onlyBifur = false);
+	/****************************************************************************/
 
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
 	// Computes the distance from every node to its nearest node in the given node lise.
