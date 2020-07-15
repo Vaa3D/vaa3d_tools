@@ -23,13 +23,15 @@ QStringList RetracePlugin::menulist() const
         <<tr("app2MultiTerafly")
         <<tr("app2TeraflyWithPara")
         <<tr("app2MultiTeraflyWithPara")
+        <<tr("ultratracerTerafly")
+        <<tr("saveMarkerWithBoundingBox")
 		<<tr("about");
 }
 
 QStringList RetracePlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("ultratracingInBox")
 		<<tr("func2")
 		<<tr("help");
 }
@@ -77,38 +79,42 @@ void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 	}
     else if (menu_name == "app2Terafly") {
-        app2Terafly(2,false,-1,callback,parent);
+        app2Terafly(2,false,-1,-1,callback,parent);
     }
     else if (menu_name == "app2MultiTerafly") {
-        app2MultiTerafly(2,false,-1,callback,parent);
+        app2MultiTerafly(2,false,-1,-1,callback,parent);
     }
     else if (menu_name == "app2TeraflyWithPara") {
 
         QDialog* dlg = new QDialog(parent);
 
         QLineEdit* typeEdit = new QLineEdit("2");
-        QLineEdit* app2ThEdit = new QLineEdit("10");
+        QLineEdit* app2ThEdit = new QLineEdit("-1");
+        QLineEdit* contrastEdit = new QLineEdit("1");
         QCheckBox* thresholdBox = new QCheckBox();
         QGridLayout* layout = new QGridLayout;
         layout->addWidget(new QLabel("type: "),1,1);
         layout->addWidget(typeEdit,1,2);
         layout->addWidget(new QLabel("app2 threshold: "),2,1);
         layout->addWidget(app2ThEdit,2,2);
-        layout->addWidget(new QLabel("SimpleThreshold "),3,1);
-        layout->addWidget(thresholdBox,3,2);
+        layout->addWidget(new QLabel("contrast ratio: "),3,1);
+        layout->addWidget(contrastEdit,3,2);
+        layout->addWidget(new QLabel("SimpleThreshold "),4,1);
+        layout->addWidget(thresholdBox,4,2);
 
         QPushButton* start = new QPushButton("Start");
         QPushButton* cancel = new QPushButton("Cancel");
 
         connect(start, SIGNAL(clicked()), dlg, SLOT(accept()));
         connect(cancel, SIGNAL(clicked()), dlg, SLOT(reject()));
-        layout->addWidget(cancel,4,1);
-        layout->addWidget(start,4,2);
+        layout->addWidget(cancel,5,1);
+        layout->addWidget(start,5,2);
 
         dlg->setLayout(layout);
         int type;
         bool threshold;
         int app2Th;
+        double contrastT;
 
         if(dlg->exec() != QDialog::Accepted) return;
 
@@ -116,42 +122,54 @@ void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         type = typeEdit->text().toInt();
         app2Th = app2ThEdit->text().toInt();
         threshold = thresholdBox->isChecked();
-        app2Terafly(type,threshold,app2Th,callback,parent);
+        contrastT = contrastEdit->text().toFloat();
+        app2Terafly(type,threshold,app2Th,contrastT,callback,parent);
     }
     else if (menu_name == "app2MultiTeraflyWithPara") {
         QDialog* dlg = new QDialog(parent);
 
         QLineEdit* typeEdit = new QLineEdit("2");
-        QLineEdit* app2ThEdit = new QLineEdit("10");
+        QLineEdit* app2ThEdit = new QLineEdit("-1");
+        QLineEdit* contrastEdit = new QLineEdit("1");
         QCheckBox* thresholdBox = new QCheckBox();
         QGridLayout* layout = new QGridLayout;
         layout->addWidget(new QLabel("type: "),1,1);
         layout->addWidget(typeEdit,1,2);
         layout->addWidget(new QLabel("app2 threshold: "),2,1);
         layout->addWidget(app2ThEdit,2,2);
-        layout->addWidget(new QLabel("SimpleThreshold "),3,1);
-        layout->addWidget(thresholdBox,3,2);
+        layout->addWidget(new QLabel("contrast ratio: "),3,1);
+        layout->addWidget(contrastEdit,3,2);
+        layout->addWidget(new QLabel("SimpleThreshold "),4,1);
+        layout->addWidget(thresholdBox,4,2);
 
         QPushButton* start = new QPushButton("Start");
         QPushButton* cancel = new QPushButton("Cancel");
 
         connect(start, SIGNAL(clicked()), dlg, SLOT(accept()));
         connect(cancel, SIGNAL(clicked()), dlg, SLOT(reject()));
-        layout->addWidget(cancel,4,1);
-        layout->addWidget(start,4,2);
+        layout->addWidget(cancel,5,1);
+        layout->addWidget(start,5,2);
 
         dlg->setLayout(layout);
         int type;
         bool threshold;
         int app2Th;
+        double contrastT;
 
         if(dlg->exec() != QDialog::Accepted) return;
 
 
         type = typeEdit->text().toInt();
         app2Th = app2ThEdit->text().toInt();
+        contrastT = contrastEdit->text().toFloat();
         threshold = thresholdBox->isChecked();
-        app2MultiTerafly(type,threshold,app2Th,callback,parent);
+        app2MultiTerafly(type,threshold,app2Th,contrastT,callback,parent);
+    }
+    else if (menu_name == "ultratracerTerafly") {
+        ultratracerTerafly(2,callback,parent);
+    }
+    else if (menu_name == "saveMarkerWithBoundingBox") {
+        writeBlock(callback,parent);
     }
 	else
 	{
@@ -167,10 +185,14 @@ bool RetracePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    if (func_name == tr("ultratracingInBox"))
+    {
+        QString imageBlockPath = (inparas.size()>=1) ? inparas[0] : "";
+        QString swcPath = (inparas.size()>=2) ? inparas[1] : "";
+        qDebug()<<"imageBlockPath: "<<imageBlockPath.toStdString().c_str();
+        qDebug()<<"swcPath: "<<swcPath.toStdString().c_str();
+        tracingPipeline(imageBlockPath,swcPath,callback);
+    }
 	else if (func_name == tr("func2"))
 	{
 		v3d_msg("To be implemented.");

@@ -5,6 +5,10 @@
 
 #include "v3d_interface.h"
 
+#define INF 3.4e+38
+
+static NeuronTree finalResult;
+
 static int colorNum = 48;
 
 static unsigned char basicColorTable[][3] = {
@@ -96,6 +100,8 @@ XYZ getLineDirection(const vector<NeuronSWC> &points);
 
 bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result);
 
+bool sortSWC(NeuronTree& nt);
+
 //bool operator<(const Triple& p1, const Triple& p2);
 
 struct Triple{
@@ -114,17 +120,91 @@ struct Triple{
 //    friend operator<(const Triple& p1, const Triple& p2);
 };
 
+void changeContrast(unsigned char* input, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, double times);
 
 vector<vector<LocationSimple> > getApp2InMarkers(QList<CellAPO> markers);
 
 NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees);
 
-void deleteSameBranch(NeuronTree& target, const NeuronTree& ori, double thres);
+void deleteSameBranch(NeuronTree& target, const NeuronTree& ori);
+
+void deleteSameBranch(NeuronTree &target, const NeuronTree &ori, double dis);
 
 NeuronTree retrace(QString apoPath, QString eswcPath, QString brainDir, int resolution, V3DPluginCallback2 &callback);
 
-void app2Terafly(int type, bool threshold, int app2Th, V3DPluginCallback2& callback, QWidget *parent);
+void app2Terafly(int type, bool threshold, int app2Th, double contrastT, V3DPluginCallback2& callback, QWidget *parent);
 
-void app2MultiTerafly(int type, bool threshold, int app2Th, V3DPluginCallback2& callback, QWidget *parent);
+void app2MultiTerafly(int type, bool threshold, int app2Th, double contrastT, V3DPluginCallback2& callback, QWidget *parent);
+
+
+void ultratracerTerafly(int type, V3DPluginCallback2& callback, QWidget *parent);
+
+void deleteBranchByDirection(NeuronTree& target, int direction);
+
+QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
+
+struct imageBlock{
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    int overlap;
+    int direction;
+    LandmarkList startMarkers;
+    imageBlock(){
+        start_x = start_y = start_z = end_x = end_y = end_z = 0;
+        overlap = 10;
+        direction = 0;
+    }
+
+    imageBlock(V3DLONG x0, V3DLONG x1, V3DLONG y0, V3DLONG y1, V3DLONG z0, V3DLONG z1, int overlap = 10, int direction = 0){
+        start_x = x0;
+        start_y = y0;
+        start_z = z0;
+        end_x = x1;
+        end_y = y1;
+        end_z = z1;
+        this->overlap = overlap;
+        this->direction = direction;
+    }
+
+    vector<NeuronTree> getNeuronTrees(QString brainPath, V3DPluginCallback2 &callback);
+    void getGlobelNeuronTrees(vector<NeuronTree>& trees);
+    void getTipBlocks(vector<NeuronTree>& trees, BoundingBox box, vector<imageBlock>& blockList);
+
+    void getTipBlocks(NeuronTree& tree, BoundingBox box, vector<imageBlock>& blockList);
+
+    NeuronTree getNeuronTree(QString brainPath, V3DPluginCallback2 &callback);
+
+    NeuronTree cutBlockSWC(const NeuronTree& nt);
+
+    void getGlobelNeuronTree(NeuronTree& nt);
+    void getLocalNeuronTree(NeuronTree& nt);
+};
+
+void normalImage(unsigned char* pdata, V3DLONG* sz);
+
+int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k);
+
+void getImageBlockByTips(LandmarkList tips, vector<imageBlock>& blockList, int block_size, int direction, BoundingBox box);
+
+NeuronTree ultratracerInBox(QString brainPath, imageBlock block, NeuronTree ori, BoundingBox box, V3DPluginCallback2& callback);
+
+BoundingBox getGlobalBoundingBox(V3DPluginCallback2 &callback);
+
+imageBlock getFirstBlock(V3DPluginCallback2& callback, BoundingBox box);
+
+int getDirection(XYZ p);
+
+void getImageBlockByTip(LocationSimple tip, vector<imageBlock> &blockList, int block_size, int direction, BoundingBox box);
+
+void getMainTree(NeuronTree& nt);
+
+NeuronTree ultratracerInBox2(QString brainPath, imageBlock block, NeuronTree ori, BoundingBox box, V3DPluginCallback2& callback);
+
+void mergeFinalResult(NeuronTree nt);
+
+bool writeBlock(V3DPluginCallback2 &callback, QWidget* parent);
+
+bool readBlocks(const QString& filename, vector<imageBlock>& blocks, vector<BoundingBox>& boxs, QString &brainPath);
+
+bool tracingPipeline(QString imageBlockPath, QString swcFile, V3DPluginCallback2& callback);
 
 #endif // RETRACEFUNCTION_H
