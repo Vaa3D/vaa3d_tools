@@ -19,14 +19,6 @@ double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
     return (xx*xx+yy*yy+zz*zz);
 };
 
-//float median(float arr[], int n){
-//    //sort the array
-//    sort(arr, arr + n);
-//    if(n % 2 == 0)
-//        return (arr[n/2 - 1] + arr[n/2])/2;
-//    return arr[n/2];
-//}
-
 double median(vector<unsigned int> scores)
 {
   size_t size = scores.size();
@@ -93,26 +85,6 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
     LandmarkList candidates_m;
     LandmarkList candidates_mf;
 
-    // Get Neuron
-    /*OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
-    if (!openDlg->exec())
-        return candidates_m;
-    NeuronTree nt = openDlg->nt;
-    QList<NeuronSWC> neuron = nt.listNeuron;
-    */
-
-    // Get Image Data
-//    int nChannel = p4DImage->getCDim();
-
-//    V3DLONG mysz[4];
-//    mysz[0] = p4DImage->getXDim();
-//    mysz[1] = p4DImage->getYDim();
-//    mysz[2] = p4DImage->getZDim();
-//    mysz[3] = nChannel;
-//    cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
-//    unsigned char *data1d_crop=p4DImage->getRawDataAtChannel(nChannel);
-//    printf("+++++++++++:%p\n",p4DImage);
-
     vector<long> ids;
     vector<long> parents;
     // Reorder tree ids so that neuron.at(i).n=i+1
@@ -155,26 +127,7 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
     NeuronTree nt;
     nt.listNeuron = neuron;
     writeESWC_file(IntTreeName,nt);
-//    for(V3DLONG id=0; id<neuron.size(); id++)
-//    {
-//        meanint = meanint + data1d_crop[V3DLONG(neuron.at(id).z*mysz[0]*mysz[1]+neuron.at(id).y*mysz[0]+neuron.at(id).x)];
-////        qDebug() << "Mean intensity in swc" << meanint;
-//        qDebug() << "Intensity in swc" << data1d_crop[V3DLONG(neuron.at(id).z*mysz[0]*mysz[1]+neuron.at(id).y*mysz[0]+neuron.at(id).x)];
-//    }
-//    meanint = meanint/neuron.size();
-//    qDebug() << "Mean intensity in swc" << meanint;
-//    for(V3DLONG id=0; id<neuron.size(); id++)
-//    {
-//        if(maxint<data1d_crop[V3DLONG(neuron.at(id).z*mysz[0]*mysz[1]+neuron.at(id).y*mysz[0]+neuron.at(id).x)]) maxint = data1d_crop[V3DLONG(neuron.at(id).z*mysz[0]*mysz[1]+neuron.at(id).y*mysz[0]+neuron.at(id).x)] ;
-////        qDebug() << "Mean intensity in swc" << meanint;
-//    }
-//    qDebug() << "Max intensity in swc" << maxint;
-//    for(V3DLONG imi=1; imi<V3DLONG(mysz[2]*mysz[0]*mysz[1]); imi++)
-//    {
-//        if(0 < data1d_crop[imi]) qDebug() << "Intensity in image" << float(data1d_crop[imi]);
-//        if(maxintim < data1d_crop[imi]) maxintim = float(data1d_crop[imi]);
-//    }
-//    qDebug() << "Max intensity in image" << maxintim;
+
     for(V3DLONG imi=1; imi<V3DLONG(mysz[2]*mysz[0]*mysz[1]); imi++)
     {
 //        if(0 < data1d_crop[imi]) qDebug() << "Intensity in image" << float(data1d_crop[imi]);
@@ -192,13 +145,6 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 //    double stdev = StandardDeviation(medianint);
     qDebug() << "Median non-zero intensity in image" << meanint;
 
-//    double imgave,imgstd;
-//    V3DLONG total_size=mysz[0]*mysz[1]*mysz[2];
-//    mean_and_std(data1d_crop,total_size,imgave,imgstd);
-//    //double td= (imgstd<10) ? 10:imgstd;
-//    double bkg_thresh= imgave+0.7*imgstd;//+15;
-//    qDebug() << "Background threshold" << bkg_thresh;
-
     float mediantreeint = median(treeint);
     qDebug() << "Median tree intensity" << mediantreeint;
 
@@ -213,31 +159,6 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 
     for(V3DLONG id=0; id<neuron.size(); id++)
     {
-        //qDebug() << id;
-        //float theta,phi;
-//        V3DLONG walknode,walknode2 = id;
-//        struct XYZ invec = XYZ(-1,-1,-1);
-//        for (int i=0; i<160; i++)
-//        {
-//            locswc.push_back(invec);
-//        }
-//        for (int i=1; i<80; i++)
-//        {
-//            if(walknode!=-1) walknode = neuron.at(walknode).pn; // Check root case
-//            if(walknode!=-1) locswc[80+i] = XYZ(neuron.at(walknode).x,neuron.at(walknode).y,neuron.at(walknode).z);
-//            cout << "\r Getting swc node locations..." << flush;
-//            if(walknode2!=-1)
-//            {
-//                long childnodeid = find(parents.begin(),parents.end(),neuron.at(walknode2).n-1) - parents.begin();
-//                if(find(parents.begin(),parents.end(),neuron.at(walknode2).n-1)!= parents.end())
-//                {
-//                    walknode2 = neuron.at(parents.at(childnodeid)).n-1; // Check tip case
-//                    if(walknode2!=-1 && 80-i>=0) locswc[80-i] = XYZ(neuron.at(walknode2).x,neuron.at(walknode2).y,neuron.at(walknode2).z);
-//                }
-//            }
-//        }
-        //cout << endl;
-        //qDebug() << "locswcs obtained";
         qDebug() << "Radius:" << neuron.at(id).radius;
         if(neuron.at(id).radius>7){continue;} // out of image border
 
@@ -434,45 +355,8 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 //                for(int i=1; i<80; i++)
                 {
                     //qDebug() << i;
-                    // Checks whether a point is in a shell of radius r<15 pixels and if intensity >15
-//                    if(dist_L2(shellp,locswc.at(i))<15 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=bkg_thresh) candidates.push_back(shellp);
-//                    if(meanint*3 > mediantreeint)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(i))<15 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=meanint*6) candidates.push_back(shellp);
-//                    }
-//                    else
-//                    {
-//                        if(dist_L2(shellp,locswc.at(i))<15 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=mediantreeint) candidates.push_back(shellp);
-//                    }
+                    // Checks whether a point is in a shell of radius 20*dendrite radius and if intensity >threshold
                     if(dist_L2(shellp,locswc.at(i))<=radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh) candidates.push_back(shellp);
-//                    else if(dist_L2(shellp,locswc.at(i))<radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh2) candidates.push_back(shellp);
-//                    if(dist_L2(shellp2,locswc.at(i))<=0.75*radius && double(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)])>=bkg_thresh) candidates.push_back(shellp2);
-//                    if(datatype==V3D_UINT8){
-//                        if(dist_L2(shellp,locswc.at(i))<radius && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=bkg_thresh+15) candidates.push_back(shellp);
-//                    }
-//                    else if(datatype==V3D_UINT16)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(i))<radius && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=bkg_thresh+3825) candidates.push_back(shellp);
-//                    }
-//                    if(datatype==V3D_UINT8){
-//                        if(dist_L2(shellp,locswc.at(i))<15 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=meanint+30) candidates.push_back(shellp);
-//                    }
-//                    else if(datatype==V3D_UINT16)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(i))<15 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=meanint+7650) candidates.push_back(shellp);
-//                    }
-//                                        if(locswc.at(80-i)==invec && locswc.at(80+i)!=invec)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(80+i))>=20 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=40) candidates.push_back(shellp);
-//                    }
-//                    else if(locswc.at(80+i)==invec && locswc.at(80-i)!=invec)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(80-i))>=20 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=40) candidates.push_back(shellp);
-//                    }
-//                    else if(locswc.at(80+i)!=invec && locswc.at(80-i)!=invec)
-//                    {
-//                        if(dist_L2(shellp,locswc.at(80-i))>=20 && dist_L2(shellp,locswc.at(80+i))>=20 && data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]>=40) candidates.push_back(shellp);//To be checked!!
-//                    }
                 }
             }
         }
@@ -492,45 +376,10 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
         candidate.y = long(candidates.at(i).y);
         candidate.z = long(candidates.at(i).z);
 
-        for(V3DLONG j=0; j<neuron.size(); j++)
-        {
-//            if(dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),XYZ(candidate.x,candidate.y,candidate.z))<double(radius)/3) out = 1;
-        }
         if(out==0 && find(candidates_m.begin(),candidates_m.end(),candidate) == candidates_m.end()){
             candidates_m.push_back(candidate);
-//            V3DLONG candint = 0;
-//            for(V3DLONG exp=0; exp<20; exp++){
-//                for(V3DLONG exp2=0; exp2<20; exp2++){
-//                    for(V3DLONG exp3=0; exp3<20; exp3++){
-//                        struct XYZ explp = XYZ(candidate.x+exp-10,candidate.y+exp2-10,candidate.z+exp3-10);
-//                        if((explp.x<0) || (explp.x>=mysz[0]) || (explp.y<0) || (explp.y>=mysz[1]) || (explp.z<0) || (explp.z>=mysz[2])){continue;} // out of image border
-//                        if(candint < data1d_crop[V3DLONG(explp.z*mysz[0]*mysz[1]+explp.y*mysz[0]+explp.x)]){
-//                            candint = data1d_crop[V3DLONG(explp.z*mysz[0]*mysz[1]+explp.y*mysz[0]+explp.x)];
-//                            candidatef.x = explp.x;
-//                            candidatef.y = explp.y;
-//                            candidatef.z = explp.z;
-//                        }
-//                    }
-//                }
-//            }
         }
-//        if(find(final_pts.begin(),final_pts.end(),XYZ(candidatef.x,candidatef.y,candidatef.z)) != final_pts.end()){
-//            final_pts.push_back(XYZ(candidatef.x,candidatef.y,candidatef.z));
-//        }
-//        if(find(candidates_f.begin(),candidates_f.end(),candidatef) != candidates_f.end()){
-//            candidates_f.push_back(candidatef);
-//        }
-//        //qDebug() << long(candidates.at(i).x) << long(candidates.at(i).y) << long(candidates.at(i).z);
-//        V3DLONG ind = xyz2pos(long(candidates.at(i).x),long(candidates.at(i).y),long(candidates.at(i).z),mysz[1],mysz[2]);
-//        vector <float>  centered = calc_mean_shift_center(ind,windowradius,mean_shift_fun::data1Dc_float,mean_shift_fun::sz_image,0);
-//        struct XYZ centeredxyz = XYZ(centered[0],centered[1],centered[2]);
-//        if(find(final_pts.begin(),final_pts.end(),centeredxyz) != final_pts.end()) final_pts.push_back(centeredxyz);
     }
-
-//    for (V3DLONG i=0; i<final_pts.size(); i++)
-//    {
-//        qDebug() << long(final_pts.at(i).x) << long(final_pts.at(i).y) << long(final_pts.at(i).z);
-//    }
 
     vector <bool> out;
     for (V3DLONG i=0; i<candidates_m.size(); i++)
@@ -568,56 +417,6 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 //    qDebug() << "Final points vector size is:" << candidates_m.size();
     qDebug() << "Final points vector size is:" << candidates_mf.size();
     return candidates_mf;
-//    return candidates_f;
-//    long RR = 40; //radius spherical coordinates shell around swc
-//    for(int id=0; id<neuron.size(); id++)
-//    {
-//        if(neuron.at(id).pn != -1)
-//        {
-//            float vx = neuron.at(id).x - neuron.at(neuron.at(id).pn-1).x;
-//            float vy = neuron.at(id).y - neuron.at(neuron.at(id).pn-1).y;
-//            float vz = neuron.at(id).z - neuron.at(neuron.at(id).pn-1).z;
-//            qDebug() << "Swc node vector:" << vx << vy << vz;
-
-//            // Get spherical coordinates of unit vector
-//            struct XYZ vec = XYZ(vx,vy,vz);
-//            float R = norm(vec);
-//            struct XYZ uvec = normalize(vec);
-//            qDebug() << "Unit vector:" << uvec.x << uvec.y << uvec.z;
-
-//            float theta = acos(uvec.z);
-//            float phi = atan(uvec.y/uvec.x);
-
-//            // Get z coordinates
-//            long minz,maxz,xin,yin;
-//            if(vz>=0)
-//            {
-//                minz = neuron.at(neuron.at(id).pn-1).z;
-//                maxz = neuron.at(id).z;
-//                xin = neuron.at(neuron.at(id).pn-1).x;
-//                yin = neuron.at(neuron.at(id).pn-1).y;
-//            }
-//            else
-//            {
-//                maxz = neuron.at(neuron.at(id).pn-1).z;
-//                minz = neuron.at(id).z;
-//                xin = neuron.at(id).x;
-//                yin = neuron.at(id).y;
-//            }
-
-//            qDebug() << "Radius:" << R;
-//            for(long zz=minz; zz<maxz; zz++) //To be rotated (by now theta=0 phi=0)
-//            {
-//                long xx = xin + (zz-minz)*sin(theta);
-//                for(double alpha=0; alpha<2*PI; alpha+=0.1)
-//                {
-//                    long yy = RR*sin(alpha);
-//                    xx = RR*cos(alpha);
-//                    qDebug() << "Cartesian coordinates:" << xx << yy << zz;
-//                }
-//            }
-//        }
-//    }
 
 }
 
