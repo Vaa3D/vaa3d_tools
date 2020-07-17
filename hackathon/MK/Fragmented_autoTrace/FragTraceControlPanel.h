@@ -59,6 +59,7 @@ public slots:
 	// ------- Configuration ------- //
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
+	void markerMonitorOption(bool checked);
 	void multiSomaTraceChecked(bool checked);
 	void saveSettingsClicked();
 	//void browseSavePathClicked();
