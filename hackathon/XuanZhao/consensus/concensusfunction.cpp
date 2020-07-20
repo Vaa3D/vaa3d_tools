@@ -337,21 +337,21 @@ NeuronTree getApp2RotateImage(Image4DSimple* image, LocationSimple m, int rotate
     double centerX = inSZ[0]/2.0, centerY = inSZ[1]/2.0, centerZ = inSZ[2]/2.0;
 
     for(int i=0; i<p.landmarks.size(); i++){
-        float x = p.landmarks[i].x - centerX;
-        float y = p.landmarks[i].y - centerY;
-        float z = p.landmarks[i].z - centerZ;
+        float x = p.landmarks[i].x - centerX - 1;
+        float y = p.landmarks[i].y - centerY - 1;
+        float z = p.landmarks[i].z - centerZ - 1;
         if(rotateAxis == 0){
-            p.landmarks[i].x = x - minX;
-            p.landmarks[i].y = cos(angle)*y - sin(angle)*z - minY;
-            p.landmarks[i].z = sin(angle)*y + cos(angle)*z - minZ;
+            p.landmarks[i].x = x - minX + 1;
+            p.landmarks[i].y = cos(angle)*y - sin(angle)*z - minY + 1;
+            p.landmarks[i].z = sin(angle)*y + cos(angle)*z - minZ + 1;
         }else if (rotateAxis == 1) {
-            p.landmarks[i].x = cos(angle)*x + sin(angle)*z - minX;
-            p.landmarks[i].y = y - minY;
-            p.landmarks[i].z = -sin(angle)*x + cos(angle)*z - minZ;
+            p.landmarks[i].x = cos(angle)*x + sin(angle)*z - minX + 1;
+            p.landmarks[i].y = y - minY + 1;
+            p.landmarks[i].z = -sin(angle)*x + cos(angle)*z - minZ + 1;
         }else {
-            p.landmarks[i].x = cos(angle)*x - sin(angle)*y - minX;
-            p.landmarks[i].y = sin(angle)*x + cos(angle)*y - minY;
-            p.landmarks[i].z = z - minZ;
+            p.landmarks[i].x = cos(angle)*x - sin(angle)*y - minX + 1;
+            p.landmarks[i].y = sin(angle)*x + cos(angle)*y - minY + 1;
+            p.landmarks[i].z = z - minZ + 1;
         }
 
     }
