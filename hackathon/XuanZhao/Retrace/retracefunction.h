@@ -182,6 +182,7 @@ struct imageBlock{
 void normalImage(unsigned char* pdata, V3DLONG* sz);
 
 int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k);
+int *getThresholdByKmeans(Image4DSimple* image, int k);
 
 void getImageBlockByTips(LandmarkList tips, vector<imageBlock>& blockList, int block_size, int direction, BoundingBox box);
 
@@ -206,5 +207,20 @@ bool writeBlock(V3DPluginCallback2 &callback, QWidget* parent);
 bool readBlocks(const QString& filename, vector<imageBlock>& blocks, vector<BoundingBox>& boxs, QString &brainPath);
 
 bool tracingPipeline(QString imageBlockPath, QString swcFile, V3DPluginCallback2& callback);
+
+
+void mirrorImage(unsigned char* pdata, V3DLONG* inSZ, int mirrorDirection);
+
+void rotateImage(unsigned char* inData, unsigned char* &outData, V3DLONG* inSZ, V3DLONG* outSZ, int rotateAxis, int angle, int &minX, int &minY, int &minZ);
+
+NeuronTree getApp2RotateImage(Image4DSimple *image, LocationSimple m, int rotateAxis, int angle, int th);
+
+NeuronTree getApp2WithParameter(Image4DSimple* image, LocationSimple m, int downSampleTimes, int mirrorDirection, int th, int type);
+
+vector<NeuronTree> getApp2NeuronTrees(int app2Th, Image4DSimple *image, LocationSimple m);
+
+NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple *inImg, LocationSimple m, V3DPluginCallback2& callback);
+
+NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DPluginCallback2& callback);
 
 #endif // RETRACEFUNCTION_H

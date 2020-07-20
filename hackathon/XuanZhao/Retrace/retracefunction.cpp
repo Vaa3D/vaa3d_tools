@@ -1205,7 +1205,7 @@ void normalImage(unsigned char* pdata, V3DLONG* sz){
     int max = 80;
     int min = INT_MAX;
     if(mean>0.5*max){
-        max = mean*1.5;
+        max = mean*2;
     }
 
     for(int i=0; i<tolSZ; i++){
@@ -1231,11 +1231,11 @@ int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k){
 
     V3DLONG totalSZ = sz[0]*sz[1]*sz[2];
 
-    double t = 255/(double) (k-1);
+    double t = 255/(double) (k+1);
 
     vector<vector<unsigned char> > groups = vector<vector<unsigned char> >(k,vector<unsigned char>());
     vector<double> groupCenter = vector<double>();
-    for(int i=0; i<k; i++){
+    for(int i=1; i<=k; i++){
         groupCenter.push_back(i*t);
     }
     int iteration = 0;
@@ -1307,6 +1307,12 @@ int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k){
 
     return result;
 
+}
+
+int* getThresholdByKmeans(Image4DSimple *image, int k){
+    unsigned char* pdata = image->getRawData();
+    V3DLONG sz[4] = {image->getXDim(),image->getYDim(),image->getZDim(),image->getCDim()};
+    return getThresholdByKmeans(pdata,sz,k);
 }
 
 QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
@@ -1386,48 +1392,48 @@ void getImageBlockByTip(LocationSimple tip, vector<imageBlock> &blockList, int b
     {
         b.end_x = tip.x + lap;
         b.start_x = b.end_x - block_size;
-        b.start_y = tip.y - block_size/2;
-        b.end_y = b.start_y + block_size;
-        b.start_z = tip.z - block_size/2;
-        b.end_z = b.start_z + block_size;
+        b.start_y = tip.y - block_size/4;
+        b.end_y = b.start_y + block_size/2;
+        b.start_z = tip.z - block_size/4;
+        b.end_z = b.start_z + block_size/2;
     }else if(direction == 2)
     {
         b.start_x = tip.x - lap;
         b.end_x = b.start_x + block_size;
-        b.start_y = tip.y - block_size/2;
-        b.end_y = b.start_y + block_size;
-        b.start_z = tip.z - block_size/2;
-        b.end_z = b.start_z + block_size;
+        b.start_y = tip.y - block_size/4;
+        b.end_y = b.start_y + block_size/2;
+        b.start_z = tip.z - block_size/4;
+        b.end_z = b.start_z + block_size/2;
     }else if(direction == 3)
     {
-        b.start_x = tip.x - block_size/2;
-        b.end_x = b.start_x + block_size;
+        b.start_x = tip.x - block_size/4;
+        b.end_x = b.start_x + block_size/2;
         b.end_y = tip.y + lap;
         b.start_y = b.end_y - block_size;
-        b.start_z = tip.z - block_size/2;
-        b.end_z = b.start_z + block_size;
+        b.start_z = tip.z - block_size/4;
+        b.end_z = b.start_z + block_size/2;
     }else if(direction == 4)
     {
-        b.start_x = tip.x - block_size/2;
-        b.end_x = b.start_x + block_size;
+        b.start_x = tip.x - block_size/4;
+        b.end_x = b.start_x + block_size/2;
         b.start_y = tip.y - lap;
         b.end_y = b.start_y + block_size;
-        b.start_z = tip.z - block_size/2;
-        b.end_z = b.start_z + block_size;
+        b.start_z = tip.z - block_size/4;
+        b.end_z = b.start_z + block_size/2;
     }else if(direction == 5)
     {
-        b.start_x = tip.x - block_size/2;
-        b.end_x = b.start_x + block_size;
-        b.start_y = tip.y - block_size/2;
-        b.end_y = b.start_y + block_size;
+        b.start_x = tip.x - block_size/4;
+        b.end_x = b.start_x + block_size/2;
+        b.start_y = tip.y - block_size/4;
+        b.end_y = b.start_y + block_size/2;
         b.end_z = tip.z + lap;
         b.start_z = b.end_z + block_size;
     }else if(direction == 6)
     {
-        b.start_x = tip.x - block_size/2;
-        b.end_x = b.start_x + block_size;
-        b.start_y = tip.y - block_size/2;
-        b.end_y = b.start_y + block_size;
+        b.start_x = tip.x - block_size/4;
+        b.end_x = b.start_x + block_size/2;
+        b.start_y = tip.y - block_size/4;
+        b.end_y = b.start_y + block_size/2;
         b.end_z = tip.z + lap;
         b.start_z = b.end_z + block_size;
     }
@@ -1471,6 +1477,7 @@ int getDirection(XYZ p){
             direction = 6;
         }
     }
+    qDebug()<<"direction: "<<direction;
     return direction;
 }
 
@@ -2163,6 +2170,8 @@ void ultratracerTerafly(int type, V3DPluginCallback2 &callback, QWidget *parent)
     QString brainPath = callback.getPathTeraFly();
 
     NeuronTree ori = callback.getSWCTeraFly();
+    sortSWC(ori);
+    mergeFinalResult(ori);
     NeuronTree resultTree = ultratracerInBox2(brainPath,block,ori,box,callback);
 
 //    vector<NeuronTree> trees = vector<NeuronTree>();
@@ -2409,33 +2418,43 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
            <<"start_y: "<<start_y<<" end_y: "<<end_y
           <<"start_z: "<<start_z<<" end_z: "<<end_z;
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString().c_str(),start_x,end_x,start_y,end_y,start_z,end_z);
+
+    QString saveImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+            QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + ".v3draw";
+    simple_saveimage_wrapper(callback,saveImagePath.toStdString().c_str(),pdata,in_sz,1);
+
     normalImage(pdata,in_sz);
     Image4DSimple* app2Image = new Image4DSimple();
     app2Image->setData(pdata,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
 
     int app2Th = -1;
 
-    paraApp2 p2 = paraApp2();
-    p2.p4dImage = app2Image;
-    p2.bkg_thresh = app2Th;
-    p2.xc0 = 0;
-    p2.yc0 = 0;
-    p2.zc0 = 0;
-    p2.xc1 = in_sz[0] - 1;
-    p2.yc1 = in_sz[1] - 1;
-    p2.zc1 = in_sz[2] - 1;
 
-    p2.bkg_thresh = -1;
+
+//    paraApp2 p2 = paraApp2();
+//    p2.p4dImage = app2Image;
+//    p2.bkg_thresh = app2Th;
+//    p2.xc0 = 0;
+//    p2.yc0 = 0;
+//    p2.zc0 = 0;
+//    p2.xc1 = in_sz[0] - 1;
+//    p2.yc1 = in_sz[1] - 1;
+//    p2.zc1 = in_sz[2] - 1;
+
+//    p2.bkg_thresh = -1;
+    bool kmeansTh = false;
 
     bool isBinaryProcess = false;
 
     LocationSimple m = LocationSimple(startMarkers[0].x + 1 - start_x, startMarkers[0].y + 1 - start_y, startMarkers[0].z + 1 - start_z);
-    p2.landmarks.push_back(m);
+//    p2.landmarks.push_back(m);
 
     if(direction == 0){
-        proc_app2(p2);
-        NeuronTree app2NeuronTree = NeuronTree();
-        app2NeuronTree.deepCopy(p2.result);
+//        proc_app2(p2);
+//        NeuronTree app2NeuronTree = NeuronTree();
+//        app2NeuronTree.deepCopy(p2.result);
+//        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,app2Image,m);
+        NeuronTree app2NeuronTree = consensus(app2Image,m,kmeansTh,callback);
 
         BranchTree tb = BranchTree();
         tb.initialize(app2NeuronTree);
@@ -2448,15 +2467,15 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
         qDebug()<<"------------BinaryProcess image-----------------------";
 
         int tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
-        unsigned char* bdata = new unsigned char[tolSZ];
-        BinaryProcess(pdata,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
-        for(int i=0; i<tolSZ; i++){
-            pdata[i] = bdata[i];
-        }
-        if(bdata){
-            delete[] bdata;
-            bdata = 0;
-        }
+//        unsigned char* bdata = new unsigned char[tolSZ];
+//        BinaryProcess(pdata,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
+//        for(int i=0; i<tolSZ; i++){
+//            pdata[i] = bdata[i];
+//        }
+//        if(bdata){
+//            delete[] bdata;
+//            bdata = 0;
+//        }
 
         NeuronTree maskTree = this->cutBlockSWC(finalResult);
         for(int i=0; i<maskTree.listNeuron.size(); i++){
@@ -2465,6 +2484,10 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
                 maskTree.listNeuron.removeAt(i);
             }
         }
+        QString maskTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.swc";
+        writeSWC_file(maskTreePath,maskTree);
+
         unsigned char* mask = 0;
         this->getLocalNeuronTree(maskTree);
         vector<MyMarker*> maskMarkers = swc_convert(maskTree);
@@ -2475,9 +2498,17 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             }
         }
 
-        proc_app2(p2);
-        NeuronTree app2NeuronTree = NeuronTree();
-        app2NeuronTree.deepCopy(p2.result);
+        QString maskImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.v3draw";
+        simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),pdata,in_sz,1);
+
+//        proc_app2(p2);
+//        NeuronTree app2NeuronTree = NeuronTree();
+//        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,app2Image,m);
+//        NeuronTree app2NeuronTree = consensus(app2NeuronTrees,app2Image,m,callback);
+//        app2NeuronTree.deepCopy(app2NeuronTree);
+
+        NeuronTree app2NeuronTree = consensus(app2Image,m,kmeansTh,callback);
 
         BranchTree tb = BranchTree();
         tb.initialize(app2NeuronTree);
@@ -2605,10 +2636,12 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             bdata = 0;
         }
 
-        proc_app2(p2);
-        p2.landmarks.clear();
-        NeuronTree app2NeuronTree = NeuronTree();
-        app2NeuronTree.deepCopy(p2.result);
+        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,app2Image,m);
+        NeuronTree app2NeuronTree = consensus(app2NeuronTrees,app2Image,m,callback);
+//        proc_app2(p2);
+//        p2.landmarks.clear();
+//        NeuronTree app2NeuronTree = NeuronTree();
+//        app2NeuronTree.deepCopy(p2.result);
 
         return app2NeuronTree;
     }
@@ -2737,7 +2770,7 @@ void mergeFinalResult(NeuronTree nt){
 NeuronTree ultratracerInBox2(QString brainPath, imageBlock block, NeuronTree ori, BoundingBox box, V3DPluginCallback2& callback){
     vector<imageBlock> blockList = vector<imageBlock>();
 
-    vector<NeuronTree> resultTrees = vector<NeuronTree>();
+//    vector<NeuronTree> resultTrees = vector<NeuronTree>();
 
 //    sortSWC(ori);
 //    mergeFinalResult(ori);
@@ -2752,6 +2785,7 @@ NeuronTree ultratracerInBox2(QString brainPath, imageBlock block, NeuronTree ori
 
     block.getTipBlocks(tree,box,blockList);
     mergeFinalResult(tree);
+//    callback.setSWCTeraFly(finalResult);
 
     while (!blockList.empty()) {
         imageBlock ib = blockList.front();
@@ -2760,6 +2794,7 @@ NeuronTree ultratracerInBox2(QString brainPath, imageBlock block, NeuronTree ori
         ib.getGlobelNeuronTree(tree);
         ib.getTipBlocks(tree,box,blockList);
         mergeFinalResult(tree);
+//        callback.setSWCTeraFly(finalResult);
         qDebug()<<"block size: "<<blockList.size();
     }
 
@@ -2769,6 +2804,9 @@ NeuronTree ultratracerInBox2(QString brainPath, imageBlock block, NeuronTree ori
 bool writeBlock(V3DPluginCallback2 &callback, QWidget *parent){
     BoundingBox box = getGlobalBoundingBox(callback);
     imageBlock block = getFirstBlock(callback,box);
+
+    NeuronTree tree = callback.getSWCTeraFly();
+    qDebug()<<"swc path: "<<tree.file.toStdString().c_str();
 
     if(block.start_x == 0 && block.end_x == 0 &&
             block.start_y == 0 && block.end_y == 0 &&
@@ -2866,9 +2904,11 @@ bool readBlocks(const QString &filename, vector<imageBlock>& blocks, vector<Boun
         imageBlock block = imageBlock();
         BoundingBox box = BoundingBox();
         LocationSimple m;
+        qDebug()<<"s0: "<<s[0].toStdString().c_str()<<" s1: "<<s[1].toStdString().c_str()<<" s2: "<<s[2].toStdString().c_str();
         m.x = s[0].toFloat();
         m.y = s[1].toFloat();
         m.z = s[2].toFloat();
+        qDebug()<<"mx: "<<m.x<<" my: "<<m.y<<" mz: "<<m.z;
         block.start_x = s[3].toLongLong();
         block.end_x = s[4].toLongLong();
         block.start_y = s[5].toLongLong();
@@ -2877,10 +2917,10 @@ bool readBlocks(const QString &filename, vector<imageBlock>& blocks, vector<Boun
         block.end_z = s[8].toLongLong();
         block.direction = s[9].toInt();
         box.x0 = s[10].toFloat();
-        box.x1 = s[11].toFloat();
-        box.y1 = s[12].toFloat();
-        box.y0 = s[13].toFloat();
-        box.z0 = s[14].toFloat();
+        box.y0 = s[11].toFloat();
+        box.z0 = s[12].toFloat();
+        box.x1 = s[13].toFloat();
+        box.y1 = s[14].toFloat();
         box.z1 = s[15].toFloat();
         if(i==1){
             brainPath = s[16];
@@ -2909,6 +2949,7 @@ bool tracingPipeline(QString imageBlockPath, QString swcFile, V3DPluginCallback2
     sortSWC(ori);
     mergeFinalResult(ori);
     for(int i=0; i<blocks.size(); i++){
+
         int minIndex = -1;
         double minD = INT_MAX;
         for(int j=0; j<ori.listNeuron.size(); j++){
@@ -2916,7 +2957,7 @@ bool tracingPipeline(QString imageBlockPath, QString swcFile, V3DPluginCallback2
             double d = dist_L2(XYZ(blocks[i].startMarkers[0].x,blocks[i].startMarkers[0].y, blocks[i].startMarkers[0].z),tmp);
             if(d<minD){
                 minD = d;
-                minIndex = i;
+                minIndex = j;
             }
         }
         if(minD<5 && minIndex != -1){
@@ -2924,16 +2965,545 @@ bool tracingPipeline(QString imageBlockPath, QString swcFile, V3DPluginCallback2
             blocks[i].startMarkers[0].y = ori.listNeuron[minIndex].y;
             blocks[i].startMarkers[0].z = ori.listNeuron[minIndex].z;
         }
-        ultratracerInBox2(brainPath,blocks[i],ori,boxs[i],callback);
+
         qDebug()<<blocks[i].start_x<<" "<<blocks[i].end_x<<" "<<blocks[i].start_y<<" "<<
                   blocks[i].end_y<<" "<<blocks[i].start_z<<" "<<blocks[i].end_z<<" "<<
                   blocks[i].direction<<" "<<blocks[i].startMarkers[0].x<<" "<<
                   blocks[i].startMarkers[0].y<<blocks[i].startMarkers[0].z<<
                   boxs[i].x0<<" "<<boxs[i].x1<<" "<<boxs[i].y0<<" "<<boxs[i].y1<<" "<<
                   boxs[i].z0<<" "<<boxs[i].z1<<" "<<brainPath.toStdString().c_str();
+
+        ultratracerInBox2(brainPath,blocks[i],ori,boxs[i],callback);
+
     }
-    writeSWC_file(swcFile,finalResult);
+    writeESWC_file(swcFile,finalResult);
     return true;
+}
+
+
+void mirrorImage(unsigned char* pdata, V3DLONG* inSZ, int mirrorDirection){
+    if(mirrorDirection == 0){
+        for(int z=0; z<inSZ[2]; z++){
+            for(int y=0; y<inSZ[1]; y++){
+                for(int x=0; x<inSZ[0]/2; x++){
+                    int index = z*inSZ[0]*inSZ[1] + y*inSZ[0] + x;
+                    unsigned char tmp = pdata[index];
+                    int mirrorIndex = z*inSZ[0]*inSZ[1] + y*inSZ[0] + (inSZ[0] - x - 1);
+                    pdata[index] = pdata[mirrorIndex];
+                    pdata[mirrorIndex] = tmp;
+                }
+            }
+        }
+    }else if (mirrorDirection == 1) {
+        for(int z=0; z<inSZ[2]; z++){
+            for(int x=0; x<inSZ[0]; x++){
+                for(int y=0; y<inSZ[1]/2; y++){
+                    int index = z*inSZ[0]*inSZ[1] + y*inSZ[0] + x;
+                    unsigned char tmp = pdata[index];
+                    int mirrorIndex = z*inSZ[0]*inSZ[1] + (inSZ[1] - y - 1)*inSZ[0] + x;
+                    pdata[index] = pdata[mirrorIndex];
+                    pdata[mirrorIndex] = tmp;
+                }
+            }
+        }
+    }else if (mirrorDirection == 2) {
+        for(int y=0; y<inSZ[1]; y++){
+            for(int x=0; x<inSZ[0]; x++){
+                for(int z=0; z<inSZ[2]/2; z++){
+                    int index = z*inSZ[0]*inSZ[1] + y*inSZ[0] + x;
+                    unsigned char tmp = pdata[index];
+                    int mirrorIndex = (inSZ[2] - z - 1)*inSZ[0]*inSZ[1] + y*inSZ[0] + x;
+                    pdata[index] = pdata[mirrorIndex];
+                    pdata[mirrorIndex] = tmp;
+                }
+            }
+        }
+    }
+}
+
+NeuronTree getApp2WithParameter(Image4DSimple* image, LocationSimple m, int downSampleTimes, int mirrorDirection, int th, int type){
+    paraApp2 p = paraApp2();
+    p.p4dImage = image;
+    V3DLONG inSZ[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+    p.b_256cube = false;
+    p.bkg_thresh = th;
+    p.xc0 = p.yc0 = p.zc0 = 0;
+    p.xc1 = inSZ[0] - 1;
+    p.yc1 = inSZ[1] - 1;
+    p.zc1 = inSZ[2] - 1;
+    p.landmarks.push_back(m);
+
+    unsigned char* pdata = p.p4dImage->getRawData();
+    int totalSZ = p.p4dImage->getTotalUnitNumber();
+
+    unsigned char* pdataCopy = new unsigned char[totalSZ];
+    for(int i=0; i<totalSZ; i++){
+        pdataCopy[i] = pdata[i];
+    }
+    Image4DSimple* copyImage = new Image4DSimple();
+    copyImage->setData(pdataCopy,p.p4dImage);
+
+    Image4DSimple* downSampleImage = new Image4DSimple();
+
+    unsigned char* downSampleData1d = 0;
+    V3DLONG downSampleSZ[4] = {0,0,0,0};
+    if(downSampleTimes == 1){
+        mirrorImage(pdataCopy,inSZ,mirrorDirection);
+        p.p4dImage = copyImage;
+        for(int i=0; i<p.landmarks.size(); i++){
+            if(mirrorDirection == 0){
+                p.landmarks[i].x = inSZ[0] - 1 - p.landmarks[i].x;
+            }else if (mirrorDirection == 1) {
+                p.landmarks[i].y = inSZ[1] - 1 - p.landmarks[i].y;
+            }else if (mirrorDirection == 2) {
+                p.landmarks[i].z = inSZ[2] - 1 - p.landmarks[i].z;
+            }
+        }
+
+    }else{
+        downsampling_img_xyz(pdata,inSZ,downSampleTimes,downSampleTimes,downSampleData1d,downSampleSZ);
+        mirrorImage(downSampleData1d,downSampleSZ,mirrorDirection);
+        downSampleImage->setData(downSampleData1d,downSampleSZ[0],downSampleSZ[1],downSampleSZ[2],downSampleSZ[3],V3D_UINT8);
+        p.p4dImage = downSampleImage;
+        p.xc0 = (int) (p.xc0/downSampleTimes + 0.5); if(p.xc0<0) p.xc0 = 0;
+        p.xc1 = (int) (p.xc1/downSampleTimes + 0.5); if(p.xc1>downSampleSZ[0]-1) p.xc1 = downSampleSZ[0]-1;
+        p.yc0 = (int) (p.yc0/downSampleTimes + 0.5); if(p.yc0<0) p.yc0 = 0;
+        p.yc1 = (int) (p.yc1/downSampleTimes + 0.5); if(p.yc1>downSampleSZ[1]-1) p.yc1 = downSampleSZ[1]-1;
+        p.zc0 = (int) (p.zc0/downSampleTimes + 0.5); if(p.zc0<0) p.zc0 = 0;
+        p.zc1 = (int) (p.zc1/downSampleTimes + 0.5); if(p.zc1>downSampleSZ[2]-1) p.zc1 = downSampleSZ[2]-1;
+        p.bkg_thresh = -1;
+        for(int i=0; i<p.landmarks.size(); i++){
+            p.landmarks[i].x = p.landmarks[i].x/downSampleTimes;
+            p.landmarks[i].y = p.landmarks[i].y/downSampleTimes;
+            p.landmarks[i].z = p.landmarks[i].z/downSampleTimes;
+
+            if(mirrorDirection == 0){
+                p.landmarks[i].x = downSampleSZ[0] - 1 - p.landmarks[i].x;
+            }else if (mirrorDirection == 1) {
+                p.landmarks[i].y = downSampleSZ[1] - 1 - p.landmarks[i].y;
+            }else if (mirrorDirection == 2) {
+                p.landmarks[i].z = downSampleSZ[2] - 1 - p.landmarks[i].z;
+            }
+        }
+    }
+
+
+
+    proc_app2(p);
+    sortSWC(p.result);
+    NeuronTree app2NeuronTree = NeuronTree();
+    app2NeuronTree.deepCopy(p.result);
+
+    for(int i=0; i<app2NeuronTree.listNeuron.size(); i++){
+
+        if(downSampleTimes == 1){
+            if(mirrorDirection == 0){
+                app2NeuronTree.listNeuron[i].x = inSZ[0] - 1 - app2NeuronTree.listNeuron[i].x;
+            }else if (mirrorDirection == 1) {
+                app2NeuronTree.listNeuron[i].y = inSZ[1] - 1 - app2NeuronTree.listNeuron[i].y;
+            }else if (mirrorDirection == 2) {
+                app2NeuronTree.listNeuron[i].z = inSZ[2] - 1 - app2NeuronTree.listNeuron[i].z;
+            }
+        }else {
+            if(mirrorDirection == 0){
+                app2NeuronTree.listNeuron[i].x = downSampleSZ[0] - 1 - app2NeuronTree.listNeuron[i].x;
+            }else if (mirrorDirection == 1) {
+                app2NeuronTree.listNeuron[i].y = downSampleSZ[1] - 1 - app2NeuronTree.listNeuron[i].y;
+            }else if (mirrorDirection == 2) {
+                app2NeuronTree.listNeuron[i].z = downSampleSZ[2] - 1 - app2NeuronTree.listNeuron[i].z;
+            }
+
+            app2NeuronTree.listNeuron[i].x *= downSampleTimes;
+            app2NeuronTree.listNeuron[i].y *= downSampleTimes;
+            app2NeuronTree.listNeuron[i].z *= downSampleTimes;
+        }
+
+    }
+
+    for(int i=0; i<app2NeuronTree.listNeuron.size(); i++){
+        app2NeuronTree.listNeuron[i].type = type;
+    }
+
+//    QString file = imgFileName + "_app2_downsample" + QString::number(downSampleTimes)
+//            + "_mirror_" + QString::number(mirrorDirection) + "_th_" +QString::number(th) + ".swc";
+//    writeSWC_file(file,app2NeuronTree);
+    if(downSampleImage)
+        delete downSampleImage;
+    return app2NeuronTree;
+
+}
+
+void rotateImage(unsigned char* inData, unsigned char* &outData, V3DLONG* inSZ, V3DLONG* outSZ, int rotateAxis, int angle, int& minX, int& minY, int& minZ){
+    V3DLONG totalSZ = inSZ[0]*inSZ[1]*inSZ[2];
+    double centerX = inSZ[0]/2.0;
+    double centerY = inSZ[1]/2.0;
+    double centerZ = inSZ[2]/2.0;
+    vector<vector<int>> rotateCoordinate = vector<vector<int>>(totalSZ,vector<int>(3,0));
+    for(int i=0; i<totalSZ; i++){
+        int x = i%inSZ[0];
+        int y = (i/inSZ[0])%inSZ[1];
+        int z = i/(inSZ[0]*inSZ[1]);
+        int rx, ry, rz;
+        if(rotateAxis == 0){
+            rx = (x - centerX);
+            ry = (int)(cos(angle)*(y - centerY) - sin(angle)*(z - centerZ) + 0.5);
+            rz = (int)(sin(angle)*(y - centerY) + cos(angle)*(z - centerZ) + 0.5);
+        }else if (rotateAxis == 1) {
+            rx = (int)(cos(angle)*(x - centerX) + sin(angle)*(z - centerZ) + 0.5);
+            ry = (y - centerY);
+            rz = (int)(-sin(angle)*(x - centerX) + cos(angle)*(z - centerZ) + 0.5);
+        }else {
+            rx = (int)(cos(angle)*(x - centerX) - sin(angle)*(y - centerY) + 0.5);
+            ry = (int)(sin(angle)*(x - centerX) + cos(angle)*(y - centerY) + 0.5);
+            rz = (z-centerZ);
+        }
+        rotateCoordinate[i][0] = rx;
+        rotateCoordinate[i][1] = ry;
+        rotateCoordinate[i][2] = rz;
+    }
+    minX = INT_MAX,  minY = INT_MAX,  minZ = INT_MAX;
+    int maxX = INT_MIN, maxY = INT_MIN, maxZ = INT_MIN;
+    for(int i=0; i<totalSZ; i++){
+        if(rotateCoordinate[i][0]<minX) minX = rotateCoordinate[i][0];
+        if(rotateCoordinate[i][0]>maxX) maxX = rotateCoordinate[i][0];
+        if(rotateCoordinate[i][1]<minY) minY = rotateCoordinate[i][1];
+        if(rotateCoordinate[i][1]>maxY) maxY = rotateCoordinate[i][1];
+        if(rotateCoordinate[i][2]<minZ) minZ = rotateCoordinate[i][2];
+        if(rotateCoordinate[i][2]>maxZ) maxZ = rotateCoordinate[i][2];
+    }
+    outSZ[0] = maxX - minX + 1;
+    outSZ[1] = maxY - minY + 1;
+    outSZ[2] = maxZ - minZ + 1;
+    outSZ[3] = 1;
+
+    V3DLONG totalRSZ = outSZ[0]*outSZ[1]*outSZ[2];
+    if(outData){
+        delete[] outData;
+        outData = 0;
+    }
+    outData = new unsigned char[totalRSZ];
+    if(outData){
+        qDebug()<<"outData is exsit";
+    }else {
+        qDebug()<<"outData is not  exsit";
+    }
+    memset(outData,0,totalRSZ*sizeof(unsigned char));
+    for(int i=0; i<totalSZ; i++){
+        int rx = rotateCoordinate[i][0] - minX;
+        int ry = rotateCoordinate[i][1] - minY;
+        int rz = rotateCoordinate[i][2] - minZ;
+        int rIndex = rz*outSZ[0]*outSZ[1] + ry*outSZ[0] + rx;
+        outData[rIndex] = inData[i];
+    }
+}
+
+NeuronTree getApp2RotateImage(Image4DSimple* image, LocationSimple m, int rotateAxis, int angle, int th){
+    paraApp2 p = paraApp2();
+    p.p4dImage = image;
+//    QString imgFileName = QString(p.p4dImage->getFileName());
+    V3DLONG inSZ[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+    p.b_256cube = false;
+    p.bkg_thresh = th;
+    unsigned char* pdata = p.p4dImage->getRawData();
+    int totalSZ = p.p4dImage->getTotalUnitNumber();
+    p.landmarks.push_back(m);
+
+    unsigned char* rdata = 0;
+    V3DLONG rSZ[4] = {0,0,0,0};
+    int minX, minY, minZ;
+    rotateImage(pdata,rdata,inSZ,rSZ,rotateAxis,angle,minX,minY,minZ);
+
+    qDebug()<<"rSZ: "<<rSZ[0]<<" "<<rSZ[1]<<" "<<rSZ[2];
+    if(rdata){
+        qDebug()<<"rdata exsit";
+    }else {
+        qDebug()<<"rdata is not exsit";
+    }
+
+//    simple_saveimage_wrapper(callback,(imgFileName+"_ratateImage" + QString::number(rotateAxis)+ ".v3draw").toStdString().c_str(),rdata,rSZ,1);
+
+    Image4DSimple* rImage = new Image4DSimple();
+    rImage->setData(rdata,rSZ[0],rSZ[1],rSZ[2],rSZ[3],V3D_UINT8);
+    p.xc0 = p.yc0 = p.zc0 = 0;
+    p.xc1 = rSZ[0] - 1;
+    p.yc1 = rSZ[1] - 1;
+    p.zc1 = rSZ[2] - 1;
+
+    p.p4dImage = rImage;
+
+    double centerX = inSZ[0]/2.0, centerY = inSZ[1]/2.0, centerZ = inSZ[2]/2.0;
+
+    for(int i=0; i<p.landmarks.size(); i++){
+        float x = p.landmarks[i].x - centerX;
+        float y = p.landmarks[i].y - centerY;
+        float z = p.landmarks[i].z - centerZ;
+        if(rotateAxis == 0){
+            p.landmarks[i].x = x - minX;
+            p.landmarks[i].y = cos(angle)*y - sin(angle)*z - minY;
+            p.landmarks[i].z = sin(angle)*y + cos(angle)*z - minZ;
+        }else if (rotateAxis == 1) {
+            p.landmarks[i].x = cos(angle)*x + sin(angle)*z - minX;
+            p.landmarks[i].y = y - minY;
+            p.landmarks[i].z = -sin(angle)*x + cos(angle)*z - minZ;
+        }else {
+            p.landmarks[i].x = cos(angle)*x - sin(angle)*y - minX;
+            p.landmarks[i].y = sin(angle)*x + cos(angle)*y - minY;
+            p.landmarks[i].z = z - minZ;
+        }
+
+    }
+
+    proc_app2(p);
+
+    NeuronTree app2NeuronTree = NeuronTree();
+    app2NeuronTree.deepCopy(p.result);
+
+    for(int i=0; i<app2NeuronTree.listNeuron.size(); i++){
+        float x = app2NeuronTree.listNeuron[i].x + minX;
+        float y = app2NeuronTree.listNeuron[i].y + minY;
+        float z = app2NeuronTree.listNeuron[i].z + minZ;
+        if(rotateAxis == 0){
+            app2NeuronTree.listNeuron[i].x = x + centerX;
+            app2NeuronTree.listNeuron[i].y = (cos(-angle)*y - sin(-angle)*z) + centerY;
+            app2NeuronTree.listNeuron[i].z = (sin(-angle)*y + cos(-angle)*z) + centerZ;
+        }else if (rotateAxis == 1) {
+            app2NeuronTree.listNeuron[i].x = (cos(-angle)*x + sin(-angle)*z) + centerX;
+            app2NeuronTree.listNeuron[i].y = y + centerY;
+            app2NeuronTree.listNeuron[i].z = (-sin(-angle)*x + cos(-angle)*z) + centerZ;
+        }else {
+            app2NeuronTree.listNeuron[i].x = (cos(-angle)*x - sin(-angle)*y) + centerX;
+            app2NeuronTree.listNeuron[i].y = (sin(-angle)*x + cos(-angle)*y) + centerY;
+            app2NeuronTree.listNeuron[i].z = z + centerZ;
+        }
+    }
+
+//    writeSWC_file(imgFileName+"_ratateImage_" + QString::number(rotateAxis) + ".swc",app2NeuronTree);
+
+    if(rImage){
+        delete rImage;
+        rImage = 0;
+    }
+
+    return app2NeuronTree;
+
+}
+
+vector<NeuronTree> getApp2NeuronTrees(int app2Th, Image4DSimple* image, LocationSimple m){
+
+    vector<NeuronTree> app2NeuronTrees = vector<NeuronTree>();
+    int mirror[3] = {0,1,2};
+    int downSampleTimes[1] = {1};
+    int type = 2;
+    for(int i=0; i<2; i++){
+        for(int j=0; j<3; j++){
+            NeuronTree app2NeuronTree = getApp2WithParameter(image,m,downSampleTimes[i],mirror[j],app2Th,type);
+            app2NeuronTrees.push_back(app2NeuronTree);
+            type++;
+        }
+    }
+
+    return app2NeuronTrees;
+
+}
+
+NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSimple m, V3DPluginCallback2& callback){
+    V3DLONG sz[4] = {inImg->getXDim(),inImg->getYDim(),inImg->getZDim(),inImg->getCDim()};
+    V3DLONG totalSZ = sz[0]*sz[1]*sz[2];
+    vector<unsigned char*> masks = vector<unsigned char*>();
+    for(int i=0; i<trees.size(); i++){
+        unsigned char* mask = 0;
+        for(int j=0; j<trees[i].listNeuron.size(); j++){
+            trees[i].listNeuron[j].r = 2;
+        }
+        vector<MyMarker*> markers = swc_convert(trees[i]);
+        swc2mask(mask,markers,sz[0],sz[1],sz[2]);
+        masks.push_back(mask);
+    }
+
+    unsigned char* consensusImgData1d = new unsigned char[totalSZ];
+    unsigned char* pdata = inImg->getRawData();
+
+    for(int i=0; i<totalSZ; i++){
+        bool flag = true;
+        for(int j=0; j<masks.size(); j++){
+            if(masks[j][i] != 255)
+                flag = false;
+        }
+        if(flag){
+            consensusImgData1d[i] = pdata[i];
+        }else {
+            consensusImgData1d[i] = 0;
+        }
+    }
+
+//    QString imgFileName = QString(inImg->getFileName()) + "_consensus.v3draw";
+//    simple_saveimage_wrapper(callback,imgFileName.toStdString().c_str(),consensusImgData1d,sz,1);
+
+    for(int j=0; j<masks.size(); j++){
+        if(masks[j])
+            delete[] masks[j];
+    }
+
+    paraApp2 p = paraApp2();
+    p.bkg_thresh = 1;
+    p.b_256cube = false;
+    p.landmarks.push_back(m);
+
+    Image4DSimple* consensusImg = new Image4DSimple();
+    consensusImg->setData(consensusImgData1d,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+    p.p4dImage = consensusImg;
+    p.xc0 = p.yc0 = p.zc0 = 0;
+    p.xc1 = p.p4dImage->getXDim()-1;
+    p.yc1 = p.p4dImage->getYDim()-1;
+    p.zc1 = p.p4dImage->getZDim()-1;
+
+    proc_app2(p);
+
+    NeuronTree result = NeuronTree();
+    result.deepCopy(p.result);
+
+    if(consensusImg)
+        delete consensusImg;
+
+    return result;
+
+}
+
+NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DPluginCallback2& callback){
+    unsigned char* pdata = image->getRawData();
+    V3DLONG sz[4] = {image->getXDim(),image->getYDim(),image->getCDim(),image->getZDim()};
+
+    int app2Th;
+
+    if(kmeansTh){
+        int k = 3;
+        int* ths = getThresholdByKmeans(image,k);
+        app2Th = ths[k-2];
+        if(ths){
+            delete[] ths;
+            ths = 0;
+        }
+    }else {
+        double imgAve, imgStd;
+        V3DLONG totalSZ = sz[0]*sz[1]*sz[2];
+        mean_and_std(pdata,totalSZ,imgAve,imgStd);
+        double td= (imgStd<10)? 10: imgStd;
+        app2Th = imgAve + 0.7*td;
+    }
+
+    vector<NeuronTree> trees  = vector<NeuronTree>();
+    paraApp2 p = paraApp2();
+    //origin image, don't rotate
+    p.p4dImage = image;
+    p.xc0 = p.yc0 = p.zc0 = 0;
+    p.xc1 = sz[0] - 1;
+    p.yc1 = sz[1] - 1;
+    p.zc1 = sz[2] - 1;
+    p.b_256cube = false;
+    p.bkg_thresh = app2Th;
+    p.landmarks.push_back(m);
+    proc_app2(p);
+    NeuronTree app2NeuronTree1 = NeuronTree();
+    app2NeuronTree1.deepCopy(p.result);
+    for(int i=0 ;i<app2NeuronTree1.listNeuron.size(); i++){
+        app2NeuronTree1.listNeuron[i].type = 2;
+    }
+
+    //origin image, rotate 30 degrees around X axis
+    int angle = 30;
+    NeuronTree app2NeuronTree2 = getApp2RotateImage(image,m,0,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree2.listNeuron.size(); i++){
+        app2NeuronTree2.listNeuron[i].type = 3;
+    }
+
+    //origin image, rotate 30 degrees around Y axis
+    NeuronTree app2NeuronTree3 = getApp2RotateImage(image,m,1,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree3.listNeuron.size(); i++){
+        app2NeuronTree3.listNeuron[i].type = 4;
+    }
+
+    //origin image, rotate 30 degrees around Z axis
+    NeuronTree app2NeuronTree4 = getApp2RotateImage(image,m,2,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree4.listNeuron.size(); i++){
+        app2NeuronTree4.listNeuron[i].type = 5;
+    }
+
+    //downSample image(2 times), don't rotate
+    unsigned char* downSampleData1d = 0;
+    V3DLONG downSampleSZ[4] = {0,0,0,0};
+    downsampling_img_xyz(pdata,sz,2,2,downSampleData1d,downSampleSZ);
+    Image4DSimple* downSampleImage = new Image4DSimple();
+    downSampleImage->setData(downSampleData1d,downSampleSZ[0],downSampleSZ[1],downSampleSZ[2],downSampleSZ[3],V3D_UINT8);
+
+    p.p4dImage = downSampleImage;
+    p.xc1 = downSampleSZ[0] - 1;
+    p.yc1 = downSampleSZ[1] - 1;
+    p.zc1 = downSampleSZ[2] - 1;
+    p.landmarks.clear();
+    m.x /= 2, m.y /= 2, m.z /= 2;
+    p.landmarks.push_back(m);
+
+    proc_app2(p);
+    NeuronTree app2NeuronTree5 = NeuronTree();
+    app2NeuronTree5.deepCopy(p.result);
+    for(int i=0 ;i<app2NeuronTree5.listNeuron.size(); i++){
+        app2NeuronTree5.listNeuron[i].x *= 2;
+        app2NeuronTree5.listNeuron[i].y *= 2;
+        app2NeuronTree5.listNeuron[i].z *= 2;
+        app2NeuronTree5.listNeuron[i].type = 6;
+    }
+
+    //downSample image(2 times), rotate 30 degrees around X axis
+    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,m,0,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree6.listNeuron.size(); i++){
+        app2NeuronTree6.listNeuron[i].x *= 2;
+        app2NeuronTree6.listNeuron[i].y *= 2;
+        app2NeuronTree6.listNeuron[i].z *= 2;
+        app2NeuronTree6.listNeuron[i].type = 7;
+    }
+
+    //downSample image(2 times), rotate 30 degrees around Y axis
+    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,m,1,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree7.listNeuron.size(); i++){
+        app2NeuronTree7.listNeuron[i].x *= 2;
+        app2NeuronTree7.listNeuron[i].y *= 2;
+        app2NeuronTree7.listNeuron[i].z *= 2;
+        app2NeuronTree7.listNeuron[i].type = 8;
+    }
+
+    //downSample image(2 times), rotate 30 degrees around Z axis
+    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,m,2,angle,app2Th);
+    for(int i=0 ;i<app2NeuronTree8.listNeuron.size(); i++){
+        app2NeuronTree8.listNeuron[i].x *= 2;
+        app2NeuronTree8.listNeuron[i].y *= 2;
+        app2NeuronTree8.listNeuron[i].z *= 2;
+        app2NeuronTree8.listNeuron[i].type = 9;
+    }
+
+    //consensus
+    trees.push_back(app2NeuronTree1);
+    trees.push_back(app2NeuronTree2);
+    trees.push_back(app2NeuronTree3);
+    trees.push_back(app2NeuronTree4);
+    trees.push_back(app2NeuronTree5);
+    trees.push_back(app2NeuronTree6);
+    trees.push_back(app2NeuronTree7);
+    trees.push_back(app2NeuronTree8);
+
+    m.x *= 2, m.y *= 2, m.z *= 2;
+    NeuronTree consensusTree = consensus(trees,image,m,callback);
+
+    if(image){
+        delete image;
+        image = 0;
+    }
+
+    if(downSampleImage){
+        delete downSampleImage;
+        downSampleImage = 0;
+    }
+
+    return consensusTree;
 }
 
 
