@@ -20,7 +20,11 @@ double getNodeLength2(NeuronTree& nt, int maxR, double axonR, double dendritR, d
 
 double getAxonNodeLength(NeuronTree& in_nt, double thre);
 
-double getAxonUtilityTree(NeuronTree& in_nt,int maxR, double thre);
+double getAxonUtilityTree(NeuronTree& in_nt, double thre,int maxR);
+
+void getUtilityValue(NeuronTree& nt,int maxR,double axon_ratio, double axon_terminal,double other_ratio, double other_terminal);
+void getUtilityContour(NeuronTree& nt);
+
 struct Branch{
     NeuronSWC head_point,end_point;
     Branch* parent;
