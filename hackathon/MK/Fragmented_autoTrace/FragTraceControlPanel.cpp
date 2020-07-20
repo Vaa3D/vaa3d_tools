@@ -235,6 +235,25 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	}
 }
 
+void FragTraceControlPanel::markerMonitorOption(bool checked)
+{
+	QObject* signalSender = sender();
+	QString objName = signalSender->objectName();
+
+	if (checked)
+	{
+		if (objName == "radioButton_5")
+		{
+			if (uiPtr->radioButton_6->isChecked()) uiPtr->radioButton_6->setChecked(false);
+			this->refreshSomaCoords();
+		}
+		else if (objName == "radioButton_6")
+		{
+			if (uiPtr->radioButton_5->isChecked()) uiPtr->radioButton_5->setChecked(false);
+		}
+	}	
+}
+
 void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker / Point Cloud Monitor]
 {
 	if (checked)

@@ -8,9 +8,8 @@
 *  Most of NeuronStructUtil class methods intend to operate on the whole neuron struct level.
 *  As 'utility' it is called, the functionalities provided in this class include:
 *    a. [Basic neuron struct operations]                   -- cropping SWC, scaling SWC, swc registration, etc.
-*    b. [Tree - subtree operations]                        -- extracting upstream or downstream of a given tree.
-*    c. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc.
-*    d. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
+*    b. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc.
+*    c. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
 *
 *  Most of NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
 *  A typical function call would need at least three input arguments:
