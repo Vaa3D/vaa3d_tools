@@ -2447,6 +2447,11 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     bool isBinaryProcess = false;
 
     LocationSimple m = LocationSimple(startMarkers[0].x + 1 - start_x, startMarkers[0].y + 1 - start_y, startMarkers[0].z + 1 - start_z);
+    QList<ImageMarker> ms;
+    ms.push_back(ImageMarker(m.x,m.y,m.z));
+    QString saveMarkerPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+            QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + ".marker";
+    writeMarker_file(saveMarkerPath,ms);
 //    p2.landmarks.push_back(m);
 
     if(direction == 0){
@@ -2484,12 +2489,15 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
                 maskTree.listNeuron.removeAt(i);
             }
         }
+
+
+        unsigned char* mask = 0;
+        this->getLocalNeuronTree(maskTree);
+
         QString maskTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
                 QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.swc";
         writeSWC_file(maskTreePath,maskTree);
 
-        unsigned char* mask = 0;
-        this->getLocalNeuronTree(maskTree);
         vector<MyMarker*> maskMarkers = swc_convert(maskTree);
         swc2mask(mask,maskMarkers,in_sz[0],in_sz[1],in_sz[2]);
         for(int i=0; i<tolSZ; i++){
@@ -3234,21 +3242,21 @@ NeuronTree getApp2RotateImage(Image4DSimple* image, LocationSimple m, int rotate
     double centerX = inSZ[0]/2.0, centerY = inSZ[1]/2.0, centerZ = inSZ[2]/2.0;
 
     for(int i=0; i<p.landmarks.size(); i++){
-        float x = p.landmarks[i].x - centerX;
-        float y = p.landmarks[i].y - centerY;
-        float z = p.landmarks[i].z - centerZ;
+        float x = p.landmarks[i].x - centerX - 1;
+        float y = p.landmarks[i].y - centerY - 1;
+        float z = p.landmarks[i].z - centerZ - 1;
         if(rotateAxis == 0){
-            p.landmarks[i].x = x - minX;
-            p.landmarks[i].y = cos(angle)*y - sin(angle)*z - minY;
-            p.landmarks[i].z = sin(angle)*y + cos(angle)*z - minZ;
+            p.landmarks[i].x = x - minX + 1;
+            p.landmarks[i].y = cos(angle)*y - sin(angle)*z - minY + 1;
+            p.landmarks[i].z = sin(angle)*y + cos(angle)*z - minZ + 1;
         }else if (rotateAxis == 1) {
-            p.landmarks[i].x = cos(angle)*x + sin(angle)*z - minX;
-            p.landmarks[i].y = y - minY;
-            p.landmarks[i].z = -sin(angle)*x + cos(angle)*z - minZ;
+            p.landmarks[i].x = cos(angle)*x + sin(angle)*z - minX + 1;
+            p.landmarks[i].y = y - minY + 1;
+            p.landmarks[i].z = -sin(angle)*x + cos(angle)*z - minZ + 1;
         }else {
-            p.landmarks[i].x = cos(angle)*x - sin(angle)*y - minX;
-            p.landmarks[i].y = sin(angle)*x + cos(angle)*y - minY;
-            p.landmarks[i].z = z - minZ;
+            p.landmarks[i].x = cos(angle)*x - sin(angle)*y - minX + 1;
+            p.landmarks[i].y = sin(angle)*x + cos(angle)*y - minY + 1;
+            p.landmarks[i].z = z - minZ + 1;
         }
 
     }
@@ -3440,8 +3448,11 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     p.yc1 = downSampleSZ[1] - 1;
     p.zc1 = downSampleSZ[2] - 1;
     p.landmarks.clear();
-    m.x /= 2, m.y /= 2, m.z /= 2;
-    p.landmarks.push_back(m);
+    LocationSimple mm;
+    mm.x = (m.x - 1)/2 +1;
+    mm.y = (m.y - 1)/2 +1;
+    mm.z = (m.z - 1)/2 +1;
+    p.landmarks.push_back(mm);
 
     proc_app2(p);
     NeuronTree app2NeuronTree5 = NeuronTree();
@@ -3454,7 +3465,7 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     }
 
     //downSample image(2 times), rotate 30 degrees around X axis
-    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,m,0,angle,app2Th);
+    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,mm,0,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree6.listNeuron.size(); i++){
         app2NeuronTree6.listNeuron[i].x *= 2;
         app2NeuronTree6.listNeuron[i].y *= 2;
@@ -3463,7 +3474,7 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     }
 
     //downSample image(2 times), rotate 30 degrees around Y axis
-    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,m,1,angle,app2Th);
+    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,mm,1,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree7.listNeuron.size(); i++){
         app2NeuronTree7.listNeuron[i].x *= 2;
         app2NeuronTree7.listNeuron[i].y *= 2;
@@ -3472,7 +3483,7 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     }
 
     //downSample image(2 times), rotate 30 degrees around Z axis
-    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,m,2,angle,app2Th);
+    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,mm,2,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree8.listNeuron.size(); i++){
         app2NeuronTree8.listNeuron[i].x *= 2;
         app2NeuronTree8.listNeuron[i].y *= 2;

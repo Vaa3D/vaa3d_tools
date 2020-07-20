@@ -744,7 +744,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     m.x *= 2, m.y *= 2, m.z *= 2;
     NeuronTree consensusTree = consensus(trees,image,m,callback);
 
-    QString consensusSWCPath = image +"_consensus.swc";
+    QString consensusSWCPath = imagePath +"_consensus.swc";
     writeSWC_file(consensusSWCPath,consensusTree);
 
     if(image){
