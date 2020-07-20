@@ -94,10 +94,10 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
     }
     for(V3DLONG i=0;i<neuron.size();i++)
     {
-        neuron[i].n=i+1;
+//        neuron[i].n=i+1;
         if(neuron.at(i).pn !=-1)
         {
-            neuron[i].pn=find(ids.begin(), ids.end(),neuron.at(i).pn) - ids.begin()+1;
+//            neuron[i].pn=find(ids.begin(), ids.end(),neuron.at(i).pn) - ids.begin()+1;
             parents.push_back(neuron.at(i).pn);
         }
     }
@@ -124,6 +124,13 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
         treeint.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
         neuron[id].fea_val.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
     }
+    qDebug() << "Feature value set.";
+    vector <V3DLONG> tipid;
+    for(V3DLONG id=0; id<neuron.size(); id++)
+    {
+        if(find(parents.begin(),parents.end(),neuron.at(id).n)==parents.end()){tipid.push_back(neuron.at(id).n);}
+    }
+
     NeuronTree nt;
     nt.listNeuron = neuron;
     writeESWC_file(IntTreeName,nt);
@@ -157,19 +164,31 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 //    V3DLONG radius = round(20*mediantreerad);
 //    qDebug() << "Shell radius for missing branch search" << radius;
 
-    for(V3DLONG id=0; id<neuron.size(); id++)
+    for(V3DLONG id=0; id<neuron.size(); id+=3)
     {
+        qDebug() << "Node " << id+1 << " of " << neuron.size();
         qDebug() << "Radius:" << neuron.at(id).radius;
-        if(neuron.at(id).radius>7){continue;} // out of image border
+        if(neuron.at(id).radius>5){continue;} // out of image border
 
-        V3DLONG nodex = V3DLONG(neuron.at(id).x+neuron.at(id).radius);
-        V3DLONG nodey = V3DLONG(neuron.at(id).y+neuron.at(id).radius);
-        V3DLONG nodez = V3DLONG(neuron.at(id).z+neuron.at(id).radius);
+        V3DLONG nodex = V3DLONG(neuron.at(id).x);
+        V3DLONG nodey = V3DLONG(neuron.at(id).y);
+        V3DLONG nodez = V3DLONG(neuron.at(id).z);
+//        V3DLONG nodex = V3DLONG(neuron.at(id).x+neuron.at(id).radius);
+//        V3DLONG nodey = V3DLONG(neuron.at(id).y+neuron.at(id).radius);
+//        V3DLONG nodez = V3DLONG(neuron.at(id).z+neuron.at(id).radius);
 //        qDebug() << nodex << nodey << nodez;
 
         //////////////////////////////////////////////////////////
-        V3DLONG radius = round(20*neuron.at(id).radius);
-        int windowradius = int(1*radius);
+        V3DLONG radius = round(10*neuron.at(id).radius);
+        int windowradius;
+        if(radius>10){
+            windowradius = int(15);
+            radius=15;
+        }
+        else
+        {
+            windowradius = int(1*radius);
+        }
         V3DLONG y_offset=mysz[0];
         V3DLONG z_offset=mysz[0]*mysz[1];
         V3DLONG page_size=mysz[0]*mysz[1]*mysz[2];
@@ -237,7 +256,7 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
                     {
                         maxint = double(data1d_crop[offsetkl + offsetjl + i]);
                     }
-                    else
+                    else if(minint > double(data1d_crop[offsetkl + offsetjl + i]))
                     {
                         minint = double(data1d_crop[offsetkl + offsetjl + i]);
                     }
@@ -300,27 +319,34 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
         V3DLONG walkid = id;
         double localswcmv=0;
         double nsteps=0;
+        struct XYZ walkp;
         for(int V3DLONG steps=1; steps<5; steps++)
         {
             V3DLONG walknodex = V3DLONG(neuron.at(walkid).x);
             V3DLONG walknodey = V3DLONG(neuron.at(walkid).y);
             V3DLONG walknodez = V3DLONG(neuron.at(walkid).z);
             localswcmv += data1d_crop[V3DLONG(mysz[0]*mysz[1]*walknodez+mysz[0]*walknodey+walknodex)];
-            walkid = neuron.at(walkid).pn;
+            walkp = XYZ(walknodex,walknodey,walknodez);
+            walkid = neuron.at(walkid).pn-1;
             nsteps++;
             if(walkid==-1)break;
         }
         if(nsteps>0)localswcmv = localswcmv/nsteps;
         qDebug() << "Adaptive local tree mean int value" << localswcmv;
 
-        double bkg_thresh = 0; //sdev > 1.36
+//        double bkg_thresh = minint + 0.5;
+//        double bkg_thresh = minint + 0.05*(localswcmv-minint);//+0.7*sdev); //sdev > 1.36
+        double bkg_thresh = 0.3*mv + 0.7*sdev + minint;//+0.7*sdev); //sdev > 1.36
+//        double bkg_thresh = (minint+1) *1.2; //sdev > 1.36
+//        double bkg_thresh = mv*0.5; //sdev > 1.36
+//        double bkg_thresh = 0; //sdev > 1.36
 //        if(20*sdev>localswcmv){
-        if(sdev>1.36){
-            bkg_thresh = mv+sdev+minint;//1.4*(1.3*mv+3.5*sdev+minint);//mv+0.7*sdev;//localswcmv+sdev*sdev
-        }
-        else{
-            bkg_thresh = double(minint)+sdev*5;//+5
-        }
+//        if(sdev>1.36){
+//            bkg_thresh = mv+sdev+minint;//1.4*(1.3*mv+3.5*sdev+minint);//mv+0.7*sdev;//localswcmv+sdev*sdev
+//        }
+//        else{
+//            bkg_thresh = double(minint);//+sdev*5;//+5
+//        }
 //        double bkg_thresh = (mv+localswcmv)/2+1.8*sdev;
 //        double bkg_thresh = localswcmv-7+0.2*mv*sdev;
 //        double bkg_thresh = data1d_crop[V3DLONG(mysz[0]*mysz[1]*nodez+mysz[0]*nodey+nodex)]-2;
@@ -338,30 +364,134 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 
         qDebug() << "";
 
-        double anglestep = asin(1/double(radius))*4;
+        double anglestep = asin(1/double(radius))*2;
 //        qDebug() << "Angle step" << anglestep;
 
-        for(double theta=0; theta<PI; theta+=anglestep) // Check the step in function of the radius (arcsin(1/radius))
+        double theta0 = 0;
+        double thetaf=PI;
+        double phi0 = 0;
+        double phif=2*PI;
+        if(find(tipid.begin(),tipid.end(),neuron.at(id).n)!=tipid.end()){
+//            theta0=0;
+//            thetaf=PI;
+//            phi0=0;
+//            phif=2*PI;
+            theta0=0;
+            thetaf=2*PI;
+            phi0=0;
+            phif=PI;
+            radius=1.7*radius;
+            bkg_thresh=0.5*bkg_thresh;
+        }
+        else{
+//            theta0=0;
+//            thetaf=PI;
+//            theta0 = acos(double(nodez-walkp.z)/sqrt(double((nodex-walkp.x)*(nodex-walkp.x)+(nodey-walkp.y)*(nodey-walkp.y)+(nodez-walkp.z)*(nodez-walkp.z))))+PI/2-PI/3;
+//            theta0 = acos(double(nodez-walkp.z)/(nsteps*3))+PI/2-PI/3;
+//            thetaf=theta0+2*PI/3;
+//            qDebug() << "Theta 0: " << theta0 << "Theta f: " << thetaf;
+//            qDebug() << "node z: " << nodez << "walkp z: " << walkp.z << " nsteps:" << nsteps;
+//            phi0=0;
+//            phif=2*PI;
+            theta0=0;
+            thetaf=2*PI;
+            phi0=atan(double(nodey-walkp.y)/double(nodex-walkp.x))+PI/2-PI/5;
+            phif=phi0+2*PI/5;
+            qDebug() << "Phi 0: " << phi0 << "Phi f: " << phif;
+            qDebug() << "node y: " << nodey << "walkp y: " << walkp.y << "node x: " << nodex << "walkp x: " << walkp.x << " nsteps:" << nsteps;
+            radius=1.5*radius;
+        }
+
+        vector <struct XYZ> loccandidates1;
+        vector <V3DLONG> loccandidatesint1;
+
+        for(double theta=theta0; theta<=thetaf; theta+=anglestep) // Check the step in function of the radius (arcsin(1/radius))
         {
             //qDebug() << theta;
-            for(double phi=0; phi<2*PI; phi+=anglestep)
+            for(double phi=phi0; phi<=phif; phi+=anglestep)
             {
                 //qDebug() << phi;
-                struct XYZ shellp = XYZ(nodex+round(radius*sin(theta)*cos(phi)),nodey+round(radius*sin(theta)*sin(phi)),nodez+round(radius*cos(theta)/3)); // radius*cos(theta)/5
-//                struct XYZ shellp2 = XYZ(nodex+round(0.75*radius*sin(theta)*cos(phi)),nodey+round(0.75*radius*sin(theta)*sin(phi)),nodez+round(0.75*radius*cos(theta)/3)); // radius*cos(theta)/5
+                struct XYZ shellp = XYZ(nodex+round(radius*sin(theta)*cos(phi)),nodey+round(radius*sin(theta)*sin(phi)),nodez+round(radius*cos(theta))); // radius*cos(theta)/5
+                struct XYZ shellp2 = XYZ(nodex+round(1.5*radius*sin(theta)*cos(phi)),nodey+round(1.5*radius*sin(theta)*sin(phi)),nodez+round(1.1*radius*cos(theta))); // radius*cos(theta)/5
                 if((shellp.x<0) || (shellp.x>=mysz[0]) || (shellp.y<0) || (shellp.y>=mysz[1]) || (shellp.z<0) || (shellp.z>=mysz[2])){continue;} // out of image border
-//                if((shellp2.x<0) || (shellp2.x>=mysz[0]) || (shellp2.y<0) || (shellp2.y>=mysz[1]) || (shellp2.z<0) || (shellp2.z>=mysz[2])){continue;} // out of image border
+                if((shellp2.x<0) || (shellp2.x>=mysz[0]) || (shellp2.y<0) || (shellp2.y>=mysz[1]) || (shellp2.z<0) || (shellp2.z>=mysz[2])){continue;} // out of image border
                 for(int i=0; i<neuron.size(); i++)
 //                for(int i=1; i<80; i++)
                 {
                     //qDebug() << i;
+                    float dist = dist_L2(shellp,locswc.at(i));
                     // Checks whether a point is in a shell of radius 20*dendrite radius and if intensity >threshold
-                    if(dist_L2(shellp,locswc.at(i))<=radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh) candidates.push_back(shellp);
+                    if(dist < 2*radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh){
+                        loccandidates1.push_back(shellp);
+                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]));
+                    }
+                    if(dist < 3*radius && double(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)])>=bkg_thresh){
+                        loccandidates1.push_back(shellp2);
+                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)]));
+                    }
                 }
             }
         }
+
+        vector <struct XYZ> loccandidates;
+        vector <V3DLONG> loccandidatesint;
+        vector <bool> out;
+//        vector <float> dists;
+
+//        V3DLONG maxcdint=*max_element(loccandidatesint1);
+        for (V3DLONG cd=0; cd<loccandidates1.size(); cd++)
+        {
+            out.push_back(0);
+        }
+        for (V3DLONG cd=0; cd<loccandidates1.size(); cd++)
+        {
+            float mindist=1000;
+            for(V3DLONG j=0; j<neuron.size(); j++)
+            {
+                float dist=dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),loccandidates1.at(cd));
+                if(dist<float(radius))
+                {
+                    out.at(cd) = 1;
+                }
+                if(dist<mindist)mindist=dist;
+            }
+            if(out.at(cd)==0)loccandidates.push_back(loccandidates1.at(cd));
+            if(out.at(cd)==0)loccandidatesint.push_back(loccandidatesint1.at(cd)/maxint+2*mindist/radius);
+        }
+
+
+        V3DLONG it;
+        if(loccandidates.size()>0)
+        {
+            if(max_element(loccandidatesint.begin(), loccandidatesint.end()) != loccandidatesint.end())
+            {
+                it = max_element(loccandidatesint.begin(), loccandidatesint.end()) - loccandidatesint.begin();
+                candidates.push_back(loccandidates.at(it));
+            }
+        }
+        if(loccandidates.size()>0)
+        {
+            loccandidates.erase(loccandidates.begin()+it);
+            loccandidatesint.erase(loccandidatesint.begin()+it);
+            if(max_element(loccandidatesint.begin(), loccandidatesint.end()) != loccandidatesint.end())
+            {
+                it = max_element(loccandidatesint.begin(), loccandidatesint.end()) - loccandidatesint.begin();
+                candidates.push_back(loccandidates.at(it));
+            }
+        }
+        if(loccandidates.size()>0)
+        {
+            loccandidates.erase(loccandidates.begin()+it);
+            loccandidatesint.erase(loccandidatesint.begin()+it);
+            if(max_element(loccandidatesint.begin(), loccandidatesint.end()) != loccandidatesint.end())
+            {
+                it = max_element(loccandidatesint.begin(), loccandidatesint.end()) - loccandidatesint.begin();
+                candidates.push_back(loccandidates.at(it));
+            }
+        }
     }
-    cout << endl;
+    qDebug() << "Number of candidates:" << candidates.size();
+//    cout << endl;
 
 //    int windowradius = 10; //Check!
 //    LandmarkList llist;
@@ -392,14 +522,14 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 //                    bool first=1;
         for(V3DLONG j=0; j<neuron.size(); j++)
         {
-            V3DLONG radius=round(neuron.at(j).radius*20);
-            if(dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),XYZ(candidates_m.at(i).x,candidates_m.at(i).y,candidates_m.at(i).z))<double(radius)*0.8) out.at(i) = 1;
+            V3DLONG radius=round(neuron.at(j).radius*10);
+            if(dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),XYZ(candidates_m.at(i).x,candidates_m.at(i).y,candidates_m.at(i).z))<float(radius)*0.9) out.at(i) = 1;
 //can be useful for small blocks                if(dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),XYZ(final_pts.at(i).x,final_pts.at(i).y,final_pts.at(i).z))>90) out.at(i) = 1;
 //            if(dist_L2(XYZ(neuron.at(j).x,neuron.at(j).y,neuron.at(j).z),XYZ(candidates_m.at(i).x,candidates_m.at(i).y,candidates_m.at(i).z))>50*radius) out.at(i) = 1;
         }
         for (V3DLONG j=i+1; j<candidates_m.size(); j++)
         {
-            if(dist_L2(XYZ(candidates_m.at(j).x,candidates_m.at(j).y,candidates_m.at(j).z),XYZ(candidates_m.at(i).x,candidates_m.at(i).y,candidates_m.at(i).z))<double(40/3))
+            if(dist_L2(XYZ(candidates_m.at(j).x,candidates_m.at(j).y,candidates_m.at(j).z),XYZ(candidates_m.at(i).x,candidates_m.at(i).y,candidates_m.at(i).z))<float(round(neuron.at(j).radius*10*0.8)))
             {
                 if(out.at(i)==0 && data1d_crop[V3DLONG(candidates_m.at(i).z*mysz[0]*mysz[1]+candidates_m.at(i).y*mysz[0]+candidates_m.at(i).x)] >= data1d_crop[V3DLONG(candidates_m.at(j).z*mysz[0]*mysz[1]+candidates_m.at(j).y*mysz[0]+candidates_m.at(j).x)])
                 {

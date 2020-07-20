@@ -368,19 +368,19 @@ bool missing_branch::dofunc(const QString & func_name, const V3DPluginArgList & 
             final_pt_mk.y = candidates.at(i).y;
             final_pt_mk.z = candidates.at(i).z;
             //qDebug() << final_pt[0] << final_pt_mk.x;
-            if((final_pts.size() == 0 ||
-               find(final_ptsx.begin(),final_ptsx.end(),long(final_pt_mk.x))==final_ptsx.end() ||
-               find(final_ptsy.begin(),final_ptsy.end(),long(final_pt_mk.y))==final_ptsy.end() ||
-               find(final_ptsz.begin(),final_ptsz.end(),long(final_pt_mk.z))==final_ptsz.end()) &&
-               final_pt_mk.y != final_pt_mk.z)
-            {
+//            if((final_pts.size() == 0 ||
+//               find(final_ptsx.begin(),final_ptsx.end(),long(final_pt_mk.x))==final_ptsx.end() ||
+//               find(final_ptsy.begin(),final_ptsy.end(),long(final_pt_mk.y))==final_ptsy.end() ||
+//               find(final_ptsz.begin(),final_ptsz.end(),long(final_pt_mk.z))==final_ptsz.end()) &&
+//               final_pt_mk.y != final_pt_mk.z)
+//            {
                 final_ptsx.push_back(long(final_pt_mk.x));
                 final_ptsy.push_back(long(final_pt_mk.y));
                 final_ptsz.push_back(long(final_pt_mk.z));
                 final_pts.push_back(final_pt_mk);
                 qDebug() << final_pt_mk.z << long(final_pt_mk.z);
                 qDebug() << "Added point:" << final_pts.at(final_pts.size()-1).x << final_pts.at(final_pts.size()-1).y << final_pts.at(final_pts.size()-1).z;
-            }
+//            }
 
 
             //                    struct XYZ final_pt_xyz = XYZ(final_pt[0],final_pt[1],final_pt[2]);
