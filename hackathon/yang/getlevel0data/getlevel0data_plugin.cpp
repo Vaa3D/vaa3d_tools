@@ -19,6 +19,7 @@ QStringList GetLevel0DataPlugin::funclist() const
 {
     return QStringList()
             <<tr("getlevel0data")
+              <<tr("getPreimage_fromAno")
            <<tr("help");
 }
 
@@ -41,6 +42,10 @@ bool GetLevel0DataPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
     if (func_name == tr("getlevel0data"))
     {
         return getlevel0data_func(input, output, callback);
+    }
+    else if (func_name == tr("getPreimage_fromAno"))
+    {
+        return getPreimage(input, output, callback);
     }
     else if (func_name == tr("help"))
     {

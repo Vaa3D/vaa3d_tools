@@ -115,11 +115,31 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 //    // cout<<"str: "<<str.c_str()<<endl;
 
 //    cout<<str.toUtf8().constData()<<endl;
+    QString inputano=QString::fromStdString(swcfile);
+    QFileInfo inputinfo(inputano);
+    if(inputinfo.suffix()=="ano")
+    {
+         cout<<"get preimage from ano file"<<endl;
+        P_ObjectFileType linker_object;
 
-
-
-    //
-    readSWC(swcfile, ratio);
+        if (!loadAnoFile(inputano,linker_object))
+        {
+            fprintf(stderr,"Error in reading the linker file.\n");
+            return ;
+        }
+        QStringList nameList = linker_object.swc_file_list;
+        int neuronNum = nameList.size();
+        for (V3DLONG j=0;j<neuronNum;j++)
+        {
+            string tmpswcfile=nameList.at(j).toStdString();
+            readSWC(tmpswcfile, ratio);
+        }
+    }
+    else
+    {
+        cout<<"get preimage from swc file"<<endl;
+        readSWC(swcfile, ratio);
+    }
 
     //
     readMetaData(inputdir);
@@ -1497,6 +1517,69 @@ char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int dat
 */
 
 //
+bool getPreimage(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1 || output.size() != 1)
+    {
+        cout<<"vaa3d -x getlevel0data -f getPreimage_fromAno -i inputdir input.ano -o outputdir -p scale<0/1/2/3/4/5/...>"<<endl;
+        return false;
+    }
+
+    // parsing input
+    float scale=0; // 0 highest resolution
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            scale = atof(paras->at(0));
+            cout<<"get preimage data at the scale: "<<scale<<endl;
+        }
+        else
+        {
+            cout<<"Invalid input"<<endl;
+            cout<<"vaa3d -x getlevel0data -f getPreimage_fromAno -i inputdir input.ano -o outputdir -p scale<0/1/2/3/4/5/...>"<<endl;
+            return false;
+        }
+    }
+
+    if(scale < 0 || scale > 6)
+    {
+        cout<<"Invalid scale!"<<endl;
+        return false;
+    }
+
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify inputs"<<endl;
+        return false;
+    }
+
+    //
+    QString inputdir = QString(inlist->at(0));
+    QString swcfile = QString(inlist->at(1));
+
+    QString outputdir = QString(outlist->at(0));
+
+    float ratio = pow(2.0, scale);
+
+    //
+    // QueryAndCopy qc(outputdir.toStdString()); // test mdata.bin writing
+    QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
+
+    //
+    return true;
+}
 bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //

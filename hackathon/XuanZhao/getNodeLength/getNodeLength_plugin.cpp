@@ -109,6 +109,7 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         writeSWC_file(swcfile.split(".").at(0)+"_UtilityCountor.swc",nt);
     }
     else if (func_name == tr("getUtreeInfolder")){
+        qDebug()<<"Get Utility rendering results of a folder:axon part";
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
         double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
         QString dirPath = infiles[0];
@@ -125,6 +126,28 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
             writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
         }
 
+    }
+    else if (func_name == tr("getUtilityL1Infolder"))
+    {
+        qDebug()<<"Get Utility rendering results of a folder: include dendrite";
+        int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
+        double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        QString dirPath = infiles[0];
+        QStringList nameFilters;
+        nameFilters<<"*.swc";
+        QDir dir(dirPath);
+        QStringList swcFiles = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+
+        for(int i=0; i<swcFiles.size(); i++){
+            QString swcFile = dirPath + '\\' + swcFiles[i];
+            NeuronTree nt = readSWC_file(swcFile);
+            double axonRatio =1;
+            double otherR =1;
+            getUtilityL1Infolder(nt,maxR,axonRatio,otherR,thre);
+            writeSWC_file(swcFile.split(".").at(0)+"_max_"+QString::number(maxR)+"_UtilityL1Result.swc",nt);
+//            getAxonUtilityTree(nt,maxR,thre);
+//            writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+        }
     }
     else if (func_name == tr("getCurve"))
 	{
@@ -207,6 +230,7 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 	else if (func_name == tr("help"))
 	{
         qDebug()<<"[For Windows: Utility Rendeing]vaa3d /x <libname:getNodeLength> /f UtilityRendering /i <input_swc> -p <MaxRadius> <AxonRatio> <OtherTypeRatio>";
+        qDebug()<<"[For Windows: Utility Rendeing]vaa3d /x <libname:getNodeLength> /f getUtreeInfolder /i <input_swc_folder_path> -p <MaxRadius> <Threshold>";
         qDebug()<<"[For Windows: Axon Utility Rendering]vaa3d /x <libname:getNodeLength> /f AxonUtilityRendering /i <input_swc> -p <Threshold> <MaxRadius>";
         qDebug()<<"[For Windows: Utility Contour]vaa3d /x <libname:getNodeLength> /f UtilityContour /i <input_swc>";
 

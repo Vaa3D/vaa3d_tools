@@ -177,7 +177,7 @@ public:
 
 // functions
 bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
-
+bool getPreimage(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 
 #endif
 
