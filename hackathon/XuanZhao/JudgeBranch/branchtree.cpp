@@ -272,19 +272,19 @@ bool Branch::caculateFeature(unsigned char *data1d, V3DLONG *sz, NeuronTree& nt)
     float intensityR1 = 0, intensityR5 = 0;
     int countR1 = 0, countR5 = 0;
     for(int i=0; i<totalSz; i++){
-        if(maskR1 > 0){
+        if(maskR1[i] > 0){
             intensityR1 += data1d[i];
             countR1++;
         }
-        if(maskR5 > 0){
+        if(maskR5[i] > 0){
             intensityR5 += data1d[i];
             countR5++;
         }
     }
     if(maskR1)
-        delete maskR1;
+        delete[] maskR1;
     if(maskR5)
-        delete maskR5;
+        delete[] maskR5;
 
     if(countR1>0)
         intensityR1 /= countR1;

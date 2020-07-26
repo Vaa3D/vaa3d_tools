@@ -10,6 +10,8 @@
 #include "basic_memory.cpp"
 #include "swc_convert.h"
 
+#include "judgebranch.h"
+
 void changeContrast(unsigned char* input, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, double times){
     V3DLONG i, j, k;
 
@@ -27,6 +29,19 @@ void changeContrast(unsigned char* input, V3DLONG iImageWidth, V3DLONG iImageHei
         }
     }
 
+}
+
+void BinaryProcess(unsigned char* &apsInput, V3DLONG* in_sz){
+    V3DLONG tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* bdata = new unsigned char[tolSZ];
+    BinaryProcess(apsInput,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
+    for(int i=0; i<tolSZ; i++){
+        apsInput[i] = bdata[i];
+    }
+    if(bdata){
+        delete[] bdata;
+        bdata = 0;
+    }
 }
 
 bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result){
@@ -1382,7 +1397,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
 }
 
 void getImageBlockByTip(LocationSimple tip, vector<imageBlock> &blockList, int block_size, int direction, BoundingBox box){
-    int lap = 20;
+    int lap = 10;
 
     imageBlock b = imageBlock();
     b.direction = direction;
@@ -1392,48 +1407,48 @@ void getImageBlockByTip(LocationSimple tip, vector<imageBlock> &blockList, int b
     {
         b.end_x = tip.x + lap;
         b.start_x = b.end_x - block_size;
-        b.start_y = tip.y - block_size/4;
-        b.end_y = b.start_y + block_size/2;
-        b.start_z = tip.z - block_size/4;
-        b.end_z = b.start_z + block_size/2;
+        b.start_y = tip.y - block_size/2;
+        b.end_y = b.start_y + block_size;
+        b.start_z = tip.z - block_size/2;
+        b.end_z = b.start_z + block_size;
     }else if(direction == 2)
     {
         b.start_x = tip.x - lap;
         b.end_x = b.start_x + block_size;
-        b.start_y = tip.y - block_size/4;
-        b.end_y = b.start_y + block_size/2;
-        b.start_z = tip.z - block_size/4;
-        b.end_z = b.start_z + block_size/2;
+        b.start_y = tip.y - block_size/2;
+        b.end_y = b.start_y + block_size;
+        b.start_z = tip.z - block_size/2;
+        b.end_z = b.start_z + block_size;
     }else if(direction == 3)
     {
-        b.start_x = tip.x - block_size/4;
-        b.end_x = b.start_x + block_size/2;
+        b.start_x = tip.x - block_size/2;
+        b.end_x = b.start_x + block_size;
         b.end_y = tip.y + lap;
         b.start_y = b.end_y - block_size;
-        b.start_z = tip.z - block_size/4;
-        b.end_z = b.start_z + block_size/2;
+        b.start_z = tip.z - block_size/2;
+        b.end_z = b.start_z + block_size;
     }else if(direction == 4)
     {
-        b.start_x = tip.x - block_size/4;
-        b.end_x = b.start_x + block_size/2;
+        b.start_x = tip.x - block_size/2;
+        b.end_x = b.start_x + block_size;
         b.start_y = tip.y - lap;
         b.end_y = b.start_y + block_size;
-        b.start_z = tip.z - block_size/4;
-        b.end_z = b.start_z + block_size/2;
+        b.start_z = tip.z - block_size/2;
+        b.end_z = b.start_z + block_size;
     }else if(direction == 5)
     {
-        b.start_x = tip.x - block_size/4;
-        b.end_x = b.start_x + block_size/2;
-        b.start_y = tip.y - block_size/4;
-        b.end_y = b.start_y + block_size/2;
+        b.start_x = tip.x - block_size/2;
+        b.end_x = b.start_x + block_size;
+        b.start_y = tip.y - block_size/2;
+        b.end_y = b.start_y + block_size;
         b.end_z = tip.z + lap;
         b.start_z = b.end_z + block_size;
     }else if(direction == 6)
     {
-        b.start_x = tip.x - block_size/4;
-        b.end_x = b.start_x + block_size/2;
-        b.start_y = tip.y - block_size/4;
-        b.end_y = b.start_y + block_size/2;
+        b.start_x = tip.x - block_size/2;
+        b.end_x = b.start_x + block_size;
+        b.start_y = tip.y - block_size/2;
+        b.end_y = b.start_y + block_size;
         b.end_z = tip.z + lap;
         b.start_z = b.end_z + block_size;
     }
@@ -2414,6 +2429,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     in_sz[1] = end_y - start_y;
     in_sz[2] = end_z - start_z;
     in_sz[3] = 1;
+    int tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
     qDebug()<<"start_x: "<<start_x<<" end_x: "<<end_x
            <<"start_y: "<<start_y<<" end_y: "<<end_y
           <<"start_z: "<<start_z<<" end_z: "<<end_z;
@@ -2427,19 +2443,22 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     Image4DSimple* app2Image = new Image4DSimple();
     app2Image->setData(pdata,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
 
-    int app2Th = -1;
+    double imgAve, imgStd;
+    mean_and_std(pdata,tolSZ,imgAve,imgStd);
+    double td= (imgStd<10)? 10: imgStd;
+    int app2Th = imgAve + 0.7*td;
 
 
 
-//    paraApp2 p2 = paraApp2();
-//    p2.p4dImage = app2Image;
-//    p2.bkg_thresh = app2Th;
-//    p2.xc0 = 0;
-//    p2.yc0 = 0;
-//    p2.zc0 = 0;
-//    p2.xc1 = in_sz[0] - 1;
-//    p2.yc1 = in_sz[1] - 1;
-//    p2.zc1 = in_sz[2] - 1;
+    paraApp2 p2 = paraApp2();
+    p2.p4dImage = app2Image;
+    p2.bkg_thresh = app2Th;
+    p2.xc0 = 0;
+    p2.yc0 = 0;
+    p2.zc0 = 0;
+    p2.xc1 = in_sz[0] - 1;
+    p2.yc1 = in_sz[1] - 1;
+    p2.zc1 = in_sz[2] - 1;
 
 //    p2.bkg_thresh = -1;
     bool kmeansTh = false;
@@ -2452,7 +2471,8 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     QString saveMarkerPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
             QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + ".marker";
     writeMarker_file(saveMarkerPath,ms);
-//    p2.landmarks.push_back(m);
+
+    p2.landmarks.push_back(m);
 
     if(direction == 0){
 //        proc_app2(p2);
@@ -2471,7 +2491,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     }else {
         qDebug()<<"------------BinaryProcess image-----------------------";
 
-        int tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
+
 //        unsigned char* bdata = new unsigned char[tolSZ];
 //        BinaryProcess(pdata,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
 //        for(int i=0; i<tolSZ; i++){
@@ -2482,152 +2502,89 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
 //            bdata = 0;
 //        }
 
-        NeuronTree maskTree = this->cutBlockSWC(finalResult);
-        for(int i=0; i<maskTree.listNeuron.size(); i++){
-            NeuronSWC s = maskTree.listNeuron[i];
-            if(s.x == startMarkers[0].x && s.y == startMarkers[0].y && s.z == startMarkers[0].z){
-                maskTree.listNeuron.removeAt(i);
-            }
-        }
+//        NeuronTree maskTree = this->cutBlockSWC(finalResult);
+//        for(int i=0; i<maskTree.listNeuron.size(); i++){
+//            NeuronSWC s = maskTree.listNeuron[i];
+//            if(s.x == startMarkers[0].x && s.y == startMarkers[0].y && s.z == startMarkers[0].z){
+//                maskTree.listNeuron.removeAt(i);
+//            }
+//        }
 
 
-        unsigned char* mask = 0;
-        this->getLocalNeuronTree(maskTree);
+//        unsigned char* mask = 0;
+//        this->getLocalNeuronTree(maskTree);
 
-        QString maskTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.swc";
-        writeSWC_file(maskTreePath,maskTree);
+//        QString maskTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.swc";
+//        writeSWC_file(maskTreePath,maskTree);
 
-        vector<MyMarker*> maskMarkers = swc_convert(maskTree);
-        swc2mask(mask,maskMarkers,in_sz[0],in_sz[1],in_sz[2]);
-        for(int i=0; i<tolSZ; i++){
-            if(mask[i] == 255){
-                pdata[i] = 0;
-            }
-        }
+//        vector<MyMarker*> maskMarkers = swc_convert(maskTree);
+//        swc2mask(mask,maskMarkers,in_sz[0],in_sz[1],in_sz[2]);
+//        for(int i=0; i<tolSZ; i++){
+//            if(mask[i] == 255){
+//                pdata[i] = 0;
+//            }
+//        }
 
-        QString maskImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.v3draw";
-        simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),pdata,in_sz,1);
+//        QString maskImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.v3draw";
+//        simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),pdata,in_sz,1);
 
 //        proc_app2(p2);
 //        NeuronTree app2NeuronTree = NeuronTree();
 //        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,app2Image,m);
 //        NeuronTree app2NeuronTree = consensus(app2NeuronTrees,app2Image,m,callback);
 //        app2NeuronTree.deepCopy(app2NeuronTree);
-
-        NeuronTree app2NeuronTree = consensus(app2Image,m,kmeansTh,callback);
-
-        BranchTree tb = BranchTree();
-        tb.initialize(app2NeuronTree);
-        qDebug()<<"---------get level0Index------";
-        vector<int> level0Index = vector<int>();
-        tb.get_level_index(level0Index,0);
-
-        XYZ p;
-        if(direction == 1){
-            p = XYZ(1,0,0);
-        }else if (direction == 2) {
-            p = XYZ(-1,0,0);
-        }else if (direction == 3) {
-            p = XYZ(0,1,0);
-        }else if (direction == 4) {
-            p = XYZ(0,-1,0);
-        }else if (direction == 5) {
-            p = XYZ(0,0,1);
-        }else if (direction == 6) {
-            p = XYZ(0,0,-1);
-        }
-
-        vector<bool> branchDFlag = vector<bool>(tb.branchs.size(),false);
-        qDebug()<<"level 0 size: "<<level0Index.size();
-
-        for(int j=0; j<level0Index.size(); j++){
-
-            qDebug()<<"j: "<<j<<" index: "<<level0Index[j];
-
-            vector<V3DLONG> pointsIndex = vector<V3DLONG>();
-            qDebug()<<"---------------aaaaa----------------";
-            tb.branchs[level0Index[j]].get_pointsIndex_of_branch(pointsIndex,app2NeuronTree);
-
-            qDebug()<<"pointsIndex size: "<<pointsIndex.size();
-
-
-            vector<NeuronSWC> points;
-            for(int k=0; k<pointsIndex.size(); k++){
-                points.push_back(app2NeuronTree.listNeuron[pointsIndex[k]]);
+        int btimes = 0;
+        while (btimes<4) {
+            proc_app2(p2);
+            p2.result.hashNeuron.clear();
+            int pointSize = p2.result.listNeuron.size();
+            qDebug()<<"pointSize: "<<pointSize;
+            for(int j=0; j<pointSize; j++){
+                p2.result.hashNeuron.insert(p2.result.listNeuron[j].n,j);
             }
-            XYZ p1 = getLineDirection(points);
-            double dire;
-            if(p1 == XYZ(-1,-1,-1)){
-                dire = -1;
+            vector<vector<V3DLONG> > children = vector<vector<V3DLONG> >(pointSize,vector<V3DLONG>());
+            for(V3DLONG j=0; j<pointSize; j++){
+                V3DLONG prt = p2.result.listNeuron[j].parent;
+                if(prt != -1){
+                    V3DLONG prtIndex = p2.result.hashNeuron.value(prt);
+                    children[prtIndex].push_back(j);
+                }
+            }
+            int tipNum = 0;
+            for(V3DLONG j=0; j<pointSize; j++){
+                if(children[j].size() == 0){
+                    tipNum++;
+                }
+            }
+
+            if(tipNum>10){
+                BinaryProcess(pdata,in_sz);
+                p2.bkg_thresh = -1;
             }else {
-                dire = dot(p,p1)/(norm(p)*norm(p1));
-            }
-            qDebug()<<" dire: "<<dire;
-
-            if(dire>0){
-                branchDFlag[level0Index[j]] = true;
-            }
-
-        }
-
-        qDebug()<<"---------------start to flag dbranch---------";
-
-        int maxLevel = tb.get_max_level();
-        qDebug()<<"maxLevel: "<<maxLevel;
-
-        map<Branch*,int> branchMap = map<Branch*,int>();
-        for(int j=0; j<tb.branchs.size(); j++){
-            Branch* b = &(tb.branchs[j]);
-            branchMap[b] = j;
-        }
-
-        for(int level = 1; level<=maxLevel; level++){
-            vector<int> levelIndex = vector<int>();
-            tb.get_level_index(levelIndex,level);
-            for(int j=0; j<levelIndex.size(); j++){
-                int prtIndex = branchMap[tb.branchs[levelIndex[j]].parent];
-                if(branchDFlag[prtIndex]){
-                    branchDFlag[levelIndex[j]] = true;
-                    qDebug()<<"delete branch: "<<levelIndex[j];
-                }
+                break;
             }
         }
 
-        qDebug()<<"------------start to delete point--------------";
 
-        int pointDNum = 0;
-        vector<bool> pointDIndex = vector<bool>(app2NeuronTree.listNeuron.size(),false);
-        for(int j=0; j<branchDFlag.size(); j++){
-            if(branchDFlag[j]){
-                vector<V3DLONG> pointIndex = vector<V3DLONG>();
-                pointIndex.clear();
+        NeuronTree app2NeuronTree = NeuronTree();
+        app2NeuronTree.deepCopy(p2.result);
 
-                tb.branchs[j].get_pointsIndex_of_branch(pointIndex,app2NeuronTree);
-                qDebug()<<"point size: "<<pointIndex.size();
-                for(int k=1; k<pointIndex.size(); k++){
-                    pointDIndex[pointIndex[k]] = true;
-                    pointDNum++;
-                }
-            }
-        }
+        QString app2NeuronTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_o.swc";
+        writeSWC_file(app2NeuronTreeOPath,app2NeuronTree);
 
-        qDebug()<<"delete point number: "<<pointDNum;
+        NeuronTree pruneTree = pruneNeuronTree(app2Image,app2NeuronTree);
+        QString pruneTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_prune.swc";
+        writeSWC_file(pruneTreeOPath,pruneTree);
 
-        qDebug()<<"---------start to copy------------------";
+        deleteBranchByDirection(app2NeuronTree,direction);
 
-        QList<NeuronSWC> listNeuron = QList<NeuronSWC>();
-        listNeuron.clear();
-        for(int j=0; j<pointDIndex.size(); j++){
-            if(!pointDIndex[j]){
-                NeuronSWC p = app2NeuronTree.listNeuron[j];
-                listNeuron.append(p);
-            }
-        }
-
-        app2NeuronTree.listNeuron.clear();
-        app2NeuronTree.listNeuron = listNeuron;
+        QString app2NeuronTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + ".swc";
+        writeSWC_file(app2NeuronTreePath,app2NeuronTree);
 
         return app2NeuronTree;
     }
@@ -2752,7 +2709,7 @@ void imageBlock::getTipBlocks(NeuronTree &tree, BoundingBox box, vector<imageBlo
                 }
                 XYZ p = getLineDirection(points);
                 int dire = getDirection(p);
-                getImageBlockByTip(newTip,blockList,256,dire,box);
+                getImageBlockByTip(newTip,blockList,512,dire,box);
             }
         }
     }
@@ -3379,7 +3336,7 @@ NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSim
 
 NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DPluginCallback2& callback){
     unsigned char* pdata = image->getRawData();
-    V3DLONG sz[4] = {image->getXDim(),image->getYDim(),image->getCDim(),image->getZDim()};
+    V3DLONG sz[4] = {image->getXDim(),image->getYDim(),image->getZDim(),image->getCDim()};
 
     int app2Th;
 
@@ -3410,6 +3367,8 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     p.b_256cube = false;
     p.bkg_thresh = app2Th;
     p.landmarks.push_back(m);
+
+    qDebug()<<"xc1: "<<p.xc1<<" yc1: "<<p.yc1<<" zc1: "<<p.zc1<<" m: "<<p.landmarks[0].x<<" "<<p.landmarks[0].y<<" "<<p.landmarks[0].z;
     proc_app2(p);
     NeuronTree app2NeuronTree1 = NeuronTree();
     app2NeuronTree1.deepCopy(p.result);
@@ -3501,7 +3460,6 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     trees.push_back(app2NeuronTree7);
     trees.push_back(app2NeuronTree8);
 
-    m.x *= 2, m.y *= 2, m.z *= 2;
     NeuronTree consensusTree = consensus(trees,image,m,callback);
 
     if(image){
@@ -3515,6 +3473,119 @@ NeuronTree consensus(Image4DSimple* image, LocationSimple m, bool kmeansTh, V3DP
     }
 
     return consensusTree;
+}
+
+void deleteBranchByDirection(NeuronTree& target, int direction){
+    BranchTree tb = BranchTree();
+    tb.initialize(target);
+    qDebug()<<"---------get level0Index------";
+    vector<int> level0Index = vector<int>();
+    tb.get_level_index(level0Index,0);
+
+    XYZ p;
+    if(direction == 1){
+        p = XYZ(1,0,0);
+    }else if (direction == 2) {
+        p = XYZ(-1,0,0);
+    }else if (direction == 3) {
+        p = XYZ(0,1,0);
+    }else if (direction == 4) {
+        p = XYZ(0,-1,0);
+    }else if (direction == 5) {
+        p = XYZ(0,0,1);
+    }else if (direction == 6) {
+        p = XYZ(0,0,-1);
+    }
+
+    vector<bool> branchDFlag = vector<bool>(tb.branchs.size(),false);
+    qDebug()<<"level 0 size: "<<level0Index.size();
+
+    for(int j=0; j<level0Index.size(); j++){
+
+        qDebug()<<"j: "<<j<<" index: "<<level0Index[j];
+
+        vector<V3DLONG> pointsIndex = vector<V3DLONG>();
+        qDebug()<<"---------------aaaaa----------------";
+        tb.branchs[level0Index[j]].get_pointsIndex_of_branch(pointsIndex,target);
+
+        qDebug()<<"pointsIndex size: "<<pointsIndex.size();
+
+
+        vector<NeuronSWC> points;
+        for(int k=0; k<pointsIndex.size(); k++){
+            points.push_back(target.listNeuron[pointsIndex[k]]);
+        }
+        XYZ p1 = getLineDirection(points);
+        double dire;
+        if(p1 == XYZ(-1,-1,-1)){
+            dire = -1;
+        }else {
+            dire = dot(p,p1)/(norm(p)*norm(p1));
+        }
+        qDebug()<<" dire: "<<dire;
+
+        if(dire>0){
+            branchDFlag[level0Index[j]] = true;
+        }
+
+    }
+
+    qDebug()<<"---------------start to flag dbranch---------";
+
+    int maxLevel = tb.get_max_level();
+    qDebug()<<"maxLevel: "<<maxLevel;
+
+    map<Branch*,int> branchMap = map<Branch*,int>();
+    for(int j=0; j<tb.branchs.size(); j++){
+        Branch* b = &(tb.branchs[j]);
+        branchMap[b] = j;
+    }
+
+    for(int level = 1; level<=maxLevel; level++){
+        vector<int> levelIndex = vector<int>();
+        tb.get_level_index(levelIndex,level);
+        for(int j=0; j<levelIndex.size(); j++){
+            int prtIndex = branchMap[tb.branchs[levelIndex[j]].parent];
+            if(branchDFlag[prtIndex]){
+                branchDFlag[levelIndex[j]] = true;
+                qDebug()<<"delete branch: "<<levelIndex[j];
+            }
+        }
+    }
+
+    qDebug()<<"------------start to delete point--------------";
+
+    int pointDNum = 0;
+    vector<bool> pointDIndex = vector<bool>(target.listNeuron.size(),false);
+    for(int j=0; j<branchDFlag.size(); j++){
+        if(branchDFlag[j]){
+            vector<V3DLONG> pointIndex = vector<V3DLONG>();
+            pointIndex.clear();
+
+            tb.branchs[j].get_pointsIndex_of_branch(pointIndex,target);
+            qDebug()<<"point size: "<<pointIndex.size();
+            for(int k=1; k<pointIndex.size(); k++){
+                pointDIndex[pointIndex[k]] = true;
+                pointDNum++;
+            }
+        }
+    }
+
+    qDebug()<<"delete point number: "<<pointDNum;
+
+    qDebug()<<"---------start to copy------------------";
+
+    QList<NeuronSWC> listNeuron = QList<NeuronSWC>();
+    listNeuron.clear();
+    for(int j=0; j<pointDIndex.size(); j++){
+        if(!pointDIndex[j]){
+            NeuronSWC p = target.listNeuron[j];
+            listNeuron.append(p);
+        }
+    }
+
+    target.listNeuron.clear();
+    target.listNeuron = listNeuron;
 }
 
 

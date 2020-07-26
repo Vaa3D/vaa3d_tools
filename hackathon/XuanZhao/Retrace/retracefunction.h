@@ -96,6 +96,8 @@ void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iIma
     }
 }
 
+void BinaryProcess(unsigned char* &apsInput, V3DLONG *in_sz);
+
 XYZ getLineDirection(const vector<NeuronSWC> &points);
 
 bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result);

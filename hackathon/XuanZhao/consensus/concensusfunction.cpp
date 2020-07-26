@@ -683,8 +683,11 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     p.yc1 = downSampleSZ[1] - 1;
     p.zc1 = downSampleSZ[2] - 1;
     p.landmarks.clear();
-    m.x /= 2, m.y /= 2, m.z /= 2;
-    p.landmarks.push_back(m);
+    LocationSimple mm;
+    mm.x = (m.x - 1)/2 +1;
+    mm.y = (m.y - 1)/2 +1;
+    mm.z = (m.z - 1)/2 +1;
+    p.landmarks.push_back(mm);
 
     proc_app2(p);
     NeuronTree app2NeuronTree5 = NeuronTree();
@@ -699,7 +702,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath5,app2NeuronTree5);
 
     //downSample image(2 times), rotate 30 degrees around X axis
-    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,m,0,angle,app2Th);
+    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,mm,0,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree6.listNeuron.size(); i++){
         app2NeuronTree6.listNeuron[i].x *= 2;
         app2NeuronTree6.listNeuron[i].y *= 2;
@@ -710,7 +713,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath6,app2NeuronTree6);
 
     //downSample image(2 times), rotate 30 degrees around Y axis
-    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,m,1,angle,app2Th);
+    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,mm,1,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree7.listNeuron.size(); i++){
         app2NeuronTree7.listNeuron[i].x *= 2;
         app2NeuronTree7.listNeuron[i].y *= 2;
@@ -721,7 +724,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath7,app2NeuronTree7);
 
     //downSample image(2 times), rotate 30 degrees around Z axis
-    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,m,2,angle,app2Th);
+    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,mm,2,angle,app2Th);
     for(int i=0 ;i<app2NeuronTree8.listNeuron.size(); i++){
         app2NeuronTree8.listNeuron[i].x *= 2;
         app2NeuronTree8.listNeuron[i].y *= 2;
@@ -741,7 +744,6 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     trees.push_back(app2NeuronTree7);
     trees.push_back(app2NeuronTree8);
 
-    m.x *= 2, m.y *= 2, m.z *= 2;
     NeuronTree consensusTree = consensus(trees,image,m,callback);
 
     QString consensusSWCPath = imagePath +"_consensus.swc";

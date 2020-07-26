@@ -9,6 +9,9 @@
 
 #include "retracedialog.h"
 #include "app2.h"
+
+#include "branchtree.h"
+#include "judgebranch.h"
 //#include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 using namespace std;
@@ -25,6 +28,7 @@ QStringList RetracePlugin::menulist() const
         <<tr("app2MultiTeraflyWithPara")
         <<tr("ultratracerTerafly")
         <<tr("saveMarkerWithBoundingBox")
+        <<tr("pruneNeuronTree")
 		<<tr("about");
 }
 
@@ -32,7 +36,7 @@ QStringList RetracePlugin::funclist() const
 {
 	return QStringList()
         <<tr("ultratracingInBox")
-		<<tr("func2")
+        <<tr("judgeBranch")
 		<<tr("help");
 }
 
@@ -171,6 +175,9 @@ void RetracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     else if (menu_name == "saveMarkerWithBoundingBox") {
         writeBlock(callback,parent);
     }
+    else if (menu_name == "pruneNeuronTree") {
+        pruneNeuronTree(callback);
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -193,9 +200,42 @@ bool RetracePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         qDebug()<<"swcPath: "<<swcPath.toStdString().c_str();
         tracingPipeline(imageBlockPath,swcPath,callback);
     }
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("judgeBranch"))
 	{
-		v3d_msg("To be implemented.");
+        QString imgPath = (infiles.size()>=1) ? infiles[0] : "";
+        QString swcPath = (infiles.size()>=2) ? infiles[1] : "";
+//        pruneNeuronTree(imgPath,callback);
+        pruneNeuronTree(imgPath,callback);
+//        V3DLONG sz[4] = {0,0,0,0};
+//        int dataType = 1;
+//        unsigned char* pdata = 0;
+//        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+//        paraApp2 p2 = paraApp2();
+//        Image4DSimple* image = new Image4DSimple();
+//        image->setData(pdata,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+//        p2.p4dImage = image;
+//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//        p2.xc1 = sz[0] - 1;
+//        p2.yc1 = sz[1] - 1;
+//        p2.zc1 = sz[2] - 1;
+//        p2.bkg_thresh = -1;
+//        proc_app2(p2);
+
+//        writeSWC_file((imgPath+".swc"),p2.result);
+
+//        keyTree kt = keyTree();
+//        kt.initial(p2.result);
+//        kt.getBranchFeature(pdata,sz);
+//        BranchTree bt = BranchTree();
+//        bt.initialize(p2.result);
+//        bt.getBranchFeature(pdata,sz);
+
+//        writeSWC_file((imgPath+"_score.swc"),bt.nt);
+
+//        if(image){
+//            delete image;
+//            image = 0;
+//        }
 	}
 	else if (func_name == tr("help"))
 	{

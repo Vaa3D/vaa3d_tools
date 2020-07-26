@@ -244,7 +244,7 @@ bool proc_app2(paraApp2 &p)
             mean_and_std(p4dImageNew->getRawDataAtChannel(0), p4dImageNew->getTotalUnitNumberPerChannel(), imgAve, imgStd);
 //            p.bkg_thresh = imgAve; //+0.5*imgStd ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5;
             double td= (imgStd<10)? 10: imgStd;
-            p.bkg_thresh = imgAve +td ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5; //20170523, PHC
+            p.bkg_thresh = imgAve + 0.5*td ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5; //20170523, PHC
         }
         else
             p.bkg_thresh = 0;
@@ -582,7 +582,7 @@ bool proc_app2(paraApp2 &p)
 //        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 //        saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-        p.result = swc_convert(outswc);
+        p.result = swcConvert(outswc);
 
     }
     //release memory

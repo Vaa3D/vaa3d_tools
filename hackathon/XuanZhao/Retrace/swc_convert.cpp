@@ -28,7 +28,7 @@ vector<MyMarker*> swc_convert(NeuronTree & nt)
     return outswc;
 }
 
-NeuronTree swc_convert(vector<MyMarker*> & inswc)
+NeuronTree swcConvert(const vector<MyMarker*> & inswc)
 {
     if(inswc.empty()) return NeuronTree();
     map<MyMarker*, long> swc_map;
