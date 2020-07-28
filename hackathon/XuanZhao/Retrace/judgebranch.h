@@ -57,6 +57,8 @@ vector<NeuronTree> splitNeuronTree(NeuronTree nt);
 
 double getHierarchySegmentDirection(unsigned char*** data3d, V3DLONG* sz, HierarchySegment* segment);
 
+vector<MyMarker*> deleteSegmentByType(vector<MyMarker*>& inswc, int type);
+
 
 //void judgeBranch(QString imgPath, V3DPluginCallback2 &callback);
 

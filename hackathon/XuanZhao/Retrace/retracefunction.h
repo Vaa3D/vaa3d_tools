@@ -179,6 +179,15 @@ struct imageBlock{
 
     void getGlobelNeuronTree(NeuronTree& nt);
     void getLocalNeuronTree(NeuronTree& nt);
+
+    bool operator<(const imageBlock& other) const {
+        if(this->startMarkers[0].radius<other.startMarkers[0].radius){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
 };
 
 void normalImage(unsigned char* pdata, V3DLONG* sz);

@@ -23,6 +23,8 @@ QStringList TestPlugin::funclist() const
 	return QStringList()
         <<tr("enhanceImage")
         <<tr("get_2d_image")
+        <<tr("getSWCL0Image")
+        <<tr("convertData")
 		<<tr("help");
 }
 
@@ -67,6 +69,21 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         get_2d_image(input,output,callback);
 	}
+    else if (func_name == tr("getSWCL0Image"))
+    {
+        QString swcPath = infiles[0];
+        QString brainPath = inparas[0];
+        QString outDir = outfiles[0];
+        int times = atoi(inparas[1]);
+
+        QString outPath = outDir + "\\result.v3draw";
+        getSwcL0Image(swcPath,brainPath,outPath,times,callback);
+    }
+    else if (func_name == tr("convertData"))
+    {
+        QString path = infiles[0];
+        convertData(path,callback);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

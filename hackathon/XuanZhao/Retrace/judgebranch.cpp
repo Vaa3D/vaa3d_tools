@@ -18,6 +18,8 @@
 
 #include <math.h>
 
+#include <qmap.h>
+
 //template<class T> bool swc2maskPackage(T * &outimg1d, vector<MyMarker * > & inswc, long sz0, long sz1, long sz2){
 //    return swc2mask(outimg1d,inswc,sz0,sz1,sz2);
 //}
@@ -650,7 +652,7 @@ NeuronTree pruneNeuronTree(Image4DSimple* image,NeuronTree &nt){
             qDebug()<<"type: "<<type;
             double d = getHierarchySegmentDirection(data3d,sz,inSegments[j]);
             qDebug()<<"d: "<<d;
-            if(d<0.5){
+            if(d<0.9){
                 for(int k=0; k<markers.size(); k++){
                     markers[k]->type = 3;
                 }
@@ -662,8 +664,17 @@ NeuronTree pruneNeuronTree(Image4DSimple* image,NeuronTree &nt){
         }
     }
 
+    qDebug()<<"-----end----";
+
+    qDebug()<<"outswc size: "<<inswc.size();
+
+    vector<MyMarker*> outswc = deleteSegmentByType(inswc,3);
+
+    qDebug()<<"outswc size: "<<outswc.size();
+
     delete3dpointer(data3d,sz[0],sz[1],sz[2]);
-    return swcConvert(inswc);
+    qDebug()<<"-----delete end-------";
+    return swcConvert(outswc);
 
 }
 
@@ -672,6 +683,11 @@ void pruneNeuronTree(V3DPluginCallback2& callback){
     Image4DSimple* image = callback.getImage(cur);
     paraApp2 p2 = paraApp2();
     p2.initialize(callback);
+    unsigned char* pdata = p2.p4dImage->getRawData();
+    V3DLONG sz[4] = {p2.p4dImage->getXDim(),p2.p4dImage->getYDim(),p2.p4dImage->getZDim(),p2.p4dImage->getCDim()};
+    normalImage(pdata,sz);
+    BinaryProcess(pdata,sz);
+    p2.bkg_thresh = -1;
     proc_app2(p2);
     sortSWC(p2.result);
     NeuronTree nt = pruneNeuronTree(image,p2.result);
@@ -716,11 +732,15 @@ vector<NeuronTree> splitNeuronTree(NeuronTree nt){
 }
 
 double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, HierarchySegment *segment){
+    qDebug()<<"------------in getHierarchySegmentDirection-------------------";
     double length = segment->length;
 
 
+    qDebug()<<"------------in getlength-------------------";
+
     vector<MyMarker*> segMarkers = vector<MyMarker*>();
     segment->get_markers(segMarkers);
+    qDebug()<<"------------in getMarker-------------------";
     int markerNum = segMarkers.size();
 
     if(length<=0 || markerNum<3){
@@ -733,7 +753,7 @@ double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, Hier
         lengthList[i] = lengthList[i-1] + dist(*(segMarkers[i]),*(segMarkers[i-1]));
     }
     LocationSimple pt;
-    int middleIndex;
+    int middleIndex = 0;
     for(int i=0; i<markerNum; i++){
         if(lengthList[i] > length/2){
             pt.x = segMarkers[i]->x;
@@ -748,13 +768,13 @@ double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, Hier
     MyMarker* p1 = 0;
     MyMarker* p2 = 0;
     for(int i=middleIndex; i>=0; i--){
-        if((lengthList[middleIndex] - lengthList[i]) > pcaR/2){
+        if((lengthList[middleIndex] - lengthList[i]) > pcaR){
             p1 = segMarkers[i];
             break;
         }
     }
     for(int i=middleIndex; i<markerNum; i++){
-        if((lengthList[i] - lengthList[middleIndex]) > pcaR/2){
+        if((lengthList[i] - lengthList[middleIndex]) > pcaR){
             p2 = segMarkers[i];
             break;
         }
@@ -791,6 +811,55 @@ double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, Hier
         dotDirection = dot(segDirection,pcaDirection);
     }
     return dotDirection/(norm(segDirection)*norm(pcaDirection));
+}
+
+vector<MyMarker*> deleteSegmentByType(vector<MyMarker*>& inswc, int type){
+
+    int markerNum = inswc.size();
+
+    qDebug()<<"marker num: "<<markerNum;
+
+    QMap<MyMarker*,int> markerIndexMap = QMap<MyMarker*,int>();
+    for(int i=0; i<markerNum; i++){
+        markerIndexMap.insert(inswc[i],i);
+    }
+    qDebug()<<"map end";
+    vector<vector<int>> children = vector<vector<int>>(markerNum,vector<int>());
+    for(int i=0; i<markerNum; i++){
+        if(inswc[i]->parent){
+            int prtIndex = markerIndexMap[inswc[i]->parent];
+            children[prtIndex].push_back(i);
+        }
+    }
+    qDebug()<<"children end";
+    vector<bool> isRemain = vector<bool>(markerNum,true);
+    for(int i=0; i<markerNum; i++){
+        if(inswc[i]->type == type){
+            int curIndex = markerIndexMap[inswc[i]];
+            vector<int> queue = vector<int>();
+            queue.push_back(curIndex);
+            while (!queue.empty()) {
+                int tmp = queue.front();
+                queue.erase(queue.begin());
+                isRemain[tmp] = false;
+                for(int j=0; j<children[tmp].size(); j++){
+                    queue.push_back(children[tmp][j]);
+                }
+            }
+        }
+    }
+    qDebug()<<"flag end";
+
+    vector<MyMarker*> outswc = vector<MyMarker*>();
+
+    for(int i=0; i<markerNum; i++){
+        if(isRemain[i]){
+            outswc.push_back(inswc[i]);
+        }
+    }
+
+    return outswc;
+
 }
 
 
