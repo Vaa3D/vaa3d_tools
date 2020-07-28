@@ -257,23 +257,56 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	}
 
 	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
-	this->treeAssembly(PRE_FINALOUTPUT_TREE);
-	
+
+	/* ======= Tree is formed from signal blobs here =======*/
+	this->treeAssembly(PRE_FINALOUTPUT_TREE);	
+	/* =====================================================*/
+
 	this->myFragPostProcessor.scalingFactor = this->scalingFactor;
 	this->myFragPostProcessor.imgOrigin = this->imgOrigin;
 	this->myFragPostProcessor.volumeAdjustedBounds = this->volumeAdjustedBounds;
 	if (this->partialVolumeTracing)
 		PRE_FINALOUTPUT_TREE = NeuronStructUtil::swcShift(PRE_FINALOUTPUT_TREE, this->volumeAdjustedBounds[0] - 1, this->volumeAdjustedBounds[2] - 1, this->volumeAdjustedBounds[4] - 1);
-	
+
 	this->getExistingFinalTree(this->existingTree);
 	if (this->continuousAxon)
 	{
+		this->totalV_NeuronSWCs.clear();
+
 		NeuronTree scaledBackExistingTree = this->myFragPostProcessor.treeScaleBack(existingTree, this->scalingFactor, this->imgOrigin);
 		NeuronTree newTreePart = TreeGrower::swcSamePartExclusion(PRE_FINALOUTPUT_TREE, scaledBackExistingTree, 4, 8);
+		profiledTree profiledNewTreePart(newTreePart);
+		
 		CONTINUOUS_AXON_PREFINAL_TREE = axonGrow(newTreePart, scaledBackExistingTree);
-		CONTINUOUS_AXON_PREFINAL_TREE = NeuronStructUtil::singleDotRemove(CONTINUOUS_AXON_PREFINAL_TREE, this->minNodeNum);
+		NeuronStructUtil::swcChangeType(CONTINUOUS_AXON_PREFINAL_TREE, 18);
+		profiledTree profiledExtendedAxonTree(CONTINUOUS_AXON_PREFINAL_TREE);
+		
 		vector<NeuronTree> trees = { scaledBackExistingTree, CONTINUOUS_AXON_PREFINAL_TREE };
 		FINALOUTPUT_TREE = this->myFragPostProcessor.scaleTree(NeuronStructUtil::swcCombine(trees), this->scalingFactor, this->imgOrigin);
+		profiledTree profiledFINAL_BEFORE_DOT_REMOVE(FINALOUTPUT_TREE);
+		FINALOUTPUT_TREE = NeuronStructUtil::singleDotRemove(profiledFINAL_BEFORE_DOT_REMOVE, this->minNodeNum);
+
+		vector<ptrdiff_t> delLocs;
+		while (1)
+		{
+			for (map<int, segUnit>::iterator newSegIt = profiledNewTreePart.segs.begin(); newSegIt != profiledNewTreePart.segs.end(); ++newSegIt)
+			{
+				for (auto& extendedSeg : profiledExtendedAxonTree.segs)
+				{
+					if (newSegIt->second == extendedSeg.second)
+					{
+						profiledNewTreePart.segs.erase(newSegIt);
+						goto OVERLAPPED_SEG_FOUND;
+					}
+				}
+			}
+			break;
+
+		OVERLAPPED_SEG_FOUND:
+			continue;
+		}
+		this->addV_NeuronSWCs(profiledNewTreePart);
+		for (auto& vSeg : this->totalV_NeuronSWCs) vSeg.to_be_deleted = true; // Default segUnit.to_be_deleted is false, so is converted V_NeuronSWC.
 
 		// ------- Debug ------- //
 		if (FragTraceTester::isInstantiated())
@@ -284,7 +317,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		// --------------------- //
 	}
 	else
+	{
+		this->totalV_NeuronSWCs.clear();
 		FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
+	}
 
 	QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
 	//writeSWC_file(localSWCFullName, FINALOUTPUT_TREE);
@@ -996,3 +1032,11 @@ NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfi
 	return outputTree;
 }
 /********************** END of [Final Traced Tree Generation] ***********************/
+
+
+/*************************** Traced Tree Post Processing ****************************/
+void FragTraceManager::addV_NeuronSWCs(const profiledTree& inputProfiledTree)
+{
+	for (auto& seg : inputProfiledTree.segs) this->totalV_NeuronSWCs.push_back(seg.second.convert2V_NeuronSWC());
+}
+/*********************** END of [Traced Tree Post Processing] ***********************/

@@ -65,6 +65,21 @@ int main(int argc, char* argv[])
 		for (auto& brNum : swcBrNums) cout << brNum.first << " " << brNum.second << endl;
 		cout << endl;
 	}
+	else if (!funcName.compare("testVsegConvert"))
+	{
+		profiledTree profiledInputTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		for (auto& seg : profiledInputTree.segs)
+		{
+			//cout << "segID " << seg.first << ": " << endl;
+			//for (auto& node : seg.second.nodes)
+			//	cout << "  " << node.n << endl;
+			//cout << endl;
+			V_NeuronSWC convertedSeg = seg.second.convert2V_NeuronSWC();
+			//for (auto& node : convertedSeg.row)
+			//	cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6] << endl;
+			//cout << seg.second.nodes.size() << " " << seg.second.seg_childLocMap.size() << endl << endl;
+		}
+	}
 	else if (!funcName.compare("getMaxEucliDist"))
 	{
 		map<string, float> maxEucliMap;
@@ -98,25 +113,18 @@ int main(int argc, char* argv[])
 		for (auto& tree : outerBifursMap) cout << tree.first << " " << tree.second.size() << endl;
 		cout << endl;
 	}
-	else if (!funcName.compare("swcID"))
+	else if (!funcName.compare("segCompareTest"))
 	{
-		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
-		string subjSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped_centroids3D\\319215569.swc";
-		QString refSWCnameQ = QString::fromStdString(refSWCname);
-		QString subjSWCnameQ = QString::fromStdString(subjSWCname);
-		NeuronTree refTree = readSWC_file(refSWCnameQ);
-		NeuronTree subjTree = readSWC_file(subjSWCnameQ);
-		NeuronTree outputTree = NeuronStructExplorer::swcIdentityCompare(subjTree, refTree, 50, 20);
-		QString outputSWCname = "H:\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputTree);
-	}
-	else if (!funcName.compare("swcScale"))
-	{
-		QString inputSWCName = QString::fromStdString(paras.at(0));
-		NeuronTree inputTree = readSWC_file(inputSWCName);
-		NeuronTree outputTree = NeuronStructUtil::swcScale(inputTree, 2, 2, 1);
-		QString outputName = QString::fromStdString(paras.at(1));
-		writeSWC_file(outputName, outputTree);
+		profiledTree profiledBaseTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		profiledTree profiledTestTree(readSWC_file(QString::fromStdString(paras.at(1))));
+		for (auto& baseSeg : profiledBaseTree.segs)
+		{
+			for (auto& testSeg : profiledTestTree.segs)
+			{
+				if (testSeg.second == baseSeg.second)
+					cout << "same segment found, ID " << testSeg.first << endl;
+			}
+		}
 	}
 	else if (!funcName.compare("swc_typeFilter"))
 	{
@@ -1304,35 +1312,6 @@ int main(int argc, char* argv[])
 			profiledTree outputProfiledTree;
 			NeuronStructUtil::treeUpSample(profiledNt, outputProfiledTree);
 			writeSWC_file(saveFolderNameQ + "\\" + *it, outputProfiledTree.tree);
-		}
-	}
-	else if (!funcName.compare("swcCombine"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-
-		const char* swcFolderNameC = argv[3];
-		string swcFolderName(swcFolderNameC);
-		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
-
-		const char* saveFolderNameC = argv[4];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		ImgManager myManager(folderNameQ);
-		myManager.outputRootPath = saveFolderNameQ;
-
-		for (QStringList::iterator caseIt = myManager.caseList.begin(); caseIt != myManager.caseList.end(); ++caseIt)
-		{
-			NeuronTree nt1 = readSWC_file(folderNameQ + "\\" + *caseIt);
-			NeuronTree nt2 = readSWC_file(swcFolderNameQ + "\\" + *caseIt);
-			vector<NeuronTree> treeVector(2);
-			treeVector[0] = nt1;
-			treeVector[1] = nt2;
-			NeuronTree outputTree = NeuronStructUtil::swcCombine(treeVector);
-
-			writeSWC_file(saveFolderNameQ + "\\" + *caseIt, outputTree);
 		}
 	}
 	else if (!funcName.compare("getPixValue"))

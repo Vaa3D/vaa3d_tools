@@ -181,7 +181,6 @@ NeuronTree FragmentPostProcessor::integrateNewTree(const NeuronTree& existingTre
 		vector<NeuronTree> trees = { profiledPRE_FINALIZED_newPart.tree, scaledBackExistingTree };
 		NeuronTree outputTree = NeuronStructUtil::swcCombine(trees);
 		return this->scaleTree(outputTree, this->scalingFactor, this->imgOrigin);
-
 	}
 	else return this->scaleTree(preFinalizedTree, this->scalingFactor, this->imgOrigin);
 }

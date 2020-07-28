@@ -55,6 +55,8 @@ public:
 
 	/************************ Neuron Struct Processing ************************/
 	// ----------------- Basic Operations ----------------- //
+	static inline void swcChangeType(NeuronTree& inputTree, const int type) { for (auto& node : inputTree.listNeuron) node.type = type; }
+
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
 
 	template<typename T>

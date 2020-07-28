@@ -171,9 +171,10 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			{
 				vector<size_t> childSegLocs;
 				childSegLocs.clear();
+
+				// This ensures that tail node still has its own pair in seg_chileLocMap, and its childSegLocs is empty.
 				if (newSeg.seg_childLocMap.find(it->n) == newSeg.seg_childLocMap.end())
 					newSeg.seg_childLocMap.insert(pair<int, vector<size_t>>(it->n, childSegLocs));
-				// This ensures that tail node still has its own pair in seg_chileLocMap, and its childSegLocs is empty.
 
 				if (node2childLocMap.find(it->n) != node2childLocMap.end())
 				{

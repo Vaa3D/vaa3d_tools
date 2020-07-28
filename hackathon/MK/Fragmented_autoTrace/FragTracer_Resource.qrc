@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/segEditingIcons">
+    <file>resources/segment_editing/show_hide.png</file>
     <file>resources/segment_editing_preferences/changeType_associatedSegs.png</file>
     <file>resources/segment_editing/connect.png</file>
     <file>resources/segment_editing/remove_new.png</file>

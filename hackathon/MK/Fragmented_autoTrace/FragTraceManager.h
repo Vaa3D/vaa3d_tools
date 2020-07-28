@@ -148,8 +148,6 @@ private:
 	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
 	NeuronTree getSmoothedPeriDenTree();
 
-	// This method performs itered-cluster based connecting first. 
-	// Then change types if segments are connected to alredy typed existing segments. Duplicated nodes are also removed.
 	profiledTree segConnect_withinCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
 
 	set<int> seedCluster;
@@ -166,6 +164,9 @@ public:
 	int displayImgDim[3];
 
 	NeuronTree existingTree;
+
+	vector<V_NeuronSWC> getCurrentVolumeV_NeuronSWCs() { return this->totalV_NeuronSWCs; }
+	void addV_NeuronSWCs(const profiledTree& inputProfiledTree);
 	/* =============================================================== */
 
 
@@ -173,6 +174,8 @@ private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;
+
+	vector<V_NeuronSWC> totalV_NeuronSWCs;
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])

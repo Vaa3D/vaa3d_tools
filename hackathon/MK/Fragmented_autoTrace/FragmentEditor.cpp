@@ -275,7 +275,7 @@ set<int> FragmentEditor::getNodeTypesInSeg(const V_NeuronSWC& inputVneuronSWC)
 	set<int> outputNodeTypes;
 	for (auto& node : inputVneuronSWC.row)
 	{
-		if (node.data[1] == 16) continue;
+		if (node.data[1] == 16 || node.data[1] == 18) continue;
 		else outputNodeTypes.insert(node.data[1]);
 	}
 

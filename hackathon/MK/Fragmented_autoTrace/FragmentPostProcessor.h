@@ -30,6 +30,7 @@ private:
 	void rc_getSegIDsFromClusterChain(boost::container::flat_set<int>& segIDs, const segEndClusterUnit* currClusterUnitPtr) const;
 
 public:
+	// Take the newly traced tree, exclude the part that overlaps the existing tree, and then combine as 1 single tree.
 	NeuronTree integrateNewTree(const NeuronTree& existingTree, const NeuronTree& preFinalizedTree, const int minNodeNum) const;
 
 };

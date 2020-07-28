@@ -80,12 +80,15 @@ namespace integratedDataTypes
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 
-		int segID;
+		const bool operator==(const segUnit& comparedSeg); // operator== for comparing 2 segUnits
+
+		bool profiled;
+		int segID, type;
 		int head;                                  // segment head node ID
 		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
 		QList<NeuronSWC> nodes;                    // segment nodes
 		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
-		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist		
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes QList. Note, tip nodes still have entries in the map with empty second value.
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
 		// [segSmoothnessMap] profiles smooth measures node by node through the whole segment.
