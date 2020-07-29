@@ -273,26 +273,38 @@ void convertData(QString path, V3DPluginCallback2& callback){
         for(int j=0; j<dirList2.size(); j++){
             qDebug()<<"dir2: "<<dirList2[j].absoluteFilePath();
             QDir dir2 = QDir(dirList2[j].absoluteFilePath());
-            QFileInfoList dirList3 = dir2.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+            QFileInfoList dirList3 = dir2.entryInfoList(QDir::Files);
             for(int k=0; k<dirList3.size(); k++){
-                qDebug()<<"dir3: "<<dirList3[k].absoluteFilePath();
-                QDir dir3 = QDir(dirList3[k].absoluteFilePath());
-                QFileInfoList fileList = dir3.entryInfoList(QDir::Files);
-                for(int p=0; p<fileList.size(); p++){
-                    qDebug()<<"tifile: "<<fileList[p].absoluteFilePath();
-                    QString tifPath = fileList[p].absoluteFilePath();
-//                    thread t(_convertData,tifPath,callback);
-//                    t.detach();
-                    _convertData(tifPath,callback);
-//                    break;
-                }
-//                break;
+                qDebug()<<"file: "<<dirList3[k].absoluteFilePath();
+                QString file = dirList3[k].absoluteFilePath();
+                _convertData(file,callback);
             }
 //            break;
         }
 //        break;
     }
 
+}
+void downSampleData(QString path, int times, V3DPluginCallback2 &callback){
+    QFileInfoList dirList1 = QDir(path).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+    for(int i=0; i<dirList1.size(); i++){
+        qDebug()<<"dir1: "<<dirList1[i].absoluteFilePath();
+        QDir dir1 = QDir(dirList1[i].absoluteFilePath());
+        QFileInfoList dirList2 = dir1.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+        for(int j=0; j<dirList2.size(); j++){
+            qDebug()<<"dir2: "<<dirList2[j].absoluteFilePath();
+            QDir dir2 = QDir(dirList2[j].absoluteFilePath());
+            QFileInfoList fileList = dir2.entryInfoList(QDir::Files);
+            for(int k=0; k<fileList.size(); k++){
+                qDebug()<<"file: "<<fileList[k].absoluteFilePath();
+                QString file = fileList[k].absoluteFilePath();
+                _downSampleData(file,times,callback);
+//                break;
+            }
+//            break;
+        }
+//        break;
+    }
 }
 
 void _downSampleData(QString tifPath,int times,V3DPluginCallback2 &callback){
@@ -302,7 +314,8 @@ void _downSampleData(QString tifPath,int times,V3DPluginCallback2 &callback){
     simple_loadimage_wrapper(callback,tifPath.toStdString().c_str(),pdata,sz,dataType);
     qDebug()<<"sz0: "<<sz[0]<<" sz1: "<<sz[1]<<" sz2: "<<sz[2]<<" sz3: "<<sz[3];
     qDebug()<<"dataType: "<<dataType;
-    downsample3dimg_1dpt(pdata,sz,times);
+    resample3dimg_interp(pdata,sz,times,times,times,1);
+//    downsample3dimg_1dpt(pdata,sz,times);
     simple_saveimage_wrapper(callback,tifPath.toStdString().c_str(),pdata,sz,1);
     if(pdata){
         delete[] pdata;
@@ -349,6 +362,118 @@ void _convertData(QString tifPath, V3DPluginCallback2 &callback){
         pdata = 0;
     }
 }
+
+void joinImage(QString tifDir, QString outPath,int times, V3DPluginCallback2& callback){
+//    int gx = 0, gy = 0, gz = 0;
+//    vector<vector<int> > oris = vector<vector<int> >();
+    qDebug()<<"-------in joinImage---------";
+
+    int gx = tifDir.split("x")[1].toInt();
+    int gy = tifDir.split("x")[0].split("(")[1].toInt();
+    int gz = tifDir.split("x")[2].split(")")[0].toInt();
+
+
+
+    int t = 16/times;
+    qDebug()<<"t: "<<t;
+    gx /= t, gy /= t, gz /= t;
+
+//    gx += 1, gy += 1, gz += 1;
+
+    unsigned int tolSZ = gx*gy*gz;
+
+    qDebug()<<"tolSZ: "<<tolSZ<<" gx: "<<gx<<" gy: "<<gy<<" gz: "<<gz;
+
+
+    qDebug()<<"start to allocate";
+    unsigned char* data = new unsigned char[tolSZ];
+    if(!data){
+        qDebug()<<"allocate memory failed";
+    }else {
+        qDebug()<<"allocate memory successed";
+    }
+
+    memset(data,0,tolSZ*sizeof(unsigned char));
+
+
+
+
+    QFileInfoList dirList1 = QDir(tifDir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+    for(int i=0; i<dirList1.size(); i++){
+//        qDebug()<<"dir1: "<<dirList1[i].absoluteFilePath();
+        QDir dir1 = QDir(dirList1[i].absoluteFilePath());
+        QFileInfoList dirList2 = dir1.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+        for(int j=0; j<dirList2.size(); j++){
+//            qDebug()<<"dir2: "<<dirList2[j].absoluteFilePath();
+            QDir dir2 = QDir(dirList2[j].absoluteFilePath());
+            QFileInfoList fileList = dir2.entryInfoList(QDir::Files);
+            for(int k=0; k<fileList.size(); k++){
+//                qDebug()<<"file: "<<fileList[k].absoluteFilePath();
+                QString file = fileList[k].absoluteFilePath();
+
+                QString fileName = fileList[k].baseName();
+//                qDebug()<<"fileName: "<<fileName;
+
+                int ox = fileName.split("_")[1].toInt();
+                int oy = fileName.split("_")[0].toInt();
+                int oz = fileName.split("_")[2].toInt();
+
+                ox /= 160;
+                oy /= 160;
+                oz /= 160;
+
+                qDebug()<<"ox: "<<ox<<" oy: "<<oy<<" oz: "<<oz;
+
+                unsigned char* pdata = 0;
+                V3DLONG sz[4] = {0,0,0,0};
+                int dataType = 1;
+                simple_loadimage_wrapper(callback,file.toStdString().c_str(),pdata,sz,dataType);
+
+                for(int z=0; z<sz[2]; z++){
+                    for(int y=0; y<sz[1]; y++){
+                        for(int x=0; x<sz[0]; x++){
+                            int pIndex = z*sz[0]*sz[1] + y*sz[0] + x;
+                            int dz = (z+oz)>(gz-1)? gz-1 : z+oz;
+                            int dy = (y+oy)>(gy-1)? gy-1 : y+oy;
+                            int dx = (x+ox)>(gx-1)? gx-1 : x+ox;
+                            unsigned int index = dz*gx*gy + dy*gx + dx;
+//                            qDebug()<<"index: "<<index;
+                            data[index] = pdata[pIndex];
+//                            if(data[index]>20){
+//                                qDebug()<<index<<" : "<<(int)data[index];
+//                            }
+
+                        }
+                    }
+                }
+
+                if(pdata){
+                    delete[] pdata;
+                    pdata = 0;
+                }
+            }
+        }
+    }
+
+
+    V3DLONG outSZ[4];
+    outSZ[0] = gx;
+    outSZ[1] = gy;
+    outSZ[2] = gz;
+    outSZ[3] = 1;
+    bool a = simple_saveimage_wrapper(callback,outPath.toStdString().c_str(),data,outSZ,1);
+    qDebug()<<"a: "<<a;
+    qDebug()<<"save image end";
+
+    if(data){
+        qDebug()<<"delete data";
+        delete[] data;
+        data = 0;
+    }
+
+}
+
+
 
 
 

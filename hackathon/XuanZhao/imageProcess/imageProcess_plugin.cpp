@@ -82,7 +82,13 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     else if (func_name == tr("convertData"))
     {
         QString path = infiles[0];
+        QString outDir = outfiles[0];
+        int times = atoi(inparas[0]);
+        int t = 16/times;
         convertData(path,callback);
+        downSampleData(path,t,callback);
+        QString outPath = outDir + "\\result.v3draw";
+        joinImage(path,outPath,times,callback);
     }
 	else if (func_name == tr("help"))
 	{
