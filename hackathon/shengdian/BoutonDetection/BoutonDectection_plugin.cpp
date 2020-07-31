@@ -22,6 +22,7 @@ QStringList BoutonDectectionPlugin::funclist() const
 	return QStringList()
         <<tr("BoutonDection_terafly")
           <<tr("BoutonDection_crop")
+            <<tr("BoutonDection_filter")
 		<<tr("help");
 }
 
@@ -47,32 +48,38 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
 
     if (func_name == tr("BoutonDection_terafly"))
 	{
-//        if(infiles.size() != 2 && infiles.size() != 3)
-//        {
-//            cerr<<"Invalid input"<<endl;
-//            return false;
-//        }
+        if(infiles.size() != 2)
+        {
+            cerr<<"Invalid input"<<endl;
+            return false;
+        }
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
 //        string out_path=outfiles[0];
-//        double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
-        cout<<"inimg_file = "<<inimg_file<<endl;
-        cout<<"inswc_file = "<<inswc_file<<endl;
-//        cout<<"outswc_file = "<<out_path<<endl;
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         getBoutonInTerafly(callback,inimg_file,nt);
         string outswc_file = inswc_file + ".densityResult.swc";
         writeSWC_file(QString::fromStdString(outswc_file),nt);
 	}
+    else if (func_name == tr("BoutonDection_filter"))
+    {
+        string inimg_file = infiles[0];
+        string inswc_file = infiles[1];
+        string out_path=outfiles[0];
+        QList <CellAPO> apolist=getBouton(callback,inswc_file);
+        string apo_file_path = inswc_file + ".bouton.apo";
+        writeAPO_file(apo_file_path,apolist);
+        getBoutonBlock(callback,inimg_file,inswc_file,apolist,out_path);
+//        getBoutonFilter(callback,inimg_file,inapo_file,apolist,out_path);
+    }
     else if (func_name == tr("BoutonDection_crop"))
     {
+        printHelp();
         string inimg_file = infiles[0];
         string inapo_file = infiles[1];
         string out_path=outfiles[0];
         //filter and crop
-        getBoutonFilter(callback,inimg_file,inapo_file,apolist,out_path);
-//        string outswc_file = inswc_file + ".densityfilter.swc";
-//        writeSWC_file(QString::fromStdString(outswc_file),nt);
+//        getBoutonBlock(callback,inimg_file,inapo_file,apolist,out_path);
     }
 	else if (func_name == tr("help"))
     {
@@ -82,40 +89,98 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
 
 	return true;
 }
-void getBoutonFilter(V3DPluginCallback2 &callback, string imgPath, string apofilename,string outpath)
+QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
 {
     cout<<"Welcome into bouton detection: filter part"<<endl;
-//    QList<NeuronSWC>& listNeuron =  nt.listNeuron;
-//    V3DLONG siz = nt.listNeuron.size();
-//    //find all the tips
-//    QHash <int, int>  hashNeuron;
-//    hashNeuron.clear();
-//    for (V3DLONG i=0;i<siz;i++)
-//    {
-//        NeuronSWC s = nt.listNeuron[i];
-//        hashNeuron.insert(s.n,0);
-//    }
-//    for (V3DLONG i=0;i<siz;i++)
-//    {
-//        NeuronSWC s = nt.listNeuron[i];
-//        if(s.pn!=-1)
-//        {
-//            //change hash value
-//            hashNeuron.value(s.pn)+=1;
+    NeuronTree nt = readSWC_file(QString::fromStdString(swcfile));
+    QList<NeuronSWC> listNeuron =  nt.listNeuron;
+    V3DLONG siz = nt.listNeuron.size();
+    QHash <int, int>  hashNeuron,hashchild;
+    hashNeuron.clear();
+    hashchild.clear();
+    long boutonnodelist[siz];
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = listNeuron[i];
+        boutonnodelist[i]=0;
+        hashNeuron.insert(s.n,i);
+        hashchild.insert(i,0);
+    }
 
-//        }
-//    }
-//    for (V3DLONG i=0;i<siz;i++)
-//    {
-//        NeuronSWC s = nt.listNeuron[i];
-//        if(hashNeuron.value(s.n)==0)
-//        {
-//            //this is a tip point
-//            cout<<"tip:"<<s.n<<endl;
-//        }
-//    }
-    QList <CellAPO> apolist = readAPO_file(QString::fromStdString(apofilename));
-    QFileInfo APOinfo(QString::fromStdString(apofilename));
+    float thisnode_intensity,thisnodep_intensity;
+    float intensity_change=0;
+    int threshold=40;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = listNeuron[i];
+
+
+        if(s.parent>0)
+        {
+            long pid=hashNeuron.value(s.parent);
+            hashchild.value(pid)++;
+            if(s.type==2)
+            {
+                thisnode_intensity=s.radius;
+
+                NeuronSWC s_pp=listNeuron[pid];
+                thisnodep_intensity=s_pp.radius;
+                intensity_change=thisnodep_intensity-thisnode_intensity;
+                if(intensity_change>threshold)
+                {
+                    boutonnodelist[pid]=1;
+                }
+            }
+        }
+        else
+            hashchild.value(hashNeuron.value(s.n))++;
+    }
+    //find all the tips
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(hashchild.value()[i]==0)
+        {
+            int childid=hashchild.key()[i];
+            NeuronSWC s = listNeuron[childid];
+            if(s.parent>0&&s.type==2)
+            {
+                long pid=hashNeuron.value(s.parent);
+                thisnode_intensity=s.radius;
+
+                NeuronSWC s_pp=listNeuron[pid];
+                thisnodep_intensity=s_pp.radius;
+                intensity_change=thisnode_intensity-thisnodep_intensity;
+                if(intensity_change>threshold)
+                {
+                    boutonnodelist[pid]=1;
+                }
+            }
+        }
+    }
+    //for all the bouton nodes
+    QList <CellAPO> apolist;apolist.clear();
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(boutonnodelist[i]==1)
+        {
+            cout<<"this is a bouton:"<<endl;
+            NeuronSWC s = listNeuron[i];
+            CellAPO apo;
+            apo.x=s.x;
+            apo.y=s.y;
+            apo.z=s.z;
+            apolist.push_back(apo);
+        }
+    }
+    return apolist;
+}
+
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath)
+{
+    cout<<"Welcome into bouton detection: crop part"<<endl;
+
+//    QList <CellAPO> apolist = readAPO_file(QString::fromStdString(apofilename));
+    QFileInfo APOinfo(QString::fromStdString(swcfile));
     V3DLONG siz = apolist.size();
     V3DLONG *in_zz = 0;
     if(!callback.getDimTeraFly(imgPath,in_zz))
@@ -151,7 +216,6 @@ void getBoutonFilter(V3DPluginCallback2 &callback, string imgPath, string apofil
         tmpstr.append("_x").append(QString("%1").arg(s.x);
         tmpstr.append("_y").append(QString("%1").arg(s.y);
         tmpstr.append("_z").append(QString("%1").arg(s.z);
-
         QString default_name = APOinfo.baseName()+"Bouton"+tmpstr+".tif";
         QStringList namelist=APOinfo.baseName().split("_");
         QString save_path = QString::fromStdString(outpath);
@@ -170,6 +234,7 @@ void getBoutonFilter(V3DPluginCallback2 &callback, string imgPath, string apofil
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
+    //write apo to file
 
 }
 
