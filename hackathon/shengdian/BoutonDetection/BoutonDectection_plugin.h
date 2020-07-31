@@ -27,8 +27,8 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt);
-void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath);
-QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile);
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath,int block_size);
+QList <CellAPO> getBouton(string swcfile,int threshold);
 void printHelp();
 // root node with parent 0
 #endif

@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "BoutonDectection_plugin.h"
+#include <QHash>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(BoutonDectection, BoutonDectectionPlugin);
@@ -66,10 +67,12 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
         string out_path=outfiles[0];
-        QList <CellAPO> apolist=getBouton(callback,inswc_file);
+        int threshold=(inparas.size()>=1)?atoi(inparas[0]):30;
+        int crop_block_size=(inparas.size()>=2)?atoi(inparas[1]):32;
+        QList <CellAPO> apolist=getBouton(inswc_file,threshold);
         string apo_file_path = inswc_file + ".bouton.apo";
-        writeAPO_file(apo_file_path,apolist);
-        getBoutonBlock(callback,inimg_file,inswc_file,apolist,out_path);
+        writeAPO_file(QString::fromStdString(apo_file_path),apolist);
+        getBoutonBlock(callback,inimg_file,inswc_file,apolist,out_path,crop_block_size);
 //        getBoutonFilter(callback,inimg_file,inapo_file,apolist,out_path);
     }
     else if (func_name == tr("BoutonDection_crop"))
@@ -89,7 +92,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
 
 	return true;
 }
-QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
+QList <CellAPO> getBouton(string swcfile,int threshold)
 {
     cout<<"Welcome into bouton detection: filter part"<<endl;
     NeuronTree nt = readSWC_file(QString::fromStdString(swcfile));
@@ -109,7 +112,7 @@ QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
 
     float thisnode_intensity,thisnodep_intensity;
     float intensity_change=0;
-    int threshold=40;
+//    int threshold=40;
     for (V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC s = listNeuron[i];
@@ -118,7 +121,7 @@ QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
         if(s.parent>0)
         {
             long pid=hashNeuron.value(s.parent);
-            hashchild.value(pid)++;
+            hashchild[pid]=hashchild[pid]+1;
             if(s.type==2)
             {
                 thisnode_intensity=s.radius;
@@ -128,20 +131,24 @@ QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
                 intensity_change=thisnodep_intensity-thisnode_intensity;
                 if(intensity_change>threshold)
                 {
+                    cout<<"bouton: index="<<s_pp.n<<endl;
                     boutonnodelist[pid]=1;
                 }
             }
         }
         else
-            hashchild.value(hashNeuron.value(s.n))++;
+            hashchild[hashNeuron.value(s.n)]=hashchild[hashNeuron.value(s.n)]+1;
     }
     //find all the tips
-    for (V3DLONG i=0;i<siz;i++)
+    QHash<int, int>::const_iterator hcit;
+    for(hcit=hashchild.begin();hcit!=hashchild.end();hcit++)
     {
-        if(hashchild.value()[i]==0)
+        if(hcit.value()==0)
         {
-            int childid=hashchild.key()[i];
+
+            int childid=hcit.key();
             NeuronSWC s = listNeuron[childid];
+            cout<<"tip: index="<<s.n<<endl;
             if(s.parent>0&&s.type==2)
             {
                 long pid=hashNeuron.value(s.parent);
@@ -152,6 +159,7 @@ QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
                 intensity_change=thisnode_intensity-thisnodep_intensity;
                 if(intensity_change>threshold)
                 {
+                    cout<<"tip bouton: index="<<s_pp.n<<endl;
                     boutonnodelist[pid]=1;
                 }
             }
@@ -163,19 +171,23 @@ QList <CellAPO> getBouton(V3DPluginCallback2 &callback, string swcfile)
     {
         if(boutonnodelist[i]==1)
         {
-            cout<<"this is a bouton:"<<endl;
+//            cout<<"this is a bouton:"<<endl;
             NeuronSWC s = listNeuron[i];
             CellAPO apo;
             apo.x=s.x;
             apo.y=s.y;
             apo.z=s.z;
+            apo.volsize=100;
+            apo.color.r=255;
+            apo.color.g=0;
+            apo.color.b=0;
             apolist.push_back(apo);
         }
     }
     return apolist;
 }
 
-void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath)
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath,int block_size)
 {
     cout<<"Welcome into bouton detection: crop part"<<endl;
 
@@ -192,7 +204,7 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
     {
         CellAPO s = apolist[i];
         int start_x,start_y,start_z,end_x,end_y,end_z;
-        int block_size=64;
+//        int block_size=16;
         start_x = s.x - block_size; if(start_x<0) start_x = 0;
         end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
         start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -204,19 +216,24 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
         in_sz[0] = end_x - start_x;
         in_sz[1] = end_y - start_y;
         in_sz[2] = end_z - start_z;
-        V3DLONG *sz;
-        sz=in_sz;
-        long sz0 = sz[0];
-        long sz01 = sz[0] * sz[1];
+        in_sz[3]=1;
+//        V3DLONG *sz;
+//        sz=in_sz;
+
         unsigned char * im_cropped = 0;
+        V3DLONG pagesz;
+        pagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
+        try {im_cropped = new unsigned char [pagesz];}
+        catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+
         im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
 //        im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
 
         QString tmpstr = "";
-        tmpstr.append("_x").append(QString("%1").arg(s.x);
-        tmpstr.append("_y").append(QString("%1").arg(s.y);
-        tmpstr.append("_z").append(QString("%1").arg(s.z);
-        QString default_name = APOinfo.baseName()+"Bouton"+tmpstr+".tif";
+        tmpstr.append("_x").append(QString("%1").arg(s.x));
+        tmpstr.append("_y").append(QString("%1").arg(s.y));
+        tmpstr.append("_z").append(QString("%1").arg(s.z));
+        QString default_name = APOinfo.baseName()+"_Bouton"+tmpstr+".tif";
         QStringList namelist=APOinfo.baseName().split("_");
         QString save_path = QString::fromStdString(outpath);
         if(namelist.size()>1)
@@ -230,11 +247,10 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
             path.mkpath(save_path);
         }
         QString save_path_img =save_path+"/"+default_name;
-
+        cout<<"save path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
-    //write apo to file
 
 }
 
