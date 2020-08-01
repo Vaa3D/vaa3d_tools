@@ -22,7 +22,7 @@ QStringList BoutonDectectionPlugin::funclist() const
 {
 	return QStringList()
         <<tr("BoutonDection_terafly")
-          <<tr("BoutonDection_crop")
+          <<tr("CropImgAndSWC_terafly")
             <<tr("BoutonDection_filter")
 		<<tr("help");
 }
@@ -73,25 +73,124 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string apo_file_path = inswc_file + ".bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
         getBoutonBlock(callback,inimg_file,inswc_file,apolist,out_path,crop_block_size);
-//        getBoutonFilter(callback,inimg_file,inapo_file,apolist,out_path);
     }
-    else if (func_name == tr("BoutonDection_crop"))
+    else if (func_name == tr("BoutonDection_Img"))
     {
-        printHelp();
+        /*Input1: img block path; Input2: SWC;*/
         string inimg_file = infiles[0];
-        string inapo_file = infiles[1];
-        string out_path=outfiles[0];
-        //filter and crop
-//        getBoutonBlock(callback,inimg_file,inapo_file,apolist,out_path);
+        string inswc_file = infiles[1];
+//        string out_path=outfiles[0];
+//        int crop_block_size=(inparas.size()>=1)?atoi(inparas[1]):128;
+        getBoutonInImg(callback,inimg_file,inswc_file);
     }
 	else if (func_name == tr("help"))
     {
+        /* Version one,20200801
+        1.Basic idea: get the intensity value of the reconstruction nodes and consider big intensity changes among child-parent nodes as bouton.
+        2.If threshold of the intensity changes is low, there will be more bouton results.
+        3.Input swc need to be refined, if the reconstructed nodes don't place at the center of the signal, the performance will be extremly ugly.
+        (Maybe consider to add refinement in future version)
+        Future:
+        1. For testing purpose:
+               1)crop img blocks and swc_in_block,in this way, the performance is easy to compute and visualize;
+               2)(Vertical)move reconstruction nodes to signal, which is so-called refinement;
+               3)(Horizontal)move reconstruction nodes to a local maxmimal intensity point, need to define the surrounding region, and may also need a purning afterwards.
+               4) The threshold parameter is a place to improve the overall performance.
+        */
         printHelp();
 	}
 	else return false;
 
 	return true;
 }
+void getBoutonInImg(V3DPluginCallback2 &callback, string imgPath, string swcfile)
+{
+    cout<<"Welcome into img bouton detection"<<endl;
+    NeuronTree nt = readSWC_file(QString::fromStdString(swcfile));
+    QList<NeuronSWC> listNeuron =  nt.listNeuron;
+    V3DLONG siz = nt.listNeuron.size();
+    long croped[siz];
+    //only crop axon part
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = listNeuron[i];
+        if(s.type==2)
+            croped[i]=0;
+        else
+            croped[i]=1;
+    }
+
+    V3DLONG *in_zz = 0;
+    if(!callback.getDimTeraFly(imgPath,in_zz))
+    {
+        cout<<"can't load terafly img"<<endl;
+        return;
+    }
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        //for all the node, if is axonal node and croped=1,this is a virgin node that needs to be croped.
+        NeuronSWC s = listNeuron[i];
+        if(s.type==2 && croped[i]==0)
+        {
+            //get block
+            int start_x,start_y,start_z,end_x,end_y,end_z;
+            start_x = s.x - block_size; if(start_x<0) start_x = 0;
+            end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
+            start_y =s.y - block_size;if(start_y<0) start_y = 0;
+            end_y = s.y + block_size;if(end_y > in_zz[1]) end_y = in_zz[1];
+            start_z = s.z - block_size;if(start_z<0) start_z = 0;
+            end_z = s.z + block_size;if(end_z > in_zz[2]) end_z = in_zz[2];
+
+            V3DLONG *in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = end_z - start_z;
+            V3DLONG *sz;
+            sz=in_sz;
+            long sz0 = sz[0];
+            long sz01 = sz[0] * sz[1];
+            unsigned char * inimg1d = 0;
+            inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+//            //version one
+//            int thisx,thisy,thisz;
+//            thisx=s.x-start_x;
+//            thisy=s.y-start_y;
+//            thisz=s.z-start_z;
+
+//            listNeuron[i].radius=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+//            cout<<"radius:"<<listNeuron[i].radius<<endl;
+            //version two
+            //for all the node in this block, update its radius with its img intensity
+            for(V3DLONG i2=0;i2<siz;i2++)
+            {
+                NeuronSWC s_block = listNeuron[i2];
+                //skip the updated nodes
+                if(s_block.type != 2 || s_block.radius !=1)
+                    continue;
+                //start from here
+                int thisx,thisy,thisz;
+                thisx=s_block.x;
+                thisy=s_block.y;
+                thisz=s_block.z;
+                if(thisx>start_x && thisx<end_x
+                        && thisy>start_y && thisy<end_y
+                        && thisz>start_z && thisz<end_z)
+                  {
+                    thisx-=start_x;
+                    thisy-=start_y;
+                    thisz-=start_z;
+                    listNeuron[i2].radius=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
+//                    cout<<"radius:"<<listNeuron[i2].radius<<endl;
+                  }
+            }
+            if(inimg1d) {delete []inimg1d; inimg1d=0;}
+        }
+    }
+    //release pointer
+    if(in_zz) {delete []in_zz; in_zz=0;}
+
+}
+
 QList <CellAPO> getBouton(string swcfile,int threshold)
 {
     cout<<"Welcome into bouton detection: filter part"<<endl;
@@ -148,7 +247,7 @@ QList <CellAPO> getBouton(string swcfile,int threshold)
 
             int childid=hcit.key();
             NeuronSWC s = listNeuron[childid];
-            cout<<"tip: index="<<s.n<<endl;
+//            cout<<"tip: index="<<s.n<<endl;
             if(s.parent>0&&s.type==2)
             {
                 long pid=hashNeuron.value(s.parent);
@@ -159,8 +258,8 @@ QList <CellAPO> getBouton(string swcfile,int threshold)
                 intensity_change=thisnode_intensity-thisnodep_intensity;
                 if(intensity_change>threshold)
                 {
-                    cout<<"tip bouton: index="<<s_pp.n<<endl;
-                    boutonnodelist[pid]=1;
+                    cout<<"tip bouton: index="<<s.n<<endl;
+                    boutonnodelist[s.n]=1;
                 }
             }
         }
@@ -174,9 +273,9 @@ QList <CellAPO> getBouton(string swcfile,int threshold)
 //            cout<<"this is a bouton:"<<endl;
             NeuronSWC s = listNeuron[i];
             CellAPO apo;
-            apo.x=s.x;
-            apo.y=s.y;
-            apo.z=s.z;
+            apo.x=s.x+1;
+            apo.y=s.y+1;
+            apo.z=s.z+1;
             apo.volsize=100;
             apo.color.r=255;
             apo.color.g=0;
@@ -190,8 +289,6 @@ QList <CellAPO> getBouton(string swcfile,int threshold)
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath,int block_size)
 {
     cout<<"Welcome into bouton detection: crop part"<<endl;
-
-//    QList <CellAPO> apolist = readAPO_file(QString::fromStdString(apofilename));
     QFileInfo APOinfo(QString::fromStdString(swcfile));
     V3DLONG siz = apolist.size();
     V3DLONG *in_zz = 0;
@@ -204,7 +301,6 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
     {
         CellAPO s = apolist[i];
         int start_x,start_y,start_z,end_x,end_y,end_z;
-//        int block_size=16;
         start_x = s.x - block_size; if(start_x<0) start_x = 0;
         end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
         start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -217,9 +313,6 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
         in_sz[1] = end_y - start_y;
         in_sz[2] = end_z - start_z;
         in_sz[3]=1;
-//        V3DLONG *sz;
-//        sz=in_sz;
-
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
         pagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
@@ -227,28 +320,39 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 
         im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
-//        im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
-
         QString tmpstr = "";
         tmpstr.append("_x").append(QString("%1").arg(s.x));
         tmpstr.append("_y").append(QString("%1").arg(s.y));
         tmpstr.append("_z").append(QString("%1").arg(s.z));
         QString default_name = APOinfo.baseName()+"_Bouton"+tmpstr+".tif";
-        QStringList namelist=APOinfo.baseName().split("_");
+        QString default_name_apo=APOinfo.baseName()+"_Bouton"+tmpstr+".apo";
+//        QStringList namelist=APOinfo.baseName().split("_");
         QString save_path = QString::fromStdString(outpath);
-        if(namelist.size()>1)
-        {
-            QString brainid=namelist[0];
-            save_path = QString::fromStdString(outpath)+"/"+brainid;
-        }
+//        if(namelist.size()>1)
+//        {
+//            QString brainid=namelist[0];
+//            save_path = QString::fromStdString(outpath)+"/"+brainid;
+//        }
         QDir path(save_path);
         if(!path.exists())
         {
             path.mkpath(save_path);
         }
         QString save_path_img =save_path+"/"+default_name;
+        QString save_path_apo=save_path+"/"+default_name_apo;
         cout<<"save path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
+        QList <CellAPO> apoboutonlist;apoboutonlist.clear();
+        CellAPO tmp;
+        tmp.x=block_size;
+        tmp.y=block_size;
+        tmp.z=block_size;
+        tmp.volsize=100;
+        tmp.color.r=0;
+        tmp.color.g=0;
+        tmp.color.b=255;
+        apoboutonlist.push_back(tmp);
+        writeAPO_file(save_path_apo,apoboutonlist);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
 
@@ -258,9 +362,6 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
 {
     cout<<"Welcome into bouton detection: intensity part"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
-//    QHash<int,int>& hN = nt.hashNeuron;
-//    SwcTree t;
-//    t.initialize(nt);
     //load terafly img
     V3DLONG siz = nt.listNeuron.size();
     for (V3DLONG i=0;i<siz;i++)
@@ -282,7 +383,7 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
         {
             //get a block
             int start_x,start_y,start_z,end_x,end_y,end_z;
-            int block_size=512;
+            int block_size=32;
             start_x = s.x - block_size; if(start_x<0) start_x = 0;
             end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
             start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -301,58 +402,40 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
             unsigned char * inimg1d = 0;
             inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
 //            //version one
-//            NeuronSWC tmp;
-//            tmp.x = listNeuron.at(i).x;
-//            tmp.y = listNeuron.at(i).y;
-//            tmp.z = listNeuron.at(i).z;
-//            tmp.n = listNeuron.at(i).n;
-//            tmp.parent = listNeuron.at(i).parent;
-//            tmp.type = listNeuron.at(i).type;
-//            tmp.radius =inimg1d[tmp.z * sz01 + tmp.y * sz0 + tmp.x];
-//            cout<<"radius:"<<tmp.radius<<endl;
-//            listNeuron.replace(i,tmp);
+            int thisx,thisy,thisz;
+            thisx=s.x-start_x;
+            thisy=s.y-start_y;
+            thisz=s.z-start_z;
+
+            listNeuron[i].radius=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+            cout<<"radius:"<<listNeuron[i].radius<<endl;
             //version two
             //for all the node in this block, update its radius with its img intensity
-            for(V3DLONG i2=0;i2<siz;i2++)
-            {
-                NeuronSWC s_block = listNeuron[i2];
-                //skip the updated nodes
-                if(s_block.type != 2 || s_block.radius !=1)
-                    continue;
-                //start from here
-                int thisx,thisy,thisz;
-                thisx=s_block.x;
-                thisy=s_block.y;
-                thisz=s_block.z;
-                if(thisx>start_x && thisx<end_x
-                        && thisy>start_y && thisy<end_y
-                        && thisz>start_z && thisz<end_z)
-                  {
-                    thisx-=start_x;
-                    thisy-=start_y;
-                    thisz-=start_z;
-                    listNeuron[i2].radius=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-//                    cout<<"radius:"<<listNeuron[i2].radius<<endl;
-                  }
-            }
+//            for(V3DLONG i2=0;i2<siz;i2++)
+//            {
+//                NeuronSWC s_block = listNeuron[i2];
+//                //skip the updated nodes
+//                if(s_block.type != 2 || s_block.radius !=1)
+//                    continue;
+//                //start from here
+//                int thisx,thisy,thisz;
+//                thisx=s_block.x;
+//                thisy=s_block.y;
+//                thisz=s_block.z;
+//                if(thisx>start_x && thisx<end_x
+//                        && thisy>start_y && thisy<end_y
+//                        && thisz>start_z && thisz<end_z)
+//                  {
+//                    thisx-=start_x;
+//                    thisy-=start_y;
+//                    thisz-=start_z;
+//                    listNeuron[i2].radius=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
+////                    cout<<"radius:"<<listNeuron[i2].radius<<endl;
+//                  }
+//            }
             if(inimg1d) {delete []inimg1d; inimg1d=0;}
         }
     }
-
-    //next step: save to swc file
-//    for (V3DLONG i=0;i<siz;i++)
-//    {
-//        NeuronSWC tmp;
-//        tmp.x = listNeuron.at(i).x;
-//        tmp.y = listNeuron.at(i).y;
-//        tmp.z = listNeuron.at(i).z;
-//        tmp.n = listNeuron.at(i).n;
-//        tmp.parent = listNeuron.at(i).parent;
-//        tmp.type = listNeuron.at(i).type;
-//        tmp.radius = listNeuron.at(i).radius;
-
-//        listNeuron.replace(i,tmp);
-//    }
     //release pointer
     if(in_zz) {delete []in_zz; in_zz=0;}
 
@@ -360,5 +443,6 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
 
 void printHelp()
 {
-    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc> -o <output_folder>";
+    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc>";
+    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_filter -i <input_image_terafly> <input_swc> -o <out_path> -p <threshold> <crop_size>";
 }

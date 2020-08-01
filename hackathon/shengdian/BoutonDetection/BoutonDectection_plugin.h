@@ -29,6 +29,7 @@ public:
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, string swcfile,QList <CellAPO> apolist,string outpath,int block_size);
 QList <CellAPO> getBouton(string swcfile,int threshold);
+void getBoutonInImg(V3DPluginCallback2 &callback, string imgPath, string swcfile);
 void printHelp();
 // root node with parent 0
 #endif
