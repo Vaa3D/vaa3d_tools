@@ -1,3 +1,16 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2020 Hsienchi Kuo (Allen Institute)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  [FragTraceControlPanel] is the user interface of Neuron Assembler. 
+*  It collects user's parameters and initiates [FragTraceManager]'s segment generating process. 
+*  It also receives user's editing commands through buttons and communicates between [terafly::CViewer], [terafly::CViewer]'s view3DWidget, and [FragmentEditor].
+*
+********************************************************************************/
+
 #ifndef _FRAGTRACECONTROLPANEL_H_
 #define _FRAGTRACECONTROLPANEL_H_
 

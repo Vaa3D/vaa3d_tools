@@ -32,6 +32,8 @@ NeuronTree FragmentPostProcessor::treeScaleBack(const NeuronTree& inputTree, con
 	return shiftScaleBackTree;
 }
 
+
+/* =========================== Extended Axon Tracing Methods =========================== */
 set<vector<float>> FragmentPostProcessor::getProbesFromLabeledExistingSegs(const NeuronTree& inputTree) const
 {
 	set<vector<float>> outputProbeSet;
@@ -170,6 +172,8 @@ void FragmentPostProcessor::rc_getSegIDsFromClusterChain(boost::container::flat_
 			this->rc_getSegIDsFromClusterChain(segIDs, childCluster.second);
 	}
 }
+/* ===================== END of [Extended Axon Tracing Methods] ======================== */
+
 
 NeuronTree FragmentPostProcessor::integrateNewTree(const NeuronTree& existingTree, const NeuronTree& preFinalizedTree, const int minNodeNum) const
 {

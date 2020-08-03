@@ -136,3 +136,57 @@ void FragTraceImgProcessor::histThreImg3D(const string inputRegImgName, const st
 	// --------------------- //
 }
 /* ========================================================================= */
+
+
+/* =========================== Image Segmentation =========================== */
+NeuronTree FragTraceImgProcessor::mask2swc(const string inputImgName, map<string, registeredImg>& imgDatabase, vector<connectedComponent>& signalBlobs)
+{
+	int sliceDims[3];
+	sliceDims[0] = imgDatabase.at(inputImgName).dims[0];
+	sliceDims[1] = imgDatabase.at(inputImgName).dims[1];
+	sliceDims[2] = 1;
+
+	vector<unsigned char**> slice2DVector;
+	unsigned char* mipPtr = new unsigned char[sliceDims[0] * sliceDims[1]];
+	for (int i = 0; i < sliceDims[0] * sliceDims[1]; ++i) mipPtr[i] = 0;
+	for (map<string, myImg1DPtr>::iterator sliceIt = imgDatabase.at(inputImgName).slicePtrs.begin();
+		sliceIt != imgDatabase.at(inputImgName).slicePtrs.end(); ++sliceIt)
+	{
+		ImgProcessor::imgMax(sliceIt->second.get(), mipPtr, mipPtr, sliceDims);
+
+		unsigned char** slice2DPtr = new unsigned char*[sliceDims[1]];
+		for (int j = 0; j < sliceDims[1]; ++j)
+		{
+			slice2DPtr[j] = new unsigned char[sliceDims[0]];
+			for (int i = 0; i < sliceDims[0]; ++i) slice2DPtr[j][i] = sliceIt->second.get()[sliceDims[0] * j + i];
+		}
+		slice2DVector.push_back(slice2DPtr);
+	}
+
+	signalBlobs.clear();
+	signalBlobs = this->findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
+
+	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(signalBlobs, true);
+
+	QString blobTreeFullFilenameQ = this->blobTreeSavePathQ + "\\blob.swc";
+	//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
+
+	// ----------- Releasing memory ------------ //
+	delete[] mipPtr;
+	mipPtr = nullptr;
+	for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
+	{
+		for (int yi = 0; yi < sliceDims[1]; ++yi)
+		{
+			delete[] (*slice2DPtrIt)[yi];
+			(*slice2DPtrIt)[yi] = nullptr;
+		}
+		delete[] *slice2DPtrIt;
+		*slice2DPtrIt = nullptr;
+	}
+	slice2DVector.clear();
+	// ------- END of [Releasing memory] ------- //
+
+	return blob3Dtree;
+}
+/* ======================= END of [Image Segmentation] ====================== */

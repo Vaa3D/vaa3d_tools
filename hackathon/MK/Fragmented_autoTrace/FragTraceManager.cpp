@@ -17,6 +17,7 @@ using NSlibTester = NeuronStructNavigator::Tester;
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
 	this->finalSaveRootQ = "D:\\Work\\FragTrace";
+	this->myImgProcessor.blobTreeSavePathQ = this->finalSaveRootQ;
 
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
@@ -96,6 +97,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
 	this->finalSaveRootQ = "D:\\Work\\FragTrace";
+	this->myImgProcessor.blobTreeSavePathQ = this->finalSaveRootQ;
 
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
@@ -222,38 +224,33 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			this->myImgProcessor.gammaCorrect("ada_cutoff", "gammaCorrected", this->fragTraceImgManager.imgDatabase);
 			this->myImgProcessor.histThreImg3D("gammaCorrected", this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->stdFold); // still needs this with gamma?
-			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
+			profiledTree profiledBlobTree(this->myImgProcessor.mask2swc(this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->signalBlobs));
+			this->fragTraceTreeManager.treeDataBase.insert({ "blobTree", profiledBlobTree });
 		}
 		else
 		{
 			if (this->mode == dendriticTree) // MOST DENDRITE GOES HERE
 			{
-				//clock_t begin = clock();
-				if (!this->mask2swc("ada_cutoff", "blobTree")) return false;
-				//clock_t end = clock();
-				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
+				profiledTree profiledBlobTree(this->myImgProcessor.mask2swc("ada_cutoff", this->fragTraceImgManager.imgDatabase, this->signalBlobs));
+				this->fragTraceTreeManager.treeDataBase.insert({ "blobTree", profiledBlobTree });
 			}
 			else // MOST AXON GOES HERE
 			{
 				this->myImgProcessor.histThreImg3D("ada_cutoff", this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->stdFold);
-				if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
+				
+				//clock_t begin = clock();
+				profiledTree profiledBlobTree(this->myImgProcessor.mask2swc(this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->signalBlobs));
+				this->fragTraceTreeManager.treeDataBase.insert({ "blobTree", profiledBlobTree });
+				//clock_t end = clock();
+				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
 			}
 		}
 	}
 	else
 	{
-		if (this->gammaCorrection)
-		{
-			this->myImgProcessor.gammaCorrect(this->adaImgName, "gammaCorrected", this->fragTraceImgManager.imgDatabase);
-			this->myImgProcessor.histThreImg3D("gammaCorrected", this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->stdFold);
-			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
-		}
-		else
-		{
-			this->myImgProcessor.histThreImg3D(this->adaImgName, this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->stdFold);
-			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
-		}
+		cerr << "Cut off intensity cannot be 0! Do nothing and return." << endl;
+		return false;
 	}
 
 	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
@@ -488,82 +485,6 @@ NeuronTree FragTraceManager::axonGrow(const NeuronTree& inputTree, const NeuronT
 // *********************************************************************** //
 
 
-/*************************** Image Segmentation ***************************/
-bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
-{
-	int sliceDims[3];
-	sliceDims[0] = this->fragTraceImgManager.imgDatabase.at(inputImgName).dims[0];
-	sliceDims[1] = this->fragTraceImgManager.imgDatabase.at(inputImgName).dims[1];
-	sliceDims[2] = 1;
-
-	vector<unsigned char**> slice2DVector;
-	unsigned char* mipPtr = new unsigned char[sliceDims[0] * sliceDims[1]];
-	for (int i = 0; i < sliceDims[0] * sliceDims[1]; ++i) mipPtr[i] = 0;
-	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputImgName).slicePtrs.begin(); 
-		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputImgName).slicePtrs.end(); ++sliceIt)
-	{
-		ImgProcessor::imgMax(sliceIt->second.get(), mipPtr, mipPtr, sliceDims);
-
-		unsigned char** slice2DPtr = new unsigned char*[sliceDims[1]];
-		for (int j = 0; j < sliceDims[1]; ++j)
-		{
-			slice2DPtr[j] = new unsigned char[sliceDims[0]];
-			for (int i = 0; i < sliceDims[0]; ++i) slice2DPtr[j][i] = sliceIt->second.get()[sliceDims[0] * j + i];
-		}
-		slice2DVector.push_back(slice2DPtr);
-	}
-	
-	this->signalBlobs.clear();
-	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
-
-	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
-	
-	QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
-	//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
-	
-	profiledTree profiledSigTree(blob3Dtree);
-	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
-
-	// ----------- Releasing memory ------------ //
-	delete[] mipPtr;
-	mipPtr = nullptr;
-	for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
-	{
-		for (int yi = 0; yi < sliceDims[1]; ++yi)
-		{
-			delete[] (*slice2DPtrIt)[yi];
-			(*slice2DPtrIt)[yi] = nullptr;
-		}
-		delete[] *slice2DPtrIt;
-		*slice2DPtrIt = nullptr;
-	}
-	slice2DVector.clear();
-	// ------- END of [Releasing memory] ------- //
-}
-
-// ----------------- Object Classification ----------------- //
-void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)
-{
-	if (signalBlobs.empty())
-	{
-		cerr << "No signal blobs data exists. Do nothing and return." << endl;
-		return;
-	}
-
-	cout << " ==> removing small blob, size threshold = " << sizeThre << endl;
-
-	vector<ptrdiff_t> delLocs;
-	for (vector<connectedComponent>::iterator compIt = signalBlobs.begin(); compIt != signalBlobs.end(); ++compIt)
-		if (compIt->size <= sizeThre) delLocs.push_back(compIt - signalBlobs.begin());
-
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
-		signalBlobs.erase(signalBlobs.begin() + *delIt);
-}
-// ------------ END of [Object Classification] ------------- //
-/*********************** END of [Image Segmentation] **********************/
-
-
 /*************************** Final Traced Tree Generation ***************************/
 profiledTree FragTraceManager::straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre)
 {
@@ -624,7 +545,7 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			}
 
 			NeuronTree centroidTree;
-			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
+			boost::container::flat_set<deque<float>> sectionalCentroids = this->myImgProcessor.getSectionalCentroids(*it);
 			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 			{
 				NeuronSWC newNode;
@@ -809,7 +730,7 @@ map<string, profiledTree> FragTraceManager::generatePeriRawDenTree(const map<str
 			if (compIt->size < this->voxelCount) continue;
 
 			NeuronTree centroidTree;
-			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*compIt);
+			boost::container::flat_set<deque<float>> sectionalCentroids = this->myImgProcessor.getSectionalCentroids(*compIt);
 			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 			{
 				NeuronSWC newNode;

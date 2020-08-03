@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2020 Hsienchi Kuo (Allen Institute)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  [FragTraceManager] controls the flow of auto-traced segment generation. This is the controlling center of the entire Neuron Assembler app.
+*  
+*  The mission of [FragTraceManager] is as follow:
+*    1. Use [FragTraceImgProcessor] to process the input image.
+*    2. Generate signal blobs.
+*	 3. Extract segments/skeletons out of signal blobs.
+*	 4. Refine extracted trees with [FragTracePostProcessor].
+*	 5. Perform higher level tree forming process with [FragTracePostProcessor].
+*
+********************************************************************************/
+
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
@@ -99,7 +117,6 @@ public:
 
 // ======= Crucial Intermediate Result ======= //
 	vector<connectedComponent> signalBlobs;   // All segmented blobs are stored here.
-	vector<connectedComponent> signalBlobs2D; // not used
 // =========================================== //
 
 
@@ -115,7 +132,6 @@ signals:
 private:
 /* ======= FragTraceManager Fascilities ======= */
 	ImgManager fragTraceImgManager;
-	ImgAnalyzer fragTraceImgAnalyzer;
 	NeuronStructExplorer fragTraceTreeManager;
 	TreeGrower* fragTraceTreeGrowerPtr;
 	TreeTrimmer* fragTraceTreeTrimmerPtr;  
@@ -123,23 +139,14 @@ private:
 	FragTraceImgProcessor myImgProcessor;
 	FragmentPostProcessor myFragPostProcessor;
 /* ============================================ */
-
-
-/* =================== Image Segmentation =================== */	
-	// ------- Object Classification ------- //
-	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
-	// ------------------------------------- //
-
-	bool mask2swc(const string inputImgName, string outputTreeName);
-	
-	// -- Each signal blob is represented by its centroid
-	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
-/* ========================================================== */
 	
 
 /* =================== Traced Tree Generating and Polishing =================== */
-	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE);
+	// Generate auto-traced segments
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
+	
+	// Connect segments, refine and smoothe, then clean up junks
+	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE);
 	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
 
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
@@ -148,12 +155,14 @@ private:
 	map<string, profiledTree> generatePeriRawDenTree(const map<string, vector<connectedComponent>>& periSigBlobMap);
 	NeuronTree getSmoothedPeriDenTree();
 
+	// Using segment end cluster approach to connect obvious segments
 	profiledTree segConnect_withinCurrBlock(const profiledTree& inputProfiledTree, float distThreshold);
 
+	// Extended axon tracing methods.
 	set<int> seedCluster;
+	map<int, segEndClusterUnit*> segEndClusterChains;
 	inline set<vector<float>> getAxonMarkerProbes() const;
 	NeuronTree axonGrow(const NeuronTree& inputTree, const NeuronTree& scaledExistingTree);
-	map<int, segEndClusterUnit*> segEndClusterChains;
 /* ============================================================================ */
 
 	
@@ -172,10 +181,11 @@ public:
 
 private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
+
+	vector<V_NeuronSWC> totalV_NeuronSWCs; // Current V_NeuronSWC in display, acquired from My4DImage::tracedNeuron.
+
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;
-
-	vector<V_NeuronSWC> totalV_NeuronSWCs;
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
@@ -198,26 +208,6 @@ inline void FragTraceManager::saveIntermediateResult(const string imgName, const
 		const char* saveFullPathC = saveFullPath.c_str();
 		ImgManager::saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
 	}
-}
-
-inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> signalBlobs)
-{
-	NeuronTree centerTree;
-	for (vector<connectedComponent>::iterator it = signalBlobs.begin(); it != signalBlobs.end(); ++it)
-	{
-		ChebyshevCenter_connComp(*it);
-		NeuronSWC centerNode;
-		centerNode.n = it->islandNum;
-		centerNode.x = it->ChebyshevCenter[0];
-		centerNode.y = it->ChebyshevCenter[1];
-		centerNode.z = it->ChebyshevCenter[2];
-		centerNode.type = 2;
-		centerNode.parent = -1;
-		centerTree.listNeuron.push_back(centerNode);
-	}
-
-	profiledTree profiledCenterTree(centerTree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "centerTree", profiledCenterTree });
 }
 
 inline set<vector<float>> FragTraceManager::getAxonMarkerProbes() const
