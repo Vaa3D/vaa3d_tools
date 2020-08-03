@@ -121,7 +121,11 @@ public:
 
 
 // **************************************************************************************************** //
-	bool imgProcPipe_wholeBlock(); // TRACING PROCESS STARTS HERE; CALLED FROM [FragTraceControlPanel].
+	// TRACING PROCESS STARTS HERE; called from [FragTraceControlPanel];
+	bool imgProcPipe_wholeBlock();						 // PRIMARY SEQUENCE CONTROL
+	
+	// Connect segments, refine and smoothe, then clean up junks
+	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE); // SECONDARY SEQUENCE CONTROL 
 // **************************************************************************************************** //
 
 
@@ -145,9 +149,7 @@ private:
 	// Generate auto-traced segments
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
 	
-	// Connect segments, refine and smoothe, then clean up junks
-	bool treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE);
-	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
+	
 
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold) const;

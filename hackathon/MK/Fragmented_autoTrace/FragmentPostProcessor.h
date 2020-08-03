@@ -39,6 +39,8 @@ public:
 	// Scale tree to local volume coordinate scale.
 	NeuronTree treeScaleBack(const NeuronTree& inputTree, const float factor, const float imgOrigin[]) const;
 
+	profiledTree straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre = 0.5);
+
 	/* ----------------- Extended Axon Tracing Methods ----------------- */
 	// Extended axon tracing employs "chained" segment end cluster approach.
 	// Each [integratedDataTypes::segEndClusterUnit] leads to its next level of [integratedDataTypes::segEndClusterUnit]s connected by segments.

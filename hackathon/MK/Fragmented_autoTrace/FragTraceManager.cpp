@@ -196,9 +196,13 @@ FragTraceManager::~FragTraceManager()
 }
 
 
-// ***************** TRACING PROCESS CONTROLING FUNCTION ***************** //
+// ****************** PRIMARY SEQUENCE CONTROL - IMAGE SEGMENTATION, TRACING INITIALIZATION, OUTPUT ******************* //
 bool FragTraceManager::imgProcPipe_wholeBlock()
 {
+	// This function controls the flow of the entire tracing process, simply a controlling center.
+	// Any operation sequence, to be added or removed, shall be placed here.
+
+	// ----------------- Image Preparation ----------------- //
 	cout << "number of slices: " << this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size() << endl;
 	V3DLONG dims[4];
 	dims[0] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[0];
@@ -252,10 +256,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		cerr << "Cut off intensity cannot be 0! Do nothing and return." << endl;
 		return false;
 	}
-
-	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
+	// ------------ END of [Image Preparation] ------------- //
 
 	/* ======= Tree is formed from signal blobs here =======*/
+	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
 	this->treeAssembly(PRE_FINALOUTPUT_TREE);	
 	/* =====================================================*/
 
@@ -265,6 +269,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 	if (this->partialVolumeTracing)
 		PRE_FINALOUTPUT_TREE = NeuronStructUtil::swcShift(PRE_FINALOUTPUT_TREE, this->volumeAdjustedBounds[0] - 1, this->volumeAdjustedBounds[2] - 1, this->volumeAdjustedBounds[4] - 1);
 
+	// ----------------- Tree Post-processing and Finalizing ----------------- //
 	this->getExistingFinalTree(this->existingTree);
 	if (this->continuousAxon)
 	{
@@ -318,6 +323,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		this->totalV_NeuronSWCs.clear();
 		FINALOUTPUT_TREE = this->myFragPostProcessor.integrateNewTree(this->existingTree, PRE_FINALOUTPUT_TREE, this->minNodeNum);
 	}
+	// ------------ END of [Tree Post-processing and Finalizing] ------------- //
 
 	QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
 	//writeSWC_file(localSWCFullName, FINALOUTPUT_TREE);
@@ -332,7 +338,10 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		this->segEndClusterChains.clear();
 	}
 }
+// ************** END of [PRIMARY SEQUENCE CONTROL - IMAGE SEGMENTATION, TRACING INITIALIZATION, OUTPUT] *************** //
 
+
+// ******************** SECONDARY SEQUENCE CONTROL - REFINING AND CONNECTING SEQUENCE ******************** //
 bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 {
 	if (this->mode == axon)
@@ -401,7 +410,7 @@ bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 		profiledTree spikeRemovedProfiledTree = TreeTrimmer::itered_spikeRemoval(dnSampledProfiledTree, 2);
 
 		// 6. Straighten up sharp angles caused by spikes.
-		profiledTree profiledSpikeRootStraightTree = this->straightenSpikeRoots(spikeRemovedProfiledTree);
+		profiledTree profiledSpikeRootStraightTree = this->myFragPostProcessor.straightenSpikeRoots(spikeRemovedProfiledTree);
 
 		// 7. Break branches.
 		NeuronTree branchBrokenTree = TreeTrimmer::branchBreak(profiledSpikeRootStraightTree);
@@ -452,7 +461,10 @@ bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 		// --------------------- //
 	}
 }
+// **************** END of [SECONDARY CONTROL - REFINING AND CONNECTING SEQUENCE] ***************** //
 
+
+// ***************** Operations Called by Primary or Secondary Control ***************** //
 NeuronTree FragTraceManager::axonGrow(const NeuronTree& inputTree, const NeuronTree& scaledExistingTree)
 {
 	set<vector<float>> probes = this->myFragPostProcessor.getProbesFromLabeledExistingSegs(scaledExistingTree);
@@ -481,38 +493,6 @@ NeuronTree FragTraceManager::axonGrow(const NeuronTree& inputTree, const NeuronT
 	//	FragTraceTester::getInstance()->clusterSegEndMarkersGen_axonChain(this->segEndClusterChains, inputProfiledTree);
 	
 	return outputTree;
-}
-// *********************************************************************** //
-
-
-/*************************** Final Traced Tree Generation ***************************/
-profiledTree FragTraceManager::straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre)
-{
-	profiledTree outputProfiledTree = inputProfiledTree;
-	//cout << " -- spike root number:" << outputProfiledTree.spikeRootIDs.size() << endl;
-	for (boost::container::flat_set<int>::iterator it = outputProfiledTree.spikeRootIDs.begin(); it != outputProfiledTree.spikeRootIDs.end(); ++it)
-	{
-		if (outputProfiledTree.node2LocMap.find(*it) != outputProfiledTree.node2LocMap.end() && outputProfiledTree.node2childLocMap.find(*it) != outputProfiledTree.node2childLocMap.end())
-		{
-			if (outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it)).parent != -1 && outputProfiledTree.node2childLocMap.at(*it).size() == 1)
-			{
-				NeuronSWC angularNode = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it));
-				NeuronSWC endNode1 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(angularNode.parent));
-				NeuronSWC endNode2 = outputProfiledTree.tree.listNeuron.at(*outputProfiledTree.node2childLocMap.at(*it).begin());
-
-				float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
-				if (angle <= 0.6)
-				{
-					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].x = (endNode1.x + endNode2.x) / 2;
-					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].y = (endNode1.y + endNode2.y) / 2;
-					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].z = (endNode1.z + endNode2.z) / 2;
-				}
-			}
-		}
-	}
-
-	profiledTreeReInit(outputProfiledTree);
-	return outputProfiledTree;
 }
 
 bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProfiledTree)
@@ -952,12 +932,12 @@ NeuronTree FragTraceManager::getPeripheralSigTree(const profiledTree& inputProfi
 
 	return outputTree;
 }
-/********************** END of [Final Traced Tree Generation] ***********************/
+// ************** END of [SECONDARY SEQUENCE CONTROL - REFINING AND CONNECTING SEQUENCE] ************** //
 
 
-/*************************** Traced Tree Post Processing ****************************/
+// *************************** Traced Tree Editing **************************** //
 void FragTraceManager::addV_NeuronSWCs(const profiledTree& inputProfiledTree)
 {
 	for (auto& seg : inputProfiledTree.segs) this->totalV_NeuronSWCs.push_back(seg.second.convert2V_NeuronSWC());
 }
-/*********************** END of [Traced Tree Post Processing] ***********************/
+// *********************** END of [Traced Tree Editing] *********************** //
