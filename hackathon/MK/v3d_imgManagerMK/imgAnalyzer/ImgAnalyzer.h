@@ -32,7 +32,6 @@ private:
 	/****************************************************************/
 
 
-
 	/***************** Image Analysis *****************/
 public:
 	// Identify the centroids of 2D connected components from every sectional plane in x, y, and z direction.
@@ -43,7 +42,6 @@ private:
 	/**************************************************/
 
 
-
 public:
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
@@ -51,8 +49,6 @@ public:
 
 	// Locate z location for auto-reaced SWC generated based on MIP image.
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
-	/******************************************************/
-
 
 	
 	/***************** Process Monitoring *****************/
