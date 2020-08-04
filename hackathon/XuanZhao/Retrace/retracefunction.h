@@ -195,6 +195,8 @@ void normalImage(unsigned char* pdata, V3DLONG* sz);
 int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k);
 int *getThresholdByKmeans(Image4DSimple* image, int k);
 
+int getPercentTh(unsigned char* pdata, V3DLONG* sz, double ratio);
+
 void getImageBlockByTips(LandmarkList tips, vector<imageBlock>& blockList, int block_size, int direction, BoundingBox box);
 
 NeuronTree ultratracerInBox(QString brainPath, imageBlock block, NeuronTree ori, BoundingBox box, V3DPluginCallback2& callback);

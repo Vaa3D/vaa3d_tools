@@ -52,6 +52,9 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     qDebug()<<input_swc;
     qDebug("number:%s",qPrintable(mipoutput));
     NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+    for(int i=0; i<nt_crop_sorted.listNeuron.size(); i++){
+        nt_crop_sorted.listNeuron[i].r = 1;
+    }
 //    NeuronTree nt_crop_sorted=revise_radius(nt_crop_sorted1,1);
 
     qDebug()<<"start to load img";
@@ -129,7 +132,7 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
        for(V3DLONG j=0; j<mysz[1]; j++){
            int index = j*mysz[0]*2 + i;
            int mipIndex = j*mysz[0] + i - mysz[0];
-           data1d_2D[index] = image_mip[mipIndex];
+           data1d_2D[index] = (label_mip[mipIndex] == 255) ? 0 : image_mip[mipIndex];
        }
    }
 //channel 2
@@ -159,7 +162,7 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
        for(V3DLONG j=0; j<mysz[1]; j++){
            int index = j*mysz[0]*2 + i + stacksz*4;
            int mipIndex = j*mysz[0] + i - mysz[0];
-           data1d_2D[index] = image_mip[mipIndex];
+           data1d_2D[index] = (label_mip[mipIndex] == 255) ? 0 : image_mip[mipIndex];
        }
    }
 
