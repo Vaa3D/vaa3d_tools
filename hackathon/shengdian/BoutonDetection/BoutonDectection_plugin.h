@@ -29,10 +29,10 @@ public:
 };
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size);
-QList <CellAPO> getBouton(NeuronTree nt,int threshold);
+QList <CellAPO> getBouton(NeuronTree nt,int threshold,int allnode=0);
 void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea=0);
 void printHelp();
 NeuronSWC nodeIntensity(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size);
-// root node with parent 0
+QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size=256);
 #endif
 
