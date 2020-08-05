@@ -636,29 +636,49 @@ NeuronTree pruneNeuronTree(Image4DSimple* image,NeuronTree &nt){
         qDebug()<<"split size: "<<inSegments.size();
         for(int j=0; j<inSegments.size(); j++){
 //            getHierarchySegmentFeature(inSegments[j],pdata,sz);
-//                vector<MyMarker*> markers = vector<MyMarker*>();
-//                inSegments[j]->get_markers(markers);
+            vector<MyMarker*> markers = vector<MyMarker*>();
+            inSegments[j]->get_markers(markers);
 //                for(int k=0; k<markers.size(); k++){
 //                    markers[k]->type = type%7;
 //                }
 //                type++;
 //                qDebug()<<"type: "<<type;
-            vector<MyMarker*> markers = vector<MyMarker*>();
-            inSegments[j]->get_markers(markers);
+//            vector<MyMarker*> markers = vector<MyMarker*>();
+//            inSegments[j]->get_markers(markers);
 //            for(int k=0; k<markers.size(); k++){
 //                markers[k]->type = type%7;
 //            }
 //            type++;
-            qDebug()<<"type: "<<type;
-            double d = getHierarchySegmentDirection(data3d,sz,inSegments[j]);
-            qDebug()<<"d: "<<d;
-            if(d<0.9){
-                for(int k=0; k<markers.size(); k++){
-                    markers[k]->type = 3;
-                }
-            }else{
-                for(int k=0; k<markers.size(); k++){
-                    markers[k]->type = 2;
+//            qDebug()<<"type: "<<type;
+//            double d = getHierarchySegmentDirection(data3d,sz,inSegments[j]);
+//            qDebug()<<"d: "<<d;
+//            if(d<0.9){
+//                for(int k=0; k<markers.size(); k++){
+//                    markers[k]->type = 3;
+//                }
+//            }else{
+//                for(int k=0; k<markers.size(); k++){
+//                    markers[k]->type = 2;
+//                }
+//            }
+            getHierarchySegmentAllPointDirection(data3d,sz,inSegments[j]);
+            int count = 0;
+            int startIndex = 0;
+            int endIndex = 0;
+            for(int k=0; k<markers.size(); k++){
+                if(markers[k]->type != 7){
+                    count++;
+                    endIndex = k;
+                }else {
+                    if(count<5){
+                        startIndex = k+1;
+                        count = 0;
+                    }else {
+                        for(int kk = startIndex; kk<=endIndex; kk++){
+                            markers[kk]->type = 4;
+                        }
+                        count = 0;
+                    }
                 }
             }
         }
@@ -666,9 +686,9 @@ NeuronTree pruneNeuronTree(Image4DSimple* image,NeuronTree &nt){
 
     qDebug()<<"-----end----";
 
-    qDebug()<<"outswc size: "<<inswc.size();
+    qDebug()<<"inswc size: "<<inswc.size();
 
-    vector<MyMarker*> outswc = deleteSegmentByType(inswc,3);
+    vector<MyMarker*> outswc = deleteSegmentByType(inswc,4);
 
     qDebug()<<"outswc size: "<<outswc.size();
 
@@ -801,7 +821,7 @@ double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, Hier
     compute_rgn_stat_new(pt,data3d,channo,sz[0],sz[1],sz[2],sz[3],datatype,vec1,vec2,vec3,sigma1,sigma2,sigma3);
     QString path = QString("D:\\reTraceTest\\") + QString::number(pt.x) + "_" + QString::number(pt.y) + "_" + QString::number(pt.z) + ".marker";
     qDebug()<<path.toStdString().c_str();
-    showDirection(vec1,vec2,vec3,sigma1,sigma2,sigma3,pt,path);
+//    showDirection(vec1,vec2,vec3,sigma1,sigma2,sigma3,pt,path);
 
     XYZ pcaDirection =  XYZ(vec1[0],vec1[1],vec1[2]);
 
@@ -809,6 +829,18 @@ double getHierarchySegmentDirection(unsigned char ***data3d, long long *sz, Hier
     if(dotDirection<0){
         segDirection = XYZ(0,0,0)-segDirection;
         dotDirection = dot(segDirection,pcaDirection);
+    }
+    if(vec1){
+        delete[] vec1;
+        vec1 = 0;
+    }
+    if(vec2){
+        delete[] vec2;
+        vec2 = 0;
+    }
+    if(vec3){
+        delete[] vec3;
+        vec3 = 0;
     }
     return dotDirection/(norm(segDirection)*norm(pcaDirection));
 }
@@ -859,6 +891,79 @@ vector<MyMarker*> deleteSegmentByType(vector<MyMarker*>& inswc, int type){
     }
 
     return outswc;
+
+}
+
+XYZ getPointDirectionInSegment(vector<MyMarker *> &inswc, int i, int HW){
+    XYZ p(0,0,0);
+    int N = inswc.size();
+    int kk;
+    for(int k=1; k<=HW; k++){
+        kk = i+k;
+        if (kk<0) kk=0;
+        if (kk>N-1) kk=N-1;
+        p.x += inswc[kk]->x;
+        p.y += inswc[kk]->y;
+        p.z += inswc[kk]->z;
+
+        kk = i-k;
+        if (kk<0) kk=0;
+        if (kk>N-1) kk=N-1;
+        p.x -= inswc[kk]->x;
+        p.y -= inswc[kk]->y;
+        p.z -= inswc[kk]->z;
+    }
+    return p;
+}
+
+void getHierarchySegmentAllPointDirection(unsigned char*** data3d, V3DLONG* sz, HierarchySegment* segment){
+    vector<MyMarker*> segMarkers = vector<MyMarker*>();
+    segment->get_markers(segMarkers);
+
+    double pcaR = 5.0;
+    int HW = 5;
+    LocationSimple pt;
+    pt.radius = pcaR;
+    double* vec1 = new double[3];
+    double* vec2 = new double[3];
+    double* vec3 = new double[3];
+    int datatype = 1;
+    int channo = 1;
+    double sigma1,sigma2,sigma3;
+    for(int i=0; i<segMarkers.size(); i++){
+        XYZ pointDirection = getPointDirectionInSegment(segMarkers,i,HW);
+        pt.x = segMarkers[i]->x;
+        pt.y = segMarkers[i]->y;
+        pt.z = segMarkers[i]->z;
+        compute_rgn_stat_new(pt,data3d,channo,sz[0],sz[1],sz[2],sz[3],datatype,vec1,vec2,vec3,sigma1,sigma2,sigma3);
+        XYZ pcaDirection =  XYZ(vec1[0],vec1[1],vec1[2]);
+        double dotDirection = dot(pointDirection,pcaDirection);
+        if(dotDirection<0){
+            pointDirection = XYZ(0,0,0)-pointDirection;
+            dotDirection = dot(pointDirection,pcaDirection);
+        }
+        double d = dotDirection/(norm(pointDirection)*norm(pcaDirection));
+        if(d>0.9){
+            segMarkers[i]->type = 7;
+        }else if (d>0.5) {
+            segMarkers[i]->type = 3;
+        }else {
+            segMarkers[i]->type = 2;
+        }
+        segMarkers[i]->radius = sigma1/((sigma2+sigma3)/2);
+    }
+    if(vec1){
+        delete[] vec1;
+        vec1 = 0;
+    }
+    if(vec2){
+        delete[] vec2;
+        vec2 = 0;
+    }
+    if(vec3){
+        delete[] vec3;
+        vec3 = 0;
+    }
 
 }
 

@@ -59,6 +59,10 @@ double getHierarchySegmentDirection(unsigned char*** data3d, V3DLONG* sz, Hierar
 
 vector<MyMarker*> deleteSegmentByType(vector<MyMarker*>& inswc, int type);
 
+XYZ getPointDirectionInSegment(vector<MyMarker*>& inswc, int i, int HW);
+
+void getHierarchySegmentAllPointDirection(unsigned char*** data3d, V3DLONG* sz, HierarchySegment* segment);
+
 
 //void judgeBranch(QString imgPath, V3DPluginCallback2 &callback);
 
