@@ -1,26 +1,24 @@
+#include <vector>
 #include <v3d_interface.h>
+#include <QDebug>
+#include <math.h>
 #include <iostream>
 #include <fstream>
-#include <QDebug>
+#include <iomanip>
 using namespace std;
 
-bool calculate_2image_overlap_shift(V3DPluginCallback2 &callback, QWidget *parent);
-bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, unsigned short * &p_cut_data1, unsigned short * &p_cut_data2, QString orientation, int & XY_overlap, int & XY_shift);
-void cut_planes_edge(unsigned short *pdata, unsigned short *&p_cut_data);
+bool Correct_Distorted_Images(V3DPluginCallback2 &callback, QWidget *parent);
+bool calculate_overlap_images(V3DPluginCallback2 &callback, QString imagePath1, QString imagePath2, QString orientation, vector<int> &XY_overlap);
 bool setOrientation(QString & orientation1, QString & orientation2, string s1, string s2);
 
-bool calculate_2image_overlap_shift(V3DPluginCallback2 &callback, QWidget *parent)
+bool Correct_Distorted_Images(V3DPluginCallback2 &callback, QWidget *parent)
 {
     QString imagePath1 = QFileDialog::getOpenFileName(parent, "Select Image1", "D:\\");
     qDebug()<<"ImagePath1: "<<imagePath1.toStdString().c_str();
     QString imagePath2 = QFileDialog::getOpenFileName(parent, "Select Image2", imagePath1);
     qDebug()<<"ImagePath2: "<<imagePath2.toStdString().c_str();
-    QString saveImageDir = QFileDialog::getExistingDirectory(parent, "Save Images", imagePath1);
+    QString saveImageDir = QFileDialog::getExistingDirectory(parent, "Save Images", "D:\\");
     qDebug()<<"saveImageDir: "<<saveImageDir.toStdString().c_str();
-    int XY_overlap, XY_shift;
-
-    unsigned short * p_cut_data1 = 0;
-    unsigned short * p_cut_data2 = 0;
 
     QFileInfo imageName1(imagePath1);
     QFileInfo imageName2(imagePath2);
@@ -39,6 +37,41 @@ bool calculate_2image_overlap_shift(V3DPluginCallback2 &callback, QWidget *paren
     cout<<"Orientation1 = "<<orientation1.toStdString().c_str()<<endl;
     cout<<"Orientation2 = "<<orientation2.toStdString().c_str()<<endl;
 
+    const int segNum = 50;
+    vector<int> XY_overlap(segNum, 0);
+    if(!calculate_overlap_images(callback, imagePath1, imagePath2, orientation1, XY_overlap))
+    {
+        qDebug()<<"Calculating images overlap is wrong !";
+    }
+
+    vector<int> extraImg(segNum-1, 0);
+    vector<double> extraPhy(segNum-1, 0);
+    vector<double> pressScale(segNum-1, 0);
+    for(int i = 0; i < segNum-1; i ++)
+    {
+        extraImg[i] = XY_overlap[i+1] - XY_overlap[0];
+        extraPhy[i] = (1920*extraImg[i]+0.0)/(3840-extraImg[i]-XY_overlap[0]);
+        pressScale[i] = (1920+extraPhy[i]+0.0)/1920;
+    }
+
+    string sname = "T"+s1+"-T"+s2;
+    QString qname1 = QString :: fromStdString(sname);
+    QString paraFileName = saveImageDir + "\\2image_overlap_shift_" + qname1 + ".txt";
+    qDebug()<<"paraFileName: "<<paraFileName.toStdString().c_str();
+
+    ofstream outfile;
+    outfile.open(paraFileName.toStdString().c_str(), ios::trunc);
+    outfile<<"XY_overlap[0] = "<< XY_overlap[0]<<"\n";
+    for(int i = 0; i < segNum-1; i ++)
+    {
+        outfile<<"XY_overlap["<<i+1<<"] = "<<XY_overlap[i+1]<<"  \t"<<"extraImg["<<i<<"] = "<<extraImg[i]<<"  \t"
+              <<"extraPhy["<<i<<"] = "<<setiosflags(ios::left)<<setw(10)<<setprecision(6)<<extraPhy[i]<<"  \t"<<"compressionRatio["<<i<<"] = "<<setiosflags(ios::left)<<setw(10)<<setprecision(6)<<pressScale[i]<<"\n";
+    }
+    outfile.close();
+}
+
+bool calculate_overlap_images(V3DPluginCallback2 &callback, QString imagePath1, QString imagePath2, QString orientation, vector<int> &XY_overlap)
+{
     V3DLONG in_sz1[4] = {0};
     int datatype1 = 0;
     unsigned char *pdata1 = 0;
@@ -65,63 +98,34 @@ bool calculate_2image_overlap_shift(V3DPluginCallback2 &callback, QWidget *paren
     data1d_copy2 = new unsigned short[in_sz2[0]*in_sz2[1]*in_sz2[2]*in_sz2[3]*datatype2/2];
     memcpy(data1d_copy2, pdata2, in_sz2[0]*in_sz2[1]*in_sz2[2]*in_sz2[3]*datatype2);
 
-    if(!calculate_2Img_overlap_shift(data1d_copy1, data1d_copy2, p_cut_data1, p_cut_data2, orientation1, XY_overlap, XY_shift))
+    for(int i = 0; i < XY_overlap.size(); i ++)
     {
-        qDebug()<<"Error calculate shift and overlap!";
-    }
+        int shift = 13;
+        const int overlap_range = 50;
+        double sum[overlap_range] = {0};
+        int difference[overlap_range] = {0};
+        int count[overlap_range] = {0};
+        double minError = INT_MAX;
 
-    qDebug()<<"XY_overlap = "<<XY_overlap;
-    qDebug()<<"shift = "<<XY_shift;
-
-    string sname = "T"+s1+"-T"+s2;
-    QString qname1 = QString :: fromStdString(sname);
-    QString paraFileName = saveImageDir + "\\2image_overlap_shift_" + qname1 + ".txt";
-    qDebug()<<"paraFileName: "<<paraFileName.toStdString().c_str();
-
-    ofstream outfile;
-    outfile.open(paraFileName.toStdString().c_str(), ios::trunc);
-
-    outfile<<"XY_overlap = "<<XY_overlap<<"\n"<<"shift = "<<XY_shift<<"  \t"<<"\n";
-    outfile.close();
-
-    /*
-    QString cutImagesFile1 = saveImageDir + "\\" + imageName1.baseName() + "_cut.v3draw";
-    QString cutImagesFile2 = saveImageDir + "\\" + imageName2.baseName() + "_cut.v3draw";
-    V3DLONG in_sz_times[4] = {(in_sz1[0]-40), (in_sz1[1]-40), in_sz1[2], in_sz1[3]};
-    simple_saveimage_wrapper(callback, cutImagesFile1.toStdString().c_str(), (unsigned char *)p_cut_data1, in_sz_times, datatype1);
-    simple_saveimage_wrapper(callback, cutImagesFile2.toStdString().c_str(), (unsigned char *)p_cut_data2, in_sz_times, datatype1);
-    */
-}
-
-bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, unsigned short * &p_cut_data1, unsigned short * &p_cut_data2, QString orientation, int & XY_overlap, int & XY_shift)
-{
-    cut_planes_edge(pdata1, p_cut_data1);
-    cut_planes_edge(pdata2, p_cut_data2);
-    cout<<"calculate 2Img overlap shift!"<<endl;
-    const int overlap_range = 30, shift_range = 20;
-    double sum[overlap_range * shift_range] = {0};
-    int difference[overlap_range * shift_range] = {0};
-    int count[overlap_range * shift_range] = {0};
-    double minError = INT_MAX;
-
-    if(orientation == "left" || orientation == "right")
-    {
-        for(int ss1 = 240; ss1 < 240+overlap_range; ss1 ++)
+        if(orientation == "left" || orientation == "right")
         {
-            for(int ss2 = 0; ss2 < shift_range; ss2 ++)
+            for(int ss1 = 260; ss1 < 260+overlap_range; ss1 ++)
             {
-                int indexOL = shift_range*(ss1-240)+ss2;
-                for(int row = 0; row < 1880-ss2; row ++)
+                int indexOL = ss1 - 260;
+                for(int row = i*1920/XY_overlap.size(); row < (i+1)*1920/XY_overlap.size(); row ++)
                 {
                     for(int col = 0; col < ss1; col ++)
                     {
                         int diff;
-                        if(orientation == "left")
-                            diff = p_cut_data1[row*1880+1880-ss1+col]-p_cut_data2[(row+ss2)*1880+col];
-                        else
-                            diff = p_cut_data2[row*1880+1880-ss1+col]-p_cut_data1[(row+ss2)*1880+col];
-                        sum[indexOL] += diff * diff;
-                        count[indexOL] += 1;
+                        if(((row+shift)*1920+col)<1920*1920)
+                        {
+                            if(orientation == "left")
+                                diff = data1d_copy1[row*1920+1920-ss1+col] - data1d_copy2[(row+shift)*1920+col];
+                            else
+                                diff = data1d_copy2[row*1920+1920-ss1+col] - data1d_copy1[(row+shift)*1920+col];
+                            sum[indexOL] += diff * diff;
+                            count[indexOL] += 1;
+                        }
                     }
                 }
                 difference[indexOL] = sum[indexOL]/count[indexOL];
@@ -129,25 +133,24 @@ bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdat
                 if(minError>difference[indexOL])
                 {
                     minError = difference[indexOL];
-                    XY_overlap = ss1;
-                    XY_shift = ss2;
+                    XY_overlap[i] = ss1;
                 }
             }
         }
-    }
 
-    else if(orientation == "up" || orientation == "down")
-    {
-        for(int ss1 = 240; ss1 < 240+overlap_range; ss1 ++)
+        else if(orientation == "up" || orientation == "down")
         {
-            for(int ss2 = 0; ss2 < shift_range; ss2 ++)
+            for(int ss1 = 260; ss1 < 260+overlap_range; ss1 ++)
             {
-                int indexOL = shift_range*(ss1-240)+ss2;
+                int indexOL = ss1 - 260;
                 for(int row = 0; row < ss1; row ++)
                 {
-                    for(int col = 0; col < 1880-ss2; col ++)
+                    for(int col = i*1920/XY_overlap.size(); col < (i+1)*1920/XY_overlap.size(); col ++)
                     {
-                        int diff = p_cut_data1[(1880-ss1+row)*1880+ss2+col]-p_cut_data2[row*1880+col];
+                        int diff;
+                        if(((1920-ss1+row)*1920+shift+col)<1920*1920)
+                            diff = data1d_copy1[(1920-ss1+row)*1920+shift+col] - data1d_copy2[row*1920+col];
+
                         sum[indexOL] += diff * diff;
                         count[indexOL] += 1;
                     }
@@ -157,25 +160,12 @@ bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdat
                 if(minError>difference[indexOL])
                 {
                     minError = difference[indexOL];
-                    XY_overlap = ss1;
-                    XY_shift = ss2;
+                    XY_overlap[i] = ss1;
                 }
             }
         }
     }
     return 1;
-}
-
-void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data)
-{
-    cout<<"cut planes edge!"<<endl;
-    if(p_cut_data){delete []p_cut_data; p_cut_data = 0;}
-    p_cut_data = new unsigned short[1880 * 1880];
-    for(int i = 0; i < 1880; i ++)
-        for(int j = 0; j < 1880; j ++)
-        {
-            p_cut_data[i*1880+j] = pdata[(i+20)*1920+(20+j)];
-        }
 }
 
 bool setOrientation(QString & orientation1, QString & orientation2, string s1, string s2)
@@ -189,8 +179,8 @@ bool setOrientation(QString & orientation1, QString & orientation2, string s1, s
     if(num11<0 || num11>28 ||num22<0 || num22>28 || num11 == num22)
         return 0;
     int flag = (num11>num22)?1:0;
-    int num1 = (num11 > num22)?num22:num11;
-    int num2 = (num11 > num22)?num11:num22;
+    int num1 = min(num11, num22);
+    int num2 = max(num11, num22);
 
     if(((num1-1)/5 == (num2-1)/5) && ((num1-1)/5%2 == 0) && (num1+1 == num2))
     {

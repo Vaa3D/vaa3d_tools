@@ -61,4 +61,6 @@
 		Folder that is selected to place the result.
 	Output: A txt file including overlap and shift between those 2 images after correcting.
 
-
+10. Correct_Distorted_Images_between_Tiles plugin:
+	Input: 2 images that are different tiles;
+	Output: A txt file including different overlap for 50 different y.

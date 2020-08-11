@@ -6,7 +6,7 @@
 #include <v3d_interface.h>
 #include <iostream>
 
-using namespace  std;
+using namespace std;
 
 class ExtractMeanCenterDialog: public QDialog
 {
@@ -38,33 +38,5 @@ public slots:
     void selectFolder();
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif // EXTRACTMEAN_GUI_H
