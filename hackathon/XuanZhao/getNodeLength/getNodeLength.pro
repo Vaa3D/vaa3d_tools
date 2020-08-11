@@ -6,10 +6,12 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= getNodeLength_plugin.h \
-    function.h
+    function.h \
+    getnodelengthdialog.h
 SOURCES	+= getNodeLength_plugin.cpp \
     function.cpp \
-    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp
+    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
+    getnodelengthdialog.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(getNodeLength)

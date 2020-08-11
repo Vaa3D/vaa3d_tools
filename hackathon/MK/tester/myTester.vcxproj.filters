@@ -24,6 +24,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="file_directoryHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SWCtester.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="processMonitoringTester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_directoryHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

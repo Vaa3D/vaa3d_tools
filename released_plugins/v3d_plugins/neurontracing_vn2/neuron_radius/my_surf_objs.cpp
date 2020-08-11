@@ -151,7 +151,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 		ifs>> marker->z;
 		ifs>> marker->radius;
 		int par_id = -1; ifs >> par_id;
-
+        ifs.ignore(1000,'\n');
 		parid_map[marker] = par_id;
 		swc.push_back(marker);
 	}

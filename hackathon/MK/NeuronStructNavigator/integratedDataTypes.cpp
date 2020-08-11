@@ -54,13 +54,19 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 			node.y = nodeIt->data[3];
 			node.z = nodeIt->data[4];
 			node.type = nodeIt->data[1];
-			node.parent = nodeIt->data[6];
-			this->nodes.push_back(node);
+			node.parent = node.n + 1;
+			this->nodes.push_front(node);
 		}
+		this->nodes.begin()->parent = -1;
 	}
 	this->head = this->nodes.begin()->n;
 	
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+	/******************************************************************************************************/
+	// Important Note: 
+	//   [segUnit.seg_childLocMap] does NOT have tail node registered freshly coming out of [NeuronStructExplorer::node2loc_node2childLocMap].
+	//   Adding tail nodes into the map with empty child locations here for the purpose of 
+	//   avoiding memory violations by accessing non-existent pair in the map.
+	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
 		if (this->seg_childLocMap.find(nodeIt->n) == this->seg_childLocMap.end())
@@ -70,6 +76,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 			seg_childLocMap.insert({ nodeIt->n, emptyChildSet });
 		}
 	}
+	/******************************************************************************************************/
 	
 	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
 }
@@ -77,7 +84,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false)
 {
 	this->nodes = inputSeg;
-	NeuronStructUtil::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 
 	this->head = this->nodes.begin()->n;
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
@@ -88,6 +95,39 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 			vector<size_t> emptyTailSet;
 			seg_childLocMap.insert({ nodeIt->n, emptyTailSet });
 		}
+	}
+}
+
+const bool integratedDataTypes::segUnit::operator==(const segUnit& comparedSeg)
+{
+	// Given 2 segUnits with the same NeuronSWC composition, it is nearly impossible for the 2 being actually different.
+	// Therefore, current implementation is based on node-wise comparing without considering its morphology.
+
+	if (this->nodes.size() != comparedSeg.nodes.size()) return false;
+	else if (this->nodes.isEmpty() && comparedSeg.nodes.isEmpty()) return true;
+	else
+	{
+		boost::container::flat_set<int> comparedNodeIDs;
+		for (QList<NeuronSWC>::const_iterator it = comparedSeg.nodes.begin(); it != comparedSeg.nodes.end(); ++it) 
+			comparedNodeIDs.insert(it->n);
+		for (QList<NeuronSWC>::const_iterator it = this->nodes.begin(); it != this->nodes.end(); ++it)
+		{
+			for (boost::container::flat_set<int>::iterator IDit = comparedNodeIDs.begin(); IDit != comparedNodeIDs.end(); ++IDit)
+			{
+				const NeuronSWC& comparedNode = comparedSeg.nodes.at(comparedSeg.seg_nodeLocMap.at(*IDit));
+				if (it->x == comparedNode.x && it->y == comparedNode.y && it->z == comparedNode.z)
+				{
+					comparedNodeIDs.erase(IDit);
+					goto FOUND_SAME_NODE;
+				}
+			}
+			return false;
+
+		FOUND_SAME_NODE:
+			continue;
+		}
+
+		return true;
 	}
 }
 
@@ -103,7 +143,20 @@ V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC() const
 	V_NeuronSWC outputV_NeuronSWC;
 	outputV_NeuronSWC.to_be_deleted = this->to_be_deleted;
 	int paNodeID = this->head;
-	this->rc_nodeRegister2V_NeuronSWC(outputV_NeuronSWC, paNodeID, paNodeID);
+	if (this->nodes.size() == 1)
+	{
+		V_NeuronSWC_unit newNodeV;
+		newNodeV.data[0] = 1;
+		newNodeV.data[2] = this->nodes.begin()->x;
+		newNodeV.data[3] = this->nodes.begin()->y;
+		newNodeV.data[4] = this->nodes.begin()->z;
+		newNodeV.data[1] = this->nodes.begin()->type;
+		newNodeV.data[6] = -1;
+		newNodeV.seg_id = this->segID;
+		outputV_NeuronSWC.row.push_back(newNodeV);
+		return outputV_NeuronSWC;
+	}
+	this->rc_nodeRegister2V_NeuronSWC(outputV_NeuronSWC, paNodeID, -1);
 
 	return outputV_NeuronSWC;
 }
@@ -114,29 +167,30 @@ void integratedDataTypes::segUnit::rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV
 	while (1)
 	{
 		V_NeuronSWC_unit newNodeV;
-		newNodeV.n = this->nodes.size() - sbjV_NeuronSWC.row.size();
-		newNodeV.x = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).x;
-		newNodeV.y = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).y;
-		newNodeV.z = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).z;
-		newNodeV.type = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).type;		
+		newNodeV.data[0] = this->nodes.size() - sbjV_NeuronSWC.row.size();
+		newNodeV.data[2] = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).x;
+		newNodeV.data[3] = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).y;
+		newNodeV.data[4] = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).z;
+		newNodeV.data[1] = this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).type;		
 		newNodeV.seg_id = this->segID;		
 
-		if (this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent == -1) newNodeV.parent = -1;
+		if (this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent == -1) newNodeV.data[6] = -1;
 		else
 		{
 			if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() > 1)
-				newNodeV.parent = branchRootID;
-			else if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() == 1)
-				newNodeV.parent = newNodeV.n + 1;
+				newNodeV.data[6] = branchRootID;
+			
+			if (this->seg_childLocMap.at(this->nodes.at(this->seg_nodeLocMap.at(currentPaID)).parent).size() == 1)
+				newNodeV.data[6] = newNodeV.n + 1;
 		}
 		sbjV_NeuronSWC.row.insert(sbjV_NeuronSWC.row.begin(), newNodeV);
 
 		if (this->seg_childLocMap.at(currentPaID).size() == 1) currentPaID = this->nodes.at(*this->seg_childLocMap.at(currentPaID).begin()).n;
-		else if (this->seg_childLocMap.at(currentPaID).size() == 0) return;
+		else if (this->seg_childLocMap.at(currentPaID).empty()) return;
 		else if (this->seg_childLocMap.at(currentPaID).size() > 1)
 		{
 			for (vector<size_t>::const_iterator tailsIt = this->seg_childLocMap.at(currentPaID).begin(); tailsIt != this->seg_childLocMap.at(currentPaID).end(); ++tailsIt)
-				this->rc_nodeRegister2V_NeuronSWC(sbjV_NeuronSWC, this->nodes.at(*tailsIt).n, newNodeV.n);
+				this->rc_nodeRegister2V_NeuronSWC(sbjV_NeuronSWC, this->nodes.at(*tailsIt).n, newNodeV.data[0]);
 			return;
 		}	
 	}
@@ -253,13 +307,12 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 		this->segTileSize = segTileLength;
 		this->nodeTileSize = nodeTileLength;
 
-		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
-		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		// -- NeuronStructExplorer::node2loc_node2childLocMap does Not create entries in node2childLocMap for tip nodes (nodes without childs).
+		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
 		//cout << "segs num: " << this->segs.size() << endl;
-
-		NeuronStructUtil::nodeSegMapGen(this->segs, this->node2segMap);
 
 		vector<segUnit> allSegs;
 		for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
@@ -287,13 +340,27 @@ integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& input
 		vector<V_NeuronSWC> displayV_NeuronSWCcopy = inputV_NeuronSWC;
 		for (vector<V_NeuronSWC>::iterator it = displayV_NeuronSWCcopy.begin() + 1; it != displayV_NeuronSWCcopy.end(); ++it)
 		{
-			for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
-			{	
-				// In V_NeuronSWC_unit, all node information is stored in [data].
-				unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];  
-				unitIt->data[6] = unitIt->data[0] + 1;						
+			// In V_NeuronSWC_unit, all node information is stored in [data].
+			//if (it->row.begin()->data[6] == -1) reverse(it->row.begin(), it->row.end());
+
+			if ((it->row.end() - 1)->data[6] == -1)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
+				{
+					unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];
+					unitIt->data[6] = unitIt->data[0] + 1;
+				}
+				(it->row.end() - 1)->data[6] = -1;
 			}
-			(it->row.end() - 1)->data[6] = -1;
+			else if (it->row.begin()->data[6] == -1)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = it->row.begin(); unitIt != it->row.end(); ++unitIt)
+				{
+					unitIt->data[0] += ((it - 1)->row.end() - 1)->data[0];
+					unitIt->data[6] = unitIt->data[0] - 1;
+				}
+				it->row.begin()->data[6] = -1;
+			}
 		}
 
 		vector<segUnit> allSegs;
@@ -309,8 +376,9 @@ integratedDataTypes::profiledTree::profiledTree(const vector<V_NeuronSWC>& input
 			this->tree.listNeuron.append(newSegUnit.nodes);
 		}
 
-		NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
-		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		// -- NeuronStructExplorer::node2loc_node2childLocMap does Not create entries in node2childLocMap for tip nodes (nodes without childs).
+		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 		this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
 		this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
@@ -325,12 +393,33 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 		if (!this->nodeTileMap.empty())
 		{
 			this->nodeTileMap.clear();
-			NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+			NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
 		}
 		else
 		{
 			this->nodeTileSize = nodeTileLength;
 			return;
+		}
+	}
+}
+
+void integratedDataTypes::profiledTree::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
+	}
+}
+
+void integratedDataTypes::profiledTree::nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap)
+{
+	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
+			nodeCoordKey2segMap.insert(pair<string, int>(nodeCoordKey, segIt->first));
 		}
 	}
 }

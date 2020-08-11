@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -80,12 +80,15 @@ namespace integratedDataTypes
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 
-		int segID;
+		const bool operator==(const segUnit& comparedSeg); // operator== for comparing 2 segUnits
+
+		bool profiled;
+		int segID, type;
 		int head;                                  // segment head node ID
 		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
 		QList<NeuronSWC> nodes;                    // segment nodes
 		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
-		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist		
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes QList. Note, tip nodes still have entries in the map with empty second value.
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
 		// [segSmoothnessMap] profiles smooth measures node by node through the whole segment.
@@ -143,11 +146,19 @@ namespace integratedDataTypes
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
 		map<string, vector<int>> nodeTileMap; // tile label -> node ID
+
+		NeuronTree sortedTree;
+		map<string, float> morphFeatureMap;
+		void sortTree();
+		void getMorphFeatures();
 		
-		map<int, segUnit> segs;								   // key = seg ID
-		boost::container::flat_multimap<int, int> node2segMap; // node ID -> seg ID
-		map<string, vector<int>> segHeadMap;				   // tile label -> seg ID
-		map<string, vector<int>> segTailMap;				   // tile label -> seg ID
+		map<int, segUnit> segs;											  // key = seg ID
+		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap; // node coord key -> seg ID
+		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
+		map<string, vector<int>> segTailMap;							  // tile label -> seg ID
+		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
+		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
 
 		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
 		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster
@@ -156,8 +167,8 @@ namespace integratedDataTypes
 
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap;
-		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;
+		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all nodes' coordinates in the cluster
+		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster
 		void getSegEndClusterNodeMap();
 		void getSegEndClusterCentoirds();
 

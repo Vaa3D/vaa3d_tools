@@ -16,7 +16,7 @@ class loc_input : public QDialog
 {
     Q_OBJECT
 public:
-    explicit loc_input(QWidget *parent = nullptr);
+    explicit loc_input(QWidget *parent = NULL);
     void setV3DPluginCallback2(V3DPluginCallback2 *callback2);
     void show_area();
 

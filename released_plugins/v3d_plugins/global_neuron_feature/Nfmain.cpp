@@ -6,6 +6,7 @@
 #include <vector>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include "../sort_neuron_swc/openSWCDialog.h"
 
 using namespace std;
@@ -53,7 +54,7 @@ void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 			nt_list.push_back(tmp);
 		}
 	}
-	
+
 	for (int i=0;i<neuronNum;i++)
 	{
 		NeuronTree nt = nt_list[i];
@@ -63,6 +64,84 @@ void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 		printFeature(features);
 		if (features) {delete []features; features = NULL;}
 	}
+}
+void nf_main_infolder(const V3DPluginArgList &input, V3DPluginArgList &output)
+{
+//    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if (outfiles.size()!=1)
+    {
+        cerr<<"Input Error. out Error. You must input an out file"<<endl;
+        return;
+    }
+    QString outfile=outfiles[0];
+    if (infiles.size()!=1)
+    {
+        cerr<<"Input Error. You must input one and only one folder path"<<endl;
+        return;
+    }
+    string inputpath = infiles[0];
+    QFileInfo inputInfo(QString::fromStdString(inputpath));
+
+    if(!inputInfo.isDir())
+    {
+        cerr<<"Error in input. You must input an existed folder path"<<endl;
+        return;
+    }
+    QStringList nameFilters;
+    nameFilters<<"*.swc";
+    nameFilters<<"*.eswc";
+    nameFilters<<"*.ESWC";
+    nameFilters<<"*.SWC";
+
+    QDir indir(QString::fromStdString(inputpath));
+    QStringList nameList = indir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+    vector<NeuronTree> nt_list;
+    if(nameList.size()==0)
+    {
+        cerr<<"Error in input. This is an empty folder or I can't find swc and eswc files in it"<<endl;
+        return;
+    }
+    for(V3DLONG i=0;i<nameList.size();i++)
+    {
+        QString thisname=QString::fromStdString(inputpath)+"/"+nameList.at(i);
+        NeuronTree tmp = readSWC_file(thisname);
+        nt_list.push_back(tmp);
+    }
+
+    ofstream csvOutFile(outfile.toStdString().c_str());
+    if(!csvOutFile.is_open()){
+         cerr<<"out Error: cannot open file to save"<<endl;
+         return;
+    }
+    csvOutFile<<"Name,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
+    csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
+    csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
+
+    for (V3DLONG i=0;i<nameList.size();i++)
+    {
+        NeuronTree nt = nt_list[i];
+        cout<<"\n--------------Neuron #"<<(i+1)<<"----------------\n";
+        double * features = new double[FNUM];
+        computeFeature(nt, features);
+        //save features to file
+
+        QString thisname=nameList[i];
+        csvOutFile<<thisname.toStdString();
+        for (int i=0;i<FNUM;i++)
+        {
+            csvOutFile<<","<<features[i];
+        }
+        csvOutFile<<endl;
+
+        if (features) {delete []features; features = NULL;}
+    }
+    csvOutFile.close();
 }
 
 void nf_main(V3DPluginCallback2 &callback, QWidget *parent)

@@ -43,6 +43,9 @@ public:
 
 
 	/*************************** Vector Geometry ***************************/
+	// Get the Euclidean distance between 2 given nodes.
+	static inline float getDistBetween2nodes(const NeuronSWC& node1, const NeuronSWC& node2);
+
 	template<typename T> // Get the vecotr formed by 2 NeuronSWC nodes. The vector = endNode - startNode.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
@@ -142,6 +145,12 @@ public:
 	static inline bool connCompBoundingRangeCheck(const connectedComponent& comp1, const connectedComponent& comp2, double distThre = 1);
 	/***********************************************************************/
 };
+
+inline float NeuronGeoGrapher::getDistBetween2nodes(const NeuronSWC& node1, const NeuronSWC& node2)
+{
+	float dist = sqrtf((node1.x - node2.x) * (node1.x - node2.x) + (node1.y - node2.y) * (node1.y - node2.y) + (node1.z - node2.z) * (node1.z - node2.z));
+	return dist;
+}
 
 template<typename T>
 inline vector<T> NeuronGeoGrapher::getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode)

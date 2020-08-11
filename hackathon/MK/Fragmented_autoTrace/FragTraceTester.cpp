@@ -82,6 +82,43 @@ void FragTraceTester::saveIntermediateImgSlices(const string& regImgName, const 
 	}
 }
 
+void FragTraceTester::printOutTerminalSegInfo(const segUnit& seg)
+{
+	if (!seg.seg_childLocMap.empty())
+	{
+		cout << endl << "node-child info:" << endl;
+		for (auto& node : seg.seg_childLocMap)
+		{
+			cout << node.first << ": ";
+			for (auto& child : node.second) 
+				cout << seg.nodes.at(child).n << " ";
+			cout << endl;
+		}
+	}
+}
+
+void FragTraceTester::printOutEditSegInfo(const vector<segUnit>& segs)
+{
+	for (auto& seg : segs)
+	{
+		cout << "profiled segment" << seg.segID << ":" << endl;
+		for (auto& node : seg.nodes)
+			cout << node.n << " " << node.x << " " << node.y << " " << node.z << " " << node.parent << endl;
+		cout << endl;
+	}
+}
+
+void FragTraceTester::printOutEditSegInfo(const V_NeuronSWC_list& displayingSegs, const set<int>& segIDs)
+{
+	for (auto& segID : segIDs)
+	{
+		cout << "displaying segmet " << segID << ":" << endl;
+		for (auto& node : displayingSegs.seg.at(segID).row)
+			cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6] << endl;
+		cout << endl;
+	}
+}
+
 void FragTraceTester::printOutEditSegInfo(const V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& segs2Bedited)
 {
 	for (auto& seg : segs2Bedited)

@@ -1,4 +1,5 @@
 #include "judgebranchfunction.h"
+//#include <math.h>
 
 RandomForest* train(RandomForest* rf, V3DPluginCallback2* callback){
     QVector<QVector<float> > data = QVector<QVector<float> >();
@@ -65,6 +66,8 @@ RandomForest* train(RandomForest* rf, V3DPluginCallback2* callback){
         feature.append(b.intensityRationToLocal);
         feature.append(b.gradientMean);
         feature.append(b.angleChangeMean);
+        feature.append(b.sigma12);
+        feature.append(b.sigma13);
 
         if(nt.listNeuron.at(pointsIndex.at(1)).type == 2){
             feature.append(1);
@@ -84,8 +87,8 @@ RandomForest* train(RandomForest* rf, V3DPluginCallback2* callback){
     RandomForest* newRF = new RandomForest(numTrees,data);
 
     newRF->C = 2;
-    newRF->M = 9;
-    newRF->Ms = round(log(newRF->M)/log(2) + 1);
+    newRF->M = 11;
+    newRF->Ms = round(log((double)newRF->M)/log(2.0) + 1);
     newRF->start();
 
     cout<<"----------------train end------------------"<<endl;
@@ -180,6 +183,8 @@ void splitBranch(Branch* b, unsigned char* data1d, V3DLONG* sz, NeuronTree& nt, 
     feature.append(b->intensityRationToLocal);
     feature.append(b->gradientMean);
     feature.append(b->angleChangeMean);
+    feature.append(b->sigma12);
+    feature.append(b->sigma13);
 //    cout<<"ijijijijij"<<endl;
 
     int c = rf->evaluate(feature);

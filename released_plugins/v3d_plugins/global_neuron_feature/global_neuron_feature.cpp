@@ -47,6 +47,7 @@ QStringList GNFPlugin::funclist() const
 	<<tr("compute_feature_batch")
 	<<tr("feature_value_distribution")
 	<<tr("compute_feature")
+    <<tr("compute_feature_in_folder")
 	<<tr("help");
 }
 
@@ -82,6 +83,8 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 		cout<<"\n\n(version 2.0) Compute global features for sigle or group of neurons.Developed by Yinan Wan 12-02-20"<<endl;
 		cout<<"Input: a list of swc file names (e.g. 'a.swc b.swc') or a linker file name (.ano)"<<endl;
 		cout<<"Usage: v3d -x global_neuron_feature -f compute_feature -i test.swc \n"<<endl;
+        cout<<"Input: a folder path (with swc or eswc files in it).Developed by SD-Jiang 20-05-20"<<endl;
+        cout<<"Usage: v3d -x global_neuron_feature -f compute_feature_in_folder -i swc_folder_path -o out_csv_file \n"<<endl;
 		return true;
 	}
 
@@ -267,7 +270,14 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 		nf_main(input,output); 
 		return true;
 	}
-
+    else if(func_name==tr("compute_feature_in_folder"))
+    {
+        cout<<"\n===============Welcome to compute_feature Function (in folder)==============="<<endl;
+        cout<<"==========This func will compute all the swc or eswc files in one folder========"<<endl;
+        cout<<"==========Added by shengdian. 20200520========"<<endl;
+        nf_main_infolder(input,output);
+        return true;
+    }
 	else if (func_name==tr("TOOLBOXcompute global features"))
 	{
 		nf_toolbox(input);
