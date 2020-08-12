@@ -149,10 +149,17 @@ private:
 
 
 	/* ========= Post Editing ========= */
-	vector<V_NeuronSWC> tracedVsegs;
-	boost::container::flat_set<int> updatedHiddenSegLocs, permanentDelSegLocs;
-	boost::container::flat_map<int, int> traced2displayVsegsMap, display2tracedVsegsMap;
-	void initDisplayingVsegs();
+	int totalVsegNum, distInterval, currentDist;
+	vector<ptrdiff_t> type16Locs;
+	vector<V_NeuronSWC> tracedType16Vsegs;
+	boost::container::flat_set<ptrdiff_t> updatedHiddenSegLocs, permanentDelSegLocs, incrementHiddenLocs;
+	boost::container::flat_map<int, boost::container::flat_set<ptrdiff_t>>::iterator type16showingPtr;
+	boost::container::flat_map<int, boost::container::flat_set<ptrdiff_t>> dist2VsegLocMap;
+	//boost::container::flat_map<int, boost::container::flat_set<segUnit>> dist2segUnitMap;
+	
+	void getType16Locs();
+	void updateDisplayingVsegProfile();
+	void moveType16showPtr(bool increment);
 	/* ================================ */
 
 

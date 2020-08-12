@@ -80,7 +80,11 @@ namespace integratedDataTypes
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 
-		const bool operator==(const segUnit& comparedSeg); // operator== for comparing 2 segUnits
+		const bool operator==(const segUnit& comparedSeg) const; // operator== for comparing 2 segUnits
+		
+		// Current operator> and operator< are based on the number of nodes on the segment.
+		const bool operator>(const segUnit& comparedSeg) const;
+		const bool operator<(const segUnit& comparedSeg) const; 
 
 		bool profiled;
 		int segID, type;
@@ -132,11 +136,12 @@ namespace integratedDataTypes
 	};
 	/************************************************************************/
 
-	/********* Complete Profile Data Structure for NeuronTree *********/
+	/******************* Complete Profile Data Structure for NeuronTree *******************/
 	struct profiledTree
 	{
 		profiledTree() = default;
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
+		//profiledTree(const vector<segUnit>& inputSegs, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		float segTileSize;
 		float nodeTileSize;
@@ -152,25 +157,34 @@ namespace integratedDataTypes
 		void sortTree();
 		void getMorphFeatures();
 		
+		/* ================= Segment-related Data Members and Functions ================= */
 		map<int, segUnit> segs;											  // key = seg ID
-		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
-		boost::container::flat_multimap<string, int> nodeCoordKey2segMap; // node coord key -> seg ID
 		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
 		map<string, vector<int>> segTailMap;							  // tile label -> seg ID
-		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
-		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
 
+		// -- NOT INITIALIZED WHEN PROFILEDTREE IS CONSTRUCTED -- //
 		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
 		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster
 		boost::container::flat_map<int, int> headSeg2ClusterMap;						  // segment ID -> the cluster in which the segment head is located
 		boost::container::flat_map<int, int> tailSeg2ClusterMap;						  // segment ID -> the cluster in which the segment tail is located
+		
+		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap; // node coord key -> seg ID
 
-		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
-
-		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all nodes' coordinates in the cluster
+		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all seg end nodes' coordinates in the cluster
 		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster
+		
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
+		// ------------------------------------------------------ //
+		
+		void nodeSegMapGen();
+		void nodeCoordKeySegMapGen();
+		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
+		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
+
 		void getSegEndClusterNodeMap();
 		void getSegEndClusterCentoirds();
+		/* ============ END of [Segment-related Data Members and Functions] ============ */
 
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
@@ -184,7 +198,7 @@ namespace integratedDataTypes
 	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	inline void segEndClusterCentroid(const set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
 	inline void segEndClusterCentroid(const boost::container::flat_set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
-	/******************************************************************/
+	/**************************************************************************************/
 
 	/***************** segEnd Cluster Tree *****************/
 	struct segEndClusterUnit

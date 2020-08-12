@@ -288,7 +288,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree profiledFINAL_BEFORE_DOT_REMOVE(FINALOUTPUT_TREE);
 		FINALOUTPUT_TREE = NeuronStructUtil::singleDotRemove(profiledFINAL_BEFORE_DOT_REMOVE, this->minNodeNum);
 
-		vector<ptrdiff_t> delLocs;
 		while (1)
 		{
 			for (map<int, segUnit>::iterator newSegIt = profiledNewTreePart.segs.begin(); newSegIt != profiledNewTreePart.segs.end(); ++newSegIt)
@@ -307,7 +306,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		OVERLAPPED_SEG_FOUND:
 			continue;
 		}
-		this->addV_NeuronSWCs(profiledNewTreePart);
+		
+		// totalV_NeuronSWC will eventually be sent to My4DImage::tracedNeuron.
+		this->addV_NeuronSWCs(profiledNewTreePart); // <-- all type-16 segments to be hidden
 		for (auto& vSeg : this->totalV_NeuronSWCs) vSeg.to_be_deleted = true; // Default segUnit.to_be_deleted is false, so is converted V_NeuronSWC.
 
 		// ------- Debug ------- //

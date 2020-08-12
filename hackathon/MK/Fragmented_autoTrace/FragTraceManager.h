@@ -146,11 +146,10 @@ private:
 	
 
 /* =================== Traced Tree Generating and Polishing =================== */
-	// Generate auto-traced segments
+	// THIS IS EXACTLY WHERE AUTO-TRACED SEGMENTS ARE GENERATED.
 	bool generateTree(workMode mode, profiledTree& objSkeletonProfiledTree);
-	
-	
 
+	// Peripheral signal capturing methods - for dendrites
 	map<string, vector<connectedComponent>> peripheralSignalBlobMap;
 	NeuronTree getPeripheralSigTree(const profiledTree& inputProfiledTree, int lengthThreshold) const;
 	vector<connectedComponent> getPeripheralBlobs(const NeuronTree& inputNeuronTree, const vector<int> origin);
@@ -184,7 +183,7 @@ public:
 private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 
-	vector<V_NeuronSWC> totalV_NeuronSWCs; // Current V_NeuronSWC in display, acquired from My4DImage::tracedNeuron.
+	vector<V_NeuronSWC> totalV_NeuronSWCs; // Type-16 V_NeuronSWCs to be acquired by FragTraceControlPanel.
 
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;

@@ -56,7 +56,7 @@ public:
 	void erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	void connectingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 
-	// Show and hide segments
+	// Sequential segment typing
 	bool sequentialTypeToggled;
 	void sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const int seedSegID, const int type);
 	void sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type);

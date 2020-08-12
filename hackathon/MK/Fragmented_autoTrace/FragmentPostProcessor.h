@@ -57,6 +57,8 @@ public:
 	// Recursive [integratedDataTypes::segEndClusterUnit] pointer deletion and memory release.
 	void rc_clusterChain_cleanUp(segEndClusterUnit* currCluster) const;	
 
+	profiledTree selectiveType16(const profiledTree& extendedTree, const profiledTree& autoTracedTree, int radius = 10) const;
+
 private:
 	void rc_clusterChain(const profiledTree& inputProfiledTree, segEndClusterUnit* currClusterUnitPtr, set<int>& includedClusterIDs) const;
 	void rc_getSegIDsFromClusterChain(boost::container::flat_set<int>& segIDs, const segEndClusterUnit* currClusterUnitPtr) const;
