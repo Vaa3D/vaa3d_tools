@@ -9,6 +9,9 @@
 
 #include "somefunction.h"
 
+#include <fstream>
+#include <sstream>
+
 using namespace std;
 Q_EXPORT_PLUGIN2(app2WithPreinfo, app2WithPreinfoPlugin);
  
@@ -25,6 +28,8 @@ QStringList app2WithPreinfoPlugin::funclist() const
 	return QStringList()
         <<tr("app2WithPreinfo")
         <<tr("app2WithPreinfoForBatch")
+        <<tr("app2WithPreinfoForBatch2")
+        <<tr("app2WithPreinfoForBatch3")
 		<<tr("help");
 }
 
@@ -57,16 +62,78 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         QString outdir = (outfiles.size()>=1) ? outfiles[0] : "";
+
+        ofstream csvFile;
+        csvFile.open((dir + "\\" + "threshold.csv").toStdString().c_str(),ios::out);
+        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
-        app2WithPreinfo(dir,brainPath,outdir,ratio,callback);
+        int th = (inparas.size()>=2) ? atoi(inparas[1]) : 0;
+        qDebug()<<"ratio: "<<ratio<<" th: "<<th;
+        app2WithPreinfo(dir,brainPath,outdir,ratio,th,csvFile,callback);
+        csvFile.close();
 	}
     else if (func_name == tr("app2WithPreinfoForBatch"))
 	{
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
-        app2WithPreinfoForBatch(dir,brainPath,ratio,callback);
+        int th = (inparas.size()>=2) ? atoi(inparas[1]) : 0;
+
+        QStringList out = dir.split("\\");
+        QString dirBaseName = out.back();
+        out.pop_back();
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(th);
+        if(!QDir().exists(outDir)){
+            QDir().mkdir(outDir);
+        }
+
+        ofstream csvFile;
+        csvFile.open((outDir + "\\" +dirBaseName + "_app2_" + QString::number(th)+ "_threshold.csv").toStdString().c_str(),ios::out);
+        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        app2WithPreinfoForBatch(dir,brainPath,ratio,th,csvFile,callback);
+        csvFile.close();
 	}
+    else if (func_name == "app2WithPreinfoForBatch2") {
+        QString dir = (infiles.size()>=1) ? infiles[0] : "";
+        QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
+        int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
+        float length = (inparas.size()>=2) ? atof(inparas[1]) : 1500;
+
+        QStringList out = dir.split("\\");
+        QString dirBaseName = out.back();
+        out.pop_back();
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2";
+        if(!QDir().exists(outDir)){
+            QDir().mkdir(outDir);
+        }
+
+        ofstream csvFile;
+        csvFile.open((outDir + "\\" +dirBaseName + "_app2" + "_threshold.csv").toStdString().c_str(),ios::out);
+        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        app2WithPreinfoForBatch2(dir,brainPath,csvFile,maxTh,length,callback);
+        csvFile.close();
+    }
+    else if (func_name == "app2WithPreinfoForBatch3") {
+        QString dir = (infiles.size()>=1) ? infiles[0] : "";
+        QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
+        int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
+        int minTh= (inparas.size()>=2) ? atoi(inparas[1]) : 0;
+
+        QStringList out = dir.split("\\");
+        QString dirBaseName = out.back();
+        out.pop_back();
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2";
+        if(!QDir().exists(outDir)){
+            QDir().mkdir(outDir);
+        }
+
+        ofstream csvFile;
+        csvFile.open((outDir + "\\" +dirBaseName + "_app2" + "_threshold.csv").toStdString().c_str(),ios::out);
+        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        app2WithPreinfoForBatch3(dir,brainPath,csvFile,maxTh,minTh,callback);
+        csvFile.close();
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

@@ -1,8 +1,11 @@
 #include "branchtree.h"
 
-#include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"
-//#include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/swc_convert.h"
-#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.h"
+//#include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"
+//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.h"
+
+#include "swc2mask.h"
+#include "swc_convert.h"
+
 #include "marker_radius.h"
 #include "basic_memory.cpp"
 #include "compute_win_pca.h"
@@ -254,7 +257,7 @@ bool Branch::caculateFeature(unsigned char *data1d, V3DLONG *sz, NeuronTree& nt)
 //    cout<<"2222222222222222222222222222222"<<endl;
 
     unsigned char* maskR1 = 0;
-    swc2mask(maskR1,markers1,sz[0],sz[1],sz[2]);
+    swcTomask(maskR1,markers1,sz[0],sz[1],sz[2]);
 
 //    cout<<"*******************************************************"<<endl;
 
@@ -267,7 +270,7 @@ bool Branch::caculateFeature(unsigned char *data1d, V3DLONG *sz, NeuronTree& nt)
     }
     vector<MyMarker*> markers5 = swc_convert(b5);
     unsigned char* maskR5 = 0;
-    swc2mask(maskR5,markers5,sz[0],sz[1],sz[2]);
+    swcTomask(maskR5,markers5,sz[0],sz[1],sz[2]);
 
     float intensityR1 = 0, intensityR5 = 0;
     int countR1 = 0, countR5 = 0;

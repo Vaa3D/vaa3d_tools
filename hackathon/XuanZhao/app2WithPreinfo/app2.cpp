@@ -519,6 +519,8 @@ bool proc_app2(paraApp2 &p)
             outswc[i]->radius *= dfactor_xy; //use xy for now
         }
 
+        qDebug()<<"outswc size: "<<outswc.size();
+
         //re-estimate the radius using the original image
         double real_thres = 40; //PHC 20121011 //This should be rescaled later for datatypes that are not UINT8
 
@@ -576,6 +578,8 @@ bool proc_app2(paraApp2 &p)
 
         }
         //prepare the output comments for neuron info in the swc file
+
+        qDebug()<<"---------cal r end-----------";
 
 
 

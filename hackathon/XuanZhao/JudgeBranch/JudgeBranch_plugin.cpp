@@ -7,6 +7,8 @@
 #include <vector>
 #include "JudgeBranch_plugin.h"
 
+#include "filter.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(JudgeBranch, JudgeBranchPlugin);
@@ -15,7 +17,7 @@ QStringList JudgeBranchPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("JudgeBranch")
-		<<tr("menu2")
+        <<tr("gaussian")
 		<<tr("about");
 }
 
@@ -34,9 +36,21 @@ void JudgeBranchPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         JudgeBranchDialog dlg = JudgeBranchDialog(parent,callback);
         dlg.exec();
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("gaussian"))
 	{
-		v3d_msg("To be implemented.");
+//        v3dhandle cur = callback.currentImageWindow();
+//        Image4DSimple* image = callback.getImage(cur);
+//        unsigned char* pdata = image->getRawData();
+//        double sigma = 5;
+//        V3DLONG sz[4] = {image->getXDim(),image->getYDim(),image->getZDim(),image->getCDim()};
+//        V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+//        unsigned char* outdata = new unsigned char[tolSZ];
+//        laplacianOfGaussian(pdata,outdata,sz,sigma);
+//        Image4DSimple* imageGaussian = new Image4DSimple();
+//        imageGaussian->setData(outdata,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+//        v3dhandle gaussianHandle = callback.newImageWindow("gaussian image");
+//        callback.setImage(gaussianHandle,imageGaussian);
+
 	}
 	else
 	{

@@ -3,8 +3,10 @@
 
 #include <QtGui>
 
-//#include "v3d_interface.h"
-#include "judgebranchfunction.h"
+#include "v3d_interface.h"
+//#include "judgebranchfunction.h"
+#include "randomforest.h"
+#include "pixelclassification.h"
 
 class JudgeBranchDialog : public QDialog
 {

@@ -29,5 +29,9 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 
+#meanshift
+HEADERS += $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES += $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
 TARGET	= $$qtLibraryTarget(app2WithPreinfo)
 DESTDIR	= $$VAA3DPATH/bin/plugins/app2WithPreinfo/
