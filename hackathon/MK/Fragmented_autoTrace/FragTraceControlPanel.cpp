@@ -39,15 +39,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	uiPtr->setupUi(this);
 	// ------------------------------------- //
 
-	// ------- Adding widgets not provided in Qt Designer ------- //
-	this->doubleSpinBox = new QDoubleSpinBox(uiPtr->frame_7);
-	this->doubleSpinBox->setObjectName(QString::fromUtf8("doubleSpinBox"));
-	this->doubleSpinBox->setGeometry(QRect(150, 10, 57, 22));
-	this->doubleSpinBox->setValue(0);
-	this->doubleSpinBox->setSingleStep(0.1);
-	this->doubleSpinBox->setRange(-5, 5);
-	//----------------------------------------------------------- //
-
 	QSettings callOldSettings("Allen-Neuronanatomy", "Neuron Assembler");
 
 	// ------- Image Format and Work Mode ------- //
@@ -107,7 +98,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		if (callOldSettings.value("histThre") == true)
 		{
 			uiPtr->groupBox_6->setChecked(true);
-			this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
+			uiPtr->doubleSpinBox_3->setValue(callOldSettings.value("histThre_std").toFloat());
 		}
 	}
 	// ---------------------------------------- //
@@ -355,7 +346,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	if (uiPtr->groupBox_6->isChecked())
 	{
 		settings.setValue("histThre", true);
-		settings.setValue("histThre_std", this->doubleSpinBox->value());
+		settings.setValue("histThre_std", uiPtr->doubleSpinBox_3->value());
 	}
 	// ----------------------------------------- //
 
@@ -504,7 +495,10 @@ void FragTraceControlPanel::showHideButtonClicked(bool clicked)
 	// NOTE: If Esc is hit or a change of basic editing function is made, [My4DImage::tracedNeuron] is refreshed.
 	//       Therefore, show/hide data members need to be reinitialized.
 
-	cout << " -- Total V_NeuronSWC number: " << this->CViewerPortal->getDisplayingSegs()->size() << endl;
+	if (FragTraceTester::isInstantiated())
+	{
+		FragTraceTester::getInstance()->printOutHiddenType16Info();
+	}
 
 	if (this->CViewerPortal->getDisplayingSegs()->size() != this->totalVsegNum) this->updateDisplayingVsegProfile();
 
@@ -681,6 +675,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		}
 		this->updateDisplayingVsegProfile();
 		this->type16showingPtr = this->dist2VsegLocMap.end();
+		this->totalVsegNum = this->CViewerPortal->getDisplayingSegs()->size();
 	}
 	// ------------------------------------------------------------------------------------------------------------------ //
 
@@ -858,7 +853,7 @@ void FragTraceControlPanel::pa_maskGeneration()
 		this->traceManagerPtr->histThre = true;
 		this->traceManagerPtr->histThreImgName = uiPtr->groupBox_6->title().toStdString();
 		this->traceManagerPtr->imgThreSeq.push_back(this->traceManagerPtr->histThreImgName);
-		this->traceManagerPtr->stdFold = this->doubleSpinBox->value();
+		this->traceManagerPtr->stdFold = uiPtr->doubleSpinBox_3->value();
 	}
 	else this->traceManagerPtr->histThre = false;
 }

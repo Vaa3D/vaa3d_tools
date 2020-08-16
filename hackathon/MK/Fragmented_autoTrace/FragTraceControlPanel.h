@@ -108,7 +108,6 @@ private:
 
 
 	/* =============== Additional Widget =============== */
-	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* somaListViewer;
 	/* ================================================= */
 

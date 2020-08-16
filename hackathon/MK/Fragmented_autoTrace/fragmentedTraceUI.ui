@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>865</width>
-    <height>768</height>
+    <height>733</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -256,7 +256,7 @@
          </font>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -274,7 +274,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>452</height>
+               <height>417</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -438,6 +438,9 @@
                        </item>
                        <item>
                         <widget class="QSpinBox" name="spinBox_9">
+                         <property name="minimum">
+                          <number>2</number>
+                         </property>
                          <property name="value">
                           <number>10</number>
                          </property>
@@ -533,13 +536,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>100</height>
+                  <height>160</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>150</height>
+                  <height>190</height>
                  </size>
                 </property>
                 <property name="font">
@@ -584,7 +587,7 @@
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>35</height>
+                        <height>50</height>
                        </size>
                       </property>
                       <property name="maximumSize">
@@ -599,32 +602,60 @@
                       <property name="frameShadow">
                        <enum>QFrame::Raised</enum>
                       </property>
-                      <widget class="QLabel" name="label_4">
-                       <property name="geometry">
-                        <rect>
-                         <x>10</x>
-                         <y>10</y>
-                         <width>131</width>
-                         <height>21</height>
-                        </rect>
-                       </property>
-                       <property name="text">
-                        <string>Threshold: mean + </string>
-                       </property>
-                      </widget>
-                      <widget class="QLabel" name="label_5">
-                       <property name="geometry">
-                        <rect>
-                         <x>220</x>
-                         <y>10</y>
-                         <width>131</width>
-                         <height>21</height>
-                        </rect>
-                       </property>
-                       <property name="text">
-                        <string>standard deviation</string>
-                       </property>
-                      </widget>
+                      <layout class="QHBoxLayout" name="horizontalLayout_12">
+                       <item>
+                        <widget class="QLabel" name="label_4">
+                         <property name="text">
+                          <string>Threshold: mean + </string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+                         <property name="font">
+                          <font>
+                           <weight>50</weight>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="decimals">
+                          <number>1</number>
+                         </property>
+                         <property name="minimum">
+                          <double>-5.000000000000000</double>
+                         </property>
+                         <property name="maximum">
+                          <double>5.000000000000000</double>
+                         </property>
+                         <property name="singleStep">
+                          <double>0.100000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>0.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_5">
+                         <property name="text">
+                          <string>standard deviation</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_11">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>355</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </widget>
                     </item>
                    </layout>
@@ -654,8 +685,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>791</width>
-               <height>452</height>
+               <width>770</width>
+               <height>444</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -822,8 +853,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>434</width>
-                         <height>178</height>
+                         <width>413</width>
+                         <height>170</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout">
@@ -928,7 +959,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>452</height>
+               <height>417</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1103,7 +1134,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>452</height>
+               <height>417</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">

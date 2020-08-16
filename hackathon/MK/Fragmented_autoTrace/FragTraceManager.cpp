@@ -507,8 +507,10 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 	{		
 		vector<NeuronTree> objTrees;
 		NeuronTree finalCentroidTree;
+
 		for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 		{
+			//cout << int(it - this->signalBlobs.begin()) << " ";
 			qApp->processEvents();
 			if (this->progressBarDiagPtr->wasCanceled())
 			{
