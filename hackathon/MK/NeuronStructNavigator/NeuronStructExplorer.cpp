@@ -54,6 +54,47 @@ void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeNam
 	else this->treeEntry(inputTree, treeName, segTileLength);
 }
 
+void NeuronStructExplorer::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
+{
+	// This method profiles node-location node-child_location of a given NeuronTree.
+	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
+	// However, any tip node WILL NOT have an entry in node2childLocMap.
+
+	nodeLocMap.clear();
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
+	//cout << " Node - Locations mapping done. size: " << nodeLocMap.size() << endl;
+
+	node2childLocMap.clear();
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+	{
+		int paID = it->parent;
+		if (paID == -1)
+		{
+			vector<size_t> childSet;
+			childSet.clear();
+			node2childLocMap.insert(pair<int, vector<size_t>>(it->n, childSet));
+		}
+		else
+		{
+			if (node2childLocMap.find(paID) != node2childLocMap.end())
+			{
+				node2childLocMap[paID].push_back(size_t(it - inputNodeList.begin()));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
+			else
+			{
+				vector<size_t> childSet;
+				childSet.clear();
+				childSet.push_back(size_t(it - inputNodeList.begin()));
+				node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
+		}
+	}
+	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
+}
+
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
 {
 	// -- This method profiles all segments in a given input tree.
@@ -77,7 +118,7 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			newSeg.nodes.push_back(*nodeIt);
 			vector<size_t> childLocs = node2childLocMap.find(nodeIt->n)->second;
 			
-			// In NeuronStructUtilities::node2loc_node2childLocMap, 
+			// In NeuronStructExplorer::node2loc_node2childLocMap, 
 			// if a segment is only with a head, its childLocs will also be assigned as empty set.
 			if (childLocs.empty()) 
 			{
@@ -130,9 +171,10 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			{
 				vector<size_t> childSegLocs;
 				childSegLocs.clear();
+
+				// This ensures that tail node still has its own pair in seg_chileLocMap, and its childSegLocs is empty.
 				if (newSeg.seg_childLocMap.find(it->n) == newSeg.seg_childLocMap.end())
 					newSeg.seg_childLocMap.insert(pair<int, vector<size_t>>(it->n, childSegLocs));
-				// This ensures that tail node still has its own pair in seg_chileLocMap, and its childSegLocs is empty.
 
 				if (node2childLocMap.find(it->n) != node2childLocMap.end())
 				{
@@ -1051,7 +1093,7 @@ set<int> NeuronStructExplorer::segEndClusterProbe(profiledTree& inputProfiledTre
 /* ============================ Tree - Subtree Operations ============================= */
 void NeuronStructExplorer::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
 {
-	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+	NeuronStructExplorer::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
 
 	QList<NeuronSWC> parents;
 	QList<NeuronSWC> children;
@@ -1084,7 +1126,7 @@ void NeuronStructExplorer::wholeSingleTree_extract(const QList<NeuronSWC>& input
 {
 	map<int, size_t> node2locMap;
 	map<int, vector<size_t>> node2childLocMap;
-	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+	NeuronStructExplorer::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
 
 	if (startingNode.parent == -1) NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
 	else
@@ -1104,6 +1146,122 @@ void NeuronStructExplorer::wholeSingleTree_extract(const QList<NeuronSWC>& input
 	}
 }
 /* ======================== END of [Tree - Subtree Operations] ======================== */
+
+
+
+/* ================================= Morphological Features ================================= */
+NeuronSWC NeuronStructExplorer::findRootNode(const NeuronTree& inputTree)
+{
+	map<int, NeuronSWC> rootNodeMap;
+	for (QList<NeuronSWC>::const_iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); ++nodeIt)
+		if (nodeIt->parent == -1) rootNodeMap.insert({ nodeIt->n, *nodeIt });
+	
+	if (rootNodeMap.empty())
+	{
+		cout << "No root found, returning -1." << endl;
+		NeuronSWC voidNode;
+		voidNode.n = -1;
+		return voidNode;
+	}
+	else if (rootNodeMap.size() == 1) return rootNodeMap.begin()->second;
+	else
+	{
+		map<int, int> rootTreeSizeMap;
+		for (map<int, NeuronSWC>::iterator rootIt = rootNodeMap.begin(); rootIt != rootNodeMap.end(); ++rootIt)
+		{
+			map<int, size_t> node2locMap;
+			map<int, vector<size_t>> node2childLocMap;
+			QList<NeuronSWC> tree;
+			NeuronStructExplorer::downstream_subTreeExtract(inputTree.listNeuron, tree, rootIt->second, node2locMap, node2childLocMap);
+			rootTreeSizeMap.insert({ rootIt->first, tree.size() });
+		}
+
+		NeuronSWC rootNode;
+		int maxSize = 0;
+		for (map<int, int>::iterator it = rootTreeSizeMap.begin(); it != rootTreeSizeMap.end(); ++it)
+		{
+			if (it->second > maxSize)
+			{
+				maxSize = it->second;
+				rootNode = rootNodeMap.at(it->first);
+			}
+		}
+
+		return rootNode;
+	}
+}
+
+pair<NeuronSWC, NeuronSWC> NeuronStructExplorer::getMaxEucliDistNode(const NeuronTree& inputTree)
+{
+	NeuronSWC rootNode = NeuronStructExplorer::findRootNode(inputTree);
+	NeuronSWC maxEucliDistNode;
+	float EucliDist = 0;
+	for (auto& node : inputTree.listNeuron)
+	{
+		float thisNodeDist = sqrtf((node.x - rootNode.x) * (node.x - rootNode.x) + (node.y - rootNode.y) * (node.y - rootNode.y) + (node.z - rootNode.z) * (node.z - rootNode.z));
+		if (thisNodeDist > EucliDist)
+		{
+			EucliDist = thisNodeDist;
+			maxEucliDistNode = node;
+		}
+	}
+
+	pair<NeuronSWC, NeuronSWC> nodePair({ rootNode, maxEucliDistNode });
+	return nodePair;
+}
+
+int NeuronStructExplorer::getBranchNum(const NeuronTree& inputTree, bool onlyBifur)
+{
+	profiledTree profiledInputTree(inputTree);
+
+	int branchNum = 0;
+	if (!onlyBifur)
+	{
+		for (map<int, vector<size_t>>::iterator it = profiledInputTree.node2childLocMap.begin(); it != profiledInputTree.node2childLocMap.end(); ++it)
+			if (it->second.size() > 1) branchNum += it->second.size();
+	}
+	else
+	{
+		for (map<int, vector<size_t>>::iterator it = profiledInputTree.node2childLocMap.begin(); it != profiledInputTree.node2childLocMap.end(); ++it)
+			if (it->second.size() > 1) branchNum += (it->second.size() * 2 - 2);
+	}
+
+	return branchNum;
+}
+
+boost::container::flat_map<int, int> NeuronStructExplorer::getOuterNodeBifurMap(const NeuronTree& inputTree, float outerFraction, bool onlyBifur)
+{
+	profiledTree profiledInputTree(inputTree);
+
+	boost::container::flat_map<int, int> nodeBifurMap;
+	pair<NeuronSWC, NeuronSWC> nodePair = NeuronStructExplorer::getMaxEucliDistNode(inputTree);
+	float outerEucliDist = NeuronGeoGrapher::getDistBetween2nodes(nodePair.first, nodePair.second) * (1 - outerFraction);
+
+	if (outerEucliDist == 0) // In order to have the soma node included since the distance ratio is applied with > instead of >= by IT team.
+	{
+		for (map<int, vector<size_t>>::iterator it = profiledInputTree.node2childLocMap.begin(); it != profiledInputTree.node2childLocMap.end(); ++it)
+			if (it->second.size() > 1) nodeBifurMap.insert(pair<int, int>(it->first, it->second.size()));
+
+		return nodeBifurMap;
+	}
+	else
+	{
+		for (QList<NeuronSWC>::iterator it = profiledInputTree.tree.listNeuron.begin(); it != profiledInputTree.tree.listNeuron.end(); ++it)
+		{
+			if (NeuronGeoGrapher::getDistBetween2nodes(nodePair.first, *it) > outerEucliDist) // IT team uses > insteat of >=
+			{
+				if (profiledInputTree.node2childLocMap.find(it->n) != profiledInputTree.node2childLocMap.end())
+				{
+					if (profiledInputTree.node2childLocMap.at(it->n).size() > 1)
+						nodeBifurMap.insert(pair<int, int>(it->n, profiledInputTree.node2childLocMap.at(it->n).size()));
+				}
+			}
+		}
+
+		return nodeBifurMap;
+	}
+}
+/* ============================ END of [Morphological Features] ============================= */
 
 
 
@@ -1524,7 +1682,7 @@ profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledT
 map<string, float> NeuronStructExplorer::selfNodeDist(const QList<NeuronSWC>& inputNodeList)
 {
 	boost::container::flat_map<string, vector<NeuronSWC>> labeledNodeMap;
-	NeuronStructUtil::nodeTileMapGen(inputNodeList, labeledNodeMap, 30);
+	NeuronStructExplorer::nodeTileMapGen(inputNodeList, labeledNodeMap, 30);
 
 	float distSum = 0;
 	vector<float> distVec;
@@ -1587,7 +1745,7 @@ NeuronTree NeuronStructExplorer::swcIdentityCompare(const NeuronTree& subjectTre
 	map<string, vector<NeuronSWC>> gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
 	// This can cause complication if the element is a data struct.
 
-	NeuronStructUtil::nodeTileMapGen(refTree, gridSWCmap, nodeTileLength);
+	NeuronStructExplorer::nodeTileMapGen(refTree, gridSWCmap, nodeTileLength);
 
 	NeuronTree outputTree;
 	NeuronTree refConfinedFilteredTree;

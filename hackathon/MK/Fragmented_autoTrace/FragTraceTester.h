@@ -47,6 +47,8 @@ public:
 	void clusterColorGen_RGB(const map<int, set<vector<float>>>& clusterSegEndMap);
 	void pushMarkers(const set<vector<float>>& markerCoords, RGBA8 color) { (*this->sharedControlPanelPtr)->CViewerPortal->pushMarkersfromTester(markerCoords, color); }
 
+	void printOutHiddenType16Info();
+
 private:
 	FragTraceTester(FragTraceControlPanel* controlPanelPtr);
 

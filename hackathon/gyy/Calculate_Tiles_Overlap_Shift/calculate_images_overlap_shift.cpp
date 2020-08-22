@@ -321,14 +321,15 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
         if(i == 0)
         {
             rows.append(qname1);
-            QString merge_cell1 = "B1:E1";
+            QString merge_cell1 = "C1:F1";
             QAxObject *merge_range1 = worksheet->querySubObject("Range(const QString&)", merge_cell1);
             merge_range1->setProperty("MergeCells", true);
 
-            QString merge_cell2 = "G1:J1";
+            QString merge_cell2 = "H1:K1";
             QAxObject *merge_range2 = worksheet->querySubObject("Range(const QString&)", merge_cell2);
             merge_range2->setProperty("MergeCells", true);
 
+            rows.append("Z");
             rows.append("overlap");
             rows.append("");
             rows.append("");
@@ -341,6 +342,7 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
         }
         else if(i == 1)
         {
+            rows.append("");
             rows.append("");
             rows.append("C1");
             rows.append("C2");
@@ -372,6 +374,7 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
             QString qs1 = QString ::fromStdString(s1);
             rows.append(qs1);
 
+            rows.append(i-1);
             rows.append(XY_overlap[0][i-2]);
             rows.append(XY_overlap[1][i-2]);
             rows.append(XY_overlap[2][i-2]);
@@ -397,7 +400,7 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
         QVariant var = QVariant(vars);
 
         QString num = QString :: fromStdString(to_string(1150+2-Z_shift));
-        QString range = "A1:J"+num;
+        QString range = "A1:K"+num;
         cout<<"excel range: "<<range.toStdString()<<endl;
 
         QAxObject *excel_property = worksheet -> querySubObject("Range(const QString&)", range);

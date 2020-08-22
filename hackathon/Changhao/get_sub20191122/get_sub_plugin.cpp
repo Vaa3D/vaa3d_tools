@@ -1725,7 +1725,7 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
         tmpstr.append("_z").append(QString("%1").arg(terafly_landmarks[m].z));
 
         QString default_name = info.baseName()+"_TeraSub"+tmpstr+".tif";
-        QString save_path_img = dir+"\\"+default_name;
+        QString save_path_img = dir+"/"+default_name;
 
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
@@ -1756,7 +1756,7 @@ int get_sub_terafly_and_swc(V3DPluginCallback2 &callback,QWidget *parent)
                 swc_sub.push_back(curr_m_tmp);
             }
         }
-        QString save_path_swc = dir+"\\"+ info.baseName()+"_TeraSub"+tmpstr+".swc";
+        QString save_path_swc = dir+"/"+ info.baseName()+"_TeraSub"+tmpstr+".swc";
 
         saveSWC_file1(save_path_swc.toStdString(),swc_sub);
         readSWC_file(save_path_swc.toStdString(),swc_sub);

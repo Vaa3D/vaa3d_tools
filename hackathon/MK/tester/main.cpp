@@ -16,6 +16,7 @@
 #include "SWCtester.h"
 #include "imgTester.h"
 #include "processMonitoringTester.h"
+#include "file_directoryHandler.h"
 #include "FeatureExtractor.h"
 #include "integratedDataTypes.h"
 #include "TreeGrower.h"
@@ -44,29 +45,86 @@ int main(int argc, char* argv[])
 	/************************************/
 
 	ImgTester myImgTester;
+	File_DirectoryHandler fileDirHandler;
 	NeuronStructUtil myNeuronStructUtil;
 	NeuronStructExplorer myExplorer;
 	TreeTrimmer myTrimmer;
 
-	if (!funcName.compare("swcID"))
+	if (!funcName.compare("getBrNumFromSWCs"))
 	{
-		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
-		string subjSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped_centroids3D\\319215569.swc";
-		QString refSWCnameQ = QString::fromStdString(refSWCname);
-		QString subjSWCnameQ = QString::fromStdString(subjSWCname);
-		NeuronTree refTree = readSWC_file(refSWCnameQ);
-		NeuronTree subjTree = readSWC_file(subjSWCnameQ);
-		NeuronTree outputTree = NeuronStructExplorer::swcIdentityCompare(subjTree, refTree, 50, 20);
-		QString outputSWCname = "H:\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputTree);
+		map<string, int> swcBrNums;
+		vector<QString> SWClist = fileDirHandler.getFiles(QString::fromStdString(paras.at(0)), ".swc");
+		for (auto& swc : SWClist)
+		{
+			NeuronTree inputTree = readSWC_file(swc);
+			int brNum = NeuronStructExplorer::getBranchNum(inputTree, true);
+			QStringList splitFileName = swc.split("\\");
+			swcBrNums.insert({ (splitFileName.end() - 1)->toStdString(), brNum });
+		}
+
+		for (auto& brNum : swcBrNums) cout << brNum.first << " " << brNum.second << endl;
+		cout << endl;
 	}
-	else if (!funcName.compare("swcScale"))
+	else if (!funcName.compare("testVsegConvert"))
 	{
-		QString inputSWCName = QString::fromStdString(paras.at(0));
-		NeuronTree inputTree = readSWC_file(inputSWCName);
-		NeuronTree outputTree = NeuronStructUtil::swcScale(inputTree, 2, 2, 1);
-		QString outputName = QString::fromStdString(paras.at(1));
-		writeSWC_file(outputName, outputTree);
+		profiledTree profiledInputTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		for (auto& seg : profiledInputTree.segs)
+		{
+			//cout << "segID " << seg.first << ": " << endl;
+			//for (auto& node : seg.second.nodes)
+			//	cout << "  " << node.n << endl;
+			//cout << endl;
+			V_NeuronSWC convertedSeg = seg.second.convert2V_NeuronSWC();
+			//for (auto& node : convertedSeg.row)
+			//	cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6] << endl;
+			//cout << seg.second.nodes.size() << " " << seg.second.seg_childLocMap.size() << endl << endl;
+		}
+	}
+	else if (!funcName.compare("getMaxEucliDist"))
+	{
+		map<string, float> maxEucliMap;
+		vector<QString> SWClist = fileDirHandler.getFiles(QString::fromStdString(paras.at(0)), ".swc");
+		for (auto& swc : SWClist)
+		{
+			NeuronTree inputTree = readSWC_file(swc);
+			pair<NeuronSWC, NeuronSWC> nodePair = NeuronStructExplorer::getMaxEucliDistNode(inputTree);
+			float EucliDist = sqrtf((nodePair.first.x - nodePair.second.x) * (nodePair.first.x - nodePair.second.x) +
+									(nodePair.first.y - nodePair.second.y) * (nodePair.first.y - nodePair.second.y) +
+									(nodePair.first.z - nodePair.second.z) * (nodePair.first.z - nodePair.second.z));
+			QStringList splitFileName = swc.split("\\");
+			maxEucliMap.insert({ (splitFileName.end() - 1)->toStdString(), EucliDist });
+		}
+
+		for (auto& Eucli : maxEucliMap) cout << Eucli.first << " " << Eucli.second << endl;
+		cout << endl;
+	}
+	else if (!funcName.compare("outerBifurNum"))
+	{
+		map<string, boost::container::flat_map<int, int>> outerBifursMap;
+		vector<QString> SWClist = fileDirHandler.getFiles(QString::fromStdString(paras.at(0)), ".swc");
+		for (auto& swc : SWClist)
+		{
+			NeuronTree inputTree = readSWC_file(swc);
+			boost::container::flat_map<int, int> outerBifurMap = NeuronStructExplorer::getOuterNodeBifurMap(inputTree, atof(paras.at(1).c_str()));
+			QStringList splitFileName = swc.split("\\");
+			outerBifursMap.insert({ (splitFileName.end() - 1)->toStdString(), outerBifurMap });
+		}
+
+		for (auto& tree : outerBifursMap) cout << tree.first << " " << tree.second.size() << endl;
+		cout << endl;
+	}
+	else if (!funcName.compare("segCompareTest"))
+	{
+		profiledTree profiledBaseTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		profiledTree profiledTestTree(readSWC_file(QString::fromStdString(paras.at(1))));
+		for (auto& baseSeg : profiledBaseTree.segs)
+		{
+			for (auto& testSeg : profiledTestTree.segs)
+			{
+				if (testSeg.second == baseSeg.second)
+					cout << "same segment found, ID " << testSeg.first << endl;
+			}
+		}
 	}
 	else if (!funcName.compare("swc_typeFilter"))
 	{
@@ -998,107 +1056,6 @@ int main(int argc, char* argv[])
 		
 		outputTest << swcStats["mean"] << " " << swcStats["std"] << endl;
 	}
-	else if (!funcName.compare("accuracy"))
-	{
-		const char* inputPathNameC = argv[1];
-		string inputPathName(inputPathNameC);
-		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\accuracy.txt");
-		outputFile << "case num\t" << "rate\t" << "node num" << endl;
-
-		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
-		{
-			string swcName = swcIt->path().filename().string();
-			string swcFullName = inputPathName + "\\" + swcName;
-			QString swcFullNameQ = QString::fromStdString(swcFullName);
-			NeuronTree nt = readSWC_file(swcFullNameQ);
-
-			int TP = 0;
-			int FP = 0;
-			for (QList<NeuronSWC>::iterator it = nt.listNeuron.begin(); it != nt.listNeuron.end(); ++it)
-			{
-				if (it->type == 2) ++TP;
-				else if (it->type == 3) ++FP;
-			}
-			double rate = double(TP) / double(TP + FP);
-
-			string caseNum = swcName.substr(0, 9);
-			outputFile << caseNum << "\t" << rate << "\t" << nt.listNeuron.size() << endl;
-		}
-	}
-	else if (!funcName.compare("interAccuracy"))
-	{
-		const char* inputFolderNameC = argv[2];
-		string inputFolderName(inputFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(inputFolderName);
-
-		const char* savePathNameC = argv[3];
-		string savePathName(savePathNameC);
-		ofstream outputFile(savePathName);
-		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avgDist all\t" << "structure diff all" << endl;
-
-		for (filesystem::directory_iterator swcIt(inputFolderName); swcIt != filesystem::directory_iterator(); ++swcIt)
-		{
-			string csvName = swcIt->path().filename().string();
-			string csvFullName = inputFolderName + "\\" + csvName;
-			string caseName = csvName.substr(0, 9);
-			//cout << csvFullName << endl;
-			ifstream inputCSV(csvFullName);
-			string inputLine;
-			int count1_2 = 0;
-			int count2_1 = 0;
-			vector<string> values(7);
-			values[0] = caseName;
-			while (getline(inputCSV, inputLine))
-			{
-				if (inputLine.find("from neuron 1 to 2") != string::npos)
-				{
-					++count1_2;
-					vector<string> inputs;
-					boost::split(inputs, inputLine, boost::is_any_of(" "));
-					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
-					//cout << inputs.size() << " ";
-					string measure = inputs.back();			
-					
-					if (count1_2 == 1) values[1] = measure;
-					else if (count1_2 == 2) values[2] = measure;
-				}
-				else if (inputLine.find("from neuron 2 to 1") != string::npos)
-				{
-					++count2_1;
-					vector<string> inputs;
-					boost::split(inputs, inputLine, boost::is_any_of(" "));
-					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
-					//cout << inputs.size() << " ";
-					string measure = inputs.back();
-
-					if (count2_1 == 1) values[3] = measure;
-					else if (count2_1 == 2) values[4] = measure;
-				}
-				else if (inputLine.find("structure-averages") != string::npos)
-				{
-					vector<string> inputs;
-					boost::split(inputs, inputLine, boost::is_any_of(" "));
-					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
-					//cout << inputs.size() << " ";
-					string measure = inputs.back();
-					values[5] = measure;
-				}
-				else if (inputLine.find("(average)") != string::npos)
-				{
-					vector<string> inputs;
-					boost::split(inputs, inputLine, boost::is_any_of(" "));
-					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
-					//cout << inputs.size() << " ";
-					string measure = inputs.back();
-					values[6] = measure;
-				}
-			}
-			for (vector<string>::iterator it = values.begin(); it != values.end(); ++it) outputFile << *it << "\t";
-			outputFile << endl;
-			values.clear();
-			inputLine.clear();
-		}
-	}
 	else if (!funcName.compare("makeLinkerFile"))
 	{
 		const char* inputPathNameC = argv[1];
@@ -1355,35 +1312,6 @@ int main(int argc, char* argv[])
 			profiledTree outputProfiledTree;
 			NeuronStructUtil::treeUpSample(profiledNt, outputProfiledTree);
 			writeSWC_file(saveFolderNameQ + "\\" + *it, outputProfiledTree.tree);
-		}
-	}
-	else if (!funcName.compare("swcCombine"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-
-		const char* swcFolderNameC = argv[3];
-		string swcFolderName(swcFolderNameC);
-		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
-
-		const char* saveFolderNameC = argv[4];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		ImgManager myManager(folderNameQ);
-		myManager.outputRootPath = saveFolderNameQ;
-
-		for (QStringList::iterator caseIt = myManager.caseList.begin(); caseIt != myManager.caseList.end(); ++caseIt)
-		{
-			NeuronTree nt1 = readSWC_file(folderNameQ + "\\" + *caseIt);
-			NeuronTree nt2 = readSWC_file(swcFolderNameQ + "\\" + *caseIt);
-			vector<NeuronTree> treeVector(2);
-			treeVector[0] = nt1;
-			treeVector[1] = nt2;
-			NeuronTree outputTree = NeuronStructUtil::swcCombine(treeVector);
-
-			writeSWC_file(saveFolderNameQ + "\\" + *caseIt, outputTree);
 		}
 	}
 	else if (!funcName.compare("getPixValue"))

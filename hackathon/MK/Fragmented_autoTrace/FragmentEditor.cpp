@@ -178,10 +178,18 @@ void FragmentEditor::connectingProcess(V_NeuronSWC_list& displayingSegs, const m
 			
 			if (connectCase == 3)
 				for (auto& node : displayingSegs.seg[bodySegID].row) node.data[1] = *nodeTypes.begin();
+
+			newDisplaySeg.to_be_deleted = false;
+			displayingSegs.seg.push_back(newDisplaySeg);
+
+			if (this->sequentialTypeToggled)
+				this->sequencialTypeChanging(displayingSegs, displayingSegs.seg.size() - 1, (displayingSegs.seg.end() - 1)->row.begin()->type);
 		}
-		
-		newDisplaySeg.to_be_deleted = false;		
-		displayingSegs.seg.push_back(newDisplaySeg);
+		else
+		{
+			newDisplaySeg.to_be_deleted = false;
+			displayingSegs.seg.push_back(newDisplaySeg);
+		}
 	}
 }
 
@@ -267,7 +275,7 @@ set<int> FragmentEditor::getNodeTypesInSeg(const V_NeuronSWC& inputVneuronSWC)
 	set<int> outputNodeTypes;
 	for (auto& node : inputVneuronSWC.row)
 	{
-		if (node.data[1] == 16) continue;
+		if (node.data[1] == 16 || node.data[1] == 18) continue;
 		else outputNodeTypes.insert(node.data[1]);
 	}
 
@@ -324,7 +332,7 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
-		NeuronStructUtil::node2loc_node2childLocMap(targetSegUnit.nodes, node2LocMap, node2childLocMap);
+		NeuronStructExplorer::node2loc_node2childLocMap(targetSegUnit.nodes, node2LocMap, node2childLocMap);
 		vector<QList<NeuronSWC>> nodeLists;
 		QList<NeuronSWC> nodeList;
 		for (QList<NeuronSWC>::iterator it = targetSegUnit.nodes.begin(); it != targetSegUnit.nodes.end(); ++it)
@@ -344,4 +352,70 @@ void FragmentEditor::erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs,
 			displayingSegs.seg.push_back(newV_NeuronSWC);
 		}
 	}
+}
+
+void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const int seedSegID, const int type)
+{
+	set<int> segs2BtypeChanged;
+	profiledTree currDisplayProfiledTree(displayingSegs.seg);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+
+	set<int> startingSegs = { seedSegID };
+	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
+
+	for (auto& seg : segs2BtypeChanged)
+	{
+		if (!currDisplayProfiledTree.segs.at(seg).to_be_deleted)
+		{
+			for (auto& node : displayingSegs.seg[seg].row)
+				node.type = type;
+		}
+	}
+}
+
+void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, const set<int>& startingSegs, const int type)
+{
+	set<int> segs2BtypeChanged;
+	profiledTree currDisplayProfiledTree(displayingSegs.seg);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	
+	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
+
+	for (auto& seg : segs2BtypeChanged)
+	{
+		if (!currDisplayProfiledTree.segs.at(seg).to_be_deleted)
+		{
+			for (auto& node : displayingSegs.seg[seg].row)
+				node.type = type;
+		}
+	}
+}
+
+void FragmentEditor::rc_findConnectedSegs(const profiledTree& inputProfiledTree, const set<int>& seedSegs, set<int>& connectedSegs)
+{
+	set<int> newSegs;
+
+	for (set<int>::iterator segIt = seedSegs.begin(); segIt != seedSegs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::const_iterator nodeIt = inputProfiledTree.segs.at(*segIt).nodes.begin(); nodeIt != inputProfiledTree.segs.at(*segIt).nodes.end(); ++nodeIt)
+		{
+			string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
+			pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(nodeCoordKey);
+			if (range.second - range.first == 1) continue;
+			else
+			{
+				for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+				{
+					if (seedSegs.find(it->second) == seedSegs.end() && connectedSegs.find(it->second) == connectedSegs.end())
+					{
+						newSegs.insert(it->second);
+						connectedSegs.insert(it->second);
+					}
+				}
+			}
+		}
+	}
+
+	if (newSegs.empty()) return;
+	else this->rc_findConnectedSegs(inputProfiledTree, newSegs, connectedSegs);
 }

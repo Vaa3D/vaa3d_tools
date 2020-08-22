@@ -144,7 +144,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 		ifs>> marker->z;
 		ifs>> marker->radius;
 		int par_id = -1; ifs >> par_id;
-
+        ifs.ignore(1000,'\n');
 		parid_map[marker] = par_id;
 		swc.push_back(marker);
 	}
@@ -161,7 +161,6 @@ vector<MyMarker*> readSWC_file(string swc_file)
 
 	return swc;
 }
-
 bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers)
 {
     cout<<"marker num = "<<out_markers.size()<<", save swc file to "<<swc_file.c_str()<<endl;

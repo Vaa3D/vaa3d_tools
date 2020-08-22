@@ -5,6 +5,6 @@
 #include "my_surf_objs.h"
 
 vector<MyMarker*> swc_convert(NeuronTree & nt);
-NeuronTree swc_convert(vector<MyMarker*> & inswc);
+NeuronTree swcConvert(const vector<MyMarker *> &inswc);
 
 #endif // SWC_CONVERT_H

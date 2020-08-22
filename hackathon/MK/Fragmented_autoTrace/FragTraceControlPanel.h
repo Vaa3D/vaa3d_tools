@@ -1,3 +1,16 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2020 Hsienchi Kuo (Allen Institute)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  [FragTraceControlPanel] is the user interface of Neuron Assembler. 
+*  It collects user's parameters and initiates [FragTraceManager]'s segment generating process. 
+*  It also receives user's editing commands through buttons and communicates between [terafly::CViewer], [terafly::CViewer]'s view3DWidget, and [FragmentEditor].
+*
+********************************************************************************/
+
 #ifndef _FRAGTRACECONTROLPANEL_H_
 #define _FRAGTRACECONTROLPANEL_H_
 
@@ -24,19 +37,18 @@ public:
 	~FragTraceControlPanel();
 	map<string, float> paramsFromUI;
 
-// ======= Saving path for results / intermediate results ======= //
+	// ======= Saving path for results / intermediate results ======= //
 	QString saveSWCFullName;
-// ============================================================== //
+	// ============================================================== //
 
 
-/* ======= Result and Scaling Functions ======= */ 
+	/* ======= Result and Scaling Functions ======= */ 
 	NeuronTree tracedTree;
-	map<string, NeuronTree> tracedTrees;
 	map<int, string> scalingRatioMap;
-/* ============================================ */
+	/* ============================================ */
 
 
-/* ======= Terafly Communicating Methods ======= */
+	/* ======= Terafly Communicating Methods ======= */
 	virtual void getNAVersionNum();
 
 	virtual void updateCViewerPortal();
@@ -47,24 +59,31 @@ public:
 	virtual void eraserSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	virtual void connectSegProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap);
 	virtual void exitNAeditingMode();
-/* ============================================= */
+
+	virtual bool changeAssociatedSegsClicked();
+	virtual void signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const int retypedSeg, const int type);
+	virtual void signalNA2retypeConnectedSegs(V_NeuronSWC_list& displayingSegs, const set<int>& retypedSegs, const int type);
+	/* ============================================= */
 
 
+	/* ================== User Interface Buttons =================== */
 public slots:
-/* ================== User Interface Buttons =================== */
 	// ------- Configuration ------- //
 	void imgFmtChecked(bool checked);
 	void nestedChecks(bool checked);
+	void markerMonitorOption(bool checked);
 	void multiSomaTraceChecked(bool checked);
 	void saveSettingsClicked();
-	void browseSavePathClicked();
+	//void browseSavePathClicked();
 	// ---------------------------- //
 
 	// ------- Post Editing ------- //
 	void eraseButtonClicked();
 	void connectButtonClicked();
+	void showHideButtonClicked(bool clicked);
+	void sequentialTypeChangingToggled(bool toggle);
 	// ---------------------------- //
-/* ======= END of [User Interface Configuration Buttons] ======= */
+	/* ======= END of [User Interface Configuration Buttons] ======= */
 
 
 // ***************************************************************************** //
@@ -79,22 +98,21 @@ public slots:
 
 
 private:
-/* ============== Member Class Pointers ============== */
+	/* ============== Member Class Pointers ============== */
 	V3DPluginCallback2* thisCallback; // DO NOT DELETE! -> created and sent from v3d_plugin_loader.
 	INeuronAssembler* CViewerPortal;  // DO NOT DELETE! -> This is the base class interface of CViewer!
 	Ui::FragmentedTraceUI* uiPtr;
 	FragTraceManager* traceManagerPtr;
 	FragmentEditor* fragEditorPtr;
-/* =================================================== */
+	/* =================================================== */
 
 
-/* =============== Additional Widget =============== */
-	QDoubleSpinBox* doubleSpinBox;
+	/* =============== Additional Widget =============== */
 	QStandardItemModel* somaListViewer;
-/* ================================================= */
+	/* ================================================= */
 
 
-/* ============== Marker Detection ============== */
+	/* ============== Marker Detection ============== */
 	int surType;
 	QList<ImageMarker> updatedMarkerList;
 	QList<ImageMarker> selectedMarkerList;
@@ -104,19 +122,19 @@ private:
 	map<int, ImageMarker> localAxonMarkerMap;
 	map<int, string> somaDisplayNameMap;
 	void updateMarkerMonitor();
-/* ============================================== */
+	/* ============================================== */
 
 
-/* =============== Parameter Collecting Functions =============== */
+	/* =============== Parameter Collecting Functions =============== */
 	void pa_imgEnhancement();
 	void pa_maskGeneration();
 	void pa_objFilter();
 	void pa_objBasedMST();
 	void pa_axonContinuous();
-/* =========== END of [Parameter Collecting Functions] ========== */
+	/* =========== END of [Parameter Collecting Functions] ========== */
 
 
-/* ======= Tracing Volume Preparation ======= */
+	/* ======= Tracing Volume Preparation ======= */
 	// Partial volume tracing is achieved by talking to tf::PluginInterface through V3d_PluginLoader with v3d_interface's virtual [getPartialVolumeCoords],
 	// so that it can be directly accessed through [thisCalback] from [teraflyTracePrep].
 	bool volumeAdjusted;
@@ -126,7 +144,22 @@ private:
 
 	void teraflyTracePrep(workMode mode); // Image preparation; NOTE: FragTraceManager is created here!
 	void sendImgParams();
-/* ========================================== */
+	/* ========================================== */
+
+
+	/* ========= Post Editing ========= */
+	int totalVsegNum, distInterval, currentDist;
+	vector<ptrdiff_t> type16Locs;
+	vector<V_NeuronSWC> tracedType16Vsegs;
+	boost::container::flat_set<ptrdiff_t> updatedHiddenSegLocs, permanentDelSegLocs, incrementHiddenLocs;
+	boost::container::flat_map<int, boost::container::flat_set<ptrdiff_t>>::iterator type16showingPtr;
+	boost::container::flat_map<int, boost::container::flat_set<ptrdiff_t>> dist2VsegLocMap;
+	//boost::container::flat_map<int, boost::container::flat_set<segUnit>> dist2segUnitMap;
+	
+	void getType16Locs();
+	void updateDisplayingVsegProfile();
+	void moveType16showPtr(bool increment);
+	/* ================================ */
 
 
 private slots:	

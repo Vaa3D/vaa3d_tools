@@ -84,11 +84,13 @@ bool calculate_2image_overlap_shift(V3DPluginCallback2 &callback, QWidget *paren
     outfile<<"XY_overlap = "<<XY_overlap<<"\n"<<"shift = "<<XY_shift<<"  \t"<<"\n";
     outfile.close();
 
+    /*
     QString cutImagesFile1 = saveImageDir + "\\" + imageName1.baseName() + "_cut.v3draw";
     QString cutImagesFile2 = saveImageDir + "\\" + imageName2.baseName() + "_cut.v3draw";
     V3DLONG in_sz_times[4] = {(in_sz1[0]-40), (in_sz1[1]-40), in_sz1[2], in_sz1[3]};
     simple_saveimage_wrapper(callback, cutImagesFile1.toStdString().c_str(), (unsigned char *)p_cut_data1, in_sz_times, datatype1);
     simple_saveimage_wrapper(callback, cutImagesFile2.toStdString().c_str(), (unsigned char *)p_cut_data2, in_sz_times, datatype1);
+    */
 }
 
 bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, unsigned short * &p_cut_data1, unsigned short * &p_cut_data2, QString orientation, int & XY_overlap, int & XY_shift)
@@ -168,9 +170,7 @@ void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data)
 {
     cout<<"cut planes edge!"<<endl;
     if(p_cut_data){delete []p_cut_data; p_cut_data = 0;}
-    cout<<__LINE__<<endl;
     p_cut_data = new unsigned short[1880 * 1880];
-    cout<<__LINE__<<endl;
     for(int i = 0; i < 1880; i ++)
         for(int j = 0; j < 1880; j ++)
         {

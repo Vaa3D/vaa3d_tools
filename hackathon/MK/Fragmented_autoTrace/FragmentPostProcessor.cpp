@@ -32,6 +32,37 @@ NeuronTree FragmentPostProcessor::treeScaleBack(const NeuronTree& inputTree, con
 	return shiftScaleBackTree;
 }
 
+profiledTree FragmentPostProcessor::straightenSpikeRoots(const profiledTree& inputProfiledTree, double angleThre)
+{
+	profiledTree outputProfiledTree = inputProfiledTree;
+	//cout << " -- spike root number:" << outputProfiledTree.spikeRootIDs.size() << endl;
+	for (boost::container::flat_set<int>::iterator it = outputProfiledTree.spikeRootIDs.begin(); it != outputProfiledTree.spikeRootIDs.end(); ++it)
+	{
+		if (outputProfiledTree.node2LocMap.find(*it) != outputProfiledTree.node2LocMap.end() && outputProfiledTree.node2childLocMap.find(*it) != outputProfiledTree.node2childLocMap.end())
+		{
+			if (outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it)).parent != -1 && outputProfiledTree.node2childLocMap.at(*it).size() == 1)
+			{
+				NeuronSWC angularNode = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(*it));
+				NeuronSWC endNode1 = outputProfiledTree.tree.listNeuron.at(outputProfiledTree.node2LocMap.at(angularNode.parent));
+				NeuronSWC endNode2 = outputProfiledTree.tree.listNeuron.at(*outputProfiledTree.node2childLocMap.at(*it).begin());
+
+				float angle = NeuronGeoGrapher::get3nodesFormingAngle<float>(angularNode, endNode1, endNode2);
+				if (angle <= 0.6)
+				{
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].x = (endNode1.x + endNode2.x) / 2;
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].y = (endNode1.y + endNode2.y) / 2;
+					outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*it)].z = (endNode1.z + endNode2.z) / 2;
+				}
+			}
+		}
+	}
+
+	profiledTreeReInit(outputProfiledTree);
+	return outputProfiledTree;
+}
+
+
+/* =========================== Extended Axon Tracing Methods =========================== */
 set<vector<float>> FragmentPostProcessor::getProbesFromLabeledExistingSegs(const NeuronTree& inputTree) const
 {
 	set<vector<float>> outputProbeSet;
@@ -171,6 +202,58 @@ void FragmentPostProcessor::rc_getSegIDsFromClusterChain(boost::container::flat_
 	}
 }
 
+profiledTree FragmentPostProcessor::selectiveType16(const profiledTree& extendedTree, const profiledTree& autoTracedTree, int radius) const
+{
+	profiledTree outputProfiledTree;
+	if (extendedTree.tree.listNeuron.isEmpty())
+	{
+		cerr << "Extended tree is empty. Do nothing and return." << endl;
+		return outputProfiledTree;
+	}
+	if (autoTracedTree.segEndClusterNodeMap.empty() || autoTracedTree.segEndClusterCentroidMap.empty())
+	{
+		cerr << "Auto-traced tree doesn't have segEndClusterNodeMap or segEndClusterCentroidMap propagated." << endl;
+		cerr << "Do nothing and return." << endl;
+		return outputProfiledTree;
+	}
+
+	for (auto& cluster : autoTracedTree.segEndClusterCentroidMap)
+	{
+		cout << "cluster ID - " << cluster.first << endl;
+		for (auto& node : extendedTree.tree.listNeuron)
+		{
+			if (sqrtf((cluster.second.at(0) - node.x) * (cluster.second.at(0) - node.x) +
+					  (cluster.second.at(1) - node.y) * (cluster.second.at(1) - node.y) +
+					  (cluster.second.at(2) - node.z) * (cluster.second.at(2) - node.z)) <= radius)
+			{
+				for (auto& clusterNode : autoTracedTree.segEndClusterNodeMap.at(cluster.first))
+				{
+					string nodeKey = to_string(clusterNode.at(0)) + "_" + to_string(clusterNode.at(1)) + "_" + to_string(clusterNode.at(2));
+					pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = autoTracedTree.nodeCoordKey2segMap.equal_range(nodeKey);
+					for (boost::container::flat_multimap<string, int>::const_iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+					{
+						outputProfiledTree.tree.listNeuron.append(autoTracedTree.segs.at(rangeIt->second).nodes);
+						for (auto& node : autoTracedTree.segs.at(rangeIt->second).nodes)
+							cout << node.n << " " << node.x << " " << node.y << " " << node.z << " " << node.parent << endl;
+					}
+				}
+				goto SEGEND_CLUSTER_INCLUDED;
+			}
+		}
+
+	SEGEND_CLUSTER_INCLUDED:
+		cout << endl;
+		continue;
+	}
+	integratedDataTypes::profiledTreeReInit(outputProfiledTree);
+	cout << outputProfiledTree.segs.size() << endl;
+	writeSWC_file("D:\\Work\\FragTrace\\selective16.swc", outputProfiledTree.tree);
+
+	return outputProfiledTree;
+}
+/* ===================== END of [Extended Axon Tracing Methods] ======================== */
+
+
 NeuronTree FragmentPostProcessor::integrateNewTree(const NeuronTree& existingTree, const NeuronTree& preFinalizedTree, const int minNodeNum) const
 {
 	if (!existingTree.listNeuron.isEmpty())
@@ -181,7 +264,6 @@ NeuronTree FragmentPostProcessor::integrateNewTree(const NeuronTree& existingTre
 		vector<NeuronTree> trees = { profiledPRE_FINALIZED_newPart.tree, scaledBackExistingTree };
 		NeuronTree outputTree = NeuronStructUtil::swcCombine(trees);
 		return this->scaleTree(outputTree, this->scalingFactor, this->imgOrigin);
-
 	}
 	else return this->scaleTree(preFinalizedTree, this->scalingFactor, this->imgOrigin);
 }

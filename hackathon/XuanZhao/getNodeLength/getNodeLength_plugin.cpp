@@ -25,8 +25,10 @@ QStringList getNodeLengthPlugin::menulist() const
 QStringList getNodeLengthPlugin::funclist() const
 {
 	return QStringList()
-        <<tr("getNodeLength")
-        <<tr("UtilityThreshold")
+        <<tr("UtilityRendering")
+        <<tr("AxonUtilityRendering")
+        <<tr("getUtility")
+        <<tr("UtilityContour")
         <<tr("getUtreeInfolder")
         <<tr("getCurve")
         <<tr("getCurve2")
@@ -62,27 +64,52 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("getNodeLength"))
+    if (func_name == tr("UtilityRendering"))
 	{
+        //
+        qDebug()<<"Utility rendering of Neuron";
         QString swcfile = infiles[0];
         NeuronTree nt = readSWC_file(swcfile);
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
-        double dendritR = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        double axonRatio = (inparas.size()>=2) ? atof(inparas[1]) : 1;
         double otherR = (inparas.size()>=3) ? atof(inparas[2]) : 1;
         double thre = (inparas.size()>=4) ? atof(inparas[3]) : 1;
-        getNodeLength(nt,maxR,dendritR,otherR,thre);
-        writeSWC_file(swcfile.split(".").at(0)+"_max_"+QString::number(maxR)+"_result.swc",nt);
+        getNodeLength(nt,maxR,axonRatio,otherR,thre);
+        writeSWC_file(swcfile.split(".").at(0)+"_max_"+QString::number(maxR)+"_UtilityResult.swc",nt);
 	}
-    else if (func_name == tr("UtilityThreshold"))
+    else if (func_name == tr("AxonUtilityRendering"))
     {
+        qDebug()<<"Utility rendering of Axonal part";
+        QString swcfile = infiles[0];
+        NeuronTree nt = readSWC_file(swcfile);
+        double thre = (inparas.size() >= 1) ? atoi(inparas[0]) : 0;
+        int maxR = (inparas.size()>=2) ? atof(inparas[1]) : 100;
+        getAxonUtilityTree(nt,thre,maxR);
+        writeSWC_file(swcfile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+    }
+    else if (func_name == tr("getUtility")){
+        qDebug()<<"Considering depth, under developing";
         QString swcfile = infiles[0];
         NeuronTree nt = readSWC_file(swcfile);
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
-        double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
-        getAxonUtilityTree(nt,maxR,thre);
-        writeSWC_file(swcfile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+        double axon_ratio = (inparas.size() >= 2) ? atof(inparas[1]) : 1;
+        double axon_terminal = (inparas.size() >= 3) ? atof(inparas[2]) : 1;
+        double other_ratio = (inparas.size() >= 4) ? atof(inparas[3]) : 1;
+        double other_terminal = (inparas.size() >= 5) ? atof(inparas[4]) : 1;
+        getUtilityValue(nt,maxR,axon_ratio,axon_terminal,other_ratio,other_terminal);
+
+        writeSWC_file(swcfile.split(".").at(0)+"_"+QString::number(maxR,10,2)+"_"+QString::number(axon_ratio,10,2)+"_Utility.swc",nt);
+    }
+    else if (func_name == tr("UtilityContour")){
+        qDebug()<<"Rendering utility in multi-stage: like python/matlab contour";
+        qDebug()<<"UtilityInterval:0-1,1-5,5-10,10-20,20-30,30-50,50-80,80-100";
+        QString swcfile = infiles[0];
+        NeuronTree nt = readSWC_file(swcfile);
+        getUtilityContour(nt);
+        writeSWC_file(swcfile.split(".").at(0)+"_UtilityCountor.swc",nt);
     }
     else if (func_name == tr("getUtreeInfolder")){
+        qDebug()<<"Get Utility rendering results of a folder:axon part";
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
         double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
         QString dirPath = infiles[0];
@@ -99,6 +126,28 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
             writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
         }
 
+    }
+    else if (func_name == tr("getUtilityL1Infolder"))
+    {
+        qDebug()<<"Get Utility rendering results of a folder: include dendrite";
+        int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
+        double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
+        QString dirPath = infiles[0];
+        QStringList nameFilters;
+        nameFilters<<"*.swc";
+        QDir dir(dirPath);
+        QStringList swcFiles = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+
+        for(int i=0; i<swcFiles.size(); i++){
+            QString swcFile = dirPath + '\\' + swcFiles[i];
+            NeuronTree nt = readSWC_file(swcFile);
+            double axonRatio =1;
+            double otherR =1;
+            getUtilityL1Infolder(nt,maxR,axonRatio,otherR,thre);
+            writeSWC_file(swcFile.split(".").at(0)+"_max_"+QString::number(maxR)+"_UtilityL1Result.swc",nt);
+//            getAxonUtilityTree(nt,maxR,thre);
+//            writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+        }
     }
     else if (func_name == tr("getCurve"))
 	{
@@ -180,7 +229,13 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
     }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        qDebug()<<"[For Windows: Utility Rendeing]vaa3d /x <libname:getNodeLength> /f UtilityRendering /i <input_swc> -p <MaxRadius> <AxonRatio> <OtherTypeRatio>";
+        qDebug()<<"[For Windows: Utility Rendeing]vaa3d /x <libname:getNodeLength> /f getUtreeInfolder /i <input_swc_folder_path> -p <MaxRadius> <Threshold>";
+        qDebug()<<"[For Windows: Axon Utility Rendering]vaa3d /x <libname:getNodeLength> /f AxonUtilityRendering /i <input_swc> -p <Threshold> <MaxRadius>";
+        qDebug()<<"[For Windows: Utility Contour]vaa3d /x <libname:getNodeLength> /f UtilityContour /i <input_swc>";
+
+        //        qmake & nmake -f Makefile.Release
+//		v3d_msg("To be implemented.");
 	}
 	else return false;
 

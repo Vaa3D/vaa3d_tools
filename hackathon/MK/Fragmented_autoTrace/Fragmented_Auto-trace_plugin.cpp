@@ -35,6 +35,7 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	{
 		this->UIinstancePtr = new FragTraceControlPanel(parent, &callback);
 		this->UIinstancePtr->exec(); // This forces the dialog to stay. Note, it is still on the SAME THREAD.
+		this->UIinstancePtr->getNAVersionNum();
 		if (this->UIinstancePtr->CViewerPortal != nullptr) this->UIinstancePtr->CViewerPortal->changeFragTraceStatus(false);
 		delete this->UIinstancePtr;
 	}
@@ -117,6 +118,27 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 
 				this->UIinstancePtr->uiPtr->pushButton_13->setChecked(true);
 				this->UIinstancePtr->connectButtonClicked();
+			}
+			else if (!inputParam.compare("show-hide"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_4->isChecked())
+				{
+					this->UIinstancePtr->uiPtr->pushButton_4->setChecked(false);
+					this->UIinstancePtr->showHideButtonClicked(false);
+				}
+				else
+				{
+					this->UIinstancePtr->uiPtr->pushButton_4->setChecked(true);
+					this->UIinstancePtr->showHideButtonClicked(true);
+				}
+			}
+			else if (!inputParam.compare("increase_show"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_4->isChecked()) this->UIinstancePtr->moveType16showPtr(true);
+			}
+			else if (!inputParam.compare("decrease_show"))
+			{
+				if (this->UIinstancePtr->uiPtr->pushButton_4->isChecked()) this->UIinstancePtr->moveType16showPtr(false);
 			}
 			else if (!inputParam.compare("escape"))
 			{

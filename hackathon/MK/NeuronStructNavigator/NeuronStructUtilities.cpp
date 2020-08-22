@@ -8,9 +8,8 @@
 *  Most of NeuronStructUtil class methods intend to operate on the whole neuron struct level.
 *  As 'utility' it is called, the functionalities provided in this class include:
 *    a. [Basic neuron struct operations]                   -- cropping SWC, scaling SWC, swc registration, etc.
-*    b. [Tree - subtree operations]                        -- extracting upstream or downstream of a given tree.
-*    c. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc.
-*    d. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
+*    b. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc.
+*    c. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
 *
 *  Most of NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
 *  A typical function call would need at least three input arguments:
@@ -119,6 +118,7 @@ segUnit NeuronStructUtil::segUnitConnect_end2end(const segUnit& segUnit1, const 
 	
 }*/
 /* ===================================================================================================== */
+
 
 
 /* ===================================== Neuron Struct Processing ====================================== */
@@ -300,8 +300,8 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 {
 	boost::container::flat_map<string, QList<NeuronSWC>> targetNodeTileMap;
 	boost::container::flat_map<string, QList<NeuronSWC>> refNodeTileMap;
-	NeuronStructUtil::nodeTileMapGen(targetTree, targetNodeTileMap);
-	NeuronStructUtil::nodeTileMapGen(refTree, refNodeTileMap);
+	NeuronStructExplorer::nodeTileMapGen(targetTree, targetNodeTileMap);
+	NeuronStructExplorer::nodeTileMapGen(refTree, refNodeTileMap);
 
 	if (type == 0)
 	{
@@ -369,6 +369,18 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 		else 
 			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
 	}
+
+	return outputTree;
+}
+
+bool NeuronStructUtil::isSorted(const NeuronTree& inputNeuronTree) // ~~ Not implemented yet ~~
+{
+	return true; 
+}
+
+NeuronTree NeuronStructUtil::sortTree(const NeuronTree& inputNeuronTree) // ~~ Not implemented yet ~~
+{
+	NeuronTree outputTree;
 
 	return outputTree;
 }
@@ -575,58 +587,6 @@ QList<NeuronSWC> NeuronStructUtil::V_NeuronSWC2nodeList(const vector<V_NeuronSWC
 }
 /* ===================================== END of [Neuron Struct Processing] ===================================== */
 
-
-/* ====================================== Neuron Struct Profiling Methods ====================================== */
-void NeuronStructUtil::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
-{
-	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
-	{
-		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
-			node2segMap.insert(pair<int, int>(nodeIt->n, segIt->first));
-	}
-}
-
-void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
-{
-	// This method profiles node-location node-child_location of a given NeuronTree.
-	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
-	// However, any tip node WILL NOT have an entry in node2childLocMap.
-
-	nodeLocMap.clear();
-	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
-		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
-	//cout << " Node - Locations mapping done. size: " << nodeLocMap.size() << endl;
-
-	node2childLocMap.clear();
-	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
-	{
-		int paID = it->parent;
-		if (paID == -1)
-		{
-			vector<size_t> childSet;
-			childSet.clear();
-			node2childLocMap.insert(pair<int, vector<size_t>>(it->n, childSet));
-		}
-		else
-		{
-			if (node2childLocMap.find(paID) != node2childLocMap.end())
-			{
-				node2childLocMap[paID].push_back(size_t(it - inputNodeList.begin()));
-				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
-			}
-			else
-			{
-				vector<size_t> childSet;
-				childSet.clear();
-				childSet.push_back(size_t(it - inputNodeList.begin()));
-				node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
-				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
-			}
-		}
-	}
-	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
-}
-/* ================================= END of [Neuron Struct Profiling Methods] ================================== */
 
 
 /* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
@@ -996,6 +956,7 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 	return outputTree;
 }
 /* =============================== END of [SWC <-> ImgAnalyzer::connectedComponents] =============================== */
+
 
 
 /* =========================================== Miscellaneous =========================================== */

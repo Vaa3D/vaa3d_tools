@@ -7,8 +7,10 @@ struct block{
     XYZ small;
     XYZ large;
 };
-LandmarkList get_missing_branches_menu(V3DPluginCallback2 & callback, QWidget *parent, Image4DSimple * p4DImage);
-LandmarkList get_missing_branches_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+//LandmarkList get_missing_branches_menu(V3DPluginCallback2 & callback, QWidget *parent, Image4DSimple * p4DImage, QList<NeuronSWC> neuron);
+LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent, unsigned char * & data1d_crop, V3DLONG mysz[4], ImagePixelType datatype, QList<NeuronSWC> neuron, QString IntTreeName);
+//LandmarkList get_missing_branches_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+
 //QList<int> get_tips(NeuronTree nt, bool include_root);
 //QList<int> get_branchps(NeuronTree nt);
 //block offset_block(block input_block, XYZ offset);
