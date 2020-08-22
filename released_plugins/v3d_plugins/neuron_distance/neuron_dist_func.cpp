@@ -15,7 +15,6 @@
 #include <iostream>
 
 #include <fstream>
-
 using namespace std;
 
 const QString title = QObject::tr("Neuron Distantce");
@@ -25,15 +24,15 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 	SelectNeuronDlg * selectDlg = new SelectNeuronDlg(parent);
 	selectDlg->exec();
 
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1,selectDlg->name_nt1);
-	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
-    message += QString("entire-structure-average:from neuron 1 to 2 = %1\n").arg(tmp_score.dist_12_allnodes);
-    message += QString("entire-structure-average:from neuron 2 to 1 = %1\n").arg(tmp_score.dist_21_allnodes);
-    message += QString("average of bi-directional entire-structure-averages = %1\n").arg(tmp_score.dist_allnodes);
-	message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
-	message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
+//    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1,selectDlg->name_nt1);
+//	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
+//    message += QString("entire-structure-average:from neuron 1 to 2 = %1\n").arg(tmp_score.dist_12_allnodes);
+//    message += QString("entire-structure-average:from neuron 2 to 1 = %1\n").arg(tmp_score.dist_21_allnodes);
+//    message += QString("average of bi-directional entire-structure-averages = %1\n").arg(tmp_score.dist_allnodes);
+//	message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
+//	message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 
-	v3d_msg(message);
+//	v3d_msg(message);
 	return 1;
 }
 
@@ -55,23 +54,18 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	QString name_nt2(inlist->at(1));
 	NeuronTree nt1 = readSWC_file(name_nt1);
 	NeuronTree nt2 = readSWC_file(name_nt2);
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,name_nt1,d_thres);
+    QFileInfo file(name_nt1);
+    QString name=file.baseName();
+    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres,name);
 
-	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
-    cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
-    cout<<"entire-structure-average (from neuron 2 to 1)= "<<tmp_score.dist_21_allnodes <<endl;
-    cout<<"average of bi-directional entire-structure-averages = "<<tmp_score.dist_allnodes <<endl;
-    cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
-    cout<<"percent of different-structure (from neuron 1 to 2) = "<<tmp_score.percent_12_apartnodes<<"%"<<endl<<endl;
-    cout<<"percent of different-structure (from neuron 2 to 1) = "<<tmp_score.percent_21_apartnodes<<"%"<<endl<<endl;
-    cout<<"percent of different-structure (average) = "<<tmp_score.percent_apartnodes<<"%"<<endl<<endl;
-
-    if (output.size() == 1)
-    {
-        char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-
+    qDebug()<<"--------------------";
         ofstream myfile;
-        myfile.open (outimg_file);
+        myfile.open (((vector<char*> *)(output.at(0).p))->at(0));
+        myfile<<"same:"<<tmp_score.dist1<<endl;
+        myfile<<"different:"<<tmp_score.dist2<<endl;
+        myfile<<"mul:"<<tmp_score.dist3<<endl;
+        myfile<<"single:"<<tmp_score.dist4<<endl;
+        myfile<<"single2:"<<tmp_score.dist5<<endl;
         myfile << "input1 = ";
         myfile << name_nt1.toStdString().c_str()  ;
         myfile << "\ninput2 = ";
@@ -92,7 +86,42 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();
-    }
+    cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
+    cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
+    cout<<"entire-structure-average (from neuron 2 to 1)= "<<tmp_score.dist_21_allnodes <<endl;
+    cout<<"average of bi-directional entire-structure-averages = "<<tmp_score.dist_allnodes <<endl;
+    cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
+    cout<<"percent of different-structure (from neuron 1 to 2) = "<<tmp_score.percent_12_apartnodes<<"%"<<endl<<endl;
+    cout<<"percent of different-structure (from neuron 2 to 1) = "<<tmp_score.percent_21_apartnodes<<"%"<<endl<<endl;
+    cout<<"percent of different-structure (average) = "<<tmp_score.percent_apartnodes<<"%"<<endl<<endl;
+
+//    if (output.size() == 1)
+//    {
+//        char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+//        ofstream myfile;
+//        myfile.open (outimg_file);
+//        myfile << "input1 = ";
+//        myfile << name_nt1.toStdString().c_str()  ;
+//        myfile << "\ninput2 = ";
+//        myfile << name_nt2.toStdString().c_str();
+//        myfile << "\nentire-structure-average (from neuron 1 to 2) = ";
+//        myfile << tmp_score.dist_12_allnodes;
+//        myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
+//        myfile << tmp_score.dist_21_allnodes;
+//        myfile << "\naverage of bi-directional entire-structure-averages = ";
+//        myfile << tmp_score.dist_allnodes;
+//        myfile << "\ndifferen-structure-average = ";
+//        myfile << tmp_score.dist_apartnodes;
+//        myfile << "\npercent of different-structure (from neuron 1 to 2) = ";
+//        myfile << tmp_score.percent_12_apartnodes;
+//        myfile << "\npercent of different-structure (from neuron 2 to 1) = ";
+//        myfile << tmp_score.percent_21_apartnodes;
+//        myfile << "\npercent of different-structure (average)= ";
+//        myfile << tmp_score.percent_apartnodes;
+//        myfile << "\n";
+//        myfile.close();
+//    }
 	return true;
 }
 

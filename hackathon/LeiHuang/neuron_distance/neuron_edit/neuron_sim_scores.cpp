@@ -215,7 +215,7 @@ double dist_directional_swc_1_2(V3DLONG & nseg1, V3DLONG & nseg1big, double & su
 		//first find the two ends of a line seg
         tp1 = (NeuronSWC *)(&(p1->listNeuron.at(i)));
         if(type)
-            tp1->type=(type)/2;
+            tp1->type=3;
         if (tp1->pn < 0)
 			continue;
         tp2 = (NeuronSWC *)(&(p1->listNeuron.at(h1.value(tp1->pn)))); //use hash table find parent
