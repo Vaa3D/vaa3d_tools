@@ -83,14 +83,26 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         QStringList out = dir.split("\\");
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(th);
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(ratio) + "_" + QString::number(th);
         if(!QDir().exists(outDir)){
             QDir().mkdir(outDir);
         }
 
         ofstream csvFile;
-        csvFile.open((outDir + "\\" +dirBaseName + "_app2_" + QString::number(th)+ "_threshold.csv").toStdString().c_str(),ios::out);
-        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        bool title;
+        if(QFile(csvPath).exists()){
+            title = false;
+        }else {
+            title = true;
+        }
+
+        csvFile.open(csvPath.toStdString().c_str(),ios::out|ios::app);
+        if(title){
+            csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"
+                     <<','<<"fstd"<<','<<"bstd"<<endl;
+        }
+
         app2WithPreinfoForBatch(dir,brainPath,ratio,th,csvFile,callback);
         csvFile.close();
 	}
@@ -109,8 +121,20 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         ofstream csvFile;
-        csvFile.open((outDir + "\\" +dirBaseName + "_app2" + "_threshold.csv").toStdString().c_str(),ios::out);
-        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        bool title;
+        if(QFile(csvPath).exists()){
+            title = false;
+        }else {
+            title = true;
+        }
+
+        csvFile.open(csvPath.toStdString().c_str(),ios::out|ios::app);
+        if(title){
+            csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"
+                     <<','<<"fstd"<<','<<"bstd"<<endl;
+        }
+
         app2WithPreinfoForBatch2(dir,brainPath,csvFile,maxTh,length,callback);
         csvFile.close();
     }
@@ -129,8 +153,20 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         ofstream csvFile;
-        csvFile.open((outDir + "\\" +dirBaseName + "_app2" + "_threshold.csv").toStdString().c_str(),ios::out);
-        csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
+        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        bool title;
+        if(QFile(csvPath).exists()){
+            title = false;
+        }else {
+            title = true;
+        }
+
+        csvFile.open(csvPath.toStdString().c_str(),ios::out|ios::app);
+        if(title){
+            csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"
+                     <<','<<"fstd"<<','<<"bstd"<<endl;
+        }
+
         app2WithPreinfoForBatch3(dir,brainPath,csvFile,maxTh,minTh,callback);
         csvFile.close();
     }

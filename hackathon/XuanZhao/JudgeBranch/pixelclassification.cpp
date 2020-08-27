@@ -9,7 +9,7 @@ QVector<QVector<float> > getPixelFeature(unsigned char *pdata, long long *sz){
     V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
     qDebug()<<"get features";
     QVector<QVector<float> > features = QVector<QVector<float> >(tolSZ,QVector<float>());
-    for(int i=0; i<7; i++){
+    for(int i=0; i<4; i++){
         float* gs = gaussianSmooth(pdata,sz,sigmas[i]);
         qDebug()<<i<<": get gaussianSmooth";
         float* ggm = gaussianGradientMagnitude(pdata,sz,sigmas[i]);

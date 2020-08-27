@@ -8,7 +8,7 @@
 #include "consensus_plugin.h"
 
 #include "concensusfunction.h"
-#include "app2.h"
+#include "multiApp2.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(consensus, ConsensusPlugin);
@@ -134,12 +134,12 @@ void ConsensusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
         v3dhandle curwin = callback.currentImageWindow();
         Image4DSimple* image = callback.getImage(curwin);
         LandmarkList landMarkers = callback.getLandmark(curwin);
-        NeuronTree tree1 = getApp2RotateImage(image,landMarkers[0],0,30,-1);
-        NeuronTree tree2 = getApp2RotateImage(image,landMarkers[0],1,30,-1);
+        NeuronTree tree1 = getApp2RotateImage(image,landMarkers,0,30,-1,true);
+        NeuronTree tree2 = getApp2RotateImage(image,landMarkers,1,30,-1,true);
         vector<NeuronTree> trees = vector<NeuronTree>();
         trees.push_back(tree1);
         trees.push_back(tree2);
-        NeuronTree consensusSwc = consensus(trees,image,landMarkers[0],callback);
+        NeuronTree consensusSwc = consensus(trees,image,landMarkers,callback);
 
         consensusSwc.color = XYZW(0,0,0,0);
 
@@ -167,13 +167,17 @@ bool ConsensusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         QString markerPath = (infiles.size()>=2) ? infiles[1] : "";
         bool kmeansTh = (inparas.size()>=1) ? atoi(inparas[0]) : false;
 
+        qDebug()<<imagePath;
+        qDebug()<<markerPath;
         QList<ImageMarker> markers =  readMarker_file(markerPath);
-        LocationSimple m = LocationSimple();
-        if(markers.size() == 1){
-            m.x = markers[0].x;
-            m.y = markers[0].y;
-            m.z = markers[0].z;
+        LandmarkList m;
+        for(int i=0; i<markers.size(); i++){
+            m.push_back(LocationSimple(markers[i].x,markers[i].y,markers[i].z));
         }
+
+        qDebug()<<"m size:"<<m.size();
+//        if(m.size()>25)
+//            return;
 
         consensus(imagePath,m,kmeansTh,callback);
 

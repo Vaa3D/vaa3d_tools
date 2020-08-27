@@ -12,6 +12,8 @@ double getSwcLength(NeuronTree &nt);
 
 void getSWCMeanStd(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& mean, double& std);
 
+void getSWCMeanStd2(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& mean, double& std);
+
 bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double ratio, int th, ofstream &csvFile, V3DPluginCallback2& callback);
 
 bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int th, ofstream &csvFile, V3DPluginCallback2& callback);

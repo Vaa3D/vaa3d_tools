@@ -12,6 +12,9 @@
 #include <fstream>
 #include <sstream>
 
+#include "../../../vaa3d_tools/released_plugins/v3d_plugins/resample_swc/resampling.h"
+
+
 bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result){
     return SortSWC(neurons,result,VOID,0);
 }
@@ -56,6 +59,8 @@ void getSWCMeanStd(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& me
 
     mean = std = 0;
 
+    qDebug()<<"listNeuron Size: "<<nt.listNeuron.size();
+
     for(int i=0; i<nt.listNeuron.size(); i++){
         nt.listNeuron[i].r = 1;
     }
@@ -73,6 +78,8 @@ void getSWCMeanStd(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& me
         }
     }
 
+    qDebug()<<"count: "<<count;
+
     if(count>0){
         mean /= (double) count;
     }
@@ -87,6 +94,40 @@ void getSWCMeanStd(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& me
         std = sqrt(std/(double)count);
     }
 
+    if(mask){
+        delete[] mask;
+        mask = 0;
+    }
+
+}
+
+void getSWCMeanStd2(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& mean, double& std){
+    mean = std = 0;
+    V3DLONG x,y,z;
+    V3DLONG index;
+    vector<unsigned char> intensities;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        x = nt.listNeuron[i].x + 0.5;
+        y = nt.listNeuron[i].y + 0.5;
+        z = nt.listNeuron[i].z + 0.5;
+        if(x<0 || x>=sz[0] || y<0 || y>=sz[1] || z<0 || z>=sz[2]){
+            continue;
+        }
+        index = z*sz[0]*sz[1] + y*sz[0] + x;
+        intensities.push_back(pdata[index]);
+    }
+    int size = intensities.size();
+    for(int i=0; i<size; i++){
+        mean += intensities[i];
+    }
+    if(size>0)
+        mean /= (double) size;
+    for(int i=0; i<size; i++){
+        std += (intensities[i]-mean)*(intensities[i]-mean);
+    }
+    if(size>0)
+        std = sqrt(std/(double)size);
+
 }
 
 
@@ -96,7 +137,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     QString swcPath,apoPath;
     for(int i=0; i<files.size(); i++){
         qDebug()<<"suffix: "<<files[i].suffix();
-        if(files[i].suffix() == "eswc"){
+        if(files[i].suffix() == "eswc" || files[i].suffix() == "swc"){
             swcPath = files[i].absoluteFilePath();
         }
         if(files[i].suffix() == "apo"){
@@ -126,6 +167,12 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
+
+    if(QFile(imagePath).exists()){
+        qDebug()<<imagePath<<" is exist!";
+        return true;
+    }
+
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
     NeuronTree backSWC,foreSWC;
@@ -134,6 +181,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
         s.x -= x0;
         s.y -= y0;
         s.z -= z0;
+        qDebug()<<"type: "<<s.type<<" xyz: "<<s.x<<" "<<s.y<<" "<<s.z;
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
         }
@@ -141,17 +189,24 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
             foreSWC.listNeuron.push_back(s);
         }
     }
+    qDebug()<<"fore swc size:"<<foreSWC.listNeuron.size();
+    qDebug()<<"back swc size:"<<backSWC.listNeuron.size();
+
+//    NeuronTree backSwcR = resample(backSWC,0.5);
+//    qDebug()<<"back swc size:"<<backSwcR.listNeuron.size();
 
     double bmean,bstd,fmean,fstd;
-    getSWCMeanStd(pdata,sz,backSWC,bmean,bstd);
-    getSWCMeanStd(pdata,sz,foreSWC,fmean,fstd);
+    getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
+    getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
 
     qDebug()<<"bmean: "<<bmean<<" bstd: "<<bstd<<" fmean: "<<fmean<<" fstd: "<<fstd;
 
     if(ratio == 0){
         ratio = bstd/(bstd + fstd);
     }
-
+    if(ratio == -4){
+        ratio = bmean/(bmean+fmean);
+    }
 
     int app2Th = fmean*ratio + bmean*(1-ratio);
     if(ratio == -1){
@@ -165,9 +220,11 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
         app2Th = bmean + th;
     }
 
+
     qDebug()<<"app2Th: "<<app2Th;
 
-    csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th<<endl;
+    csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+             <<','<<fstd<<','<<bstd<<endl;
 
     Image4DSimple* image = new Image4DSimple();
     image->setData(pdata,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
@@ -198,7 +255,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     p2.yc1 = sz[1] - 1;
     p2.zc1 = sz[2] - 1;
     p2.bkg_thresh = app2Th;
-    p2.b_256cube = false;
+//    p2.b_256cube = false;
     p2.landmarks.push_back(LocationSimple(shift_m.x,shift_m.y,shift_m.z));
 
     proc_app2(p2);
@@ -240,7 +297,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
     QString swcPath = "",apoPath = "";
     for(int i=0; i<files.size(); i++){
         qDebug()<<"suffix: "<<files[i].suffix();
-        if(files[i].suffix() == "eswc"){
+        if(files[i].suffix() == "eswc" || files[i].suffix() == "swc"){
             swcPath = files[i].absoluteFilePath();
         }
         if(files[i].suffix() == "apo"){
@@ -274,8 +331,17 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
     QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
+
+    if(QFile(imagePath).exists()){
+        qDebug()<<imagePath<<" is exist!";
+        return true;
+    }
+
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
+    int bCount = 0;
+    int fCount = 0;
+    int aCount = 0;
     NeuronTree backSWC,foreSWC;
     for(int i=0; i<nt.listNeuron.size(); i++){
         NeuronSWC s = nt.listNeuron[i];
@@ -284,15 +350,19 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         s.z -= z0;
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
+            bCount++;
         }
         if(s.type == 3){
             foreSWC.listNeuron.push_back(s);
+            fCount++;
         }
+        aCount++;
     }
 
+    qDebug()<<"bCount: "<<bCount<<" fCount: "<<fCount<<" aCount: "<<aCount;
     double bmean,bstd,fmean,fstd;
-    getSWCMeanStd(pdata,sz,backSWC,bmean,bstd);
-    getSWCMeanStd(pdata,sz,foreSWC,fmean,fstd);
+    getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
+    getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
     double ratio = -3;
 
     Image4DSimple* image = new Image4DSimple();
@@ -342,7 +412,13 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         proc_app2(p2);
         sortSWC(p2.result);
 
-        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th<<endl;
+
+        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+                 <<','<<fstd<<','<<bstd<<endl;
+
+        if(p2.result.listNeuron.isEmpty()){
+            continue;
+        }
 
         QString localSwcPath = outDir + "\\" + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_" + QString::number(th) +".swc";
@@ -387,7 +463,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
     QString swcPath = "",apoPath = "";
     for(int i=0; i<files.size(); i++){
         qDebug()<<"suffix: "<<files[i].suffix();
-        if(files[i].suffix() == "eswc"){
+        if(files[i].suffix() == "eswc" || files[i].suffix() == "swc"){
             swcPath = files[i].absoluteFilePath();
         }
         if(files[i].suffix() == "apo"){
@@ -421,9 +497,18 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
     QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
+
+    if(QFile(imagePath).exists()){
+        qDebug()<<imagePath<<" is exist!";
+        return true;
+    }
+
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
     NeuronTree backSWC,foreSWC;
+    int bCount = 0;
+    int fCount = 0;
+    int aCount = 0;
     for(int i=0; i<nt.listNeuron.size(); i++){
         NeuronSWC s = nt.listNeuron[i];
         s.x -= x0;
@@ -431,15 +516,19 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         s.z -= z0;
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
+            bCount++;
         }
         if(s.type == 3){
             foreSWC.listNeuron.push_back(s);
+            fCount++;
         }
+        aCount++;
     }
+    qDebug()<<"bCount: "<<bCount<<" fCount: "<<fCount<<" aCount: "<<aCount;
 
     double bmean,bstd,fmean,fstd;
-    getSWCMeanStd(pdata,sz,backSWC,bmean,bstd);
-    getSWCMeanStd(pdata,sz,foreSWC,fmean,fstd);
+    getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
+    getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
     double ratio = -3;
 
     Image4DSimple* image = new Image4DSimple();
@@ -489,7 +578,12 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         proc_app2(p2);
         sortSWC(p2.result);
 
-        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th<<endl;
+        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+              <<','<<fstd<<','<<bstd<<endl;
+
+        if(p2.result.listNeuron.isEmpty()){
+            continue;
+        }
 
         QString localSwcPath = outDir + "\\" + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_" + QString::number(th) +".swc";
@@ -528,7 +622,7 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
     QStringList out = dir.split("\\");
     QString dirBaseName = out.back();
     out.pop_back();
-    QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(th);
+    QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(ratio) + "_" + QString::number(th);
     if(!QDir().exists(outDir)){
         QDir().mkdir(outDir);
     }
