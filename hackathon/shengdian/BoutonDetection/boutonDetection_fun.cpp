@@ -452,6 +452,10 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         tmpstr.append("_x_").append(QString("%1").arg(s.x));
         tmpstr.append("_y_").append(QString("%1").arg(s.y));
         tmpstr.append("_z_").append(QString("%1").arg(s.z));
+        tmpstr.append("_blocksize");
+        tmpstr.append("_x_").append(QString("%1").arg(cropx));
+        tmpstr.append("_y_").append(QString("%1").arg(cropy));
+        tmpstr.append("_z_").append(QString("%1").arg(cropz));
         QString default_name = "Img"+tmpstr+".v3draw";
         QString save_path = QString::fromStdString(outpath);
         QDir path(save_path);
@@ -535,6 +539,119 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO>
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
 
+}
+void splitSWC(V3DPluginCallback2 &callback, string imgPath,string inswc_file, string outpath, int cropx, int cropy, int cropz)
+{
+    cout<<"Crop swc and terafly block: split swc"<<endl;
+    //read swc
+    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+    QList<NeuronSWC>& listNeuron =  nt.listNeuron;
+    QList <CellAPO> outapo;
+    outapo.clear();
+    V3DLONG siz = nt.listNeuron.size();
+    size_t minX = INT_MAX, minY = INT_MAX, minZ = INT_MAX;
+    size_t maxX = 0, maxY = 0, maxZ = 0;
+    for(int i=0; i<siz; i++){
+        NeuronSWC s = nt.listNeuron[i];
+        if(minX>s.x) minX = s.x;
+        if(maxX<s.x) maxX = s.x;
+        if(minY>s.y) minY = s.y;
+        if(maxY<s.y) maxY = s.y;
+        if(minZ>s.z) minZ = s.z;
+        if(maxZ<s.z) maxZ = s.z;
+    }
+    int xblockNum=1,yblockNum=1,zblockNum=1;
+    if(cropx<1&&cropy<1&&cropz<1)
+        cropx=cropy=cropz=256;
+    xblockNum=int((maxX-minX)/cropx)+1;
+    yblockNum=int((maxY-minY)/cropy)+1;
+    zblockNum=int((maxZ-minZ)/cropz)+1;
+    cout<<"Blockx min="<<minX<<",Blockx max="<<maxX<<endl;
+    cout<<"Blocky min="<<minY<<",Blocky max="<<maxY<<endl;
+    cout<<"Blockz min="<<minZ<<",Blockz max="<<maxZ<<endl;
+    cout<<"split block x="<<xblockNum<<endl;
+    cout<<"split block y="<<yblockNum<<endl;
+    cout<<"split block z="<<zblockNum<<endl;
+    //for every blocks
+    float startx,starty,startz;
+    float endx,endy,endz;
+    startx=endx=minX;
+    starty=endy=minY;
+    startz=endz=minZ;
+    for(long ix=0;ix<xblockNum;ix++)
+    {
+        if(ix==0) startx=minX; else startx=endx;
+        endx=((startx+cropx)>maxX)?maxX:(startx+cropx);
+        for(long iy=0;iy<yblockNum;iy++)
+        {
+            starty=(iy==0)?minY:endy;
+            endy=((starty+cropy)>maxY)?maxY:(starty+cropy);
+            for(long iz=0;iz<zblockNum;iz++)
+            {
+                startz=(iz==0)?minZ:endz;
+                endz=((startz+cropz)>maxZ)?maxZ:(startz+cropz);
+                //crop swc
+//                cout<<"----"<<endl;
+//                cout<<"x="<<startx<<","<<endx<<endl;
+//                cout<<"y="<<starty<<","<<endy<<endl;
+//                cout<<"z="<<startz<<","<<endz<<endl;
+                NeuronTree nt_corped=NeuronTree();
+                long count = 0;
+                for(long i=0; i<siz; i++)
+                {
+                    NeuronSWC thiss = listNeuron[i];
+                    if(thiss.x>=startx&&thiss.x<endx
+                            &&thiss.y>=starty&&thiss.y<endy
+                            &&thiss.z>=startz&&thiss.z<endz)
+                    {
+                        thiss.x-=startx;
+                        thiss.y-=starty;
+                        thiss.z-=startz;
+                        nt_corped.listNeuron.push_back(thiss);
+                        nt_corped.hashNeuron.insert(thiss.n,count);
+                        count++;
+                    }
+                }
+                //save to file
+                if(nt_corped.listNeuron.size()>0&&count>0)
+                {
+                    cout<<"neuron tree size is "<<nt_corped.listNeuron.size()<<endl;
+                    QString tmpstr = "";
+                    tmpstr.append("_x_").append(QString("%1").arg((startx+endx)/2));
+                    tmpstr.append("_y_").append(QString("%1").arg((starty+endy)/2));
+                    tmpstr.append("_z_").append(QString("%1").arg((startz+endz)/2));
+                    tmpstr.append("_blocksize");
+                    tmpstr.append("_x_").append(QString("%1").arg((endx-startx)));
+                    tmpstr.append("_y_").append(QString("%1").arg((endy-starty)));
+                    tmpstr.append("_z_").append(QString("%1").arg((endz-startz)));
+                    QString default_name = "Croped"+tmpstr+".swc";
+                    QString save_path = QString::fromStdString(outpath)+"/CropedSWC";
+                    QDir path(save_path);
+                    if(!path.exists())
+                    {
+                        path.mkpath(save_path);
+                    }
+                    QString save_croped_path =save_path+"/"+default_name;
+//                    cout<<"save img path:"<<save_croped_path.toStdString()<<endl;
+                    writeESWC_file(save_croped_path,nt_corped);
+                    //out the center of this block to apo
+                    CellAPO tmp;
+                    tmp.x=float((startx+endx)/2);
+                    tmp.y=float((starty+endy)/2);
+                    tmp.z=float((startz+endz)/2);
+                    tmp.volsize=ix+iy+iz+1;
+                    tmp.color.r=0;
+                    tmp.color.g=0;
+                    tmp.color.b=255;
+                    outapo.push_back(tmp);
+                    string outImgpath=outpath+"/CropedImg";
+                    getTeraflyBlock(callback,imgPath,outapo,outImgpath,endx-startx,endy-starty,endz-startz);
+                    outapo.clear();
+                }
+            }
+        }
+    }
+//    return outapo;
 }
 
 /*Given a NeuronTree and a swc node in this NeuronTree, return std intensity of surrounding area (thre_size)*/

@@ -30,6 +30,7 @@ QStringList BoutonDectectionPlugin::funclist() const
        <<tr("ReconstructionComplexity")
         <<tr("RecontructionIntensity_terafly")
        <<tr("Crop_terafly_block")
+      <<tr("crop_terafly_swc_block")
 		<<tr("help");
 }
 
@@ -271,6 +272,42 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         else if(outfiles.size()>1)
             printHelp();return false;
     }
+    else if (func_name==tr("crop_terafly_swc_block"))
+    {
+        if(infiles.size() != 2)
+        {
+            cerr<<"Invalid input"<<endl;
+            cout<<"Input file size="<<infiles.size()<<endl;
+            return false;
+        }
+        /*crop img block and swc from terafly
+         *Input img is highest resolution img path
+         *Input swc file, split reconstructions into series of blocks
+         *Input para for crop size of x, y and z
+         *output path is the save path for img block and swc file.
+        */
+        string inimg_file = infiles[0];
+        string inswc_file = infiles[1];
+        int cropx=(inparas.size()>=1)?atoi(inparas[0]):256;
+        int cropy=(inparas.size()>=2)?atoi(inparas[1]):256;
+        int cropz=(inparas.size()>=3)?atoi(inparas[2]):256;
+        string out_path=outfiles[0];
+        /*workflow
+         *1.get the boundary of reconstruction
+         *2.according to the crop size, split the swc into list of boxes
+         *3.get the center of the splited swc neuronTree and convert to CellApolist
+         *4.use crop_terafly_block function.
+        */
+        splitSWC(callback,inimg_file,inswc_file,out_path,cropx,cropy,cropz);
+//        QList <CellAPO> apolist=splitSWC(inswc_file,out_path,cropx,cropy,cropz);
+//        if(apolist.size()>0)
+//        {
+//            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz);
+//        }
+//        else
+//            cout<<"apo size is zero"<<endl;
+        cout<<"done"<<endl;
+    }
     else if (func_name==tr("Crop_terafly_block"))
     {
         if(infiles.size() != 2)
@@ -283,8 +320,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
          *Input img is highest resolution img path
          *Input apo with dst marker in it
          *Input para for crop size of x, y and z
-         *output path is the save path for img block
-        */
+         *output path is the save path for img block*/
         string inimg_file = infiles[0];
         string inapo_file = infiles[1];
         int cropx=(inparas.size()>=1)?atoi(inparas[0]):1024;
