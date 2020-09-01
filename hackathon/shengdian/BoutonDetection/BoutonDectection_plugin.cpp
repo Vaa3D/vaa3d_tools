@@ -30,6 +30,7 @@ QStringList BoutonDectectionPlugin::funclist() const
        <<tr("ReconstructionComplexity")
         <<tr("RecontructionIntensity_terafly")
        <<tr("Crop_terafly_block")
+         <<tr("mask_img_from_swc")
       <<tr("crop_terafly_swc_block")
 		<<tr("help");
 }
@@ -272,6 +273,41 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         else if(outfiles.size()>1)
             printHelp();return false;
     }
+    else if (func_name==tr("mask_img_from_swc"))
+    {
+        if(infiles.size() != 2)
+        {
+            cerr<<"Invalid input"<<endl;
+            cout<<"Input file size="<<infiles.size()<<endl;
+            return false;
+        }
+        /*according to swc, mask img block
+         *Input img block
+         *Input swc file
+         *Input para for mask size of x, y and z
+         *output path is the save path for processed img block.
+        */
+        string inimg_file = infiles[0];
+        QString inswc_file = infiles[1];
+        int maskRadius=(inparas.size()>=1)?atoi(inparas[0]):12;
+        QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
+        //read img
+        unsigned char * inimg1d = 0;
+        V3DLONG in_sz[4];
+        int datatype;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
+        //read swc
+        NeuronTree nt = readSWC_file(inswc_file);
+        QDir path(out_path);
+        if(!path.exists())
+        {
+            path.mkpath(out_path);
+        }
+        QString save_path_img =out_path+"/"+QFileInfo(inswc_file).baseName()+"_maskRadius_"+QString::number(maskRadius)+".v3draw";
+        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius);
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    }
     else if (func_name==tr("crop_terafly_swc_block"))
     {
         if(infiles.size() != 2)
@@ -297,15 +333,9 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
          *2.according to the crop size, split the swc into list of boxes
          *3.get the center of the splited swc neuronTree and convert to CellApolist
          *4.use crop_terafly_block function.
+         *5.alternatively, mask the cropped block
         */
         splitSWC(callback,inimg_file,inswc_file,out_path,cropx,cropy,cropz);
-//        QList <CellAPO> apolist=splitSWC(inswc_file,out_path,cropx,cropy,cropz);
-//        if(apolist.size()>0)
-//        {
-//            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz);
-//        }
-//        else
-//            cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
     }
     else if (func_name==tr("Crop_terafly_block"))
@@ -366,22 +396,6 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         QList <CellAPO> apolist=getBouton(nt,threshold,allnode);
         string apo_file_path = inswc_file + "_bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
-//        //scale the result
-//        int max_intensity=1;
-//        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
-//        {
-//            if(max_intensity<nt.listNeuron[i].level)
-//                max_intensity=nt.listNeuron[i].level;
-
-//        }
-//        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
-//        {
-//            nt.listNeuron[i].radius/=max_intensity;
-//            nt.listNeuron[i].radius*=10;
-//        }
-//        QString outswc_file_scale =QString::fromStdString(inswc_file)+"_IntensityResult_scale.swc";
-//        writeSWC_file(outswc_file_scale,nt);
-
     }
     else if (func_name == tr("ReconstructionComplexity"))
     {
