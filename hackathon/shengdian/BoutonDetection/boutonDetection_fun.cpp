@@ -4,7 +4,7 @@
 #include <fstream>
 void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree& nt,int allnode)
 {
-    cout<<"Welcome into bouton detection: intensity part"<<endl;
+    cout<<"Welcome into bouton detection (Terafly Version): intensity part"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
     //load terafly img
     V3DLONG siz = nt.listNeuron.size();
@@ -31,8 +31,8 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
             if(s.level==1)
             {
                 //get a block
-                int start_x,start_y,start_z,end_x,end_y,end_z;
-                int block_size=64;
+                long start_x,start_y,start_z,end_x,end_y,end_z;
+                int block_size=16;
                 start_x = s.x - block_size; if(start_x<0) start_x = 0;
                 end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
                 start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -51,23 +51,36 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
                 unsigned char * inimg1d = 0;
                 inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
     //            //version one
-                int thisx,thisy,thisz;
+                V3DLONG thisx,thisy,thisz;
                 thisx=s.x-start_x;
                 thisy=s.y-start_y;
                 thisz=s.z-start_z;
 
                 listNeuron[i].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
-                //refine the intensity to local maximal
+                //refine the node to local maximal(surrounding area)
+                NeuronSWC out=nodeRefine(inimg1d,thisx,thisy,thisz,in_sz,allnode);
+                double imgave,imgstd;
+                V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+                mean_and_std(inimg1d,total_size,imgave,imgstd);
+                if(listNeuron[i].level+imgave+imgstd<out.level)
+                {
+//                    cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
+//                    cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
+                    listNeuron[i].level=out.level;
+                    listNeuron[i].x=start_x+out.x;
+                    listNeuron[i].y=start_y+out.y;
+                    listNeuron[i].z=start_z+out.z;
+                }
+                //refine the intensity to local maximal(line direction)
                 float childIntensity=listNeuron[i].level;
                 //get their parent node intensity
-
                 if(s.parent>0)
                 {
                     long pid=hashNeuron.value(s.parent);
                     NeuronSWC sp=listNeuron[pid];
                     //consider the distance of child-parent node
-                    float distanceThre=5;
-                    float child_parent_distance=(sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z);
+                    float distanceThre=2;
+                    V3DLONG child_parent_distance=(sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z);
                     if(child_parent_distance<distanceThre*distanceThre)
                     {
 
@@ -75,22 +88,22 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
                         sm.x=(sp.x-s.x)/2+s.x;
                         sm.y=(sp.y-s.y)/2+s.y;
                         sm.z=(sp.z-s.z)/2+s.z;
-                        int thisxm,thisym,thiszm;
+                        long thisxm,thisym,thiszm;
                         thisxm=sm.x-start_x;
                         thisym=sm.y-start_y;
                         thiszm=sm.z-start_z;
-                        int thisxp,thisyp,thiszp;
+                        long thisxp,thisyp,thiszp;
                         thisxp=sp.x-start_x;
                         thisyp=sp.y-start_y;
                         thiszp=sp.z-start_z;
-                        float parentIntensity=inimg1d[int(thiszp) * sz01 + int(thisyp) * sz0 + int(thisxp)];
-                        float middleIntensity=inimg1d[int(thiszm) * sz01 + int(thisym) * sz0 + int(thisxm)];
+                        V3DLONG parentIntensity=inimg1d[(thiszp) * sz01 + (thisyp) * sz0 + (thisxp)];
+                        V3DLONG middleIntensity=inimg1d[(thiszm) * sz01 + (thisym) * sz0 + (thisxm)];
                         //this may need another threshold
                         int updateThre=10;
                         if((middleIntensity-childIntensity>updateThre)&&(middleIntensity-parentIntensity>updateThre))
                         {
-                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<endl;
-                            cout<<"this node id:"<<s.n;
+//                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<endl;
+//                            cout<<"this node id:"<<s.n;
                             //                    update child node Intensity
                             listNeuron[i].level=middleIntensity;
                         }
@@ -106,7 +119,7 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
             {
                 //get a block
                 int start_x,start_y,start_z,end_x,end_y,end_z;
-                int block_size=32;
+                int block_size=16;
                 start_x = s.x - block_size; if(start_x<0) start_x = 0;
                 end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
                 start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -125,24 +138,39 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
                 unsigned char * inimg1d = 0;
                 inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
     //            //version one
-                int thisx,thisy,thisz;
+                V3DLONG thisx,thisy,thisz;
                 thisx=s.x-start_x;
                 thisy=s.y-start_y;
                 thisz=s.z-start_z;
 
                 listNeuron[i].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
 //                cout<<"level:"<<listNeuron[i].level<<endl;
-                //refine the intensity to local maximal
-                float childIntensity=listNeuron[i].level;
-                //get their parent node intensity
 
+                //refine the node to local maximal(surrounding area)
+//                NeuronSWC out=nodeRefine(inimg1d,thisx,thisy,thisz,in_sz);
+//                double imgave,imgstd;
+//                V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+//                mean_and_std(inimg1d,total_size,imgave,imgstd);
+//                if(listNeuron[i].level+imgave+imgstd<out.level)
+//                {
+////                    cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
+////                    cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
+//                    listNeuron[i].level=out.level;
+//                    listNeuron[i].x=start_x+out.x;
+//                    listNeuron[i].y=start_y+out.y;
+//                    listNeuron[i].z=start_z+out.z;
+//                }
+
+                //refine the intensity to local maximal
+                V3DLONG childIntensity=listNeuron[i].level;
+                //get their parent node intensity
                 if(s.parent>0)
                 {
                     long pid=hashNeuron.value(s.parent);
                     NeuronSWC sp=listNeuron[pid];
                     //consider the distance of child-parent node
                     float distanceThre=5;
-                    float child_parent_distance=(sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z);
+                    V3DLONG child_parent_distance=(sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z);
                     if(child_parent_distance<distanceThre*distanceThre)
                     {
 
@@ -150,22 +178,22 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
                         sm.x=(sp.x-s.x)/2+s.x;
                         sm.y=(sp.y-s.y)/2+s.y;
                         sm.z=(sp.z-s.z)/2+s.z;
-                        int thisxm,thisym,thiszm;
+                        V3DLONG thisxm,thisym,thiszm;
                         thisxm=sm.x-start_x;
                         thisym=sm.y-start_y;
                         thiszm=sm.z-start_z;
-                        int thisxp,thisyp,thiszp;
+                        V3DLONG thisxp,thisyp,thiszp;
                         thisxp=sp.x-start_x;
                         thisyp=sp.y-start_y;
                         thiszp=sp.z-start_z;
-                        float parentIntensity=inimg1d[int(thiszp) * sz01 + int(thisyp) * sz0 + int(thisxp)];
-                        float middleIntensity=inimg1d[int(thiszm) * sz01 + int(thisym) * sz0 + int(thisxm)];
+                        V3DLONG parentIntensity=inimg1d[V3DLONG(thiszp) * sz01 + V3DLONG(thisyp) * sz0 + V3DLONG(thisxp)];
+                        V3DLONG middleIntensity=inimg1d[V3DLONG(thiszm) * sz01 + V3DLONG(thisym) * sz0 + V3DLONG(thisxm)];
                         //this may need another threshold
-                        int updateThre=10;
+                        int updateThre=2;
                         if((middleIntensity-childIntensity>updateThre)&&(middleIntensity-parentIntensity>updateThre))
                         {
-                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<endl;
-                            cout<<"this node id:"<<s.n;
+//                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<endl;
+//                            cout<<"this node id:"<<s.n;
                             //                    update child node Intensity
                             listNeuron[i].level=middleIntensity;
                         }
@@ -207,8 +235,8 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
         hashchild.insert(i,0);
     }
 
-    float Ip1,Ip2,Ip3,Ip4;
-    float intensity_change=0;
+    long Ip1,Ip2,Ip3,Ip4;
+    long intensity_change=0;
 //    int thre_low=4*threshold/5;
     /*Two level threshold seperate the region into three intervals:
      *p1 maybe is a P-site or maybe not. if p1 is a P-site, it should be known by its child.
@@ -228,6 +256,7 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
      *1.3. p3 in R3; p3 =P-site-high
      *2. p2 in R3; p2=P-site-high
     */
+    cout<<"-------Internal bouton detection---------------"<<endl;
     for (V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC s = listNeuron[i];
@@ -255,8 +284,8 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
                 intensity_change=Ip2-Ip1;
                 if(intensity_change>=threshold)
                 {
-                    cout<<"(internal p2, p2>p1)bouton: index="<<p2.n<<endl;
-                    cout<<"threshold intensity is "<<threshold<<endl;
+//                    cout<<"(internal p2, p2>p1)bouton: index="<<p2.n<<endl;
+//                    cout<<"threshold intensity is "<<threshold<<endl;
                     boutonnodelist[p2_id]=Ip2;
                 }
                 else if(intensity_change>0&&intensity_change<threshold)
@@ -271,16 +300,16 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
                     int p3change=Ip3-Ip1;
                     if(p3change>=threshold)
                     {
-                        cout<<"(internal p3, 0<p2-p1<thre && p3-p1 > thre)bouton: index="<<p3.n<<endl;
-                        cout<<"threshold intensity is "<<threshold<<endl;
+//                        cout<<"(internal p3, 0<p2-p1<thre && p3-p1 > thre)bouton: index="<<p3.n<<endl;
+//                        cout<<"threshold intensity is "<<threshold<<endl;
                         boutonnodelist[p3_id]=Ip3;
                     }
                     else if(p3change<0)
                     {
                         if(Ip2-Ip3>=threshold)
                         {
-                            cout<<"(internal p3, 0<p2-p1<thre && p2-p3 > thre && p3<p1 )bouton: index="<<p2.n<<endl;
-                            cout<<"threshold intensity is "<<threshold<<endl;
+//                            cout<<"(internal p3, 0<p2-p1<thre && p2-p3 > thre && p3<p1 )bouton: index="<<p2.n<<endl;
+//                            cout<<"threshold intensity is "<<threshold<<endl;
                             boutonnodelist[p2_id]=Ip2;
                         }
                         else
@@ -299,8 +328,8 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
                         Ip4=p4.level;
                         if(Ip4-Ip1>=threshold)
                         {
-                            cout<<"(internal p4, p4-p1>thre )bouton: index="<<p4.n<<endl;
-                            cout<<"threshold intensity is "<<threshold<<endl;
+//                            cout<<"(internal p4, p4-p1>thre )bouton: index="<<p4.n<<endl;
+//                            cout<<"threshold intensity is "<<threshold<<endl;
                             boutonnodelist[p4_id]=Ip4;
                         }
                         else
@@ -320,6 +349,8 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
             hashchild[hashNeuron.value(s.n)]=hashchild[hashNeuron.value(s.n)]+1;
     }
     //find all the tips
+    //
+    cout<<"-------Tip bouton detection---------------"<<endl;
     QHash<int, int>::const_iterator hcit;
     for(hcit=hashchild.begin();hcit!=hashchild.end();hcit++)
     {
@@ -343,7 +374,7 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
                     intensity_change=Ip1-Ip2;
                     if(intensity_change>threshold)
                     {
-                        cout<<"tip bouton: index="<<s.n<<endl;
+//                        cout<<"tip bouton: index="<<s.n<<endl;
                         boutonnodelist[s.n-1]=Ip1;
                     }
                 }
@@ -365,7 +396,9 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
 //                    threshold=id_threshold.value(pid);
                     if(intensity_change>threshold)
                     {
-                        cout<<"tip bouton: index="<<s.n<<endl;
+//                        cout<<"tip bouton: index="<<s.n<<endl;
+                        if(s.n-1>=siz)
+                            continue;
                         boutonnodelist[s.n-1]=Ip1;
                     }
                 }
@@ -373,44 +406,54 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
 
         }
     }
+
     //for all the P-sites nodes
+    cout<<"-------Bouton out to Apo---------------"<<endl;
     QList <CellAPO> apolist;apolist.clear();
+    Bouton_Color_List boutonColorMap;
+    V3DLONG boutonColorMapSize=boutonColorMap.listcolor.size();
+    V3DLONG boutonCount=0;
     for (V3DLONG i=0;i<siz;i++)
     {
         if(boutonnodelist[i]==0)
             continue;
         NeuronSWC s = listNeuron[i];
-        //parent node and grandparent node should not be bouton
-
+        //parent node should not be bouton
         if(s.parent>0)
         {
             long pid=hashNeuron.value(s.parent);
-            NeuronSWC s_p=listNeuron[pid];
+//            NeuronSWC s_p=listNeuron[pid];
 
             if(boutonnodelist[pid]>0)
                 continue;
-            if(s_p.parent>0)
-            {
-                long ppid=hashNeuron.value(s_p.parent);
-//                NeuronSWC s_pp=listNeuron[ppid];
-                if(boutonnodelist[ppid]>0)
-                    continue;
-            }
+//            if(s_p.parent>0)
+//            {
+//                long ppid=hashNeuron.value(s_p.parent);
+////                NeuronSWC s_pp=listNeuron[ppid];
+//                if(boutonnodelist[ppid]>0)
+//                    continue;
+//            }
         }
+        Bouton_Color_Basic this_color;
+        this_color=(i<boutonColorMapSize)?boutonColorMap.listcolor[i]:boutonColorMap.listcolor[V3DLONG(i%boutonColorMapSize)];
+
         threshold=id_threshold.value(i);
         CellAPO apo;
         apo.x=s.x+1;
         apo.y=s.y+1;
         apo.z=s.z+1;
-        apo.intensity=s.radius;
+        apo.intensity=threshold;
         apo.volsize=s.level;
-        apo.color.r=0;
-        apo.color.g=0;
-        apo.color.b=255;
+        apo.color.r=this_color.color_ele_r;
+        apo.color.g=this_color.color_ele_g;
+        apo.color.b=this_color.color_ele_b;
+        boutonCount++;
         apolist.push_back(apo);
     }
+    cout<<"Detected Bouton: "<<boutonCount<<endl;
     return apolist;
 }
+
 void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz)
 {
     cout<<"Welcome into terafly block crop"<<endl;
@@ -515,7 +558,7 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO>
         tmpstr.append("_y").append(QString("%1").arg(s.y));
         tmpstr.append("_z").append(QString("%1").arg(s.z));
         QString default_name = "Bouton"+tmpstr+".tif";
-        QString default_name_apo="Bouton"+tmpstr+".apo";
+//        QString default_name_apo="Bouton"+tmpstr+".apo";
         QString save_path = QString::fromStdString(outpath);
         QDir path(save_path);
         if(!path.exists())
@@ -523,21 +566,21 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO>
             path.mkpath(save_path);
         }
         QString save_path_img =save_path+"/"+default_name;
-        QString save_path_apo=save_path+"/"+default_name_apo;
+//        QString save_path_apo=save_path+"/"+default_name_apo;
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
         //save apo file
-        QList <CellAPO> apoboutonlist;apoboutonlist.clear();
-        CellAPO tmp;
-        tmp.x=block_size;
-        tmp.y=block_size;
-        tmp.z=block_size;
-        tmp.volsize=s.intensity;
-        tmp.color.r=0;
-        tmp.color.g=0;
-        tmp.color.b=255;
-        apoboutonlist.push_back(tmp);
-        writeAPO_file(save_path_apo,apoboutonlist);
+//        QList <CellAPO> apoboutonlist;apoboutonlist.clear();
+//        CellAPO tmp;
+//        tmp.x=block_size;
+//        tmp.y=block_size;
+//        tmp.z=block_size;
+//        tmp.volsize=s.intensity;
+//        tmp.color.r=0;
+//        tmp.color.g=0;
+//        tmp.color.b=255;
+//        apoboutonlist.push_back(tmp);
+//        writeAPO_file(save_path_apo,apoboutonlist);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
 
@@ -606,7 +649,6 @@ void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize)
     }
     if(im_transfer) {delete []im_transfer; im_transfer=0;}
 }
-
 void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius)
 {
     /*for all the pixels in the dst block*/
@@ -667,7 +709,6 @@ void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outp
     //release pointer
      if(im_transfer) {delete []im_transfer; im_transfer=0;}
 }
-
 void splitSWC(V3DPluginCallback2 &callback, string imgPath,string inswc_file, string outpath, int cropx, int cropy, int cropz)
 {
     cout<<"Crop swc and terafly block: split swc"<<endl;
@@ -781,7 +822,6 @@ void splitSWC(V3DPluginCallback2 &callback, string imgPath,string inswc_file, st
     }
 //    return outapo;
 }
-
 /*Given a NeuronTree and a swc node in this NeuronTree, return std intensity of surrounding area (thre_size)*/
 QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size)
 {
@@ -834,7 +874,7 @@ QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size)
         if(blockIntensityAvearage>120)
         {
             id_threshold.insert(i,stdIntensity*3);
-            cout<<"Avearage="<<blockIntensityAvearage<<";index="<<i<<endl;
+//            cout<<"Avearage="<<blockIntensityAvearage<<";index="<<i<<endl;
         }
         else
             id_threshold.insert(i,stdIntensity);
@@ -842,7 +882,6 @@ QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size)
     }
     return id_threshold;
 }
-
 /*Func: get radius of nodes in neuron tree
  *
 */
@@ -902,7 +941,7 @@ void getNodeRadius(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt)
                                 {
                                     background_num++;
 
-                                    if ((background_num/total_num) > 0.001) goto end2;
+                                    if ((background_num/total_num) > 0.1) goto end2;
                                 }
                             }
                         }
@@ -914,7 +953,6 @@ end2:
     //release pointer
 //     if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
-
 void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea)
 {
     cout<<"Welcome into bouton detection: intensity part"<<endl;
@@ -931,7 +969,9 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
     cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
     long sz01 = in_sz[0] * in_sz[1];
     long sz0 = in_sz[0];
-
+    double imgave,imgstd;
+    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+    mean_and_std(inimg1d,total_size,imgave,imgstd);
     for(V3DLONG i=0;i<siz;i++)
     {
         //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
@@ -945,11 +985,12 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
             if(useNeighborArea!=0)
             {
                 listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                NeuronSWC out=nodeIntensity(inimg1d,listNeuron[i].x,listNeuron[i].y,listNeuron[i].z,in_sz,1);
-                if(listNeuron[i].level<out.level)
+                NeuronSWC out=nodeRefine(inimg1d,listNeuron[i].x,listNeuron[i].y,listNeuron[i].z,in_sz,useNeighborArea);
+
+                if(listNeuron[i].level+imgave+imgstd<out.level)
                 {
-                    cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
-                    cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
+//                    cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
+//                    cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
                     listNeuron[i].level=out.level;
                     listNeuron[i].x=out.x;
                     listNeuron[i].y=out.y;
@@ -982,7 +1023,7 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
                         int updateThre=10;
                         if((middleIntensity-childIntensity>updateThre)&&(middleIntensity-parentIntensity>updateThre))
                         {
-                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<";this node id:"<<s.n<<endl;
+//                            cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<";this node id:"<<s.n<<endl;
 
                             //                    update child node Intensity
                             listNeuron[i].level=middleIntensity;
@@ -996,7 +1037,6 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
     //release pointer
 //     if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
-
 void getSWCIntensityInTerafly(V3DPluginCallback2 &callback, string imgPath, QString inswc_file)
 {
     cout<<"Welcome into Intensity statistics"<<endl;
@@ -1105,31 +1145,33 @@ void getSWCIntensityInTerafly(V3DPluginCallback2 &callback, string imgPath, QStr
     writeESWC_file(outswc_name,nt);
     cout<<"Done:"<<endl;
 }
-
-NeuronSWC nodeIntensity(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size)
+NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size)
 {
     //return the intensity of the input node
 //    int outRadius=0;
+    cout<<"---Node refine to the local maximal intensity----"<<endl;
     NeuronSWC out;
     out.level=0;
-    float thisx,thisy,thisz;
+    V3DLONG thisx,thisy,thisz;
     out.x=thisx=nodex;
     out.y=thisy=nodey;
     out.z=thisz=nodez;
 
     V3DLONG sz01 = sz[0] * sz[1];
-    for(float iz=((thisz-neighbor_size)>=0)?(thisz-neighbor_size):0;(iz<thisz+neighbor_size+1)&&(iz<sz[2]);iz=iz+0.2)
+//    cout<<"----------node new------------"<<endl;
+    for(V3DLONG iz=((thisz-neighbor_size)>=0)?(thisz-neighbor_size):0;(iz<thisz+neighbor_size+1)&&(iz<sz[2]);iz++)
     {
-
-        for( float iy=((thisy-neighbor_size)>=0)?(thisy-neighbor_size):0;(iy<thisy+neighbor_size-1)&&(iy<sz[1]);iy=iy+0.2)
+        for( V3DLONG iy=((thisy-neighbor_size)>=0)?(thisy-neighbor_size):0;(iy<thisy+neighbor_size+1)&&(iy<sz[1]);iy++)
         {
-            for(float ix=((thisx-neighbor_size)>=0)?(thisx-neighbor_size):0;(ix<thisx+neighbor_size-1)&&(ix<sz[0]);ix=ix+0.2)
+            for(V3DLONG ix=((thisx-neighbor_size)>=0)?(thisx-neighbor_size):0;(ix<thisx+neighbor_size+1)&&(ix<sz[0]);ix++)
             {
-                long pos = iz*sz01 + iy * sz[0] + ix;
-                int thisRadius=inimg1d[pos];
-                if(thisRadius>out.level)
+
+                V3DLONG pos = iz*sz01 + iy * sz[0] + ix;
+                V3DLONG thisIntensity=inimg1d[pos];
+                if(thisIntensity>out.level)
                 {
-                    out.level=thisRadius;
+//                    cout<<"update to intensity:"<<thisIntensity<<endl;
+                    out.level=thisIntensity;
                     out.x=ix;
                     out.y=iy;
                     out.z=iz;

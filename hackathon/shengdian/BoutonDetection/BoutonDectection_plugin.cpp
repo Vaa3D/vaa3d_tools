@@ -31,6 +31,7 @@ QStringList BoutonDectectionPlugin::funclist() const
         <<tr("RecontructionIntensity_terafly")
        <<tr("Crop_terafly_block")
          <<tr("mask_img_from_swc")
+        <<tr("crop_bouton_block")
       <<tr("crop_terafly_swc_block")
 		<<tr("help");
 }
@@ -65,6 +66,9 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
         cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
         long sz01 = in_sz[0] * in_sz[1];
         long sz0 = in_sz[0];
+        double imgave,imgstd;
+        V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+        mean_and_std(inimg1d,total_size,imgave,imgstd);
         NeuronTree nt =callback.getSWC(curwin);
         QList<NeuronSWC>& listNeuron =  nt.listNeuron;
 
@@ -125,8 +129,8 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
                 if(useNeighborArea)
                 {
                     listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                    NeuronSWC out=nodeIntensity(inimg1d,listNeuron[i].x,listNeuron[i].y,listNeuron[i].z,in_sz,1);
-                    if(listNeuron[i].level<out.level)
+                    NeuronSWC out=nodeRefine(inimg1d,listNeuron[i].x,listNeuron[i].y,listNeuron[i].z,in_sz);
+                    if(listNeuron[i].level+imgave+imgstd<out.level)
                     {
                         cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
                         cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
@@ -140,7 +144,6 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
                 {
                     listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
                     float childIntensity=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-//                    listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
                     //get their parent node intensity
 
                     if(s.parent>0)
@@ -172,8 +175,6 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
                     }
 
                 }
-//                if(max_intensity<listNeuron[i].level)
-//                    max_intensity=listNeuron[i].level;
             }
         }
         getNodeRadius(inimg1d,in_sz,nt);
@@ -183,14 +184,6 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
         QString apo_file_path = savepath +"/"+ "bouton.apo";
         writeAPO_file(apo_file_path,apolist);
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
-//        //set back the result
-//        for(V3DLONG i=0;i<siz;i++)
-//        {
-//            listNeuron[i].radius/=max_intensity;
-//            listNeuron[i].radius*=10;
-//        }
-//        QString outswc_file_scale =savepath+"/"+"IntensityResult_scale.swc";
-//        writeSWC_file(outswc_file_scale,nt);
         callback.setSWC(curwin,nt);
 	}
 	else
@@ -214,17 +207,13 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             return false;
         }
         string inimg_file = infiles[0];
-        string inswc_file = infiles[1];
-        int allnode=0;
-        if(inparas.size()>=1)
-        {
-            allnode=atoi(inparas[0]);
-        }
-        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        QString inswc_file = infiles[1];
+        int allnode=(inparas.size()>=1)?atoi(inparas[0]):2;
+        NeuronTree nt = readSWC_file(inswc_file);
         getBoutonInTerafly(callback,inimg_file,nt,allnode);
 
-        string outswc_file = inswc_file + "_IntensityResult.eswc";
-        writeESWC_file(QString::fromStdString(outswc_file),nt);
+        QString outswc_file = inswc_file +"_"+QString::number(allnode)+ "_IntensityResult.eswc";
+        writeESWC_file(outswc_file,nt);
 	}
     else if (func_name == tr("BoutonDection_filter"))
     {
@@ -247,9 +236,9 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             return false;
         }
         int threshold=(inparas.size()>=1)?atoi(inparas[0]):20;
-        int allnode=(inparas.size()>=2)?atoi(inparas[1]):0;
+        int allnode=(inparas.size()>=2)?atoi(inparas[1]):1;
         int renderingType=(inparas.size()>=3)?atoi(inparas[2]):0;
-        int crop_block_size=(inparas.size()>=4)?atoi(inparas[3]):32;
+        int crop_block_size=(inparas.size()>=4)?atoi(inparas[3]):16;
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         V3DLONG siz = nt.listNeuron.size();
         if(renderingType==1)
@@ -260,11 +249,10 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
                 nt.listNeuron[i].radius=s.type;
             }
         }
-
         QList <CellAPO> apolist=getBouton(nt,threshold,allnode);
         string apo_file_path = inswc_file + "_bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
-        if(outfiles.size()==1)
+        if(infiles.size()==2&&outfiles.size()==1)
         {
 
             string out_path=outfiles[0];
@@ -281,7 +269,8 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             cout<<"Input file size="<<infiles.size()<<endl;
             return false;
         }
-        /*according to swc, mask img block
+        /*20200903:there is a v3dplugin: swc_to_mask is just like this
+         *according to swc, mask img block
          *Input img block
          *Input swc file
          *Input para for mask size of x, y and z
@@ -338,6 +327,13 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         splitSWC(callback,inimg_file,inswc_file,out_path,cropx,cropy,cropz);
         cout<<"done"<<endl;
     }
+    else if(func_name==tr("crop_bouton_block"))
+    {
+        /*Design purpose: for a brain have 10w+ bouton, crop a block with the maximal bouton density?
+         *
+        */
+        cout<<"Under developing"<<endl;
+    }
     else if (func_name==tr("Crop_terafly_block"))
     {
         if(infiles.size() != 2)
@@ -380,7 +376,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
 
         int threshold=(inparas.size()>=1)?atoi(inparas[0]):20;
         int useNeighborArea=(inparas.size()>=2)?atoi(inparas[1]):0;
-        int allnode=(inparas.size()>=3)?atoi(inparas[2]):0;
+        int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
         //read img
         unsigned char * inimg1d = 0;
         V3DLONG in_sz[4];
@@ -578,7 +574,7 @@ void printHelp()
 {
     qDebug()<<"Function for terafly";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc>";
-    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc> -p <all node is used: 0 or 1>";
+    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc> -p <all nodes in swc are used: 0 means only type 2; greater than 0 means use all the nodes and will use this para to refine swc node to its local maximal intensity>";
     qDebug()<<"Use one: get bouton apo file and crop img out";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_filter -i <input_image_terafly> <input_swc> -o <out_path> -p <threshold> <allnode> <crop_size>";
     qDebug()<<"Use two: only get bouton apo file.";
