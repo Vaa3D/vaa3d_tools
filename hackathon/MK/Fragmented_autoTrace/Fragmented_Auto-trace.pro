@@ -4,11 +4,17 @@ CONFIG	+= qt plugin warn_off
 QMAKE_CXXFLAGS += /MP
 #CONFIG	+= x86_64
 
+BOOSTPATH = $$(BOOST_PATH)
+QTPATH = $$(QTDIR)
+
 VAA3DPATH = ../../../../v3d_external/v3d_main
 IMGMANAGERPATH = ../v3d_imgManagerMK
 STATSLEARNERPATH = ../StatsLearner
 V3DTOOLPATH = ../../../released_plugins/v3d_plugins
 
+INCLUDEPATH += $$BOOSTPATH
+INCLUDEPATH += $$QTPATH/demos/shared
+INCLUDEPATH += $$QTPATH/include/QtOpenGL
 INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
@@ -22,20 +28,12 @@ INCLUDEPATH += $$VAA3DPATH/neuron_editing
 INCLUDEPATH += $$VAA3DPATH/common_lib/include
 INCLUDEPATH += $$VAA3DPATH/3drenderer
 
-win32: {
-    BOOSTPATH = $$(BOOST_PATH)
-    QTPATH = $$(QTDIR)
-
-    INCLUDEPATH += $$BOOSTPATH
-    INCLUDEPATH += $$QTPATH/demos/shared
-    INCLUDEPATH += $$QTPATH/include/QtOpenGL
-    LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
-
-    LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
-    LIBS += -L../NeuronStructNavigator -lNeuronStructNavigator
-}
+LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
+LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
+LIBS += -L../NeuronStructNavigator -lNeuronStructNavigator
 
 FORMS += fragmentedTraceUI.ui
+FORMS += progressMonitor.ui
 
 RESOURCES += FragTracer_Resource.qrc
 
@@ -48,6 +46,7 @@ HEADERS += FragmentEditor.h
 HEADERS += FragmentPostProcessor.h
 HEADERS += FragTraceImgProcessor.h
 HEADERS += FragTraceTester.h
+HEADERS += progressMonitor.h
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= Fragmented_Auto-trace_plugin.cpp
@@ -57,11 +56,7 @@ SOURCES += FragmentEditor.cpp
 SOURCES += FragmentPostProcessor.cpp
 SOURCES += FragTraceImgProcessor.cpp
 SOURCES += FragTraceTester.cpp
-
-unix:!macx {
-    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lNeuronStructNavigator
-    LIBS += -L/usr/lib64/ -lboost_system
-}
+SOURCES += progressMonitor.cpp
 
 TARGET	= $$qtLibraryTarget(Fragmented_Auto-trace)
 DESTDIR	= ../../../../v3d_external/bin/plugins/Fragmented_Auto-trace/

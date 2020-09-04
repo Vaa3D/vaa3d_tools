@@ -1,86 +1,11 @@
-#include <ctime>
-
 #include "ImgAnalyzer.h"
+#include "MKimgManagementTester.h"
 
 using namespace std;
 
 /* ======================================= Image Segmentation/Detection ======================================= */
-vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int dims[], const int distThre, unsigned char maxIP1D[])
+bool ImgAnalyzer::connComp2D(vector<connectedComponent>& connList2D, const vector<unsigned char**>& inputSlicesVector, const int distThre, const boost::container::flat_set<vector<int>>& whitePixAddress)
 {
-	// -- This method finds connected components from a given 2D or 3D image.
-	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
-
-	vector<connectedComponent> connList2D;
-	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
-	bool MIPprovided = true;
-
-	// --------- Enter this selection block only when MIP image is not provided ---------
-	if (maxIP1D == nullptr) 
-	{
-		MIPprovided = false;
-		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
-
-		maxIP1D = new unsigned char[dims[0] * dims[1]];
-		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
-		for (int i = 0; i < dims[0] * dims[1]; ++i)
-		{
-			maxIP1D[i] = 0;
-			currSlice1D[i] = 0;
-		}
-		
-		cout << "scanning slices.. ";
-		for (vector<unsigned char**>::const_iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
-		{
-			cout << ptrdiff_t(it - inputSlicesVector.begin() + 1) << " ";
-			size_t currSliceI = 0;
-			for (int j = 0; j < dims[1]; ++j)
-			{
-				for (int i = 0; i < dims[0]; ++i)
-				{
-					++currSliceI;
-					currSlice1D[currSliceI] = (*it)[j][i];
-				}
-			}
-			ImgProcessor::imgMax(currSlice1D, maxIP1D, maxIP1D, dims);
-		}
-		cout << " MIP done." << endl;
-
-		delete[] currSlice1D;
-		currSlice1D = nullptr;
-
-	}
-
-#ifdef MIP_DEBUG
-	V3DLONG mipDims[4];
-	mipDims[0] = dims[0];
-	mipDims[1] = dims[1];
-	mipDims[2] = 1;
-	mipDims[3] = 1;
-	string testSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testMIP.tif";
-	const char* testSaveNameC = testSaveName.c_str();
-	ImgManager::saveimage_wrapper(testSaveNameC, maxIP1D, mipDims, 1);*/
-#endif
-
-	// ------- END [Enter this selection block only when MIP image is not provided] -------
-
-	// ----------- Prepare white pixel address book ------------
-	set<vector<int>> whitePixAddress;
-	unsigned char** maxIP2D = new unsigned char*[dims[1]];
-	for (int j = 0; j < dims[1]; ++j)
-	{
-		maxIP2D[j] = new unsigned char[dims[0]];
-		vector<int> coord(2);
-		for (int i = 0; i < dims[0]; ++i)
-		{
-			maxIP2D[j][i] = maxIP1D[dims[0] * j + i];
-			coord[0] = j;
-			coord[1] = i;
-			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
-		}
-	}
-	// ------- END of [Prepare white pixel address book] ------
-	
-	// -------------------- Finding connected components slice by slice -------------------
 	int islandCount = 0;
 	cout << "  -- white pixel number: " << whitePixAddress.size() << endl << endl;
 	cout << "Processing each slice to identify connected components: ";
@@ -88,7 +13,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned ch
 	{
 		int sliceNum = int(sliceIt - inputSlicesVector.begin());
 		cout << sliceNum << " ";
-		for (set<vector<int>>::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
+		for (boost::container::flat_set<vector<int>>::const_iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 		{
 			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0) // use mip image to narraow down search region for every slice.
 			{
@@ -100,7 +25,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned ch
 					{
 						for (set<vector<int>>::iterator it = connIt->coordSets.at(sliceNum).begin(); it != connIt->coordSets.at(sliceNum).end(); ++it)
 						{
-						/******* IMPORATANT NOTE: Vaa3D coord system's x and y are flipped from TIF. Needs to switch x and when assigning x and y to swc from tif image! *******/
+							/******* IMPORATANT NOTE: Vaa3D coord system's x and y are flipped from TIF. Needs to switch x and when assigning x and y to swc from tif image! *******/
 							if (it->at(0) >= mipIt->at(1) - distThre && it->at(0) <= mipIt->at(1) + distThre &&
 								it->at(1) >= mipIt->at(0) - distThre && it->at(1) <= mipIt->at(0) + distThre) // using 8-connectivity
 							{
@@ -152,12 +77,102 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned ch
 				continue;
 			}
 		}
+
+		//cout << "(" << this->terminate << ") ";
+		if (this->fragTrace && this->terminate)
+		{	
+			v3d_msg("Image segmentation has exceeded your time limit.\nPlease adjust the settings.");
+			return false;
+		}
 	}
 	cout << endl;
-	// ------------------ END of [Finding connected components slice by slice] -----------------
 
-	// --------- Merge 2D blobs into 3D, compute the component's final size and boundaries ---------
-	vector<connectedComponent> connList = this->merge2DConnComponent(connList2D);
+	return true;
+}
+
+vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int dims[], const int distThre, unsigned char maxIP1D[])
+{
+	// -- This method finds connected components from a given 2D or 3D image.
+	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
+
+	vector<connectedComponent> connList2D;
+	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
+	bool MIPprovided = true;
+
+	// --------- Enter this selection block only when MIP image is not provided ---------
+	if (maxIP1D == nullptr) 
+	{
+		MIPprovided = false;
+		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
+
+		maxIP1D = new unsigned char[dims[0] * dims[1]];
+		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
+		for (int i = 0; i < dims[0] * dims[1]; ++i)
+		{
+			maxIP1D[i] = 0;
+			currSlice1D[i] = 0;
+		}
+		
+		cout << "scanning slices.. ";
+		for (vector<unsigned char**>::const_iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
+		{
+			cout << ptrdiff_t(it - inputSlicesVector.begin() + 1) << " ";
+			size_t currSliceI = 0;
+			for (int j = 0; j < dims[1]; ++j)
+			{
+				for (int i = 0; i < dims[0]; ++i)
+				{
+					++currSliceI;
+					currSlice1D[currSliceI] = (*it)[j][i];
+				}
+			}
+			ImgProcessor::imgMax(currSlice1D, maxIP1D, maxIP1D, dims);
+		}
+		cout << " MIP done." << endl;
+
+		delete[] currSlice1D;
+		currSlice1D = nullptr;
+
+	}
+	// ------- END [Enter this selection block only when MIP image is not provided] -------
+
+	// ----------- Prepare white pixel address book ------------
+	boost::container::flat_set<vector<int>> whitePixAddress;
+	unsigned char** maxIP2D = new unsigned char*[dims[1]];
+	for (int j = 0; j < dims[1]; ++j)
+	{
+		maxIP2D[j] = new unsigned char[dims[0]];
+		vector<int> coord(2);
+		for (int i = 0; i < dims[0]; ++i)
+		{
+			maxIP2D[j][i] = maxIP1D[dims[0] * j + i];
+			coord[0] = j;
+			coord[1] = i;
+			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
+		}
+	}
+	// ------- END of [Prepare white pixel address book] ------
+	
+	// ------- Find 2D connected componenets slice by slice, store it in vector<connectedComponent> connList2D ------- //
+	// ------- Then merge 2D blobs into 3D, store those 3D connected components in vector<connectedComponent> connList ------- //
+	vector<connectedComponent> connList;
+	if (this->fragTrace)
+	{
+		if (!this->connComp2D(connList2D, inputSlicesVector, distThre, whitePixAddress))
+		{
+			connList2D.clear();
+			return connList2D;
+		}
+		connList = this->merge2DConnCompInto3D(connList2D);
+	}
+	else
+	{
+		this->connComp2D(connList2D, inputSlicesVector, distThre, whitePixAddress);
+		connList = this->merge2DConnCompInto3D(connList2D);
+	}
+	// ------------------------------------------------------------------------------------------------------------------- //
+
+	// --------- Compute the component's final size and boundaries --------- //
 	for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end(); ++it)
 	{
 		int compSize = 0;
@@ -184,21 +199,20 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(const vector<unsigned ch
 		it->yMin = ymin;
 		it->size = compSize;
 	}
-	// ---- END of [Merge 2D blobs into 3D, compute the component's final size and boundaries] ----
+	// ---- END of [Compute the component's final size and boundaries] ---- //
 
 	return connList;
 }
 
-vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connectedComponent>& inputConnCompList)
+vector<connectedComponent> ImgAnalyzer::merge2DConnCompInto3D(const vector<connectedComponent>& inputConnCompList)
 {
-	// -- This method finds 3D signal blobs by grouping 2D signal blobs together, which are generated by ImgAnalyzer::findSignalBlobs.
+	// -- This method finds 3D signal blobs by grouping 2D signal blobs together, which are generated by ImgAnalyzer::connComp2D.
 	// -- This method is typically called by ImgAnalyzer::findSignalBlobs when identifying 3D blobs from 2D ones.
 	// -- The approach is consists of 2 stages:
 	//		1. Identifying the same 3D blobs slice by slice.
 	//		2. Merging 3D blobs that contain the same 2D blobs.
 
-	cout << "Merging 2D signal blobs.." << endl;
-	cout << "-- processing slice ";
+	cout << endl << "Merging 2D signal blobs.." << endl;
 
 	vector<connectedComponent> outputConnCompList;
 
@@ -242,13 +256,8 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 		increasedSize = 0;
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it); // collect all connected components from the current slice
-		if (currSliceConnComps.empty())
-		{
-			//cout << i << "->0 ";
-			continue;
-		}
+		if (currSliceConnComps.empty()) continue;
 
-		//cout << i << "->";
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
 		if (preSliceConnComps.empty())
@@ -319,10 +328,8 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 				increasedSize = increasedSize + comps.size();
 			}
 		}
-		//cout << increasedSize << ", ";
 	}
-	//cout << endl << endl;
-	cout << "Done merging 2D blobs from every 2 slices." << endl << endl;
+	cout << " -- Done merging 2D blobs from every 2 slices." << endl << endl;
 	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
 
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
@@ -332,79 +339,52 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
-	if (!this->blobMergingReport)
+	while (!mergeFinish)
 	{
-		while (!mergeFinish)
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 		{
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+			if (checkIt1->first < currBaseBlob) continue;
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
-				if (checkIt1->first < currBaseBlob) continue;
-				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 				{
-					//if (checkIt2 == checkIt1) continue;
-					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
 					{
-						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+						if (*member2 == *member1)
 						{
-							if (*member2 == *member1)
-							{
-								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
-								b3Dcomps.erase(checkIt2);
-								currBaseBlob = checkIt1->first;
+							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+							b3Dcomps.erase(checkIt2);
+							currBaseBlob = checkIt1->first;
 
-								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
-								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+							double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
 
-								goto MERGED;
-							}
+							goto MERGED;
 						}
 					}
 				}
 			}
-			mergeFinish = true;
 
-		MERGED:
-			continue;
-		}
-	}
-	else
-	{
-		while (!mergeFinish)
-		{
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+			//cout << "(" << this->terminate << ") ";
+			if (this->fragTrace && this->terminate)
 			{
-				if (checkIt1->first < currBaseBlob) continue;
-				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
-				{
-					//if (checkIt2 == checkIt1) continue;
-					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
-					{
-						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
-						{
-							if (*member2 == *member1)
-							{
-								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
-								b3Dcomps.erase(checkIt2);
-								currBaseBlob = checkIt1->first;
-
-								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
-								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
-								this->progressReading = int(ceil(processedPercentage));
-
-								goto MERGED_WITH_PROGRESS_REPORT;
-							}
-						}
-					}
-				}
+				v3d_msg("Image processing has exceeded your time limit.\nPlease adjust the settings.");
+				outputConnCompList.clear();
+				return outputConnCompList;
 			}
-			mergeFinish = true;
-
-		MERGED_WITH_PROGRESS_REPORT:
-			continue;
 		}
-	}
-	
+		mergeFinish = true;
 
+	MERGED:
+		//cout << "(" << this->terminate << ") ";
+		if (this->fragTrace && this->terminate)
+		{
+			v3d_msg("Image processing has exceeded your time limit.\nPlease adjust the settings.");
+			outputConnCompList.clear();
+			return outputConnCompList;
+		}
+		continue;
+	}
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
@@ -583,7 +563,6 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 	return dendriteSigSet;
 }
 /* ================================== END of [Image Segmentation/Detection] ================================== */
-
 
 
 /* ============================================ Image Analysis ============================================ */
@@ -766,11 +745,20 @@ void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const 
 /* ====================================== END of [Image Analysis] ====================================== */
 
 
-
 /* ==================================== Process Monitoring ==================================== */
-void ImgAnalyzer::reportProcess(ImgAnalyzer::processName processName)
+void ImgAnalyzer::timing(const int allowedProcTime, bool& terminate)
 {
-	this->progressReading = 0;
-	if (processName == ImgAnalyzer::blobMerging) this->blobMergingReport = true;
+	chrono::seconds waitingTime(allowedProcTime);
+	clock_t start = clock();
+	this_thread::sleep_for(waitingTime);
+	clock_t end = clock();
+	int duration = int(end - start) / CLOCKS_PER_SEC;
+
+	mutex terminateMutex;
+	lock_guard<mutex> guard(terminateMutex);
+	terminate = true;
+	
+	cout << " ==> time elapsed: " << duration << " seconds" << endl;
+	system("pause");
 }
 /* ============================================================================================ */

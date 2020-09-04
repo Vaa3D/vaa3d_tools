@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -7,7 +7,7 @@
 *
 *  [integratedDataTypes] is part of the NeuronStructNavigator library.
 *  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
-*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make developing neuron structure operations and algorithms more convenient.
+*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
 *  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
 *
 *  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
@@ -17,13 +17,13 @@
 
 ********************************************************************************/
 
-#include <iostream>
-
 #include "integratedDataTypes.h"
 #include "NeuronGeoGrapher.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #include "NeuronStructNavigatingTester.h"
+
+#include <iostream>
 
 using namespace std;
 using NSlibTester = NeuronStructNavigator::Tester;

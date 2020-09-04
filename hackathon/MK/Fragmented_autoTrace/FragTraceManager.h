@@ -19,6 +19,9 @@
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
+#include <mutex>
+#include <thread>
+
 #include "v3d_interface.h"
 #include "INeuronAssembler.h"
 
@@ -38,6 +41,7 @@
 
 #include "FragTraceImgProcessor.h"
 #include "FragmentPostProcessor.h"
+#include "progressMonitor.h"
 #endif
 
 enum workMode { axon, dendriticTree };
@@ -100,6 +104,10 @@ public:
 	string MSTtreeName;
 	int minNodeNum;
 	// ----------------------------------- //
+
+	// ------- Process Monitoring ------- //
+	int allowedProcTime;
+	// ---------------------------------- //
 
 	enum imgProcSteps { gamma_Correction,
 						adaptiveThresholding, simpleThresholding, histBasedThresholding3D,
@@ -183,7 +191,13 @@ public:
 private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 
-	vector<V_NeuronSWC> totalV_NeuronSWCs; // Type-16 V_NeuronSWCs to be acquired by FragTraceControlPanel.
+	// Type-16 V_NeuronSWCs to be acquired by FragTraceControlPanel.
+	vector<V_NeuronSWC> totalV_NeuronSWCs; 
+
+	bool MSTterminate, fragTaskFinished;
+	void timingImgProc(FragTraceManager* FragTraceMgrPtr, int allowedProcTime);
+	void timingFragGen(FragTraceManager* FragTraceMgrPtr, int allowedProcTime);
+	//bool treeGenThread(FragTraceManager* FragTraceMgrPtr, profiledTree& inputProfiledTree, workMode mode);
 
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;

@@ -7,7 +7,7 @@
 *
 *  [integratedDataTypes] is part of the NeuronStructNavigator library. 
 *  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
-*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make developing neuron structure operations and algorithms more convenient.
+*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
 *  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
 * 
 *  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
@@ -20,15 +20,14 @@
 #ifndef INTEGRATEDDATATYPES_H
 #define INTEGRATEDDATATYPES_H
 
+#include "integratedDataStructures.h"
+
+#include "v_neuronswc.h"
+#include "basic_surf_objs.h"
+
 #include <deque>
 #include <string>
 
-#include "v_neuronswc.h"
-
-#include "basic_surf_objs.h"
-#include "integratedDataStructures.h"
-
-using namespace std;
 using namespace integratedDataStructures;
 
 const double PI_MK            = 3.1415926535897932; // This name is given simply to avoid the conflict with [const double PI] in IM_config.h of terafly submodule.
@@ -80,7 +79,8 @@ namespace integratedDataTypes
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 
-		const bool operator==(const segUnit& comparedSeg) const; // operator== for comparing 2 segUnits
+		const bool operator==(const segUnit& comparedSeg) const;												         // operator== for comparing 2 segUnits
+		const bool operator!=(const segUnit& comparedSeg) const { return this->operator==(comparedSeg) ? false : true; } // operator!= for comparing 2 segUnits
 		
 		// Current operator> and operator< are based on the number of nodes on the segment.
 		const bool operator>(const segUnit& comparedSeg) const;

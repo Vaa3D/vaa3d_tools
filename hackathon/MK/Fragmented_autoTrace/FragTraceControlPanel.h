@@ -74,7 +74,6 @@ public slots:
 	void markerMonitorOption(bool checked);
 	void multiSomaTraceChecked(bool checked);
 	void saveSettingsClicked();
-	//void browseSavePathClicked();
 	// ---------------------------- //
 
 	// ------- Post Editing ------- //
@@ -167,6 +166,8 @@ private slots:
 
 
 private:
+	//bool initThread();
+
 	void fillUpParamsForm(); // This is for future parameter learning project.
 };
 

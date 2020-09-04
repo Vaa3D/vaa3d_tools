@@ -127,6 +127,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	uiPtr->spinBox_7->setValue(callOldSettings.value("axonCluster_range").toInt());
 	// ------------------------------- //
 
+	// ------- Process Monitoring ------- //
+	uiPtr->spinBox_3->setValue(callOldSettings.value("allowedProcessingTime").toInt());
+	// ---------------------------------- //
+
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);  
@@ -374,6 +378,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 	// ------------------------------- //
+
+	// ------- Process Monitoring ------- //
+	settings.setValue("allowedProcessingTime", uiPtr->spinBox_3->value());
+	// ---------------------------------- //
 }
 
 void FragTraceControlPanel::eraseButtonClicked()
@@ -623,6 +631,7 @@ void FragTraceControlPanel::traceButtonClicked()
 			this->pa_objFilter();                              // object filter
 			this->pa_objBasedMST();                            // object-based MST node connecting
 			this->pa_axonContinuous();
+			this->traceManagerPtr->allowedProcTime = uiPtr->spinBox_3->value();
 			// ---------------------------------------------------------- //
 		}
 	}
@@ -662,6 +671,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		v3d_msg(QString("The process has been terminated."));
 		return;
 	}
+	//this->initThread();
 	this->thisCallback->setSWCTeraFly(this->tracedTree);
 	
 	// -- Acquire all type-16 Vsegs that are to be hidden, and record their locations on [My4DImage::tracedNeuron.seg] -- //
@@ -1142,6 +1152,13 @@ void FragTraceControlPanel::signalNA2retypeConnectedSegs(V_NeuronSWC_list& displ
 }
 /* =============== END of [Terafly/Editing Communicating Methods] =============== */
 
+
+
+/*bool FragTraceControlPanel::initThread()
+{
+	std::thread testThread(&FragTraceManager::imgProcPipe_wholeBlock, this->traceManagerPtr);
+	return true;
+}*/
 
 
 void FragTraceControlPanel::fillUpParamsForm()
