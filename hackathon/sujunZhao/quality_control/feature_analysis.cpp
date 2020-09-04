@@ -1,16 +1,18 @@
 #include "feature_analysis.h"
 #include <vector>
+#include <stack>
 #define FNUM 26
 #ifndef VOID
 #define VOID 1000000000
 #endif
 #define PI 3.14159265359
-#define min(a,b) (a)<(b)?(a):(b)
-#define max(a,b) (a)>(b)?(a):(b)
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a,b) ((a) < (b) ? (a) : (b))
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
 #define MAX_DOUBLE 1.79769e+308
+
 
 using namespace std;
 
@@ -2007,5 +2009,239 @@ QList<int> loop_detection(const NeuronTree & nt){
 //    }
 //    return;
 //}
+
+QList<TreeNode> tree(NeuronTree nt, int n){
+    QList<TreeNode> tree;
+    QList<int> plist;
+    QList<int> nlist;
+    for(int i=0; i<n;i++){
+        NeuronSWC node=nt.listNeuron.at(i);
+        plist.append(node.pn);
+        nlist.append(node.n);
+    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(n, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<n;i++)
+    {
+        int pid = nlist.lastIndexOf(nt.listNeuron.at(i).pn);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+    QList<int> branch;
+    QList<int> tip;
+    for(int i=0; i<n; i++){
+        if(children[i].size()>1){
+            branch.append(i);
+        }
+        if(children[i].size()==0){
+            tip.append(i);
+        }
+    }
+    for(int i=0; i<branch.size(); i++){
+        int child1=children[branch.at(i)].at(0);
+        int child2=children[branch.at(i)].at(1);
+        int tmp=1;
+        TreeNode p;
+        p.val=branch.at(i);
+        while (tmp ==1){
+            int b_tmp=branch.lastIndexOf(child1);
+            int t_tmp=tip.lastIndexOf(child1);
+            if(b_tmp>=0 || t_tmp >=0){
+                p.left=child1;
+                tmp=0;
+            }
+            else{
+                child1=children[child1].at(0);
+            }
+        }
+        tmp=1;
+        while (tmp ==1){
+            int b_tmp=branch.lastIndexOf(child2);
+            int t_tmp=tip.lastIndexOf(child2);
+            if(b_tmp>=0 || t_tmp >=0){
+                p.right=child2;
+                tmp=0;
+            }
+            else{
+                child2=children[child2].at(0);
+            }
+        }
+        tree.append(p);
+    }
+    return tree;
+}
+
+
+void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback)
+{
+    vector<char*> in, inparas, outfiles;
+    if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    bool hasOutput;
+    if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);hasOutput=true;} else {hasOutput=false;}
+    QString swc_file = in.at(0);
+    NeuronTree nt = readSWC_file(swc_file);
+    //V3DLONG newrootid = VOID;
+    //double thres = VOID;
+    //NeuronTree nt_sort = my_SortSWC(nt, newrootid, thres);
+    NeuronTree nt_sort=nt;
+    int n=nt_sort.listNeuron.size();
+    //cout<<"swc size "<<n<<endl;
+    QList<TreeNode> simple_tree;
+    simple_tree= tree(nt_sort, n);
+    QList<int> nlist;
+    for(int i=0; i<n;i++){
+        NeuronSWC node=nt_sort.listNeuron.at(i);
+        nlist.append(node.n);
+    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(n, QVector<V3DLONG>() );
+    QHash<int, int> parent;
+    parent.clear();
+    for (V3DLONG i=0;i<n;i++)
+    {
+        int pid = nlist.lastIndexOf(nt_sort.listNeuron.at(i).pn);
+        parent.insert(i,pid);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+    QList<int> tip;
+    QList<int> branch;
+    for (int i=0; i<n; i++){
+        if (children[i].size()==0){
+            tip.append(i);
+        }
+        if (children[i].size()>1){
+            branch.append(i);
+        }
+    }
+    QHash<int, int> child_parent;
+    child_parent.clear();
+    QHash< int, QList<int> > parent_child;
+    parent_child.clear();
+    //Bifurcation ampl
+    double bif_avg_angle;
+    double bif_max_angle=0;
+    //cout<<"simple tree size="<<simple_tree.size()<<endl;
+    for (int i=0; i<simple_tree.size(); i++){
+        int a= simple_tree.at(i).val;
+        int b1=simple_tree.at(i).left;
+        int b2=simple_tree.at(i).right;
+        child_parent.insert(b1, a);
+        child_parent.insert(b2, a);
+        QList<int> tmp;
+        tmp.clear();
+        tmp.push_back(b1);
+        tmp.push_back(b2);
+        parent_child.insert(a,tmp);
+        double ang=angle(nt_sort.listNeuron.at(a),nt_sort.listNeuron.at(b1),nt_sort.listNeuron.at(b2));
+        bif_avg_angle=bif_avg_angle+ang;
+        if(ang>bif_max_angle){
+            bif_max_angle=ang;
+        }
+    }
+    int maxdepth=0;
+    int mindepth=1000;
+    //cout<<"tip size ="<<tip.size()<<endl;
+    for(int i=0; i<tip.size();i++){
+        int tmp=1;
+        int id=tip.at(i);
+        while (child_parent.contains(id)){
+            id=child_parent.value(id);
+            tmp=tmp+1;
+        }
+        if(maxdepth<tmp){
+            maxdepth=tmp+1;
+        }
+        if(mindepth>tmp){
+            mindepth=tmp+1;
+        }
+    }
+    //cout<<maxdepth<<" "<<mindepth<<endl;
+
+    //branch_pathlength
+    double sum_path=0;
+    //cout<<"branch size "<<branch.size()<<endl;
+    //cout<<"p size "<<parent.size()<<endl;
+    for(int i=0; i<branch.size();i++){
+        int tmp_index=branch.at(i);
+        if (nt_sort.listNeuron.at(tmp_index).pn == -1){continue;}
+        int p_index=parent[tmp_index];
+        //cout<<"pindex "<<parent[18]<<endl;
+        double pathL=dist(nt_sort.listNeuron.at(tmp_index),nt_sort.listNeuron.at(p_index));
+        sum_path=sum_path+pathL;
+        //int countloop=1;
+        while (!branch.contains(p_index)){
+            if(nt_sort.listNeuron.at(p_index).pn == -1){break;}
+            sum_path=sum_path+dist(nt_sort.listNeuron.at(p_index),nt_sort.listNeuron.at(parent[p_index]));
+            p_index=parent[p_index];
+            //cout<<"parent "<<p_index<<endl;
+            //countloop++;
+        }
+    }
+    double avg_path=sum_path/branch.size();
+
+    //Terminal degree
+    QHash<int, int> tip_count;
+    tip_count.clear();
+    int terminal_deg=0;
+    //cout<<"tip size ="<<tip.size()<<endl;
+    for (int i=0; i<tip.size();i++){
+        int p_index=parent[tip.at(i)];
+        while(p_index != -1){
+            if(branch.contains(p_index)){
+                terminal_deg=terminal_deg+1;
+                if(!tip_count.contains(p_index)){
+                    tip_count.insert(p_index,1);
+                }
+                else{
+                    tip_count[p_index]=tip_count[p_index]+1;
+                }
+            }
+            p_index=parent[p_index];
+        }
+    }
+    double degree= terminal_deg/branch.size();
+
+    //cout<<"asymmetry"<<endl;
+    //Partition Asymmetry
+    double asymmetry=0;
+    QHash< int,QList<int> >::const_iterator it;
+    for (it = parent_child.constBegin(); it!=parent_child.constEnd(); ++it){
+        int left, right;
+        int left_id=it.value().at(0);
+        int right_id=it.value().at(1);
+        if(tip.contains(left_id)){
+            left=1;
+        }
+        else{
+            left=tip_count[left_id];
+        }
+        if(tip.contains(right_id)){
+            right=1;
+        }
+        else{
+            right=tip_count[right_id];
+        }
+        if(left+right == 2){
+            continue;
+        }
+        else{
+            asymmetry=(abs(left-right)/(left+right-2))+asymmetry;
+        }
+        //cout<<"asy "<<asymmetry<<endl;
+    }
+    double asy=asymmetry/parent_child.size();
+
+    QString neuron_id_split=QString(swc_file).split("/").last();
+    QList<QString> path_split=neuron_id_split.split(".");
+    QString neuron_split1=path_split.first();
+    ofstream myfile;
+    myfile.open ("/home/penglab/Desktop/sujun/analysis/arbor/LM.txt",ios::out | ios::app );
+    myfile <<neuron_split1.toStdString().c_str()<<" "<<mindepth<<" "<<bif_avg_angle<<" "<<bif_max_angle<<" "<<avg_path<<" "<<degree<<
+          " "<<asy<<endl;
+    myfile.close();
+}
+
 
 

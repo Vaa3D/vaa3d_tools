@@ -81,6 +81,10 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         }
         writeAPO_file(filename, apo);
 	}
+    else if (func_name == tr("tree_feature"))
+    {
+        tree_structure(input, output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
