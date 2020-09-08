@@ -1011,68 +1011,69 @@ void computeNeuronTreeLineScore(unsigned char *data1d, long long *sz, NeuronTree
         double r1 = nt.listNeuron[i].r;
         double r2 = nt.listNeuron[prtIndex].r;
         if(r2/r1>2 || r1<2.0){
-            nt.listNeuron[i].type = 5;
-        }
-    }
-    vector<V3DLONG> pointIndexs = vector<V3DLONG>();
-
-    V3DLONG t,tmp;
-    double pathlength;
-    while (!stack.empty()) {
-        t = stack.pop();
-        pointIndexs.push_back(t);
-        vector<V3DLONG> child = children[t];
-        for(int i=0; i<child.size(); i++){
-            tmp = child[i];
-
-            while(children[tmp].size() == 1){
-                pointIndexs.push_back(tmp);
-                V3DLONG ch = children[tmp][0];
-                tmp = ch;
-            }
-
-            int chsz = children[tmp].size();
-            if(chsz>1){
-                stack.push(tmp);
-            }else {
-                pointIndexs.push_back(tmp);
-            }
-
-//            pathlength = zx_dist(nt.listNeuron[tmp],nt.listNeuron[t]);
-
-
-        }
-    }
-
-    for(int i=0; i<pointIndexs.size(); i++){
-        t = pointIndexs[i];
-        if(zx_dist(nt.listNeuron[t],nt.listNeuron[ori]) < nt.listNeuron[ori].r*2
-                || nt.listNeuron[t].type != 5 || isRemain[t] == 1){
-            isRemain[t] = 1;
+            nt.listNeuron[i].type = 2;
         }else {
-            V3DLONG prtIndex = nt.hashNeuron.value(nt.listNeuron[t].parent);
-            if(children[t].size()>1 || children[prtIndex].size()>1){
-                V3DLONG cur;
-                if(children[t].size() > 1){
-                    cur = t;
-                }else {
-                    cur = prtIndex;
-                }
-                vector<V3DLONG> segment1 = vector<V3DLONG>();
-//                segment1.push_back(cur);
-                V3DLONG curP = nt.hashNeuron.value(nt.listNeuron[cur].parent);
-                while(children[curP].size() == 1){
-                    segment1.push_back(curP);
-                    curP = nt.hashNeuron.value(nt.listNeuron[curP].parent);
-                }
-
-
-            }
+            nt.listNeuron[i].type = 7;
         }
-
-
-
     }
+//    vector<V3DLONG> pointIndexs = vector<V3DLONG>();
+
+//    V3DLONG t,tmp;
+//    double pathlength;
+//    while (!stack.empty()) {
+//        t = stack.pop();
+//        pointIndexs.push_back(t);
+//        vector<V3DLONG> child = children[t];
+//        for(int i=0; i<child.size(); i++){
+//            tmp = child[i];
+
+//            while(children[tmp].size() == 1){
+//                pointIndexs.push_back(tmp);
+//                V3DLONG ch = children[tmp][0];
+//                tmp = ch;
+//            }
+
+//            int chsz = children[tmp].size();
+//            if(chsz>1){
+//                stack.push(tmp);
+//            }else {
+//                pointIndexs.push_back(tmp);
+//            }
+
+//           pathlength = zx_dist(nt.listNeuron[tmp],nt.listNeuron[t]);
+
+
+//        }
+//    }
+
+//    for(int i=0; i<pointIndexs.size(); i++){
+//        t = pointIndexs[i];
+//        if(zx_dist(nt.listNeuron[t],nt.listNeuron[ori]) < nt.listNeuron[ori].r*2
+//                || nt.listNeuron[t].type != 5 || isRemain[t] == 1){
+//            isRemain[t] = 1;
+//        }else {
+//            V3DLONG prtIndex = nt.hashNeuron.value(nt.listNeuron[t].parent);
+//            if(children[t].size()>1 || children[prtIndex].size()>1){
+//                V3DLONG cur;
+//                if(children[t].size() > 1){
+//                    cur = t;
+//                }else {
+//                    cur = prtIndex;
+//                }
+//                vector<V3DLONG> segment1 = vector<V3DLONG>();
+//                V3DLONG curP = nt.hashNeuron.value(nt.listNeuron[cur].parent);
+//                while(children[curP].size() == 1){
+//                    segment1.push_back(curP);
+//                    curP = nt.hashNeuron.value(nt.listNeuron[curP].parent);
+//                }
+
+
+//            }
+//        }
+
+
+
+//    }
 
 
 

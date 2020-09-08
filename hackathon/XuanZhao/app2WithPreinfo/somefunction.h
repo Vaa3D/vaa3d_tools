@@ -26,4 +26,6 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream& 
 
 bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile, int maxTh, int minTh, V3DPluginCallback2& callback);
 
+NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees);
+
 #endif // SOMEFUNCTION_H

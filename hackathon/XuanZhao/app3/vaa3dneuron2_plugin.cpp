@@ -83,6 +83,12 @@ QStringList NTApp2Plugin::funclist() const
 
 bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
     if(func_name == "app2")
     {
         PARA_APP2 p;
@@ -110,6 +116,55 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
             return false;
 
         if (!proc_app3(callback, p, versionStr))
+            return false;
+    }
+    else if (func_name == "app2WithRemoveCross") {
+        PARA_APP2 p;
+        if (!p.fetch_para_commandline(input, output, callback, parent))
+            return false;
+        p.is_coverage_prune = false;
+//        p.b_256cube = false;
+        p.is_break_accept = true;
+        p.bkg_thresh = -1;
+
+//        QString imgPath = infiles[0];
+//        V3DLONG sz[4] = {0,0,0,0};
+
+//        int dataType = 1;
+//        unsigned char* pdata = 0;
+//        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+//        V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+//        double imageMean = 0;
+//        double imageStd = 0;
+//        int count = 0;
+//        for(int i=0; i<tolSZ; i++){
+//            if(pdata[i]>0){
+//                imageMean += pdata[i];
+//                count++;
+//            }
+//        }
+//        if(count>0){
+//            imageMean /= (double)count;
+//        }
+//        for(int i=0; i<tolSZ; i++){
+//            if(pdata[i]>0){
+//                imageStd += (pdata[i]-imageMean)*(pdata[i]-imageMean);
+//            }
+//        }
+//        if(count>0){
+//            imageStd = sqrt(imageStd/(double)count);
+//        }
+//        p.bkg_thresh = imageMean + 0.5*imageStd;
+
+        if (!proc_app2WithRemoveCross(callback, p, versionStr))
+            return false;
+    }else if (func_name == "NP-Tracer") {
+        PARA_APP2 p;
+
+        if (!p.fetch_para_commandline(input, output, callback, parent))
+            return false;
+
+        if (!proc_multiApp2(callback, p, versionStr))
             return false;
     }
     else //if (func_name == "help")

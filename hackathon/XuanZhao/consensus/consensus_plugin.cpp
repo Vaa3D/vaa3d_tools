@@ -104,13 +104,13 @@ void ConsensusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
     else if (menu_name == tr("consensus"))
 	{
-//        v3dhandle curwin = callback.currentImageWindow();
-//        Image4DSimple* image = callback.getImage(curwin);
+        v3dhandle curwin = callback.currentImageWindow();
+        Image4DSimple* image = callback.getImage(curwin);
 
 
 //        bool ok;
 //        int k = QInputDialog::getInt(parent,tr("set k"),tr("k:"),2,2,100,1,&ok);
-////        if(ok)
+//        if(ok)
 
 
 //        int* th = getThresholdByKmeans(image,k);
@@ -119,15 +119,17 @@ void ConsensusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 
 //        if(th)
 //            delete[] th;
-//        LandmarkList landMarkers = callback.getLandmark(curwin);
+        LandmarkList landMarkers = callback.getLandmark(curwin);
 //        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,callback,parent);
-//        NeuronTree consensusSwc =  consensus(app2NeuronTrees,image,landMarkers,callback);
+        consensus(QString(image->getFileName()),landMarkers,0,callback);
 //        writeSWC_file(QString(image->getFileName()) + "_consensus.swc",consensusSwc);
-//        consensusSwc.color = XYZW(0,0,0,0);
+        QString consensusSwcPath = QString(image->getFileName()) + "_consensus.swc";
 
-//        callback.setSWC(curwin,consensusSwc);
-//        callback.open3DWindow(curwin);
-//        callback.getView3DControl(curwin)->updateWithTriView();
+        NeuronTree consensusSwc = readSWC_file(consensusSwcPath);
+
+        callback.setSWC(curwin,consensusSwc);
+        callback.open3DWindow(curwin);
+        callback.getView3DControl(curwin)->updateWithTriView();
 
 	}
     else if (menu_name == "rotateImage") {

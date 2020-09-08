@@ -50,6 +50,7 @@ NeuronTree swc_convert(vector<MyMarker*> & inswc)
 		ns.y = marker->y;
 		ns.z = marker->z;
 		ns.r = marker->radius;
+        ns.type = marker->type;
 		ns.n = swc_map[marker];
 		ns.pn = pid;
 		nt.listNeuron.push_back(ns);

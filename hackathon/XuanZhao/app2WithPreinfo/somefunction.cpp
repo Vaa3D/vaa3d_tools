@@ -175,7 +175,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
-    NeuronTree backSWC,foreSWC;
+    NeuronTree backSWC,foreSWC,otherSWC;
     for(int i=0; i<nt.listNeuron.size(); i++){
         NeuronSWC s = nt.listNeuron[i];
         s.x -= x0;
@@ -184,11 +184,13 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
         qDebug()<<"type: "<<s.type<<" xyz: "<<s.x<<" "<<s.y<<" "<<s.z;
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
-        }
-        if(s.type == 3){
+        }else if(s.type == 3){
             foreSWC.listNeuron.push_back(s);
+        }else{
+            otherSWC.listNeuron.push_back(s);
         }
     }
+    sortSWC(otherSWC);
     qDebug()<<"fore swc size:"<<foreSWC.listNeuron.size();
     qDebug()<<"back swc size:"<<backSWC.listNeuron.size();
 
@@ -266,11 +268,19 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     writeSWC_file(localSwcPath,p2.result);
 
+    vector<NeuronTree> trees = vector<NeuronTree>();
     for(int i=0; i<p2.result.listNeuron.size(); i++){
-        p2.result.listNeuron[i].x += x0;
-        p2.result.listNeuron[i].y += y0;
-        p2.result.listNeuron[i].z += z0;
         p2.result.listNeuron[i].type = 3;
+    }
+    trees.push_back(p2.result);
+    trees.push_back(otherSWC);
+    NeuronTree globalTree = mergeNeuronTrees(trees);
+
+    for(int i=0; i<globalTree.listNeuron.size(); i++){
+        globalTree.listNeuron[i].x += x0;
+        globalTree.listNeuron[i].y += y0;
+        globalTree.listNeuron[i].z += z0;
+//        globalTree.listNeuron[i].type = 3;
     }
 
     QString outApoPath = outDir + "\\" + outDir.split("\\").back() + ".apo";
@@ -283,7 +293,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     ano<<"SWCFILE="<<(outDir.split("\\").back() + ".eswc").toStdString().c_str()<<endl;
     ano.close();
     writeAPO_file(outApoPath,markers);
-    writeESWC_file(outSwcPath,p2.result);
+    writeESWC_file(outSwcPath,globalTree);
 
     if(image){
         delete image;
@@ -342,7 +352,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
     int bCount = 0;
     int fCount = 0;
     int aCount = 0;
-    NeuronTree backSWC,foreSWC;
+    NeuronTree backSWC,foreSWC,otherSWC;
     for(int i=0; i<nt.listNeuron.size(); i++){
         NeuronSWC s = nt.listNeuron[i];
         s.x -= x0;
@@ -351,13 +361,15 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
             bCount++;
-        }
-        if(s.type == 3){
+        }else if(s.type == 3){
             foreSWC.listNeuron.push_back(s);
             fCount++;
+        }else{
+            otherSWC.listNeuron.push_back(s);
         }
         aCount++;
     }
+    sortSWC(otherSWC);
 
     qDebug()<<"bCount: "<<bCount<<" fCount: "<<fCount<<" aCount: "<<aCount;
     double bmean,bstd,fmean,fstd;
@@ -413,8 +425,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         sortSWC(p2.result);
 
 
-        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
-                 <<','<<fstd<<','<<bstd<<endl;
+
 
         if(p2.result.listNeuron.isEmpty()){
             continue;
@@ -425,27 +436,41 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
         writeSWC_file(localSwcPath,p2.result);
 
-        for(int i=0; i<p2.result.listNeuron.size(); i++){
-            p2.result.listNeuron[i].x += x0;
-            p2.result.listNeuron[i].y += y0;
-            p2.result.listNeuron[i].z += z0;
-            p2.result.listNeuron[i].type = 3;
-        }
 
-        QString outApoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".apo";
-        QString outSwcPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".eswc";
-        QString outAnoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".ano";
-
-        ofstream ano;
-        ano.open(outAnoPath.toStdString().c_str(),ios::out);
-        ano<<"APOFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
-        ano<<"SWCFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
-        ano.close();
-        writeAPO_file(outApoPath,markers);
-        writeESWC_file(outSwcPath,p2.result);
 
         double swcLength = getSwcLength(p2.result);
         if(swcLength>length){
+
+            csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+                     <<','<<fstd<<','<<bstd<<endl;
+
+            vector<NeuronTree> trees = vector<NeuronTree>();
+            trees.clear();
+            for(int i=0; i<p2.result.listNeuron.size(); i++){
+                p2.result.listNeuron[i].type = 3;
+            }
+            trees.push_back(p2.result);
+            trees.push_back(otherSWC);
+            NeuronTree globalTree = mergeNeuronTrees(trees);
+
+            for(int i=0; i<globalTree.listNeuron.size(); i++){
+                globalTree.listNeuron[i].x += x0;
+                globalTree.listNeuron[i].y += y0;
+                globalTree.listNeuron[i].z += z0;
+            }
+
+            QString outApoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".apo";
+            QString outSwcPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".eswc";
+            QString outAnoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".ano";
+
+            ofstream ano;
+            ano.open(outAnoPath.toStdString().c_str(),ios::out);
+            ano<<"APOFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
+            ano<<"SWCFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
+            ano.close();
+            writeAPO_file(outApoPath,markers);
+            writeESWC_file(outSwcPath,globalTree);
+
             qDebug()<<"the out size is too big";
             break;
         }
@@ -505,7 +530,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
-    NeuronTree backSWC,foreSWC;
+    NeuronTree backSWC,foreSWC,otherSWC;
     int bCount = 0;
     int fCount = 0;
     int aCount = 0;
@@ -517,13 +542,15 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         if(s.type == 2){
             backSWC.listNeuron.push_back(s);
             bCount++;
-        }
-        if(s.type == 3){
+        }else if(s.type == 3){
             foreSWC.listNeuron.push_back(s);
             fCount++;
+        }else{
+            otherSWC.listNeuron.push_back(s);
         }
         aCount++;
     }
+    sortSWC(otherSWC);
     qDebug()<<"bCount: "<<bCount<<" fCount: "<<fCount<<" aCount: "<<aCount;
 
     double bmean,bstd,fmean,fstd;
@@ -590,11 +617,20 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
         writeSWC_file(localSwcPath,p2.result);
 
+        vector<NeuronTree> trees = vector<NeuronTree>();
+        trees.clear();
         for(int i=0; i<p2.result.listNeuron.size(); i++){
-            p2.result.listNeuron[i].x += x0;
-            p2.result.listNeuron[i].y += y0;
-            p2.result.listNeuron[i].z += z0;
             p2.result.listNeuron[i].type = 3;
+        }
+        trees.push_back(p2.result);
+        trees.push_back(otherSWC);
+        NeuronTree globalTree = mergeNeuronTrees(trees);
+
+        for(int i=0; i<globalTree.listNeuron.size(); i++){
+            globalTree.listNeuron[i].x += x0;
+            globalTree.listNeuron[i].y += y0;
+            globalTree.listNeuron[i].z += z0;
+    //        globalTree.listNeuron[i].type = 3;
         }
 
         QString outApoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".apo";
@@ -607,7 +643,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         ano<<"SWCFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
         ano.close();
         writeAPO_file(outApoPath,markers);
-        writeESWC_file(outSwcPath,p2.result);
+        writeESWC_file(outSwcPath,globalTree);
     }
 
     if(image){
@@ -695,6 +731,64 @@ bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile,
     return true;
 }
 
+
+NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees){
+    NeuronTree merge = NeuronTree();
+    if(neuronTrees.empty()){
+        return merge;
+    }
+    V3DLONG n= 0;
+    for(int i=0; i<neuronTrees[0].listNeuron.size(); i++){
+        merge.listNeuron.append(neuronTrees[0].listNeuron[i]);
+        if(neuronTrees[0].listNeuron[i].n>n)
+            n = neuronTrees[0].listNeuron[i].n;
+    }
+    if(neuronTrees.size() == 1){
+        return merge;
+    }
+
+    qDebug()<<"max n: "<<n;
+//    n++;
+    for(int i=1; i<neuronTrees.size(); i++){
+        NeuronTree& nt = neuronTrees[i];
+        QList<NeuronSWC>& listNeuron = nt.listNeuron;
+        if(listNeuron.isEmpty()){
+            continue;
+        }
+        V3DLONG minInd = listNeuron[0].n;
+
+        for(int j=1; j<listNeuron.size(); j++){
+            if(listNeuron[j].n<minInd)
+                minInd = listNeuron[j].n;
+            if(minInd<0)
+                qDebug()<<"Found illegal neuron node index which is less than 0 in mergeNeuronTrees()!";
+        }
+        qDebug()<<"minInd: "<<minInd;
+        V3DLONG n0 = n;
+        for(int j=0; j<listNeuron.size(); j++){
+            NeuronSWC v = listNeuron[j];
+//            v.x = listNeuron[j].x;
+//            v.y = listNeuron[j].y;
+//            v.z = listNeuron[j].z;
+//            v.radius = listNeuron[j].radius;
+//            v.type = listNeuron[j].type;
+            v.n = (n0+2) + listNeuron[j].n - minInd;
+            v.parent = (listNeuron[j].parent<0) ? -1 : ((n0+2) + listNeuron[j].parent - minInd);
+
+            merge.listNeuron.append(v);
+            if(v.n>n){
+                n = v.n;
+            }
+        }
+        qDebug()<<"max n: "<<n;
+    }
+
+    for(int i=0; i<merge.listNeuron.size(); i++){
+        merge.hashNeuron.insert((int) merge.listNeuron[i].n,i);
+    }
+
+    return merge;
+}
 
 
 

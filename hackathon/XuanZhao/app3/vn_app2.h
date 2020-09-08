@@ -173,6 +173,10 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
 bool proc_app3(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
 
+bool proc_app2WithRemoveCross(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
+
+bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
+
 template <class T>
 bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
                           V3DLONG x0, V3DLONG y0, V3DLONG z0,
