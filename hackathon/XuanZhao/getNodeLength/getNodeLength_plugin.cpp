@@ -29,6 +29,7 @@ QStringList getNodeLengthPlugin::funclist() const
         <<tr("AxonUtilityRendering")
         <<tr("getUtility")
         <<tr("UtilityContour")
+       <<tr("LongAxonRemove")
         <<tr("getUtreeInfolder")
         <<tr("getCurve")
         <<tr("getCurve2")
@@ -39,8 +40,8 @@ void getNodeLengthPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 {
     if (menu_name == tr("UtilityTree"))
 	{
-        getNodeLengthDialog a = getNodeLengthDialog(parent,callback);
-        a.exec();
+//        getNodeLengthDialog a = getNodeLengthDialog(parent,callback);
+//        a.exec();
 //        a.setModal(false);
 //        a.show();
 //        a.setAttribute(Qt::WA_DeleteOnClose);
@@ -86,6 +87,16 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         int maxR = (inparas.size()>=2) ? atof(inparas[1]) : 100;
         getAxonUtilityTree(nt,thre,maxR);
         writeSWC_file(swcfile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
+    }
+    else if (func_name == tr("LongAxonRemove"))
+    {
+        qDebug()<<"Remove long axon of neurons";
+        QString swcfile = infiles[0];
+        NeuronTree nt = readSWC_file(swcfile);
+        double thre = (inparas.size() >= 1) ? atoi(inparas[0]) : 10;
+        int maxR = (inparas.size()>=2) ? atof(inparas[1]) : 100;
+        removeLongAxon(nt,thre,maxR);
+        writeESWC_file(swcfile+"_longAxonRemoved.eswc",nt);
     }
     else if (func_name == tr("getUtility")){
         qDebug()<<"Considering depth, under developing";
@@ -133,18 +144,24 @@ bool getNodeLengthPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         int maxR = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
         double thre = (inparas.size()>=2) ? atof(inparas[1]) : 1;
         QString dirPath = infiles[0];
+        QString save_path = outfiles[0];
+        QDir path(save_path);
+        if(!path.exists())
+        {
+            path.mkpath(save_path);
+        }
         QStringList nameFilters;
         nameFilters<<"*.swc";
         QDir dir(dirPath);
         QStringList swcFiles = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
 
         for(int i=0; i<swcFiles.size(); i++){
-            QString swcFile = dirPath + '\\' + swcFiles[i];
+            QString swcFile = dirPath + '/' + swcFiles[i];
             NeuronTree nt = readSWC_file(swcFile);
             double axonRatio =1;
             double otherR =1;
             getUtilityL1Infolder(nt,maxR,axonRatio,otherR,thre);
-            writeSWC_file(swcFile.split(".").at(0)+"_max_"+QString::number(maxR)+"_UtilityL1Result.swc",nt);
+            writeSWC_file(save_path+"/"+swcFiles[i].split(".").at(0)+"_max_"+QString::number(maxR)+"_UtilityL1Result.swc",nt);
 //            getAxonUtilityTree(nt,maxR,thre);
 //            writeSWC_file(swcFile.split(".").at(0)+"_"+QString::number(thre,10,2)+"_AxonUtilityTree.swc",nt);
         }

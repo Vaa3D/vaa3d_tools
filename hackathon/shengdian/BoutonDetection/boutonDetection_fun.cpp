@@ -413,6 +413,9 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
     Bouton_Color_List boutonColorMap;
     V3DLONG boutonColorMapSize=boutonColorMap.listcolor.size();
     V3DLONG boutonCount=0;
+    //if you want to render one swc file into one color
+    Bouton_Color_Basic this_color;
+    this_color=(siz<boutonColorMapSize)?boutonColorMap.listcolor[siz]:boutonColorMap.listcolor[V3DLONG(siz%boutonColorMapSize)];
     for (V3DLONG i=0;i<siz;i++)
     {
         if(boutonnodelist[i]==0)
@@ -434,8 +437,9 @@ QList <CellAPO> getBouton(NeuronTree nt, int threshold,int allnode)
 //                    continue;
 //            }
         }
-        Bouton_Color_Basic this_color;
-        this_color=(i<boutonColorMapSize)?boutonColorMap.listcolor[i]:boutonColorMap.listcolor[V3DLONG(i%boutonColorMapSize)];
+        //if you want to render different colors to one swc file, unshield it
+//        Bouton_Color_Basic this_color;
+//        this_color=(i<boutonColorMapSize)?boutonColorMap.listcolor[i]:boutonColorMap.listcolor[V3DLONG(i%boutonColorMapSize)];
 
         threshold=id_threshold.value(i);
         CellAPO apo;

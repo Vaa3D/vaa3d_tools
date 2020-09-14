@@ -26,6 +26,7 @@ QStringList UnsortedPlugin::funclist() const
             <<tr("ReconstructionComplexity")
            <<tr("RecontructionIntensity_terafly")
           <<tr("Crop_terafly_block")
+            <<tr("SomaRefinement")
          <<tr("help");
 }
 
@@ -77,6 +78,64 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         else
             cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
+    }
+    else if (func_name==tr("SomaRefinement"))
+    {
+        /*if the distance between the two somata are less than 10, remove one of this
+        */
+        string inimg_file;
+        string inapo_file;
+//        QString::fromStdString(inapo_file)
+        cout<<"size of the input file is "<<infiles.size()<<endl;
+        cout<<"size of the inpara file is "<<inparas.size()<<endl;
+        cout<<"size of the output file is "<<outfiles.size()<<endl;
+        if(infiles.size()==1)
+        {
+            inapo_file = infiles[0];
+        }
+        else if(infiles.size()==2)
+        {
+            inimg_file = infiles[0];
+            inapo_file = infiles[1];
+        }
+        else
+        {
+            cout<<"Input error"<<endl;
+            return false;
+        }
+        int dis_thre=(inparas.size()>=1)?atoi(inparas[0]):10;
+
+        QList <CellAPO> apolist=readAPO_file(QString::fromStdString(inapo_file));
+        QList <CellAPO> apolist_out;apolist_out.clear();
+        for(V3DLONG i=0;i<(apolist.size()-1);i++)
+        {
+            bool is_single=false;
+            CellAPO thisapo=apolist[i];
+
+            for(V3DLONG j=i+1;j<apolist.size();j++)
+            {
+                CellAPO compareapo=apolist[j];
+                double distance_somata=(thisapo.x-compareapo.x)*(thisapo.x-compareapo.x)
+                        +(thisapo.y-compareapo.y)*(thisapo.y-compareapo.y)
+                        +(thisapo.z-compareapo.z)*(thisapo.z-compareapo.z);
+                if(distance_somata<dis_thre*dis_thre)
+                {
+                    is_single=true;
+                    break;
+                }
+            }
+            if(is_single==false)
+            {
+                apolist_out.push_back(thisapo);
+            }
+
+        }
+        cout<<"APO size is "<<apolist.size()<<",New APO size is "<<apolist_out.size()<<endl;
+        cout<<"Remove false marker num = "<<(apolist.size()-apolist_out.size())<<endl;
+        //save to file
+        string save_apo_file=inapo_file+"_refined.apo";
+        writeAPO_file(QString::fromStdString(save_apo_file),apolist_out);
+
     }
     else if(func_name ==tr("RecontructionIntensity_terafly"))
     {

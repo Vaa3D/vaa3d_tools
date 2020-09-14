@@ -218,9 +218,9 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
     else if (func_name == tr("BoutonDection_filter"))
     {
         string inswc_file,inimg_file;
-        cout<<"size of the input file is "<<infiles.size()<<endl;
-        cout<<"size of the inpara file is "<<inparas.size()<<endl;
-        cout<<"size of the output file is "<<outfiles.size()<<endl;
+//        cout<<"size of the input file is "<<infiles.size()<<endl;
+//        cout<<"size of the inpara file is "<<inparas.size()<<endl;
+//        cout<<"size of the output file is "<<outfiles.size()<<endl;
         if(infiles.size()==1)
         {
             inswc_file = infiles[0];
@@ -575,10 +575,10 @@ void printHelp()
     qDebug()<<"Function for terafly";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc>";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_terafly -i <input_image_terafly> <input_swc> -p <all nodes in swc are used: 0 means only type 2; greater than 0 means use all the nodes and will use this para to refine swc node to its local maximal intensity>";
-    qDebug()<<"Use one: get bouton apo file and crop img out";
+    qDebug()<<"Usage_basic: get bouton apo file and crop img out";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_filter -i <input_image_terafly> <input_swc> -o <out_path> -p <threshold> <allnode> <crop_size>";
-    qDebug()<<"Use two: only get bouton apo file.";
-    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_filter -i <input_image_terafly> <input_swc>";
+    qDebug()<<"Usage_simple: only get bouton apo file.";
+    qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_filter -i <input_swc>";
     qDebug()<<"Function for Img block";
     qDebug()<<"Usage: get bouton in using inputImg and inputSWC";
     qDebug()<<"vaa3d -x <libname:BoutonDectection> -f BoutonDection_Img -i <input_image> <input_swc> -p <threshold> <useNeighborArea: 0 or 1>";

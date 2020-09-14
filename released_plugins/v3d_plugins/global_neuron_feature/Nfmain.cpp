@@ -126,7 +126,7 @@ void nf_main_infolder(const V3DPluginArgList &input, V3DPluginArgList &output)
     for (V3DLONG i=0;i<nameList.size();i++)
     {
         NeuronTree nt = nt_list[i];
-        cout<<"\n--------------Neuron #"<<(i+1)<<"----------------\n";
+        cout<<"\n----------Neuron #"<<(i+1)<<",Total #"<<nameList.size()<<"-----------\n";
         double * features = new double[FNUM];
         computeFeature(nt, features);
         //save features to file
