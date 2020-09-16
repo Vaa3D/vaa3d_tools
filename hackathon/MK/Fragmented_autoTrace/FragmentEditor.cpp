@@ -284,6 +284,9 @@ set<int> FragmentEditor::getNodeTypesInSeg(const V_NeuronSWC& inputVneuronSWC)
 
 void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
+	this->CViewerPortal->printOutCViewerAddress();
+	cout << " -- FragmentEditor: " << displayingSegs.seg.size() << " segments." << endl;
+
 	map<int, set<int>> outputEditingSegInfo;
 	for (map<int, vector<NeuronSWC>>::const_iterator segIt = seg2includedNodeMap.begin(); segIt != seg2includedNodeMap.end(); ++segIt)
 	{

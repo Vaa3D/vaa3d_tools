@@ -191,7 +191,6 @@ void ImgTester::mask2SWC()
 
 		this->signalBlobs.clear();
 		ImgAnalyzer myImgAnalyzer;
-		myImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
 		unique_lock<mutex> progressLock(myImgAnalyzer.blobMergingMutex);
 		ProcessMonitoringTester myMonitor;
 		thread monitorThread(myMonitor, std::ref(myImgAnalyzer));
