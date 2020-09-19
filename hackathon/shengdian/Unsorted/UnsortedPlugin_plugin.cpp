@@ -103,7 +103,7 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
             cout<<"Input error"<<endl;
             return false;
         }
-        int dis_thre=(inparas.size()>=1)?atoi(inparas[0]):10;
+        int dis_thre=(inparas.size()>=1)?atoi(inparas[0]):64;
 
         QList <CellAPO> apolist=readAPO_file(QString::fromStdString(inapo_file));
         QList <CellAPO> apolist_out;apolist_out.clear();
