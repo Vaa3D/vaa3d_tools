@@ -133,4 +133,7 @@ struct paraApp2
 };
 
 bool proc_app2(paraApp2 &p);
+
+bool proc_multiApp2(paraApp2 &p);
+
 #endif // APP2_H

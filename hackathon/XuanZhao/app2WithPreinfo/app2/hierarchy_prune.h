@@ -4,11 +4,6 @@
 #include <map>
 #include <set>
 #include "smooth_curve.h"
-#include "my_surf_objs.h"
-
-#include "basic_surf_objs.h"
-#include "marker_radius.h"
-
 using namespace std;
 
 #define INTENSITY_DISTANCE_METHOD 0
@@ -220,243 +215,16 @@ template<class T> bool hierarchy_prune(vector<MyMarker*> &inswc, vector<MyMarker
 	return true;
 }
 
-template<class T> bool hierarchy_prune2(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc, T * inimg1d, long sz0, long sz1, long sz2, double bkg_thresh = 10.0, double length_thresh = 10.0, bool isSoma = true, double SR_ratio = 1.0/9.0){
-
-    double T_max = (1ll << sizeof(T));
-    V3DLONG sz01 = sz0 * sz1;
-    V3DLONG tol_sz = sz01 * sz2;
-
-    vector<HierarchySegment*> topo_segs;
-    swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
-    vector<HierarchySegment*> filter_segs;
-    MyMarker* root;
-    for(V3DLONG i=0; i<inswc.size(); i++){
-        if(inswc[i]->parent == 0){
-            root = inswc[i];
-            break;
-        }
-    }
-
-    if(1) // dark nodes pruning
-    {
-        int dark_num_pruned = 1;
-        int iteration = 1;
-        vector<bool> is_pruneable(topo_segs.size(), 0);
-        cout<<"===== Perform dark node pruning ====="<<endl;
-        while(dark_num_pruned > 0)
-        {
-            dark_num_pruned = 0;
-            for(V3DLONG i = 0; i < topo_segs.size(); i++)
-            {
-                if(iteration > 1 && !is_pruneable[i]) continue;
-                HierarchySegment * seg = topo_segs[i];
-                MyMarker * leaf_marker = seg->leaf_marker;
-                MyMarker * root_marker = seg->root_marker;
-                if(leaf_marker == root_marker) continue;
-                if(inimg1d[leaf_marker->ind(sz0, sz01)] <= bkg_thresh)
-                {
-                    seg->leaf_marker = leaf_marker->parent;
-                    dark_num_pruned ++;
-                    is_pruneable[i] = true;
-                }
-                else is_pruneable[i] = false;
-            }
-            cout<<"\t iteration ["<<iteration++<<"] "<<dark_num_pruned<<" dark node pruned"<<endl;
-        }
-    }
-
-    double real_thres = 40;
-    if (real_thres<bkg_thresh) real_thres = bkg_thresh;
-    V3DLONG in_sz[4] = {sz0, sz1, sz2, 1};
-    double somaR = markerRadiusXY(inimg1d, in_sz, *root, real_thres);
-
-    for(V3DLONG i=0; i<topo_segs.size(); i++){
-        MyMarker* leaf_marker = topo_segs[i]->leaf_marker;
-        if(isSoma && dist(*leaf_marker,*root) < 3.0*somaR){
-            if(topo_segs[i]->length >= somaR*4){
-                filter_segs.push_back(topo_segs[i]);
-            }
-        }else {
-            if(topo_segs[i]->length >= length_thresh){
-                filter_segs.push_back(topo_segs[i]);
-            }
-        }
-    }
-
-    multimap<double, HierarchySegment*> seg_dist_map;
-    for(V3DLONG i = 0; i < filter_segs.size(); i++)
-    {
-        double dst = filter_segs[i]->length;
-        seg_dist_map.insert(pair<double, HierarchySegment*> (dst, filter_segs[i]));
-    }
-
-    // calculate radius for every node
-    {
-        cout<<"Calculating radius for every node"<<endl;
-        V3DLONG in_sz[4] = {sz0, sz1, sz2, 1};
-        for(V3DLONG i = 0; i < filter_segs.size(); i++)
-        {
-            HierarchySegment * seg = filter_segs[i];
-            MyMarker * leaf_marker = seg->leaf_marker;
-            MyMarker * root_marker = seg->root_marker;
-            MyMarker * p = leaf_marker;
-            while(true)
-            {
-                double real_thres = 40; if (real_thres<bkg_thresh) real_thres = bkg_thresh; //by PHC 20121012
-
-                p->radius = markerRadiusXY(inimg1d, in_sz, *p, real_thres);
-                if(p == root_marker) break;
-                p = p->parent;
-            }
-        }
-    }
-
-    {
-        cout<<"Perform hierarchical pruning"<<endl;
-        T * tmpimg1d = new T[tol_sz]; memcpy(tmpimg1d, inimg1d, tol_sz * sizeof(T));
-        V3DLONG tmp_sz[4] = {sz0, sz1, sz2, 1};
-
-        multimap<double, HierarchySegment*>::reverse_iterator it = seg_dist_map.rbegin();
-        //MyMarker * soma = (*it).second->root_marker;  // 2012/07 Hang, no need to consider soma
-        //cout<<"soma ("<<soma->x<<","<<soma->y<<","<<soma->z<<") radius = "<<soma->radius<<" value = "<<(int)inimg1d[soma->ind(sz0, sz01)]<<endl;
-        filter_segs.clear();
-        set<HierarchySegment*> visited_segs;
-        double tol_sum_sig = 0.0, tol_sum_rdc = 0.0;
-        while(it != seg_dist_map.rend())
-        {
-            HierarchySegment * seg = it->second;
-            if(seg->parent && visited_segs.find(seg->parent) == visited_segs.end()){it++; continue;}
-
-            MyMarker * leaf_marker = seg->leaf_marker;
-            MyMarker * root_marker = seg->root_marker;
-            double SR_RATIO = SR_ratio;     // the soma area will use different SR_ratio
-            //if(dist(*soma, *root_marker) <= soma->radius) SR_RATIO = 1.0;
-
-            double sum_sig = 0;
-            double sum_rdc = 0;
-
-            if(1)
-            {
-                MyMarker * p = leaf_marker;
-                while(true)
-                {
-                    if(tmpimg1d[p->ind(sz0, sz01)] == 0){sum_rdc += inimg1d[p->ind(sz0, sz01)];}
-                    else
-                    {
-                        if(0) sum_sig += inimg1d[p->ind(sz0, sz01)]; // simple stragety
-                        if(1)// if sphere overlap
-                        {
-                            int r = p->radius;
-                            V3DLONG x1 = p->x + 0.5;
-                            V3DLONG y1 = p->y + 0.5;
-                            V3DLONG z1 = p->z + 0.5;
-                            double sum_sphere_size = 0.0;
-                            double sum_delete_size = 0.0;
-                            for(V3DLONG kk = -r; kk <= r; kk++)
-                            {
-                                V3DLONG z2 = z1 + kk;
-                                if(z2 < 0 || z2 >= sz2) continue;
-                                for(V3DLONG jj = -r; jj <= r; jj++)
-                                {
-                                    V3DLONG y2 = y1 + jj;
-                                    if(y2 < 0 || y2 >= sz1) continue;
-                                    for(V3DLONG ii = -r; ii <= r; ii++)
-                                    {
-                                        V3DLONG x2 = x1 + ii;
-                                        if(x2 < 0 || x2 >= sz0) continue;
-                                        if(kk*kk + jj*jj + ii*ii > r*r) continue;
-                                        V3DLONG ind2 = z2 * sz01 + y2 * sz0 + x2;
-                                        sum_sphere_size++;
-                                        if(tmpimg1d[ind2] != inimg1d[ind2]){sum_delete_size ++;}
-                                    }
-                                }
-                            }
-                            // the intersection between two sphere with equal size and distance = R is 5/16 (0.3125)
-                            // sum_delete_size/sum_sphere_size should be < 5/16 for outsize points
-                            if(sum_sphere_size > 0 && sum_delete_size/sum_sphere_size > 0.1)
-                            {
-                                sum_rdc += inimg1d[p->ind(sz0, sz01)];
-                            }
-                            else sum_sig += inimg1d[p->ind(sz0, sz01)];
-                        }
-                    }
-                    if(p == root_marker) break;
-                    p = p->parent;
-                }
-            }
-
-            //double sum_sig = total_sum_int - sum_rdc;
-            if(!seg->parent || sum_rdc == 0.0 || (sum_sig/sum_rdc >= SR_RATIO && sum_sig >= 1.0 * T_max))
-            {
-                tol_sum_sig += sum_sig;
-                tol_sum_rdc += sum_rdc;
-
-                vector<MyMarker*> seg_markers;
-                MyMarker * p = leaf_marker;
-                while(true){if(tmpimg1d[p->ind(sz0, sz01)] != 0) seg_markers.push_back(p); if(p == root_marker) break; p = p->parent;}
-                //reverse(seg_markers.begin(), seg_markers.end()); // need to reverse if resampling
-
-                for(int m = 0; m < seg_markers.size(); m++)
-                {
-                    p = seg_markers[m];
-
-                    int r = p->radius;
-                    if(r > 0)// && tmpimg1d[p->ind(sz0, sz01)] != 0)
-                    {
-                        double rr = r * r;
-                        V3DLONG x = p->x + 0.5;
-                        V3DLONG y = p->y + 0.5;
-                        V3DLONG z = p->z + 0.5;
-                        for(V3DLONG kk = -r; kk <= r; kk++)
-                        {
-                            V3DLONG z2 = z + kk;
-                            if(z2 < 0 || z2 >= sz2) continue;
-                            for(V3DLONG jj = -r; jj <= r; jj++)
-                            {
-                                V3DLONG y2 = y + jj;
-                                if(y2 < 0 || y2 >= sz1) continue;
-                                for(V3DLONG ii = -r; ii <= r; ii++)
-                                {
-                                    V3DLONG x2 = x + ii;
-                                    if(x2 < 0 || x2 >= sz0) continue;
-                                    double dst = ii*ii + jj*jj + kk*kk;
-                                    if(dst > rr) continue;
-                                    V3DLONG ind = z2 * sz01 + y2 * sz0 + x2;
-                                    tmpimg1d[ind] = 0;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                filter_segs.push_back(seg);
-                visited_segs.insert(seg);     // used to delete children when parent node is delete
-            }
-            it++;
-        }
-        cout<<"prune by coverage (segment number) : "<<seg_dist_map.size() << " - "<< filter_segs.size() <<" = "<<seg_dist_map.size() - filter_segs.size()<<endl;
-        cout<<"R/S ratio = "<<tol_sum_rdc/tol_sum_sig<<" ("<<tol_sum_rdc<<"/"<<tol_sum_sig<<")"<<endl;
-        if(1) // evaluation
-        {
-            double tree_sig = 0.0; for(int m = 0; m < inswc.size(); m++) tree_sig += inimg1d[inswc[m]->ind(sz0, sz01)];
-            double covered_sig = 0.0; for(int ind = 0; ind < tol_sz; ind++) if(tmpimg1d[ind] == 0) covered_sig += inimg1d[ind];
-            cout<<"S/T ratio = "<<covered_sig/tree_sig<<" ("<<covered_sig<<"/"<<tree_sig<<")"<<endl;
-        }
-        //saveImage("test.tif", tmpimg1d, tmp_sz, V3D_UINT8);
-        if(tmpimg1d){delete [] tmpimg1d; tmpimg1d = 0; }
-    }
-
-    topo_segs2swc(filter_segs,outswc,0);
-    return true;
-}
-
 // hierarchy coverage pruning
 template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc, T * inimg1d, long sz0, long sz1, long sz2, double bkg_thresh = 10.0, double length_thresh = 2.0, double SR_ratio = 1.0/9.0, bool is_leaf_prune = true, bool is_smooth = true)
 {
-	double T_max = (1ll << sizeof(T));
+	//cout << "wp add here;change (1ll << sizeof(T)) to (1ll << sizeof(T)*8) 2018_11_25"<< endl;
+	//cout << (1ll << sizeof(T)) << " " << (1ll << sizeof(T)*8) << endl;
+	double T_max = (1ll << sizeof(T)*8);
+	
 
 	V3DLONG sz01 = sz0 * sz1;
-	V3DLONG tol_sz = sz01 * sz2;
+	V3DLONG tol_sz = sz01 * sz2; 
 
 	map<MyMarker*, int> child_num;
 	getLeaf_markers(inswc, child_num);
@@ -477,7 +245,15 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		seg_dist_map.insert(pair<double, HierarchySegment*> (dst, filter_segs[i]));
 	}
 
-    if(1) // dark nodes pruning
+	//add_by_wp_2018_11_25
+	//ofstream fileOut("D:/soamdata/6/most/test/log.txt");
+	//fileOut << "add_by_wp_2018_11_25 seg_dist_map.size():" << seg_dist_map.size() << endl;
+	//for(int i=0;i<filter_segs.size();i++){
+		//fileOut << filter_segs[i]->length << endl;
+	//}
+	//fileOut.close();
+
+	if(1) // dark nodes pruning
 	{
 		int dark_num_pruned = 1;
 		int iteration = 1;
@@ -505,7 +281,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		}
 	}
 
-    if(1) // dark segment pruning  pruning segments false?
+	if(1) // dark segment pruning
 	{
 		set<int> delete_index_set;
         for(V3DLONG i = 0; i < filter_segs.size(); i++)
@@ -561,40 +337,54 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	}
 
 #ifdef __USE_APP_METHOD__
-    if(1) // hierarchy coverage order pruning
+	//cout << "in wp debug" << endl;
+	if(1) // hierarchy coverage order pruning
 #else
+	//cout << "in wp debug 2" << endl;
 	if(1) // hierarchy coverage order pruning
 #endif
 	{ 
 		cout<<"Perform hierarchical pruning"<<endl;
 		T * tmpimg1d = new T[tol_sz]; memcpy(tmpimg1d, inimg1d, tol_sz * sizeof(T));
 		V3DLONG tmp_sz[4] = {sz0, sz1, sz2, 1};
-
+	
 		multimap<double, HierarchySegment*>::reverse_iterator it = seg_dist_map.rbegin();
 		//MyMarker * soma = (*it).second->root_marker;  // 2012/07 Hang, no need to consider soma
 		//cout<<"soma ("<<soma->x<<","<<soma->y<<","<<soma->z<<") radius = "<<soma->radius<<" value = "<<(int)inimg1d[soma->ind(sz0, sz01)]<<endl;
 		filter_segs.clear();
 		set<HierarchySegment*> visited_segs;
 		double tol_sum_sig = 0.0, tol_sum_rdc = 0.0;
+		int count=0;
 		while(it != seg_dist_map.rend())
 		{
 			HierarchySegment * seg = it->second;
+			//cout << "seg->length:" << seg->length << endl;//add by wp
 			if(seg->parent && visited_segs.find(seg->parent) == visited_segs.end()){it++; continue;}
 
 			MyMarker * leaf_marker = seg->leaf_marker;
 			MyMarker * root_marker = seg->root_marker;
 			double SR_RATIO = SR_ratio;     // the soma area will use different SR_ratio
+			//cout << "wp debug :" << SR_ratio << endl;
 			//if(dist(*soma, *root_marker) <= soma->radius) SR_RATIO = 1.0;
 
 			double sum_sig = 0;
 			double sum_rdc = 0;
 
+			//for(int i=0;i<sz0*sz1*sz2;i++){
+			//	//if(inimg1d[i]-tmpimg1d[i]!=0)
+			//		//cout << i << " " << (double)inimg1d[i] << " " << (double)tmpimg1d[i] << endl;
+			//}
 			if(1)
 			{
 				MyMarker * p = leaf_marker;
 				while(true) 
 				{ 
-					if(tmpimg1d[p->ind(sz0, sz01)] == 0){sum_rdc += inimg1d[p->ind(sz0, sz01)];}
+					if(tmpimg1d[p->ind(sz0, sz01)] == 0)
+					{
+						//cout << "wp debug:" << sum_rdc << " " << (double)inimg1d[p->ind(sz0, sz01)] << endl;
+						sum_rdc += inimg1d[p->ind(sz0, sz01)];
+						//cout << sum_rdc << endl;
+					}
 					else
 					{
 						if(0) sum_sig += inimg1d[p->ind(sz0, sz01)]; // simple stragety
@@ -639,9 +429,11 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 				}
 			}
 
+			//cout << "wp debug:" << count++ << ":" << endl;
 			//double sum_sig = total_sum_int - sum_rdc;
 			if(!seg->parent || sum_rdc == 0.0 || (sum_sig/sum_rdc >= SR_RATIO && sum_sig >= 1.0 * T_max))
 			{
+				//cout << "in:" << (!seg->parent) << " " << sum_rdc << endl;
 				tol_sum_sig += sum_sig;
 				tol_sum_rdc += sum_rdc;
 
@@ -735,7 +527,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	}
 	
 #ifdef __USE_APP_METHOD__
-    if(1)//is_leaf_prune)  // leaf nodes pruning
+	if(1)//is_leaf_prune)  // leaf nodes pruning
 #else
 	if(0)
 #endif
@@ -852,7 +644,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	}
 
 #ifdef __USE_APP_METHOD__
-    if(1) // joint leaf node pruning
+	if(1) // joint leaf node pruning 
 #else
 	if(0) // joint leaf node pruning 
 #endif

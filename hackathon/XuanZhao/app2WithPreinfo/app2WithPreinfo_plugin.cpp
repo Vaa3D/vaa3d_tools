@@ -69,8 +69,17 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
         int th = (inparas.size()>=2) ? atoi(inparas[1]) : 0;
+        int resolutionTimes = (inparas.size()>=3) ? atoi(inparas[2]) : 1;
+        int imageFlag = (inparas.size()>=4) ? atoi(inparas[3]) : 0;
+
+        double lower = (inparas.size()>=5) ? atof(inparas[4]) : 10;
+        double upper = (inparas.size()>=6) ? atof(inparas[5]) : 50;
+
+        int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : false;
+        double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
+
         qDebug()<<"ratio: "<<ratio<<" th: "<<th;
-        app2WithPreinfo(dir,brainPath,outdir,ratio,th,csvFile,callback);
+        app2WithPreinfo(dir,brainPath,outdir,ratio,th,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,csvFile,callback);
         csvFile.close();
 	}
     else if (func_name == tr("app2WithPreinfoForBatch"))
@@ -79,11 +88,23 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
         int th = (inparas.size()>=2) ? atoi(inparas[1]) : 0;
+        int resolutionTimes = (inparas.size()>=3) ? atoi(inparas[2]) : 1;
+        int imageFlag = (inparas.size()>=4) ? atoi(inparas[3]) : 0;
+
+        double lower = (inparas.size()>=5) ? atof(inparas[4]) : 10;
+        double upper = (inparas.size()>=6) ? atof(inparas[5]) : 50;
+
+        int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
+        double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
 
         QStringList out = dir.split("\\");
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_" + QString::number(ratio) + "_" + QString::number(th);
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch1_"
+                + QString::number(ratio) + "_" + QString::number(th)+ "_"
+                + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
+                + QString::number(lower) + "_" + QString::number(upper) + "_"
+                + QString::number(isMulti) + "_" + QString::number(app2Length);
         if(!QDir().exists(outDir)){
             QDir().mkdir(outDir);
         }
@@ -103,7 +124,7 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
                      <<','<<"fstd"<<','<<"bstd"<<endl;
         }
 
-        app2WithPreinfoForBatch(dir,brainPath,ratio,th,csvFile,callback);
+        app2WithPreinfoForBatch(dir,brainPath,ratio,th,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,csvFile,callback);
         csvFile.close();
 	}
     else if (func_name == "app2WithPreinfoForBatch2") {
@@ -112,10 +133,23 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
         float length = (inparas.size()>=2) ? atof(inparas[1]) : 1500;
 
+        int resolutionTimes = (inparas.size()>=3) ? atoi(inparas[2]) : 1;
+        int imageFlag = (inparas.size()>=4) ? atoi(inparas[3]) : 0;
+
+        double lower = (inparas.size()>=5) ? atof(inparas[4]) : 10;
+        double upper = (inparas.size()>=6) ? atof(inparas[5]) : 50;
+
+        int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
+        double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
+
         QStringList out = dir.split("\\");
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2";
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch2_"
+                + QString::number(maxTh) + "_" + QString::number(length)+ "_"
+                + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
+                + QString::number(lower) + "_" + QString::number(upper) + "_"
+                + QString::number(isMulti) + "_" + QString::number(app2Length);
         if(!QDir().exists(outDir)){
             QDir().mkdir(outDir);
         }
@@ -135,7 +169,7 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
                      <<','<<"fstd"<<','<<"bstd"<<endl;
         }
 
-        app2WithPreinfoForBatch2(dir,brainPath,csvFile,maxTh,length,callback);
+        app2WithPreinfoForBatch2(dir,brainPath,csvFile,maxTh,length,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,callback);
         csvFile.close();
     }
     else if (func_name == "app2WithPreinfoForBatch3") {
@@ -144,10 +178,23 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
         int minTh= (inparas.size()>=2) ? atoi(inparas[1]) : 0;
 
+        int resolutionTimes = (inparas.size()>=3) ? atoi(inparas[2]) : 1;
+        int imageFlag = (inparas.size()>=4) ? atoi(inparas[3]) : 0;
+
+        double lower = (inparas.size()>=5) ? atof(inparas[4]) : 10;
+        double upper = (inparas.size()>=6) ? atof(inparas[5]) : 50;
+
+        int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
+        double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
+
         QStringList out = dir.split("\\");
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2";
+        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch3_"
+                + QString::number(maxTh) + "_" + QString::number(minTh)+ "_"
+                + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
+                + QString::number(lower) + "_" + QString::number(upper) + "_"
+                + QString::number(isMulti) + "_" + QString::number(app2Length);
         if(!QDir().exists(outDir)){
             QDir().mkdir(outDir);
         }
@@ -167,7 +214,7 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
                      <<','<<"fstd"<<','<<"bstd"<<endl;
         }
 
-        app2WithPreinfoForBatch3(dir,brainPath,csvFile,maxTh,minTh,callback);
+        app2WithPreinfoForBatch3(dir,brainPath,csvFile,maxTh,minTh,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,callback);
         csvFile.close();
     }
 	else if (func_name == tr("help"))

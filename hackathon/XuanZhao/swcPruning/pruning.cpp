@@ -618,10 +618,15 @@ NeuronTree pruningSoma(NeuronTree& nt, double times){
     qDebug()<<"topo size:"<<topo_segs.size();
     for(V3DLONG i=0; i<topo_segs.size(); i++){
         MyMarker* leaf_marker = topo_segs[i]->leaf_marker;
-        if(dist(*leaf_marker,*root) < times*somaR){
+        MyMarker* root_marker = topo_segs[i]->root_marker;
+        if(dist(*leaf_marker,*root) < times*somaR && dist(*root_marker,*root) < times*somaR/2){
             double ed = dist(*(topo_segs[i]->root_marker),*(topo_segs[i]->leaf_marker));
-            qDebug()<<"somaR: "<<somaR<<" somaR*(times+1): "<<somaR*(times+1)<<" length: "<<topo_segs[i]->length<<" ed: "<<ed<<" level: "<<topo_segs[i]->level;
-            if(topo_segs[i]->length/ed >= 1.2 || topo_segs[i]->level > 1){
+            double ratio = topo_segs[i]->length/ed;
+            qDebug()<<"somaR: "<<somaR<<" somaR*(times+1): "<<somaR*(times+1)
+                   <<" length: "<<topo_segs[i]->length<<" ed: "<<ed
+                  <<"ratio: "<<ratio
+                 <<" level: "<<topo_segs[i]->level;
+            if((ratio >= 1.2 && topo_segs[i]->length>5) || topo_segs[i]->level > 1){
                 filter_segs.push_back(topo_segs[i]);
             }
         }else {
@@ -1239,7 +1244,36 @@ void pruningSegmentByAngle(NeuronTree& nt, vector<vector<V3DLONG> > children, ve
 
 }
 
+NeuronTree pruningInit(NeuronTree& nt, unsigned char* pdata, V3DLONG* sz, double bifurcationD, double somaTimes){
+    vector<MyMarker*> inswc = swc_convert(nt);
+    vector<MyMarker*> outswc;
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double imgMean,imgStd;
+    mean_and_std(pdata,tolSZ,imgMean,imgStd);
+    double th = imgMean + 0.5*imgStd;
+//    hierarchy_prune2(inswc,outswc,pdata,sz[0],sz[1],sz[2],th,10,false);
 
+    happ(inswc,outswc,pdata,sz[0],sz[1],sz[2],th,2);
+
+    NeuronTree outnt = swc_convert(outswc);
+//    if(somaTimes>0){
+//        NeuronTree tmpnt = pruningSoma(outnt,somaTimes);
+//        outnt.listNeuron.clear();
+//        outnt.hashNeuron.clear();
+//        outnt.deepCopy(tmpnt);
+//    }
+//    pruningCross3(outnt,bifurcationD);
+//    NeuronTree outnt1 = pruningByType(nt,2);
+//    NeuronTree resultnt = pruningByLength(outnt1,10);
+
+
+    for(V3DLONG i=0; i<inswc.size(); i++){
+        delete inswc[i];
+    }
+
+//    return resultnt;
+    return outnt;
+}
 
 
 

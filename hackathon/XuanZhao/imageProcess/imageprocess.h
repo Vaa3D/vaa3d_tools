@@ -49,4 +49,8 @@ void changeContrast(unsigned char* data1d, V3DLONG* sz);
 
 void changeContrast2(unsigned char* data1d, V3DLONG* sz, double percentDown, double percentUp);
 
+void convertDataTo0_255(unsigned char* data1d, V3DLONG* sz);
+
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz);
+
 #endif // IMAGEPROCESS_H

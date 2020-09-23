@@ -1716,6 +1716,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     channel = (paras.size() >= k+1) ? atoi(paras[k]) : channel;  k++;//0;
     bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : bkg_thresh; if(bkg_thresh == atoi("AUTO")) bkg_thresh = -1;k++;// 30;
     birfucation_thres = (paras.size() >= k+1) ? atoi(paras[k]) : birfucation_thres; k++; //30
+    is_0_255 = (paras.size() >= k+1) ? atoi(paras[k]) : is_0_255; k++;
     is_coverage_prune = (paras.size() >= k+1) ? atoi(paras[k]) :is_coverage_prune; k++;// added by xz
     b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : b_256cube; k++;// true
     b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : b_RadiusFrom2D; k++;// true
@@ -4057,6 +4058,13 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
           //in this case try to read the image files
           QString infile = p.inimg_file;
           p.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
+
+          if(p.is_0_255){
+              unsigned char* tmpData = p.p4dImage->getRawData();
+              V3DLONG tmpSZ[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+              convertDataTo0_255(tmpData,tmpSZ);
+          }
+
           if (!p.p4dImage || !p.p4dImage->valid()) return false;
           else
           {
@@ -4103,6 +4111,7 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
       tmpstr =  qPrintable( qtstr.prepend("##Vaa3D-Neuron-APP2 ").append(versionStr) ); infostring.push_back(tmpstr);
       tmpstr =  qPrintable( qtstr.setNum(p.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
       tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+      tmpstr =  qPrintable( qtstr.setNum(p.is_0_255).prepend("#is_0_255 = ") ); infostring.push_back(tmpstr);
 
       tmpstr =  qPrintable( qtstr.setNum(p.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
       tmpstr =  qPrintable( qtstr.setNum(p.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
@@ -4501,7 +4510,7 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
               if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
           }
 
-  //        saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+          saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
 
           for (tmpi=0; tmpi<inswc.size(); tmpi++)
           {
@@ -4658,6 +4667,26 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
       }
 
       return true;
+}
+
+void convertDataTo0_255(unsigned char *data1d, long long *sz){
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double iMin = INT_MAX;
+    double iMax = 0;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(data1d[i]>iMax){
+            iMax = data1d[i];
+        }
+        if(data1d[i]<iMin){
+            iMin = data1d[i];
+        }
+    }
+
+    for(V3DLONG i =0; i<tolSZ; i++){
+        double tmp = ((data1d[i]-iMin)/(iMax-iMin))*255;
+        if(tmp>255) tmp = 255;
+        data1d[i] = (unsigned char) tmp;
+    }
 }
 
 

@@ -112,17 +112,23 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString imgNewPath = imgPath + "_bilateralfilter.v3draw";
         qDebug()<<imgNewPath;
 
-        double spaceSigmaXY = inparas.size()>=1 ? atof(inparas[0]) : 10;
-        double spaceSigmaZ = inparas.size()>=2 ? atof(inparas[1]) : 5;
-        double colorSigma = inparas.size()>=2 ? atof(inparas[1]) : 35;
+        bool isNormal = inparas.size()>=1 ? atoi(inparas[0]) : 1;
+        double spaceSigmaXY = inparas.size()>=2 ? atof(inparas[1]) : 2;
+        double spaceSigmaZ = inparas.size()>=3 ? atof(inparas[2]) : 1;
+        double colorSigma = inparas.size()>=4 ? atof(inparas[3]) : 35;
 
         unsigned char* data1d = 0;
         V3DLONG sz[4] = {0,0,0,0};
         int datatype = 0;
         simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
 
+        removeAbnormalLine(data1d,sz);
+        if(isNormal){
+            convertDataTo0_255(data1d,sz);
+        }
+
         unsigned char* dst = 0;
-        V3DLONG kernelSZ[3] = {5,5,3};
+        V3DLONG kernelSZ[3] = {spaceSigmaXY*4+1,spaceSigmaXY*4+1,spaceSigmaZ*4+1};
         bilateralfilter(data1d,dst,sz,kernelSZ,spaceSigmaXY,spaceSigmaZ,colorSigma);
         simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),dst,sz,datatype);
         if(data1d){

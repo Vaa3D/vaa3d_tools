@@ -29,6 +29,6 @@ void pruningSegmentByAngle(NeuronTree& nt, vector<vector<V3DLONG> > children, ve
 
 void getAdjacentChildSegment(NeuronTree& nt, vector<vector<V3DLONG> > children, vector<vector<V3DLONG> > &cbs, V3DLONG t, double bifurcationD, int* isRemain);
 
-
+NeuronTree pruningInit(NeuronTree& nt, unsigned char *pdata, long long *sz, double bifurcationD, double somaTimes);
 
 #endif // PRUNING_H

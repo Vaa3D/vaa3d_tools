@@ -106,6 +106,26 @@ bool swcPruningPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         writeSWC_file(swcPrunedPath,outnt);
 
     }
+    else if(func_name == tr("pruningInit"))
+    {
+        QString swcPath = infiles[0];
+        QString imgPath = infiles[1];
+        QString swcPrunedPath = swcPath + "_initPruned.swc";
+
+        V3DLONG sz[4] = {0,0,0,0};
+        int dataType = 1;
+        unsigned char* pdata = 0;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+
+        double bifurcationD = inparas.size()>=1 ? atof(inparas[0]) : 10;
+        double somaTimes = inparas.size()>=2 ? atof(inparas[1]) : 6;
+
+        NeuronTree nt = readSWC_file(swcPath);
+
+        NeuronTree outnt = pruningInit(nt,pdata,sz,bifurcationD,somaTimes);
+        writeSWC_file(swcPrunedPath,outnt);
+
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

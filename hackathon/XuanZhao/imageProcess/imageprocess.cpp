@@ -717,7 +717,57 @@ void changeContrast2(unsigned char* data1d, V3DLONG* sz, double percentDown, dou
     }
 }
 
+void convertDataTo0_255(unsigned char *data1d, long long *sz){
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double iMin = INT_MAX;
+    double iMax = 0;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(data1d[i]>iMax){
+            iMax = data1d[i];
+        }
+        if(data1d[i]<iMin){
+            iMin = data1d[i];
+        }
+    }
 
+    for(V3DLONG i =0; i<tolSZ; i++){
+        double tmp = ((data1d[i]-iMin)/(iMax-iMin))*255;
+        if(tmp>255) tmp = 255;
+        data1d[i] = (unsigned char) tmp;
+    }
+}
+
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz){
+
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    V3DLONG sz01 = sz[0]*sz[1];
+
+    unsigned imageMin = 255;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(imageMin>data1d[i]){
+            imageMin = data1d[i];
+        }
+    }
+
+    for(int z=0; z<sz[2]; z++){
+        for(int y=0; y<sz[1]; y++){
+            double zyMean = 0;
+            for(int x=0; x<sz[0]; x++){
+                V3DLONG index = z*sz01 + y*sz[0] + x;
+                zyMean += data1d[index];
+            }
+            if(sz[0]>0){
+                zyMean /= (double)sz[0];
+            }
+            if(zyMean>128){
+                for(int x=0; x<sz[0]; x++){
+                    V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
+                    data1d[index] = imageMin;
+                }
+            }
+        }
+    }
+}
 
 
 

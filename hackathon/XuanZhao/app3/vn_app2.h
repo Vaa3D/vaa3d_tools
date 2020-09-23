@@ -28,6 +28,7 @@ struct PARA_APP2: public PARA_VN
     bool b_menu;
 
     int birfucation_thres;//added by xz
+    bool is_0_255;
 
     
     QString inimg_file, inmarker_file, outswc_file;
@@ -50,6 +51,7 @@ struct PARA_APP2: public PARA_VN
         b_menu = true;
 
         birfucation_thres = 30;
+        is_0_255 = true;
 
         inimg_file = "";
         inmarker_file = "";
@@ -292,6 +294,8 @@ bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
 
     return true;
 }
+
+void convertDataTo0_255(unsigned char* data1d, V3DLONG* sz);
 
 #endif
 
