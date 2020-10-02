@@ -43,7 +43,7 @@ class FragmentEditor : public QWidget
 
 public:
 	// The access to v3d interface and terafly::CViewer interface is captured in constructor.
-	FragmentEditor(V3DPluginCallback2* callback) : thisCallback(callback), CViewerPortal(callback->castCViewer) {};
+	FragmentEditor(V3DPluginCallback2* callback) : thisCallback(callback), CViewerPortal(callback->castCViewer) {}
 
 	// [CViewerPortal] needs to be updated whenever a change of image volume happens.
 	void updateCViewerPortal() { this->CViewerPortal = thisCallback->castCViewer; }
@@ -67,7 +67,6 @@ private:
 
 	//NeuronStructExplorer editorExplorer;
 	//TreeGrower* editorGrowerPtr;
-
 	void erasingProcess_cuttingSeg(V_NeuronSWC_list& displayingSegs, const map<int, set<int>>& seg2BeditedInfo);
 	vector<float> getSegEndPointingVec(const segUnit& inputSeg, const int endNodeID, int nodeNum = 3);
 	NeuronSWC mostProbableBodyNode(const vector<float>& segEndPointingVec, const vector<NeuronSWC>& bodyNodes, const NeuronSWC& endNode);

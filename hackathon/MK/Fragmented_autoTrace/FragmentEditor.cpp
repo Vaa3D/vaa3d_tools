@@ -311,7 +311,6 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<
 		cout << endl;
 	}
 
-
  	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
 }
 

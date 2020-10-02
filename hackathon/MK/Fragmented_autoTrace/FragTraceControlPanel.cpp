@@ -714,7 +714,10 @@ void FragTraceControlPanel::traceButtonClicked()
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	// This method prepares the image data for FragTraceManager to trace.
-	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
+
+	/**************************************************/
+	/* The FRAGTRACEMANAGER INSTANCE IS CREATED HERE. */
+	/**************************************************/
 
 	this->volumeAdjusted = this->CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->printOutVolInfo();

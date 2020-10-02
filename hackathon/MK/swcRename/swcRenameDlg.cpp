@@ -1,6 +1,9 @@
 #include <sstream>
 #include <cstdio>
 
+#include <qstring.h>
+#include <qdir.h>
+
 #include "swcRenameDlg.h"
 
 using namespace std;
@@ -18,19 +21,22 @@ SWC_renameDlg::SWC_renameDlg(QWidget* parent, V3DPluginCallback2* callback) : ui
 
 void SWC_renameDlg::browseFolderClicked()
 {
-	this->fileNameList.clear();
-
-	this->rootPath = QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog);
-	QDir swcFolder(this->rootPath);
-	swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-	this->fileNameList = swcFolder.entryList();
-	uiPtr->lineEdit->setText(this->rootPath);
+	uiPtr->lineEdit->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::changeName()
 {
-	this->oldNewMap.clear();
+	QString Vaa3DDir = QDir::currentPath();
+	
+	this->fileNameList.clear();
+	this->rootPath = uiPtr->lineEdit->text();
+	this->rootPath.replace("/", "\\");
 
+	QDir swcFolder(this->rootPath);
+	swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	this->fileNameList = swcFolder.entryList();
+
+	this->oldNewMap.clear();
 	for (auto& fileNameQ : this->fileNameList)
 	{
 		QStringList splitted = fileNameQ.split(".");
@@ -52,33 +58,48 @@ void SWC_renameDlg::changeName()
 			string yCoord = this->getYcoord(fileName);
 			newFileName += yCoord;
 
-			//if (*(splitted.end() - 1) == "swc") newFileName += ".swc";
-			//else if (*(splitted.end() - 1) == "eswc") newFileName += ".eswc";
 			newFileName += ".swc";
 			this->oldNewMap[fileNameQ.toStdString()] = newFileName;
-			//cout << "new file Name: " << newFileName << endl << endl;
 
-			const char* oldNameC = (this->rootPath + "\\" + fileNameQ).toStdString().c_str();
-			const char* newNameC = ((this->rootPath + "\\").toStdString() + newFileName).c_str();
-			if (!rename(oldNameC, newNameC))
-				cout << fileNameQ.toStdString() << " -> " << newFileName << endl;
-			else
+			string oldName = fileNameQ.toStdString();
+			cout << oldName << endl << newFileName << endl;
+
+			QString oldNameQ = this->rootPath + "\\" + fileNameQ;
+			QString newNameQ = this->rootPath + "\\" + QString::fromStdString(newFileName);
+			//const char* oldNameC = (this->rootPath + "\\" + fileNameQ).toStdString().c_str();
+			//const char* newNameC = ((this->rootPath + "\\").toStdString() + newFileName).c_str();
+			if (!QFile::rename(oldNameQ, newNameQ))
 			{
-				perror("Error");
-				cout << fileNameQ.toStdString() << " file name change failed." << endl;
+				if (oldNameQ != newNameQ)
+				{
+					cout << " -> QFile::rename falied, using system command instead:" << endl;
+					string command = "rename " + oldNameQ.toStdString() + " " + newFileName;
+					cout << command << endl;
+					const char* commandC = command.c_str();
+					if (system(commandC))
+					{
+						string commandDup = command + "_duplicated.swc";
+						const char* commandDupC = commandDup.c_str();
+						system(commandDupC);
+					}
+				}
 			}
+			cout << endl;
 		}
 	}
 }
 
 void SWC_renameDlg::undoClicked()
 {
+	QString lineText = uiPtr->lineEdit->text();
+	lineText.replace("/", "\\");
+
 	if (this->oldNewMap.empty())
 	{
 		v3d_msg("No file names have been changed in this folder yet.");
 		return;
 	}
-	else if (uiPtr->lineEdit->text() != this->rootPath)
+	else if (lineText != this->rootPath)
 	{
 		v3d_msg("You have changed to a different folder.");
 		return;
@@ -86,9 +107,9 @@ void SWC_renameDlg::undoClicked()
 
 	for (auto& newNamePair : this->oldNewMap)
 	{
-		string oldName = this->rootPath.toStdString() + "\\" + newNamePair.first;
+		string oldName = this->rootPath.toStdString() + "/" + newNamePair.first;
 		const char* oldNameC = oldName.c_str();
-		string newName = this->rootPath.toStdString() + "\\" + newNamePair.second;
+		string newName = this->rootPath.toStdString() + "/" + newNamePair.second;
 		const char* newNameC = newName.c_str();
 
 		rename(newNameC, oldNameC);
@@ -126,7 +147,8 @@ string SWC_renameDlg::getSliceNum(string& input)
 	{
 		try
 		{
-			stoi(string(1, input[i]));
+			int digit = stoi(string(1, input[i]));
+			if (i == 0 && digit == 0) continue;
 		}
 		catch (std::invalid_argument)
 		{
@@ -143,11 +165,20 @@ string SWC_renameDlg::getXcoord(string& input)
 	string outputXcoord;
 	outputXcoord += "X";
 
+	for (int i = 0; i < input.size(); ++i)
+	{
+		if (!string(1, input[i]).compare("x") || !string(1, input[i]).compare("X"))
+		{
+			input = input.substr(i, input.size() - i - 1);
+			break;
+		}
+	}
+
 	for (int i = 1; i < input.size(); ++i)
 	{
 		try
 		{
-			stoi(string(i, input[i]));
+			stoi(string(1, input[i]));
 		}
 		catch (std::invalid_argument)
 		{
@@ -168,7 +199,7 @@ string SWC_renameDlg::getYcoord(string& input)
 	{
 		try
 		{
-			stoi(string(i, input[i]));
+			stoi(string(1, input[i]));
 		}
 		catch (std::invalid_argument)
 		{
