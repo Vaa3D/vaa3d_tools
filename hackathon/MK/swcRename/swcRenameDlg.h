@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
 #include <map>
 
 #include "v3d_interface.h"
@@ -20,6 +21,7 @@ public:
 	QString rootPath;
 	QStringList fileNameList;
 	map<string, string> oldNewMap;
+	map<string, set<string>> seuCellMap;
 
 public slots:
 	void browseFolderClicked();
