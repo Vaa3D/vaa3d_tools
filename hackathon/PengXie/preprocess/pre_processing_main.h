@@ -1,6 +1,8 @@
 #ifndef __PRE_PROCESSING_MAIN_H__
 #define __PRE_PROCESSING_MAIN_H__
 
+//#define _YUN_FINAL_RELEASE_
+
 #include "QtGlobal"
 #include "vector"
 #include "v3d_message.h"
@@ -40,6 +42,10 @@ using namespace std;
 #define ZSCALE 1
 #endif
 
+#ifdef _YUN_FINAL_RELEASE_
+#include "..\\..\\MK\\v3d_imgManagerMK\\integratedDataStructures.h"
+#endif
+
 bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent);
 bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0.5, double thres_long = 10,
@@ -50,4 +56,10 @@ bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outp
 bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 void printHelp_pre_processing();
+
+
+/********* Soma Process Admendment, MK, Oct, 2020 *********/
+bool getSomaFromProcessedSWC(const NeuronTree& inputTree, CellAPO& somaMarker);
+bool getSomaFromProcessedAPO(const QList<CellAPO>& inputAPOs, CellAPO& somaMarker);
+/**********************************************************/
 #endif

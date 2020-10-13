@@ -343,6 +343,55 @@ QList<CellAPO> get_new_marker(QString APO_file, int r, int g, int b){
     return markers;
 }
 
+bool getSomaFromProcessedSWC(const NeuronTree& inputTree, CellAPO& somaMarker)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.constBegin(); it != inputTree.listNeuron.constEnd(); ++it)
+	{
+		if (it->type == 1)
+		{
+			RGBA8 somaColor;
+			somaColor.r = 0;
+			somaColor.g = 0;
+			somaColor.b = 0;
+			somaMarker.color = somaColor;
+			somaMarker.x = it->x;
+			somaMarker.y = it->y;
+			somaMarker.z = it->z;
+			somaMarker.volsize = 500;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool getSomaFromProcessedAPO(const QList<CellAPO>& inputAPOs, CellAPO& somaMarker)
+{
+	set<vector<float>> somaConnPoints;
+	for (QList<CellAPO>::const_iterator it = inputAPOs.constBegin(); it != inputAPOs.constEnd(); ++it)
+	{
+		if (it->color.r == 0 || it->color.g == 255 || it->color.b == 0)
+		{
+			vector<float> connPoint;
+			connPoint.push_back(it->x);
+			connPoint.push_back(it->y);
+			connPoint.push_back(it->z);
+			somaConnPoints.insert(connPoint);
+		}
+	}
+
+	float somaCoord[3];
+	integratedDataStructures::ChebyshevCenter(somaConnPoints, somaCoord); 
+	RGBA8 somaColor;
+	somaColor.r = 0;
+	somaColor.g = 0;
+	somaColor.b = 0;
+	somaMarker.color = somaColor;
+	somaMarker.x = somaCoord[0];
+	somaMarker.y = somaCoord[1];
+	somaMarker.z = somaCoord[2];
+	somaMarker.volsize = 500;
+}
+
 bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres, double thres_long,
                     double step_size, double connect_soma_dist, bool rotation,
                     bool colorful, bool return_maintree, bool return_temp)
@@ -526,8 +575,18 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     for(int i=0;i<markers.size(); i++){
         markers[i].volsize=500;
     }
+
+#ifndef _YUN_FINAL_RELEASE_
     writeAPO_file(outfileLabel+".apo", markers);
     my_saveANO(outfileLabel, true, true, qs_output);
+#else
+	CellAPO somaMarker;
+	if (!getSomaFromProcessedSWC(nt, somaMarker))
+		getSomaFromProcessedAPO(markers, somaMarker);
+	QList<CellAPO> finalAPOs;
+	finalAPOs.push_back(somaMarker);
+	writeAPO_file(outfileLabel + ".apo", finalAPOs);
+#endif
 
     if(return_temp)
     {
