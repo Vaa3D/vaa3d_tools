@@ -605,6 +605,47 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     return 1;
 }
 
+void singleMarkerAPOgen(QString inputName)
+{
+	QString outputFileName;
+	bool batch = false;
+	if (inputName.endsWith(".swc") || inputName.endsWith(".SWC")) outputFileName = inputName.left(inputName.length() - 4) + ".processed.apo";
+	else if (inputName.endsWith(".eswc") || inputName.endsWith(".ESWC")) outputFileName = inputName.left(inputName.length() - 5) + ".processed.apo";
+	else batch = true;
+
+	if (!batch)
+	{
+		NeuronTree nt = readSWC_file(inputName);
+		CellAPO somaMarker;
+		getSomaFromProcessedSWC(nt, somaMarker);
+		QList<CellAPO> finalAPOs;
+		finalAPOs.push_back(somaMarker);
+		writeAPO_file(outputFileName, finalAPOs);
+	}
+	else
+	{
+		QDir swcFolder(inputName);
+		QString newFolder = inputName + "\\Processed";
+		swcFolder.mkpath(newFolder);
+		swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList filter;
+		filter << "*.swc" << "*.eswc";
+		QStringList swcFileList = swcFolder.entryList(filter);
+		for (auto& fileName : swcFileList)
+		{
+			if (fileName.endsWith(".swc") || fileName.endsWith(".SWC")) outputFileName = newFolder + "\\" + fileName.left(fileName.length() - 4) + ".processed.apo";
+			else if (fileName.endsWith(".eswc") || fileName.endsWith(".ESWC")) outputFileName = newFolder + "\\" + fileName.left(fileName.length() - 5) + ".processed.apo";
+
+			NeuronTree nt = readSWC_file(inputName + "\\" + fileName);
+			CellAPO somaMarker;
+			getSomaFromProcessedSWC(nt, somaMarker);
+			QList<CellAPO> finalAPOs;
+			finalAPOs.push_back(somaMarker);
+			writeAPO_file(outputFileName, finalAPOs);
+		}
+	}
+}
+
 bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 

@@ -1,7 +1,7 @@
 #ifndef __PRE_PROCESSING_MAIN_H__
 #define __PRE_PROCESSING_MAIN_H__
 
-//#define _YUN_FINAL_RELEASE_
+#define _YUN_FINAL_RELEASE_
 
 #include "QtGlobal"
 #include "vector"
@@ -59,6 +59,7 @@ void printHelp_pre_processing();
 
 
 /********* Soma Process Admendment, MK, Oct, 2020 *********/
+void singleMarkerAPOgen(QString inputName);
 bool getSomaFromProcessedSWC(const NeuronTree& inputTree, CellAPO& somaMarker);
 bool getSomaFromProcessedAPO(const QList<CellAPO>& inputAPOs, CellAPO& somaMarker);
 /**********************************************************/

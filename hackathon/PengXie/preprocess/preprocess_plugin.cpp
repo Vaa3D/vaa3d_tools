@@ -25,6 +25,8 @@ QStringList neuron_analysis::menulist() const
             <<tr("preprocess")
             <<tr("preprocess_batch")
             <<tr("split_neuron")
+			<< tr("produce single soma marker file")
+			<< tr("produce single soma marker file (batch)")
             <<tr("help")
             <<tr("about");
 }
@@ -66,6 +68,19 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     {
         split_neuron_domenu(callback, parent);
     }
+
+	if (menu_name == tr("produce single soma marker file"))
+	{
+		QString fileName = QFileDialog::getOpenFileName(parent, tr("Choose file"), "", tr("neuron reconstructions (*.swc *.eswc)"));
+		singleMarkerAPOgen(fileName);
+	}
+
+	if (menu_name == tr("produce single soma marker file (batch)"))
+	{
+		QString folderName = QFileDialog::getExistingDirectory(parent, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog);
+		singleMarkerAPOgen(folderName);
+	}
+
     if (menu_name == tr("help"))
     {
         v3d_msg(tr("This plugin performs several tasks: \n"
