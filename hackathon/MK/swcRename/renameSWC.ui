@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>660</width>
-    <height>398</height>
+    <width>620</width>
+    <height>582</height>
    </rect>
   </property>
   <property name="font">
@@ -17,6 +17,12 @@
   </property>
   <property name="windowTitle">
    <string>Neuron Reconstruction File Manager</string>
+  </property>
+  <property name="toolTip">
+   <string/>
+  </property>
+  <property name="whatsThis">
+   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;For [&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt;non-processed&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;] SWC files, simply change the file names to Allen's formal name patterns based on the information indicated by the old names.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note, no new files will be generated.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
@@ -28,8 +34,14 @@
        <bold>true</bold>
       </font>
      </property>
+     <property name="whatsThis">
+      <string/>
+     </property>
      <property name="title">
-      <string>Rename SWC files:</string>
+      <string>Rename WMU files (non-processed SWC):</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -151,6 +163,126 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="whatsThis">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;This will create a new folder [renamed_indexed] in which new ano, apo, and swc files named with Allen's formal name pattern will be generated. A csv file named [formalName_WMU_map] that provides new-old name lookup table will also be created.&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note, the input has to be &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt;processed&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="title">
+      <string>Index WMU files (processed SWC):</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QGroupBox" name="groupBox_6">
+        <property name="font">
+         <font>
+          <family>Calibri</family>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="title">
+         <string>Select a folder to process:</string>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QLineEdit" name="lineEdit_3">
+           <property name="minimumSize">
+            <size>
+             <width>450</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>10000</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_4">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Browse</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="frame_3">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>259</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QDialogButtonBox" name="buttonBox_3">
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="standardButtons">
+            <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="font">
       <font>
@@ -159,8 +291,11 @@
        <bold>true</bold>
       </font>
      </property>
+     <property name="whatsThis">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Similar to 'Index WMU files (processed SWC)', this creates a new folder [renamed_indexed] in which new ano, apo, and swc files named with Allen's formal name pattern will be generated. A csv file named [formalName_SEU_map] that provides new-old name lookup table will also be created.&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note, this assumes all SEU's SWC files are already&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt; processed&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="title">
-      <string>Index SEU reconstruction files:</string>
+      <string>Index SEU files:</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
@@ -265,9 +400,6 @@
        </widget>
       </item>
      </layout>
-     <zorder>groupBox_4</zorder>
-     <zorder>frame</zorder>
-     <zorder>frame_2</zorder>
     </widget>
    </item>
   </layout>
@@ -281,7 +413,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>624</x>
+     <x>584</x>
      <y>107</y>
     </hint>
     <hint type="destinationlabel">
@@ -297,8 +429,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>624</x>
-     <y>169</y>
+     <x>584</x>
+     <y>168</y>
     </hint>
     <hint type="destinationlabel">
      <x>438</x>
@@ -313,8 +445,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>624</x>
-     <y>169</y>
+     <x>584</x>
+     <y>168</y>
     </hint>
     <hint type="destinationlabel">
      <x>611</x>
@@ -329,8 +461,8 @@
    <slot>undoClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>417</x>
-     <y>169</y>
+     <x>384</x>
+     <y>168</y>
     </hint>
     <hint type="destinationlabel">
      <x>309</x>
@@ -345,11 +477,11 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>575</x>
-     <y>285</y>
+     <x>584</x>
+     <y>485</y>
     </hint>
     <hint type="destinationlabel">
-     <x>652</x>
+     <x>619</x>
      <y>272</y>
     </hint>
    </hints>
@@ -361,8 +493,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>485</x>
-     <y>342</y>
+     <x>584</x>
+     <y>546</y>
     </hint>
     <hint type="destinationlabel">
      <x>527</x>
@@ -377,12 +509,60 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>610</x>
-     <y>346</y>
+     <x>584</x>
+     <y>546</y>
     </hint>
     <hint type="destinationlabel">
-     <x>652</x>
+     <x>619</x>
      <y>347</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_3</sender>
+   <signal>accepted()</signal>
+   <receiver>dialog</receiver>
+   <slot>okClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>584</x>
+     <y>345</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>619</x>
+     <y>157</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_3</sender>
+   <signal>rejected()</signal>
+   <receiver>dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>584</x>
+     <y>344</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>619</x>
+     <y>394</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_4</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>575</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>615</x>
+     <y>234</y>
     </hint>
    </hints>
   </connection>

@@ -17,5 +17,5 @@ SOURCES += swcRenameDlg.cpp
 
 FORMS += renameSWC.ui
 
-TARGET	= $$qtLibraryTarget(swcFileRename)
-DESTDIR	= $$VAA3DPATH/bin/plugins/swcFileRename/
+TARGET	= $$qtLibraryTarget(NeuronReconFile_Manager)
+DESTDIR	= $$VAA3DPATH/bin/plugins/NeuronReconFile_Manager/

@@ -30,6 +30,8 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_3")
 		uiPtr->lineEdit_2->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+	else if (objName == "pushButton_4")
+		uiPtr->lineEdit_3->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::changeName()
@@ -214,6 +216,64 @@ void SWC_renameDlg::changeName()
 		}
 		indexOut.close();
 	}
+	else if (objName == "buttonBox_3")
+	{
+		this->rootPath = uiPtr->lineEdit_3->text();
+		this->rootPath.replace("/", "\\");
+
+		QDir wmuFileFolder(this->rootPath);
+		wmuFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->fileNameList.clear();
+		this->fileNameList = wmuFileFolder.entryList();
+
+		QString newFolderName = this->rootPath + "\\renamed_indexed";
+		QDir newDir(newFolderName);
+		if (!newDir.exists()) newDir.mkpath(".");
+
+		string indexFileName = this->rootPath.toStdString() + "\\formalName_WMU_map.csv";
+		ofstream indexOut(indexFileName);
+
+		for (auto& fileNameQ : this->fileNameList)
+		{
+			QString swcFullName = this->rootPath + "\\" + fileNameQ;
+			string newName, newNameBase;
+			vector<float> coordVec;
+			if (fileNameQ.endsWith(".swc") || fileNameQ.endsWith("eswc"))
+			{
+				NeuronTree nt = readSWC_file(swcFullName);
+				coordVec = this->getCoordsFromSWC(nt.listNeuron);
+				string coord = to_string(int(coordVec.at(0))) + "-X" + to_string(int(coordVec.at(1))) + "-Y" + to_string(int(coordVec.at(2)));
+				QStringList splitNameUnderscore = fileNameQ.split("_");
+				newNameBase = splitNameUnderscore.at(0).toStdString() + "_" + coord;
+				newName = newFolderName.toStdString() + "\\" + newNameBase;
+				
+				QString nameBaseQ;
+				if (fileNameQ.endsWith(".swc")) nameBaseQ = fileNameQ.left(fileNameQ.length() - 4);
+				else if (fileNameQ.endsWith(".eswc")) nameBaseQ = fileNameQ.left(fileNameQ.length() - 5);
+				cout << nameBaseQ.toStdString() << " -> " << newNameBase << endl;
+				indexOut << nameBaseQ.toStdString() << "," << newNameBase << endl;
+			}
+
+			QString newSWCname = QString::fromStdString(newName) + ".swc";
+			if (!QFile::copy(swcFullName, newSWCname)) cout << swcFullName.toStdString() << " not found.";
+
+			QFile newAPOfile;
+			newAPOfile.setFileName(QString::fromStdString(newName) + ".apo");
+			newAPOfile.open(QIODevice::ReadWrite);
+			QTextStream apoOut(&newAPOfile);
+			apoOut << "##n,orderinfo,name,comment,z,x,y,pixmax,intensity,sdev,volsize,mass,,,,color_r,color_g,color_b\n";
+			apoOut << ",,,," << QString::number(coordVec.at(0)) << "," << QString::number(coordVec.at(1)) << "," << QString::number(coordVec.at(2)) << ",,,," << 500 << ",,,," << 0 << "," << "0" << "," << ",";
+			newAPOfile.close();
+
+			QFile newANOfile;
+			newANOfile.setFileName(QString::fromStdString(newName) + ".ano");
+			newANOfile.open(QIODevice::ReadWrite);
+			QTextStream anoOut(&newANOfile);
+			anoOut << "SWCFILE=" << QString::fromStdString(newNameBase) << ".swc\nAPOFILE=" << QString::fromStdString(newNameBase) << ".apo";
+			newANOfile.close();
+		}
+		indexOut.close();
+	}
 }
 
 void SWC_renameDlg::undoClicked()
@@ -243,6 +303,23 @@ void SWC_renameDlg::undoClicked()
 		cout << newNamePair.second << " -> " << newNamePair.first << endl;
 		this->oldNewMap[newNamePair.first] = "";
 	}
+}
+
+vector<float> SWC_renameDlg::getCoordsFromSWC(const QList<NeuronSWC>& inputNodes)
+{
+	vector<float> outputVec;
+	for (auto& node : inputNodes)
+	{
+		if (node.type == 1)
+		{
+			outputVec.push_back(node.z);
+			outputVec.push_back(node.x);
+			outputVec.push_back(node.y);
+			return outputVec;
+		}
+	}
+
+	return outputVec;
 }
 
 string SWC_renameDlg::getBrainID(string& inputFileName)
