@@ -14,6 +14,8 @@
 
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 
+#include <algorithm>
+
 bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<string> & infostring)
 {
     if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
@@ -497,6 +499,30 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     if(p.is_coverage_prune)
     {
         v3d_msg("start to use APP2 program.\n", 0);
+        if(p.length_thresh < 0){
+            double lengthThres = 60;
+            double iniLengthThres = 2;
+            hierarchy_prune(inswc,outswc,indata1d, in_sz[0], in_sz[1], in_sz[2],iniLengthThres);
+            vector<int> iniIntensity = vector<int>();
+            for(int i=0; i<outswc.size(); i++){
+                int x = outswc[i]->x+0.5;
+                int y = outswc[i]->y+0.5;
+                int z = outswc[i]->z+0.5;
+                V3DLONG index = z*in_sz[0]*in_sz[1] + y*in_sz[0] + x;
+                iniIntensity.push_back(indata1d[index]);
+            }
+            sort(iniIntensity.begin(),iniIntensity.end());
+            int iniIntensityMid = iniIntensity[iniIntensity.size()/2];
+            p.length_thresh = lengthThres/(255/iniIntensityMid);
+            p.length_thresh /= dfactor_xy;
+            if(p.length_thresh<2)
+                p.length_thresh = 2;
+            if(p.length_thresh>10)
+                p.length_thresh = 10;
+            tmpstr =  qPrintable( qtstr.setNum(iniIntensityMid).prepend("#intensity medium= ") ); infostring.push_back(tmpstr);
+            tmpstr =  qPrintable( qtstr.setNum(p.length_thresh).prepend("#autoset #length_thresh = ") ); infostring.push_back(tmpstr);
+            outswc.clear();
+        }
         happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
     }
     else
@@ -4292,7 +4318,7 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
           else
               p.bkg_thresh = 0;
 
-  //        tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
+          tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
       }
       else if (p.b_brightfiled)
       {
@@ -4510,7 +4536,7 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
               if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
           }
 
-          saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+//          saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
 
           for (tmpi=0; tmpi<inswc.size(); tmpi++)
           {
@@ -4531,6 +4557,30 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
       if(p.is_coverage_prune)
       {
           v3d_msg("start to use APP2 program.\n", 0);
+          if(p.length_thresh < 0){
+              double lengthThres = 60;
+              double iniLengthThres = 2;
+              hierarchy_prune(inswc,outswc,indata1d, in_sz[0], in_sz[1], in_sz[2],iniLengthThres);
+              vector<int> iniIntensity = vector<int>();
+              for(int i=0; i<outswc.size(); i++){
+                  int x = outswc[i]->x+0.5;
+                  int y = outswc[i]->y+0.5;
+                  int z = outswc[i]->z+0.5;
+                  V3DLONG index = z*in_sz[0]*in_sz[1] + y*in_sz[0] + x;
+                  iniIntensity.push_back(indata1d[index]);
+              }
+              sort(iniIntensity.begin(),iniIntensity.end());
+              int iniIntensityMid = iniIntensity[iniIntensity.size()/2];
+              p.length_thresh = lengthThres/(255/iniIntensityMid);
+              p.length_thresh /= dfactor_xy;
+              if(p.length_thresh<2)
+                  p.length_thresh = 2;
+              if(p.length_thresh>10)
+                  p.length_thresh = 10;
+              tmpstr =  qPrintable( qtstr.setNum(iniIntensityMid).prepend("#intensity medium= ") ); infostring.push_back(tmpstr);
+              tmpstr =  qPrintable( qtstr.setNum(p.length_thresh).prepend("#autoset #length_thresh = ") ); infostring.push_back(tmpstr);
+              outswc.clear();
+          }
           happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
       }
       else

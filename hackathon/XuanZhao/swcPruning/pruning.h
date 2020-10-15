@@ -31,4 +31,8 @@ void getAdjacentChildSegment(NeuronTree& nt, vector<vector<V3DLONG> > children, 
 
 NeuronTree pruningInit(NeuronTree& nt, unsigned char *pdata, long long *sz, double bifurcationD, double somaTimes);
 
+void getHierarchySegmentLength(NeuronTree& nt, ofstream &csvFile, unsigned char *pdata, long long *sz);
+
+
+
 #endif // PRUNING_H

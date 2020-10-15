@@ -1275,6 +1275,26 @@ NeuronTree pruningInit(NeuronTree& nt, unsigned char* pdata, V3DLONG* sz, double
     return outnt;
 }
 
+void getHierarchySegmentLength(NeuronTree& nt, ofstream& csvFile, unsigned char* pdata, V3DLONG* sz){
+    vector<MyMarker*> inswc = swc_convert(nt);
+    vector<HierarchySegment*> topo_segs;
+    swc2topo_segs(inswc,topo_segs,0,pdata,sz[0],sz[1],sz[2]);
+
+    double path;
+    vector<MyMarker*> markers = vector<MyMarker*>();
+    for(V3DLONG i=0; i<topo_segs.size(); i++){
+        markers.clear();
+        path = 0;
+        topo_segs[i]->get_markers(markers);
+        for(int j=markers.size()-1; j>0; j--){
+            path += dist(*(markers[j]),*(markers[j]->parent));
+        }
+
+        csvFile<<path<<','<<topo_segs[i]->length<<endl;
+    }
+
+}
+
 
 
 

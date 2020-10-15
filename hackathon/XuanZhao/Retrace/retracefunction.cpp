@@ -2486,8 +2486,9 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     mean_and_std(pdata,tolSZ,imgAve,imgStd);
     double td= (imgStd<10)? 10: imgStd;
 //    int app2Th = imgAve + 0.7*td;
-    double ratio = 0.05;
-    int app2Th = getPercentTh(pdata,in_sz,ratio);
+    double ratio = 0.01;
+    int app2Th = MAX(getPercentTh(pdata,in_sz,ratio),25);
+//    int app2Th = 20;
 
 
 
@@ -2526,11 +2527,11 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
                 QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_o.swc";
         writeSWC_file(app2NeuronTreeOPath,app2NeuronTree);
 
-        NeuronTree pruneTree = pruneNeuronTree(app2Image,app2NeuronTree);
-        sortSWC(pruneTree);
-        QString pruneTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_prune.swc";
-        writeSWC_file(pruneTreeOPath,pruneTree);
+//        NeuronTree pruneTree = pruneNeuronTree(app2Image,app2NeuronTree);
+//        sortSWC(pruneTree);
+//        QString pruneTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_prune.swc";
+//        writeSWC_file(pruneTreeOPath,pruneTree);
 
         if(app2Image){
             delete app2Image;
@@ -2541,7 +2542,8 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             in_sz = 0;
         }
 
-        return pruneTree;
+        return app2NeuronTree;
+//        return pruneTree;
 
 //        BranchTree tb = BranchTree();
 //        tb.initialize(app2NeuronTree);
@@ -2552,52 +2554,6 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
 //        }
     }else {
         qDebug()<<"------------BinaryProcess image-----------------------";
-
-
-//        unsigned char* bdata = new unsigned char[tolSZ];
-//        BinaryProcess(pdata,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
-//        for(int i=0; i<tolSZ; i++){
-//            pdata[i] = bdata[i];
-//        }
-//        if(bdata){
-//            delete[] bdata;
-//            bdata = 0;
-//        }
-
-//        NeuronTree maskTree = this->cutBlockSWC(finalResult);
-//        for(int i=0; i<maskTree.listNeuron.size(); i++){
-//            NeuronSWC s = maskTree.listNeuron[i];
-//            if(s.x == startMarkers[0].x && s.y == startMarkers[0].y && s.z == startMarkers[0].z){
-//                maskTree.listNeuron.removeAt(i);
-//            }
-//        }
-
-
-//        unsigned char* mask = 0;
-//        this->getLocalNeuronTree(maskTree);
-//        sortSWC(maskTree);
-
-//        QString maskTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.swc";
-//        writeSWC_file(maskTreePath,maskTree);
-
-//        vector<MyMarker*> maskMarkers = swc_convert(maskTree);
-//        swc2mask(mask,maskMarkers,in_sz[0],in_sz[1],in_sz[2]);
-//        for(int i=0; i<tolSZ; i++){
-//            if(mask[i] == 255){
-//                pdata[i] = 0;
-//            }
-//        }
-
-//        QString maskImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_mask.v3draw";
-//        simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),pdata,in_sz,1);
-
-//        proc_app2(p2);
-//        NeuronTree app2NeuronTree = NeuronTree();
-//        vector<NeuronTree> app2NeuronTrees = getApp2NeuronTrees(app2Th,app2Image,m);
-//        NeuronTree app2NeuronTree = consensus(app2NeuronTrees,app2Image,m,callback);
-//        app2NeuronTree.deepCopy(app2NeuronTree);
         int btimes = 0;
         while (btimes<4) {
             proc_app2(p2);
@@ -2622,9 +2578,10 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
                 }
             }
 
-            if(tipNum>30){
-                BinaryProcess(pdata,in_sz);
-                p2.bkg_thresh = -1;
+            if(tipNum>10){
+                p2.bkg_thresh += 2;
+//                BinaryProcess(pdata,in_sz);
+//                p2.bkg_thresh = -1;
             }else {
                 break;
             }
@@ -2642,17 +2599,17 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
                 QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_o.swc";
         writeSWC_file(app2NeuronTreeOPath,app2NeuronTree);
 
-        NeuronTree pruneTree = pruneNeuronTree(app2Image,app2NeuronTree);
-        sortSWC(pruneTree);
-        QString pruneTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
-                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_prune.swc";
-        writeSWC_file(pruneTreeOPath,pruneTree);
+//        NeuronTree pruneTree = pruneNeuronTree(app2Image,app2NeuronTree);
+//        sortSWC(pruneTree);
+//        QString pruneTreeOPath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
+//                QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + "_prune.swc";
+//        writeSWC_file(pruneTreeOPath,pruneTree);
 
-        deleteBranchByDirection(pruneTree,direction);
+        deleteBranchByDirection(app2NeuronTree,direction);
 
         QString app2NeuronTreePath = "D:\\reTraceTest\\" + QString::number(start_x) + " " + QString::number(end_x) + " " +
                 QString::number(start_y) + " " + QString::number(end_y) + " " + QString::number(start_z) + " " + QString::number(end_z) + ".swc";
-        writeSWC_file(app2NeuronTreePath,pruneTree);
+        writeSWC_file(app2NeuronTreePath,app2NeuronTree);
 
         if(app2Image){
             delete app2Image;
@@ -2663,7 +2620,9 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             in_sz = 0;
         }
 
-        return pruneTree;
+        return app2NeuronTree;
+
+//        return pruneTree;
     }
 
     if(isBinaryProcess && direction == 0){

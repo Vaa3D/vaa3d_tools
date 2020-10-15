@@ -1854,10 +1854,34 @@ template<class T> bool fastmarching_tree_wp(
             //tmp_map[ind]->parent = tmp_map[ind2];
         }
     }
-    delete phi;
-    delete parent;
-    delete state;
-    delete label;
+
+    for(int i=0;i<roots.size();i++){
+
+        if (phi[i]) {delete []phi[i]; phi[i]=0;}
+        if (parent[i]) {delete []parent[i]; parent[i]=0;}
+        if (state[i]) {delete []state[i]; state[i]=0;}
+    }
+
+    if(phi){
+        delete[] phi;
+        phi = 0;
+    }
+    if(parent){
+        delete[] parent;
+        parent = 0;
+    }
+    if(state){
+        delete[] state;
+        state = 0;
+    }
+    if(label){
+        delete[] label;
+        label = 0;
+    }
+//    delete phi;
+//    delete parent;
+//    delete state;
+//    delete label;
 
 }
 

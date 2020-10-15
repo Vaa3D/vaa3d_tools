@@ -200,39 +200,40 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     XYZ somaXYZ = XYZ(markers[0].x-1,markers[0].y-1,markers[0].z-1);
 
     V3DLONG x0,x1,y0,y1,z0,z1;
-    if(markers.size() == 1){
+    if(markers.size() >= 1){
         x0 = (int)(somaXYZ.x/resolutionTimes+0.5) - 512/resolutionTimes;
         x1 = (int)(somaXYZ.x/resolutionTimes+0.5) + 512/resolutionTimes;
         y0 = (int)(somaXYZ.y/resolutionTimes+0.5) - 512/resolutionTimes;
         y1 = (int)(somaXYZ.y/resolutionTimes+0.5) + 512/resolutionTimes;
         z0 = (int)(somaXYZ.z/resolutionTimes+0.5) - 256/resolutionTimes;
         z1 = (int)(somaXYZ.z/resolutionTimes+0.5) + 256/resolutionTimes;
-    }else{
-        double dxy = 0, dz = 0;
-        for(int i=1; i<markers.size(); i++){
-            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
-            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
-            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
-
-            if(tmpx>dxy){
-                dxy = tmpx;
-            }
-            if(tmpy>dxy){
-                dxy = tmpy;
-            }
-            if(tmpz>dz){
-                dz = tmpz;
-            }
-        }
-        dxy += 20; dz += 20;
-
-        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
-        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
-        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
-        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
-        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
-        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
     }
+//    else{
+//        double dxy = 0, dz = 0;
+//        for(int i=1; i<markers.size(); i++){
+//            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
+//            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
+//            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
+
+//            if(tmpx>dxy){
+//                dxy = tmpx;
+//            }
+//            if(tmpy>dxy){
+//                dxy = tmpy;
+//            }
+//            if(tmpz>dz){
+//                dz = tmpz;
+//            }
+//        }
+//        dxy += 20; dz += 20;
+
+//        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
+//        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
+//        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
+//        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
+//        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
+//        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
+//    }
 
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
     V3DLONG sz[4] = {x1-x0,y1-y0,z1-z0,1};
@@ -447,39 +448,40 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
     XYZ somaXYZ = XYZ(markers[0].x-1,markers[0].y-1,markers[0].z-1);
 
     V3DLONG x0,x1,y0,y1,z0,z1;
-    if(markers.size() == 1){
+    if(markers.size() >= 1){
         x0 = (int)(somaXYZ.x/resolutionTimes+0.5) - 512/resolutionTimes;
         x1 = (int)(somaXYZ.x/resolutionTimes+0.5) + 512/resolutionTimes;
         y0 = (int)(somaXYZ.y/resolutionTimes+0.5) - 512/resolutionTimes;
         y1 = (int)(somaXYZ.y/resolutionTimes+0.5) + 512/resolutionTimes;
         z0 = (int)(somaXYZ.z/resolutionTimes+0.5) - 256/resolutionTimes;
         z1 = (int)(somaXYZ.z/resolutionTimes+0.5) + 256/resolutionTimes;
-    }else{
-        double dxy = 0, dz = 0;
-        for(int i=1; i<markers.size(); i++){
-            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
-            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
-            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
-
-            if(tmpx>dxy){
-                dxy = tmpx;
-            }
-            if(tmpy>dxy){
-                dxy = tmpy;
-            }
-            if(tmpz>dz){
-                dz = tmpz;
-            }
-        }
-        dxy += 20; dz += 20;
-
-        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
-        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
-        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
-        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
-        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
-        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
     }
+//    else{
+//        double dxy = 0, dz = 0;
+//        for(int i=1; i<markers.size(); i++){
+//            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
+//            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
+//            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
+
+//            if(tmpx>dxy){
+//                dxy = tmpx;
+//            }
+//            if(tmpy>dxy){
+//                dxy = tmpy;
+//            }
+//            if(tmpz>dz){
+//                dz = tmpz;
+//            }
+//        }
+//        dxy += 20; dz += 20;
+
+//        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
+//        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
+//        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
+//        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
+//        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
+//        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
+//    }
 
 
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
@@ -694,39 +696,40 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
     }
     XYZ somaXYZ = XYZ(markers[0].x-1,markers[0].y-1,markers[0].z-1);
     V3DLONG x0,x1,y0,y1,z0,z1;
-    if(markers.size() == 1){
+    if(markers.size() >= 1){
         x0 = (int)(somaXYZ.x/resolutionTimes+0.5) - 512/resolutionTimes;
         x1 = (int)(somaXYZ.x/resolutionTimes+0.5) + 512/resolutionTimes;
         y0 = (int)(somaXYZ.y/resolutionTimes+0.5) - 512/resolutionTimes;
         y1 = (int)(somaXYZ.y/resolutionTimes+0.5) + 512/resolutionTimes;
         z0 = (int)(somaXYZ.z/resolutionTimes+0.5) - 256/resolutionTimes;
         z1 = (int)(somaXYZ.z/resolutionTimes+0.5) + 256/resolutionTimes;
-    }else{
-        double dxy = 0, dz = 0;
-        for(int i=1; i<markers.size(); i++){
-            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
-            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
-            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
-
-            if(tmpx>dxy){
-                dxy = tmpx;
-            }
-            if(tmpy>dxy){
-                dxy = tmpy;
-            }
-            if(tmpz>dz){
-                dz = tmpz;
-            }
-        }
-        dxy += 20; dz += 20;
-
-        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
-        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
-        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
-        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
-        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
-        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
     }
+//    else{
+//        double dxy = 0, dz = 0;
+//        for(int i=1; i<markers.size(); i++){
+//            double tmpx = abs(markers[i].x - 1 - somaXYZ.x);
+//            double tmpy = abs(markers[i].y - 1 - somaXYZ.y);
+//            double tmpz = abs(markers[i].z - 1 - somaXYZ.z);
+
+//            if(tmpx>dxy){
+//                dxy = tmpx;
+//            }
+//            if(tmpy>dxy){
+//                dxy = tmpy;
+//            }
+//            if(tmpz>dz){
+//                dz = tmpz;
+//            }
+//        }
+//        dxy += 20; dz += 20;
+
+//        x0 = (int)((somaXYZ.x-dxy)/resolutionTimes+0.5);
+//        x1 = (int)((somaXYZ.x+dxy)/resolutionTimes+0.5);
+//        y0 = (int)((somaXYZ.y-dxy)/resolutionTimes+0.5);
+//        y1 = (int)((somaXYZ.y+dxy)/resolutionTimes+0.5);
+//        z0 = (int)((somaXYZ.z-dz)/resolutionTimes+0.5);
+//        z1 = (int)((somaXYZ.z+dz)/resolutionTimes+0.5);
+//    }
 
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
     V3DLONG sz[4] = {x1-x0,y1-y0,z1-z0,1};
