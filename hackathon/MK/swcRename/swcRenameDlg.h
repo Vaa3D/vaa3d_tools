@@ -39,6 +39,7 @@ private:
 	string getSliceNum(string& input);
 	string getXcoord(string& input);
 	string getYcoord(string& input);
+	vector<float> getCoordsFromSWC(const QList<NeuronSWC>& inputNodes);
 };
 
 #endif
