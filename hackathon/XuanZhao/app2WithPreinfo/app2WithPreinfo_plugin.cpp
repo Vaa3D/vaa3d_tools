@@ -59,12 +59,18 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
     if (func_name == tr("app2WithPreinfo"))
 	{
+#ifdef Q_OS_LINUX
+        QString pathSeparator = "/";
+#else
+        QString pathSeparator = "\\";
+#endif
+
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         QString outdir = (outfiles.size()>=1) ? outfiles[0] : "";
 
         ofstream csvFile;
-        csvFile.open((dir + "\\" + "threshold.csv").toStdString().c_str(),ios::out);
+        csvFile.open((dir + pathSeparator + "threshold.csv").toStdString().c_str(),ios::out);
         csvFile<<"ID neuron"<<','<<"frontmean"<<','<<"backmean"<<','<<"ratio"<<','<<"increment"<<','<<"threshold"<<endl;
 
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
@@ -84,6 +90,12 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	}
     else if (func_name == tr("app2WithPreinfoForBatch"))
 	{
+#ifdef Q_OS_LINUX
+        QString pathSeparator = "/";
+#else
+        QString pathSeparator = "\\";
+#endif
+
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         double ratio = (inparas.size()>=1) ? atof(inparas[0]) : 0;
@@ -97,10 +109,10 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
         double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
 
-        QStringList out = dir.split("\\");
+        QStringList out = dir.split(pathSeparator);
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch1_"
+        QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch1_"
                 + QString::number(ratio) + "_" + QString::number(th)+ "_"
                 + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
                 + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -110,7 +122,7 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         ofstream csvFile;
-        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        QString csvPath = outDir + pathSeparator +dirBaseName + "_app2_threshold.csv";
         bool title;
         if(QFile(csvPath).exists()){
             title = false;
@@ -128,6 +140,11 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         csvFile.close();
 	}
     else if (func_name == "app2WithPreinfoForBatch2") {
+#ifdef Q_OS_LINUX
+        QString pathSeparator = "/";
+#else
+        QString pathSeparator = "\\";
+#endif
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
@@ -142,10 +159,10 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
         double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
 
-        QStringList out = dir.split("\\");
+        QStringList out = dir.split(pathSeparator);
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch2_"
+        QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch2_"
                 + QString::number(maxTh) + "_" + QString::number(length)+ "_"
                 + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
                 + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -155,7 +172,7 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         ofstream csvFile;
-        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        QString csvPath = outDir + pathSeparator +dirBaseName + "_app2_threshold.csv";
         bool title;
         if(QFile(csvPath).exists()){
             title = false;
@@ -173,6 +190,11 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         csvFile.close();
     }
     else if (func_name == "app2WithPreinfoForBatch3") {
+#ifdef Q_OS_LINUX
+        QString pathSeparator = "/";
+#else
+        QString pathSeparator = "\\";
+#endif
         QString dir = (infiles.size()>=1) ? infiles[0] : "";
         QString brainPath = (infiles.size()>=2) ? infiles[1] : "";
         int maxTh = (inparas.size()>=1) ? atoi(inparas[0]) : 5;
@@ -187,10 +209,10 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int isMulti = (inparas.size()>=7) ? atoi(inparas[6]) : 0;
         double app2Length =  (inparas.size()>=8) ? atof(inparas[7]) : 5;
 
-        QStringList out = dir.split("\\");
+        QStringList out = dir.split(pathSeparator);
         QString dirBaseName = out.back();
         out.pop_back();
-        QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch3_"
+        QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch3_"
                 + QString::number(maxTh) + "_" + QString::number(minTh)+ "_"
                 + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
                 + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -200,7 +222,8 @@ bool app2WithPreinfoPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         ofstream csvFile;
-        QString csvPath = outDir + "\\" +dirBaseName + "_app2_threshold.csv";
+        QString csvPath = outDir + pathSeparator +dirBaseName + "_app2_threshold.csv";
+
         bool title;
         if(QFile(csvPath).exists()){
             title = false;

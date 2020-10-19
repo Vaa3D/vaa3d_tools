@@ -176,6 +176,12 @@ void getSWCMeanStd2(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& m
 bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double ratio, int th, int resolutionTimes,
                      int imageFlag, double lower, double upper, int isMulti, double app2Length,
                      ofstream& csvFile, V3DPluginCallback2& callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList files = QDir(dir).entryInfoList(QDir::Files);
     QString swcPath,apoPath;
     for(int i=0; i<files.size(); i++){
@@ -238,7 +244,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
     V3DLONG sz[4] = {x1-x0,y1-y0,z1-z0,1};
 
-    QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString imagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
 
     if(QFile(imagePath).exists()){
@@ -250,8 +256,8 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
-                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0-255.v3draw";
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
     }
 
@@ -289,14 +295,14 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     if(imageFlag == 2){
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,0);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag2.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
         getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
     }else if (imageFlag == 3) {
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,1);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag3.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
@@ -328,7 +334,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     qDebug()<<"app2Th: "<<app2Th;
 
-    csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+    csvFile<<dir.split(pathSeparator).back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
              <<','<<fstd<<','<<bstd<<endl;
 
     Image4DSimple* image = new Image4DSimple();
@@ -367,7 +373,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
             p2.landmarks.push_back(LocationSimple(tmpm.x,tmpm.y,tmpm.z));
         }
     }
-    QString localMarkerPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString localMarkerPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".marker";
 
     writeMarker_file(localMarkerPath,ms);
@@ -379,7 +385,7 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
     }
     sortSWC(p2.result);
 
-    QString localSwcPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString localSwcPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".swc";
 
     writeSWC_file(localSwcPath,p2.result);
@@ -399,14 +405,14 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 //        globalTree.listNeuron[i].type = 3;
     }
 
-    QString outApoPath = outDir + "\\" + outDir.split("\\").back() + ".apo";
-    QString outSwcPath = outDir + "\\" + outDir.split("\\").back() + ".eswc";
-    QString outAnoPath = outDir + "\\" + outDir.split("\\").back() + ".ano";
+    QString outApoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + ".apo";
+    QString outSwcPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + ".eswc";
+    QString outAnoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + ".ano";
 
     ofstream ano;
     ano.open(outAnoPath.toStdString().c_str(),ios::out);
-    ano<<"APOFILE="<<(outDir.split("\\").back() + ".apo").toStdString().c_str()<<endl;
-    ano<<"SWCFILE="<<(outDir.split("\\").back() + ".eswc").toStdString().c_str()<<endl;
+    ano<<"APOFILE="<<(outDir.split(pathSeparator).back() + ".apo").toStdString().c_str()<<endl;
+    ano<<"SWCFILE="<<(outDir.split(pathSeparator).back() + ".eswc").toStdString().c_str()<<endl;
     ano.close();
     writeAPO_file(outApoPath,markers);
     writeESWC_file(outSwcPath,globalTree);
@@ -420,6 +426,12 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
 bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& csvFile, int maxTh, float length, int resolutionTimes,
                       int imageFlag, double lower, double upper, int isMulti, double app2Length, V3DPluginCallback2& callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList files = QDir(dir).entryInfoList(QDir::Files);
     QString swcPath = "",apoPath = "";
     for(int i=0; i<files.size(); i++){
@@ -487,7 +499,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
     V3DLONG sz[4] = {x1-x0,y1-y0,z1-z0,1};
 
-    QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString imagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
 
     if(QFile(imagePath).exists()){
@@ -499,8 +511,8 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
-                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0-255.v3draw";
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
     }
 
@@ -534,14 +546,14 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
     if(imageFlag == 2){
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,0);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag2.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
         getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
     }else if (imageFlag == 3) {
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,1);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag3.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
@@ -583,7 +595,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
             p2.landmarks.push_back(LocationSimple(tmpm.x,tmpm.y,tmpm.z));
         }
     }
-    QString localMarkerPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString localMarkerPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".marker";
 
     writeMarker_file(localMarkerPath,ms);
@@ -614,7 +626,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
             continue;
         }
 
-        QString localSwcPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString localSwcPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_" + QString::number(th) +".swc";
 
         writeSWC_file(localSwcPath,p2.result);
@@ -624,7 +636,7 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         double swcLength = getSwcLength(p2.result);
         if(swcLength>length){
 
-            csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+            csvFile<<dir.split(pathSeparator).back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
                      <<','<<fstd<<','<<bstd<<endl;
 
             vector<NeuronTree> trees = vector<NeuronTree>();
@@ -642,14 +654,14 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
                 globalTree.listNeuron[i].z = (globalTree.listNeuron[i].z+z0)*resolutionTimes;
             }
 
-            QString outApoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".apo";
-            QString outSwcPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".eswc";
-            QString outAnoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".ano";
+            QString outApoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".apo";
+            QString outSwcPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".eswc";
+            QString outAnoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".ano";
 
             ofstream ano;
             ano.open(outAnoPath.toStdString().c_str(),ios::out);
-            ano<<"APOFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
-            ano<<"SWCFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
+            ano<<"APOFILE="<<(outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
+            ano<<"SWCFILE="<<(outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
             ano.close();
             writeAPO_file(outApoPath,markers);
             writeESWC_file(outSwcPath,globalTree);
@@ -669,6 +681,12 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &csvFile, int maxTh, int minTh,
                       int resolutionTimes, int imageFlag, double lower, double upper,
                       int isMulti, double app2Length, V3DPluginCallback2 &callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList files = QDir(dir).entryInfoList(QDir::Files);
     QString swcPath = "",apoPath = "";
     for(int i=0; i<files.size(); i++){
@@ -734,7 +752,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString(),x0,x1,y0,y1,z0,z1);
     V3DLONG sz[4] = {x1-x0,y1-y0,z1-z0,1};
 
-    QString imagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString imagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".v3draw";
 
     if(QFile(imagePath).exists()){
@@ -746,8 +764,8 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
-                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0-255.v3draw";
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
     }
 
@@ -781,14 +799,14 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
     if(imageFlag == 2){
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,0);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag2.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
         getSWCMeanStd2(pdata,sz,foreSWC,fmean,fstd);
     }else if (imageFlag == 3) {
         convertDataPiecewise(pdata,sz,bmean,fmean,lower,upper,1);
-        QString convertImagePath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_imageFlag3.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
         getSWCMeanStd2(pdata,sz,backSWC,bmean,bstd);
@@ -822,7 +840,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
     p2.length_thresh = app2Length;
 //    p2.b_256cube = false;
     p2.landmarks.push_back(LocationSimple(shift_m.x,shift_m.y,shift_m.z));
-    QString localMarkerPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+    QString localMarkerPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
             + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + ".marker";
 
     writeMarker_file(localMarkerPath,ms);
@@ -854,14 +872,14 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         }
         sortSWC(p2.result);
 
-        csvFile<<dir.split("\\").back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
+        csvFile<<dir.split(pathSeparator).back().toStdString().c_str()<<','<<fmean<<','<<bmean<<','<<ratio<<','<<th<<','<<app2Th
               <<','<<fstd<<','<<bstd<<endl;
 
         if(p2.result.listNeuron.isEmpty()){
             continue;
         }
 
-        QString localSwcPath = outDir + "\\" + QString::number(markers[0].x) + "_"
+        QString localSwcPath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_" + QString::number(th) +".swc";
 
         writeSWC_file(localSwcPath,p2.result);
@@ -882,14 +900,14 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
     //        globalTree.listNeuron[i].type = 3;
         }
 
-        QString outApoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".apo";
-        QString outSwcPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".eswc";
-        QString outAnoPath = outDir + "\\" + outDir.split("\\").back() + "_" + QString::number(th) + ".ano";
+        QString outApoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".apo";
+        QString outSwcPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".eswc";
+        QString outAnoPath = outDir + pathSeparator + outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".ano";
 
         ofstream ano;
         ano.open(outAnoPath.toStdString().c_str(),ios::out);
-        ano<<"APOFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
-        ano<<"SWCFILE="<<(outDir.split("\\").back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
+        ano<<"APOFILE="<<(outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".apo").toStdString().c_str()<<endl;
+        ano<<"SWCFILE="<<(outDir.split(pathSeparator).back() + "_" + QString::number(th) + ".eswc").toStdString().c_str()<<endl;
         ano.close();
         writeAPO_file(outApoPath,markers);
         writeESWC_file(outSwcPath,globalTree);
@@ -905,11 +923,17 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int th, int resolutionTimes,
                              int imageFlag, double lower, double upper, int isMulti, double app2Length,
                              ofstream &csvFile, V3DPluginCallback2& callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList dirs = QDir(dir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-    QStringList out = dir.split("\\");
+    QStringList out = dir.split(pathSeparator);
     QString dirBaseName = out.back();
     out.pop_back();
-    QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch1_"
+    QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch1_"
             + QString::number(ratio) + "_" + QString::number(th)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -922,7 +946,7 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
         QString dirPath = dirs[i].absoluteFilePath();
         qDebug()<<i<<":"<<dirPath;
         QString id = dirPath.split("/").back();
-        QString outDirPath = outDir + "\\" + id;
+        QString outDirPath = outDir + pathSeparator + id;
         qDebug()<<"id: "<<id;
         qDebug()<<"outdirpath: "<<outDirPath;
         if(!QDir().exists(outDirPath)){
@@ -937,11 +961,17 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
 bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile, int maxTh, float length,
                               int resolutionTimes, int imageFlag, double lower, double upper,
                               int isMulti, double app2Length, V3DPluginCallback2& callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList dirs = QDir(dir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-    QStringList out = dir.split("\\");
+    QStringList out = dir.split(pathSeparator);
     QString dirBaseName = out.back();
     out.pop_back();
-    QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch2_"
+    QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch2_"
             + QString::number(maxTh) + "_" + QString::number(length)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -954,7 +984,7 @@ bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile,
         QString dirPath = dirs[i].absoluteFilePath();
         qDebug()<<i<<":"<<dirPath;
         QString id = dirPath.split("/").back();
-        QString outDirPath = outDir + "\\" + id;
+        QString outDirPath = outDir + pathSeparator + id;
         qDebug()<<"id: "<<id;
         qDebug()<<"outdirpath: "<<outDirPath;
         if(!QDir().exists(outDirPath)){
@@ -968,11 +998,17 @@ bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile,
 
 bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile, int maxTh, int minTh, int resolutionTimes,
                               int imageFlag, double lower, double upper, int isMulti, double app2Length, V3DPluginCallback2 &callback){
+#ifdef Q_OS_LINUX
+    QString pathSeparator = "/";
+#else
+    QString pathSeparator = "\\";
+#endif
+
     QFileInfoList dirs = QDir(dir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-    QStringList out = dir.split("\\");
+    QStringList out = dir.split(pathSeparator);
     QString dirBaseName = out.back();
     out.pop_back();
-    QString outDir = out.join("\\") + "\\" + dirBaseName + "_app2_batch3_"
+    QString outDir = out.join(pathSeparator) + pathSeparator + dirBaseName + "_app2_batch3_"
             + QString::number(maxTh) + "_" + QString::number(minTh)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
@@ -985,7 +1021,7 @@ bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile,
         QString dirPath = dirs[i].absoluteFilePath();
         qDebug()<<i<<":"<<dirPath;
         QString id = dirPath.split("/").back();
-        QString outDirPath = outDir + "\\" + id;
+        QString outDirPath = outDir + pathSeparator + id;
         qDebug()<<"id: "<<id;
         qDebug()<<"outdirpath: "<<outDirPath;
         if(!QDir().exists(outDirPath)){
