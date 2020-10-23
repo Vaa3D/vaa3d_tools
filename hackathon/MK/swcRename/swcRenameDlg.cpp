@@ -14,9 +14,9 @@ SWC_renameDlg::SWC_renameDlg(QWidget* parent, V3DPluginCallback2* callback) : ui
 {
 	uiPtr->setupUi(this);
 	
-	this->connToken.push_back("_");
-	this->connToken.push_back("-");
-	this->connToken.push_back("-");
+	this->fileManager.connToken.push_back("_");
+	this->fileManager.connToken.push_back("-");
+	this->fileManager.connToken.push_back("-");
 
 	this->show();
 }
@@ -32,6 +32,8 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_2->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_4")
 		uiPtr->lineEdit_3->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+	else if (objName == "pushButton_5")
+		uiPtr->lineEdit_4->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::changeName()
@@ -50,6 +52,7 @@ void SWC_renameDlg::changeName()
 		this->fileNameList = swcFolder.entryList();
 
 		this->oldNewMap.clear();
+		//this->fileManager.nameChange(this->fileNameList, FileNameChangerIndexer::WMU_name, &(this->oldNewMap));
 		for (auto& fileNameQ : this->fileNameList)
 		{
 			QStringList splitted = fileNameQ.split(".");
@@ -273,6 +276,30 @@ void SWC_renameDlg::changeName()
 			newANOfile.close();
 		}
 		indexOut.close();
+	}
+}
+
+void SWC_renameDlg::reconOp()
+{
+	QObject* signalSender = sender();
+	QString objName = signalSender->objectName();
+
+	if (objName == "buttonBox_4")
+	{
+		this->rootPath = uiPtr->lineEdit_4->text();
+		this->rootPath.replace("/", "\\");
+		this->myOperator.rootPath = this->rootPath;
+
+		QDir seuFileFolder(this->rootPath);
+		seuFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->fileNameList.clear();
+		this->fileNameList = seuFileFolder.entryList();
+
+		float xFactor = 1 / (uiPtr->lineEdit_5->text().toFloat());
+		float yFactor = 1 / (uiPtr->lineEdit_6->text().toFloat());
+		float zFactor = 1 / (uiPtr->lineEdit_7->text().toFloat());
+
+		this->myOperator.downSampleReconFile(this->fileNameList, xFactor, yFactor, zFactor);
 	}
 }
 

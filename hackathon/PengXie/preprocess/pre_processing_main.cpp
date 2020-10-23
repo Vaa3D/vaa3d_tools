@@ -576,9 +576,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         markers[i].volsize=500;
     }
 
+	my_saveANO(outfileLabel, true, true, qs_output);
 #ifndef _YUN_FINAL_RELEASE_
     writeAPO_file(outfileLabel+".apo", markers);
-    my_saveANO(outfileLabel, true, true, qs_output);
 #else
 	CellAPO somaMarker;
 	if (!getSomaFromProcessedSWC(nt, somaMarker))

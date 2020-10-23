@@ -10,6 +10,8 @@
 #include "v3d_interface.h"
 
 #include "ui_renameSWC.h"
+#include "FileNameChangerIndexer.h"
+#include "ReconOperator.h"
 
 class SWC_renameDlg : public QDialog
 {
@@ -26,13 +28,18 @@ public:
 public slots:
 	void browseFolderClicked();
 	void okClicked() { this->changeName(); }
+	void okClicked2() { this->reconOp(); }
 	void undoClicked();
 
 private:
 	Ui_dialog* uiPtr;
 	V3DPluginCallback2* thisCallback;
 
+	FileNameChangerIndexer fileManager;
+	ReconOperator myOperator;
+
 	void changeName();
+	void reconOp();
 
 	vector<string> connToken;
 	string getBrainID(string& inputFileName);

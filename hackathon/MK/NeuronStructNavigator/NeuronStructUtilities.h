@@ -66,6 +66,9 @@ public:
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
 
 	template<typename T>
+	static inline QList<CellAPO> apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale);
+
+	template<typename T>
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
 	
 	template<typename T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
@@ -206,6 +209,22 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, T xSca
 	}
 
 	return outputTree;
+}
+
+template<typename T>
+inline QList<CellAPO> NeuronStructUtil::apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale)
+{
+	QList<CellAPO> outputApo;
+	for (QList<CellAPO>::const_iterator it = inputApo.begin(); it != inputApo.end(); ++it)
+	{
+		CellAPO newApo = *it;
+		newApo.x = it->x * xScale;
+		newApo.y = it->y * yScale;
+		newApo.z = it->z * zScale;
+		outputApo.push_back(newApo);
+	}
+
+	return outputApo;
 }
 
 template<typename T>
