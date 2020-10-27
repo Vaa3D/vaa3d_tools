@@ -2474,10 +2474,10 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     double imgAve, imgStd;
     mean_and_std(pdata,tolSZ,imgAve,imgStd);
 
-    if(imgAve<30){
-        normalImage(pdata,in_sz);
-        isNormal = true;
-    }
+//    if(imgAve<30){
+//        normalImage(pdata,in_sz);
+//        isNormal = true;
+//    }
 
     Image4DSimple* app2Image = new Image4DSimple();
     app2Image->setData(pdata,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
@@ -2487,14 +2487,16 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     double td= (imgStd<10)? 10: imgStd;
 //    int app2Th = imgAve + 0.7*td;
     double ratio = 0.01;
-    int app2Th = MAX(getPercentTh(pdata,in_sz,ratio),25);
-//    int app2Th = 20;
+//    int app2Th = MAX(getPercentTh(pdata,in_sz,ratio),20);
+    int app2Th = -1;
 
 
 
     paraApp2 p2 = paraApp2();
     p2.p4dImage = app2Image;
     p2.bkg_thresh = app2Th;
+    p2.b_256cube = 0;
+//    p2.f_length = 20;
     p2.xc0 = 0;
     p2.yc0 = 0;
     p2.zc0 = 0;
@@ -2556,7 +2558,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
         qDebug()<<"------------BinaryProcess image-----------------------";
         int btimes = 0;
         while (btimes<4) {
-            proc_app2(p2);
+            proc_app2_getLine(p2);
             p2.result.hashNeuron.clear();
             int pointSize = p2.result.listNeuron.size();
             qDebug()<<"pointSize: "<<pointSize;
@@ -2585,11 +2587,12 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             }else {
                 break;
             }
+            btimes++;
         }
 
         if(p2.result.listNeuron.isEmpty() && !isNormal){
             normalImage(pdata,in_sz);
-            proc_app2(p2);
+            proc_app2_getLine(p2);
         }
 
         NeuronTree app2NeuronTree = NeuronTree();
@@ -2766,6 +2769,9 @@ void imageBlock::getTipBlocks(NeuronTree &tree, BoundingBox box, vector<imageBlo
                         break;
                 }
                 XYZ p = getLineDirection(points);
+                if(p == XYZ(-1,-1,-1)){
+                    return;
+                }
                 int dire = getDirection(p);
                 getImageBlockByTip(newTip,blockList,512,dire,box);
             }

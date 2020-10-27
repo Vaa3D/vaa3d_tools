@@ -370,6 +370,8 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
         for(int i=1; i<markers.size(); i++){
             ImageMarker tmpm = ImageMarker(markers[i].x/resolutionTimes-x0,markers[i].y/resolutionTimes-y0,markers[i].z/resolutionTimes-z0);
             ms.push_back(tmpm);
+            if(tmpm.x<1 || tmpm.x>sz[0] || tmpm.y<1 || tmpm.y>sz[1] || tmpm.z<1 || tmpm.z>sz[2])
+                continue;
             p2.landmarks.push_back(LocationSimple(tmpm.x,tmpm.y,tmpm.z));
         }
     }
@@ -592,6 +594,8 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
         for(int i=1; i<markers.size(); i++){
             ImageMarker tmpm = ImageMarker(markers[i].x/resolutionTimes-x0,markers[i].y/resolutionTimes-y0,markers[i].z/resolutionTimes-z0);
             ms.push_back(tmpm);
+            if(tmpm.x<1 || tmpm.x>sz[0] || tmpm.y<1 || tmpm.y>sz[1] || tmpm.z<1 || tmpm.z>sz[2])
+                continue;
             p2.landmarks.push_back(LocationSimple(tmpm.x,tmpm.y,tmpm.z));
         }
     }
@@ -849,6 +853,8 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
         for(int i=1; i<markers.size(); i++){
             ImageMarker tmpm = ImageMarker(markers[i].x/resolutionTimes-x0,markers[i].y/resolutionTimes-y0,markers[i].z/resolutionTimes-z0);
             ms.push_back(tmpm);
+            if(tmpm.x<1 || tmpm.x>sz[0] || tmpm.y<1 || tmpm.y>sz[1] || tmpm.z<1 || tmpm.z>sz[2])
+                continue;
             p2.landmarks.push_back(LocationSimple(tmpm.x,tmpm.y,tmpm.z));
         }
     }
