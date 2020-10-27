@@ -1,6 +1,7 @@
 #include "feature_analysis.h"
 #include <vector>
 #include <stack>
+
 #define FNUM 26
 #ifndef VOID
 #define VOID 1000000000
@@ -2243,5 +2244,277 @@ void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3
     myfile.close();
 }
 
+
+void arbor_main(V3DPluginCallback2 &callback, QWidget *parent){
+    QString InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all arbor swcs."),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.csv)"
+                ));
+    if(fileOpenName.isEmpty())
+        return;
+    //arbor_qc(InputfolderName, fileOpenName, output);
+    arbor_qc(InputfolderName, fileOpenName);
+}
+
+
+// arbor analysis
+//void arbor_qc(QString input1, QString input2, QString output){
+void arbor_qc(QString input1, QString input2){
+    QHash <QString, QString>  swc_celltype;
+    QHash <QString, QString> swc_region;
+    QFile f_type(input2);
+    if(!f_type.open(QIODevice::ReadOnly)){
+        cout<<"cannot open swc!"<<endl;
+    }
+    else{
+        QString first_line=QString(f_type.readLine()).trimmed();
+        QStringList first_sp=first_line.split(",");
+        int reg_index=first_sp.indexOf("CellType_Rough");
+        int r_index=first_sp.indexOf("region");
+        while(!f_type.atEnd()){
+            QString line=QString(f_type.readLine()).trimmed();
+            QStringList line_sp=line.split(",");
+            swc_celltype.insert(line_sp.at(0),line_sp.at(r_index));
+            swc_region.insert(line_sp.at(0),line_sp.at(reg_index));
+        }
+    }
+    QFileInfo f(input1);
+    QString folderpath;
+    if(f.isDir()){
+        folderpath=input1;
+    }
+    else{
+        folderpath=f.path();
+    }
+    QString out, outgf;
+//    if (hasOutput)
+//    {
+//        outgf = QString(outfiles.at(0))+"/gf.csv";
+//        out = QString(outfiles.at(0))+"/result.csv";
+//    }
+//    else
+//    {
+        outgf = folderpath+"/gf.txt";
+        out = folderpath+"/result.csv";
+//    }
+        ofstream csvOutFile;
+        //cout<<outgf.toStdString()<<endl;
+        csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+        csvOutFile<<"Name,Region,Celltype_Rough,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
+        csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
+        csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
+        csvOutFile.close();
+
+//    if(f.isDir()){
+        QDir dir(input1);
+        //printf("%s\n",indir.toStdString().data());
+        QStringList nameFilters;
+        nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
+        QStringList files = dir.entryList(nameFilters, QDir::Files|QDir::Readable, QDir::Name);
+        //cout<<files.size()<<endl;
+
+        for(int i=0;i<files.size();i++){
+            QString swc_file = files.at(i);
+            //QString output_branch = output_dir+"/"+flag1+".apo";
+            QString swc_path=input1+"/"+swc_file;
+            //printf("%s\n",swc_path.toStdString().data());
+            arbor_analysis(swc_path,folderpath, outgf, swc_celltype,out, swc_region);
+        }
+//    }
+//    else{
+//        QString swc_file= in.at(0);
+
+//        csvOutFile.close();
+//        result.close();
+//    }
+}
+
+void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QString, QString> swc_celltype,
+                    QString out, QHash <QString, QString> swc_region){
+    //output
+    QFileInfo f(swc);
+    QString id=f.fileName();
+    QString fileSaveName;
+//    if (hasOutput)
+//    {
+//        fileSaveName = QString(outfiles.at(0))+"/"+id+"_sorted.swc";
+//    }
+//    else
+//    {
+        QDir sort_folder;
+        QString spath=folderpath+"/sort";
+        sort_folder.mkdir(spath);
+        fileSaveName = spath+"/"+id+"_sorted.swc";
+//    }
+
+        ofstream csvOutFile, result;
+        cout<<outgf.toStdString()<<endl;
+        csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+        result.open(out.toStdString().c_str(),ios::out | ios::app);
+        if(!csvOutFile.is_open()){
+             cerr<<"out Error: cannot open file to save"<<endl;
+             return;
+        }
+        if(!result.is_open()){
+            cerr<<"out Error: cannot open file to save final results"<<endl;
+            return;
+        }
+
+    //sort
+    NeuronTree nt_unsorted = readSWC_file(swc);
+    QList<NeuronSWC> neuron_unsorted,sort_result;
+    neuron_unsorted=nt_unsorted.listNeuron;
+    if (!SortSWC(neuron_unsorted, sort_result , VOID, VOID))
+    {
+        cout<<"Error in sorting swc"<<endl;
+    }
+    if (!export_list2file(sort_result, fileSaveName, swc))
+    {
+        cout<<"Error in writing swc to file"<<endl;
+    }
+    NeuronTree nt_sort = readSWC_file(fileSaveName);
+
+    //compute features
+    double * swc_features = new double[FNUM];
+    computeFeature(nt_sort,swc_features);
+
+    QString celltype;
+    QString region;
+    QHash<QString, QString>::iterator it;
+    for(it=swc_region.begin();it!=swc_region.end();++it){
+        if(it.key()==id){
+            region=it.value();
+            csvOutFile<<it.key().toStdString()<<","<<it.value().toStdString();
+            result<<it.key().toStdString()<<","<<it.value().toStdString();
+            cout<<"**********"<<it.key().toStdString()<<","<<it.value().toStdString()<<endl;
+        }
+    }
+    for(it=swc_celltype.begin();it!=swc_celltype.end();++it){
+        if(it.key()==id){
+            celltype=it.value();
+            csvOutFile<<","<<it.value().toStdString();
+            result<<","<<it.value().toStdString();
+        }
+    }
+
+    QList<int> feas_id;
+    QList<float> feas;
+    feas_id<<5<<6<<6<<8<<10<<15;
+    for (int i=0;i<feas_id.size();i++)
+    {
+        feas.append(swc_features[feas_id.at(i)]);
+        result<<","<<swc_features[feas_id.at(i)];
+    }
+    for(int i=0; i<FNUM; i++){
+        csvOutFile<<","<<swc_features[i];
+    }
+    csvOutFile<<endl;
+    //cout<<"################## "<<id.toStdString()<<" "<<region.toStdString()<<" "<<celltype.toStdString()<<endl;
+    //qc
+    if(region=="TH"){
+        if(celltype=="VPM"){
+            if((feas[0]>=29)&&(feas[0]<=93)&&(feas[1]>=5.48)&&(feas[1]<=13.759)&&(feas[2]>=7.189)&&(feas[2]<=19.258)&&(feas[3]>=5.153)&&(feas[3]<=15.497)
+                    &&(feas[4]>=93.281)&&(feas[4]<=402.169)&&(feas[5]>=5)&&(feas[5]<=14)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="VPL"){
+            if((feas[0]>=31)&&(feas[0]<=108)&&(feas[1]>=5.916)&&(feas[1]<=14.946)&&(feas[2]>=7.662)&&(feas[2]<=17.703)&&(feas[3]>=4.611)&&(feas[3]<=15.628)
+                    &&(feas[4]>=95.924)&&(feas[4]<=369.248)&&(feas[5]>=6)&&(feas[5]<=15)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="LGd"){
+            if((feas[0]>=47)&&(feas[0]<=82)&&(feas[1]>=6.816)&&(feas[1]<=14.477)&&(feas[2]>=3.949)&&(feas[2]<=18.641)&&(feas[3]>=5.125)&&(feas[3]<=16.95)
+                    &&(feas[4]>=126.229)&&(feas[4]<=358.143)&&(feas[5]>=7)&&(feas[5]<=11)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="MG"){
+            if((feas[0]>=34)&&(feas[0]<=79)&&(feas[1]>=6.149)&&(feas[1]<=14.498)&&(feas[2]>=7.059)&&(feas[2]<=22.429)&&(feas[3]>=6.26)&&(feas[3]<=14.093)
+                    &&(feas[4]>=120.773)&&(feas[4]<=318.078)&&(feas[5]>=6)&&(feas[5]<=16)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else{
+            if((feas[0]>=29)&&(feas[0]<=111)&&(feas[1]>=6.132)&&(feas[1]<=19.839)&&(feas[2]>=7.010)&&(feas[2]<=21.136)&&(feas[3]>=6.29)&&(feas[3]<=21.51)
+                    &&(feas[4]>=118.877)&&(feas[4]<=499.613)&&(feas[5]>=5)&&(feas[5]<=20)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+    }
+    else if((region=="CNU")){
+        if(celltype=="CP"){
+            if(feas[4]<350){
+                if((feas[0]>=26)&&(feas[0]<=109)&&(feas[1]>=5.942)&&(feas[1]<=21.221)&&(feas[2]>=3.806)&&(feas[2]<=22.034)&&(feas[3]>=5.486)&&(feas[3]<=18.734)
+                        &&(feas[4]>=81.289)&&(feas[4]<=344.946)&&(feas[5]>=4)&&(feas[5]<=18)){
+                    result<<","<<1<<endl;
+                }
+                else{
+                    result<<","<<0<<endl;
+                }
+            }
+            else {
+                if((feas[0]>=40)&&(feas[0]<=208)&&(feas[1]>=13.271)&&(feas[1]<=66.578)&&(feas[2]>=12.03)&&(feas[2]<=72.919)&&(feas[3]>=11.288)&&(feas[3]<=54.891)
+                        &&(feas[4]>=263.618)&&(feas[4]<=1312.98)&&(feas[5]>=8)&&(feas[5]<=29)){
+                    result<<","<<1<<endl;
+                }
+                else{
+                    result<<","<<0<<endl;
+                }
+            }
+        }
+        else{
+            if((feas[0]>=1)&&(feas[0]<=67)&&(feas[1]>=2.665)&&(feas[1]<=20.478)&&(feas[2]>=2.687)&&(feas[2]<=32.034)&&(feas[3]>=0.956)&&(feas[3]<=20.952)
+                    &&(feas[4]>=6.028)&&(feas[4]<=263.696)&&(feas[5]>=1)&&(feas[5]<=12)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+
+    }
+    else if(region=="CTX"){
+        if((feas[0]>=22)&&(feas[0]<=121)&&(feas[1]>=6.77)&&(feas[1]<=31.354)&&(feas[2]>=6.683)&&(feas[2]<=46.143)&&(feas[3]>=6.36)&&(feas[3]<=35.99)
+                &&(feas[4]>=71.317)&&(feas[4]<=585.043)&&(feas[5]>=5)&&(feas[5]<=30)){
+            result<<","<<1<<endl;
+        }
+        else{
+            result<<","<<0<<endl;
+        }
+    }
+    else{
+        if((feas[0]>=21)&&(feas[0]<=125)&&(feas[1]>=6.132)&&(feas[1]<=38.328)&&(feas[2]>=6.353)&&(feas[2]<=46.256)&&(feas[3]>=5.592)&&(feas[3]<=39.227)
+                &&(feas[4]>=68.541)&&(feas[4]<=662.401)&&(feas[5]>=5)&&(feas[5]<=29)){
+            result<<","<<1<<endl;
+        }
+        else{
+            result<<","<<0<<endl;
+        }
+    }
+
+    csvOutFile.close();
+    result.close();
+}
 
 

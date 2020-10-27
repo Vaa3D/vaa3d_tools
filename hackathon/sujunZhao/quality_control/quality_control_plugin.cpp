@@ -12,7 +12,7 @@ Q_EXPORT_PLUGIN2(quality_control, TestPlugin);
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("quality control")
+        <<tr("arbor_based_QC")
 		<<tr("menu2")
 		<<tr("about");
 }
@@ -27,9 +27,9 @@ QStringList TestPlugin::funclist() const
 
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("quality control"))
+    if (menu_name == tr("arbor_based_QC"))
 	{
-		v3d_msg("To be implemented.");
+        arbor_main(callback, parent);
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -84,6 +84,22 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     else if (func_name == tr("tree_feature"))
     {
         tree_structure(input, output,callback);
+    }
+    else if (func_name == tr("arbor_qc"))
+    {
+        vector<char*> in, inparas, outfiles;
+        if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+        if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+        //bool hasOutput;
+        QString outfolder;
+//        if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);outfolder= QString(outfiles.at(0));}
+        //else{hasOutput=false;}
+//        else{outfolder="";}
+        QString inputfolder=QString::fromStdString(in[0]);
+        QString type_csv=inparas.at(0);
+//        arbor_qc(inputfolder, type_csv, outfolder);
+        arbor_qc(inputfolder, type_csv);
+
     }
 	else if (func_name == tr("help"))
 	{

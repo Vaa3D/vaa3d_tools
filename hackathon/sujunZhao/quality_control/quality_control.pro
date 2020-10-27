@@ -8,7 +8,6 @@ INCLUDEPATH     += ../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontr
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
 
-
 HEADERS	+= quality_control_plugin.h \
     feature_analysis.h\
 ../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h \

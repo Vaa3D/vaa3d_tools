@@ -10,7 +10,7 @@
 #include "my_surf_objs.h"
 #include "v3d_message.h"
 #include "basic_surf_objs.h"
-
+using namespace std;
 class OpenSWCDialog: public QDialog
 {
     Q_OBJECT
@@ -51,4 +51,8 @@ QList<int> get_subtree(NeuronTree nt, int id);
 QList<int> loop_detection(const NeuronTree & nt);
 //QList<TreeNode> tree(NeuronTree nt, int n);
 void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback);
+void arbor_main(V3DPluginCallback2 &callback, QWidget *parent);
+void arbor_qc(QString input1, QString input2);
+void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QString, QString> swc_celltype,
+                    QString out, QHash <QString, QString> swc_region);
 #endif // FEATURE_ANALYSIS_H
