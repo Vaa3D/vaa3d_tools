@@ -2433,7 +2433,7 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
 
     QList<int> feas_id;
     QList<float> feas;
-    feas_id<<5<<6<<6<<8<<10<<15;
+    feas_id<<5<<6<<7<<8<<10<<15;
     for (int i=0;i<feas_id.size();i++)
     {
         feas.append(swc_features[feas_id.at(i)]);
