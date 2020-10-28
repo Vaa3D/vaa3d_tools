@@ -2413,18 +2413,17 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
     QString celltype;
     QString region;
     QHash<QString, QString>::iterator it;
-    for(it=swc_region.begin();it!=swc_region.end();++it){
-        if(it.key()==id){
-            region=it.value();
-            csvOutFile<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
-            result<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
-            //cout<<"**********"<<it.key().toStdString()<<","<<it.value().toStdString()<<endl;
-            break;
-        }
-    }
     for(it=swc_celltype.begin();it!=swc_celltype.end();++it){
         if(it.key()==id){
             celltype=it.value();
+            csvOutFile<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            result<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            break;
+        }
+    }
+    for(it=swc_region.begin();it!=swc_region.end();++it){
+        if(it.key()==id){
+            region=it.value();
             csvOutFile<<","<<it.value().toStdString().c_str();
             result<<","<<it.value().toStdString().c_str();
             break;
