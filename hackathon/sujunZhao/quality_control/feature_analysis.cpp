@@ -2334,16 +2334,26 @@ void arbor_qc(QString SwcFolder, QString CsvFile, bool flag_sort, QString Output
     swc_celltype.clear();
     swc_region.clear();
     ifstream readcsvOut, readresult;
-    int n_csvOut, n_result;
+    int n_csvOut=0, n_result=0;
     string tmp1, tmp2;
     readcsvOut.open(outgf.toStdString().c_str(),ios::in);
-    while(getline(readcsvOut,tmp1)){n_csvOut++;}
+    while(getline(readcsvOut,tmp1)){
+        n_csvOut++;
+        if(n_csvOut>1){
+            break;
+        }
+    }
     if(n_csvOut<2){
         QFile fileTemp1(outgf.toStdString().c_str());
         fileTemp1.remove();
     }
     readresult.open(out.toStdString().c_str(),ios::in);
-    while(getline(readresult,tmp2)){n_result++;}
+    while(getline(readresult,tmp2)){
+        n_result++;
+        if(n_result>1){
+            break;
+        }
+    }
     if(n_csvOut<2){
         QFile fileTemp2(out.toStdString().c_str());
         fileTemp2.remove();
