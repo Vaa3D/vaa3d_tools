@@ -2466,7 +2466,7 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
             }
         }
         else if(celltype=="LGd"){
-            if((feas[0]>=47)&&(feas[0]<=82)&&(feas[1]>=6.816)&&(feas[1]<=14.477)&&(feas[2]>=3.949)&&(feas[2]<=18.641)&&(feas[3]>=5.125)&&(feas[3]<=16.95)
+            if((feas[0]>=47)&&(feas[0]<=82)&&(feas[1]>=6.816)&&(feas[1]<=13.477)&&(feas[2]>=3.949)&&(feas[2]<=18.641)&&(feas[3]>=5.125)&&(feas[3]<=16.95)
                     &&(feas[4]>=126.229)&&(feas[4]<=358.143)&&(feas[5]>=7)&&(feas[5]<=11)){
                 result<<","<<1<<endl;
             }
