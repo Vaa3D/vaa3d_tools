@@ -1,6 +1,7 @@
 #include "feature_analysis.h"
 #include <vector>
 #include <stack>
+#include <QMessageBox>
 
 #define FNUM 26
 #ifndef VOID
@@ -2249,24 +2250,40 @@ void arbor_main(V3DPluginCallback2 &callback, QWidget *parent){
     QString InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all arbor swcs."),
                                           QDir::currentPath(),
                                           QFileDialog::ShowDirsOnly);
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+    QString CsvName;
+    CsvName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
             "",
             QObject::tr("Supported file (*.csv)"
                 ));
-    if(fileOpenName.isEmpty())
+    if(CsvName.isEmpty())
         return;
-    //arbor_qc(InputfolderName, fileOpenName, output);
-    arbor_qc(InputfolderName, fileOpenName);
+
+    bool flag_sort=TRUE;
+    QString title="Sort Function";
+    QString content="Do you want to sort swc files";
+    QMessageBox::StandardButton result=QMessageBox::information(0,title,content,QMessageBox::Yes|QMessageBox::No);
+    switch (result) {
+    case QMessageBox::Yes:
+        flag_sort=TRUE;
+        break;
+    case QMessageBox::No:
+        flag_sort=FALSE;
+        break;
+    }
+
+    QString OutputFolder = QFileDialog::getExistingDirectory(parent,
+                                                              QString(QObject::tr("Choose the output directory."))
+                                                              );
+    if(OutputFolder.size()==0){OutputFolder = InputfolderName;}
+    arbor_qc(InputfolderName, CsvName, flag_sort, OutputFolder);
 }
 
 
 // arbor analysis
-//void arbor_qc(QString input1, QString input2, QString output){
-void arbor_qc(QString input1, QString input2){
+void arbor_qc(QString SwcFolder, QString CsvFile, bool flag_sort, QString OutputFolder){
     QHash <QString, QString>  swc_celltype;
     QHash <QString, QString> swc_region;
-    QFile f_type(input2);
+    QFile f_type(CsvFile);
     if(!f_type.open(QIODevice::ReadOnly)){
         cout<<"cannot open swc!"<<endl;
     }
@@ -2282,101 +2299,102 @@ void arbor_qc(QString input1, QString input2){
             swc_region.insert(line_sp.at(0),line_sp.at(reg_index));
         }
     }
-    QFileInfo f(input1);
-    QString folderpath;
-    if(f.isDir()){
-        folderpath=input1;
-    }
-    else{
-        folderpath=f.path();
-    }
+
     QString out, outgf;
-//    if (hasOutput)
-//    {
-//        outgf = QString(outfiles.at(0))+"/gf.csv";
-//        out = QString(outfiles.at(0))+"/result.csv";
-//    }
-//    else
-//    {
-        outgf = folderpath+"/gf.txt";
-        out = folderpath+"/result.csv";
-//    }
-        ofstream csvOutFile;
-        //cout<<outgf.toStdString()<<endl;
-        csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
-        csvOutFile<<"Name,Region,Celltype_Rough,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
-        csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
-        csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
-        csvOutFile.close();
 
-//    if(f.isDir()){
-        QDir dir(input1);
-        //printf("%s\n",indir.toStdString().data());
-        QStringList nameFilters;
-        nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
-        QStringList files = dir.entryList(nameFilters, QDir::Files|QDir::Readable, QDir::Name);
-        //cout<<files.size()<<endl;
+    outgf = OutputFolder+"/gf.csv";
+    out = OutputFolder+"/result.csv";
 
-        for(int i=0;i<files.size();i++){
-            QString swc_file = files.at(i);
-            //QString output_branch = output_dir+"/"+flag1+".apo";
-            QString swc_path=input1+"/"+swc_file;
-            //printf("%s\n",swc_path.toStdString().data());
-            arbor_analysis(swc_path,folderpath, outgf, swc_celltype,out, swc_region);
+    ofstream csvOutFile;
+    //cout<<outgf.toStdString()<<endl;
+    csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+    csvOutFile<<"Name,Region,Celltype_Rough,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
+    csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
+    csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
+    csvOutFile.close();
+    ofstream resultcsv;
+    resultcsv.open(out.toStdString().c_str(),ios::out | ios::app);
+    resultcsv<<"Name,Region,Celltype_Rough,Tips,Width,Height,Depth,Length,MaxBranchOrder,QC_result"<<endl;
+    resultcsv.close();
+
+    QDir dir(SwcFolder);
+    QStringList nameFilters;
+    nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
+    QStringList files = dir.entryList(nameFilters, QDir::Files|QDir::Readable, QDir::Name);
+
+    for(int i=0;i<files.size();i++){
+        QString swc_file = files.at(i);
+        QString swc_path=SwcFolder+"/"+swc_file;
+        if(!swc_region.contains(swc_file)){
+            v3d_msg(QString("File \"%1\" are not in the csv table. Please double check.").arg(swc_file));
+            continue;
         }
-//    }
-//    else{
-//        QString swc_file= in.at(0);
-
-//        csvOutFile.close();
-//        result.close();
-//    }
+        arbor_analysis(swc_path,outgf, swc_celltype,out, swc_region, flag_sort);
+    }
+    swc_celltype.clear();
+    swc_region.clear();
+    ifstream readcsvOut, readresult;
+    int n_csvOut, n_result;
+    string tmp1, tmp2;
+    readcsvOut.open(outgf.toStdString().c_str(),ios::in);
+    while(getline(readcsvOut,tmp1)){n_csvOut++;}
+    if(n_csvOut<2){
+        QFile fileTemp1(outgf.toStdString().c_str());
+        fileTemp1.remove();
+    }
+    readresult.open(out.toStdString().c_str(),ios::in);
+    while(getline(readresult,tmp2)){n_result++;}
+    if(n_csvOut<2){
+        QFile fileTemp2(out.toStdString().c_str());
+        fileTemp2.remove();
+    }
 }
 
-void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QString, QString> swc_celltype,
-                    QString out, QHash <QString, QString> swc_region){
+void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_celltype,
+                    QString out, QHash <QString, QString> swc_region, bool flag_sort){
     //output
     QFileInfo f(swc);
     QString id=f.fileName();
+    QFileInfo outf(out);
+    QString outpath=outf.path();
     QString fileSaveName;
-//    if (hasOutput)
-//    {
-//        fileSaveName = QString(outfiles.at(0))+"/"+id+"_sorted.swc";
-//    }
-//    else
-//    {
-        QDir sort_folder;
-        QString spath=folderpath+"/sort";
-        sort_folder.mkdir(spath);
-        fileSaveName = spath+"/"+id+"_sorted.swc";
-//    }
 
-        ofstream csvOutFile, result;
-        cout<<outgf.toStdString()<<endl;
-        csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
-        result.open(out.toStdString().c_str(),ios::out | ios::app);
-        if(!csvOutFile.is_open()){
-             cerr<<"out Error: cannot open file to save"<<endl;
-             return;
-        }
-        if(!result.is_open()){
-            cerr<<"out Error: cannot open file to save final results"<<endl;
-            return;
-        }
+    ofstream csvOutFile, result;
+    cout<<outgf.toStdString()<<endl;
+    csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+    result.open(out.toStdString().c_str(),ios::out | ios::app);
+    if(!csvOutFile.is_open()){
+         cerr<<"out Error: cannot open file to save"<<endl;
+         return;
+    }
+    if(!result.is_open()){
+        cerr<<"out Error: cannot open file to save final results"<<endl;
+        return;
+    }
 
     //sort
-    NeuronTree nt_unsorted = readSWC_file(swc);
-    QList<NeuronSWC> neuron_unsorted,sort_result;
-    neuron_unsorted=nt_unsorted.listNeuron;
-    if (!SortSWC(neuron_unsorted, sort_result , VOID, VOID))
-    {
-        cout<<"Error in sorting swc"<<endl;
+    NeuronTree nt_sort;
+    if(flag_sort){
+        QDir sort_folder;
+        QString spath=outpath+"/sort";
+        sort_folder.mkdir(spath);
+        fileSaveName = spath+"/"+id+"_sorted.swc";
+        NeuronTree nt_unsorted = readSWC_file(swc);
+        QList<NeuronSWC> neuron_unsorted,sort_result;
+        neuron_unsorted=nt_unsorted.listNeuron;
+        if (!SortSWC(neuron_unsorted, sort_result , VOID, VOID))
+        {
+            cout<<"Error in sorting swc"<<endl;
+        }
+        if (!export_list2file(sort_result, fileSaveName, swc))
+        {
+            cout<<"Error in writing swc to file"<<endl;
+        }
+        nt_sort = readSWC_file(fileSaveName);
     }
-    if (!export_list2file(sort_result, fileSaveName, swc))
-    {
-        cout<<"Error in writing swc to file"<<endl;
+    else{
+        nt_sort = readSWC_file(swc);
     }
-    NeuronTree nt_sort = readSWC_file(fileSaveName);
 
     //compute features
     double * swc_features = new double[FNUM];
@@ -2388,16 +2406,18 @@ void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QStrin
     for(it=swc_region.begin();it!=swc_region.end();++it){
         if(it.key()==id){
             region=it.value();
-            csvOutFile<<it.key().toStdString()<<","<<it.value().toStdString();
-            result<<it.key().toStdString()<<","<<it.value().toStdString();
-            cout<<"**********"<<it.key().toStdString()<<","<<it.value().toStdString()<<endl;
+            csvOutFile<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            result<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            //cout<<"**********"<<it.key().toStdString()<<","<<it.value().toStdString()<<endl;
+            break;
         }
     }
     for(it=swc_celltype.begin();it!=swc_celltype.end();++it){
         if(it.key()==id){
             celltype=it.value();
-            csvOutFile<<","<<it.value().toStdString();
-            result<<","<<it.value().toStdString();
+            csvOutFile<<","<<it.value().toStdString().c_str();
+            result<<","<<it.value().toStdString().c_str();
+            break;
         }
     }
 
@@ -2413,6 +2433,7 @@ void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QStrin
         csvOutFile<<","<<swc_features[i];
     }
     csvOutFile<<endl;
+    csvOutFile.close();
     //cout<<"################## "<<id.toStdString()<<" "<<region.toStdString()<<" "<<celltype.toStdString()<<endl;
     //qc
     if(region=="TH"){
@@ -2512,8 +2533,6 @@ void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QStrin
             result<<","<<0<<endl;
         }
     }
-
-    csvOutFile.close();
     result.close();
 }
 

@@ -89,16 +89,30 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     {
         vector<char*> in, inparas, outfiles;
         if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+
         if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-        //bool hasOutput;
+        int input_flag=TRUE;
+        bool flag_sort;
+        if (inparas.size() == 1)
+        {
+            input_flag = atof(inparas.at(0));
+            if(input_flag==1){
+                flag_sort=TRUE;
+            }
+            else{
+                flag_sort=FALSE;
+            }
+         }
+        else if(inparas.size()>1){
+            cout<<"Illegal parameter list."<<endl;
+            return false;
+        }
+
         QString outfolder;
-//        if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);outfolder= QString(outfiles.at(0));}
-        //else{hasOutput=false;}
-//        else{outfolder="";}
+        if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);outfolder= QString(outfiles.at(0));}
         QString inputfolder=QString::fromStdString(in[0]);
         QString type_csv=inparas.at(0);
-//        arbor_qc(inputfolder, type_csv, outfolder);
-        arbor_qc(inputfolder, type_csv);
+        arbor_qc(inputfolder, type_csv, flag_sort, outfolder);
 
     }
 	else if (func_name == tr("help"))

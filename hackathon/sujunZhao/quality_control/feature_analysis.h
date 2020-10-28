@@ -11,24 +11,24 @@
 #include "v3d_message.h"
 #include "basic_surf_objs.h"
 using namespace std;
-class OpenSWCDialog: public QDialog
-{
-    Q_OBJECT
+//class OpenSWCDialog: public QDialog
+//{
+//    Q_OBJECT
 
-public:
-    V3DPluginCallback2 * callback;
-    QListWidget * listWidget;
-    QList<NeuronTree> _3DViewerTreeList;
-    NeuronTree  nt;
-    QString file_name;
+//public:
+//    V3DPluginCallback2 * callback;
+//    QListWidget * listWidget;
+//    QList<NeuronTree> _3DViewerTreeList;
+//    NeuronTree  nt;
+//    QString file_name;
 
-    OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
-    void getAllNeuronTreeNames(V3DPluginCallback2 * callback);
+//    OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
+//    void getAllNeuronTreeNames(V3DPluginCallback2 * callback);
 
-public slots:
-    bool run();
-    bool setTree(const QString & file);
-};
+//public slots:
+//    bool run();
+//    bool setTree(const QString & file);
+//};
 
 struct TreeNode
 {
@@ -52,7 +52,7 @@ QList<int> loop_detection(const NeuronTree & nt);
 //QList<TreeNode> tree(NeuronTree nt, int n);
 void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback);
 void arbor_main(V3DPluginCallback2 &callback, QWidget *parent);
-void arbor_qc(QString input1, QString input2);
-void arbor_analysis(QString swc,QString folderpath, QString outgf, QHash <QString, QString> swc_celltype,
-                    QString out, QHash <QString, QString> swc_region);
+void arbor_qc(QString input1, QString input2, bool flag_sort, QString OutputFolder);
+void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_celltype,
+                    QString out, QHash <QString, QString> swc_region, bool flag_sort);
 #endif // FEATURE_ANALYSIS_H
