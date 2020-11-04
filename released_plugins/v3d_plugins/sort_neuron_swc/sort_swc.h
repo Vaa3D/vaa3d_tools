@@ -236,6 +236,8 @@ QList<V3DLONG> DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG newrootid, V3D
 
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
+    // modified by Sujun
+    // add empty file judgement
     if(neurons.size()==0){
         v3d_msg("Empty SWC file.");
         return(false);
