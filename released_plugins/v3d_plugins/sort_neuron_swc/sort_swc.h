@@ -236,6 +236,10 @@ QList<V3DLONG> DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG newrootid, V3D
 
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
+    if(neurons.size()==0){
+        v3d_msg("Empty SWC file.");
+        return(false);
+    }
     // node name list of
     QList<V3DLONG> nlist;
     for(int i=0; i<neurons.size(); i++){
@@ -698,7 +702,7 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
     file.close();
     cout<<"swc/eswc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
 	return true;
-};
+}
 
 void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double angThr)
 {

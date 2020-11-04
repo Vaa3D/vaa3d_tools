@@ -2271,6 +2271,7 @@ void arbor_main(V3DPluginCallback2 &callback, QWidget *parent){
         break;
     }
 
+
     QString OutputFolder = QFileDialog::getExistingDirectory(parent,
                                                               QString(QObject::tr("Choose the output directory."))
                                                               );
@@ -2392,6 +2393,10 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
         NeuronTree nt_unsorted = readSWC_file(swc);
         QList<NeuronSWC> neuron_unsorted,sort_result;
         neuron_unsorted=nt_unsorted.listNeuron;
+        if(neuron_unsorted.size()==0){
+            v3d_msg("Empty SWC file.");
+            return;
+        }
         if (!SortSWC(neuron_unsorted, sort_result , VOID, VOID))
         {
             cout<<"Error in sorting swc"<<endl;
