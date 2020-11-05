@@ -50,7 +50,101 @@ int main(int argc, char* argv[])
 	NeuronStructExplorer myExplorer;
 	TreeTrimmer myTrimmer;
 
-	if (!funcName.compare("getBrNumFromSWCs"))
+	if (!funcName.compare("seuName"))
+	{
+		QString inputFolderQ = QString::fromStdString(paras.at(0));
+		QString outputFolderQ = QString::fromStdString(paras.at(1));
+
+		ifstream inTable(paras.at(2));
+		string line, buffer;
+		if (inTable.is_open())
+		{
+			while (getline(inTable, line))
+			{
+				QString lineQ = QString::fromStdString(line);
+				QStringList lineSplitQ = lineQ.split(",");
+				cout << lineSplitQ.at(0).toStdString() << " " << lineSplitQ.at(1).toStdString() << endl;
+
+				QString inputFileFullNameQ = inputFolderQ + "\\" + lineSplitQ.at(0) + ".swc";
+				QString outputFileFullNameQ = outputFolderQ + "\\" + lineSplitQ.at(1) + "_reg.swc";
+				QFile::rename(inputFileFullNameQ, outputFileFullNameQ);
+			}
+		}
+
+
+		//seuFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		//this->fileNameList.clear();
+		//this->fileNameList = seuFileFolder.entryList();
+	}
+	else if (!funcName.compare("WMUdnRename"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
+		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList checkFileNameListQ = checkFolderQ.entryList();
+
+		QString inputFullPathQ = QString::fromStdString(paras.at(0)) + "\\";
+		QString checkFolderPathQ = QString::fromStdString(paras.at(1)) + "\\";
+		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		{
+			QStringList nameSplitQ = it->split(".");
+			QString checkNameQ = checkFolderPathQ + nameSplitQ.at(0) + ".swc";
+			cout << checkNameQ.toStdString() << endl;
+			if (QFile::exists(checkNameQ))
+			{
+				QString newFileNameQ = inputFullPathQ + nameSplitQ.at(0) + "_xy32z8.swc";
+				QString oldFileNameQ = inputFullPathQ + *it;
+				QFile::rename(oldFileNameQ, newFileNameQ);
+			}
+		}
+	}
+	else if (!funcName.compare("nameCheck"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
+		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList checkFileNameListQ = checkFolderQ.entryList();
+
+		QString inputFullPathQ = QString::fromStdString(paras.at(0)) + "\\";
+		QString checkFolderPathQ = QString::fromStdString(paras.at(1)) + "\\";
+		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		{
+			QStringList nameSplitQ = it->split("_reg");
+			QString checkNameQ = checkFolderPathQ + nameSplitQ.at(0) + ".swc";
+			//cout << checkNameQ.toStdString() << endl;
+			if (!QFile::exists(checkNameQ))
+			{
+				cout << it->toStdString() << endl;
+				//QFile::rename(oldFileNameQ, newFileNameQ);
+			}
+		}
+	}
+	else if (!funcName.compare("seuCheck"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
+		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList checkFileNameListQ = checkFolderQ.entryList();
+
+		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		{
+			for (QStringList::iterator it1 = checkFileNameListQ.begin(); it1 != checkFileNameListQ.end(); ++it1)
+			{
+				if (*it == *it1) goto FOUND;
+			}
+			cout << it->toStdString() << endl;
+
+		FOUND:
+			continue;
+		}
+	}
+	else if (!funcName.compare("getBrNumFromSWCs"))
 	{
 		map<string, int> swcBrNums;
 		vector<QString> SWClist = fileDirHandler.getFiles(QString::fromStdString(paras.at(0)), ".swc");

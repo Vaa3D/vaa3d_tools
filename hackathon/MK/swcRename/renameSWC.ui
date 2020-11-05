@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>573</width>
-    <height>665</height>
+    <width>574</width>
+    <height>595</height>
    </rect>
   </property>
   <property name="font">
@@ -52,11 +52,77 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>521</width>
-            <height>584</height>
+            <width>522</width>
+            <height>514</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QFrame" name="frame_6">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Optional file name addition:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_8">
+                <property name="minimumSize">
+                 <size>
+                  <width>200</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>250</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item>
             <widget class="QGroupBox" name="groupBox_2">
              <property name="maximumSize">
@@ -73,10 +139,10 @@
               </font>
              </property>
              <property name="whatsThis">
-              <string/>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Create a new folder named &amp;quot;newFilesWithFormalizedNames&amp;quot; in which all swc, apo, ano files with formalized filenames are stored.&lt;br/&gt;&lt;br/&gt;When [Create apo and ano] button is not checked, apo and ano files won't be generated. The default is set to be checked.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="title">
-              <string>Rename WMU files (non-processed SWC):</string>
+              <string>Formalize WMU filename:</string>
              </property>
              <property name="flat">
               <bool>false</bool>
@@ -169,6 +235,22 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_2">
                  <item>
+                  <widget class="QRadioButton" name="radioButton">
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Create apo and ano</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <spacer name="horizontalSpacer">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -180,26 +262,6 @@
                     </size>
                    </property>
                   </spacer>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_2">
-                   <property name="maximumSize">
-                    <size>
-                     <width>80</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Undo</string>
-                   </property>
-                  </widget>
                  </item>
                  <item>
                   <widget class="QDialogButtonBox" name="buttonBox">
@@ -231,155 +293,17 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_5">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>180</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>11</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="whatsThis">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;This will create a new folder [renamed_indexed] in which new ano, apo, and swc files named with Allen's formal name pattern will be generated. A csv file named [formalName_WMU_map] that provides new-old name lookup table will also be created.&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note, the input has to be &lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt;processed&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="title">
-              <string>Index WMU files (processed SWC):</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_4">
-              <item>
-               <widget class="QGroupBox" name="groupBox_6">
-                <property name="maximumSize">
-                 <size>
-                  <width>500</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Calibri</family>
-                  <pointsize>10</pointsize>
-                  <weight>50</weight>
-                  <bold>false</bold>
-                 </font>
-                </property>
-                <property name="title">
-                 <string>Select a folder to process:</string>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_5">
-                 <item>
-                  <widget class="QLineEdit" name="lineEdit_3">
-                   <property name="minimumSize">
-                    <size>
-                     <width>350</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>400</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_4">
-                   <property name="maximumSize">
-                    <size>
-                     <width>80</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Browse</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QFrame" name="frame_3">
-                <property name="maximumSize">
-                 <size>
-                  <width>500</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_6">
-                 <item>
-                  <spacer name="horizontalSpacer_3">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>259</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QDialogButtonBox" name="buttonBox_3">
-                   <property name="maximumSize">
-                    <size>
-                     <width>180</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="standardButtons">
-                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
             <widget class="QGroupBox" name="groupBox_3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>245</height>
+              </size>
+             </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>180</height>
+               <height>250</height>
               </size>
              </property>
              <property name="font">
@@ -390,14 +314,20 @@
               </font>
              </property>
              <property name="whatsThis">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Similar to 'Index WMU files (processed SWC)', this creates a new folder [renamed_indexed] in which new ano, apo, and swc files named with Allen's formal name pattern will be generated. A csv file named [formalName_SEU_map] that provides new-old name lookup table will also be created.&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note, this assumes all SEU's SWC files are already&lt;/span&gt;&lt;span style=&quot; font-size:9pt; font-weight:600;&quot;&gt; processed&lt;/span&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Similar to the above, this will create a &amp;quot;newFilesWithFormalizedNames&amp;quot; folder where all files with formalized names are stored. When mapping table is provided, the names in the mapping table will be used. Otherwise, file names will be given with soma information from swc files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="title">
-              <string>Index SEU files:</string>
+              <string>Formalize SEU files:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
                <widget class="QGroupBox" name="groupBox_4">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>75</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>500</width>
@@ -440,6 +370,71 @@
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_3">
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_9">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>75</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select the name mappinbg table file (.csv):</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_11">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_9">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>10000</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_6">
                    <property name="font">
                     <font>
                      <pointsize>10</pointsize>
@@ -533,8 +528,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>521</width>
-            <height>584</height>
+            <width>522</width>
+            <height>514</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -851,8 +846,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>161</y>
+     <x>509</x>
+     <y>216</y>
     </hint>
     <hint type="destinationlabel">
      <x>572</x>
@@ -867,8 +862,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>222</y>
+     <x>509</x>
+     <y>277</y>
     </hint>
     <hint type="destinationlabel">
      <x>438</x>
@@ -883,28 +878,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>222</y>
+     <x>509</x>
+     <y>277</y>
     </hint>
     <hint type="destinationlabel">
      <x>572</x>
      <y>138</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_2</sender>
-   <signal>clicked()</signal>
-   <receiver>dialog</receiver>
-   <slot>undoClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>323</x>
-     <y>222</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>309</x>
-     <y>150</y>
     </hint>
    </hints>
   </connection>
@@ -915,8 +894,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>539</y>
+     <x>509</x>
+     <y>592</y>
     </hint>
     <hint type="destinationlabel">
      <x>572</x>
@@ -931,8 +910,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>600</y>
+     <x>509</x>
+     <y>716</y>
     </hint>
     <hint type="destinationlabel">
      <x>527</x>
@@ -947,60 +926,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>510</x>
-     <y>600</y>
+     <x>509</x>
+     <y>716</y>
     </hint>
     <hint type="destinationlabel">
      <x>572</x>
      <y>347</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox_3</sender>
-   <signal>accepted()</signal>
-   <receiver>dialog</receiver>
-   <slot>okClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>510</x>
-     <y>411</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>572</x>
-     <y>157</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox_3</sender>
-   <signal>rejected()</signal>
-   <receiver>dialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>510</x>
-     <y>411</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>572</x>
-     <y>394</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_4</sender>
-   <signal>clicked()</signal>
-   <receiver>dialog</receiver>
-   <slot>browseFolderClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>510</x>
-     <y>350</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>572</x>
-     <y>234</y>
     </hint>
    </hints>
   </connection>
@@ -1049,6 +980,22 @@
     <hint type="destinationlabel">
      <x>568</x>
      <y>374</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_6</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>474</x>
+     <y>650</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>571</x>
+     <y>647</y>
     </hint>
    </hints>
   </connection>

@@ -16,8 +16,12 @@ class FileNameChangerIndexer
 public:
 	enum nameChangingMode { WMU_name, WMU_index, SEU_index };
 
+	bool WMUapoAno;
 	vector<string> connToken;
 	QString rootPath;
+	QString fileNameAddition;
+	QString mappingTableFullName;
+	map<string, set<string>> seuCellMap;
 	void nameChange(const QStringList& fileNameList, nameChangingMode mode, map<string, string>* oldMapPtr = nullptr);
 
 private:
@@ -25,5 +29,7 @@ private:
 	string getSliceNum(string& input);
 	string getXcoord(string& input);
 	string getYcoord(string& input);
+	string getFileNameTail(const string& input);
 	vector<float> getCoordsFromSWC(const QList<NeuronSWC>& inputNodes);
+	void SEUnameChange(const map<string, set<string>>& seuNameMap, bool table);
 };
