@@ -12,7 +12,14 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 		QString newSavingPathQ = this->rootPath + "\\newFilesWithFormalizedNames";
 		QDir newDir(newSavingPathQ);
 		if (!newDir.exists()) newDir.mkpath(".");
+
+		QString unProcessedSavingPathQ = this->rootPath + "\\files_MoreThan1RootNode";
+		QDir unProcessedDir(unProcessedSavingPathQ);		
 		
+		string indexFileName = this->rootPath.toStdString() + "\\formalName_WMU_map.csv";
+		ofstream indexOut(indexFileName);
+		indexOut << "Original Name" << "," << "Formatted Name" << "," << "Accurate Name" << endl;
+
 		for (auto& fileNameQ : fileNameList)
 		{
 			if (fileNameQ.endsWith("swc") || fileNameQ.endsWith("eswc"))
@@ -46,6 +53,17 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 				QString oldFullNameQ = this->rootPath + "\\" + fileNameQ;
 				QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(newFileName);
 				QString newFullNameQ = newFullBaseNameQ + ".swc";
+				
+				NeuronTree inputTree = readSWC_file(oldFullNameQ);
+				vector<float> somaCoords;
+				if (!this->getCoordsFromSWC(inputTree.listNeuron, somaCoords))
+				{
+					if (!unProcessedDir.exists()) unProcessedDir.mkpath(".");
+					QString newUnprocessdFullName = unProcessedSavingPathQ + "\\" + fileNameQ;
+					QFile::copy(oldFullNameQ, newUnprocessdFullName);
+					continue;
+				}
+				
 				int dupCount = 0;
 				while (1)
 				{
@@ -57,38 +75,54 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 					else
 					{
 						QFile::copy(oldFullNameQ, newFullNameQ);
+						if (indexOut.is_open())
+						{
+							string accurateName = brainID + "_" + to_string(int(somaCoords.at(0))) + "-X" + to_string(int(somaCoords.at(1))) + "-Y" + to_string(int(somaCoords.at(2)));
+							if (fileNameQ.endsWith("swc"))
+							{
+								string oldNameNoExt = fileNameQ.left(fileNameQ.length() - 4).toStdString();
+								indexOut << oldNameNoExt << "," << newFileName << "," << accurateName << endl;
+							}
+							else if (fileNameQ.endsWith("eswc"))
+							{
+								string oldNameNoExt = fileNameQ.left(fileNameQ.length() - 5).toStdString();
+								indexOut << oldNameNoExt << "," << newFileName << "," << accurateName << endl;
+							}
+						}
 						break;
 					}
 				}
 				
-				NeuronTree inputTree = readSWC_file(oldFullNameQ);
-				vector<float> somaCoords = this->getCoordsFromSWC(inputTree.listNeuron);
-				CellAPO somaMarker;
-				RGBA8 color;
-				color.r = 0;
-				color.g = 0;
-				color.b = 0;
-				somaMarker.x = somaCoords.at(1);
-				somaMarker.y = somaCoords.at(2);
-				somaMarker.z = somaCoords.at(0);
-				somaMarker.color = color;
-				somaMarker.volsize = 500;
-				QList<CellAPO> somaList;
-				somaList.push_back(somaMarker);
-				QString fullAPOnameQ = newFullBaseNameQ + ".apo";
-				writeAPO_file(fullAPOnameQ, somaList);
-				
-				QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
-				QFile anoFile;
-				anoFile.setFileName(outputANOfullNameQ);
-				anoFile.open(QIODevice::ReadWrite);
-				QTextStream anoOut(&anoFile);
-				QString swcNameQ = QString::fromStdString(newFileName) + ".swc";
-				QString apoNameQ = QString::fromStdString(newFileName) + ".apo";
-				anoOut << "SWCFILE=" << swcNameQ << "\nAPOFILE=" << apoNameQ << "\n";
-				anoFile.close();
+				if (this->WMUapoAno)
+				{
+					CellAPO somaMarker;
+					RGBA8 color;
+					color.r = 0;
+					color.g = 0;
+					color.b = 0;
+					somaMarker.x = somaCoords.at(1);
+					somaMarker.y = somaCoords.at(2);
+					somaMarker.z = somaCoords.at(0);
+					somaMarker.color = color;
+					somaMarker.volsize = 500;
+					QList<CellAPO> somaList;
+					somaList.push_back(somaMarker);
+					QString fullAPOnameQ = newFullBaseNameQ + ".apo";
+					writeAPO_file(fullAPOnameQ, somaList);
+
+					QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
+					QFile anoFile;
+					anoFile.setFileName(outputANOfullNameQ);
+					anoFile.open(QIODevice::ReadWrite);
+					QTextStream anoOut(&anoFile);
+					QString swcNameQ = QString::fromStdString(newFileName) + ".swc";
+					QString apoNameQ = QString::fromStdString(newFileName) + ".apo";
+					anoOut << "SWCFILE=" << swcNameQ << "\nAPOFILE=" << apoNameQ << "\n";
+					anoFile.close();
+				}
 			}
 		}
+		if (indexOut.is_open()) indexOut.close();
 	}
 	else if (mode == FileNameChangerIndexer::SEU_index)
 	{
@@ -115,21 +149,21 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 	}
 }
 
-vector<float> FileNameChangerIndexer::getCoordsFromSWC(const QList<NeuronSWC>& inputNodes)
+bool FileNameChangerIndexer::getCoordsFromSWC(const QList<NeuronSWC>& inputNodes, vector<float>& somaCoords)
 {
-	vector<float> outputVec;
+	somaCoords.clear();
 	for (auto& node : inputNodes)
 	{
-		if (node.type == 1)
+		if (node.parent == -1)
 		{
-			outputVec.push_back(node.z);
-			outputVec.push_back(node.x);
-			outputVec.push_back(node.y);
-			return outputVec;
+			somaCoords.push_back(node.z);
+			somaCoords.push_back(node.x);
+			somaCoords.push_back(node.y);
 		}
 	}
 
-	return outputVec;
+	if (somaCoords.size() != 3) return false;
+	else return true;
 }
 
 string FileNameChangerIndexer::getBrainID(string& inputFileName)
@@ -263,6 +297,9 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 		QDir newDir(newSavingPathQ);
 		if (!newDir.exists()) newDir.mkpath(".");
 
+		QString unProcessedSavingPathQ = this->rootPath + "\\files_MoreThan1RootNode";
+		QDir unProcessedDir(unProcessedSavingPathQ);
+
 		string indexFileName = this->rootPath.toStdString() + "\\formalName_SEU_map.csv";
 		ofstream indexOut(indexFileName);
 
@@ -272,7 +309,14 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 			{
 				QString swcFullNameQ = this->rootPath + "\\" + QString::fromStdString(brainID.first) + "_" + QString::fromStdString(seuCellID);
 				NeuronTree inputTree = readSWC_file(swcFullNameQ);
-				vector<float> somaCoords = getCoordsFromSWC(inputTree.listNeuron);
+				vector<float> somaCoords;
+				if (!getCoordsFromSWC(inputTree.listNeuron, somaCoords))
+				{
+					if (!unProcessedDir.exists()) unProcessedDir.mkpath(".");
+					QString newUnprocessdFullName = unProcessedSavingPathQ + "\\" + QString::fromStdString(brainID.first) + "_" + QString::fromStdString(seuCellID);
+					QFile::copy(swcFullNameQ, newUnprocessdFullName);
+					continue;
+				}
 				QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(brainID.first) + "_" + QString::number(int(somaCoords.at(0))) + "-X" + QString::number(int(somaCoords.at(1))) + "-Y" + QString::number(int(somaCoords.at(2)));
 				//QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(brainID.first) + "_" + QString::number(int(round(somaCoords.at(0)))) + "-X" + QString::number(int(round(somaCoords.at(1)))) + "-Y" + QString::number(int(round(somaCoords.at(2))));
 				string tailInfo = this->getFileNameTail(seuCellID);
@@ -291,33 +335,30 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 				if (indexOut.is_open()) indexOut << inputSEUname << "," << outputBaseName << endl;
 				cout << inputSEUname << " -> " << outputBaseName << endl;
 
-				if (this->WMUapoAno)
-				{
-					CellAPO somaMarker;
-					RGBA8 color;
-					color.r = 0;
-					color.g = 0;
-					color.b = 0;
-					somaMarker.x = somaCoords.at(1);
-					somaMarker.y = somaCoords.at(2);
-					somaMarker.z = somaCoords.at(0);
-					somaMarker.color = color;
-					somaMarker.volsize = 500;
-					QList<CellAPO> somaList;
-					somaList.push_back(somaMarker);
-					QString outputAPOfullNameQ = newFullBaseNameQ + ".apo";
-					writeAPO_file(outputAPOfullNameQ, somaList);
+				CellAPO somaMarker;
+				RGBA8 color;
+				color.r = 0;
+				color.g = 0;
+				color.b = 0;
+				somaMarker.x = somaCoords.at(1);
+				somaMarker.y = somaCoords.at(2);
+				somaMarker.z = somaCoords.at(0);
+				somaMarker.color = color;
+				somaMarker.volsize = 500;
+				QList<CellAPO> somaList;
+				somaList.push_back(somaMarker);
+				QString outputAPOfullNameQ = newFullBaseNameQ + ".apo";
+				writeAPO_file(outputAPOfullNameQ, somaList);
 
-					QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
-					QFile anoFile;
-					anoFile.setFileName(outputANOfullNameQ);
-					anoFile.open(QIODevice::ReadWrite);
-					QTextStream anoOut(&anoFile);
-					QString swcNameQ = QString::fromStdString(outputBaseName) + ".swc";
-					QString apoNameQ = QString::fromStdString(outputBaseName) + ".apo";
-					anoOut << "SWCFILE=" << swcNameQ << "\nAPOFILE=" << apoNameQ << "\n";
-					anoFile.close();
-				}
+				QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
+				QFile anoFile;
+				anoFile.setFileName(outputANOfullNameQ);
+				anoFile.open(QIODevice::ReadWrite);
+				QTextStream anoOut(&anoFile);
+				QString swcNameQ = QString::fromStdString(outputBaseName) + ".swc";
+				QString apoNameQ = QString::fromStdString(outputBaseName) + ".apo";
+				anoOut << "SWCFILE=" << swcNameQ << "\nAPOFILE=" << apoNameQ << "\n";
+				anoFile.close();
 			}
 		}
 
@@ -325,6 +366,14 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 	}
 	else
 	{
+		QString newSavingPathQ = this->rootPath + "\\newFilesWithFormalizedNames";
+		QDir newDir(newSavingPathQ);
+		if (!newDir.exists()) newDir.mkpath(".");
+		
+		QString renamedFilesSavingPathQ = this->rootPath + "\\files_renamed";
+		QDir renamedDir(renamedFilesSavingPathQ);
+		if (!renamedDir.exists()) renamedDir.mkpath(".");
+		
 		ifstream mappingTableIn(this->mappingTableFullName.toStdString());
 		string line;
 		if (mappingTableIn.is_open())
@@ -335,12 +384,15 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 				QStringList lineSplitQ = lineQ.split(",");
 				cout << lineSplitQ.at(0).toStdString() << " " << lineSplitQ.at(1).toStdString() << endl;
 
-				QString inputFileFullNameQ = this->rootPath + "\\" + lineSplitQ.at(0);
-				QString outputFileFullNameQ = this->rootPath + "\\" + lineSplitQ.at(1);
+				QString inputFileFullNameQ = this->rootPath + "\\" + lineSplitQ.at(0) + ".swc";
+				QString outputFileFullNameQ = newSavingPathQ + "\\" + lineSplitQ.at(1);
 
 				if (this->fileNameAddition.isEmpty()) outputFileFullNameQ += ".swc";
 				else outputFileFullNameQ = outputFileFullNameQ + "_" + this->fileNameAddition + ".swc";
-				if (QFile::exists(inputFileFullNameQ)) QFile::rename(inputFileFullNameQ, outputFileFullNameQ);
+				if (QFile::exists(inputFileFullNameQ)) QFile::copy(inputFileFullNameQ, outputFileFullNameQ);
+
+				QString renamedFullNameQ = renamedFilesSavingPathQ + "\\" + lineSplitQ.at(0) + ".swc";
+				QFile::rename(inputFileFullNameQ, renamedFullNameQ);
 			}
 		}
 	}

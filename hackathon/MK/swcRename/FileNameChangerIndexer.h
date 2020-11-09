@@ -30,6 +30,6 @@ private:
 	string getXcoord(string& input);
 	string getYcoord(string& input);
 	string getFileNameTail(const string& input);
-	vector<float> getCoordsFromSWC(const QList<NeuronSWC>& inputNodes);
+	bool getCoordsFromSWC(const QList<NeuronSWC>& inputNodes, vector<float>& somaCoords);
 	void SEUnameChange(const map<string, set<string>>& seuNameMap, bool table);
 };
