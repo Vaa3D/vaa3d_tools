@@ -88,7 +88,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%QTDIR%\include\QtCore;%QTDIR%\include;..\..\..\..\v3d_external\v3d_main\basic_c_fun;..\..\..\..\v3d_external\v3d_main\v3d;..\v3d_imgManagerMK;..\v3d_imgManagerMK\imgProcessor;..\v3d_imgManagerMK\imgAnalyzer;..\..\..\..\v3d_external\v3d_main\neuron_editing;..\..\..\..\v3d_external\v3d_main\common_lib\include;..\..\..\released_plugins\v3d_plugins\swc2mask_cylinder;..\..\..\..\v3d_external\v3d_main\io;..\v3dSource;%BOOST_PATH%;%QTDIR%\include\QtGui;%QTDIR%\include\ActiveQt;release;%QTDIR%\mkspecs\win32-msvc2013;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;%QTDIR%\include\QtCore;$(QTDIR)\include;..\..\..\..\v3d_external\v3d_main\basic_c_fun;..\..\..\..\v3d_external\v3d_main\v3d;..\v3d_imgManagerMK;..\v3d_imgManagerMK\imgProcessor;..\v3d_imgManagerMK\imgAnalyzer;..\..\..\..\v3d_external\v3d_main\neuron_editing;..\..\..\..\v3d_external\v3d_main\common_lib\include;..\..\..\released_plugins\v3d_plugins\swc2mask_cylinder;..\..\..\..\v3d_external\v3d_main\io;..\v3dSource;%BOOST_PATH%;%QTDIR%\include\QtGui;%QTDIR%\include\ActiveQt;release;%QTDIR%\mkspecs\win32-msvc2013;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm200 -FS %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -137,6 +137,7 @@
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\mg_image_lib.cpp" />
     <ClCompile Include="..\v3dSource\mg_utilities.cpp" />
     <ClCompile Include="..\..\..\released_plugins\v3d_plugins\swc2mask_cylinder\my_surf_objs.cpp" />
+    <ClCompile Include="MKimgManagementTester.cpp" />
     <ClCompile Include="processManager.cpp" />
     <ClCompile Include="..\v3dSource\stackutil.cpp" />
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.cpp" />
