@@ -175,6 +175,7 @@ void getSWCMeanStd2(unsigned char* pdata, V3DLONG* sz, NeuronTree& nt, double& m
 
 bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double ratio, int th, int resolutionTimes,
                      int imageFlag, double lower, double upper, int isMulti, double app2Length,
+                     double contrastTh, double contrastRatio,
                      ofstream& csvFile, V3DPluginCallback2& callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
@@ -254,15 +255,23 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double imageMean,imageStd;
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
         QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
+
+        mean_and_std(pdata,tolSZ,imageMean,imageStd);
+        if(imageMean<contrastTh){
+            changeContrast(pdata,sz,contrastRatio);
+            QString contrastImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                    + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_ratio_" + QString::number(contrastRatio) + "_contrast.v3draw";
+            simple_saveimage_wrapper(callback,contrastImagePath.toStdString().c_str(),pdata,sz,1);
+        }
     }
 
-    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
-    double imageMean,imageStd;
     mean_and_std(pdata,tolSZ,imageMean,imageStd);
 
 
@@ -427,7 +436,8 @@ bool app2WithPreinfo(QString dir, QString brainPath, QString outDir, double rati
 }
 
 bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& csvFile, int maxTh, float length, int resolutionTimes,
-                      int imageFlag, double lower, double upper, int isMulti, double app2Length, V3DPluginCallback2& callback){
+                      int imageFlag, double lower, double upper, int isMulti, double app2Length,
+                      double contrastTh, double contrastRatio, V3DPluginCallback2& callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
 #else
@@ -511,11 +521,21 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double imageMean,imageStd;
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
         QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
+
+        mean_and_std(pdata,tolSZ,imageMean,imageStd);
+        if(imageMean<contrastTh){
+            changeContrast(pdata,sz,contrastRatio);
+            QString contrastImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                    + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_ratio_" + QString::number(contrastRatio) + "_contrast.v3draw";
+            simple_saveimage_wrapper(callback,contrastImagePath.toStdString().c_str(),pdata,sz,1);
+        }
     }
 
     int bCount = 0;
@@ -684,7 +704,8 @@ bool app2WithPreinfo2(QString dir, QString brainPath, QString outDir, ofstream& 
 
 bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &csvFile, int maxTh, int minTh,
                       int resolutionTimes, int imageFlag, double lower, double upper,
-                      int isMulti, double app2Length, V3DPluginCallback2 &callback){
+                      int isMulti, double app2Length,
+                      double contrastTh, double contrastRatio, V3DPluginCallback2 &callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
 #else
@@ -766,11 +787,22 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
     simple_saveimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,1);
 
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double imageMean,imageStd;
+
     if(imageFlag == 1){
         convertDataTo0_255(pdata,sz);
         QString convertImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
                 + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_0_255.v3draw";
         simple_saveimage_wrapper(callback,convertImagePath.toStdString().c_str(),pdata,sz,1);
+
+        mean_and_std(pdata,tolSZ,imageMean,imageStd);
+        if(imageMean<contrastTh){
+            changeContrast(pdata,sz,contrastRatio);
+            QString contrastImagePath = outDir + pathSeparator + QString::number(markers[0].x) + "_"
+                    + QString::number(markers[0].y) + "_" + QString::number(markers[0].z) + "_ratio_" + QString::number(contrastRatio) + "_contrast.v3draw";
+            simple_saveimage_wrapper(callback,contrastImagePath.toStdString().c_str(),pdata,sz,1);
+        }
     }
 
     NeuronTree backSWC,foreSWC,otherSWC;
@@ -928,6 +960,7 @@ bool app2WithPreinfo3(QString dir, QString brainPath, QString outDir, ofstream &
 
 bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int th, int resolutionTimes,
                              int imageFlag, double lower, double upper, int isMulti, double app2Length,
+                             double contrastTh, double contrastRatio,
                              ofstream &csvFile, V3DPluginCallback2& callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
@@ -943,7 +976,8 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
             + QString::number(ratio) + "_" + QString::number(th)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
-            + QString::number(isMulti) + "_" + QString::number(app2Length);
+            + QString::number(isMulti) + "_" + QString::number(app2Length)+ "_"
+            + QString::number(contrastTh) + "_" + QString::number(contrastRatio);
     if(!QDir().exists(outDir)){
         QDir().mkdir(outDir);
     }
@@ -958,7 +992,7 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
         if(!QDir().exists(outDirPath)){
             QDir().mkdir(outDirPath);
         }
-        app2WithPreinfo(dirPath,brainPath,outDirPath,ratio,th,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,csvFile,callback);
+        app2WithPreinfo(dirPath,brainPath,outDirPath,ratio,th,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,contrastTh,contrastRatio,csvFile,callback);
 
     }
     return true;
@@ -966,7 +1000,8 @@ bool app2WithPreinfoForBatch(QString dir, QString brainPath, double ratio, int t
 
 bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile, int maxTh, float length,
                               int resolutionTimes, int imageFlag, double lower, double upper,
-                              int isMulti, double app2Length, V3DPluginCallback2& callback){
+                              int isMulti, double app2Length,
+                              double contrastTh, double contrastRatio, V3DPluginCallback2& callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
 #else
@@ -981,7 +1016,8 @@ bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile,
             + QString::number(maxTh) + "_" + QString::number(length)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
-            + QString::number(isMulti) + "_" + QString::number(app2Length);
+            + QString::number(isMulti) + "_" + QString::number(app2Length)+ "_"
+            + QString::number(contrastTh) + "_" + QString::number(contrastRatio);
     if(!QDir().exists(outDir)){
         QDir().mkdir(outDir);
     }
@@ -996,14 +1032,15 @@ bool app2WithPreinfoForBatch2(QString dir, QString brainPath, ofstream &csvFile,
         if(!QDir().exists(outDirPath)){
             QDir().mkdir(outDirPath);
         }
-        app2WithPreinfo2(dirPath,brainPath,outDirPath,csvFile,maxTh,length,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,callback);
+        app2WithPreinfo2(dirPath,brainPath,outDirPath,csvFile,maxTh,length,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,contrastTh,contrastRatio,callback);
 
     }
     return true;
 }
 
 bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile, int maxTh, int minTh, int resolutionTimes,
-                              int imageFlag, double lower, double upper, int isMulti, double app2Length, V3DPluginCallback2 &callback){
+                              int imageFlag, double lower, double upper, int isMulti, double app2Length,
+                              double contrastTh, double contrastRatio, V3DPluginCallback2 &callback){
 #ifdef Q_OS_LINUX
     QString pathSeparator = "/";
 #else
@@ -1018,7 +1055,8 @@ bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile,
             + QString::number(maxTh) + "_" + QString::number(minTh)+ "_"
             + QString::number(resolutionTimes) + "_" + QString::number(imageFlag)+ "_"
             + QString::number(lower) + "_" + QString::number(upper) + "_"
-            + QString::number(isMulti) + "_" + QString::number(app2Length);
+            + QString::number(isMulti) + "_" + QString::number(app2Length)+ "_"
+            + QString::number(contrastTh) + "_" + QString::number(contrastRatio);
     if(!QDir().exists(outDir)){
         QDir().mkdir(outDir);
     }
@@ -1033,7 +1071,7 @@ bool app2WithPreinfoForBatch3(QString dir, QString brainPath, ofstream &csvFile,
         if(!QDir().exists(outDirPath)){
             QDir().mkdir(outDirPath);
         }
-        app2WithPreinfo3(dirPath,brainPath,outDirPath,csvFile,maxTh,minTh,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,callback);
+        app2WithPreinfo3(dirPath,brainPath,outDirPath,csvFile,maxTh,minTh,resolutionTimes,imageFlag,lower,upper,isMulti,app2Length,contrastTh,contrastRatio,callback);
 
     }
     return true;
@@ -1115,6 +1153,18 @@ void convertDataTo0_255(unsigned char *data1d, long long *sz){
         double tmp = ((data1d[i]-iMin)/(iMax-iMin))*255;
         if(tmp>255) tmp = 255;
         data1d[i] = (unsigned char) tmp;
+    }
+}
+
+void changeContrast(unsigned char* data1d, V3DLONG* sz, double contrastRatio){
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    for(V3DLONG i=0; i<tolSZ; i++){
+        double tmp = data1d[i]*contrastRatio;
+        if(tmp>255)
+            tmp = 255;
+        if(tmp<0)
+            tmp = 0;
+        data1d[i] = (unsigned char)tmp;
     }
 }
 

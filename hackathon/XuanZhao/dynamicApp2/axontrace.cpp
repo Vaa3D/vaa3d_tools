@@ -5,6 +5,19 @@
 #include "swc_convert.h"
 #include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
+void BinaryProcess(unsigned char* &apsInput, V3DLONG* in_sz){
+    V3DLONG tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* bdata = new unsigned char[tolSZ];
+    BinaryProcess(apsInput,bdata,in_sz[0],in_sz[1],in_sz[2],3,5);
+    for(int i=0; i<tolSZ; i++){
+        apsInput[i] = bdata[i];
+    }
+    if(bdata){
+        delete[] bdata;
+        bdata = 0;
+    }
+}
+
 bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result){
     return SortSWC(neurons,result,VOID,1);
 }
@@ -173,6 +186,58 @@ void imageBlock::getMaskImage(unsigned char *inimg, unsigned char *&outimg, V3DL
     }
 }
 
+XYZ imageBlock::getLastDirection(){
+    XYZ lastDirection;
+
+    if(finalResult.listNeuron.size()<5)
+        return XYZ(0,0,0);
+    NeuronSWC lastPoint;
+    for(int i=0; i<finalResult.listNeuron.size(); i++){
+        NeuronSWC s = finalResult.listNeuron[i];
+        if(s.x == startMarker.x && s.y == startMarker.y && s.z == startMarker.z){
+            lastPoint = s;
+        }
+    }
+
+    NeuronSWC tmp = lastPoint;
+    vector<NeuronSWC> ns = vector<NeuronSWC>();
+    int count = 0;
+    while (tmp.parent != -1) {
+        ns.push_back(tmp);
+        V3DLONG prtIndex = finalResult.hashNeuron[tmp.parent];
+        tmp = finalResult.listNeuron[prtIndex];
+        if(count>20)
+            break;
+        count++;
+    }
+
+    XYZ cur = XYZ(0,0,0);
+    XYZ cur_front = XYZ(0,0,0);
+    int mcount = 0;
+    for(int i=0; i<10; i++){
+        if(i>=ns.size()){
+            break;
+        }
+        cur = cur + XYZ(ns[i].x,ns[i].y,ns[i].z);
+        mcount++;
+    }
+    cur = cur/XYZ(mcount,mcount,mcount);
+    mcount = 0;
+    for(int i=ns.size()-1; i>ns.size()-10; i-=2){
+        if(i<0){
+            break;
+        }
+        cur_front = cur_front + XYZ(ns[i].x,ns[i].y,ns[i].z);
+        mcount++;
+    }
+
+    cur_front = cur_front/XYZ(mcount,mcount,mcount);
+    lastDirection = cur - cur_front;
+
+    return lastDirection;
+
+}
+
 NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &callback, double maskR){
     V3DLONG* in_sz = new V3DLONG[4];
     in_sz[0] = end_x - start_x;
@@ -184,6 +249,9 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
            <<"start_y: "<<start_y<<" end_y: "<<end_y
           <<"start_z: "<<start_z<<" end_z: "<<end_z;
     unsigned char* pdata = callback.getSubVolumeTeraFly(brainPath.toStdString().c_str(),start_x,end_x,start_y,end_y,start_z,end_z);
+    if(pdata == 0){
+        return NeuronTree();
+    }
 
     QDir saveImageDir = QDir("D:\\reTraceTest");
     if(!saveImageDir.exists()){
@@ -202,6 +270,16 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
             QString::number(end_z) + "_mask.v3draw";
     simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),maskImage,in_sz,1);
 
+    double imageMean, imageStd;
+    mean_and_std(maskImage,tolSZ,imageMean,imageStd);
+    qDebug()<<"maskImage meanStd: "<<imageMean<<" "<<imageStd;
+    BinaryProcess(maskImage,in_sz);
+
+    QString maskThresImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+            QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
+            QString::number(end_z) + "_maskThres.v3draw";
+    simple_saveimage_wrapper(callback,maskThresImagePath.toStdString().c_str(),maskImage,in_sz,1);
+
     Image4DSimple* app2Image = new Image4DSimple();
     app2Image->setData(maskImage,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
     app2Image->setFileName(maskImagePath.toStdString().c_str());
@@ -216,6 +294,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     p2.xc1 = in_sz[0] - 1;
     p2.yc1 = in_sz[1] - 1;
     p2.zc1 = in_sz[2] - 1;
+    p2.lastDirection = this->getLastDirection();
 
     LocationSimple m = LocationSimple(startMarker.x + 1 - start_x, startMarker.y + 1 - start_y, startMarker.z + 1 - start_z);
     QList<ImageMarker> ms;
@@ -389,6 +468,24 @@ BoundingBox getGlobalBoundingBox(V3DPluginCallback2& callback){
 
 }
 
+BoundingBox getGlobalBoundingBox(QString brainPath){
+    qDebug()<<" in getGlobalBoundingBox ";
+    BoundingBox box = BoundingBox();
+    QString brain =  QFileInfo(brainPath).baseName();
+    qDebug()<<"brain: "<<brain;
+    QStringList ls = brain.split('x');
+    int x0 = 0;
+    int y0 = 0;
+    int z0 = 0;
+    int x1 = ls[0].split('(')[1].toInt();
+    int y1 = ls[1].toInt();
+    int z1 = ls[2].split(')')[0].toInt();
+
+    box = BoundingBox(x0, y0, z0, x1, y1, z1);
+    qDebug()<<"box block: "<<box.x0<<" "<<box.x1<<" "<<box.y0<<" "<<box.y1<<" "<<box.z0<<" "<<box.z1;
+    return box;
+}
+
 NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees){
     NeuronTree merge = NeuronTree();
     if(neuronTrees.empty()){
@@ -457,6 +554,11 @@ void mergeFinalResult(NeuronTree nt){
 
 NeuronTree ultratracerAxon(QString brainPath, BoundingBox box, NeuronTree ori, V3DPluginCallback2& callback){
 
+    QDir saveImageDir = QDir("D:\\testDynamicTracing");
+    if(!saveImageDir.exists()){
+        saveImageDir.mkdir("D:\\testDynamicTracing");
+    }
+
     int pointSize = ori.listNeuron.size();
     qDebug()<<"pointSize: "<<pointSize;
 
@@ -507,11 +609,33 @@ NeuronTree ultratracerAxon(QString brainPath, BoundingBox box, NeuronTree ori, V
 void ultratracerAxonTerafly(V3DPluginCallback2 &callback, QWidget *parent){
     QString brainPath = callback.getPathTeraFly();
     NeuronTree ori = callback.getSWCTeraFly();
-    sortSWC(ori);
-    mergeFinalResult(ori);
+
+    NeuronTree target,other;
+    for(int i=0; i<ori.listNeuron.size(); i++){
+        NeuronSWC s = ori.listNeuron[i];
+        if(s.type == 2){
+            target.listNeuron.push_back(s);
+        }else{
+            other.listNeuron.push_back(s);
+        }
+    }
+    sortSWC(target);
+    mergeFinalResult(target);
     BoundingBox box = getGlobalBoundingBox(callback);
 
-    NeuronTree resultTree = ultratracerAxon(brainPath,box,ori,callback);
+    NeuronTree resultTreeTmp = ultratracerAxon(brainPath,box,target,callback);
+    vector<NeuronTree> trees;
+    trees.push_back(other);
+    trees.push_back(resultTreeTmp);
+    NeuronTree resultTree = mergeNeuronTrees(trees);
     callback.setSWCTeraFly(resultTree);
+}
+
+NeuronTree ultratracerAxonTerafly(QString brainPath, NeuronTree ori, V3DPluginCallback2 &callback){
+//    sortSWC(ori);
+    mergeFinalResult(ori);
+    BoundingBox box = getGlobalBoundingBox(brainPath);
+    NeuronTree resultTree = ultratracerAxon(brainPath,box,ori,callback);
+    return resultTree;
 }
 

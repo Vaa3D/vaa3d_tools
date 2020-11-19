@@ -297,5 +297,7 @@ bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
 
 void convertDataTo0_255(unsigned char* data1d, V3DLONG* sz);
 
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz);
+
 #endif
 

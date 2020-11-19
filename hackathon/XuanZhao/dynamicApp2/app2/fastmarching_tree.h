@@ -19,6 +19,10 @@
 
 #include <QString>
 
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
 #include "stackutil.h"
 #include "my_surf_objs.h"
 #include "heap.h"
@@ -1263,6 +1267,240 @@ template<class T> bool fastmarching_tree_constraint(MyMarker root,
     return true;
 }
 
+/*****
+ *T: has objects of x,y,z
+ *
+ *
+ */
+template<class T>
+XYZ getDirection(vector<T*> points, double cosThres){
+    int pointsNum = points.size();
+    if(pointsNum<=12){
+        return XYZ(-3,-3,-3);
+    }
+    XYZ cur,cur_front,cur_back,p1,p2;
+    double cosAngle;
+    for(int i=6; i<pointsNum-6; i++){
+        cur = XYZ(points[i]->x,points[i]->y,points[i]->z);
+        cur_front = XYZ(0,0,0);
+        cur_back = XYZ(0,0,0);
+        for(int j=i-6; j<i; j+=2){
+            cur_front = cur_front + XYZ(points[j]->x,points[j]->y,points[j]->z);
+        }
+        for(int j=i+2; j<=i+6; j+=2){
+            cur_back = cur_back + XYZ(points[j]->x,points[j]->y,points[j]->z);
+        }
+        cur_front = cur_front / XYZ(3,3,3);
+        cur_back = cur_back / XYZ(3,3,3);
+        p1 = cur - cur_front;
+        p2 = cur_back - cur;
+        cosAngle = dot(normalize(p1),normalize(p2));
+        qDebug()<<i<<" cosAngle: "<<cosAngle;
+        if(cosAngle < cosThres){
+            return XYZ(-2,-2,-2);
+        }
+    }
+
+    cur = XYZ(0,0,0);
+    cur_back = XYZ(0,0,0);
+    for(int i=0; i<10; i+=2){
+        cur = cur + XYZ(points[i]->x,points[i]->y,points[i]->z);
+    }
+    for(int i=pointsNum-1; i>=pointsNum-10; i-=2){
+        cur_back = cur_back + XYZ(points[i]->x,points[i]->y,points[i]->z);
+    }
+
+    cur = cur / XYZ(5,5,5);
+    cur_back = cur_back / XYZ(5,5,5);
+
+    return cur_back - cur;
+
+}
+
+/*****
+ *T: has objects of x,y,z
+ *
+ *
+ */
+template<class T>
+XYZ getDirection2(vector<T*> points, double cosThres){
+    int pointsNum = points.size();
+    if(pointsNum<=12){
+        return XYZ(-3,-3,-3);
+    }
+    XYZ cur,cur_front,cur_back,p1,p2;
+    double cosAngle;
+    int inflectionIndex = 0;
+    for(int i=6; i<pointsNum-6; i++){
+        cur = XYZ(points[i]->x,points[i]->y,points[i]->z);
+        cur_front = XYZ(0,0,0);
+        cur_back = XYZ(0,0,0);
+        int count = 0;
+        for(int j=i-6; j<i; j+=2){
+            if(j<inflectionIndex)
+                j = inflectionIndex;
+            cur_front = cur_front + XYZ(points[j]->x,points[j]->y,points[j]->z);
+            count++;
+            if(count>=3)
+                break;
+        }
+        cur_front = cur_front / XYZ(count,count,count);
+        count = 0;
+        for(int j=i+2; j<=i+6; j+=2){
+            cur_back = cur_back + XYZ(points[j]->x,points[j]->y,points[j]->z);
+        }
+
+        cur_back = cur_back / XYZ(3,3,3);
+        p1 = cur - cur_front;
+        p2 = cur_back - cur;
+        cosAngle = dot(normalize(p1),normalize(p2));
+        qDebug()<<i<<" cosAngle: "<<cosAngle;
+        if(cosAngle < cosThres){
+            if(cosAngle < -0.5){
+                return XYZ(-4,-4,-4);
+            }
+            if(inflectionIndex == 0){
+                inflectionIndex = i;
+            }else{
+                return XYZ(-2,-2,-2);
+            }
+        }
+    }
+
+//    cur = XYZ(0,0,0);
+//    cur_back = XYZ(0,0,0);
+//    for(int i=0; i<10; i+=2){
+//        cur = cur + XYZ(points[i]->x,points[i]->y,points[i]->z);
+//    }
+//    for(int i=pointsNum-1; i>=pointsNum-10; i-=2){
+//        cur_back = cur_back + XYZ(points[i]->x,points[i]->y,points[i]->z);
+//    }
+
+//    cur = cur / XYZ(5,5,5);
+//    cur_back = cur_back / XYZ(5,5,5);
+    cur = XYZ(points[0]->x,points[0]->y,points[0]->z);
+    if(inflectionIndex == 0){
+        cur_back = XYZ(0,0,0);
+        for(int i=pointsNum-1; i>=pointsNum-10; i-=2){
+            cur_back = cur_back + XYZ(points[i]->x,points[i]->y,points[i]->z);
+        }
+        cur_back = cur_back / XYZ(5,5,5);
+    }else{
+        cur_back = XYZ(points[inflectionIndex]->x,points[inflectionIndex]->y,points[inflectionIndex]->z);
+    }
+
+    return cur_back - cur;
+
+}
+
+template<class T>
+int getInflectionIndex(vector<T*> points, double cosThres){
+    int pointsNum = points.size();
+    if(pointsNum<=12){
+        return 0;
+    }
+    XYZ cur,cur_front,cur_back,p1,p2;
+    double cosAngle;
+    int inflectionIndex = 0;
+    for(int i=6; i<pointsNum-6; i++){
+        cur = XYZ(points[i]->x,points[i]->y,points[i]->z);
+        cur_front = XYZ(0,0,0);
+        cur_back = XYZ(0,0,0);
+        int count = 0;
+        for(int j=i-6; j<i; j+=2){
+            if(j<inflectionIndex)
+                j = inflectionIndex;
+            cur_front = cur_front + XYZ(points[j]->x,points[j]->y,points[j]->z);
+            count++;
+            if(count>=3)
+                break;
+        }
+        cur_front = cur_front / XYZ(count,count,count);
+        count = 0;
+        for(int j=i+2; j<=i+6; j+=2){
+            cur_back = cur_back + XYZ(points[j]->x,points[j]->y,points[j]->z);
+        }
+
+        cur_back = cur_back / XYZ(3,3,3);
+        p1 = cur - cur_front;
+        p2 = cur_back - cur;
+        cosAngle = dot(normalize(p1),normalize(p2));
+        qDebug()<<i<<" cosAngle: "<<cosAngle;
+        if(cosAngle < cosThres){
+            if(inflectionIndex == 0){
+                inflectionIndex = i;
+            }else{
+                return inflectionIndex;
+            }
+        }
+    }
+
+}
+
+bool segCmp(HierarchySegment* a, HierarchySegment* b){
+    return a->length > b->length;
+}
+
+template<class T>
+double getSmoothWeight(T * inimg1d, V3DLONG index, long sz0, long sz1, long sz2){
+
+    double wights[27] = {1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,
+                      1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,
+                      1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27,1.0/27};
+
+    long sz01 = sz0*sz1;
+    int x = index % sz0;
+    int y = (index/sz0) % sz1;
+    int z = (index/sz01) % sz2;
+
+    double sum = 0;
+    for(int k=-1; k<=1; k++){
+        for(int j=-1; j<=1; j++){
+            for(int i=-1; i<=1; i++){
+                int xx = x + i;
+                int yy = y + j;
+                int zz = z + k;
+                if(xx<0) xx = 0; if(xx>=sz0) xx = sz0-1;
+                if(yy<0) yy = 0; if(yy>=sz1) yy = sz1-1;
+                if(zz<0) zz = 0; if(zz>=sz2) zz = sz2-1;
+                long curIndex = zz*sz01 + yy*sz0 + xx;
+                sum += inimg1d[curIndex]*wights[(k+1)*9+(j+1)*3+i+1];
+            }
+        }
+    }
+
+    return sum;
+}
+
+template<class T>
+double getDirectionWeight(T * inimg1d, V3DLONG index, long sz0, long sz1, long sz2, XYZ direction){
+    double sum = 0;
+
+    long sz01 = sz0*sz1;
+    int x = index % sz0;
+    int y = (index/sz0) % sz1;
+    int z = (index/sz01) % sz2;
+
+    for(int i=0; i<10; i+=2){
+        int xx = x + direction.x*i + 0.5;
+        int yy = y + direction.y*i + 0.5;
+        int zz = z + direction.z*i + 0.5;
+        if(xx<0) xx = 0; if(xx>=sz0) xx = sz0-1;
+        if(yy<0) yy = 0; if(yy>=sz1) yy = sz1-1;
+        if(zz<0) zz = 0; if(zz>=sz2) zz = sz2-1;
+
+        long curIndex = zz*sz01 + yy*sz0 + xx;
+        sum += inimg1d[curIndex];
+    }
+
+    if(sum>0)
+        sum /= 5;
+
+    return sum;
+
+}
+
+
 /*********************************************************************
  * Function : fastmarching_tree_line
  *
@@ -1286,11 +1524,13 @@ template<class T> bool fastmarching_line(MyMarker root,
                                          int cnn_type = 3,
                                          double bkg_thresh = 20,
                                          bool is_break_accept = false,
-                                         double length = 50)
+                                         double length = 50,
+                                         XYZ lastDirection = XYZ(0,0,0),
+                                         double zScale = 1)
 {
     is_break_accept = true;
     bkg_thresh = 0;
-    enum{ALIVE = -1, TRIAL = 0, FAR = 1, FINAL = 2};
+    enum{ALIVE = -1, TRIAL = 0, FAR = 1, FINAL = 2, TMP = 3};
 
     long tol_sz = sz0 * sz1 * sz2;
     long sz01 = sz0 * sz1;
@@ -1364,7 +1604,7 @@ template<class T> bool fastmarching_line(MyMarker root,
     int stopFlag = 0;
     while (stopFlag < 2) {
 
-        cout<<"t: "<<t<<endl;
+        qDebug()<<"t: "<<t;
 
         stopFlag += 1;
         // loop
@@ -1409,7 +1649,7 @@ template<class T> bool fastmarching_line(MyMarker root,
                 }
                 break;
             }
-
+//            qDebug()<<"path[min_ind]: "<<path[min_ind];
             if(path[min_ind]>length){
                 stopFlag = 0;
                 while (!heap.empty()) {
@@ -1419,7 +1659,7 @@ template<class T> bool fastmarching_line(MyMarker root,
                 }
                 break;
             }
-//            qDebug()<<"path[min_ind]: "<<path[min_ind];
+
 
             int w, h, d;
             for(int kk = -1; kk <= 1; kk++)
@@ -1436,24 +1676,39 @@ template<class T> bool fastmarching_line(MyMarker root,
                         if(w < 0 || w >= sz0) continue;
                         int offset = ABS(ii) + ABS(jj) + ABS(kk);
                         if(offset == 0 || offset > cnn_type) continue;
-                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+//                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                        double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
                         long index = d*sz01 + h*sz0 + w;
-                        if (is_break_accept)
-                        {
-                            if(inimg1d[index] <= bkg_thresh &&
-                               inimg1d[min_ind] <= bkg_thresh)
-                                continue;
-                        }
-                        else
-                        {
-                            if(inimg1d[index] <= bkg_thresh)
-                                continue;
-                        }
+//                        if (is_break_accept)
+//                        {
+//                            if(inimg1d[index] <= bkg_thresh &&
+//                               inimg1d[min_ind] <= bkg_thresh)
+//                                continue;
+//                        }
+//                        else
+//                        {
+//                            if(inimg1d[index] <= bkg_thresh)
+//                                continue;
+//                        }
 //                        qDebug()<<"state[index]: "<<(int)state[index];
 
                         if(state[index] != ALIVE && state[index] != FINAL)
                         {
-                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+//                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+
+                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
+                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
+
+                            XYZ curDire = XYZ(w-i,h-j,d-k);
+                            curDire = normalize(curDire);
+                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
+                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
+
+                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
+                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
+
+//                            double new_dist = phi[min_ind] + (GIG(indexDG) + GIG(min_indDG))*factor*0.5;
+
                             long prev_ind = min_ind;
 
                             if(state[index] == FAR)
@@ -1514,7 +1769,7 @@ template<class T> bool fastmarching_line(MyMarker root,
                 //tmp_map[ind]->parent = tmp_map[ind2];
             }
         }
-        QString s = "C:\\Users\\admin\\Desktop\\testCross\\sc\\3\\test\\" + QString::number(t) + ".swc";
+        QString s = "D:\\testDynamicTracing\\" + QString::number(t) + "_init.swc";
         saveSWC_file(s.toStdString(),tmptree);
 
         qDebug()<<"tmpTree size: "<<tmptree.size();
@@ -1531,20 +1786,699 @@ template<class T> bool fastmarching_line(MyMarker root,
         vector<HierarchySegment*> segs = vector<HierarchySegment*>();
         swc2topo_segs<unsigned char>(tmptree,segs,1);
 
-        int segMaxLength = 0;
-        int segMaxIndex = -1;
-        for(int i=0; i<segs.size(); i++){
-            if(segs[i]->root_marker == rootMarker && segs[i]->length>segMaxLength){
-                segMaxLength = segs[i]->length;
-                segMaxIndex = i;
-            }
+//        int segMaxLength = 0;
+//        int segMaxIndex = -1;
+
+        ofstream csvFile;
+        QString csvPath = "D:\\testDynamicTracing\\" + QString::number(t) + "_segments.csv";
+        csvFile.open(csvPath.toStdString().c_str(), ios::out);
+        csvFile<<"level"<<','<<"length"<<endl;
+
+        sort(segs.begin(),segs.end(),segCmp);
+        vector<HierarchySegment*> tmpSegs = vector<HierarchySegment*>();
+//        for(int i=0; i<segs.size(); i++){
+//            csvFile<<segs[i]->level<<','<<segs[i]->length<<endl;
+//            if(segs[i]->length > length/3){
+//                tmpSegs.push_back(segs[i]);
+//            }
+//            if(segs[i]->root_marker == rootMarker && segs[i]->length>segMaxLength){
+//                segMaxLength = segs[i]->length;
+//                segMaxIndex = i;
+//            }
+//        }
+        for(int i=0; i<15; i++){
+            if(i>=segs.size())
+                break;
+            csvFile<<segs[i]->level<<','<<segs[i]->length<<endl;
+            tmpSegs.push_back(segs[i]);
+        }
+        csvFile.close();
+        HierarchySegment* targetSegment = 0;
+
+        //select the candidate segment
+        vector<HierarchySegment*> candidate = vector<HierarchySegment*>();
+        vector<XYZ> candidateDire = vector<XYZ>();
+        for(int i=0; i<tmpSegs.size(); i++){
+             vector<MyMarker*> tmpMarkers = vector<MyMarker*>();
+             MyMarker* marker = tmpSegs[i]->leaf_marker;
+
+             XYZ judgeSameDire = XYZ(marker->x-rootMarker->x,marker->y-rootMarker->y,marker->z-rootMarker->z);
+             tmpMarkers.push_back(marker);
+             while(marker != rootMarker){
+                 marker = marker->parent;
+                 tmpMarkers.push_back(marker);
+             }
+             qDebug()<<"before tmpMarker size:"<<tmpMarkers.size();
+             if(t != 1){
+                 marker = outtree.back();marker = outtree.back();
+                 int foreNum = 0;
+                 while(marker->parent != 0){
+                     tmpMarkers.push_back(marker);
+                     marker = marker->parent;
+                     foreNum++;
+                     if(foreNum>=6)
+                         break;
+                 }
+             }
+             qDebug()<<"after tmpMarker size:"<<tmpMarkers.size();
+
+
+             reverse(tmpMarkers.begin(),tmpMarkers.end());
+
+             qDebug()<<i<<"---------------------------------------------------------";
+             XYZ tmpDire;
+             if(i == 0){
+                 tmpDire = getDirection2(tmpMarkers,0.5);
+             }else{
+                 tmpDire = getDirection2(tmpMarkers,0.5);
+             }
+             qDebug()<<"length: "<<tmpSegs[i]->length<<" tmpDire: "<<tmpDire.x<<" "<<tmpDire.y<<" "<<tmpDire.z;
+             if(tmpDire == XYZ(-3,-3,-3) || tmpDire == XYZ(-2,-2,-2) || tmpDire == XYZ(-4,-4,-4)){
+                 continue;
+             }else {
+                 double tmpCosAngle = dot(normalize(tmpDire),normalize(lastDirection));
+
+                 qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+                 if(1/*tmpCosAngle>sqrt(2)/2*/){
+                     if(i == 0){
+                         targetSegment = tmpSegs[0];
+                         QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_"
+                                 + QString::number(i) + "_" + QString::number(tmpCosAngle) + "_candidate.swc";
+                         saveSWC_file(sss.toStdString(),tmpMarkers);
+                         break;
+                     }else
+                     {
+                         if(candidate.empty()){
+                             candidate.push_back(tmpSegs[i]);
+                             candidateDire.push_back(judgeSameDire);
+                         }else {
+                             bool isSame = false;
+                             for(int j=0; j<candidate.size(); j++){
+                                 double segsCosAngle = dot(normalize(tmpDire),normalize(candidateDire[j]));
+                                 if(segsCosAngle>0.9){
+                                     isSame = true;
+                                     break;
+                                 }
+                             }
+                             if(!isSame){
+                                 candidate.push_back(tmpSegs[i]);
+                                 candidateDire.push_back(judgeSameDire);
+                                 QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_"
+                                         + QString::number(i) + "_" + QString::number(tmpCosAngle) + "_candidate.swc";
+                                 saveSWC_file(sss.toStdString(),tmpMarkers);
+                             }
+                         }
+                     }
+                 }
+             }
         }
 
-        qDebug()<<"segMaxLength: "<<segMaxLength;
+        qDebug()<<"canditate size: "<<candidate.size();
+
+
+
+        if(!candidate.empty()){
+            vector<HierarchySegment*> candidate2 = vector<HierarchySegment*>();
+            for(int c=0; c<candidate.size(); c++){
+                qDebug()<<c<<"-------judge candidate seg------";
+                MyMarker* leafMarker = candidate[c]->leaf_marker;
+                long index = leafMarker->z*sz01 + leafMarker->y*sz0 +leafMarker->x;
+                phi[index] = 0;
+                path[index] = 0;
+                HeapElemX *elem = new HeapElemX(index, phi[index]);
+                elem->prev_ind = index;
+                heap.insert(elem);
+                elems[index] = elem;
+
+                while(!heap.empty())
+                {
+                    HeapElemX* min_elem = heap.delete_min();
+                    elems.erase(min_elem->img_ind);
+
+                    long min_ind = min_elem->img_ind;
+                    long prev_ind = min_elem->prev_ind;
+                    delete min_elem;
+
+                    parent[min_ind] = prev_ind;
+
+                    state[min_ind] = TMP;
+                    int i = min_ind % sz0;
+                    int j = (min_ind/sz0) % sz1;
+                    int k = (min_ind/sz01) % sz2;
+
+                    int pi = prev_ind % sz0;
+                    int pj = (prev_ind/sz0) % sz1;
+                    int pk = (prev_ind/sz01) % sz2;
+
+                    path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+                    if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1) && t != 1){
+                        while (!heap.empty()) {
+                            HeapElemX* tmp_elem = heap.delete_min();
+                            elems.erase(tmp_elem->img_ind);
+                            delete tmp_elem;
+                        }
+                        break;
+                    }
+
+                    if(path[min_ind]>length){
+                        while (!heap.empty()) {
+                            HeapElemX* tmp_elem = heap.delete_min();
+                            elems.erase(tmp_elem->img_ind);
+                            delete tmp_elem;
+                        }
+                        break;
+                    }
+
+                    int w, h, d;
+                    for(int kk = -1; kk <= 1; kk++)
+                    {
+                        d = k+kk;
+                        if(d < 0 || d >= sz2) continue;
+                        for(int jj = -1; jj <= 1; jj++)
+                        {
+                            h = j+jj;
+                            if(h < 0 || h >= sz1) continue;
+                            for(int ii = -1; ii <= 1; ii++)
+                            {
+                                w = i+ii;
+                                if(w < 0 || w >= sz0) continue;
+                                int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                                if(offset == 0 || offset > cnn_type) continue;
+        //                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                                double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
+                                long index = d*sz01 + h*sz0 + w;
+//                                    if (is_break_accept)
+//                                    {
+//                                        if(inimg1d[index] <= bkg_thresh &&
+//                                           inimg1d[min_ind] <= bkg_thresh)
+//                                            continue;
+//                                    }
+//                                    else
+//                                    {
+//                                        if(inimg1d[index] <= bkg_thresh)
+//                                            continue;
+//                                    }
+
+                                if(state[index] != ALIVE && state[index] != FINAL && state[index] != TMP)
+                                {
+                                    double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                                    long prev_ind = min_ind;
+
+                                    if(state[index] == FAR)
+                                    {
+                                        phi[index] = new_dist;
+                                        HeapElemX * elem = new HeapElemX(index, phi[index]);
+                                        elem->prev_ind = prev_ind;
+                                        heap.insert(elem);
+                                        elems[index] = elem;
+                                        state[index] = TRIAL;
+                                    }
+                                    else if(state[index] == TRIAL)
+                                    {
+                                        if (phi[index] > new_dist)
+                                        {
+                                            phi[index] = new_dist;
+                                            HeapElemX * elem = elems[index];
+                                            heap.adjust(elem->heap_id, phi[index]);
+                                            elem->prev_ind = prev_ind;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                qDebug()<<"end heap";
+
+                vector<MyMarker*> tmptree2 = vector<MyMarker*>();
+                if (1)
+                {
+                    int i = -1, j = -1, k = -1;
+                    map<long, MyMarker*> tmp_map2;
+                    for(long ind = 0; ind < tol_sz; ind++)
+                    {
+                        i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
+                        if(state[ind] != TMP) continue;
+                        MyMarker * marker = new MyMarker(i,j,k);
+                        tmp_map2[ind] = marker;
+                        tmptree2.push_back(marker);
+            //            outtree.push_back(marker);
+                    }
+                    i=-1; j = -1; k = -1;
+                    for(long ind = 0; ind < tol_sz; ind++)
+                    {
+                        i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
+                        if(state[ind] == TRIAL)
+                            state[ind] = FAR;
+                        if(state[ind] != TMP) continue;
+                        state[ind] = FAR; //set far
+                        long ind2 = parent[ind];
+                        MyMarker * marker1 = tmp_map2[ind];
+                        MyMarker * marker2 = tmp_map2[ind2];
+                        if(marker1 == marker2) marker1->parent = 0;
+                        else marker1->parent = marker2;
+                        //tmp_map[ind]->parent = tmp_map[ind2];
+                    }
+                }
+                qDebug()<<"make tmptree2 end";
+
+                MyMarker* rootMarker2;
+                map<long,MyMarker*> indexMap = map<long,MyMarker*>();
+                double midX = 0, midY = 0, midZ = 0;
+                for(int i=0; i<tmptree2.size(); i++){
+                    long markerIndex = tmptree2[i]->z*sz01 + tmptree2[i]->y*sz0 + tmptree2[i]->x;
+                    midX += tmptree2[i]->x;
+                    midY += tmptree2[i]->y;
+                    midZ += tmptree2[i]->z;
+                    indexMap[markerIndex] = tmptree2[i];
+                    if(tmptree2[i]->parent == 0){
+                        rootMarker2 = tmptree2[i];
+//                        break;
+                    }
+                }
+
+                midX /= tmptree2.size();
+                midY /= tmptree2.size();
+                midZ /= tmptree2.size();
+                long midIndex = (int)(midZ+0.5)*sz01 + (int)(midY+0.5)*sz0 + (int)(midX+0.5);
+                MyMarker* midMarker;
+                if(indexMap.find(midIndex) != indexMap.end()){
+                    midMarker = indexMap[midIndex];
+                }else{
+                    qDebug()<<" the seg is right";
+                    candidate2.push_back(candidate[c]);
+                    for(int i=0; i<tmptree2.size(); i++){
+                        if(tmptree2[i]){
+                            delete tmptree2[i];
+                        }
+                    }
+                    tmptree2.clear();
+                    continue;
+                }
+
+//                vector<HierarchySegment*> segs2 = vector<HierarchySegment*>();
+//                swc2topo_segs<unsigned char>(tmptree2,segs2,1);
+
+//                int segMaxLength2 = 0;
+//                int segMaxIndex2 = -1;
+
+//                qDebug()<<"convert HierarchySegment end";
+
+
+//                for(int i=0; i<segs2.size(); i++){
+//                    if(segs2[i]->root_marker == rootMarker2 && segs2[i]->length>segMaxLength2){
+//                        segMaxLength2 = segs2[i]->length;
+//                        segMaxIndex2 = i;
+//                    }
+//                }
+//                if(segMaxIndex2 == -1){
+//                    qDebug()<<"segs2 size:"<<segs2.size();
+//                    continue;
+//                }
+
+                vector<MyMarker*> markers2 = vector<MyMarker*>();
+//                segs2[segMaxIndex2]->get_markers(markers2);
+
+                markers2.push_back(midMarker);
+                while(midMarker!=rootMarker2){
+                    midMarker = midMarker->parent;
+                    markers2.push_back(midMarker);
+                }
+
+                qDebug()<<"get markers end";
+                QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_" + QString::number(c) + "_tmp_test.swc";
+                saveSWC_file(sss.toStdString(),markers2);
+
+
+                int foreNum = 0;
+                for(int i=0; i<markers2.size(); i++){
+                    MyMarker* marker = markers2[i];
+                    long ind2 = marker->z*sz01 + marker->y*sz0 + marker->x;
+//                        qDebug()<<(int)inimg1d[ind2]<<" bkg_thres"<<bkg_thresh;
+                    if(inimg1d[ind2] >= bkg_thresh){
+                        foreNum++;
+                    }
+                }
+
+                qDebug()<<" caculate forenum";
+
+                if((double)foreNum/markers2.size()>0.5){
+//                    targetSegment = segs[segMaxIndex];
+                    candidate2.push_back(candidate[c]);
+                    qDebug()<<"foreNumratio: "<<(double)foreNum/markers2.size()<<" the seg is right";
+                }else{
+                    qDebug()<<"foreNumratio: "<<(double)foreNum/markers2.size()<<" the seg is wrong";
+                }
+                markers2.clear();
+                for(int i=0; i<tmptree2.size(); i++){
+                    if(tmptree2[i]){
+                        delete tmptree2[i];
+                    }
+                }
+                tmptree2.clear();
+            }
+
+            if(candidate2.empty()){
+                targetSegment = segs[0];
+            }else{
+                qDebug()<<"candidate2 size: "<<candidate2.size();
+                double lengthMax = 0;
+                double angleMin = -1;
+                for(int i=0; i<candidate2.size(); i++){
+
+                    vector<MyMarker*> tmpMarkers = vector<MyMarker*>();
+                    MyMarker* marker = candidate2[i]->leaf_marker;
+                    tmpMarkers.push_back(marker);
+                    while(marker != rootMarker){
+                        marker = marker->parent;
+                        tmpMarkers.push_back(marker);
+                    }
+                    reverse(tmpMarkers.begin(),tmpMarkers.end());
+
+                    QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_" + QString::number(i) + "_candidate2.swc";
+                    saveSWC_file(sss.toStdString(),tmpMarkers);
+
+                    XYZ tmpDire = getDirection(tmpMarkers,sqrt(2)/2);
+                    qDebug()<<"length: "<<candidate2[i]->length<<" tmpDire: "<<tmpDire.x<<" "<<tmpDire.y<<" "<<tmpDire.z;
+
+                    if(tmpDire == XYZ(-3,-3,-3) || tmpDire == XYZ(-2,-2,-2) || tmpDire == XYZ(-4,-4,-4)){
+                        continue;
+                    }else {
+                        double tmpCosAngle = dot(normalize(tmpDire),normalize(lastDirection));
+                        qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+                        if(tmpCosAngle>angleMin){
+                            angleMin = tmpCosAngle;
+                            targetSegment = candidate2[i];
+                        }
+                    }
+//                    double lengthTmp = 0;
+//                    MyMarker* marker = candidate2[i]->leaf_marker;
+//                    while(marker != rootMarker){
+//                        lengthTmp += dist(*marker,*(marker->parent));
+//                        marker = marker->parent;
+//                    }
+//                    if(lengthTmp>lengthMax){
+//                        qDebug()<<i<<" candidate length: "<<lengthTmp;
+//                        lengthMax = lengthTmp;
+//                        targetSegment = candidate2[i];
+//                    }
+                }
+
+                if(targetSegment == 0){
+                    targetSegment = segs[0];
+                }
+            }
+
+
+        }else {
+            targetSegment = segs[0];
+        }
+
+
+/*
+        if(tmpSegs.size() == 0){
+            targetSegment = segs[segMaxIndex];
+        }else if(tmpSegs.size() == 1){
+            targetSegment = tmpSegs[0];
+        }else {
+            vector<HierarchySegment*> candidate = vector<HierarchySegment*>();
+            for(int i=0; i<tmpSegs.size(); i++){
+                 vector<MyMarker*> tmpMarkers = vector<MyMarker*>();
+                 MyMarker* marker = tmpSegs[i]->leaf_marker;
+                 tmpMarkers.push_back(marker);
+                 while(marker != rootMarker){
+                     marker = marker->parent;
+                     tmpMarkers.push_back(marker);
+                 }
+                 reverse(tmpMarkers.begin(),tmpMarkers.end());
+
+                 qDebug()<<i<<"---------------------------------------------------------";
+                 XYZ tmpDire = getDirection(tmpMarkers,0.5);
+                 qDebug()<<"length: "<<tmpSegs[i]->length<<" tmpDire: "<<tmpDire.x<<" "<<tmpDire.y<<" "<<tmpDire.z;
+                 if(tmpDire == XYZ(-3,-3,-3) || tmpDire == XYZ(-2,-2,-2)){
+                     continue;
+                 }else {
+                     double tmpCosAngle = dot(normalize(tmpDire),normalize(lastDirection));
+                     qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+                     if(tmpCosAngle>sqrt(2)/2){
+                         candidate.push_back(tmpSegs[i]);
+                     }
+                 }
+            }
+
+            if(candidate.empty()){
+                double lengthMax = 0;
+                for(int i=0; i<tmpSegs.size(); i++){
+                    double lengthTmp = 0;
+                    MyMarker* marker = tmpSegs[i]->leaf_marker;
+                    while(marker != rootMarker){
+                        lengthTmp += dist(*marker,*(marker->parent));
+                        marker = marker->parent;
+                    }
+
+                    if(lengthTmp>lengthMax){
+                        qDebug()<<i<<" length: "<<lengthTmp;
+                        lengthMax = lengthTmp;
+                        targetSegment = tmpSegs[i];
+                    }
+                }
+            }else {
+                double lengthMax = 0;
+                qDebug()<<"candidate size: "<<candidate.size();
+                for(int i=0; i<candidate.size(); i++){
+                    double lengthTmp = 0;
+                    MyMarker* marker = candidate[i]->leaf_marker;
+                    while(marker != rootMarker){
+                        lengthTmp += dist(*marker,*(marker->parent));
+                        marker = marker->parent;
+                    }
+                    if(lengthTmp>lengthMax){
+                        qDebug()<<i<<" candidate length: "<<lengthTmp;
+                        lengthMax = lengthTmp;
+                        targetSegment = candidate[i];
+                    }
+                }
+                if(targetSegment != segs[segMaxIndex]){
+                    qDebug()<<"------targetSegment != segs[segMaxIndex]-------";
+                    MyMarker* leafMarker = targetSegment->leaf_marker;
+                    long index = leafMarker->z*sz01 + leafMarker->y*sz0 +leafMarker->x;
+                    phi[index] = 0;
+                    path[index] = 0;
+                    HeapElemX *elem = new HeapElemX(index, phi[index]);
+                    elem->prev_ind = index;
+                    heap.insert(elem);
+                    elems[index] = elem;
+
+                    while(!heap.empty())
+                    {
+                        HeapElemX* min_elem = heap.delete_min();
+                        elems.erase(min_elem->img_ind);
+
+                        long min_ind = min_elem->img_ind;
+                        long prev_ind = min_elem->prev_ind;
+                        delete min_elem;
+
+                        parent[min_ind] = prev_ind;
+
+                        state[min_ind] = TMP;
+                        int i = min_ind % sz0;
+                        int j = (min_ind/sz0) % sz1;
+                        int k = (min_ind/sz01) % sz2;
+
+                        int pi = prev_ind % sz0;
+                        int pj = (prev_ind/sz0) % sz1;
+                        int pk = (prev_ind/sz01) % sz2;
+
+                        path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+                        if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1) && t != 1){
+                            while (!heap.empty()) {
+                                HeapElemX* tmp_elem = heap.delete_min();
+                                elems.erase(tmp_elem->img_ind);
+                                delete tmp_elem;
+                            }
+                            break;
+                        }
+
+                        if(path[min_ind]>length){
+                            while (!heap.empty()) {
+                                HeapElemX* tmp_elem = heap.delete_min();
+                                elems.erase(tmp_elem->img_ind);
+                                delete tmp_elem;
+                            }
+                            break;
+                        }
+
+                        int w, h, d;
+                        for(int kk = -1; kk <= 1; kk++)
+                        {
+                            d = k+kk;
+                            if(d < 0 || d >= sz2) continue;
+                            for(int jj = -1; jj <= 1; jj++)
+                            {
+                                h = j+jj;
+                                if(h < 0 || h >= sz1) continue;
+                                for(int ii = -1; ii <= 1; ii++)
+                                {
+                                    w = i+ii;
+                                    if(w < 0 || w >= sz0) continue;
+                                    int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                                    if(offset == 0 || offset > cnn_type) continue;
+            //                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                                    double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
+                                    long index = d*sz01 + h*sz0 + w;
+//                                    if (is_break_accept)
+//                                    {
+//                                        if(inimg1d[index] <= bkg_thresh &&
+//                                           inimg1d[min_ind] <= bkg_thresh)
+//                                            continue;
+//                                    }
+//                                    else
+//                                    {
+//                                        if(inimg1d[index] <= bkg_thresh)
+//                                            continue;
+//                                    }
+
+                                    if(state[index] != ALIVE && state[index] != FINAL && state[index] != TMP)
+                                    {
+                                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                                        long prev_ind = min_ind;
+
+                                        if(state[index] == FAR)
+                                        {
+                                            phi[index] = new_dist;
+                                            HeapElemX * elem = new HeapElemX(index, phi[index]);
+                                            elem->prev_ind = prev_ind;
+                                            heap.insert(elem);
+                                            elems[index] = elem;
+                                            state[index] = TRIAL;
+                                        }
+                                        else if(state[index] == TRIAL)
+                                        {
+                                            if (phi[index] > new_dist)
+                                            {
+                                                phi[index] = new_dist;
+                                                HeapElemX * elem = elems[index];
+                                                heap.adjust(elem->heap_id, phi[index]);
+                                                elem->prev_ind = prev_ind;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    qDebug()<<"end heap";
+
+                    vector<MyMarker*> tmptree2 = vector<MyMarker*>();
+                    if (1)
+                    {
+                        int i = -1, j = -1, k = -1;
+                        map<long, MyMarker*> tmp_map2;
+                        for(long ind = 0; ind < tol_sz; ind++)
+                        {
+                            i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
+                            if(state[ind] != TMP) continue;
+                            MyMarker * marker = new MyMarker(i,j,k);
+                            tmp_map2[ind] = marker;
+                            tmptree2.push_back(marker);
+                //            outtree.push_back(marker);
+                        }
+                        i=-1; j = -1; k = -1;
+                        for(long ind = 0; ind < tol_sz; ind++)
+                        {
+                            i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
+                            if(state[ind] == TRIAL)
+                                state[ind] = FAR;
+                            if(state[ind] != TMP) continue;
+                            state[ind] = FAR; //set far
+                            long ind2 = parent[ind];
+                            MyMarker * marker1 = tmp_map2[ind];
+                            MyMarker * marker2 = tmp_map2[ind2];
+                            if(marker1 == marker2) marker1->parent = 0;
+                            else marker1->parent = marker2;
+                            //tmp_map[ind]->parent = tmp_map[ind2];
+                        }
+                    }
+                    qDebug()<<"make tmptree2 end";
+
+                    MyMarker* rootMarker2;
+                    for(int i=0; i<tmptree2.size(); i++){
+                        if(tmptree2[i]->parent == 0){
+                            rootMarker2 = tmptree2[i];
+                            break;
+                        }
+                    }
+                    vector<HierarchySegment*> segs2 = vector<HierarchySegment*>();
+                    swc2topo_segs<unsigned char>(tmptree2,segs2,1);
+
+                    int segMaxLength2 = 0;
+                    int segMaxIndex2 = -1;
+
+                    qDebug()<<"convert HierarchySegment end";
+
+
+                    for(int i=0; i<segs2.size(); i++){
+                        if(segs2[i]->root_marker == rootMarker2 && segs2[i]->length>segMaxLength2){
+                            segMaxLength2 = segs2[i]->length;
+                            segMaxIndex2 = i;
+                        }
+                    }
+
+                    vector<MyMarker*> markers2 = vector<MyMarker*>();
+                    segs2[segMaxIndex2]->get_markers(markers2);
+
+                    qDebug()<<"get markers end";
+                    QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_tmp_test.swc";
+                    saveSWC_file(sss.toStdString(),markers2);
+
+
+                    int foreNum = 0;
+                    for(int i=0; i<markers2.size(); i++){
+                        MyMarker* marker = markers2[i];
+                        long ind2 = marker->z*sz01 + marker->y*sz0 + marker->x;
+//                        qDebug()<<(int)inimg1d[ind2]<<" bkg_thres"<<bkg_thresh;
+                        if(inimg1d[ind2] >= bkg_thresh){
+                            foreNum++;
+                        }
+                    }
+
+                    qDebug()<<" caculate forenum";
+
+                    if((double)foreNum/markers2.size()<0.5){
+                        targetSegment = segs[segMaxIndex];
+                        qDebug()<<"foreNumratio: "<<(double)foreNum/markers2.size()<<" the seg is not right";
+                    }
+                    markers2.clear();
+                    for(int i=0; i<tmptree2.size(); i++){
+                        if(tmptree2[i]){
+                            delete tmptree2[i];
+                        }
+                    }
+                    tmptree2.clear();
+
+
+                }
+
+            }
+        }
+*/
+//        targetSegment = segs[0];
+        qDebug()<<"targetLength: "<<targetSegment->length;
+
+        vector<MyMarker*> tmpSwc = vector<MyMarker*>();
+        topo_segs2swc(tmpSegs,tmpSwc,1);
+        QString ss = "\\testDynamicTracing\\" + QString::number(t) + "_tmp.swc";
+        saveSWC_file(ss.toStdString(),tmpSwc);
+
+//        qDebug()<<"segMaxLength: "<<segMaxLength;
 
         // init heap
         {
-            MyMarker* leafMarker = segs[segMaxIndex]->leaf_marker;
+            MyMarker* leafMarker = targetSegment->leaf_marker;
             long index = leafMarker->z*sz01 + leafMarker->y*sz0 +leafMarker->x;
             phi[index] = 0;
 //            parent[index] = index;
@@ -1558,11 +2492,63 @@ template<class T> bool fastmarching_line(MyMarker root,
         qDebug()<<"----init heap end-----";
 
         vector<MyMarker*> markers = vector<MyMarker*>();
-        segs[segMaxIndex]->get_markers(markers);
+//        segs[segMaxIndex]->get_markers(markers);
+        MyMarker* markerTmp = targetSegment->leaf_marker;
+        markers.push_back(markerTmp);
+        while (markerTmp != rootMarker) {
+            markerTmp = markerTmp->parent;
+            markers.push_back(markerTmp);
+        }
+        qDebug()<<"target markers size: "<<markers.size();
+
+
+
+        XYZ cur = XYZ(0,0,0);
+        XYZ cur_front = XYZ(0,0,0);
+        int mcount = 0;
+        for(int i=0; i<10; i+=2){
+            if(i>=markers.size()){
+                break;
+            }
+            cur = cur + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+            mcount++;
+        }
+        cur = cur/XYZ(mcount,mcount,mcount);
+        mcount = 0;
+        for(int i=markers.size()-1; i>markers.size()-10; i-=2){
+            if(i<0){
+                break;
+            }
+            cur_front = cur_front + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+            mcount++;
+        }
+        cur_front = cur_front/XYZ(mcount,mcount,mcount);
+
+        XYZ curDirection = cur - cur_front;
+        double curCosAngle = dot(normalize(curDirection),normalize(lastDirection));
+        if(curCosAngle<-0.9){
+            qDebug()<<"reverse direction";
+            for(int i=0; i<tmptree.size(); i++){
+                if(tmptree[i]){
+                    delete tmptree[i];
+                }
+            }
+            tmptree.clear();
+            break;
+        }
+
+        cur = XYZ(markers[0]->x,markers[0]->y,markers[0]->z);
+        int cur_frontIndex = 6;
+        if(cur_frontIndex>=markers.size())
+            cur_frontIndex = markers.size()-1;
+        cur_front = XYZ(markers[cur_frontIndex]->x,markers[cur_frontIndex]->y,markers[cur_frontIndex]->z);
+        lastDirection = cur - cur_front;
+
         MyMarker* pMarker = 0;
 
         bkg_thresh = INT_MAX;
         int* grays = new int[markers.size()];
+        vector<MyMarker*> tmpResult = vector<MyMarker*>();
         for(int i=markers.size()-1; i>=0; i--){
             MyMarker* marker = new MyMarker(markers[i]->x,markers[i]->y,markers[i]->z);
             marker->parent = pMarker;
@@ -1575,15 +2561,45 @@ template<class T> bool fastmarching_line(MyMarker root,
                 bkg_thresh = inimg1d[ind];
             }
             if(i != markers.size()-1 || (i == markers.size()-1 && t == 1)){
-                outtree.push_back(marker);
+                tmpResult.push_back(marker);
+//                outtree.push_back(marker);
             }
         }
-        double b_mean,b_std;
-        mean_and_std(grays,markers.size(),b_mean,b_std);
-        qDebug()<<"b_mean: "<<b_mean<<" b_std: "<<b_std;
-        double td = MIN(7,b_std);
-        bkg_thresh = b_mean - b_std*3;//b_std*0.5;
-        bkg_thresh = 0;
+        int foreNum = 0;
+        for(int i=0; i<tmpResult.size(); i++){
+            MyMarker* marker = tmpResult[i];
+            long ind2 = marker->z*sz01 + marker->y*sz0 + marker->x;
+            if(inimg1d[ind2] > bkg_thresh){
+                foreNum++;
+            }
+        }
+
+
+
+        if((double)foreNum/tmpResult.size()<0.5){
+            qDebug()<<"fornumRatio: "<<(double)foreNum/tmpResult.size()<<"-------------touch tip-----------------";
+            stopFlag = 2;
+        }
+        qDebug()<<"before: "<<outtree.size();
+        for(int i=0; i<tmpResult.size(); i++){
+            outtree.push_back(tmpResult[i]);
+        }
+        qDebug()<<"after: "<<outtree.size();
+
+//        double b_mean,b_std;
+//        mean_and_std(grays,markers.size(),b_mean,b_std);
+//        qDebug()<<"b_mean: "<<b_mean<<" b_std: "<<b_std;
+//        double td = MIN(7,b_std);
+//        bkg_thresh = b_mean - b_std*3;//b_std*0.5;
+//        bkg_thresh = 0;
+
+        sort(grays,grays+markers.size()-1);
+        bkg_thresh = MAX(grays[markers.size()/4] - 5,1);
+
+        if(grays){
+            delete[] grays;
+            grays = 0;
+        }
 
         qDebug()<<"bkg_thres: "<<bkg_thresh;
 
@@ -1622,5 +2638,854 @@ template<class T> bool fastmarching_line(MyMarker root,
     if(path) {delete []path; path=0;}
     return true;
 }
+
+
+
+/*********************************************************************
+ * Function : fastmarching_tree_line
+ *
+ * Features :
+ * 1. Create fast marcing tree from root marker only
+ * 2. Background (intensity 0) will be ignored.
+ * 3. Graph augumented distance is used
+ *
+ * Input : root          root marker
+ *         inimg1d       original 8bit image
+ *
+ * Output : tree         output swc
+ *          phi          the distance for each pixels
+ * *******************************************************************/
+template<class T> bool fastmarching_line2(MyMarker root,
+                                         T * inimg1d,
+                                         vector<MyMarker*> &outtree,
+                                         long sz0,
+                                         long sz1,
+                                         long sz2,
+                                         int cnn_type = 3,
+                                         double bkg_thresh = 20,
+                                         bool is_break_accept = false,
+                                         double length = 50,
+                                         XYZ lastDirection = XYZ(0,0,0),
+                                         double zScale = 1)
+{
+    is_break_accept = true;
+    bkg_thresh = 0;
+    enum{ALIVE = -1, TRIAL = 0, FAR = 1, FINAL = 2, TMP = 3};
+
+    long tol_sz = sz0 * sz1 * sz2;
+    long sz01 = sz0 * sz1;
+    long i;
+    //int cnn_type = 3;  // ?
+
+    float * phi = 0;
+    long * parent = 0;
+    char * state = 0;
+    float * path = 0;
+    try
+    {
+        phi = new float[tol_sz];
+        parent = new long[tol_sz];
+        state = new char[tol_sz];
+        path = new float[tol_sz];
+        for(i = 0; i < tol_sz; i++)
+        {
+            phi[i] = INF;
+            parent[i] = i;  // each pixel point to itself at the         statements beginning
+            state[i] = FAR;
+            path[i] = 0;
+        }
+    }
+    catch (...)
+    {
+        cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+        if (phi) {delete []phi; phi=0;}
+        if (parent) {delete []parent; parent=0;}
+        if (state) {delete []state; state=0;}
+        if (path) {delete []path; path=0;}
+        return false;
+    }
+
+    // GI parameter min_int, max_int, li
+    double max_int = 0; // maximum intensity, used in GI
+    double min_int = INF;
+    for(i = 0; i < tol_sz; i++)
+    {
+        if (inimg1d[i] > max_int) max_int = inimg1d[i];
+        else if (inimg1d[i] < min_int) min_int = inimg1d[i];
+    }
+    max_int -= min_int;
+    double li = 10;
+
+    // initialization
+
+    // init state and phi for root
+    long rootx = root.x + 0.5;
+    long rooty = root.y + 0.5;
+    long rootz = root.z + 0.5;
+
+    long root_ind = rootz*sz01 + rooty*sz0 + rootx;
+
+    state[root_ind] = ALIVE;
+    phi[root_ind] = 0.0;
+
+    BasicHeap<HeapElemX> heap;
+    map<long, HeapElemX*> elems;
+
+    // init heap
+    {
+        long index = root_ind;
+        HeapElemX *elem = new HeapElemX(index, phi[index]);
+        elem->prev_ind = index;
+        heap.insert(elem);
+        elems[index] = elem;
+    }
+
+    int tt = 1;
+    int stopFlag = 0;
+    while (stopFlag < 2) {
+
+        qDebug()<<"tt: "<<tt;
+
+        stopFlag += 1;
+        // loop
+        int time_counter = 1;
+        double process1 = 0;
+
+        while(!heap.empty())
+        {
+            double process2 = (time_counter++)*10000.0/tol_sz;
+            //cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush();
+            if(process2 - process1 >= 1)
+            {
+                cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush(); process1 = process2;
+            }
+
+            HeapElemX* min_elem = heap.delete_min();
+            elems.erase(min_elem->img_ind);
+
+            long min_ind = min_elem->img_ind;
+            long prev_ind = min_elem->prev_ind;
+            delete min_elem;
+
+            parent[min_ind] = prev_ind;
+
+            state[min_ind] = ALIVE;
+            int i = min_ind % sz0;
+            int j = (min_ind/sz0) % sz1;
+            int k = (min_ind/sz01) % sz2;
+
+            int pi = prev_ind % sz0;
+            int pj = (prev_ind/sz0) % sz1;
+            int pk = (prev_ind/sz01) % sz2;
+
+            path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+            if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1) && tt != 1){
+                stopFlag = 2;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+//            qDebug()<<"path[min_ind]: "<<path[min_ind];
+            if(path[min_ind]>length){
+                stopFlag = 0;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+
+
+            int w, h, d;
+            for(int kk = -1; kk <= 1; kk++)
+            {
+                d = k+kk;
+                if(d < 0 || d >= sz2) continue;
+                for(int jj = -1; jj <= 1; jj++)
+                {
+                    h = j+jj;
+                    if(h < 0 || h >= sz1) continue;
+                    for(int ii = -1; ii <= 1; ii++)
+                    {
+                        w = i+ii;
+                        if(w < 0 || w >= sz0) continue;
+                        int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                        if(offset == 0 || offset > cnn_type) continue;
+//                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                        double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
+                        long index = d*sz01 + h*sz0 + w;
+
+                        if(state[index] != ALIVE && state[index] != FINAL)
+                        {
+//                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+
+                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
+                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
+
+                            XYZ curDire = XYZ(w-i,h-j,d-k);
+                            curDire = normalize(curDire);
+                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
+                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
+
+                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
+                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
+
+//                            double new_dist = phi[min_ind] + (GIG(indexDG) + GIG(min_indDG))*factor*0.5;
+
+                            long prev_ind = min_ind;
+
+                            if(state[index] == FAR)
+                            {
+                                phi[index] = new_dist;
+                                HeapElemX * elem = new HeapElemX(index, phi[index]);
+                                elem->prev_ind = prev_ind;
+                                heap.insert(elem);
+                                elems[index] = elem;
+                                state[index] = TRIAL;
+                            }
+                            else if(state[index] == TRIAL)
+                            {
+                                if (phi[index] > new_dist)
+                                {
+                                    phi[index] = new_dist;
+                                    HeapElemX * elem = elems[index];
+                                    heap.adjust(elem->heap_id, phi[index]);
+                                    elem->prev_ind = prev_ind;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        qDebug()<<"-------find next startPoint----------";
+
+        vector<MyMarker*> tmptree = vector<MyMarker*>();
+        // save current swc tree
+        if (1)
+        {
+            int i = -1, j = -1, k = -1;
+            map<long, MyMarker*> tmp_map;
+            for(long ind = 0; ind < tol_sz; ind++)
+            {
+                i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
+                if(state[ind] != ALIVE) continue;
+                MyMarker * marker = new MyMarker(i,j,k);
+                tmp_map[ind] = marker;
+                tmptree.push_back(marker);
+    //            outtree.push_back(marker);
+            }
+            i=-1; j = -1; k = -1;
+            for(long ind = 0; ind < tol_sz; ind++)
+            {
+                i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
+                if(state[ind] == TRIAL)
+                    state[ind] = FAR;
+                if(state[ind] != ALIVE) continue;
+                state[ind] = FINAL; //set final
+                long ind2 = parent[ind];
+                MyMarker * marker1 = tmp_map[ind];
+                MyMarker * marker2 = tmp_map[ind2];
+                if(marker1 == marker2) marker1->parent = 0;
+                else marker1->parent = marker2;
+                //tmp_map[ind]->parent = tmp_map[ind2];
+            }
+        }
+        QString s = "D:\\testDynamicTracing\\" + QString::number(tt) + "_init.swc";
+        saveSWC_file(s.toStdString(),tmptree);
+
+        qDebug()<<"tmpTree size: "<<tmptree.size();
+
+        MyMarker* rootMarker;
+        for(int i=0; i<tmptree.size(); i++){
+            if(tmptree[i]->parent == 0)
+                rootMarker = tmptree[i];
+        }
+
+        vector<MyMarker*> markers = vector<MyMarker*>();
+        if(tt == 1){
+
+            vector<HierarchySegment*> segs = vector<HierarchySegment*>();
+            swc2topo_segs<unsigned char>(tmptree,segs,1);
+            sort(segs.begin(),segs.end(),segCmp);
+
+            MyMarker* marker = segs[0]->leaf_marker;
+            markers.push_back(marker);
+            while(marker != rootMarker){
+                marker = marker->parent;
+                markers.push_back(marker);
+            }
+
+        }else {
+            vector<MyMarker*> tmpOutTree = vector<MyMarker*>();
+            happ(tmptree,tmpOutTree,inimg1d,sz0,sz1,sz2,bkg_thresh,0.2,6.0,false,false);
+
+            s = "D:\\testDynamicTracing\\" + QString::number(tt) + ".swc";
+            saveSWC_file(s.toStdString(),tmpOutTree);
+
+            int pointSize = tmpOutTree.size();
+            if(pointSize == 0){
+                for(int i=0; i<tmptree.size(); i++){
+                    if(tmptree[i]){
+                        delete tmptree[i];
+                    }
+                }
+                tmptree.clear();
+                break;
+            }
+            vector<vector<V3DLONG> > children = vector<vector<V3DLONG> >(pointSize,vector<V3DLONG>());
+            QStack<int> stack = QStack<int>();
+            QHash<MyMarker*,int> hashNeuron = QHash<MyMarker*,int>();
+            for(int i=0; i<pointSize; i++){
+                hashNeuron.insert(tmpOutTree[i],i);
+            }
+            int* isRemain = new int[pointSize];
+            V3DLONG ori;
+            for(V3DLONG i=0 ; i<pointSize; i++){
+                isRemain[i] = 0;
+                if(tmpOutTree[i]->parent == 0){
+                    ori = i;
+                    stack.push(ori);
+                    continue;
+                }
+                V3DLONG prtIndex = hashNeuron.value(tmpOutTree[i]->parent);
+                children[prtIndex].push_back(i);
+            }
+
+            vector<V3DLONG> pointIndexs = vector<V3DLONG>();
+            V3DLONG t,tmp;
+
+            while (!stack.empty()) {
+                t = stack.pop();
+                pointIndexs.push_back(t);
+                vector<V3DLONG> child = children[t];
+                for(int i=0; i<child.size(); i++){
+                    tmp = child[i];
+
+                    while(children[tmp].size() == 1){
+                        pointIndexs.push_back(tmp);
+                        V3DLONG ch = children[tmp][0];
+                        tmp = ch;
+                    }
+
+                    int chsz = children[tmp].size();
+                    if(chsz>1){
+                        stack.push(tmp);
+                    }else {
+                        pointIndexs.push_back(tmp);
+                    }
+
+                }
+            }
+
+            qDebug()<<"size: "<<pointIndexs.size();
+
+            for(V3DLONG i=0; i<pointSize; i++){
+                t = pointIndexs[i];
+//                qDebug()<<t<<" is remain[t] "<<isRemain[t];
+                if(children[t].size()>1 && isRemain[t] == 0){
+                    isRemain[t] = 1;
+                    vector<V3DLONG> child = children[t];
+                    vector<vector<V3DLONG> > cbs;
+                    qDebug()<<"i: "<<i<<" child size:"<<child.size();
+                    for(int j=0; j<child.size(); j++){
+                        vector<V3DLONG> cb = vector<V3DLONG>();
+                        tmp = child[j];
+                        cb.push_back(tmp);
+                        while(children[tmp].size() == 1){
+                            tmp = children[tmp][0];
+                            cb.push_back(tmp);
+                        }
+                        qDebug()<<"j:"<<j<<" children size :"<<children[tmp].size();
+                        if(children[tmp].size()>1){
+                            if(children[tmp].size()>2){
+                                QStack<int> tmpStack = QStack<int>();
+                                tmpStack.push_back(child[j]);
+                                while (!tmpStack.isEmpty()) {
+                                    tmp = tmpStack.pop();
+                                    isRemain[tmp] = 2;
+                                    for(int kk=0; kk<children[tmp].size(); kk++){
+                                        V3DLONG tmp1 = children[tmp][kk];
+                                        while(children[tmp1].size() == 1){
+                                            isRemain[tmp1] = 2;
+                                            tmp1 = children[tmp1][0];
+                                        }
+                                        if(children[tmp1].size() == 0){
+                                            isRemain[tmp1] = 2;
+                                        }else {
+                                            tmpStack.push_back(tmp1);
+                                        }
+                                    }
+                                }
+                            }else{
+                                XYZ p1,p2;
+                                V3DLONG tmp1 = children[tmp][0];
+                                V3DLONG tmp2 = children[tmp][1];
+                                while (children[tmp1].size() == 1) {
+                                    tmp1 = children[tmp1][0];
+                                }
+                                while (children[tmp2].size() == 1) {
+                                    tmp2 = children[tmp2][0];
+                                }
+                                p1 = XYZ(tmpOutTree[tmp1]->x - tmpOutTree[tmp]->x,
+                                         tmpOutTree[tmp1]->y - tmpOutTree[tmp]->y,
+                                         tmpOutTree[tmp1]->z - tmpOutTree[tmp]->z);
+                                p2 = XYZ(tmpOutTree[tmp2]->x - tmpOutTree[tmp]->x,
+                                         tmpOutTree[tmp2]->y - tmpOutTree[tmp]->y,
+                                         tmpOutTree[tmp2]->z - tmpOutTree[tmp]->z);
+                                double tmpCosAngle = dot(normalize(p1),normalize(p2));
+                                qDebug()<<"next bifurcation angle: "<<tmpCosAngle;
+                                if(tmpCosAngle<-0.9){
+                                    QStack<int> tmpStack = QStack<int>();
+                                    tmpStack.push_back(child[j]);
+                                    while (!tmpStack.isEmpty()) {
+                                        tmp = tmpStack.pop();
+                                        isRemain[tmp] = 2;
+                                        for(int kk=0; kk<children[tmp].size(); kk++){
+                                            V3DLONG tmp1 = children[tmp][kk];
+                                            while(children[tmp1].size() == 1){
+                                                isRemain[tmp1] = 2;
+                                                tmp1 = children[tmp1][0];
+                                            }
+                                            if(children[tmp1].size() == 0){
+                                                isRemain[tmp1] = 2;
+                                            }else {
+                                                tmpStack.push_back(tmp1);
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    cbs.push_back(cb);
+                                }
+
+                            }
+                        }else{
+                            cbs.push_back(cb);
+                        }
+                    }
+
+                    qDebug()<<"cbs size:"<<cbs.size();
+
+                    if(cbs.size() == 1){
+                        for(int kk=0; kk<cbs[0].size()-1; kk++){
+                            isRemain[cbs[0][kk]] = 1;
+                        }
+                        if(children[cbs[0].back()].size() == 0){
+                            isRemain[cbs[0].back()] = 1;
+                        }
+                    }else{
+                        double maxCosAngle = -1;
+                        int maxIndex = -1;
+                        for(int j=0; j<cbs.size(); j++){
+                            qDebug()<<"cbs j"<<j<<" size: "<<cbs[j].size();
+                            XYZ p1 = XYZ(tmpOutTree[cbs[j].back()]->x - tmpOutTree[cbs[j].front()]->x,
+                                    tmpOutTree[cbs[j].back()]->y - tmpOutTree[cbs[j].front()]->y,
+                                    tmpOutTree[cbs[j].back()]->z - tmpOutTree[cbs[j].front()]->z);
+                            double tmpCosAngle = dot(normalize(p1),normalize(lastDirection));
+                            qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+                            if(maxCosAngle<tmpCosAngle){
+                                maxCosAngle = tmpCosAngle;
+                                maxIndex = j;
+                            }
+                        }
+                        qDebug()<<"maxCosAngle: "<<maxCosAngle<<" maxIndex: "<<maxIndex;
+                        for(int j=0; j<cbs.size(); j++){
+                            if(j == maxIndex){
+                                for(int kk=0; kk<cbs[j].size()-1; kk++){
+                                    isRemain[cbs[j][kk]] = 1;
+                                }
+                                if(children[cbs[j].back()].size() == 0){
+//                                    qDebug()<<"children 0: "<<cbs[j].back();
+                                    isRemain[cbs[j].back()] = 1;
+                                }
+                            }else{
+                                QStack<int> tmpStack = QStack<int>();
+                                tmpStack.push_back(cbs[j][0]);
+                                while (!tmpStack.isEmpty()) {
+                                    tmp = tmpStack.pop();
+                                    qDebug()<<"2 "<<tmp;
+                                    isRemain[tmp] = 2;
+                                    for(int kk=0; kk<children[tmp].size(); kk++){
+                                        V3DLONG tmp1 = children[tmp][kk];
+                                        while(children[tmp1].size() == 1){
+//                                            qDebug()<<"2 "<<tmp1;
+                                            isRemain[tmp1] = 2;
+                                            tmp1 = children[tmp1][0];
+                                        }
+                                        if(children[tmp1].size() == 0){
+//                                            qDebug()<<"2 "<<tmp1;
+                                            isRemain[tmp1] = 2;
+                                        }else {
+                                            tmpStack.push_back(tmp1);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            qDebug()<<"start to save marker!";
+            MyMarker* marker;
+            for(int i=0; i<pointSize; i++){
+                if(isRemain[i] == 1 && children[i].size() == 0){
+                    marker = tmpOutTree[i];
+                }
+            }
+            markers.push_back(marker);
+            while(marker != rootMarker){
+                marker = marker->parent;
+                markers.push_back(marker);
+            }
+        }
+
+
+        // init heap
+        {
+            MyMarker* leafMarker = markers[0];
+            long index = leafMarker->z*sz01 + leafMarker->y*sz0 +leafMarker->x;
+            phi[index] = 0;
+//            parent[index] = index;
+            path[index] = 0;
+            HeapElemX *elem = new HeapElemX(index, phi[index]);
+            elem->prev_ind = index;
+            heap.insert(elem);
+            elems[index] = elem;
+        }
+
+
+//        qDebug()<<"tmpTree size: "<<tmptree.size();
+
+        /*
+        if(tmptree.size()<2){
+            break;
+        }
+
+        MyMarker* rootMarker;
+        for(int i=0; i<tmptree.size(); i++){
+            if(tmptree[i]->parent == 0)
+                rootMarker = tmptree[i];
+        }
+        vector<HierarchySegment*> segs = vector<HierarchySegment*>();
+        swc2topo_segs<unsigned char>(tmptree,segs,1);
+
+        ofstream csvFile;
+        QString csvPath = "D:\\testDynamicTracing\\" + QString::number(t) + "_segments.csv";
+        csvFile.open(csvPath.toStdString().c_str(), ios::out);
+        csvFile<<"level"<<','<<"length"<<endl;
+
+        sort(segs.begin(),segs.end(),segCmp);
+//        vector<HierarchySegment*> tmpSegs = vector<HierarchySegment*>();
+
+        HierarchySegment* targetSegment = 0;
+
+        MyMarker* marker = segs[0]->leaf_marker;
+        vector<MyMarker*> tmpMarkers = vector<MyMarker*>();
+
+        tmpMarkers.push_back(marker);
+        while(marker != rootMarker){
+            marker = marker->parent;
+            tmpMarkers.push_back(marker);
+        }
+        qDebug()<<"before tmpMarker size:"<<tmpMarkers.size();
+        if(t != 1){
+            marker = outtree.back();marker = outtree.back();
+            int foreNum = 0;
+            while(marker->parent != 0){
+                tmpMarkers.push_back(marker);
+                marker = marker->parent;
+                foreNum++;
+                if(foreNum>=6)
+                    break;
+            }
+        }
+        reverse(tmpMarkers.begin(),tmpMarkers.end());
+        XYZ tmpDire = getDirection2(tmpMarkers,0.5);
+
+        if(tmpDire == XYZ(-2,-2,-2) || tmpDire == XYZ(-4,-4,-4)){
+
+            int inflectionIndex = getInflectionIndex(tmpMarkers,0.5);
+            MyMarker otherMarker = MyMarker(tmpMarkers[inflectionIndex]->x,
+                                            tmpMarkers[inflectionIndex]->y,
+                                            tmpMarkers[inflectionIndex]->z);
+            MyMarker midMarker = MyMarker(0,0,0);
+            MyMarker tmpMidMarker = MyMarker(0,0,0);
+            MyMarker tmpOtherMarker = MyMarker(0,0,0);
+            for(int i=0; i<tmptree.size(); i++){
+                midMarker.x += tmptree[i]->x;
+                midMarker.y += tmptree[i]->y;
+                midMarker.z += tmptree[i]->z;
+            }
+            midMarker.x /= tmptree.size();
+            midMarker.y /= tmptree.size();
+            midMarker.z /= tmptree.size();
+            int times = 0;
+            vector<MyMarker*> midMarkers = vector<MyMarker*>();
+            vector<MyMarker*> otherMarkers = vector<MyMarker*>();
+
+            for(int i=0; i<tmptree.size(); i++){
+                double d_mid = dist(*(tmptree[i]),midMarker);
+                double d_other = dist(*(tmptree[i]),otherMarker);
+                if(d_mid<d_other){
+                    midMarkers.push_back(tmptree[i]);
+                }else {
+                    otherMarkers.push_back(tmptree[i]);
+                }
+            }
+
+//            while(times<100){
+//                for(int i=0; i<tmptree.size(); i++){
+//                    double d_mid = dist(*(tmptree[i]),midMarker);
+//                    double d_other = dist(*(tmptree[i]),otherMarker);
+//                    if(d_mid<d_other){
+//                        midMarkers.push_back(tmptree[i]);
+//                    }else {
+//                        otherMarkers.push_back(tmptree[i]);
+//                    }
+//                }
+//                double shiftD = 0;
+//                tmpMidMarker = MyMarker(0,0,0);
+//                for(int i=0; i<midMarkers.size(); i++){
+//                    tmpMidMarker.x += midMarkers[i]->x;
+//                    tmpMidMarker.y += midMarkers[i]->y;
+//                    tmpMidMarker.z += midMarkers[i]->z;
+//                }
+//                if(midMarkers.size()>0){
+//                    tmpMidMarker.x /= midMarkers.size();
+//                    tmpMidMarker.y /= midMarkers.size();
+//                    tmpMidMarker.z /= midMarkers.size();
+//                }
+
+//                shiftD += dist(midMarker,tmpMidMarker);
+
+//                tmpOtherMarker = MyMarker(0,0,0);
+//                for(int i=0; i<otherMarkers.size(); i++){
+//                    tmpOtherMarker.x += otherMarkers[i]->x;
+//                    tmpOtherMarker.y += otherMarkers[i]->y;
+//                    tmpOtherMarker.z += otherMarkers[i]->z;
+//                }
+//                if(otherMarkers.size()>0){
+//                    tmpOtherMarker.x /= otherMarkers.size();
+//                    tmpOtherMarker.y /= otherMarkers.size();
+//                    tmpOtherMarker.z /= otherMarkers.size();
+//                }
+
+//                shiftD += dist(otherMarker,tmpOtherMarker);
+
+//                if(shiftD>1){
+//                    midMarker = tmpMidMarker;
+//                    otherMarker = tmpOtherMarker;
+//                    midMarkers.clear();
+//                    otherMarkers.clear();
+//                }else{
+//                    break;
+//                }
+//                times++;
+//            }
+            qDebug()<<"mid size:"<<midMarkers.size();
+
+            for(int i=0; i<otherMarkers.size(); i++){
+                long index = otherMarkers[i]->ind(sz0,sz01);
+                state[index] = FAR;
+            }
+            segs.clear();
+            swc2topo_segs<unsigned char>(midMarkers,segs,1);
+
+            QString s = "D:\\testDynamicTracing\\" + QString::number(t) + "_initClass.swc";
+            saveSWC_file(s.toStdString(),midMarkers);
+
+            sort(segs.begin(),segs.end(),segCmp);
+
+            targetSegment = segs[0];
+
+        }else if (tmpDire == XYZ(-3,-3,-3)) {
+            for(int i=0; i<tmptree.size(); i++){
+                if(tmptree[i]){
+                    delete tmptree[i];
+                }
+            }
+            tmptree.clear();
+            break;
+        }
+        else{
+            targetSegment = segs[0];
+        }
+
+        qDebug()<<"targetLength: "<<targetSegment->length;
+
+        // init heap
+        {
+            MyMarker* leafMarker = targetSegment->leaf_marker;
+            long index = leafMarker->z*sz01 + leafMarker->y*sz0 +leafMarker->x;
+            phi[index] = 0;
+//            parent[index] = index;
+            path[index] = 0;
+            HeapElemX *elem = new HeapElemX(index, phi[index]);
+            elem->prev_ind = index;
+            heap.insert(elem);
+            elems[index] = elem;
+        }
+
+        qDebug()<<"----init heap end-----";
+
+        vector<MyMarker*> markers = vector<MyMarker*>();
+//        segs[segMaxIndex]->get_markers(markers);
+        MyMarker* markerTmp = targetSegment->leaf_marker;
+        markers.push_back(markerTmp);
+        while (markerTmp != rootMarker) {
+            markerTmp = markerTmp->parent;
+            markers.push_back(markerTmp);
+        }
+        qDebug()<<"target markers size: "<<markers.size();
+
+        */
+
+
+
+        XYZ cur = XYZ(0,0,0);
+        XYZ cur_front = XYZ(0,0,0);
+        int mcount = 0;
+        for(int i=0; i<10; i+=2){
+            if(i>=markers.size()){
+                break;
+            }
+            cur = cur + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+            mcount++;
+        }
+        cur = cur/XYZ(mcount,mcount,mcount);
+        mcount = 0;
+        for(int i=markers.size()-1; i>markers.size()-10; i-=2){
+            if(i<0){
+                break;
+            }
+            cur_front = cur_front + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+            mcount++;
+        }
+        cur_front = cur_front/XYZ(mcount,mcount,mcount);
+
+        XYZ curDirection = cur - cur_front;
+        double curCosAngle = dot(normalize(curDirection),normalize(lastDirection));
+        if(curCosAngle<-0.9){
+            qDebug()<<"reverse direction";
+            for(int i=0; i<tmptree.size(); i++){
+                if(tmptree[i]){
+                    delete tmptree[i];
+                }
+            }
+            tmptree.clear();
+            break;
+        }
+
+        cur = XYZ(markers[0]->x,markers[0]->y,markers[0]->z);
+        int cur_frontIndex = 6;
+        if(cur_frontIndex>=markers.size())
+            cur_frontIndex = markers.size()-1;
+        cur_front = XYZ(markers[cur_frontIndex]->x,markers[cur_frontIndex]->y,markers[cur_frontIndex]->z);
+        lastDirection = cur - cur_front;
+
+        MyMarker* pMarker = 0;
+
+        bkg_thresh = INT_MAX;
+        int* grays = new int[markers.size()];
+        vector<MyMarker*> tmpResult = vector<MyMarker*>();
+        for(int i=markers.size()-1; i>=0; i--){
+            MyMarker* marker = new MyMarker(markers[i]->x,markers[i]->y,markers[i]->z);
+            marker->parent = pMarker;
+            pMarker = marker;
+            if(tt != 1 && i == markers.size()-1)
+                pMarker = outtree.back();
+            long ind = marker->z*sz01 + marker->y*sz0 + marker->x;
+            grays[i] = inimg1d[ind];
+            if(inimg1d[ind]<bkg_thresh){
+                bkg_thresh = inimg1d[ind];
+            }
+            if(i != markers.size()-1 || (i == markers.size()-1 && tt == 1)){
+                tmpResult.push_back(marker);
+//                outtree.push_back(marker);
+            }
+        }
+        int foreNum = 0;
+        for(int i=0; i<tmpResult.size(); i++){
+            MyMarker* marker = tmpResult[i];
+            long ind2 = marker->z*sz01 + marker->y*sz0 + marker->x;
+            if(inimg1d[ind2] > bkg_thresh){
+                foreNum++;
+            }
+        }
+
+
+
+        if((double)foreNum/tmpResult.size()<0.5){
+            qDebug()<<"fornumRatio: "<<(double)foreNum/tmpResult.size()<<"-------------touch tip-----------------";
+            stopFlag = 2;
+        }
+        qDebug()<<"before: "<<outtree.size();
+        for(int i=0; i<tmpResult.size(); i++){
+            outtree.push_back(tmpResult[i]);
+        }
+        qDebug()<<"after: "<<outtree.size();
+
+//        double b_mean,b_std;
+//        mean_and_std(grays,markers.size(),b_mean,b_std);
+//        qDebug()<<"b_mean: "<<b_mean<<" b_std: "<<b_std;
+//        double td = MIN(7,b_std);
+//        bkg_thresh = b_mean - b_std*3;//b_std*0.5;
+//        bkg_thresh = 0;
+
+        sort(grays,grays+markers.size()-1);
+        bkg_thresh = MAX(grays[markers.size()/4] - 5,1);
+
+        if(grays){
+            delete[] grays;
+            grays = 0;
+        }
+
+        qDebug()<<"bkg_thres: "<<bkg_thresh;
+
+        if(stopFlag == 1){
+            bkg_thresh = 0;
+        }else if(stopFlag == 2){
+            while (!heap.empty()) {
+                HeapElemX* tmp_elem = heap.delete_min();
+                elems.erase(tmp_elem->img_ind);
+                delete tmp_elem;
+            }
+        }
+
+        for(int i=0; i<tmptree.size(); i++){
+            if(tmptree[i]){
+                delete tmptree[i];
+            }
+        }
+        tmptree.clear();
+
+        qDebug()<<"----clear tmpTree end----";
+
+        tt++;
+    }
+    // over
+
+    map<long, HeapElemX*>::iterator mit = elems.begin();
+    while (mit != elems.end())
+    {
+        HeapElemX * elem = mit->second; delete elem; mit++;
+    }
+
+    if(phi){delete [] phi; phi = 0;}
+    if(parent){delete [] parent; parent = 0;}
+    if(state) {delete [] state; state = 0;}
+    if(path) {delete []path; path=0;}
+    return true;
+}
+
+
 
 #endif

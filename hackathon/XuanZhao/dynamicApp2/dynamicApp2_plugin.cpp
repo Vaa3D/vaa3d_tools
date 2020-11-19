@@ -72,6 +72,7 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
 	}
     else if (func_name == tr("dynamicApp2"))
 	{
+        qInstallMsgHandler(messageOutput);
         PARA_APP2 p;
 
         if (!p.fetch_para_commandline(input, output, callback, parent))
@@ -80,6 +81,18 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
         if (!proc_app2_dynamic(callback, p, versionStr))
             return false;
 	}
+    else if (func_name == tr("ultratracerAxonTerafly"))
+    {
+        qInstallMsgHandler(messageOutput);
+        QString swcPath = infiles.size()>=1 ? infiles[0] : "";
+        QString brainPath = infiles.size()>=2 ? infiles[1] : "";
+        QString outSwcPath = swcPath + "_result.swc";
+
+        NeuronTree ori = readSWC_file(swcPath);
+        NeuronTree resultTree = ultratracerAxonTerafly(brainPath,ori,callback);
+        writeSWC_file(outSwcPath,resultTree);
+
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

@@ -758,6 +758,7 @@ bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString
             t.x = file_inmarkers[i].x;
             t.y = file_inmarkers[i].y;
             t.z = file_inmarkers[i].z;
+            qDebug()<<t.x<<' '<<t.y<<' '<<t.z;
             if(t.x<p.xc0+1 || t.x>p.xc1+1 || t.y<p.yc0+1 || t.y>p.yc1+1 || t.z<p.zc0+1 || t.z>p.zc1+1)
             {
                 if(i==0)
@@ -1079,11 +1080,11 @@ bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString
             {
                 case V3D_UINT8:
                     v3d_msg("8bit", 0);
-                    fastmarching_line(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, p.f_length);
+                    fastmarching_line(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, p.f_length, p.lastDirection);
                     break;
                 case V3D_UINT16: //this is no longer needed, as the data type has been converted above
                     v3d_msg("16bit", 0);
-                    fastmarching_line(inmarkers[0], (short int*)indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, p.f_length);
+                    fastmarching_line(inmarkers[0], (short int*)indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, p.f_length, p.lastDirection);
                     break;
                 default:
                     v3d_msg("Unsupported data type");
@@ -1172,24 +1173,25 @@ bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString
     cout<<"Pruning neuron tree"<<endl;
 
     vector<MyMarker*> outswc;
-    if(p.is_coverage_prune)
-    {
-        v3d_msg("start to use APP2 program.\n", 0);
-        happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
-    }
-    else
-    {
-        hierarchy_prune(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.length_thresh);
-        if(1) //get radius
-        {
-            double real_thres = 40; //PHC 20121011
-            if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-            for(i = 0; i < outswc.size(); i++)
-            {
-                outswc[i]->radius = markerRadius(indata1d, in_sz, *(outswc[i]), real_thres);
-            }
-        }
-    }
+    outswc.insert(outswc.begin(),inswc.begin(),inswc.end());
+//    if(p.is_coverage_prune)
+//    {
+//        v3d_msg("start to use APP2 program.\n", 0);
+//        happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
+//    }
+//    else
+//    {
+//        hierarchy_prune(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.length_thresh);
+//        if(1) //get radius
+//        {
+//            double real_thres = 40; //PHC 20121011
+//            if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
+//            for(i = 0; i < outswc.size(); i++)
+//            {
+//                outswc[i]->radius = markerRadius(indata1d, in_sz, *(outswc[i]), real_thres);
+//            }
+//        }
+//    }
 
     qint64 etime2 = timer2.elapsed();
     qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";

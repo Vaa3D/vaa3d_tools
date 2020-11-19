@@ -4088,6 +4088,7 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
           if(p.is_0_255){
               unsigned char* tmpData = p.p4dImage->getRawData();
               V3DLONG tmpSZ[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
+              removeAbnormalLine(tmpData,tmpSZ);
               convertDataTo0_255(tmpData,tmpSZ);
           }
 
@@ -4570,9 +4571,18 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
                   iniIntensity.push_back(indata1d[index]);
               }
               sort(iniIntensity.begin(),iniIntensity.end());
-              int iniIntensityMid = iniIntensity[iniIntensity.size()/2];
-              p.length_thresh = lengthThres/(255/iniIntensityMid);
-              p.length_thresh /= dfactor_xy;
+              int iniIntensityMid;
+              if(iniIntensity.size()<1){
+                  iniIntensityMid = 1;
+              }else{
+                  iniIntensityMid = iniIntensity[iniIntensity.size()/2];
+              }
+              if(iniIntensityMid == 0){
+                  p.length_thresh = 0;
+              }else{
+                  p.length_thresh = lengthThres/(255/iniIntensityMid);
+                  p.length_thresh /= dfactor_xy;
+              }
               if(p.length_thresh<2)
                   p.length_thresh = 2;
               if(p.length_thresh>10)
@@ -4717,6 +4727,38 @@ bool proc_multiApp2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
       }
 
       return true;
+}
+
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz){
+
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    V3DLONG sz01 = sz[0]*sz[1];
+
+    unsigned imageMin = 255;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(imageMin>data1d[i]){
+            imageMin = data1d[i];
+        }
+    }
+
+    for(int z=0; z<sz[2]; z++){
+        for(int y=0; y<sz[1]; y++){
+            double zyMean = 0;
+            for(int x=0; x<sz[0]; x++){
+                V3DLONG index = z*sz01 + y*sz[0] + x;
+                zyMean += data1d[index];
+            }
+            if(sz[0]>0){
+                zyMean /= (double)sz[0];
+            }
+            if(zyMean>64){
+                for(int x=0; x<sz[0]; x++){
+                    V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
+                    data1d[index] = imageMin;
+                }
+            }
+        }
+    }
 }
 
 void convertDataTo0_255(unsigned char *data1d, long long *sz){

@@ -24,8 +24,10 @@ struct PARA_APP2: public PARA_VN
 
     bool b_menu;
 
+    XYZ lastDirection;
     double f_length;
     NeuronTree result;
+    double zScale;
 
     
     QString inimg_file, inmarker_file, outswc_file;
@@ -48,6 +50,8 @@ struct PARA_APP2: public PARA_VN
         b_menu = true;
 
         f_length = 30;
+        lastDirection = XYZ(0,0,0);
+        zScale = 5;
 
         inimg_file = "";
         inmarker_file = "";

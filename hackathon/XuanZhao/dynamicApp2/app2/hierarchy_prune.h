@@ -4,6 +4,8 @@
 #include <map>
 #include <set>
 #include "smooth_curve.h"
+#include "my_surf_objs.h"
+#include "v3d_interface.h"
 using namespace std;
 
 #define INTENSITY_DISTANCE_METHOD 0

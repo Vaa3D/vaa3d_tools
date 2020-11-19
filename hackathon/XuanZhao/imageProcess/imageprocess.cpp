@@ -759,7 +759,7 @@ void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz){
             if(sz[0]>0){
                 zyMean /= (double)sz[0];
             }
-            if(zyMean>128){
+            if(zyMean>64){
                 for(int x=0; x<sz[0]; x++){
                     V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
                     data1d[index] = imageMin;
