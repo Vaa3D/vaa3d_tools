@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>574</width>
-    <height>595</height>
+    <width>581</width>
+    <height>712</height>
    </rect>
   </property>
   <property name="font">
@@ -35,7 +35,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -52,8 +52,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>522</width>
-            <height>514</height>
+            <width>529</width>
+            <height>631</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -528,8 +528,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>522</width>
-            <height>514</height>
+            <width>529</width>
+            <height>631</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -538,13 +538,13 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>300</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>600</width>
-               <height>230</height>
+               <height>240</height>
               </size>
              </property>
              <property name="font">
@@ -815,17 +815,284 @@
             </widget>
            </item>
            <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
+            <widget class="QGroupBox" name="groupBox_5">
+             <property name="maximumSize">
               <size>
-               <width>20</width>
-               <height>40</height>
+               <width>16777215</width>
+               <height>180</height>
               </size>
              </property>
-            </spacer>
+             <property name="title">
+              <string>Separate dentrite (including apical dendrite) from axon</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <item>
+               <widget class="QGroupBox" name="groupBox_10">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select a folder to process:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_10">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>400</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_7">
+                   <property name="maximumSize">
+                    <size>
+                     <width>80</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_7">
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_13">
+                 <item>
+                  <spacer name="horizontalSpacer_8">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>259</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="buttonBox_5">
+                   <property name="maximumSize">
+                    <size>
+                     <width>180</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_6">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>255</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Combine dendrite and axon SWCs</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_10">
+              <item>
+               <widget class="QGroupBox" name="groupBox_11">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select the root path where dendrite and axon folders are</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_14">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_11">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>400</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_8">
+                   <property name="maximumSize">
+                    <size>
+                     <width>80</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_8">
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <item>
+                  <spacer name="horizontalSpacer_9">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>259</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="buttonBox_6">
+                   <property name="maximumSize">
+                    <size>
+                     <width>180</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -846,11 +1113,11 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>216</y>
+     <x>511</x>
+     <y>308</y>
     </hint>
     <hint type="destinationlabel">
-     <x>572</x>
+     <x>546</x>
      <y>13</y>
     </hint>
    </hints>
@@ -862,8 +1129,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>277</y>
+     <x>511</x>
+     <y>369</y>
     </hint>
     <hint type="destinationlabel">
      <x>438</x>
@@ -878,11 +1145,11 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>277</y>
+     <x>511</x>
+     <y>369</y>
     </hint>
     <hint type="destinationlabel">
-     <x>572</x>
+     <x>546</x>
      <y>138</y>
     </hint>
    </hints>
@@ -894,11 +1161,11 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>592</y>
+     <x>511</x>
+     <y>543</y>
     </hint>
     <hint type="destinationlabel">
-     <x>572</x>
+     <x>546</x>
      <y>272</y>
     </hint>
    </hints>
@@ -910,8 +1177,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>716</y>
+     <x>511</x>
+     <y>672</y>
     </hint>
     <hint type="destinationlabel">
      <x>527</x>
@@ -926,28 +1193,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>716</y>
+     <x>511</x>
+     <y>672</y>
     </hint>
     <hint type="destinationlabel">
-     <x>572</x>
+     <x>546</x>
      <y>347</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_5</sender>
-   <signal>clicked()</signal>
-   <receiver>dialog</receiver>
-   <slot>browseFolderClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>464</x>
-     <y>199</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>568</x>
-     <y>112</y>
     </hint>
    </hints>
   </connection>
@@ -958,11 +1209,11 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>479</x>
-     <y>355</y>
+     <x>496</x>
+     <y>275</y>
     </hint>
     <hint type="destinationlabel">
-     <x>569</x>
+     <x>546</x>
      <y>329</y>
     </hint>
    </hints>
@@ -974,11 +1225,11 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>500</x>
-     <y>350</y>
+     <x>496</x>
+     <y>275</y>
     </hint>
     <hint type="destinationlabel">
-     <x>568</x>
+     <x>546</x>
      <y>374</y>
     </hint>
    </hints>
@@ -990,12 +1241,124 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>474</x>
-     <y>650</y>
+     <x>511</x>
+     <y>618</y>
     </hint>
     <hint type="destinationlabel">
-     <x>571</x>
+     <x>546</x>
      <y>647</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_5</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>496</x>
+     <y>161</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>112</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_5</sender>
+   <signal>accepted()</signal>
+   <receiver>dialog</receiver>
+   <slot>okClicked2()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>395</x>
+     <y>443</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>451</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_5</sender>
+   <signal>rejected()</signal>
+   <receiver>dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>414</x>
+     <y>451</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>502</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_6</sender>
+   <signal>accepted()</signal>
+   <receiver>dialog</receiver>
+   <slot>okClicked2()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>380</x>
+     <y>703</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>568</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_6</sender>
+   <signal>rejected()</signal>
+   <receiver>dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>457</x>
+     <y>708</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>546</x>
+     <y>636</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_7</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>449</x>
+     <y>390</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>575</x>
+     <y>407</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_8</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>451</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>575</x>
+     <y>537</y>
     </hint>
    </hints>
   </connection>

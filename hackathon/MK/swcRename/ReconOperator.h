@@ -14,4 +14,7 @@ public:
 	int xFactor, yFactor, zFactor;
 
 	void downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor);
+
+	void denAxonSeparate(const QStringList& fileList);
+	void denAxonCombine();
 };

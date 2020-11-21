@@ -37,6 +37,10 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_4->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_6")
 		uiPtr->lineEdit_9->setText(QFileDialog::getOpenFileName(this, tr("Choose the mapping table file"), ""));
+	else if (objName == "pushButton_7")
+		uiPtr->lineEdit_10->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+	else if (objName == "pushButton_8")
+		uiPtr->lineEdit_11->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::changeName()
@@ -99,6 +103,27 @@ void SWC_renameDlg::reconOp()
 		float zFactor = 1 / (uiPtr->lineEdit_7->text().toFloat());
 
 		this->myOperator.downSampleReconFile(this->fileNameList, xFactor, yFactor, zFactor);
+	}
+	else if (objName == "buttonBox_5")
+	{
+		this->rootPath = uiPtr->lineEdit_10->text();
+		this->rootPath.replace("/", "\\");
+		this->myOperator.rootPath = this->rootPath;
+
+		QDir inputFileFolder(this->rootPath);
+		inputFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->fileNameList.clear();
+		this->fileNameList = inputFileFolder.entryList();
+
+		this->myOperator.denAxonSeparate(this->fileNameList);
+	}
+	else if (objName == "buttonBox_6")
+	{
+		this->rootPath = uiPtr->lineEdit_11->text();
+		this->rootPath.replace("/", "\\");
+		this->myOperator.rootPath = this->rootPath;
+
+		this->myOperator.denAxonCombine();
 	}
 }
 
