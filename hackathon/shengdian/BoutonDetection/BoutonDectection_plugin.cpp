@@ -27,6 +27,7 @@ QStringList BoutonDectectionPlugin::funclist() const
         <<tr("BoutonDection_terafly")
         <<tr("BoutonDection_Img")
         <<tr("BoutonDection_filter")
+          <<tr("BoutonDection_filter_toSWC")
        <<tr("ReconstructionComplexity")
         <<tr("RecontructionIntensity_terafly")
        <<tr("Crop_terafly_block")
@@ -208,19 +209,58 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         }
         string inimg_file = infiles[0];
         QString inswc_file = infiles[1];
-        int allnode=(inparas.size()>=1)?atoi(inparas[0]):2;
+        int allnode=(inparas.size()>=1)?atoi(inparas[0]):0;
         NeuronTree nt = readSWC_file(inswc_file);
         getBoutonInTerafly(callback,inimg_file,nt,allnode);
-
-        QString outswc_file = inswc_file +"_"+QString::number(allnode)+ "_IntensityResult.eswc";
+        QString outswc_file = inswc_file +"_IntensityResult.eswc";
+        if(allnode)
+            outswc_file = inswc_file +"_"+QString::number(allnode)+ "_IntensityResult.eswc";
         writeESWC_file(outswc_file,nt);
 	}
+    else if(func_name ==tr("BoutonDection_filter_toSWC"))
+    {
+        //this version will output the detected boutons to swc file
+        string inswc_file;
+        if(infiles.size()==1)
+        {
+            inswc_file = infiles[0];
+        }
+        else
+        {
+            printHelp();
+            return false;
+        }
+
+        float dis_thre=(inparas.size()>=1)?atoi(inparas[0]):2.0;
+        int threshold=(inparas.size()>=2)?atoi(inparas[1]):20;
+        int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
+        int renderingType=(inparas.size()>=4)?atoi(inparas[3]):0;
+
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        V3DLONG siz = nt.listNeuron.size();
+        if(renderingType==1)
+        {
+            for (V3DLONG i=0;i<siz;i++)
+            {
+                NeuronSWC s = nt.listNeuron[i];
+                nt.listNeuron[i].radius=s.type;
+            }
+        }
+        if(nt.listNeuron.size()==0)
+            return false;
+        NeuronTree nt_out=getBouton_toSWC(nt,threshold,allnode,dis_thre);
+        if(nt_out.listNeuron.size()==0)
+            qDebug()<<"Can't find bouton at input swc file";
+        else
+        {
+            QString outswc_file = QString::fromStdString(inswc_file) +"_bouton.eswc";
+            writeESWC_file(outswc_file,nt_out);
+        }
+    }
     else if (func_name == tr("BoutonDection_filter"))
     {
+        //this version will output the detected boutons to apo file
         string inswc_file,inimg_file;
-//        cout<<"size of the input file is "<<infiles.size()<<endl;
-//        cout<<"size of the inpara file is "<<inparas.size()<<endl;
-//        cout<<"size of the output file is "<<outfiles.size()<<endl;
         if(infiles.size()==1)
         {
             inswc_file = infiles[0];
@@ -254,7 +294,6 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
         if(infiles.size()==2&&outfiles.size()==1)
         {
-
             string out_path=outfiles[0];
             getBoutonBlock(callback,inimg_file,apolist,out_path,crop_block_size);
         }
@@ -374,7 +413,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
 
-        int threshold=(inparas.size()>=1)?atoi(inparas[0]):20;
+        int threshold=(inparas.size()>=1)?atoi(inparas[0]):10;
         int useNeighborArea=(inparas.size()>=2)?atoi(inparas[1]):0;
         int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
         //read img

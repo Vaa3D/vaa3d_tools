@@ -1,0 +1,4 @@
+#ifndef UTILITY_FUNCTION_H
+#define UTILITY_FUNCTION_H
+
+#endif // UTILITY_FUNCTION_H

@@ -62,26 +62,25 @@ MorphoHub_MainWindow::MorphoHub_MainWindow(V3DPluginCallback2 &callback,QWidget 
 
 void MorphoHub_MainWindow::MorphoHub_Init()
 {
+    initworkingspaceTablist=seuallenAP.architechure.initworkingspaceTablist;
     QSettings settings("MorphoHub","Vaa3d");
     //read and update settings
     QStringList setinitworkingspaceTablist=settings.value("InitTab").toStringList();
     if(setinitworkingspaceTablist.size()==0)
     {
         qDebug()<<"No init setting";
-        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
+//        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
         settings.setValue("InitTab",initworkingspaceTablist);
     }
     else if(setinitworkingspaceTablist.size()==1
             &&setinitworkingspaceTablist.at(0).isEmpty())
     {
         qDebug()<<"settings empty";
-        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
+//        initworkingspaceTablist <<"L1A"<<"L1B"<<"L1C"<<"L2A"<<"L2B"<<"L2C";
         settings.setValue("InitTab",initworkingspaceTablist);
     }
     else
-    {
         initworkingspaceTablist=setinitworkingspaceTablist;
-    }
     dbpath=settings.value("dbpath").toString();
     curOperator.UserID=settings.value("UserID").toString();
 

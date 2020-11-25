@@ -79,11 +79,13 @@ struct Annotationlevel{
 struct ArchitechureofMorphoHub{
     QList<SourceData> basicData;
     QStringList originForder;
+    QStringList initworkingspaceTablist;
     QList<Annotationlevel> finished;
     QList<Annotationlevel> workingSpace;
     ArchitechureofMorphoHub(){
         basicData.clear();
         originForder<<"Brain"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Configuration/BrainConf"<<"Configuration/WorkingSpace_Conf"<<"Release"<<"Registration";
+        initworkingspaceTablist<<"L1A"<<"L1D"<<"L2A"<<"L2D";
         QStringList flevel;
         flevel<<"L1"<<"L2";
         for(int i=0;i<flevel.size();i++)
@@ -108,6 +110,35 @@ struct ArchitechureofMorphoHub{
                 tmplevel.childlist.append("Annotator");
                 tmplevel.childlist.append("Priority");
             }
+            tmplevel.ParentDir="WorkingSpace";
+            tmplevel.Comments="";
+            workingSpace.append(tmplevel);
+        }
+    }
+    ArchitechureofMorphoHub(QString mtype){
+        if(mtype.compare("minimal")==0)
+            ArchitechureofMorphoHub();
+        basicData.clear();
+        originForder<<"Brain"<<"WorkingSpace"<<"Finished"<<"Configuration"<<"Configuration/BrainConf"<<"Configuration/WorkingSpace_Conf";
+        initworkingspaceTablist<<"L1A"<<"L1D"<<"L2A"<<"L2D";
+        QStringList flevel;
+        flevel<<"L1"<<"L2";
+        for(int i=0;i<flevel.size();i++)
+        {
+            Annotationlevel tmplevel;
+            tmplevel.Name=flevel.at(i);
+            tmplevel.ParentDir="Finished";
+            tmplevel.Comments="";
+            finished.append(tmplevel);
+        }
+        QStringList wlevel;
+        wlevel<<"L1A"<<"L1ACheck"<<"L1D"
+             <<"L2A"<<"L2ACheck"<<"L2D"
+            <<"QuestionZone";
+        for(int i=0;i<wlevel.size();i++)
+        {
+            Annotationlevel tmplevel;
+            tmplevel.Name=wlevel.at(i);
             tmplevel.ParentDir="WorkingSpace";
             tmplevel.Comments="";
             workingSpace.append(tmplevel);
