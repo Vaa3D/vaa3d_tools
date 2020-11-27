@@ -62,7 +62,8 @@ struct Bouton_Color_List
         }
     }
 };
-
+NeuronTree removeDupNodes(NeuronTree nt,V3DLONG removed_dist_thre=1);
+QList <CellAPO> removeBoutons(QList <CellAPO> inapo,V3DLONG removed_dist_thre=2);
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0);
 void getSWCIntensityInTerafly(V3DPluginCallback2 &callback,string imgPath, QString inswc_file);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size=32);

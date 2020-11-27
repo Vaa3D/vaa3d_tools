@@ -275,7 +275,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             printHelp();
             return false;
         }
-        int threshold=(inparas.size()>=1)?atoi(inparas[0]):20;
+        int threshold=(inparas.size()>=1)?atoi(inparas[0]):40;
         int allnode=(inparas.size()>=2)?atoi(inparas[1]):1;
         int renderingType=(inparas.size()>=3)?atoi(inparas[2]):0;
         int crop_block_size=(inparas.size()>=4)?atoi(inparas[3]):16;
@@ -290,6 +290,8 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             }
         }
         QList <CellAPO> apolist=getBouton(nt,threshold,allnode);
+        //remove duplicated bouton at branch point
+        apolist=removeBoutons(apolist);
         string apo_file_path = inswc_file + "_bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
         if(infiles.size()==2&&outfiles.size()==1)
@@ -413,7 +415,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
 
-        int threshold=(inparas.size()>=1)?atoi(inparas[0]):10;
+        int threshold=(inparas.size()>=1)?atoi(inparas[0]):40;
         int useNeighborArea=(inparas.size()>=2)?atoi(inparas[1]):0;
         int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
         //read img
@@ -424,11 +426,14 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         getBoutonInImg(callback,inimg1d,in_sz,nt,useNeighborArea);
+        nt=removeDupNodes(nt);
         getNodeRadius(inimg1d,in_sz,nt);
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
         string outswc_file = inswc_file + "_IntensityResult.eswc";
         writeESWC_file(QString::fromStdString(outswc_file),nt);
         QList <CellAPO> apolist=getBouton(nt,threshold,allnode);
+        //remove duplicated bouton at branch point
+        apolist=removeBoutons(apolist);
         string apo_file_path = inswc_file + "_bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
     }
