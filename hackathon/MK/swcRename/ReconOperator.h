@@ -16,5 +16,7 @@ public:
 	void downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor);
 
 	void denAxonSeparate(const QStringList& fileList);
-	void denAxonCombine();
+	void denAxonCombine(bool dupRemove);
+
+	void removeDupedNodes();
 };

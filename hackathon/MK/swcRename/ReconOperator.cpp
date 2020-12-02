@@ -53,6 +53,7 @@ void ReconOperator::denAxonSeparate(const QStringList& fileList)
 			map<int, QList<NeuronSWC>> swcTypeMap = NeuronStructUtil::swcSplitByType(inputTree);
 
 			NeuronTree denTree;
+			if (swcTypeMap.find(1) != swcTypeMap.end()) denTree.listNeuron.append(swcTypeMap.at(1));
 			denTree.listNeuron.append(swcTypeMap.at(3));
 			if (swcTypeMap.find(4) != swcTypeMap.end()) denTree.listNeuron.append(swcTypeMap.at(4));
 
@@ -69,7 +70,7 @@ void ReconOperator::denAxonSeparate(const QStringList& fileList)
 	v3d_msg(QString("Neurite separation done."));
 }
 
-void ReconOperator::denAxonCombine()
+void ReconOperator::denAxonCombine(bool dupRemove)
 {
 	QDir inputDenFileFolder(this->rootPath + "\\dendrite");
 	QDir inputAxonFileFolder(this->rootPath + "\\axon");
@@ -81,18 +82,72 @@ void ReconOperator::denAxonCombine()
 	QString outputFolderName = this->rootPath + "\\denAxonCombined\\";
 	QDir outputDir(outputFolderName);
 	if (!outputDir.exists()) outputDir.mkpath(".");
-	inputDenFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-	QStringList denFileList = inputDenFileFolder.entryList();
+	inputAxonFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	QStringList axonFileList = inputAxonFileFolder.entryList();
 
-	for (auto& denFile : denFileList)
+	for (auto& axonFile : axonFileList)
 	{
-		QString denFullName = this->rootPath + "\\dendrite\\" + denFile;
-		NeuronTree outputTree = readSWC_file(denFullName);
-		QString axonFullName = this->rootPath + "\\axon\\" + denFile;
-		outputTree.listNeuron.append(readSWC_file(axonFullName).listNeuron);
-		QString outputSWCfullName = outputFolderName + denFile;
+		if (axonFile.endsWith(".ano") || axonFile.endsWith(".apo")) continue;
+
+		vector<NeuronTree> trees;
+		QString denFullName;
+		QString denFullNameEswcQ = this->rootPath + "\\dendrite\\" + axonFile.left(axonFile.length() - 4) + ".ano.eswc";
+		QString denFullNameSwcQ = this->rootPath + "\\dendrite\\" + axonFile;
+
+		if (QFile::exists(denFullNameEswcQ)) denFullName = denFullNameEswcQ;
+		else denFullName = denFullNameSwcQ;
+		trees.push_back(readSWC_file(denFullName));
+		QString axonFullName = this->rootPath + "\\axon\\" + axonFile;
+		trees.push_back(readSWC_file(axonFullName));
+		NeuronTree outputTree = NeuronStructUtil::swcCombine(trees);
+		
+		if (dupRemove) outputTree = NeuronStructUtil::removeDupNodes(outputTree);
+		QString outputSWCfullName = outputFolderName + axonFile;
 		writeSWC_file(outputSWCfullName, outputTree);
 	}
 	
 	v3d_msg(QString("Dendrite and axon conbination done."));
+}
+
+void ReconOperator::removeDupedNodes()
+{
+	QDir inputFolder(this->rootPath);
+	inputFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	QStringList swcFileList = inputFolder.entryList();
+
+	QString outputFolderQ = this->rootPath + "\\allCleanedUp\\";
+	QString remainingFolderQ = this->rootPath + "\\stillMoreThan1Root\\";
+	QDir outputDir(outputFolderQ);
+	QDir remainingDir(remainingFolderQ);
+	if (!outputDir.exists()) outputDir.mkpath(".");
+
+	for (auto& file : swcFileList)
+	{
+		QString inputSWCFullName = this->rootPath + "\\" + file;
+		NeuronTree inputTree = readSWC_file(inputSWCFullName);
+		if (NeuronStructUtil::multipleRootCheck(inputTree))
+		{
+			QString outputSWCfullName;
+			NeuronTree dupRemovedTree = NeuronStructUtil::removeDupNodes(inputTree);
+			if (!NeuronStructUtil::multipleRootCheck(dupRemovedTree))
+			{
+				if (file.endsWith("eswc")) outputSWCfullName = outputFolderQ + file.left(file.length() - 4) + "swc";
+				else outputSWCfullName = outputFolderQ + file;
+				writeSWC_file(outputSWCfullName, dupRemovedTree);
+			}
+			else
+			{
+				if (file.endsWith("eswc")) outputSWCfullName = remainingFolderQ + file.left(file.length() - 4) + "swc";
+				else outputSWCfullName = remainingFolderQ + file;
+				if (!remainingDir.exists()) remainingDir.mkpath(".");
+				writeSWC_file(outputSWCfullName, dupRemovedTree);
+			}
+		}
+		else
+		{
+			QString oldName = this->rootPath + "\\" + file;
+			QString newName = outputFolderQ + file;
+			QFile::copy(oldName, newName);
+		}
+	}
 }

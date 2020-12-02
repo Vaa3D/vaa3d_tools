@@ -229,21 +229,46 @@ int main(int argc, char* argv[])
 		outputTree.listNeuron = swcTypeMap.at(stoi(paras.at(2)));
 		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
 	}
-	else if (!funcName.compare("gammaTest"))
+	else if (!funcName.compare("dupRemove"))
 	{
-		myImgTester.inputString = paras.at(0);
-		myImgTester.outputString = paras.at(1);
-		if (paras.at(2).compare("")) myImgTester.gammaCutoff = stoi(paras.at(2));
-		myImgTester.gamma();
+		QString rootPathQ = QString::fromStdString(paras.at(0));
+		QString saveRootPathQ = QString::fromStdString(paras.at(1));
+
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		clock_t timeStart = clock();
+		for (auto& fileName : fileNameListQ)
+		{
+			QString swcFullNameQ = rootPathQ + "\\" + fileName;
+			NeuronTree noDupedTree = NeuronStructUtil::removeDupNodes(readSWC_file(swcFullNameQ));
+
+			QString saveFullNameQ = saveRootPathQ + "\\" + fileName;
+			writeSWC_file(saveFullNameQ, noDupedTree);
+		}
+		clock_t timeEnd = clock();
+		float duration = (timeEnd - timeStart) / CLOCKS_PER_SEC;
+		cout << duration << endl;
 	}
-	else if (!funcName.compare("inputSWCProperties"))
+	else if (!funcName.compare("multipleRootCheck"))
 	{
-		QString inputSWCName = QString::fromStdString(paras.at(0));
-		NeuronTree inputTree = readSWC_file(inputSWCName);
-		profiledTree inputProfiledTree(inputTree);
+		QString rootPathQ = QString::fromStdString(paras.at(0));
+		QString copyRootPathQ = QString::fromStdString(paras.at(1));
 
-		cout << inputProfiledTree.segs.size() << endl;
-
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+		
+		for (auto& fileName : fileNameListQ)
+		{
+			QString swcFullNameQ = rootPathQ + "\\" + fileName;
+			if (NeuronStructUtil::multipleRootCheck(readSWC_file(swcFullNameQ)))
+			{
+				QString saveFullNameQ = copyRootPathQ + "\\" + fileName;
+				QFile::copy(swcFullNameQ, saveFullNameQ);
+			}
+		}
 	}
 	else if (!funcName.compare("stackSlice"))
 	{

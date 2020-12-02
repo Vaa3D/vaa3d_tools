@@ -41,6 +41,8 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_10->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_8")
 		uiPtr->lineEdit_11->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+	else if (objName == "pushButton_9")
+		uiPtr->lineEdit_12->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::changeName()
@@ -123,7 +125,16 @@ void SWC_renameDlg::reconOp()
 		this->rootPath.replace("/", "\\");
 		this->myOperator.rootPath = this->rootPath;
 
-		this->myOperator.denAxonCombine();
+		if (uiPtr->radioButton_2->isChecked()) this->myOperator.denAxonCombine(true);
+		else this->myOperator.denAxonCombine(false);
+	}
+	else if (objName == "buttonBox_7")
+	{
+		this->rootPath = uiPtr->lineEdit_12->text();
+		this->rootPath.replace("/", "\\");
+		this->myOperator.rootPath = this->rootPath;
+
+		this->myOperator.removeDupedNodes();
 	}
 }
 

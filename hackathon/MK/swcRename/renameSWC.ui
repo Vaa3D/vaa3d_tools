@@ -528,8 +528,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>529</width>
-            <height>631</height>
+            <width>508</width>
+            <height>814</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -815,6 +815,146 @@
             </widget>
            </item>
            <item>
+            <widget class="QGroupBox" name="groupBox_12">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>180</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Remove duplicated nodes:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <widget class="QGroupBox" name="groupBox_13">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select a folder to process:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_12">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>400</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_9">
+                   <property name="maximumSize">
+                    <size>
+                     <width>80</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_9">
+                <property name="maximumSize">
+                 <size>
+                  <width>500</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_15">
+                 <item>
+                  <spacer name="horizontalSpacer_10">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>259</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="buttonBox_7">
+                   <property name="maximumSize">
+                    <size>
+                     <width>180</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBox_5">
              <property name="maximumSize">
               <size>
@@ -1053,6 +1193,22 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_16">
                  <item>
+                  <widget class="QRadioButton" name="radioButton_2">
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Remove duplicated nodes</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <spacer name="horizontalSpacer_9">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -1113,8 +1269,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>308</y>
+     <x>518</x>
+     <y>272</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1129,8 +1285,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>369</y>
+     <x>518</x>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
      <x>438</x>
@@ -1145,8 +1301,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>369</y>
+     <x>518</x>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1161,8 +1317,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>543</y>
+     <x>518</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1177,8 +1333,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>672</y>
+     <x>518</x>
+     <y>618</y>
     </hint>
     <hint type="destinationlabel">
      <x>527</x>
@@ -1193,8 +1349,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>672</y>
+     <x>518</x>
+     <y>618</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1241,8 +1397,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>511</x>
-     <y>618</y>
+     <x>518</x>
+     <y>564</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1273,8 +1429,8 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>395</x>
-     <y>443</y>
+     <x>497</x>
+     <y>647</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1289,8 +1445,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>414</x>
-     <y>451</y>
+     <x>497</x>
+     <y>647</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1305,8 +1461,8 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>380</x>
-     <y>703</y>
+     <x>497</x>
+     <y>832</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1321,8 +1477,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>457</x>
-     <y>708</y>
+     <x>497</x>
+     <y>832</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1337,8 +1493,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>449</x>
-     <y>390</y>
+     <x>497</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
      <x>575</x>
@@ -1353,12 +1509,60 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>451</x>
-     <y>579</y>
+     <x>497</x>
+     <y>775</y>
     </hint>
     <hint type="destinationlabel">
      <x>575</x>
      <y>537</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_9</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>388</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>571</x>
+     <y>251</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_7</sender>
+   <signal>accepted()</signal>
+   <receiver>dialog</receiver>
+   <slot>okClicked2()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>348</x>
+     <y>455</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>574</x>
+     <y>550</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_7</sender>
+   <signal>rejected()</signal>
+   <receiver>dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>450</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>578</x>
+     <y>590</y>
     </hint>
    </hints>
   </connection>

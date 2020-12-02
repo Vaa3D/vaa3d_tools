@@ -278,22 +278,53 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& inputTree)
 {
 	map<int, QList<NeuronSWC>> outputNodeTypeMap;
-	map<int, boost::container::flat_set<int>> nodeIDsetMap;
+
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-	{
 		outputNodeTypeMap[it->type].append(*it);
-		nodeIDsetMap[it->type].insert(it->n);
-	}
-	for (map<int, QList<NeuronSWC>>::iterator mapIt = outputNodeTypeMap.begin(); mapIt != outputNodeTypeMap.end(); ++mapIt)
+
+	return outputNodeTypeMap;
+}
+
+NeuronTree NeuronStructUtil::removeDupNodes(const NeuronTree& inputTree)
+{
+	profiledTree inputProfiledTree(inputTree);
+	vector<ptrdiff_t> headDelLocs;
+	boost::container::flat_map<ptrdiff_t, ptrdiff_t> childLoc2tailLocMap;
+
+	for (auto& headSegTile : inputProfiledTree.segHeadMap)
 	{
-		for (QList<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+		for (vector<int>::iterator segHeadIt = headSegTile.second.begin(); segHeadIt != headSegTile.second.end(); ++segHeadIt)
 		{
-			if (nodeIt->parent == -1) continue;
-			else if (nodeIDsetMap.at(nodeIt->type).find(nodeIt->parent) == nodeIDsetMap.at(nodeIt->type).end()) nodeIt->parent = -1;
+			ptrdiff_t headLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*segHeadIt).head);
+			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(headLoc);
+			if (inputProfiledTree.segTailMap.find(headSegTile.first) != inputProfiledTree.segTailMap.end())
+			{
+				for (vector<int>::iterator segTailIt = inputProfiledTree.segTailMap.at(headSegTile.first).begin(); segTailIt != inputProfiledTree.segTailMap.at(headSegTile.first).end(); ++segTailIt)
+				{
+					for (auto& tailID : inputProfiledTree.segs.at(*segTailIt).tails)
+					{
+						ptrdiff_t tailLoc = inputProfiledTree.node2LocMap.at(tailID);
+						const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(tailLoc);
+						if (headNode.x == tailNode.x && headNode.y == tailNode.y && headNode.z == tailNode.z)
+						{
+							headDelLocs.push_back(headLoc);
+							for (auto& childLoc : inputProfiledTree.node2childLocMap.at(headNode.n)) 
+								childLoc2tailLocMap.insert(pair<ptrdiff_t, ptrdiff_t>(childLoc, tailLoc));
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return outputNodeTypeMap;
+	for (auto& childLoc : childLoc2tailLocMap)
+		inputProfiledTree.tree.listNeuron[childLoc.first].parent = inputProfiledTree.tree.listNeuron.at(childLoc.second).n;
+
+	sort(headDelLocs.rbegin(), headDelLocs.rend());
+	for (auto& headDelLoc : headDelLocs)
+		inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + headDelLoc);
+
+	return inputProfiledTree.tree;
 }
 
 NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type)

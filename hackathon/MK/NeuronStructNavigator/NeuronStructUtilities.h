@@ -83,6 +83,9 @@ public:
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
+	static inline bool multipleRootCheck(const NeuronTree& inputTree);
+	static NeuronTree removeDupNodes(const NeuronTree& inputTree);
+
 	// Subtract refTree from targetTree.
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
 	// ------------ END of [Basic Operations] ------------- //
@@ -192,6 +195,15 @@ inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 	boundaries[5] = zMax;
 
 	return boundaries;
+}
+
+inline bool NeuronStructUtil::multipleRootCheck(const NeuronTree& inputTree)
+{
+	for (auto& node : inputTree.listNeuron)
+	{
+		if (node.parent == -1 && node.type != 1) return true;
+	}
+	return false;
 }
 
 template<typename T>
