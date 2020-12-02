@@ -1299,7 +1299,7 @@ bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString
         saveSWC_file(outswc_file.toStdString(), outswc, infostring);
         p.result = swc_convert(outswc);
 
-        if(outswc.size()>1)
+        if(0/*outswc.size()>1*/)
         {
 
         //call sort_swc function

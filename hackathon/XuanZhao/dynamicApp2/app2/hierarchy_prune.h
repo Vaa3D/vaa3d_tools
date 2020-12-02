@@ -3,9 +3,11 @@
 
 #include <map>
 #include <set>
+#include <algorithm>
 #include "smooth_curve.h"
 #include "my_surf_objs.h"
 #include "v3d_interface.h"
+#include "marker_radius.h"
 using namespace std;
 
 #define INTENSITY_DISTANCE_METHOD 0
@@ -839,6 +841,252 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	// release hierarchical segments
     for(V3DLONG i = 0; i < topo_segs.size(); i++) delete topo_segs[i];
 	return true;
+}
+
+bool segCmp(HierarchySegment* a, HierarchySegment* b){
+    return a->length > b->length;
+}
+
+template<class T> bool happBasedFlag(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc, T* inimgFlag,
+                                     int flag, long sz0, long sz1, long sz2, double length_thresh = 2.0,
+                                     double SR_ratio = 1.0/9.0, bool is_smooth = false){
+    V3DLONG sz01 = sz0 * sz1;
+    V3DLONG tol_sz = sz01 * sz2;
+
+    vector<HierarchySegment*> topo_segs;
+    swc2topo_segs<unsigned char>(inswc,topo_segs,1);
+    if(topo_segs.empty()){
+        cout<<"the topo_segs is empty!"<<endl;
+        return false;
+    }
+
+    sort(topo_segs.begin(),topo_segs.end(),segCmp);
+
+    vector<HierarchySegment*> filter_segs;
+    HierarchySegment* rootSeg = topo_segs[0];
+    MyMarker* rootMarker = rootSeg->root_marker;
+    filter_segs.push_back(rootSeg);
+//    cout<<"root seg: "<<rootSeg->length<<endl;
+    for(V3DLONG i = 1; i < topo_segs.size(); i++)
+    {
+        HierarchySegment* tmpSeg = topo_segs[i];
+        while (tmpSeg->parent != rootSeg) {
+            tmpSeg = tmpSeg->parent;
+        }
+        if(tmpSeg->root_marker->parent == rootMarker){
+//            cout<<i<<" : "<<topo_segs[i]->length<<" "<<tmpSeg->length<<endl;
+            continue;
+        }
+        if(topo_segs[i]->length >= length_thresh) filter_segs.push_back(topo_segs[i]);
+    }
+
+//    cout<<"Calculating radius for every node"<<endl;
+//    V3DLONG in_sz[4] = {sz0, sz1, sz2, 1};
+//    for(int i=0; i<filter_segs.size(); i++){
+//        HierarchySegment* seg = filter_segs[i];
+//        MyMarker * leaf_marker = seg->leaf_marker;
+//        MyMarker * root_marker = seg->root_marker;
+//        MyMarker * p = leaf_marker;
+//        while(true){
+//            p->radius = markerRadius_xuan_XY(inimgFlag,in_sz,*p,flag);
+//            if(p == root_marker) break;
+//            p = p->parent;
+//        }
+//    }
+
+    cout<<"Perform hierarchical pruning"<<endl;
+    T* tmpimg1d = new T[tol_sz];
+    memset(tmpimg1d,0,tol_sz*sizeof(T));
+
+    set<HierarchySegment*> visited_segs;
+    vector<HierarchySegment*> filter_segs2;
+
+    double tol_sum_sig = 0.0, tol_sum_rdc = 0.0;
+    for(int i=0; i<filter_segs.size(); i++){
+        HierarchySegment* seg = filter_segs[i];
+        if(seg->parent && visited_segs.find(seg->parent) == visited_segs.end())
+            continue;
+        MyMarker * leaf_marker = seg->leaf_marker;
+        MyMarker * root_marker = seg->root_marker;
+        double SR_RATIO = SR_ratio;
+
+        int sum_sig = 0;
+        int sum_rdc = 0;
+
+        MyMarker* p = leaf_marker;
+
+//        vector<MyMarker*> tmpMarkers = vector<MyMarker*>();
+//        seg->get_markers(tmpMarkers);
+
+
+
+        while (true) {
+//            cout<<"p x "<<p->x<<endl;
+            MyMarker* pp = p->parent;
+            if(tmpimg1d[p->ind(sz0,sz01)] == 1){
+                sum_rdc++;
+            }else{
+                XYZ dire = XYZ(p->x - pp->x, p->y - pp->y, p->z - pp->z);
+                double l = norm(dire);
+                double max_r = 5;
+                double total_num, background_num;
+                double ir;
+                int r;
+                double dz, dy, dx;
+                for(ir=1; ir<=max_r; ir++){
+//                    cout<<"ir: "<<ir<<endl;
+                    for(dz=-ir-1; dz<=ir+1; dz++){
+                        for(dy=-ir-1; dy<=ir+1; dy++){
+                            for(dx=-ir-1; dx<=ir+1; dx++){
+                                V3DLONG x2 = p->x + dx;
+                                V3DLONG y2 = p->y + dy;
+                                V3DLONG z2 = p->z + dz;
+
+                                XYZ curDire = XYZ(x2 - pp->x, y2 - pp->y, z2 - pp->z);
+                                double curL = norm(curDire);
+                                double cosAngle = dot(normalize(dire),normalize(curDire));
+                                double sinAngle = sin(acosf(cosAngle));
+
+                                double curP = curL*cosAngle;
+                                double curR = curL*sinAngle;
+//                                cout<<"curL: "<<curL<<" curP: "<<curP<<" curR: "<<curR<<endl;
+                                if(curP>=0 && curP<=l && curR>0 && curR<=ir){
+                                    total_num++;
+                                    if(x2<0 || x2>=sz0) goto end1;
+                                    if(y2<0 || y2>=sz1) goto end1;
+                                    if(z2<0 || z2>=sz2) goto end1;
+
+                                    if(curR>ir-1 && inimgFlag[z2 * sz01 + y2 * sz0 + x2] != flag){
+                                        background_num++;
+                                        if ((background_num/total_num) > 0.001) goto end1;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+                end1:
+                    {r = ir;}
+
+//                cout<<"r: "<<r<<endl;
+                p->radius = r;
+
+                double sum_sphere_size = 0.0;
+                double sum_delete_size = 0.0;
+                for(dz=-r-1; dz<=r+1; dz++){
+                    for(dy=-r-1; dy<=r+1; dy++){
+                        for(dx=-r-1; dx<=r+1; dx++){
+                            V3DLONG x2 = p->x + dx;
+                            V3DLONG y2 = p->y + dy;
+                            V3DLONG z2 = p->z + dz;
+
+                            XYZ curDire = XYZ(x2 - pp->x, y2 - pp->y, z2 - pp->z);
+                            double cosAngle = dot(normalize(dire),normalize(curDire));
+                            double sinAngle = sin(acosf(cosAngle));
+                            double curL = norm(curDire);
+                            double curP = curL*cosAngle;
+                            double curR = curL*sinAngle;
+                            if(curP>=0 && curP<=l && curR>0 && curR<=ir){
+                                if(x2<0 || x2>=sz0) continue;
+                                if(y2<0 || y2>=sz1) continue;
+                                if(z2<0 || z2>=sz2) continue;
+                                V3DLONG ind2 = z2 * sz01 + y2 * sz0 + x2;
+                                if(inimgFlag[ind2] != flag)
+                                    continue;
+                                sum_sphere_size += 1;
+                                if(tmpimg1d[ind2] == 1){
+                                    sum_delete_size += 1;
+                                }else{
+                                    tmpimg1d[ind2] = 2;
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+
+                if(sum_sphere_size>0 && sum_delete_size/sum_sphere_size>0.1){
+                    sum_rdc++;
+                }else {
+                    sum_sig++;
+                }
+
+            }
+            if(pp == root_marker){
+                break;
+            }
+            p = pp;
+        }
+
+        cout<<"i: "<<i<<" sum_rdc: "<<sum_rdc<<" sum_sig: "<<sum_sig<<endl;
+
+        if(!seg->parent || sum_rdc == 0 || (sum_sig/(double)sum_rdc >= SR_RATIO && sum_sig>=1)){
+            tol_sum_sig += sum_sig;
+            tol_sum_rdc += sum_rdc;
+
+            for(int j=0; j<tol_sz; j++){
+                if(tmpimg1d[j] == 2){
+                    tmpimg1d[j] = 1;
+                }
+            }
+
+            filter_segs2.push_back(seg);
+            visited_segs.insert(seg);
+
+        }else{
+            for(int j=0; j<tol_sz; j++){
+                if(tmpimg1d[j] == 2){
+                    tmpimg1d[j] = 0;
+                }
+            }
+        }
+
+    }
+
+    cout<<"prune by coverage (segment number) : "<<filter_segs.size() << " - "<< filter_segs2.size() <<" = "<<filter_segs.size() - filter_segs2.size()<<endl;
+    cout<<"R/S ratio = "<<tol_sum_rdc/tol_sum_sig<<" ("<<tol_sum_rdc<<"/"<<tol_sum_sig<<")"<<endl;
+
+
+    if(tmpimg1d){delete [] tmpimg1d; tmpimg1d = 0; }
+
+//    for(V3DLONG i=0; i<filter_segs.size(); i++){
+//        vector<MyMarker*> tmpMarkers;
+//        filter_segs[i]->get_markers(tmpMarkers);
+//        if(tmpMarkers.size()>=3){
+//            filter_segs2.push_back(filter_segs[i]);
+//        }
+//        tmpMarkers.clear();
+//    }
+
+    if(is_smooth) // smooth curve
+    {
+        cout<<"Smooth the final curve"<<endl;
+        for(V3DLONG i = 0; i < filter_segs2.size(); i++)
+        {
+            HierarchySegment * seg = filter_segs2[i];
+            MyMarker * leaf_marker = seg->leaf_marker;
+            MyMarker * root_marker = seg->root_marker;
+            vector<MyMarker*> seg_markers;
+            MyMarker * p = leaf_marker;
+            while(p != root_marker)
+            {
+                seg_markers.push_back(p);
+                p = p->parent;
+            }
+            seg_markers.push_back(root_marker);
+            smooth_curve_and_radius(seg_markers, 5);
+        }
+    }
+    outswc.clear();
+
+
+    topo_segs2swc(filter_segs2, outswc, 0);
+    for(V3DLONG i = 0; i < topo_segs.size(); i++) delete topo_segs[i];
+    return true;
+
 }
 
 #endif

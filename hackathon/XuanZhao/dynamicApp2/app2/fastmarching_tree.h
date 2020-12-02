@@ -1437,9 +1437,9 @@ int getInflectionIndex(vector<T*> points, double cosThres){
 
 }
 
-bool segCmp(HierarchySegment* a, HierarchySegment* b){
-    return a->length > b->length;
-}
+//bool segCmp(HierarchySegment* a, HierarchySegment* b){
+//    return a->length > b->length;
+//}
 
 template<class T>
 double getSmoothWeight(T * inimg1d, V3DLONG index, long sz0, long sz1, long sz2){
@@ -1534,7 +1534,7 @@ template<class T> bool fastmarching_line(MyMarker root,
 
     long tol_sz = sz0 * sz1 * sz2;
     long sz01 = sz0 * sz1;
-    long i;
+//    long i;
     //int cnn_type = 3;  // ?
 
     float * phi = 0;
@@ -1547,7 +1547,7 @@ template<class T> bool fastmarching_line(MyMarker root,
         parent = new long[tol_sz];
         state = new char[tol_sz];
         path = new float[tol_sz];
-        for(i = 0; i < tol_sz; i++)
+        for(long i = 0; i < tol_sz; i++)
         {
             phi[i] = INF;
             parent[i] = i;  // each pixel point to itself at the         statements beginning
@@ -1568,7 +1568,7 @@ template<class T> bool fastmarching_line(MyMarker root,
     // GI parameter min_int, max_int, li
     double max_int = 0; // maximum intensity, used in GI
     double min_int = INF;
-    for(i = 0; i < tol_sz; i++)
+    for(long i = 0; i < tol_sz; i++)
     {
         if (inimg1d[i] > max_int) max_int = inimg1d[i];
         else if (inimg1d[i] < min_int) min_int = inimg1d[i];
@@ -1610,6 +1610,11 @@ template<class T> bool fastmarching_line(MyMarker root,
         // loop
         int time_counter = 1;
         double process1 = 0;
+        
+//        HeapElemX* tempElem = heap.delete_min();
+//        HeapElemX* tempElemCopy = new HeapElemX(tempElem->img_ind,tempElem->value);
+//        tempElemCopy->prev_ind = tempElem->prev_ind;
+//        heap.insert(tempElem);
 
         while(!heap.empty())
         {
@@ -1694,18 +1699,18 @@ template<class T> bool fastmarching_line(MyMarker root,
 
                         if(state[index] != ALIVE && state[index] != FINAL)
                         {
-//                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
 
-                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
-                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
+//                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
+//                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
 
-                            XYZ curDire = XYZ(w-i,h-j,d-k);
-                            curDire = normalize(curDire);
-                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
-                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
+//                            XYZ curDire = XYZ(w-i,h-j,d-k);
+//                            curDire = normalize(curDire);
+//                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
+//                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
 
-                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
-                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
+//                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
+//                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
 
 //                            double new_dist = phi[min_ind] + (GIG(indexDG) + GIG(min_indDG))*factor*0.5;
 
@@ -1735,6 +1740,158 @@ template<class T> bool fastmarching_line(MyMarker root,
                 }
             }
         }
+
+        /*
+        max_int = 0; // maximum intensity, used in GI
+        min_int = INF;
+        for(long ind=0; ind<tol_sz; ind++){
+            if(state[ind] == TRIAL){
+                state[ind] = FAR;
+            }else if (state[ind] == ALIVE) {
+                if (inimg1d[ind] > max_int) max_int = inimg1d[ind];
+                if (inimg1d[ind] < min_int) min_int = inimg1d[ind];
+                state[ind] = FAR;
+            }
+            phi[ind] = INF;
+            path[ind] = 0;
+            parent[ind] = ind;
+
+        }
+        max_int -= min_int;
+
+        //init heap
+        {
+            heap.insert(tempElemCopy);
+            elems[tempElemCopy->img_ind] = tempElemCopy;
+            path[tempElemCopy->img_ind] = 0;
+            phi[tempElemCopy->img_ind] = 0;
+        }
+
+        while(!heap.empty())
+        {
+            double process2 = (time_counter++)*10000.0/tol_sz;
+            //cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush();
+            if(process2 - process1 >= 1)
+            {
+                cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush(); process1 = process2;
+            }
+
+            HeapElemX* min_elem = heap.delete_min();
+            elems.erase(min_elem->img_ind);
+
+            long min_ind = min_elem->img_ind;
+            long prev_ind = min_elem->prev_ind;
+            delete min_elem;
+
+            parent[min_ind] = prev_ind;
+
+            state[min_ind] = ALIVE;
+            int i = min_ind % sz0;
+            int j = (min_ind/sz0) % sz1;
+            int k = (min_ind/sz01) % sz2;
+
+            int pi = prev_ind % sz0;
+            int pj = (prev_ind/sz0) % sz1;
+            int pk = (prev_ind/sz01) % sz2;
+
+            path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+            if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1) && t != 1){
+                stopFlag = 2;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+//            qDebug()<<"path[min_ind]: "<<path[min_ind];
+            if(path[min_ind]>length){
+                stopFlag = 0;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+
+
+            int w, h, d;
+            for(int kk = -1; kk <= 1; kk++)
+            {
+                d = k+kk;
+                if(d < 0 || d >= sz2) continue;
+                for(int jj = -1; jj <= 1; jj++)
+                {
+                    h = j+jj;
+                    if(h < 0 || h >= sz1) continue;
+                    for(int ii = -1; ii <= 1; ii++)
+                    {
+                        w = i+ii;
+                        if(w < 0 || w >= sz0) continue;
+                        int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                        if(offset == 0 || offset > cnn_type) continue;
+//                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                        double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
+                        long index = d*sz01 + h*sz0 + w;
+//                        if (is_break_accept)
+//                        {
+//                            if(inimg1d[index] <= bkg_thresh &&
+//                               inimg1d[min_ind] <= bkg_thresh)
+//                                continue;
+//                        }
+//                        else
+//                        {
+//                            if(inimg1d[index] <= bkg_thresh)
+//                                continue;
+//                        }
+//                        qDebug()<<"state[index]: "<<(int)state[index];
+
+                        if(state[index] != ALIVE && state[index] != FINAL)
+                        {
+                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+
+//                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
+//                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
+
+//                            XYZ curDire = XYZ(w-i,h-j,d-k);
+//                            curDire = normalize(curDire);
+//                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
+//                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
+
+//                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
+//                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
+
+//                            double new_dist = phi[min_ind] + (GIG(indexDG) + GIG(min_indDG))*factor*0.5;
+
+                            long prev_ind = min_ind;
+
+                            if(state[index] == FAR)
+                            {
+                                phi[index] = new_dist;
+                                HeapElemX * elem = new HeapElemX(index, phi[index]);
+                                elem->prev_ind = prev_ind;
+                                heap.insert(elem);
+                                elems[index] = elem;
+                                state[index] = TRIAL;
+                            }
+                            else if(state[index] == TRIAL)
+                            {
+                                if (phi[index] > new_dist)
+                                {
+                                    phi[index] = new_dist;
+                                    HeapElemX * elem = elems[index];
+                                    heap.adjust(elem->heap_id, phi[index]);
+                                    elem->prev_ind = prev_ind;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        */
 
         qDebug()<<"-------find next startPoint----------";
 
@@ -1848,7 +2005,7 @@ template<class T> bool fastmarching_line(MyMarker root,
              qDebug()<<i<<"---------------------------------------------------------";
              XYZ tmpDire;
              if(i == 0){
-                 tmpDire = getDirection2(tmpMarkers,0.5);
+                 tmpDire = getDirection2(tmpMarkers,0.6);
              }else{
                  tmpDire = getDirection2(tmpMarkers,0.5);
              }
@@ -1865,7 +2022,50 @@ template<class T> bool fastmarching_line(MyMarker root,
                          QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_"
                                  + QString::number(i) + "_" + QString::number(tmpCosAngle) + "_candidate.swc";
                          saveSWC_file(sss.toStdString(),tmpMarkers);
-                         break;
+
+                         vector<MyMarker*> markers = vector<MyMarker*>();
+                 //        segs[segMaxIndex]->get_markers(markers);
+                         MyMarker* markerTmp = targetSegment->leaf_marker;
+                         markers.push_back(markerTmp);
+                         while (markerTmp != rootMarker) {
+                             markerTmp = markerTmp->parent;
+                             markers.push_back(markerTmp);
+                         }
+                         qDebug()<<"target markers size: "<<markers.size();
+
+
+
+                         XYZ cur = XYZ(0,0,0);
+                         XYZ cur_front = XYZ(0,0,0);
+                         int mcount = 0;
+                         for(int i=0; i<10; i+=2){
+                             if(i>=markers.size()){
+                                 break;
+                             }
+                             cur = cur + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+                             mcount++;
+                         }
+                         cur = cur/XYZ(mcount,mcount,mcount);
+                         mcount = 0;
+                         for(int i=markers.size()-1; i>markers.size()-10; i-=2){
+                             if(i<0){
+                                 break;
+                             }
+                             cur_front = cur_front + XYZ(markers[i]->x,markers[i]->y,markers[i]->z);
+                             mcount++;
+                         }
+                         cur_front = cur_front/XYZ(mcount,mcount,mcount);
+
+                         XYZ curDirection = cur - cur_front;
+                         double curCosAngle = dot(normalize(curDirection),normalize(lastDirection));
+                         if(curCosAngle<-0.9){
+                             qDebug()<<"the longest seg ie reverse";
+                             targetSegment = 0;
+                         }else{
+                             break;
+                         }
+
+
                      }else
                      {
                          if(candidate.empty()){
@@ -1873,9 +2073,11 @@ template<class T> bool fastmarching_line(MyMarker root,
                              candidateDire.push_back(judgeSameDire);
                          }else {
                              bool isSame = false;
+                             int sameIndex = -1;
                              for(int j=0; j<candidate.size(); j++){
-                                 double segsCosAngle = dot(normalize(tmpDire),normalize(candidateDire[j]));
+                                 double segsCosAngle = dot(normalize(judgeSameDire),normalize(candidateDire[j]));
                                  if(segsCosAngle>0.9){
+                                     sameIndex = j;
                                      isSame = true;
                                      break;
                                  }
@@ -1886,6 +2088,42 @@ template<class T> bool fastmarching_line(MyMarker root,
                                  QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_"
                                          + QString::number(i) + "_" + QString::number(tmpCosAngle) + "_candidate.swc";
                                  saveSWC_file(sss.toStdString(),tmpMarkers);
+                             }else{
+
+                                 QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_"
+                                         + QString::number(i) + "_" + QString::number(tmpCosAngle) + "_Notcandidate.swc";
+                                 saveSWC_file(sss.toStdString(),tmpMarkers);
+
+
+                                 MyMarker* curLeafMarker = tmpSegs[i]->leaf_marker;
+                                 MyMarker* lastLeafMarker = candidate[sameIndex]->leaf_marker;
+                                 double curLeafIntensity = 0.0, lastLeafIntensity = 0.0;
+
+                                 int tmpCount = 0;
+                                 for(int j=0; j<5; j++){
+                                     long curLeafInd = curLeafMarker->z*sz01
+                                             + curLeafMarker->y*sz0
+                                             + curLeafMarker->x;
+                                     long lastLeafInd = lastLeafMarker->z*sz01
+                                             + lastLeafMarker->y*sz0
+                                             + lastLeafMarker->x;
+                                     qDebug()<<j<<" "<<curLeafInd<<" "<<lastLeafInd;
+                                     curLeafIntensity += inimg1d[curLeafInd];
+                                     lastLeafIntensity += inimg1d[lastLeafInd];
+                                     tmpCount++;
+                                     if(curLeafMarker->parent != rootMarker && lastLeafMarker->parent != rootMarker){
+                                         curLeafMarker = curLeafMarker->parent;
+                                         lastLeafMarker = lastLeafMarker->parent;
+                                     }else{
+                                         break;
+                                     }
+
+                                 }
+
+                                 qDebug()<<"curLeafIntensity: "<<curLeafIntensity<<" lastLeafIntensity: "<<lastLeafIntensity;
+                                 if(curLeafIntensity>lastLeafIntensity){
+                                     candidate[sameIndex] = tmpSegs[i];
+                                 }
                              }
                          }
                      }
@@ -2160,7 +2398,7 @@ template<class T> bool fastmarching_line(MyMarker root,
                     QString sss = "D:\\testDynamicTracing\\" + QString::number(t) + "_" + QString::number(i) + "_candidate2.swc";
                     saveSWC_file(sss.toStdString(),tmpMarkers);
 
-                    XYZ tmpDire = getDirection(tmpMarkers,sqrt(2)/2);
+                    XYZ tmpDire = getDirection(tmpMarkers,0.5);
                     qDebug()<<"length: "<<candidate2[i]->length<<" tmpDire: "<<tmpDire.x<<" "<<tmpDire.y<<" "<<tmpDire.z;
 
                     if(tmpDire == XYZ(-3,-3,-3) || tmpDire == XYZ(-2,-2,-2) || tmpDire == XYZ(-4,-4,-4)){
@@ -2751,6 +2989,143 @@ template<class T> bool fastmarching_line2(MyMarker root,
         int time_counter = 1;
         double process1 = 0;
 
+        HeapElemX* tempElem = heap.delete_min();
+        HeapElemX* tempElemCopy = new HeapElemX(tempElem->img_ind,tempElem->value);
+        tempElemCopy->prev_ind = tempElem->prev_ind;
+        heap.insert(tempElem);
+
+        while(!heap.empty())
+        {
+            double process2 = (time_counter++)*10000.0/tol_sz;
+            //cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush();
+            if(process2 - process1 >= 1)
+            {
+                cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush(); process1 = process2;
+            }
+
+            HeapElemX* min_elem = heap.delete_min();
+            elems.erase(min_elem->img_ind);
+
+            long min_ind = min_elem->img_ind;
+            long prev_ind = min_elem->prev_ind;
+            delete min_elem;
+
+            parent[min_ind] = prev_ind;
+
+            state[min_ind] = ALIVE;
+            int i = min_ind % sz0;
+            int j = (min_ind/sz0) % sz1;
+            int k = (min_ind/sz01) % sz2;
+
+            int pi = prev_ind % sz0;
+            int pj = (prev_ind/sz0) % sz1;
+            int pk = (prev_ind/sz01) % sz2;
+
+            path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+            if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1) && tt != 1){
+                stopFlag = 2;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+//            qDebug()<<"path[min_ind]: "<<path[min_ind];
+            if(path[min_ind]>length){
+                stopFlag = 0;
+                while (!heap.empty()) {
+                    HeapElemX* tmp_elem = heap.delete_min();
+                    elems.erase(tmp_elem->img_ind);
+                    delete tmp_elem;
+                }
+                break;
+            }
+
+
+            int w, h, d;
+            for(int kk = -1; kk <= 1; kk++)
+            {
+                d = k+kk;
+                if(d < 0 || d >= sz2) continue;
+                for(int jj = -1; jj <= 1; jj++)
+                {
+                    h = j+jj;
+                    if(h < 0 || h >= sz1) continue;
+                    for(int ii = -1; ii <= 1; ii++)
+                    {
+                        w = i+ii;
+                        if(w < 0 || w >= sz0) continue;
+                        int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                        if(offset == 0 || offset > cnn_type) continue;
+//                        double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                        double factor = sqrt(ii*ii + jj*jj + kk*kk*zScale*zScale);
+                        long index = d*sz01 + h*sz0 + w;
+
+                        if(state[index] != ALIVE && state[index] != FINAL)
+                        {
+//                            double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+
+                            double indexSG = getSmoothWeight(inimg1d,index,sz0,sz1,sz2);
+                            double min_indSG = getSmoothWeight(inimg1d,min_ind,sz0,sz1,sz2);
+
+                            XYZ curDire = XYZ(w-i,h-j,d-k);
+                            curDire = normalize(curDire);
+                            double indexDG = getDirectionWeight(inimg1d,index,sz0,sz1,sz2,curDire);
+                            double min_indDG = getDirectionWeight(inimg1d,min_ind,sz0,sz1,sz2,curDire);
+
+                            double direFactor = 1;//exp(1.0/(dot(curDire,normalize(lastDirection))+1.01));
+                            double new_dist = phi[min_ind] + (GIG(indexSG) + GIG(min_indSG))*factor*0.5*direFactor;
+
+//                            double new_dist = phi[min_ind] + (GIG(indexDG) + GIG(min_indDG))*factor*0.5;
+
+                            long prev_ind = min_ind;
+
+                            if(state[index] == FAR)
+                            {
+                                phi[index] = new_dist;
+                                HeapElemX * elem = new HeapElemX(index, phi[index]);
+                                elem->prev_ind = prev_ind;
+                                heap.insert(elem);
+                                elems[index] = elem;
+                                state[index] = TRIAL;
+                            }
+                            else if(state[index] == TRIAL)
+                            {
+                                if (phi[index] > new_dist)
+                                {
+                                    phi[index] = new_dist;
+                                    HeapElemX * elem = elems[index];
+                                    heap.adjust(elem->heap_id, phi[index]);
+                                    elem->prev_ind = prev_ind;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        max_int = 0; // maximum intensity, used in GI
+        min_int = INF;
+        for(long ind=0; ind<tol_sz; ind++){
+            if(state[ind] == TRIAL){
+                state[ind] = FAR;
+            }else if (state[ind] == ALIVE) {
+                if (inimg1d[ind] > max_int) max_int = inimg1d[ind];
+                if (inimg1d[ind] < min_int) min_int = inimg1d[ind];
+                state[ind] = FAR;
+            }
+        }
+        max_int -= min_int;
+
+        //init heap
+        {
+            heap.insert(tempElemCopy);
+            elems[tempElemCopy->img_ind] = tempElemCopy;
+        }
+
         while(!heap.empty())
         {
             double process2 = (time_counter++)*10000.0/tol_sz;
@@ -2888,7 +3263,7 @@ template<class T> bool fastmarching_line2(MyMarker root,
                 if(state[ind] == TRIAL)
                     state[ind] = FAR;
                 if(state[ind] != ALIVE) continue;
-                state[ind] = FINAL; //set final
+                state[ind] = TMP; //set final
                 long ind2 = parent[ind];
                 MyMarker * marker1 = tmp_map[ind];
                 MyMarker * marker2 = tmp_map[ind2];
@@ -2924,7 +3299,8 @@ template<class T> bool fastmarching_line2(MyMarker root,
 
         }else {
             vector<MyMarker*> tmpOutTree = vector<MyMarker*>();
-            happ(tmptree,tmpOutTree,inimg1d,sz0,sz1,sz2,bkg_thresh,0.2,6.0,false,false);
+//            happ(tmptree,tmpOutTree,inimg1d,sz0,sz1,sz2,bkg_thresh,0.2,6.0,false,false);
+            happBasedFlag(tmptree,tmpOutTree,state,TMP,sz0,sz1,sz2);
 
             s = "D:\\testDynamicTracing\\" + QString::number(tt) + ".swc";
             saveSWC_file(s.toStdString(),tmpOutTree);
@@ -2985,6 +3361,18 @@ template<class T> bool fastmarching_line2(MyMarker root,
             }
 
             qDebug()<<"size: "<<pointIndexs.size();
+            bool isSingleLine = true;
+            for(V3DLONG i=0; i<pointSize; i++){
+                if(children[i].size()>1){
+                    isSingleLine = false;
+                    break;
+                }
+            }
+            if(isSingleLine){
+                for(V3DLONG i=0; i<pointSize; i++){
+                    isRemain[i] = 1;
+                }
+            }
 
             for(V3DLONG i=0; i<pointSize; i++){
                 t = pointIndexs[i];
@@ -3144,6 +3532,12 @@ template<class T> bool fastmarching_line2(MyMarker root,
             while(marker != rootMarker){
                 marker = marker->parent;
                 markers.push_back(marker);
+            }
+        }
+        for(long ind = 0; ind < tol_sz; ind++)
+        {
+            if(state[ind] == TMP){
+                state[ind] = FINAL;
             }
         }
 
