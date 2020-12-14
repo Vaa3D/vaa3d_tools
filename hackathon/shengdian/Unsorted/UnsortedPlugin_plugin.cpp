@@ -30,6 +30,7 @@ QStringList UnsortedPlugin::funclist() const
          <<tr("RadiusContour")
         <<tr("getTipBlock")
        <<tr("getTipComponent")
+      <<tr("renderingSWC")
             <<tr("SomaRefinement")
            <<tr("somaBlockCrop")
           <<tr("MIP_Zslices")
@@ -84,6 +85,81 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         else
             cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
+    }
+    else if (func_name==tr("renderingSWC"))
+    {
+        /*scan all the swc files in a folder
+         *rendering into differenct colors
+        */
+        //for all the swc files
+        QString swcpath = infiles[0];
+        QString outpath=outfiles[0];
+        QDir dir(swcpath);
+        QStringList qsl_filelist,qsl_filters;
+        qsl_filters+="*.swc";
+        qsl_filters+="*.eswc";
+        foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
+        {
+            qsl_filelist+=file;
+        }
+
+        if(qsl_filelist.size()==0)
+        {
+            v3d_msg("Cannot find the respective files in the given directory!\nTry another diretory");
+        }
+
+        //generator ano file
+        QString ano_file=outfiles[1];
+        QString qs_filename_out;
+         if(ano_file.isEmpty())
+              qs_filename_out = outpath+"/mylinker.ano"; // for domenu()
+         else
+              qs_filename_out =  ano_file;
+
+        QFile qf_anofile(qs_filename_out);
+        if(!qf_anofile.open(QIODevice::WriteOnly))
+        {
+            v3d_msg("Cannot open file for writing!");
+        }
+
+        QTextStream out(&qf_anofile);
+        for(V3DLONG i=0;i<qsl_filelist.size();i++)
+        {
+            QString temp;
+            QFileInfo curfile_info(qsl_filelist[i]);
+            if (curfile_info.suffix().toUpper()=="SWC")
+                temp = qsl_filelist[i].prepend("SWCFILE=");
+            else if (curfile_info.suffix().toUpper()=="ESWC")
+                temp = qsl_filelist[i].prepend("SWCFILE=");
+            else
+                v3d_msg("You should never see this, - check with the developer of this plugin.");
+
+            out << temp << endl;
+            v3d_msg(qPrintable(temp), 0);
+        }
+
+        //show message box
+         if(ano_file.isEmpty())
+              v3d_msg(QString("Save the linker file to: \n\n%1\n\nComplete!").arg(qs_filename_out));
+         else
+              v3d_msg(QString("Save the linker file to: \n\n%1\n\nComplete!").arg(qs_filename_out), 0);
+
+         //change type: from 2-100
+         int colortype=2;
+         foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
+         {
+             QString thisswcfile=swcpath+"/"+file;
+             NeuronTree nt = readSWC_file(thisswcfile);
+             for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+             {
+                 nt.listNeuron[i].type=colortype;
+             }
+             //write swc file
+             QString outswc_file = outpath +"/"+file;
+             writeESWC_file(outswc_file,nt);
+             colortype++;
+             colortype=(colortype>22)?2:colortype;
+         }
     }
     else if (func_name==tr("getTipBlock"))
     {
@@ -646,6 +722,7 @@ void getTipComponent(QString inswc_file, QString outpath, int cropx, int cropy, 
     }
 }
 
+
 void getTipBlock(V3DPluginCallback2 &callback, string imgPath, QString inswc_file, QString outpath, int cropx, int cropy, int cropz)
 {
 
@@ -947,7 +1024,7 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
+        pagesz = (end_x-start_x)*(end_y-start_y)*(end_z-start_z);
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 

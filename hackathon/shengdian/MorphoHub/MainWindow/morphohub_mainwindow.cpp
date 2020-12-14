@@ -224,7 +224,7 @@ void MorphoHub_MainWindow::createActions()
     loginAction->setEnabled(true);
     connect(loginAction,SIGNAL(triggered()),this,SLOT(loginAction_slot()));
 
-    logoutAction=new QAction(tr("&LogOut"),this);
+    logoutAction=new QAction(tr("&Logout"),this);
     logoutAction->setEnabled(false);
     connect(logoutAction,SIGNAL(triggered()),this,SLOT(logoutAction_slot()));
 
