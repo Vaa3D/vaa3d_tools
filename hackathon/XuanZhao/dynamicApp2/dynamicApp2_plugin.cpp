@@ -78,7 +78,7 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
         if (!p.fetch_para_commandline(input, output, callback, parent))
             return false;
 
-        if (!proc_app2_dynamic(callback, p, versionStr))
+        if (!proc_app2_dynamic2(callback, p, versionStr))
             return false;
 	}
     else if (func_name == tr("ultratracerAxonTerafly"))

@@ -175,5 +175,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
 bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
 
+bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
+
 #endif
 
