@@ -1917,6 +1917,35 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
     cout<<"stems end"<<endl;
     cout<<"leaf markers size: "<<leafMarkers.size()<<endl;
 
+    long tol_sz = p.p4dImage->getXDim()*p.p4dImage->getYDim()*p.p4dImage->getZDim();
+    float * fphi = 0;
+    long * fparent = 0;
+    char * fstate = 0;
+    float * fpath = 0;
+    try
+    {
+        fphi = new float[tol_sz];
+        fparent = new long[tol_sz];
+        fstate = new char[tol_sz];
+        fpath = new float[tol_sz];
+        for(long i = 0; i < tol_sz; i++)
+        {
+            fphi[i] = INF;
+            fparent[i] = i;  // each pixel point to itself at the         statements beginning
+            fstate[i] = 1;
+            fpath[i] = 0;
+        }
+    }
+    catch (...)
+    {
+        cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+        if (fphi) {delete []fphi; fphi=0;}
+        if (fparent) {delete []fparent; fparent=0;}
+        if (fstate) {delete []fstate; fstate=0;}
+        if (fpath) {delete []fpath; fpath=0;}
+        return false;
+    }
+
     for(int i=0; i<leafMarkers.size(); i++){
         MyMarker* leafMarker = leafMarkers[i];
         MyMarker* foreMarker = leafMarker;
@@ -1931,9 +1960,15 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
         cout<<"i"<<i<<endl;
         XYZ lastDire = XYZ(leafMarker->x - foreMarker->x, leafMarker->y - foreMarker->y, leafMarker->z - foreMarker->z);
         fastmarching_ultratracer2(leafMarker, p.p4dImage->getRawData(), rootMarker, outMarkers,
+                                  fphi, fparent, fstate, fpath,
                                   p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(),
                                   p.cnn_type, p.f_length, lastDire);
     }
+    if(fphi){delete [] fphi; fphi = 0;}
+    if(fparent){delete [] fparent; fparent = 0;}
+    if(fstate) {delete [] fstate; fstate = 0;}
+    if(fpath) {delete []fpath; fpath=0;}
+
     QString s = "D:\\testDynamicTracing\\tmp.swc";
     saveSWC_file(s.toStdString(),outMarkers);
 
