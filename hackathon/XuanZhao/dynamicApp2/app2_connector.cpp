@@ -1898,6 +1898,7 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
                     outMarkers.push_back(p);
                     tc = children[tc][0];
                     p = outswc[tc];
+//                    cout<<"p xyz: "<<p->x<<" "<<p->y<<" "<<p->z<<endl;
                 }
             }
 
@@ -1959,7 +1960,7 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
         }
         cout<<"i"<<i<<endl;
         XYZ lastDire = XYZ(leafMarker->x - foreMarker->x, leafMarker->y - foreMarker->y, leafMarker->z - foreMarker->z);
-        fastmarching_ultratracer2(leafMarker, p.p4dImage->getRawData(), rootMarker, outMarkers,
+        fastmarching_ultratracer2_line(leafMarker, p.p4dImage->getRawData(), rootMarker, outMarkers,
                                   fphi, fparent, fstate, fpath,
                                   p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(),
                                   p.cnn_type, p.f_length, lastDire);
@@ -1969,8 +1970,8 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
     if(fstate) {delete [] fstate; fstate = 0;}
     if(fpath) {delete []fpath; fpath=0;}
 
-    QString s = "D:\\testDynamicTracing\\tmp.swc";
-    saveSWC_file(s.toStdString(),outMarkers);
+//    QString s = "D:\\testDynamicTracing\\tmp.swc";
+//    saveSWC_file(s.toStdString(),outMarkers);
 
 
 
@@ -1999,86 +2000,12 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
             outswc_file = p.outswc_file;
         else
             outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
-
-        for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
-        {
-            if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
-            outswc[i]->x += (p.xc0);
-            if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
-
-            if (dfactor_xy>1) outswc[i]->y *= dfactor_xy;
-            outswc[i]->y += (p.yc0);
-            if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
-
-            if (dfactor_z>1) outswc[i]->z *= dfactor_z;
-            outswc[i]->z += (p.zc0);
-            if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
-
-            outswc[i]->radius *= dfactor_xy; //use xy for now
-        }
-
-        //re-estimate the radius using the original image
-        double real_thres = 40; //PHC 20121011 //This should be rescaled later for datatypes that are not UINT8
-
-        if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-        V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
-        unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
-        if(p.b_brightfiled)
-        {
-            for(V3DLONG i = 0; i < p.p4dImage->getTotalUnitNumberPerChannel(); i++)
-                pOriginalData[i] = 255 - pOriginalData[i];
-
-        }
-
-        int method_radius_est = ( p.b_RadiusFrom2D ) ? 1 : 2;
-
-        switch (p.p4dImage->getDatatype())
-        {
-            case V3D_UINT8:
-            {
-                for(i = 0; i < outswc.size(); i++)
-                {
-                    //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
-                }
-            }
-                break;
-            case V3D_UINT16:
-            {
-                unsigned short int *pOriginalData_uint16 = (unsigned short int *)pOriginalData;
-                for(i = 0; i < outswc.size(); i++)
-                {
-                    //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData_uint16, szOriginalData, *(outswc[i]), real_thres * 16, method_radius_est); //*16 as it is often 12 bit data
-                }
-            }
-                break;
-            case V3D_FLOAT32:
-            {
-                float *pOriginalData_float = (float *)pOriginalData;
-                for(i = 0; i < outswc.size(); i++)
-                {
-                    //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData_float, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
-                }
-            }
-                break;
-            default:
-                break;
-        }
-
-        if(p.b_brightfiled)
-        {
-            for(V3DLONG i = 0; i < p.p4dImage->getTotalUnitNumberPerChannel(); i++)
-                pOriginalData[i] = 255 - pOriginalData[i];
-
-        }
         //prepare the output comments for neuron info in the swc file
 
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-        saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-        p.result = swc_convert(outswc);
+        saveSWC_file(outswc_file.toStdString(), outMarkers, infostring);
+        p.result = swc_convert(outMarkers);
 
         if(0/*outswc.size()>1*/)
         {
