@@ -6,21 +6,39 @@ V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH     += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app2
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/newmat11
 
-#unix {
-#LIBS += -L$$V3DMAINPATH/jba/c++
-#LIBS += -lv3dnewmat
-#}
-#win32 {
-#LIBS += -L$$V3DMAINPATH/common_lib/winlib64
-#LIBS += -llibnewmat
-#}
+macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+#    CONFIG += x86_64
+}
+
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+    } else {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
+    }
+}
+
+unix:!macx {
+    LIBS += -L$$V3DMAINPATH/common_lib/lib -ltiff
+    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
+}
+
+LIBS            += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
 
 DEFINES += QT_MESSAGELOGCONTEXT
 
 HEADERS	+= dynamicApp2_plugin.h \
     axontrace.h \
-    dlog.h
+    dlog.h \
+    regiongrow.h
 HEADERS += vn_imgpreprocess.h
 HEADERS += vn.h
 HEADERS += vn_app2.h
