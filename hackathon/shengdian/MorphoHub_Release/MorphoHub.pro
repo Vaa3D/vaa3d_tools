@@ -12,14 +12,16 @@ HEADERS	+= MorphoHub_plugin.h \
     Dialogs/imagedatamanagement.h \
     Service/screenwall.h \
     Service/screenwall_func.h \
-    Dialogs/usermanagement.h
+    Dialogs/usermanagement.h \
+    morphohub_dbms_basic.h
 SOURCES	+= MorphoHub_plugin.cpp \
     GUI/morphohub_gui.cpp \
     ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
     basic_conf.cpp \
     Dialogs/imagedatamanagement.cpp \
     Service/screenwall.cpp \
-    Dialogs/usermanagement.cpp
+    Dialogs/usermanagement.cpp \
+    morphohub_dbms_basic.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 

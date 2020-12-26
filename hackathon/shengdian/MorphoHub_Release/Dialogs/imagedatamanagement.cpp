@@ -22,13 +22,14 @@ void ImageDataManagement::IDMInit()
         QMessageBox::warning(this,tr("Path Error"),tr("please setup dbpath"));
         return;
     }
-    mImage tmpImage;
+
     this->imgconfpath=mfs.getImgConfPath();
     if(this->imgconfpath.isEmpty())
     {
         qDebug()<<"Can't get conf path from "<<imgconfpath<<endl;
         return;
     }
+    mImage tmpImage;
     imgconfTitle=tmpImage.mFeatures;
 
     //load from conf file or start from new

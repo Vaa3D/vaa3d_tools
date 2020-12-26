@@ -50,9 +50,13 @@ private:
     void createTabWindow(bool init);
     QTreeWidget *contentTreewidget;
     QTreeWidgetItem *content_morphometry;
-    QTreeWidgetItem *content_images;
+//    QTreeWidgetItem *content_images;
+
     /*data tab*/
     QTabWidget *dataTabwidget;
+    QList<QTableWidget*> createdTables;//all the created qtable will have a pointer here.
+    QStringList createdTables_namelist;//all the tab name of the created qtable
+    QTableWidget* createQTableWidget(QList<QStringList> inlist,QStringList datatitle);
 
     /*menu list*/
     QMenu *dbMenu;
@@ -119,7 +123,7 @@ private slots:
     void userManagementAction_slot();
     //services action list
     void monitorAction_slot();
-
+    void cellSortColumn(int c);
     //login and logout
     void loginAction_slot();
     void loginOkayButton_slot();

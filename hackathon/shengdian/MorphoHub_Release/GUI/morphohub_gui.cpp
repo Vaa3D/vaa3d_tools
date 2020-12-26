@@ -169,6 +169,15 @@ void morphoHub_GUI::setMainLayout()
     mainlayout->addWidget(dataTabwidget,6);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);
+
+    if(mfs.dbPath.isEmpty())
+        toLogWindow("Warning: Please set the database path!");
+    else
+    {
+        toLogWindow(tr("Load Database: %1").arg(mfs.dbPath));
+        createTabWindow(false);
+        updateStatusBar(tr("Database: %1").arg(mfs.dbPath));
+    }
 }
 void morphoHub_GUI::createContentTreeWidget(bool init)
 {
@@ -176,15 +185,27 @@ void morphoHub_GUI::createContentTreeWidget(bool init)
     {
         contentTreewidget=new QTreeWidget(this);
         contentTreewidget->setColumnCount(1);
-        contentTreewidget->setHeaderLabel(tr("Content"));
+        contentTreewidget->setHeaderLabel(tr("Morphometry"));
         QList<QTreeWidgetItem*> contentitems;
-        //create nodes
-        content_morphometry=new QTreeWidgetItem(contentTreewidget,QStringList(QString("Morphometry")));
+        content_morphometry=new QTreeWidgetItem(contentTreewidget,QStringList(QString("Image Datasets")));
         contentitems.append(content_morphometry);
+        //create nodes with brain or image list, second node is morphology_id list, third is different morphometry versions
+        QStringList nodelist=mfs.mimagedb.getlistImage_name();
+        if(nodelist.size())
+        {
+            for(V3DLONG i=0;i<nodelist.size();i++)
+            {
+                QString tmpitem=nodelist.at(i);
+                QTreeWidgetItem *content_childnode=new QTreeWidgetItem(content_morphometry,QStringList(tmpitem));
+                content_morphometry->addChild(content_childnode);
+            }
+        }
         //create parent node
+
         contentTreewidget->insertTopLevelItems(0,contentitems);
         contentTreewidget->setItemsExpandable(true);
         contentTreewidget->expandAll();
+//        contentTreewidget->setCurrentItem(contentitems,0);
         connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
     }
 }
@@ -199,10 +220,109 @@ void morphoHub_GUI::createTabWindow(bool init)
     }
     else
     {
-        //come here later
-        toLogWindow(tr("under developing"));
+        if(dataTabwidget->count()>0)
+        {
+            //set tab widget
+            dataTabwidget->disconnect();
+            //disconnect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+            qDebug()<<"remove tab";
+            dataTabwidget->clear();
+        }
+        createdTables.clear();
+        createdTables_namelist.clear();
+
+        //update
+        //should have a list for shown tabs, define in filesystem
+        for(int i=0;i<mfs.morphometryType_showlist.size();i++)
+        {
+            QString tableName=mfs.morphometryType_showlist.at(i);
+            //get qlist for this table
+            if(i==0)
+            {
+                //soma
+                //get brainid
+                pointCloud_morphometry mpointcloud;
+                QStringList nodelist=mfs.mimagedb.getlistImage_name();
+                QString imagename=nodelist.at(0);
+//                qDebug()<<"Image name: "<<imagename<<endl;
+                //get soma path
+                QString confpath=
+                        mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".apo";
+                pointCloud_morphometry_list mlist=convertApo2pclist(confpath);
+                QList<QStringList> tableshowlist=getshowlistpointCloud(mlist);
+                if(tableshowlist.size())
+                {
+                    QTableWidget* creatingTable=new QTableWidget();
+                    creatingTable=createQTableWidget(tableshowlist,mpointcloud.showlist_name);//hh
+                    if(creatingTable)
+                    {
+                        qDebug()<<"create Tab: "<<tableName;
+                        createdTables_namelist.append(tableName);
+                        createdTables.append(creatingTable);
+                        dataTabwidget->addTab(creatingTable,tableName);
+                    }
+                }
+                //set tab widget
+//                connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+            }
+            else if(i==1)
+            {
+                //Auto traced
+                mMorphometry mtemp;
+                QStringList nodelist=mfs.mimagedb.getlistImage_name();
+                QString imagename=nodelist.at(0);
+                QString confpath=
+                        mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".conf";
+                qDebug()<<"conf path: "<<confpath<<endl;
+                mMorphometryDB mmdb=convertconf2mlist(confpath);
+                QList<QStringList> tableshowlist=getshowlistmMorphometry(mmdb);
+                if(tableshowlist.size())
+                {
+                    QTableWidget* creatingTable=new QTableWidget();
+                    creatingTable=createQTableWidget(tableshowlist,mtemp.showlist_name);//hh
+                    if(creatingTable)
+                    {
+                        qDebug()<<"create Tab: "<<tableName;
+                        createdTables_namelist.append(tableName);
+                        createdTables.append(creatingTable);
+                        dataTabwidget->addTab(creatingTable,tableName);
+                    }
+                }
+            }
+        }
+
     }
 }
+QTableWidget* morphoHub_GUI::createQTableWidget(QList<QStringList> inlist,QStringList datatitle)
+{
+    int col = datatitle.size();
+    int row= inlist.size();
+    QTableWidget* t;
+    if(inlist.size()>0)
+    {
+        t= new QTableWidget(row,col, this);
+        t->setHorizontalHeaderLabels(datatitle);
+        for(V3DLONG i=0;i<inlist.size();i++)
+            for(int j=0;j<col;j++)
+                t->setItem(i,j,new QTableWidgetItem(inlist.at(i).at(j)));
+        t->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        t->setSelectionBehavior(QAbstractItemView::SelectRows);
+        t->setSelectionMode(QAbstractItemView::SingleSelection);
+        t->resizeColumnsToContents();
+        t->resizeRowsToContents();
+        //set content menu
+        t->setContextMenuPolicy(Qt::CustomContextMenu);
+//        connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
+        //get table cell info when clicked.
+//        connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
+        //double click to get a 3D view of the neuron
+//        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
+        //sort Item
+        connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
+    }
+    return t;
+}
+
 void morphoHub_GUI::contentValueChange(QTreeWidgetItem *item,int column)
 {
     if(mfs.dbPath.isEmpty())
@@ -216,8 +336,122 @@ void morphoHub_GUI::contentValueChange(QTreeWidgetItem *item,int column)
         return;
     QString itemtext=item->text(column);
     toLogWindow(itemtext);
+    //creat tab windows, update all the tabs
+//    if(datatabletitlelist.contains(itemtext))
+//    {
+//        //1.move to this tab
+//        int tabindex=datatabletitlelist.indexOf(itemtext);
+//        if(dataTabwidget->currentIndex()!=tabindex)
+//        {
+//            dataTabwidget->setCurrentIndex(tabindex);
+//        }
+//        else
+//        {
+//            //2.update the content of this tab
+//            QTableWidget *levelTable=datatablelist.at(tabindex);
+//            levelTable->clear();
+//            //get reconstructions info from this level
+//            QList<ReconstructionInfo> thislevelres;
+//            thislevelres=getReconstuctionsFromLevel(itemtext);
+//            updateTableDataLevel(levelTable,thislevelres);
+//            toLogWindow(tr("Tab: %1 update!").arg(itemtext));
+//        }
+//    }
+//    else
+//    {
+//        //get reconstructions info from this level
+//        QList<ReconstructionInfo> thislevelres;
+//        thislevelres=getReconstuctionsFromLevel(itemtext);
+//        if(thislevelres.size()>0)
+//        {
+//            QTableWidget* levelTable=new QTableWidget();
+//            levelTable=createTableDataLevel(thislevelres);
+//            if(levelTable)
+//            {
+//                datatabletitlelist.append(itemtext);
+//                datatablelist.append(levelTable);
+//                dataTabwidget->addTab(levelTable,itemtext);
+//                toLogWindow(tr("New Tab: %1 !").arg(itemtext));
+//            }
+//        }
+//    }
+    if(dataTabwidget->count()>0)
+    {
+        //set tab widget
+        dataTabwidget->disconnect();
+        //disconnect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+        qDebug()<<"remove tab";
+        dataTabwidget->clear();
+    }
+    createdTables.clear();
+    createdTables_namelist.clear();
+    //update
+    pointCloud_morphometry mpointcloud;
+    for(int i=0;i<mfs.morphometryType_showlist.size();i++)
+    {
+        QString tableName=mfs.morphometryType_showlist.at(i);
+        //get qlist for this table
+        if(i==0)
+        {
+            QString imagename=itemtext;
+            //get soma path
+            QString somapath=mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/SomaApo/"+imagename+".apo";
+            pointCloud_morphometry_list mlist=convertApo2pclist(somapath);
+            QList<QStringList> tableshowlist=getshowlistpointCloud(mlist);
+            if(tableshowlist.size())
+            {
+                QTableWidget* creatingTable=new QTableWidget();
+                creatingTable=createQTableWidget(tableshowlist,mpointcloud.showlist_name);//hh
+                if(creatingTable)
+                {
+                    qDebug()<<"create Tab: "<<tableName;
+                    createdTables_namelist.append(tableName);
+                    createdTables.append(creatingTable);
+                    dataTabwidget->addTab(creatingTable,tableName);
+                }
+            }
+            //set tab widget
+        }
+        else if(i==1)
+        {
+            //Auto traced
+            mMorphometry mtemp;
+            QStringList nodelist=mfs.mimagedb.getlistImage_name();
+            QString imagename=nodelist.at(0);
+            QString confpath=
+                    mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".conf";
+
+            mMorphometryDB mlist=convertconf2mlist(confpath);
+            QList<QStringList> tableshowlist=getshowlistmMorphometry(mlist);
+            if(tableshowlist.size())
+            {
+                QTableWidget* creatingTable=new QTableWidget();
+                creatingTable=createQTableWidget(tableshowlist,mtemp.showlist_name);//hh
+                if(creatingTable)
+                {
+                    qDebug()<<"create Tab: "<<tableName;
+                    createdTables_namelist.append(tableName);
+                    createdTables.append(creatingTable);
+                    dataTabwidget->addTab(creatingTable,tableName);
+                }
+            }
+        }
+    }
 }
 /*-------------------slot action-------------------*/
+void morphoHub_GUI::cellSortColumn(int c)
+{
+    if(c>=0)
+    {
+        int curtabindex=dataTabwidget->currentIndex();
+        QTableWidget *levelTable=createdTables.at(curtabindex);
+        if(levelTable->rowCount()>0)
+        {
+            levelTable->sortItems(c,Qt::AscendingOrder);
+//            levelTable->columnAt(0);
+        }
+    }
+}
 /*User management*/
 void morphoHub_GUI::userManagementAction_slot()
 {
