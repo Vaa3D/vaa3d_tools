@@ -10,6 +10,8 @@
 #include "vn_app2.h"
 #include "axontrace.h"
 
+#include "swc_convert.h"
+
 
 #include "dlog.h"
 
@@ -91,6 +93,79 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
         NeuronTree ori = readSWC_file(swcPath);
         NeuronTree resultTree = ultratracerAxonTerafly(brainPath,ori,callback);
         writeSWC_file(outSwcPath,resultTree);
+
+    }
+    else if (func_name == tr("ultratracerLine")) {
+        qInstallMsgHandler(messageOutput);
+        QString imgPath = infiles.size()>=1 ? infiles[0] : "";
+        QString swcPath = infiles.size()>=2 ? infiles[1] : "";
+        double length_thresh = inparas.size()>=1 ? atof(inparas[0]) : 30;
+        PARA_APP2 p;
+        cout<<"-------------start--------------"<<endl;
+        p.p4dImage = callback.loadImage((char *)(qPrintable(imgPath)));
+//        unsigned char* pdata = 0;
+//        V3DLONG sz[4];
+//        int dataType = 1;
+//        if(!simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType)){
+//            cout<<"load image failed"<<endl;
+//            return false;
+//        }
+
+//        Image4DSimple* p4dImage = new Image4DSimple();
+//        p4dImage->setData(pdata,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+//        p.p4dImage = p4dImage;
+
+        p.xc0 = p.yc0 = p.zc0 = 0;
+        p.xc1 = p.p4dImage->getXDim()-1;
+        p.yc1 = p.p4dImage->getYDim()-1;
+        p.zc1 = p.p4dImage->getZDim()-1;
+        qDebug()<<"load image end"<<endl;
+
+        NeuronTree nt = readSWC_file(swcPath);
+        vector<MyMarker*> markers = swc_convert(nt);
+        map<MyMarker*,int> markersMap;
+        for(int i=0; i<markers.size(); i++){
+            markersMap[markers[i]] = i;
+        }
+        qDebug()<<"markers size: "<<markers.size();
+
+        vector<int> markersChildren = vector<int>(markers.size(), 0);
+        MyMarker* rootMarker;
+        MyMarker* leafMarker;
+        for(int i=0; i<markers.size(); i++){
+            if(markers[i]->parent == 0){
+                rootMarker = markers[i];
+                continue;
+            }
+            int pIndex = markersMap[markers[i]->parent];
+            markersChildren[pIndex]++;
+        }
+        vector<MyMarker*> leafMarkers;
+        for(int i=0; i<markers.size(); i++){
+            if(markersChildren[i] == 0){
+                leafMarkers.push_back(markers[i]);
+            }
+        }
+        if(leafMarkers.size() != 1){
+            cout<<"the leafMarker size is wrong"<<endl;
+            if(p.p4dImage){
+                delete p.p4dImage;
+                p.p4dImage = 0;
+            }
+            return false;
+        }
+        leafMarker = leafMarkers[0];
+        p.root = leafMarker;
+        p.rootFore = rootMarker;
+        p.f_length = length_thresh;
+        proc_app2_line(callback,p,versionStr);
+
+
+
+        if(p.p4dImage){
+            delete p.p4dImage;
+            p.p4dImage = 0;
+        }
 
     }
 	else if (func_name == tr("help"))

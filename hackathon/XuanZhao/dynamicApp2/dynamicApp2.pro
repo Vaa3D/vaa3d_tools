@@ -53,6 +53,7 @@ HEADERS += $$V3DMAINPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc2mask
 
 HEADERS += $$V3DMAINPATH/../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 
+#HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 SOURCES	+= dynamicApp2_plugin.cpp \
     axontrace.cpp
@@ -64,6 +65,8 @@ SOURCES += app2/my_surf_objs.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
+
+#SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 TARGET	= $$qtLibraryTarget(dynamicApp2)
 DESTDIR	= $$V3DMAINPATH/../bin/plugins/dynamicApp2/

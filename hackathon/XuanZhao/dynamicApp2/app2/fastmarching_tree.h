@@ -4113,7 +4113,7 @@ bool fastmarching_ultratracer(MyMarker root,
 
 }
 
-bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2, double r){
+bool getMarkersBetweenZX(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2, double r){
     double A = m2.x - m1.x;
     double B = m2.y - m1.y;
     double C = m2.z - m1.z;
@@ -4143,7 +4143,7 @@ bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2, d
         int radius = r0 + R*t + 0.5;
         int radius2 = radius * radius;
 
-        for(int k = -radius; k <= radius; k++)
+        for(int k = -radius/4; k <= radius/4; k++)
         {
             for(int j = -radius; j <= radius; j++)
             {
@@ -4183,7 +4183,7 @@ bool segToMask(T* state, MyMarker* leaf, MyMarker* root, long sz0, long sz1, lon
         MyMarker* par = p->parent;
         vector<MyMarker> tmpMarkers;
         tmpMarkers.clear();
-        getMarkersBetween(tmpMarkers,*p,*par,r);
+        getMarkersBetweenZX(tmpMarkers,*p,*par,r);
 //        cout<<"px:"<<p->x<<endl;
 //        cout<<"tmpMarker size:"<<tmpMarkers.size()<<endl;
         for(int j = 0; j < tmpMarkers.size(); j++)
@@ -4203,7 +4203,7 @@ template<class T>
 bool twoPointsToMask(T* state, MyMarker* p1, MyMarker* p2, long sz0, long sz1, long sz2, double r, int flag){
     long sz01 = sz0 * sz1;
     vector<MyMarker> tmpMarkers;
-    getMarkersBetween(tmpMarkers, *p1, *p2, r);
+    getMarkersBetweenZX(tmpMarkers, *p1, *p2, r);
 
     for(int j = 0; j < tmpMarkers.size(); j++)
     {
@@ -4709,7 +4709,7 @@ bool fastmarching_ultratracer2(MyMarker* root,
     }
     twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
 
-    maskR = 8;
+//    maskR = 8;
 
     etime2 = timer2.elapsed();
     cout<<"mask cost "<<etime2<<" milliseconds"<<endl;
@@ -5708,6 +5708,322 @@ bool fastmarching_ultratracer2(MyMarker* root,
 
 }
 
+template<class T>
+bool fastmarching_core(MyMarker* root,
+                       T * inimg1d,
+                       vector<MyMarker*> &tmptree,
+                       vector<MyMarker*> &tmpMarkers,
+                       int& stopFlag,
+                       double max_int,
+                       double min_int,
+                       float * phi,
+                       long * parent,
+                       char * state,
+                       float * path,
+                       long sz0,
+                       long sz1,
+                       long sz2,
+                       double lineThres,
+                       int cnn_type = 3,
+                       double length = 30,
+                       XYZ lastDire = XYZ(0,0,0)){
+
+    long sz01 = sz0*sz1;
+    enum{ALIVE = -1, TRIAL = 0, FAR = 1, FINAL = 2, TMP = 3};
+
+    // init state and phi for root
+    long rootx = root->x + 0.5;
+    long rooty = root->y + 0.5;
+    long rootz = root->z + 0.5;
+
+    long root_ind = rootz*sz01 + rooty*sz0 + rootx;
+
+    state[root_ind] = ALIVE;
+    phi[root_ind] = 0.0;
+
+    BasicHeap<HeapElemX> heap;
+    map<long, HeapElemX*> elems;
+
+    // init heap
+    {
+        long index = root_ind;
+        HeapElemX *elem = new HeapElemX(index, phi[index]);
+        elem->prev_ind = index;
+        heap.insert(elem);
+        elems[index] = elem;
+    }
+
+    vector<long> aliveIndexs = vector<long>();
+    aliveIndexs.clear();
+
+    long lastInd = -1;
+
+    while(!heap.empty())
+    {
+        HeapElemX* min_elem = heap.delete_min();
+        elems.erase(min_elem->img_ind);
+
+        long min_ind = min_elem->img_ind;
+        long prev_ind = min_elem->prev_ind;
+        delete min_elem;
+
+        parent[min_ind] = prev_ind;
+
+        state[min_ind] = ALIVE;
+        aliveIndexs.push_back(min_ind);
+        int i = min_ind % sz0;
+        int j = (min_ind/sz0) % sz1;
+        int k = (min_ind/sz01) % sz2;
+
+        int pi = prev_ind % sz0;
+        int pj = (prev_ind/sz0) % sz1;
+        int pk = (prev_ind/sz01) % sz2;
+
+        path[min_ind] = path[prev_ind] + dist(MyMarker(i,j,k),MyMarker(pi,pj,pk));
+
+        if((i<1 || i>=sz0-1 || j<1 || j>=sz1-1 || k<1 || k>=sz2-1)){
+            stopFlag = 1;
+            lastInd = min_ind;
+            while (!heap.empty()) {
+                HeapElemX* tmp_elem = heap.delete_min();
+                aliveIndexs.push_back(tmp_elem->img_ind);
+                elems.erase(tmp_elem->img_ind);
+                delete tmp_elem;
+            }
+            break;
+        }
+//            qDebug()<<"path[min_ind]: "<<path[min_ind];
+        if(path[min_ind]>length){
+            cout<<"path:"<<path[min_ind]<<endl;
+            lastInd = min_ind;
+            while (!heap.empty()) {
+                HeapElemX* tmp_elem = heap.delete_min();
+                aliveIndexs.push_back(tmp_elem->img_ind);
+                elems.erase(tmp_elem->img_ind);
+                delete tmp_elem;
+            }
+            break;
+        }
+
+
+        int w, h, d;
+        for(int kk = -1; kk <= 1; kk++)
+        {
+            d = k+kk;
+            if(d < 0 || d >= sz2) continue;
+            for(int jj = -1; jj <= 1; jj++)
+            {
+                h = j+jj;
+                if(h < 0 || h >= sz1) continue;
+                for(int ii = -1; ii <= 1; ii++)
+                {
+                    w = i+ii;
+                    if(w < 0 || w >= sz0) continue;
+
+                    if(dist_L2(XYZ(i,j,k),XYZ(rootx,rooty,rootz))<length/6){
+                        XYZ curDire = XYZ(w-i,h-j,d-k);
+                        double cosAngle = dot(normalize(curDire),normalize(lastDire));
+                        if(cosAngle<0){
+                            continue;
+                        }
+                    }
+
+                    int offset = ABS(ii) + ABS(jj) + ABS(kk);
+                    if(offset == 0 || offset > cnn_type) continue;
+                    double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
+                    long index = d*sz01 + h*sz0 + w;
+
+                    if(state[index] != ALIVE && state[index] != FINAL)
+                    {
+//                        double cFactor = exp(abs(inimg1d[index]-lineThres));
+                        double lineThresMax = lineThres + 10;
+                        double lineThresMin = lineThres - 10;
+                        double cFactor = 1;
+//                        if(inimg1d[index]>=lineThresMin && inimg1d[index]<=lineThresMax)
+//                            cFactor = 1;
+//                        else{
+//                            if(inimg1d[index]>lineThres){
+//                                cFactor = exp(inimg1d[index]-lineThres);
+//                            }else{
+//                                cFactor = exp(lineThres-inimg1d[index]);
+//                            }
+//                        }
+
+                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5*cFactor;
+                        long prev_ind = min_ind;
+
+                        if(state[index] == FAR)
+                        {
+                            phi[index] = new_dist;
+                            HeapElemX * elem = new HeapElemX(index, phi[index]);
+                            elem->prev_ind = prev_ind;
+                            heap.insert(elem);
+                            elems[index] = elem;
+                            state[index] = TRIAL;
+                        }
+                        else if(state[index] == TRIAL)
+                        {
+                            if (phi[index] > new_dist)
+                            {
+                                phi[index] = new_dist;
+                                HeapElemX * elem = elems[index];
+                                heap.adjust(elem->heap_id, phi[index]);
+                                elem->prev_ind = prev_ind;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cout<<"heap end"<<endl;
+
+//    etime2 = timer2.elapsed();
+//    cout<<t<<" heap cost "<<etime2<<" milliseconds"<<endl;
+//    timer2.restart();
+
+//    vector<MyMarker*> tmptree = vector<MyMarker*>();
+
+//    vector<MyMarker*> maxSegMarkers;
+    cout<<"lastind: "<<lastInd<<endl;
+    // save current swc tree
+    if (1)
+    {
+        int i = -1, j = -1, k = -1;
+        map<long, MyMarker*> tmp_map;
+
+        for(long ii = 0; ii < aliveIndexs.size(); ii++)
+        {
+            long ind = aliveIndexs[ii];
+            i = ind % sz0;
+            j = (ind/sz0) % sz1;
+            k = (ind/sz01) % sz2;
+            if(state[ind] != ALIVE) continue;
+            MyMarker * marker = new MyMarker(i,j,k);
+            tmp_map[ind] = marker;
+            tmptree.push_back(marker);
+        }
+        for(long ii = 0; ii < aliveIndexs.size(); ii++)
+        {
+            long ind = aliveIndexs[ii];
+            i = ind % sz0;
+            j = (ind/sz0) % sz1;
+            k = (ind/sz01) % sz2;
+            if(state[ind] == TRIAL)
+                state[ind] = FAR;
+            if(state[ind] != ALIVE) continue;
+//            state[ind] = FINAL; //set final
+            long ind2 = parent[ind];
+            MyMarker * marker1 = tmp_map[ind];
+            MyMarker * marker2 = tmp_map[ind2];
+            if(marker1 == marker2) marker1->parent = 0;
+            else marker1->parent = marker2;
+            //tmp_map[ind]->parent = tmp_map[ind2];
+        }
+        if(lastInd == -1){
+//            for(int i=0; i<tmptree.size(); i++){
+//                if(tmptree[i]){
+//                    delete tmptree[i];
+//                }
+//            }
+//            tmptree.clear();
+            for(long ii=0; ii<aliveIndexs.size(); ii++){
+                long ind = aliveIndexs[ii];
+                if(state[ind] == TRIAL || state[ind] == ALIVE){
+                    state[ind] = FAR;
+                }
+                phi[ind] = INF;
+                path[ind] = 0;
+                parent[ind] = ind;
+            }
+            map<long, HeapElemX*>::iterator mit = elems.begin();
+            while (mit != elems.end())
+            {
+                HeapElemX * elem = mit->second; delete elem; mit++;
+            }
+            return false;
+        }
+
+        vector<MyMarker*> maxSegMarkers;
+        MyMarker* tmpMarker = tmp_map[lastInd];
+        maxSegMarkers.push_back(tmpMarker);
+        while(tmpMarker->parent != 0){
+            tmpMarker = tmpMarker->parent;
+            maxSegMarkers.push_back(tmpMarker);
+        }
+
+//        vector<MyMarker*> tmpMarkers;
+        MyMarker* curP = 0;
+        for(int i=maxSegMarkers.size()-1; i>=0; i--){
+            MyMarker* pp = maxSegMarkers[i];
+            MyMarker* p = new MyMarker(pp->x,pp->y,pp->z);
+            p->parent = curP;
+            tmpMarkers.push_back(p);
+            curP = p;
+        }
+
+//        QString s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty)
+//                + "_" + QString::number(rootz) + "_" + QString::number(t) + "_init.swc";
+//        saveSWC_file(s.toStdString(),tmptree);
+    }
+
+    for(long ii=0; ii<aliveIndexs.size(); ii++){
+        long ind = aliveIndexs[ii];
+        if(state[ind] == TRIAL || state[ind] == ALIVE){
+            state[ind] = FAR;
+        }
+        phi[ind] = INF;
+        path[ind] = 0;
+        parent[ind] = ind;
+    }
+
+    return true;
+
+}
+template<class T>
+bool saveMaskImage(T* inimg1d, char * state, unsigned char* maskImage,  long sz0, long sz1, long sz2,
+                   QString imageName, V3DPluginCallback2 & callback){
+    long tol_sz = sz0*sz1*sz2;
+//    unsigned char* maskImage = new unsigned char[tol_sz];
+    for(long i=0; i<tol_sz; i++){
+        if(state[i] != 2){
+            maskImage[i] = (unsigned char) inimg1d[i];
+        }else{
+            maskImage[i] = 0;
+        }
+    }
+    V3DLONG sz[4] = {sz0,sz1,sz2,1};
+    int dataType = 1;
+//    saveImage(imageName.toStdString().c_str(),maskImage,sz,dataType);
+//    Image4DSimple image;
+//    image.setData(maskImage,sz0,sz1,sz2,1,V3D_UINT8);
+//    image.saveImage(imageName.toStdString().c_str());
+//    V3DPluginCallback2 callback;
+    simple_saveimage_wrapper(callback,imageName.toStdString().c_str(),maskImage,sz,dataType);
+    return true;
+}
+
+template<class T>
+bool onePointsToMask(T* state, MyMarker* p, long sz0, long sz1, long sz2, double r, int flag){
+    for(int k=-r; k<=r; k++){
+        for(int j=-r; j<=r; j++){
+            for(int i=-r; i<=r; i++){
+                double radius = sqrt(k*k + j*j + i*i);
+                if(radius>r)
+                    continue;
+                int z = p->z + k;
+                int y = p->y + j;
+                int x = p->x + i;
+                if(x < 0 || x >= sz0 || y < 0 || y >= sz1 || z < 0 || z >= sz2) continue;
+                long index = z*sz0*sz1 + y*sz0 + x;
+                state[index] = (T)flag;
+            }
+        }
+    }
+    return true;
+
+}
 
 template<class T>
 bool fastmarching_ultratracer2_line(MyMarker* root,
@@ -5721,6 +6037,8 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
                                long sz0,
                                long sz1,
                                long sz2,
+                               double lineThres,
+                               V3DPluginCallback2& callback,
                                int cnn_type = 3,
                                double length = 30,
                                XYZ lastDire = XYZ(0,0,0)){
@@ -5749,7 +6067,9 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     cout<<"start to mask"<<endl;
 
-    double maskR = 5;
+    unsigned char* maskImage = new unsigned char[tol_sz];
+
+    double maskR = 10;
     MyMarker* tMakrer = root;
     while (tMakrer->parent != 0) {
         tMakrer = tMakrer->parent;
@@ -5769,8 +6089,9 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
         }
     }
     twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
+//    segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
 
-    maskR = 8;
+//    maskR = 8;
 
     etime2 = timer2.elapsed();
     cout<<"mask cost "<<etime2<<" milliseconds"<<endl;
@@ -5787,20 +6108,24 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     long root_ind = rootz*sz01 + rooty*sz0 + rootx;
 
-    state[root_ind] = ALIVE;
-    phi[root_ind] = 0.0;
+    QString imageName = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+            + "_init1.v3draw";
+//    saveMaskImage(inimg1d,state,maskImage,sz0,sz1,sz2,imageName,callback);
 
-    BasicHeap<HeapElemX> heap;
-    map<long, HeapElemX*> elems;
+//    state[root_ind] = ALIVE;
+//    phi[root_ind] = 0.0;
+
+//    BasicHeap<HeapElemX> heap;
+//    map<long, HeapElemX*> elems;
 
     // init heap
-    {
-        long index = root_ind;
-        HeapElemX *elem = new HeapElemX(index, phi[index]);
-        elem->prev_ind = index;
-        heap.insert(elem);
-        elems[index] = elem;
-    }
+//    {
+//        long index = root_ind;
+//        HeapElemX *elem = new HeapElemX(index, phi[index]);
+//        elem->prev_ind = index;
+//        heap.insert(elem);
+//        elems[index] = elem;
+//    }
 
     double pc1,pc2,pc3;
     double* vec1 = new double[3];
@@ -5811,6 +6136,18 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     int t = 0;
     int stopFlag = 0;
+
+    vector<MyMarker*> tmptree = vector<MyMarker*>();
+
+    vector<MyMarker*> tmpMarkers;
+
+    fastmarching_core(root,inimg1d,tmptree,tmpMarkers,stopFlag,max_int,min_int,phi,parent,state,path,sz0,sz1,sz2,lineThres,cnn_type,length,lastDire);
+
+    QString s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+            + "_init0.swc";
+    saveSWC_file(s.toStdString(),tmptree);
+
+    /*
     vector<vector<MyMarker*> > markersVec;
 
     vector<vector<MyMarker*> > maskMakersVec;
@@ -5896,7 +6233,21 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
                     if(state[index] != ALIVE && state[index] != FINAL)
                     {
-                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+//                        double cFactor = exp(abs(inimg1d[index]-lineThres));
+                        double lineThresMax = lineThres + 10;
+                        double lineThresMin = lineThres - 10;
+                        double cFactor = 1;
+//                        if(inimg1d[index]>=lineThresMin && inimg1d[index]<=lineThresMax)
+//                            cFactor = 1;
+//                        else{
+//                            if(inimg1d[index]>lineThres){
+//                                cFactor = exp(inimg1d[index]-lineThres);
+//                            }else{
+//                                cFactor = exp(lineThres-inimg1d[index]);
+//                            }
+//                        }
+
+                        double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5*cFactor;
                         long prev_ind = min_ind;
 
                         if(state[index] == FAR)
@@ -6005,12 +6356,14 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
         QString s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty)
                 + "_" + QString::number(rootz) + "_" + QString::number(t) + "_init.swc";
-//        saveSWC_file(s.toStdString(),tmptree);
+        saveSWC_file(s.toStdString(),tmptree);
     }
 
     etime2 = timer2.elapsed();
     cout<<" save markers cost "<<etime2<<" milliseconds"<<endl;
     timer2.restart();
+
+    */
 
     if(tmptree.size() <= 1){
         for(int i=0; i<tmptree.size(); i++){
@@ -6019,20 +6372,6 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
             }
         }
         tmptree.clear();
-        for(long ii=0; ii<aliveIndexs.size(); ii++){
-            long ind = aliveIndexs[ii];
-            if(state[ind] == TRIAL || state[ind] == ALIVE){
-                state[ind] = FAR;
-            }
-            phi[ind] = INF;
-            path[ind] = 0;
-            parent[ind] = ind;
-        }
-        map<long, HeapElemX*>::iterator mit = elems.begin();
-        while (mit != elems.end())
-        {
-            HeapElemX * elem = mit->second; delete elem; mit++;
-        }
 
         if(vec1){delete[] vec1; vec1 = 0;}
         if(vec2){delete[] vec2; vec2 = 0;}
@@ -6044,48 +6383,48 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
     qDebug()<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
            <<" pc1 pc2 pc3: "<<pc1<<" "<<pc2<<" "<<pc3;
 
-    if(pc3>5){
+    if(pc3>8){
+        max_int = 0;
+        min_int = INT_MAX;
         for(int i=0; i<tmptree.size(); i++){
-            if(tmptree[i]){
-                delete tmptree[i];
-            }
+            long index = tmptree[i]->ind(sz0,sz01);
+            if (inimg1d[index] > max_int) max_int = inimg1d[index];
+            else if (inimg1d[index] < min_int) min_int = inimg1d[index];
         }
+        max_int -= min_int;
+//        if(max_int>255) max_int = 255;
         tmptree.clear();
+        tmpMarkers.clear();
+        fastmarching_core(root,inimg1d,tmptree,tmpMarkers,stopFlag,max_int,min_int,phi,parent,state,path,sz0,sz1,sz2,lineThres,cnn_type,length,lastDire);
 
-        for(long ii=0; ii<aliveIndexs.size(); ii++){
-            long ind = aliveIndexs[ii];
-            if(state[ind] == TRIAL || state[ind] == ALIVE){
-                state[ind] = FAR;
+        s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                + "_init1.swc";
+        saveSWC_file(s.toStdString(),tmptree);
+
+        computeLocalPcaEigVec2(tmptree,sz0,sz1,sz2,pc1,pc2,pc3,vec1,vec2,vec3);
+        qDebug()<<"after: "<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+               <<" pc1 pc2 pc3: "<<pc1<<" "<<pc2<<" "<<pc3;
+
+        if(pc3>8){
+            for(int i=0; i<tmptree.size(); i++){
+                if(tmptree[i]){
+                    delete tmptree[i];
+                }
             }
-            phi[ind] = INF;
-            path[ind] = 0;
-            parent[ind] = ind;
-        }
-        map<long, HeapElemX*>::iterator mit = elems.begin();
-        while (mit != elems.end())
-        {
-            HeapElemX * elem = mit->second; delete elem; mit++;
-        }
+            tmptree.clear();
 
-        if(vec1){delete[] vec1; vec1 = 0;}
-        if(vec2){delete[] vec2; vec2 = 0;}
-        if(vec3){delete[] vec3; vec3 = 0;}
-        return true;
+            if(vec1){delete[] vec1; vec1 = 0;}
+            if(vec2){delete[] vec2; vec2 = 0;}
+            if(vec3){delete[] vec3; vec3 = 0;}
+            return true;
+        }
     }
 
     etime2 = timer2.elapsed();
     cout<<" compute eigvec cost "<<etime2<<" milliseconds"<<endl;
     timer2.restart();
 
-    vector<MyMarker*> tmpMarkers;
-    MyMarker* curP = 0;
-    for(int i=maxSegMarkers.size()-1; i>=0; i--){
-        MyMarker* pp = maxSegMarkers[i];
-        MyMarker* p = new MyMarker(pp->x,pp->y,pp->z);
-        p->parent = curP;
-        tmpMarkers.push_back(p);
-        curP = p;
-    }
+
 
     for(int i=0; i<tmptree.size(); i++){
         if(tmptree[i]){
@@ -6094,34 +6433,252 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
     }
     tmptree.clear();
 
-    for(long ii=0; ii<aliveIndexs.size(); ii++){
-        long ind = aliveIndexs[ii];
-        if(state[ind] == TRIAL || state[ind] == ALIVE){
-            state[ind] = FAR;
+    if(stopFlag == 1){
+
+        tmpMarkers[1]->parent = root;
+
+        for(int i=1; i<tmpMarkers.size(); i++){
+            outtree.push_back(tmpMarkers[i]);
         }
-        phi[ind] = INF;
-        path[ind] = 0;
-        parent[ind] = ind;
+
+        if(vec1){delete[] vec1; vec1 = 0;}
+        if(vec2){delete[] vec2; vec2 = 0;}
+        if(vec3){delete[] vec3; vec3 = 0;}
+        return true;
     }
 
 
-    QString s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
-            + "_size" + QString::number(markersVec.size()) +  +  "_partial2.swc";
-//    saveSWC_file(s.toStdString(),tmpMarkers);
+    s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+            + "_p1.swc";
+    saveSWC_file(s.toStdString(),tmpMarkers);
+
+    twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
+//    segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
+    MyMarker* tmpEndMarker;
+    MyMarker* tMarker2 ;
+    double tmpLength = 0;
+    for(int i=tmpMarkers.size()-1; i>0; i--){
+        tmpLength += dist(*(tmpMarkers[i]),*(tmpMarkers[i-1]));
+        if(tmpLength>length/5.0){
+            tMarker2= tmpMarkers[i];
+            break;
+        }
+    }
+    cout<<"tmpLength: "<<tmpLength<<endl;
+
+    tmpEndMarker = tMarker2;
+    while (tmpEndMarker->parent != 0) {
+        tmpEndMarker = tmpEndMarker->parent;
+        if(dist(*tmpEndMarker,*tMarker2) > maskR + 0.5){
+            break;
+        }
+    }
+
+    twoPointsToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FINAL);
+
+    imageName = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                + "_init2.v3draw";
+//    saveMaskImage(inimg1d,state,maskImage,sz0,sz1,sz2,imageName,callback);
+
+//    segToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FINAL);
+    XYZ tmpLastDire = XYZ(tmpEndMarker->x-tMarker2->x,tmpEndMarker->y-tMarker2->y,tmpEndMarker->z-tMarker2->z);
+    vector<MyMarker*> tmptree2;
+    vector<MyMarker*> tmpMarkers2;
+    fastmarching_core(tmpEndMarker,inimg1d,tmptree2,tmpMarkers2,stopFlag,max_int,min_int,phi,parent,state,path,
+                      sz0,sz1,sz2,lineThres,cnn_type,length*5/6.0,tmpLastDire);
+
+    s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                +  "_init2.swc";
+    saveSWC_file(s.toStdString(),tmptree2);
+
+    s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                +  "_p2.swc";
+    saveSWC_file(s.toStdString(),tmpMarkers2);
+
+    twoPointsToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FAR);
+
+    map<long,int> markersMap;
+    for(int i=0; i<tmptree2.size(); i++){
+        long index = tmptree2[i]->ind(sz0,sz01);
+        markersMap[index] = i;
+    }
+    if(markersMap.find(root_ind) == markersMap.end()){
+
+        tmpMarkers.clear();
+        tmptree.clear();
+        twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
+        fastmarching_core(root,inimg1d,tmptree,tmpMarkers,stopFlag,max_int,min_int,phi,parent,state,path,
+                          sz0,sz1,sz2,lineThres,cnn_type,length*3,lastDire);
+
+        MyMarker* tMarker3 = tmpMarkers.back();
+
+        while (tMarker3 != tmpMarkers.front()) {
+            tMarker3 = tMarker3->parent;
+            if(dist(*tMarker3,*tmpMarkers.back())>maskR+0.5){
+                break;
+            }
+        }
+        twoPointsToMask(state,tMarker3,tmpMarkers.back(),sz0,sz1,sz2,maskR,FINAL);
+        onePointsToMask(state,tMarker3,sz0,sz1,sz2,maskR/2,FAR);
+
+        tmpMarkers2.clear();
+        tmptree2.clear();
+
+        tmpLastDire = XYZ(tMarker3->x-tmpMarkers.back()->x,tMarker3->y-tmpMarkers.back()->y,tMarker3->z-tmpMarkers.back()->z);
+        fastmarching_core(tMarker3,inimg1d,tmptree2,tmpMarkers2,stopFlag,max_int,min_int,phi,parent,state,path,
+                          sz0,sz1,sz2,lineThres,cnn_type,length*4.5,tmpLastDire);
+
+        MyMarker* tMarker4;
+        MyMarker* tMarker5;
+        tmpLength = 0;
+        for(int i=0; i<tmpMarkers2.size()-1; i++){
+            tmpLength += dist(*tmpMarkers2[i],*tmpMarkers2[i+1]);
+            if(tmpLength>length*1.5){
+                tMarker4 = tmpMarkers2[i];
+                break;
+            }
+        }
+
+        tmpLength = 0;
+        for(int i=tmpMarkers2.size()-1; i>0; i--){
+            tmpLength += dist(*tmpMarkers2[i],*tmpMarkers2[i-1]);
+            if(tmpLength>length*1.5){
+                tMarker5 = tmpMarkers2[i];
+                break;
+            }
+        }
+
+        twoPointsToMask(state,tMarker4,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FINAL);
+        twoPointsToMask(state,tMarker5,tmpMarkers2.back(),sz0,sz1,sz2,maskR,FINAL);
+
+        tmpMarkers.clear();
+        tmptree.clear();
+        twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
+        fastmarching_core(root,inimg1d,tmptree,tmpMarkers,stopFlag,max_int,min_int,phi,parent,state,path,
+                          sz0,sz1,sz2,lineThres,cnn_type,length*3,lastDire);
+
+
+
+
+
+
+//        MyMarker* tMarker3 = tmpMarkers.back();
+//        for(int i=0; i<tmpMarkers2.size(); i++){
+//            if(dist(*tmpMarkers2[i],*tmpMarkers2.front())>maskR+0.5){
+//                tMarker3 = tmpMarkers2[i];
+//                break;
+//            }
+//        }
+//        twoPointsToMask(state,tMarker3,tmpMarkers2.back(),sz0,sz1,sz2,maskR,FINAL);
+//        twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
+
+//        onePointsToMask(state,root,sz0,sz1,sz2,maskR,FAR);
+
+        imageName = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                    + "_init3.v3draw";
+        saveMaskImage(inimg1d,state,maskImage,sz0,sz1,sz2,imageName,callback);
+
+//        segToMask(state,tMarker3,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FINAL);
+//        segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
+
+//        vector<MyMarker*> tmptree2;
+//        vector<MyMarker*> tmpMarkers2;
+//        tmptree.clear();
+//        tmpMarkers.clear();
+//        fastmarching_core(root,inimg1d,tmptree,tmpMarkers,stopFlag,max_int,min_int,phi,parent,state,path,
+//                          sz0,sz1,sz2,lineThres,cnn_type,length,lastDire);
+
+        s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                    +  "_init3.swc";
+        saveSWC_file(s.toStdString(),tmptree);
+
+        s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+                    +  "_p3.swc";
+        saveSWC_file(s.toStdString(),tmpMarkers);
+
+
+        twoPointsToMask(state,tMarker4,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FAR);
+        twoPointsToMask(state,tMarker5,tmpMarkers2.back(),sz0,sz1,sz2,maskR,FAR);
+//        twoPointsToMask(state,tMarker3,tmpMarkers2.back(),sz0,sz1,sz2,maskR,FAR);
+//        twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
+
+//        segToMask(state,tMarker3,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FAR);
+//        segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
+
+        computeLocalPcaEigVec2(tmptree,sz0,sz1,sz2,pc1,pc2,pc3,vec1,vec2,vec3);
+        qDebug()<<"init 3: "<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
+               <<" pc1 pc2 pc3: "<<pc1<<" "<<pc2<<" "<<pc3;
+
+//        if(pc3>5){
+//            for(int i=0; i<tmptree.size(); i++){
+//                if(tmptree[i]){
+//                    delete tmptree[i];
+//                }
+//            }
+//            tmptree.clear();
+
+//            if(vec1){delete[] vec1; vec1 = 0;}
+//            if(vec2){delete[] vec2; vec2 = 0;}
+//            if(vec3){delete[] vec3; vec3 = 0;}
+//            return true;
+//        }
+
+        for(int i=0; i<tmptree.size(); i++){
+            if(tmptree[i]){
+                delete tmptree[i];
+            }
+        }
+        tmptree.clear();
+
+        tmpEndMarker = 0;
+
+
+//        qDebug()<<"find not start point";
+//        if(vec1){delete[] vec1; vec1 = 0;}
+//        if(vec2){delete[] vec2; vec2 = 0;}
+//        if(vec3){delete[] vec3; vec3 = 0;}
+//        return true;
+    }
+
+    twoPointsToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FAR);
+//    segToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FAR);
+
+    for(int i=0; i<tmptree2.size(); i++){
+        if(tmptree2[i]){
+            delete tmptree2[i];
+        }
+    }
+    tmptree2.clear();
+
 
     tmpMarkers[1]->parent = root;
 
     for(int i=1; i<tmpMarkers.size(); i++){
         outtree.push_back(tmpMarkers[i]);
+        if(tmpEndMarker == tmpMarkers[i]){
+            break;
+        }
     }
 
-    if(stopFlag == 1){
-        map<long, HeapElemX*>::iterator mit = elems.begin();
-        while (mit != elems.end())
-        {
-            HeapElemX * elem = mit->second; delete elem; mit++;
-        }
+//    double lineThresTmp = 0;
+//    for(int i=0; i<tmpMarkers.size(); i++){
+//        long index = tmpMarkers[i]->ind(sz0,sz01);
+//        lineThresTmp += inimg1d[index];
+//    }
 
+//    if(tmpMarkers.size()>0){
+//        lineThresTmp /= tmpMarkers.size();
+//    }
+//    lineThres = (lineThres + lineThresTmp)/2;
+
+    qDebug()<<"lineThres: "<<lineThres;
+
+    if(stopFlag == 1){
+
+        if(maskImage){
+            delete[] maskImage;
+            maskImage = 0;
+        }
         if(vec1){delete[] vec1; vec1 = 0;}
         if(vec2){delete[] vec2; vec2 = 0;}
         if(vec3){delete[] vec3; vec3 = 0;}
@@ -6132,22 +6689,28 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
     cout<<" add marker cost "<<etime2<<" milliseconds"<<endl;
     timer2.restart();
 
-    map<long, HeapElemX*>::iterator mit = elems.begin();
-    while (mit != elems.end())
-    {
-        HeapElemX * elem = mit->second; delete elem; mit++;
-    }
 
     if(vec1){delete[] vec1; vec1 = 0;}
     if(vec2){delete[] vec2; vec2 = 0;}
     if(vec3){delete[] vec3; vec3 = 0;}
+
+    if(maskImage){
+        delete[] maskImage;
+        maskImage = 0;
+    }
 
 
     etime2 = timer2.elapsed();
     cout<<" release memory cost "<<etime2<<" milliseconds"<<endl;
     timer2.restart();
 
-    MyMarker* leafMarker = tmpMarkers.back();
+//    MyMarker* leafMarker = tmpMarkers.back();
+    MyMarker* leafMarker;
+    if(tmpEndMarker == 0){
+        leafMarker = tmpMarkers.back();
+    }else{
+        leafMarker = tmpEndMarker;
+    }
     MyMarker* leafForeMarker = leafMarker;
 
     int c = 0;
@@ -6161,7 +6724,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
     lastDire = XYZ(leafMarker->x-leafForeMarker->x,leafMarker->y-leafForeMarker->y,leafMarker->z-leafForeMarker->z);
 
     fastmarching_ultratracer2_line(leafMarker,inimg1d,root,outtree,phi,parent,state,path,
-                              sz0,sz1,sz2,cnn_type,length,lastDire);
+                              sz0,sz1,sz2,lineThres,callback,cnn_type,length,lastDire);
 
     return true;
 

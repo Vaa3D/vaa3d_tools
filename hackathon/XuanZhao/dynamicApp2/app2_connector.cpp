@@ -1,9 +1,8 @@
 //last change: by Hanchuan Peng. 2012-12-30, 2013-06-05
 
 #include "vn_app2.h"
-#include "fastmarching_tree.h"
 #include "fastmarching_dt.h"
-#include "hierarchy_prune.h"
+#include "fastmarching_tree.h"
 #include "marker_radius.h"
 #include "basic_surf_objs.h"
 #include "swc_convert.h"
@@ -1959,10 +1958,11 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
             }
         }
         cout<<"i"<<i<<endl;
+        double lineThres = 0;
         XYZ lastDire = XYZ(leafMarker->x - foreMarker->x, leafMarker->y - foreMarker->y, leafMarker->z - foreMarker->z);
         fastmarching_ultratracer2_line(leafMarker, p.p4dImage->getRawData(), rootMarker, outMarkers,
                                   fphi, fparent, fstate, fpath,
-                                  p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(),
+                                  p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), lineThres, callback,
                                   p.cnn_type, p.f_length, lastDire);
     }
     if(fphi){delete [] fphi; fphi = 0;}
@@ -2079,6 +2079,114 @@ bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QStrin
     {
         if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
     }
+
+    return true;
+}
+
+bool proc_app2_line(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
+{
+
+    qDebug()<<"--------------in proc_app2_line--------------";
+    vector<MyMarker*> outMarkers;
+    long sz0 = p.p4dImage->getXDim();
+    long sz1 = p.p4dImage->getYDim();
+    long sz2 = p.p4dImage->getZDim();
+    long sz01 = sz0*sz1;
+    long tol_sz = sz01*sz2;
+    unsigned char* inimg = p.p4dImage->getRawData();
+
+    float * fphi = 0;
+    long * fparent = 0;
+    char * fstate = 0;
+    float * fpath = 0;
+    try
+    {
+        fphi = new float[tol_sz];
+        fparent = new long[tol_sz];
+        fstate = new char[tol_sz];
+        fpath = new float[tol_sz];
+        for(long i = 0; i < tol_sz; i++)
+        {
+            fphi[i] = INF;
+            fparent[i] = i;  // each pixel point to itself at the         statements beginning
+            fstate[i] = 1;
+            fpath[i] = 0;
+        }
+    }
+    catch (...)
+    {
+        cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+        if (fphi) {delete []fphi; fphi=0;}
+        if (fparent) {delete []fparent; fparent=0;}
+        if (fstate) {delete []fstate; fstate=0;}
+        if (fpath) {delete []fpath; fpath=0;}
+        return false;
+    }
+    qDebug()<<"allocate memory end";
+
+    MyMarker* leafMarker = p.root;
+    MyMarker* foreMarker = leafMarker;
+    int count = 0;
+    while (foreMarker != p.rootFore) {
+        foreMarker = foreMarker->parent;
+        count++;
+        if(count>5){
+            break;
+        }
+    }
+
+    MyMarker* tmp = p.root;
+    double lineThres = 0;
+    count = 0;
+    while (tmp != p.rootFore) {
+        long index = tmp->ind(sz0,sz01);
+        tmp = tmp->parent;
+        lineThres += inimg[index];
+        count++;
+    }
+    if(count>0){
+        lineThres /= count;
+    }
+    qDebug()<<"start lineThres: "<<lineThres;
+
+    XYZ lastDire = XYZ(leafMarker->x - foreMarker->x, leafMarker->y - foreMarker->y, leafMarker->z - foreMarker->z);
+    fastmarching_ultratracer2_line(leafMarker, inimg, p.rootFore, outMarkers,
+                              fphi, fparent, fstate, fpath,
+                              sz0, sz1, sz2, lineThres, callback,
+                              p.cnn_type, p.f_length, lastDire);
+
+    if(fphi){delete [] fphi; fphi = 0;}
+    if(fparent){delete [] fparent; fparent = 0;}
+    if(fstate) {delete [] fstate; fstate = 0;}
+    if(fpath) {delete []fpath; fpath=0;}
+
+
+    list<string> infostring;
+    if(1)
+    {
+        QString rootposstr="", tmps;
+        tmps.setNum(int(p.root->x+0.5)).prepend("_x"); rootposstr += tmps;
+        tmps.setNum(int(p.root->y+0.5)).prepend("_y"); rootposstr += tmps;
+        tmps.setNum(int(p.root->z+0.5)).prepend("_z"); rootposstr += tmps;
+        //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
+        QString outswc_file;
+        if(!p.outswc_file.isEmpty())
+            outswc_file = p.outswc_file;
+        else
+            outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
+        //prepare the output comments for neuron info in the swc file
+
+        saveSWC_file(outswc_file.toStdString(), outMarkers, infostring);
+        p.result = swc_convert(outMarkers);
+    }
+
+
+    for(V3DLONG i=0; i<outMarkers.size(); i++){
+        if(outMarkers[i]){
+            delete outMarkers[i];
+        }
+    }
+    outMarkers.clear();
 
     return true;
 }

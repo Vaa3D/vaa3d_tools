@@ -4,6 +4,8 @@
 #define __VN2_PARA_H__
 
 #include "vn.h"
+#include "my_surf_objs.h"
+
 
 struct PARA_APP2: public PARA_VN
 {
@@ -28,6 +30,10 @@ struct PARA_APP2: public PARA_VN
     double f_length;
     NeuronTree result;
     double zScale;
+
+    MyMarker* root;
+    MyMarker* rootFore;
+
 
     
     QString inimg_file, inmarker_file, outswc_file;
@@ -176,6 +182,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 bool proc_app2_dynamic(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
 
 bool proc_app2_dynamic2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
+
+bool proc_app2_line(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
 
 #endif
 
