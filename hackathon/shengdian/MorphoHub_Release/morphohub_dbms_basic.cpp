@@ -97,6 +97,8 @@ bool mDatabase::createMorpho(MImageType imageID=MinImageID,MSomaType somaID=MinS
      * 2.3 create an init version with the metadata of soma inside <file:imageID_somaID_MinMorphometryID_soma.metadata>
      *          at <db>/morphometry/imageID/somaID/MinMorphometryID/
      * 3. if not, assign new morphometryID
+     *
+     * question is that: i have to scan all the metadata files in Metadata_morphometry path, sometimes processing ten of thousands of metadata to get the list. find a more effiency way!
     */
 }
 QString mDatabase::getMorpho_db_path()
@@ -498,23 +500,32 @@ bool mDatabase::createNewSomaMorpho_fromApo(const QString &inapo,MImageType inmI
     }
     return writeSomaMorphoToFile(saveTo,inmSomaMorpho);
 }
-QStringList mImage::getDataNumber()
+QStringList mImage::getDataNumber(bool basic)
 {
     QStringList out;
-    out.append(QString::number(this->mImageID));
-    out.append(this->getName());
-    out.append(this->sampleID);
-    out.append(this->sourceID);
-    out.append(this->mFormatList[this->mFormatID]);
-    out.append(this->mObjectList[this->mObjectID]);
-    out.append(QString::number(this->mIS.sx));
-    out.append(QString::number(this->mIS.sy));
-    out.append(QString::number(this->mIS.sz));
-    out.append(QString::number(this->mVR.rx));
-    out.append(QString::number(this->mVR.ry));
-    out.append(QString::number(this->mVR.rz));
-    out.append(this->comments);
-    return out;
+    if(basic)
+    {
+        out.append(QString::number(this->mImageID));
+        out.append(this->sampleID);
+        return out;
+    }
+    else
+    {
+        out.append(QString::number(this->mImageID));
+        out.append(this->getName());
+        out.append(this->sampleID);
+        out.append(this->sourceID);
+        out.append(this->mFormatList[this->mFormatID]);
+        out.append(this->mObjectList[this->mObjectID]);
+        out.append(QString::number(this->mIS.sx));
+        out.append(QString::number(this->mIS.sy));
+        out.append(QString::number(this->mIS.sz));
+        out.append(QString::number(this->mVR.rx));
+        out.append(QString::number(this->mVR.ry));
+        out.append(QString::number(this->mVR.rz));
+        out.append(this->comments);
+        return out;
+    }
 }
 QStringList mSoma::getDataNumber()
 {
@@ -709,13 +720,14 @@ QList<mImage> getImagelist(const QString& inpath)
     //3.write to Qlist
     return outlist;
 }
-bool writeImagelistToFile(const QString &topath, QList<mImage> &inlist)
+bool writeImagelistToFile(const QString &topath, QList<mImage> &inlist,bool basic)
 {
     if (topath.isEmpty()||inlist.size()==0)
         return false;
     QFile scanconffile(topath);
     //get title
     mImage temp;QString confTitle="#";
+    temp.setDataNumberTitle(basic);
     if(temp.dataNumberTitle.size())
     {
         confTitle+=temp.dataNumberTitle.at(0);
@@ -733,7 +745,7 @@ bool writeImagelistToFile(const QString &topath, QList<mImage> &inlist)
         for(V3DLONG i=0;i<inlist.size();i++)
         {
             mImage tempi=inlist.at(i);
-            tempi.getDataNumber();
+            tempi.getDataNumber(basic);
             QString data=tempi.dataNumber.at(0);
             for(int j=1;j<tempi.dataNumber.size();j++)
                 data+=(","+tempi.dataNumber.at(j));

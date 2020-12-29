@@ -15,6 +15,7 @@ using namespace std;
 #define MImageType unsigned long
 #define MSomaType unsigned long
 #define MMorphoType unsigned int
+#define MUserType unsigned int
 
 struct mMorphometry;
 struct mSoma;
@@ -217,11 +218,20 @@ struct mImage{
         this->name=mObjectList[mObjectID]+"_"+sampleID+"_"+mFormatList[mFormatID];
         return this->name;
     }
-    QStringList getDataNumber();
+    QStringList getDataNumber(bool basic=false);
+    void setDataNumberTitle(bool basic=false){
+        dataNumberTitle.clear();
+        if(basic)
+            dataNumberTitle<<"ImageID"<<"Name"<<"SampleID"<<"SourceID"
+                     <<"Format"<<"Object"<<"SizeX"<<"SizeY"<<"SizeZ"<<
+                       "ResolutionX"<<"ResolutionY"<<"ResolutionZ"<<"Bit"<<"Comments";
+        else
+            dataNumberTitle<<"ImageID"<<"SampleID";
+    }
 };
 mImage createImageFromQSL(QStringList inlist);
 QList<mImage> getImagelist(const QString& inpath);
-bool writeImagelistToFile(const QString& topath,QList<mImage> &inlist);
+bool writeImagelistToFile(const QString& topath,QList<mImage> &inlist,bool basic=false);
 /*Definition of the MorphoHub-Database*/
 enum db_init_1stlayer_index{
     METADATA=0,
@@ -283,6 +293,8 @@ struct mDatabase{
     bool createDB(const QString &inpath);
     bool loadDB(const QString &inpath);
     /************************Morphometry dataset part*********************/
+    /*get the morphometry-list(listmMorphometry), load and write morphometry.metadata*/
+    /*create a new morphometry; delete or update a morphometry;*/
     bool createMorpho(MImageType imageID=MinImageID,MSomaType somaID=MinSomaID);
     QString getMorpho_db_path();
     /*return the path of neurons of an image dataset*/
