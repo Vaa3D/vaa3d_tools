@@ -1,39 +1,46 @@
 #include "morphohub_dbms_basic.h"
 /*For the initialization of database*/
-bool mDatabase::initialization()
+bool mDatabase::dbInitialization(bool start)
 {
-    if(loadDB(this->dbpath))
+    if(start)
     {
-        //1. init of image list
-        QDir img_metadata_Dir(this->img_metadata_path);
-        if(!this->img_metadata_path.isEmpty()&&img_metadata_Dir.exists())
+        db_init_1stlayer.clear();db_init_2stlayer_metadata.clear();db_init_3stlayer_metadata.clear();
+        dbpath="";
+        db_init_1stlayer<<"metadata"<<"morphometry"<<"level0"<<"module";
+        db_init_2stlayer_metadata<<"image"<<"soma"<<"morphometry"<<"user";
+        db_init_3stlayer_metadata<<"basic"<<"detail"<<"supplementary";
+    }
+    else
+    {
+        return loadDB(this->dbpath);
+    }
+    return true;
+}
+bool mDatabase::imageInitialization(bool start)
+{
+    if(start)
+    {
+        imgdbpath=db_img_metadata_path=img_metadata_path="";
+        listImages.clear();mImagePointer=new mImage();
+    }
+    else
+    {
+        this->db_img_metadata_path=this->getImg_metadata_path();
+        //init when load the database, listImages from db_img_metadata_path
+        QDir img_metadata_Dir(this->db_img_metadata_path);
+        if(!this->db_img_metadata_path.isEmpty()&&img_metadata_Dir.exists())
         {
             //load from this image.metadata
-            this->listImages=getImagelist(this->img_metadata_path);
+            this->listImages=getImagelist(this->db_img_metadata_path,true);
             if(!this->listImages.size())
             {
-                QMessageBox::warning(0,"Image dataset empth",QObject::tr("Without image datasets at %1 !").arg(this->img_metadata_path));
+                QMessageBox::warning(0,"Image dataset empth",QObject::tr("Without image datasets at %1 !").arg(this->db_img_metadata_path));
                 return false;
             }
-            //2. init of somata list
-            QDir soma_metadata_Dir(this->soma_metadata_path);
-            if(!this->soma_metadata_path.isEmpty()&&soma_metadata_Dir.exists())
-            {
-                this->listmSomata=getSomaMorpholist();
-                //3. init of morphometry list
-                if(!this->morpho_metadata_path.isEmpty())
-                {
-                    //come here later
-                }
-            }
-            else
-                qDebug()<<"Warnning:meta data of soma is empty.";
         }
         else
             return false;
     }
-    else
-        return false;
     return true;
 }
 bool mDatabase::createDB(const QString &inpath)
@@ -79,14 +86,199 @@ bool mDatabase::createDB(const QString &inpath)
                 return false;
         }
     }
-    this->img_metadata_path=this->getImg_metadata_path();
-    this->soma_metadata_path=this->getSoma_metadata_path();
-    this->morpho_metadata_path=this->getMorpho_metadata_path();
     return true;
 }
 bool mDatabase::loadDB(const QString &inpath)
 {
     return createDB(inpath);
+}
+QString mDatabase::getImg_metadata_path()
+{
+    QString outpath="";QDir dbDir(dbpath);
+    if(dbpath.isEmpty()||!dbDir.exists())
+        return outpath;
+    outpath=dbpath+"/"+db_init_1stlayer[METADATA]+"/"+db_init_2stlayer_metadata[IMAGE]+"/"+
+            db_init_3stlayer_metadata[BASIC]+"/"+db_init_2stlayer_metadata[IMAGE]+".metadata";
+    return outpath;
+}
+QString mDatabase::getImg_metadata_path(MImageType qImageID)
+{
+    QString outpath=""; QDir dbDir(dbpath);
+    if(dbpath.isEmpty()||!dbDir.exists()||qImageID<MinImageID||qImageID>MaxImageID)
+        return outpath;
+    V3DLONG liz=this->listImages.size();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(qImageID==temp.mImageID)
+        {
+            outpath= dbpath+"/"+db_init_1stlayer[METADATA]+"/"+db_init_2stlayer_metadata[IMAGE]+"/"+
+                    db_init_3stlayer_metadata[DETAIL]+"/"+QString::number(qImageID)+"/"+
+                    db_init_2stlayer_metadata[IMAGE]+".metadata";
+            break;
+        }
+    }
+    QFile metaFile(outpath);
+    if(!metaFile.exists())
+    {
+        qDebug()<<"Requested image metadata of "<<QString::number(qImageID)<<" is not existed.";
+    }
+    return outpath;
+}
+QString mDatabase::getImg_metadata_path(const QString &insampleID)
+{
+    QString outpath="";
+    V3DLONG liz=this->listImages.size();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(QString::compare(insampleID,temp.sampleID))
+            return this->getImg_metadata_path(temp.mImageID);
+    }
+    return outpath;
+}
+bool mDatabase::getImagePointer(MImageType qImageID)
+{
+    this->img_metadata_path=this->getImg_metadata_path(qImageID);
+    if(this->img_metadata_path.isEmpty())
+        return false;
+    this->mImagePointer=getImage(this->img_metadata_path);
+    return true;
+}
+bool mDatabase::getImagePointer(const QString &insampleID)
+{
+    V3DLONG liz=this->listImages.size();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(QString::compare(insampleID,temp.sampleID))
+            return this->getImagePointer(temp.mImageID);
+    }
+    return false;
+}
+bool mDatabase::addImage(const QString & insampleID)
+{
+    /*1. check the validity of the input `sampleID`
+      2. assign a new `mImageID`.
+      3. create a metadata file at `<db>/metadata/image/detail/<newID>/image.metadata`
+      4. update info into `listmImages`
+      5. update metadata file of all the images in db.*/
+    /*1*/
+    V3DLONG liz=this->listImages.size();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(QString::compare(temp.sampleID,insampleID))
+        {
+            qDebug()<<"Error: Already has image "<<insampleID;
+            return false;
+        }
+    }
+    /*2*/
+    mImage newImage;
+    newImage.mImageID=MinImageID;
+    QList<MImageType> listimageID; listimageID.clear();
+    for(V3DLONG i=0;i<liz;i++)
+        listimageID.append(this->listImages.at(i).mImageID);
+    for(V3DLONG i=MinImageID;i<MaxImageID+1;i++)
+        if(!listimageID.contains(i))
+        {
+            newImage.mImageID=i;
+            break;
+        }
+    /*3*/
+    QList<mImage> outImage;outImage.clear();
+    newImage.init(insampleID);
+    outImage.append(newImage);
+    QDir dstdir;bool ok=false;
+    if(!QDir(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath()).exists())
+        dstdir.mkpath(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath());
+    if(QDir(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath()).exists())
+        ok=writeImagelistToFile(this->getImg_metadata_path(newImage.mImageID),outImage);
+    if(ok)
+    {
+        /*4 and 5*/
+        this->listImages.append(newImage);
+        if(this->listImages.size()==liz+1)
+            return writeImagelistToFile(this->getImg_metadata_path(),this->listImages,true);
+    }
+    else
+        dstdir.rmpath(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath());
+    return false;
+}
+bool mDatabase::deleteImage(MImageType removeID)
+{
+    /*1. check the validity of the input `mImageID` or `sampleID`
+      2. delete metadata file at `get_img_metadata_path(mImageID)`
+      3. update info into `listmImages`
+      4. update metadata file of all the images in db.
+      5. delete all the related files and metadata
+    */
+    /*1*/
+    V3DLONG liz=this->listImages.size();
+    bool ok=false;
+    QList<mImage> tmplistImages;tmplistImages.clear();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(removeID==temp.mImageID)
+        {
+            ok=true;
+            continue;
+        }
+        tmplistImages.append(this->listImages.at(i));
+    }
+    if(!ok)
+        return false;
+    /*2*/
+    QDir dstdir;
+    dstdir.rmpath(QFileInfo(this->getImg_metadata_path(removeID)).absolutePath());
+    if(QDir(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath()).exists())
+        return false;
+    /*3*/
+    this->listImages.clear();
+    for(V3DLONG i=0;i<tmplistImages.size();i++)
+        this->listImages.append(tmplistImages.at(i));
+    /*4*/
+    if(liz==this->listImages.size()-1)
+        return writeImagelistToFile(this->getImg_metadata_path(),this->listImages);
+    /*5*/
+    //come here later
+    //get soma and morphometry metadata and remove
+    //remove morphometry database
+    return false;
+}
+bool mDatabase::deleteImage(const QString &insampleID)
+{
+    V3DLONG liz=this->listImages.size();
+    for(V3DLONG i=0;i<liz;i++)
+    {
+        mImage temp=this->listImages.at(i);
+        if(QString::compare(insampleID,temp.sampleID))
+            return this->deleteImage(temp.mImageID);
+    }
+    return false;
+}
+bool mDatabase::updateImage(mImage inImage)
+{
+    /*1. check the validity of the input `mImageID` and `sampleID`
+      2. get metadata file at `get_img_metadata_path(mImageID)` and read to `mImagePointer`
+      3. revise operation here
+      4. update and write to metadata file at `get_img_metadata_path(mImageID)`*/
+    /*1 and 2*/
+    bool validatedID=getImagePointer(inImage.mImageID);
+    if(validatedID)
+    {
+        this->mImagePointer=inImage;
+        QList<mImage> outImage;outImage.clear();
+        outImage.append(inImage);
+        QDir dstdir;
+        if(!QDir(QFileInfo(this->getImg_metadata_path(inImage.mImageID)).absolutePath()).exists())
+            dstdir.mkpath(QFileInfo(this->getImg_metadata_path(inImage.mImageID)).absolutePath());
+        if(QDir(QFileInfo(this->getImg_metadata_path(inImage.mImageID)).absolutePath()).exists())
+            validatedID=writeImagelistToFile(this->getImg_metadata_path(inImage.mImageID),outImage);
+    }
+    return validatedID;
 }
 bool mDatabase::createMorpho(MImageType imageID=MinImageID,MSomaType somaID=MinSomaID)
 {
@@ -219,44 +411,29 @@ QString mDatabase::getMorpho_metadata_path(MImageType qImageID,MSomaType qSomaID
     }
     return outpath;
 }
-QString mDatabase::getImg_metadata_path()
+bool mDatabase::somaInitialization(bool start=true)
 {
-    QString outpath="";
-    QDir dbDir(dbpath);
-    if(dbpath.isEmpty()||!dbDir.exists())
-        return outpath;
-    outpath=dbpath+"/"+db_init_1stlayer[METADATA]+"/"+db_init_2stlayer_metadata[IMAGE]+"/"+
-            db_init_3stlayer_metadata[BASIC]+"/"+db_init_2stlayer_metadata[IMAGE]+".metadata";
-    return outpath;
-}
-QString mDatabase::getImg_metadata_path(MImageType queryID)
-{
-    QString outpath="";
-    QDir dbDir(dbpath);
-    if(dbpath.isEmpty()||!dbDir.exists())
-        return outpath;
-    V3DLONG liz=this->listImages.size();
-    for(V3DLONG i=0;i<liz;i++)
+    if(start)
     {
-        mImage temp=this->listImages.at(i);
-        if(temp.mImageID==queryID)
-            return dbpath+"/"+db_init_1stlayer[METADATA]+"/"+db_init_2stlayer_metadata[IMAGE]+"/"+
-                    db_init_3stlayer_metadata[DETAIL]+"/"+QString::number(queryID)+"/"+
-                    db_init_2stlayer_metadata[IMAGE]+".metadata";
+        db_soma_metadata_path=soma_metadata_path="";
+        listSomata.clear();mSomataPointer.clear();
     }
-    return outpath;
-}
-QString mDatabase::getImg_metadata_path(const QString &insampleID)
-{
-    QString outpath="";
-    V3DLONG liz=this->listImages.size();
-    for(V3DLONG i=0;i<liz;i++)
+    else
     {
-        mImage temp=this->listImages.at(i);
-        if(QString::compare(insampleID,temp.sampleID))
-            return this->getImg_metadata_path(temp.mImageID);
+        QDir soma_metadata_Dir(this->soma_metadata_path);
+        if(!this->soma_metadata_path.isEmpty()&&soma_metadata_Dir.exists())
+        {
+            this->listmSomata=getSomaMorpholist();
+            //3. init of morphometry list
+            if(!this->morpho_metadata_path.isEmpty())
+            {
+                //come here later
+            }
+        }
+        else
+            qDebug()<<"Warnning:meta data of soma is empty.";
     }
-    return outpath;
+    return true;
 }
 QString mDatabase::getSoma_metadata_path()
 {
@@ -358,57 +535,6 @@ bool mDatabase::deleteSomaMorpho(const QString &insampleID)
     }
     return false;
 }
-bool mDatabase::creatNewImage(const QString & insampleID)
-{
-    /*get the max ImageID; assign imageID*/
-    V3DLONG liz=this->listImages.size();
-    mImage newImage;
-    newImage.mImageID=(liz>0)?MinImageID:(liz+MinImageID);
-    for(V3DLONG i=0;i<liz;i++)
-    {
-        mImage temp=this->listImages.at(i);
-        if(temp.mImageID>newImage.mImageID)
-            newImage.mImageID=temp.mImageID+1;
-    }
-    newImage.init(insampleID);
-    this->listImages.append(newImage);
-    if(this->listImages.size()==liz+1)
-        return writeImagelistToFile(this->getImg_metadata_path(),this->listImages);
-    return false;
-}
-bool mDatabase::deleteImage(MImageType removeID)
-{
-    QList<mImage> tmplistImages;tmplistImages.clear();
-    V3DLONG liz=this->listImages.size();
-    for(V3DLONG i=0;i<liz;i++)
-    {
-        mImage temp=this->listImages.at(i);
-        tmplistImages.append(temp);
-    }
-    this->listImages.clear();
-    for(V3DLONG i=0;i<liz;i++)
-    {
-        mImage temp=this->listImages.at(i);
-        if(temp.mImageID==removeID)
-            continue;
-        this->listImages.append(temp);
-    }
-    //save to file
-    if(liz==this->listImages.size()-1)
-        return writeImagelistToFile(this->getImg_metadata_path(),this->listImages);
-    return false;
-}
-bool mDatabase::deleteImage(const QString &insampleID)
-{
-    V3DLONG liz=this->listImages.size();
-    for(V3DLONG i=0;i<liz;i++)
-    {
-        mImage temp=this->listImages.at(i);
-        if(QString::compare(insampleID,temp.sampleID))
-            return this->deleteImage(temp.mImageID);
-    }
-    return false;
-}
 bool mDatabase::updateSomaMorpho_fromApo(const QString &inapo,MImageType inmImageID)
 {
     QList<mSomaMorpho> updatedlist; updatedlist.clear();
@@ -502,10 +628,11 @@ bool mDatabase::createNewSomaMorpho_fromApo(const QString &inapo,MImageType inmI
 }
 QStringList mImage::getDataNumber(bool basic)
 {
-    QStringList out;
+    QStringList out;out.clear();
     if(basic)
     {
         out.append(QString::number(this->mImageID));
+        out.append(this->getName());
         out.append(this->sampleID);
         return out;
     }
@@ -527,9 +654,17 @@ QStringList mImage::getDataNumber(bool basic)
         return out;
     }
 }
-QStringList mSoma::getDataNumber()
+QStringList mSoma::getDataNumber(bool basic)
 {
-    QStringList out;
+    QStringList out;out.clear();
+    if(basic)
+    {
+        out.append(QString::number(this->mImageID));
+        out.append(QString::number(this->mSomaID));
+        out.append(this->getName());
+        return out;
+    }
+    out.append(QString::number(this->mImageID));
     out.append(QString::number(this->mSomaID));
     out.append(this->getName());
     out.append(QString::number(this->position.mx));
@@ -549,8 +684,7 @@ QStringList mSoma::getDataNumber()
 }
 QStringList mMorphometry::getDataNumber()
 {
-//    dataNumberTitle<<"MorphometryID"<<"Name"<<"MorphometryType"<<"Comments";
-    QStringList out;
+    QStringList out;out.clear();
     out.append(QString::number(this->mMorphometryID));
     out.append(this->name);
     out.append(this->morphometryType);
@@ -575,32 +709,39 @@ void mMorphometrylist::reNamelistMorphometry()
         }
     }
 }
-mSoma createSomaMorphoFromQSL(QStringList inlist)
+mSoma createSomaMorphoFromQSL(QStringList inlist,bool basic)
 {
     mSoma out;
-    out.mSomaID=inlist.at(0).toULong();
-    out.cellName=inlist.at(1);
-    out.position.mx=inlist.at(2).toFloat();
-    out.position.my=inlist.at(3).toFloat();
-    out.position.mz=inlist.at(4).toFloat();
-    out.radius=inlist.at(5).toFloat();
-    out.color.r=inlist.at(6).toUInt();
-    out.color.g=inlist.at(7).toUInt();
-    out.color.b=inlist.at(8).toUInt();
-    out.color.a=inlist.at(9).toUInt();
-    out.intensity=inlist.at(10).toFloat();
-    out.volume=inlist.at(11).toFloat();
-    out.comments=inlist.at(12);
-    out.region=inlist.at(13);
-    out.cellType=inlist.at(14);
+    if(basic)
+    {
+        out.mImageID=inlist.at(0).toLong();
+        out.mSomaID=inlist.at(1).toULong();
+        out.name=inlist.at(2);
+        return out;
+    }
+    out.mImageID=inlist.at(0).toLong();
+    out.mSomaID=inlist.at(1).toULong();
+    out.name=inlist.at(2);
+    out.position.mx=inlist.at(3).toFloat();
+    out.position.my=inlist.at(4).toFloat();
+    out.position.mz=inlist.at(5).toFloat();
+    out.radius=inlist.at(6).toFloat();
+    out.color.r=inlist.at(7).toUInt();
+    out.color.g=inlist.at(8).toUInt();
+    out.color.b=inlist.at(9).toUInt();
+    out.color.a=inlist.at(10).toUInt();
+    out.intensity=inlist.at(11).toFloat();
+    out.volume=inlist.at(12).toFloat();
+    out.comments=inlist.at(13);
+    out.region=inlist.at(14);
+    out.cellType=inlist.at(15);
     return out;
 }
-mSomaMorpho getSomaMorpho(const QString& queryPath,MImageType inmImageID)
+QList<mSoma> getSomalist(const QString& inpath,bool basic)
 {
-    mSomaMorpho outMorpho;outMorpho.listSomata.clear();
-    outMorpho.mImageID=inmImageID;
+    QList<mSoma> outSomalist;outSomalist.clear();
     //1.scan conf path.
-    QFile scanconffile(queryPath);
+    QFile scanconffile(inpath);
     if(!scanconffile.exists())
         QMessageBox::warning(0,"File Not Found","Can't find configuration file at Input path!");
     else
@@ -617,20 +758,21 @@ mSomaMorpho getSomaMorpho(const QString& queryPath,MImageType inmImageID)
                 if (buf[0]=='#') continue;
                 QStringList qsl = QString(buf).trimmed().split(",");
                 if (qsl.size()==0)   continue;
-                mSoma tempi=createSomaMorphoFromQSL(qsl);
-                outMorpho.listSomata.append(tempi);
+                mSoma tempi=createSomaMorphoFromQSL(qsl,basic);
+                outSomalist.append(tempi);
             }
         }
     }
-    return outMorpho;
+    return outSomalist;
 }
-bool writeSomaMorphoToFile(const QString& topath,mSomaMorpho inmSomaMorpho)
+bool writeSomalistToFile(const QString& topath,QList<mSoma> &insomalist,bool basic)
 {
-    if (topath.isEmpty()||inmSomaMorpho.listSomata.size()==0)
+    if (topath.isEmpty()||insomalist.size()==0)
         return false;
     QFile scanconffile(topath);
     //get title
     mSoma temp;QString confTitle="#";
+    temp.setDataNumberTitle(basic);
     if(temp.dataNumberTitle.size())
     {
         confTitle+=temp.dataNumberTitle.at(0);
@@ -645,10 +787,10 @@ bool writeSomaMorphoToFile(const QString& topath,mSomaMorpho inmSomaMorpho)
         //title
         scanconffile.write(confTitle.toAscii());
         //inside
-        for(V3DLONG i=0;i<inmSomaMorpho.listSomata.size();i++)
+        for(V3DLONG i=0;i<insomalist.size();i++)
         {
-            mSoma tempi=inmSomaMorpho.listSomata.at(i);
-            tempi.getDataNumber();
+            mSoma tempi=insomalist.at(i);
+            tempi.getDataNumber(basic);
             QString data=tempi.dataNumber.at(0);
             for(int j=1;j<tempi.dataNumber.size();j++)
                 data+=(","+tempi.dataNumber.at(j));
@@ -672,25 +814,34 @@ mSoma apo2mSoma(CellAPO inapo)
     outmSoma.position.mz=inapo.z;
     return outmSoma;
 }
-mImage createImageFromQSL(QStringList inlist)
+mImage createImageFromQSL(QStringList inlist,bool basic)
 {
-    mImage out;
+    mImage out;out.setDataNumberTitle(basic);
     if(inlist.size()!=out.dataNumberTitle.size())
         return out;
-    out.mImageID=inlist.at(0).toULong();
-    out.name=inlist.at(1);
-    out.sampleID=inlist.at(2);
-    out.sourceID=inlist.at(3);
-    if(out.mFormatList.contains(inlist.at(3)))
-        out.mFormatID=out.mFormatList.indexOf(inlist.at(3));
-    if(out.mObjectList.contains(inlist.at(4)))
-        out.mFormatID=out.mObjectList.indexOf(inlist.at(4));
-    out.mIS.setmIS(inlist.at(5).toULong(),inlist.at(6).toULong(),inlist.at(7).toULong());
-    out.mVR.setmVR(inlist.at(8).toDouble(),inlist.at(9).toDouble(),inlist.at(10).toDouble());
-    out.comments=inlist.at(11);
+    if(basic)
+    {
+        out.mImageID=inlist.at(0).toULong();
+        out.name=inlist.at(1);
+        out.sampleID=inlist.at(2);
+    }
+    else
+    {
+        out.mImageID=inlist.at(0).toULong();
+        out.name=inlist.at(1);
+        out.sampleID=inlist.at(2);
+        out.sourceID=inlist.at(3);
+        if(out.mFormatList.contains(inlist.at(3)))
+            out.mFormatID=out.mFormatList.indexOf(inlist.at(3));
+        if(out.mObjectList.contains(inlist.at(4)))
+            out.mFormatID=out.mObjectList.indexOf(inlist.at(4));
+        out.mIS.setmIS(inlist.at(5).toULong(),inlist.at(6).toULong(),inlist.at(7).toULong());
+        out.mVR.setmVR(inlist.at(8).toDouble(),inlist.at(9).toDouble(),inlist.at(10).toDouble());
+        out.comments=inlist.at(11);
+    }
     return out;
 }
-QList<mImage> getImagelist(const QString& inpath)
+QList<mImage> getImagelist(const QString& inpath,bool basic)
 {
     QList<mImage> outlist;
     outlist.clear();
@@ -712,7 +863,7 @@ QList<mImage> getImagelist(const QString& inpath)
                 if (buf[0]=='#') continue;
                 QStringList qsl = QString(buf).trimmed().split(",");
                 if (qsl.size()==0)   continue;
-                mImage tempi=createImageFromQSL(qsl);
+                mImage tempi=createImageFromQSL(qsl,basic);
                 outlist.append(tempi);
             }
         }
@@ -720,14 +871,40 @@ QList<mImage> getImagelist(const QString& inpath)
     //3.write to Qlist
     return outlist;
 }
+mImage getImage(const QString& inpath)
+{
+    mImage out=new mImage();
+    QFile scanconffile(inpath);
+    if(!scanconffile.exists())
+        QMessageBox::warning(0,"File Not Found","Can't find configuration file at Input path!");
+    else
+    {
+        //2.get all lines from the conf file.
+        if (scanconffile.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            while (! scanconffile.atEnd())
+            {
+                char _buf[1000], *buf;
+                scanconffile.readLine(_buf, sizeof(_buf));
+                for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+                if (buf[0]=='\0')	continue;
+                if (buf[0]=='#') continue;
+                QStringList qsl = QString(buf).trimmed().split(",");
+                if (qsl.size()==0)   continue;
+                out=createImageFromQSL(qsl);
+            }
+        }
+    }
+    return out;
+}
 bool writeImagelistToFile(const QString &topath, QList<mImage> &inlist,bool basic)
 {
     if (topath.isEmpty()||inlist.size()==0)
         return false;
     QFile scanconffile(topath);
     //get title
-    mImage temp;QString confTitle="#";
-    temp.setDataNumberTitle(basic);
+    mImage temp;temp.setDataNumberTitle(basic);
+    QString confTitle="#";
     if(temp.dataNumberTitle.size())
     {
         confTitle+=temp.dataNumberTitle.at(0);
