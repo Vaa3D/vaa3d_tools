@@ -62,6 +62,16 @@ namespace integratedDataTypes
 		double phi;   // vertical angle
 	};
 
+	struct overlappedCoord
+	{
+		overlappedCoord() = default;
+		overlappedCoord(float x, float y, float z);
+		overlappedCoord(string coordKey);
+		float x, y, z;
+		string coordKey;
+		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap;
+	};
+
 	struct topoCharacter
 	{
 		topoCharacter() = default;
@@ -102,6 +112,7 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 
+		bool reverse();
 		V_NeuronSWC convert2V_NeuronSWC() const;
 
 		void reInit(segUnit& inputSegUnit);
@@ -168,24 +179,30 @@ namespace integratedDataTypes
 		boost::container::flat_map<int, int> headSeg2ClusterMap;						  // segment ID -> the cluster in which the segment head is located
 		boost::container::flat_map<int, int> tailSeg2ClusterMap;						  // segment ID -> the cluster in which the segment tail is located
 		
-		boost::container::flat_multimap<int, int> node2segMap;			  // node ID -> seg ID
-		boost::container::flat_multimap<string, int> nodeCoordKey2segMap; // node coord key -> seg ID
+		boost::container::flat_map<int, int> node2segMap;											 // node ID -> seg ID
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap;							 // node coord key -> seg ID
+		boost::container::flat_multimap<string, int> nodeCoordKey2nodeIDMap;						 // node coord key -> node ID
+		boost::container::flat_map<string, integratedDataTypes::overlappedCoord> overlappedCoordMap; // node coord key -> profiled overlapped coordinate
 
 		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all seg end nodes' coordinates in the cluster
 		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster
 		
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
 		// ------------------------------------------------------ //
-		
-		void nodeSegMapGen();
-		void nodeCoordKeySegMapGen();
-		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap);
-		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
-
 		void getSegEndClusterNodeMap();
 		void getSegEndClusterCentoirds();
-		/* ============ END of [Segment-related Data Members and Functions] ============ */
 
+		void nodeSegMapGen();
+		void nodeCoordKeySegMapGen();
+		void nodeCoordKeyNodeIDmapGen();
+
+	private:
+		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap);			
+		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
+		void nodeCoordKeyNodeIDmapGen(const QList<NeuronSWC>& nodeList, boost::container::flat_multimap<string, int>& nodeCoordKey2nodeIDmap);
+		
+		/* ============ END of [Segment-related Data Members and Functions] ============ */
+	public:
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 

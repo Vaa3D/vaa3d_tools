@@ -83,9 +83,6 @@ public:
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
-	static inline bool multipleRootCheck(const NeuronTree& inputTree);
-	static NeuronTree removeDupNodes(const NeuronTree& inputTree);
-
 	// Subtract refTree from targetTree.
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
 	// ------------ END of [Basic Operations] ------------- //
@@ -93,6 +90,14 @@ public:
 	// ------------- Higher level processing -------------- //
 	static bool isSorted(const NeuronTree& inputNeuronTree);       // ~~ Not implemented yet ~~
 	static NeuronTree sortTree(const NeuronTree& inputNeuronTree); // ~~ Not implemented yet ~~
+
+	static void somaCleanUp(NeuronTree& inputTree);
+	//static void somaCleanUp(const profiledTree& inputProfiledTree);
+	static bool multipleSegsCheck(const NeuronTree& inputTree);
+	static void getOverlappedCoordMap(profiledTree& inputProfiledTree);
+	static bool removeDupHeads(NeuronTree& inputTree);
+	//static NeuronTree itered_dupNodesRemove(NeuronTree& inputTree);
+	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
 
 	static NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
@@ -195,15 +200,6 @@ inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 	boundaries[5] = zMax;
 
 	return boundaries;
-}
-
-inline bool NeuronStructUtil::multipleRootCheck(const NeuronTree& inputTree)
-{
-	for (auto& node : inputTree.listNeuron)
-	{
-		if (node.parent == -1 && node.type != 1) return true;
-	}
-	return false;
 }
 
 template<typename T>

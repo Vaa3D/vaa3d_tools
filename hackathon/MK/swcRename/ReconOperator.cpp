@@ -125,11 +125,11 @@ void ReconOperator::removeDupedNodes()
 	{
 		QString inputSWCFullName = this->rootPath + "\\" + file;
 		NeuronTree inputTree = readSWC_file(inputSWCFullName);
-		if (NeuronStructUtil::multipleRootCheck(inputTree))
+		if (NeuronStructUtil::multipleSegsCheck(inputTree))
 		{
 			QString outputSWCfullName;
 			NeuronTree dupRemovedTree = NeuronStructUtil::removeDupNodes(inputTree);
-			if (!NeuronStructUtil::multipleRootCheck(dupRemovedTree))
+			if (!NeuronStructUtil::multipleSegsCheck(dupRemovedTree))
 			{
 				if (file.endsWith("eswc")) outputSWCfullName = outputFolderQ + file.left(file.length() - 4) + "swc";
 				else outputSWCfullName = outputFolderQ + file;

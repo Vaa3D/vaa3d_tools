@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "sharpAngleSmooth";
+	//string funcName = "segCompare";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -50,98 +50,279 @@ int main(int argc, char* argv[])
 	NeuronStructExplorer myExplorer;
 	TreeTrimmer myTrimmer;
 
-	if (!funcName.compare("seuName"))
+	if (!funcName.compare("segCompare"))
 	{
-		QString inputFolderQ = QString::fromStdString(paras.at(0));
-		QString outputFolderQ = QString::fromStdString(paras.at(1));
-
-		ifstream inTable(paras.at(2));
-		string line, buffer;
-		if (inTable.is_open())
+		//QDir inputFolderQ1(QString::fromStdString(paras.at(0)));
+		
+		QDir inputFolderQ1("C:\\Users\\hkuo9\\Desktop\\dupSegs\\");
+		inputFolderQ1.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ1 = inputFolderQ1.entryList();
+		//QString inputFolderQ2 = QString::fromStdString(paras.at(1)) + "\\";
+		QString inputFolderQ2 = "C:\\Users\\hkuo9\\Desktop\\dupSegs_composite4\\";
+		QString outputFolderQ = "C:\\Users\\hkuo9\\Desktop\\remnantTrees\\";
+		
+		for (auto& file : fileNameListQ1)
 		{
-			while (getline(inTable, line))
+			cout << endl << file.toStdString() << endl;
+			NeuronTree dupSegTree = readSWC_file("C:\\Users\\hkuo9\\Desktop\\dupSegs\\" + file);
+			NeuronTree dupSegCleanedTree = readSWC_file(inputFolderQ2 + file);
+			profiledTree profiledDupSegTree(dupSegTree);
+			//profiledDupSegTree.nodeCoordKeyNodeIDmapGen();
+			profiledTree profiledDupCleanedTree(dupSegCleanedTree);
+			//profiledDupCleanedTree.nodeCoordKeyNodeIDmapGen();
+			
+			for (map<int, segUnit>::iterator it1 = profiledDupCleanedTree.segs.begin(); it1 != profiledDupCleanedTree.segs.end(); ++it1)
 			{
-				QString lineQ = QString::fromStdString(line);
-				QStringList lineSplitQ = lineQ.split(",");
-				cout << lineSplitQ.at(0).toStdString() << " " << lineSplitQ.at(1).toStdString() << endl;
+				vector<int> delSegs;
+				for (map<int, segUnit>::iterator it2 = profiledDupSegTree.segs.begin(); it2 != profiledDupSegTree.segs.end(); ++it2)
+					if (it1->second == it2->second) delSegs.push_back(it2->first);
+				for (auto& segID : delSegs) profiledDupSegTree.segs.erase(profiledDupSegTree.segs.find(segID));
+			}
 
-				QString inputFileFullNameQ = inputFolderQ + "\\" + lineSplitQ.at(0) + ".swc";
-				QString outputFileFullNameQ = outputFolderQ + "\\" + lineSplitQ.at(1) + "_reg.swc";
-				QFile::rename(inputFileFullNameQ, outputFileFullNameQ);
+			if (!profiledDupSegTree.segs.empty())
+			{
+				NeuronTree remnantTree;
+				for (auto& remnantSeg : profiledDupSegTree.segs) remnantTree.listNeuron.append(remnantSeg.second.nodes);
+				writeSWC_file(outputFolderQ + file, remnantTree);
 			}
 		}
-
-
-		//seuFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		//this->fileNameList.clear();
-		//this->fileNameList = seuFileFolder.entryList();
 	}
-	else if (!funcName.compare("WMUdnRename"))
+	else if (!funcName.compare("nodeCompare"))
+	{
+		QDir inputFolderQ1(QString::fromStdString(paras.at(0)));
+		inputFolderQ1.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ1 = inputFolderQ1.entryList();
+		QDir inputFolderQ2(QString::fromStdString(paras.at(1)));
+
+		for (auto& file : fileNameListQ1)
+		{
+			profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
+			inputProfiledTree.nodeCoordKeyNodeIDmapGen();
+			profiledTree targetProfiledTree(readSWC_file(QString::fromStdString(paras.at(1)) + "\\" + file));
+			targetProfiledTree.nodeCoordKeyNodeIDmapGen();
+
+			for (auto& nodeCoordKey : inputProfiledTree.nodeCoordKey2nodeIDMap)
+			{
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = targetProfiledTree.nodeCoordKey2nodeIDMap.equal_range(nodeCoordKey.first);
+				if (range.first == range.second)
+				{
+					QString outputFullNameQ = "C:\\Users\\hkuo9\\Desktop\\nodeInconsistency\\" + file;
+					writeSWC_file(outputFullNameQ, targetProfiledTree.tree);
+					break;
+				}
+			}
+		}
+	}
+	else if (!funcName.compare("compareLength"))
+	{
+		QDir inputFolderQ1(QString::fromStdString(paras.at(0)));
+		inputFolderQ1.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ1 = inputFolderQ1.entryList();
+
+		for (auto& file : fileNameListQ1)
+		{
+			QString fullNameQ1 = QString::fromStdString(paras.at(0)) + "\\" + file;
+			QString fullNameQ2 = QString::fromStdString(paras.at(1)) + "\\" + file;
+			NeuronTree tree1 = readSWC_file(fullNameQ1);
+			NeuronTree tree2 = readSWC_file(fullNameQ2);
+			if (tree1.listNeuron.size() != tree2.listNeuron.size())
+			{
+				cout << "  Discrepency: " << file.toStdString() << endl;
+			}
+		}
+	}
+	else if (!funcName.compare("segNodeID"))
 	{
 		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
 		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 		QStringList fileNameListQ = inputFolderQ.entryList();
-		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
-		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		QStringList checkFileNameListQ = checkFolderQ.entryList();
 
-		QString inputFullPathQ = QString::fromStdString(paras.at(0)) + "\\";
-		QString checkFolderPathQ = QString::fromStdString(paras.at(1)) + "\\";
-		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		for (auto& file : fileNameListQ)
 		{
-			QStringList nameSplitQ = it->split(".");
-			QString checkNameQ = checkFolderPathQ + nameSplitQ.at(0) + ".swc";
-			cout << checkNameQ.toStdString() << endl;
-			if (QFile::exists(checkNameQ))
+			cout << file.toStdString() << ": " << endl;
+			NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file);
+			profiledTree inputProfiledTree(inputTree);
+			inputProfiledTree.nodeSegMapGen();
+			cout << "  node ID not labeled with segments: ";
+			for (auto& node : inputProfiledTree.tree.listNeuron)
 			{
-				QString newFileNameQ = inputFullPathQ + nameSplitQ.at(0) + "_xy32z8.swc";
-				QString oldFileNameQ = inputFullPathQ + *it;
-				QFile::rename(oldFileNameQ, newFileNameQ);
+				if (inputProfiledTree.node2segMap.find(node.n) == inputProfiledTree.node2segMap.end()) cout << node.n << " ";
 			}
+			cout << endl;
 		}
 	}
-	else if (!funcName.compare("nameCheck"))
+	else if (!funcName.compare("checkDupSeg"))
 	{
 		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
 		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 		QStringList fileNameListQ = inputFolderQ.entryList();
-		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
-		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		QStringList checkFileNameListQ = checkFolderQ.entryList();
 
-		QString inputFullPathQ = QString::fromStdString(paras.at(0)) + "\\";
-		QString checkFolderPathQ = QString::fromStdString(paras.at(1)) + "\\";
-		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		QString outputFolderQ = QString::fromStdString(paras.at(1)) + "\\dupSegs_composite4\\";
+		QDir outputDir(outputFolderQ);
+		if (!outputDir.exists()) outputDir.mkpath(".");
+
+		for (auto& file : fileNameListQ)
 		{
-			QStringList nameSplitQ = it->split("_reg");
-			QString checkNameQ = checkFolderPathQ + nameSplitQ.at(0) + ".swc";
-			//cout << checkNameQ.toStdString() << endl;
-			if (!QFile::exists(checkNameQ))
+			cout << file.toStdString();
+			QString outputFullNameQ = outputFolderQ + file;
+			NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file);
+			if (NeuronStructUtil::multipleSegsCheck(inputTree))
 			{
-				cout << it->toStdString() << endl;
-				//QFile::rename(oldFileNameQ, newFileNameQ);
+				clock_t start = clock();
+				NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+				clock_t end = clock();
+				cout << "time elapsed: " << float(end - start) / CLOCKS_PER_SEC << endl;
+				writeSWC_file(outputFullNameQ, noDupSegTree);
+				//QString inputFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + file;
+				//QFile::copy(inputFullNameQ, outputFullNameQ);
+				cout << endl;
 			}
 		}
 	}
-	else if (!funcName.compare("seuCheck"))
+	else if (!funcName.compare("dupNodeRemove"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		//QDir inputFolderQ("C:\\Users\\hkuo9\\Desktop\\debug\\");
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		QString outputFolderQ = QString::fromStdString(paras.at(0)) + "\\dupNodeRemoved\\";
+		//QString outputFolderQ = "C:\\Users\\hkuo9\\Desktop\\debug\\dupNodeRemoved\\";
+		QDir outputDir(outputFolderQ);
+		if (!outputDir.exists()) outputDir.mkpath(".");
+
+		for (auto& file : fileNameListQ)
+		{
+			
+			cout << file.toStdString();
+			QString outputFullNameQ = outputFolderQ + file;
+			NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file);
+			//NeuronTree inputTree = readSWC_file("C:\\Users\\hkuo9\\Desktop\\debug\\" + file);
+			NeuronStructUtil::removeDupHeads(inputTree);
+			
+			writeSWC_file(outputFullNameQ, inputTree);
+			
+		}
+	}
+	else if (!funcName.compare("findLikelySoma"))
 	{
 		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
 		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 		QStringList fileNameListQ = inputFolderQ.entryList();
-		QDir checkFolderQ(QString::fromStdString(paras.at(1)));
-		checkFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		QStringList checkFileNameListQ = checkFolderQ.entryList();
-
-		for (QStringList::iterator it = fileNameListQ.begin(); it != fileNameListQ.end(); ++it)
+		QString outputFolderQ = QString::fromStdString(paras.at(0)) + "\\soma\\";
+		QDir outputDir(outputFolderQ);
+		if (!outputDir.exists()) outputDir.mkpath(".");
+		
+		for (auto& file : fileNameListQ)
 		{
-			for (QStringList::iterator it1 = checkFileNameListQ.begin(); it1 != checkFileNameListQ.end(); ++it1)
-			{
-				if (*it == *it1) goto FOUND;
-			}
-			cout << it->toStdString() << endl;
+			cout << file.toStdString();
+			QString swcFullName = QString::fromStdString(paras.at(0)) + "\\" + file;
+			NeuronTree inputTree = readSWC_file(swcFullName);
+			NeuronStructUtil::somaCleanUp(inputTree);
+			QString swcSaveFullNameQ = outputFolderQ + file;
+			writeSWC_file(swcSaveFullNameQ, inputTree);
+			cout << endl;
+		}
+	}
+	else if (!funcName.compare("treeProfile"))
+	{
+		profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		cout << "seg number: " << inputProfiledTree.segs.size() << endl;
+		cout << "tail number: " << inputProfiledTree.segs.begin()->second.tails.size() << endl << endl;
 
-		FOUND:
-			continue;
+		NeuronTree outputTree = NeuronStructUtil::removeDupSegs(inputProfiledTree.tree);
+		profiledTree outputProfiledTree(outputTree);
+		cout << "seg number: " << outputProfiledTree.segs.size() << endl;
+		cout << "tail number: " << outputProfiledTree.segs.begin()->second.tails.size() << endl << endl;
+
+		QString saveNameQ = "C:\\Users\\hkuo9\\Desktop\\test.swc";
+		writeSWC_file(saveNameQ, outputTree);
+	}
+	else if (!funcName.compare("mostProbableSoma"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		QString outputFolderQ = QString::fromStdString(paras.at(0)) + "\\soma\\";
+		QDir outputDir(outputFolderQ);
+		if (!outputDir.exists()) outputDir.mkpath(".");
+
+		for (auto& file : fileNameListQ)
+		{
+			profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
+			int maxSomaID, maxChildNum = 0;
+			for (auto& seg : inputProfiledTree.segs)
+			{
+				if (seg.second.nodes.at(seg.second.seg_nodeLocMap.at(seg.second.head)).type == 1)
+				{
+					int childNum = seg.second.seg_childLocMap.at(seg.second.head).size();
+					if (childNum > maxChildNum)
+					{
+						maxSomaID = seg.second.head;
+						maxChildNum = childNum;
+					}
+				}
+			}
+
+			NeuronTree outputTree = inputProfiledTree.tree;
+			outputTree.listNeuron[inputProfiledTree.node2LocMap.at(maxSomaID)].type = 7;
+			QString outputSaveNameQ = outputFolderQ + file;
+			writeSWC_file(outputSaveNameQ, outputTree);
+		}
+
+	}
+	else if (!funcName.compare("somaCleanUp"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		QString outputFolderQminus1 = QString::fromStdString(paras.at(0)) + "\\type1NotRoot\\" ;
+		QString outputFolderQ0 = QString::fromStdString(paras.at(0)) + "\\noSoma\\";
+		QString outputFolderQ1 = QString::fromStdString(paras.at(0)) + "\\noType1soma\\";
+		QString outputFolderQ2 = QString::fromStdString(paras.at(0)) + "\\multipleSoma\\";
+		QDir outputDirMinus1(outputFolderQminus1);
+		QDir outputDirQ0(outputFolderQ0);
+		QDir outputDirQ1(outputFolderQ1);
+		QDir outputDirQ2(outputFolderQ2);
+		if (!outputDirMinus1.exists()) outputDirMinus1.mkpath(".");
+		if (!outputDirQ0.exists()) outputDirQ0.mkpath(".");
+		if (!outputDirQ1.exists()) outputDirQ1.mkpath(".");
+		if (!outputDirQ2.exists()) outputDirQ2.mkpath(".");
+
+		for (auto& swc : fileNameListQ)
+		{
+			qDebug() << swc << ":";
+			QString fullNameQ = inputFolderQ.absolutePath() + "\\" + swc;
+			NeuronTree inputTree = readSWC_file(fullNameQ);
+			/*if (NeuronStructUtil::somaCleanUp(inputTree) == 2)
+			{
+				QString saveFullNameQ = outputFolderQ2 + swc;
+				QFile::copy(fullNameQ, saveFullNameQ);
+			}*/
+
+			/*if (NeuronStructUtil::somaCleanUp(inputTree) == -1)
+			{
+				QString saveFullNameQ = outputFolderQminus1 + swc;
+				QFile::copy(fullNameQ, saveFullNameQ);
+			}
+			else if (NeuronStructUtil::somaCleanUp(inputTree) == 0)
+			{
+				QString saveFullNameQ = outputFolderQ0 + swc;
+				QFile::copy(fullNameQ, saveFullNameQ);
+			}
+			else if (NeuronStructUtil::somaCleanUp(inputTree) == 1)
+			{
+				QString saveFullNameQ = outputFolderQ1 + swc;
+				QFile::copy(fullNameQ, saveFullNameQ);
+			}
+			else if (NeuronStructUtil::somaCleanUp(inputTree) == 2)
+			{
+				QString saveFullNameQ = outputFolderQ2 + swc;
+				QFile::copy(fullNameQ, saveFullNameQ);
+			}*/
+			cout << endl << "----" << endl;
 		}
 	}
 	else if (!funcName.compare("getBrNumFromSWCs"))
@@ -229,29 +410,7 @@ int main(int argc, char* argv[])
 		outputTree.listNeuron = swcTypeMap.at(stoi(paras.at(2)));
 		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
 	}
-	else if (!funcName.compare("dupRemove"))
-	{
-		QString rootPathQ = QString::fromStdString(paras.at(0));
-		QString saveRootPathQ = QString::fromStdString(paras.at(1));
-
-		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
-		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		QStringList fileNameListQ = inputFolderQ.entryList();
-
-		clock_t timeStart = clock();
-		for (auto& fileName : fileNameListQ)
-		{
-			QString swcFullNameQ = rootPathQ + "\\" + fileName;
-			NeuronTree noDupedTree = NeuronStructUtil::removeDupNodes(readSWC_file(swcFullNameQ));
-
-			QString saveFullNameQ = saveRootPathQ + "\\" + fileName;
-			writeSWC_file(saveFullNameQ, noDupedTree);
-		}
-		clock_t timeEnd = clock();
-		float duration = (timeEnd - timeStart) / CLOCKS_PER_SEC;
-		cout << duration << endl;
-	}
-	else if (!funcName.compare("multipleRootCheck"))
+	else if (!funcName.compare("multipleSegsCheck"))
 	{
 		QString rootPathQ = QString::fromStdString(paras.at(0));
 		QString copyRootPathQ = QString::fromStdString(paras.at(1));
@@ -263,7 +422,7 @@ int main(int argc, char* argv[])
 		for (auto& fileName : fileNameListQ)
 		{
 			QString swcFullNameQ = rootPathQ + "\\" + fileName;
-			if (NeuronStructUtil::multipleRootCheck(readSWC_file(swcFullNameQ)))
+			if (NeuronStructUtil::multipleSegsCheck(readSWC_file(swcFullNameQ)))
 			{
 				QString saveFullNameQ = copyRootPathQ + "\\" + fileName;
 				QFile::copy(swcFullNameQ, saveFullNameQ);

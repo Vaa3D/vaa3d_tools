@@ -45,6 +45,7 @@ namespace integratedDataStructures
 	};
 	/****************************************************************************************/
 
+	/******************* Connected Component and Brain Region Data Structure *******************/
 	struct connectedComponent
 	{
 		int islandNum;
@@ -78,6 +79,7 @@ namespace integratedDataStructures
 		void writeBrainRegion_file(string saveFileName);
 		void readBrainRegion_file(string inputFileName);
 	};
+	/*******************************************************************************************/
 
 	struct registeredImg
 	{

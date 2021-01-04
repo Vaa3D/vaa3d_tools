@@ -28,6 +28,41 @@
 using namespace std;
 using NSlibTester = NeuronStructNavigator::Tester;
 
+integratedDataTypes::overlappedCoord::overlappedCoord(float x, float y, float z) : x(x), y(y), z(z)
+{
+	this->coordKey = to_string(x) + "_" + to_string(y) + "_" + to_string(z);
+	set<pair<int, int>> segNodeIDpairSet;
+	this->involvedSegsOriMap.insert({ integratedDataTypes::head, segNodeIDpairSet });
+	this->involvedSegsOriMap.insert({ integratedDataTypes::tail, segNodeIDpairSet });
+	this->involvedSegsOriMap.insert({ integratedDataTypes::body, segNodeIDpairSet });
+}
+
+integratedDataTypes::overlappedCoord::overlappedCoord(string coordKey) : coordKey(coordKey)
+{
+	vector<string> coord;
+	string currDimValue;
+	currDimValue.clear();
+	for (int i = 0; i < coordKey.length(); ++i)
+	{
+		if (coordKey.at(i) == '_')
+		{
+			coord.push_back(currDimValue);
+			currDimValue.clear();
+			continue;
+		}
+		else currDimValue += coordKey.at(i);
+	}
+
+	this->x = stof(coord.at(0));
+	this->y = stof(coord.at(1));
+	this->z = stof(coord.at(2));
+
+	set<pair<int, int>> segNodeIDpairSet;
+	this->involvedSegsOriMap.insert({ integratedDataTypes::head, segNodeIDpairSet });
+	this->involvedSegsOriMap.insert({ integratedDataTypes::tail, segNodeIDpairSet });
+	this->involvedSegsOriMap.insert({ integratedDataTypes::body, segNodeIDpairSet });
+}
+
 integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 {
 	if ((inputV_NeuronSWC.row.end() - 1)->parent == -1)
@@ -101,7 +136,7 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 
 const bool integratedDataTypes::segUnit::operator==(const segUnit& comparedSeg) const
 {
-	// Given 2 segUnits with the same NeuronSWC composition, it is nearly impossible for the 2 being actually different.
+	// Given 2 segUnits with the same NeuronSWC composition, it is nearly impossible for them being actually different.
 	// Therefore, current implementation is based on node-wise comparing without considering its morphology.
 
 	if (this->nodes.size() != comparedSeg.nodes.size()) return false;
@@ -148,7 +183,30 @@ void integratedDataTypes::segUnit::reInit(segUnit& inputSegUnit)
 {
 	segUnit reInitUnit(inputSegUnit.nodes);
 	reInitUnit.segID = inputSegUnit.segID;
-	inputSegUnit = reInitUnit;
+	inputSegUnit = reInitUnit; // Copy reInitUnit to the memory where inputSegUnit refers to -- OK.
+}
+
+bool integratedDataTypes::segUnit::reverse()
+{
+	if (this->tails.size() > 1) return false;
+
+	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
+	QList<NeuronSWC> newNodeList;
+	for (auto& node : this->nodes)
+	{
+		NeuronSWC newNode = node;
+		if (this->seg_childLocMap.find(node.n) == this->seg_childLocMap.end())
+		{
+			newNode.parent = -1;
+			newNodeList.push_front(newNode);
+			continue;
+		}
+		const NeuronSWC& childNode = this->nodes.at(*this->seg_childLocMap.at(newNode.n).begin());
+		newNode.parent = childNode.n;
+		newNodeList.push_front(newNode);
+	}
+	this->nodes = newNodeList;
+	this->reInit(*this);
 }
 
 V_NeuronSWC integratedDataTypes::segUnit::convert2V_NeuronSWC() const
@@ -321,6 +379,7 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 		this->nodeTileSize = nodeTileLength;
 
 		NeuronStructExplorer::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		
 		// -- NeuronStructExplorer::node2loc_node2childLocMap does Not create entries in node2childLocMap for tip nodes (nodes without childs).
 		NeuronStructExplorer::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
@@ -483,7 +542,7 @@ void integratedDataTypes::profiledTree::nodeSegMapGen()
 	this->nodeSegMapGen(this->segs, this->node2segMap);
 }
 
-void integratedDataTypes::profiledTree::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<int, int>& node2segMap)
+void integratedDataTypes::profiledTree::nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap)
 {
 	for (map<int, segUnit>::const_iterator segIt = segMap.begin(); segIt != segMap.end(); ++segIt)
 	{
@@ -506,6 +565,20 @@ void integratedDataTypes::profiledTree::nodeCoordKeySegMapGen(const map<int, seg
 			string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
 			nodeCoordKey2segMap.insert(pair<string, int>(nodeCoordKey, segIt->first));
 		}
+	}
+}
+
+void integratedDataTypes::profiledTree::nodeCoordKeyNodeIDmapGen()
+{
+	this->nodeCoordKeyNodeIDmapGen(this->tree.listNeuron, this->nodeCoordKey2nodeIDMap);
+}
+
+void integratedDataTypes::profiledTree::nodeCoordKeyNodeIDmapGen(const QList<NeuronSWC>& nodeList, boost::container::flat_multimap<string, int>& nodeCoordKey2nodeIDmap)
+{
+	for (QList<NeuronSWC>::const_iterator nodeIt = nodeList.begin(); nodeIt != nodeList.end(); ++nodeIt)
+	{
+		string nodeCoordKey = to_string(nodeIt->x) + "_" + to_string(nodeIt->y) + "_" + to_string(nodeIt->z);
+		nodeCoordKey2nodeIDMap.insert(pair<string, int>(nodeCoordKey, nodeIt->n));
 	}
 }
 
@@ -619,7 +692,7 @@ void integratedDataTypes::profiledTree::addTopoUnit(int nodeID)
 void integratedDataTypes::profiledTreeReInit(profiledTree& inputProfiledTree)
 {
 	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
-	inputProfiledTree = tempTree;
+	inputProfiledTree = tempTree; // Copy tempTree to the memory where [inputProfiledTree] refers to -- OK.
 }
 
 integratedDataTypes::segEndClusterUnit::~segEndClusterUnit()

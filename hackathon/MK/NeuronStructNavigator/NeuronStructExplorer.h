@@ -47,11 +47,14 @@ public:
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
-	// Returns the corresponding string key with the given node or marker.
+	// Returns the corresponding string node tile key with the given node or marker.
 	static inline string getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
+
+	// Returns the corresponding string segment tile key with the given node or marker.
+	static inline string getSegTileKey(const NeuronSWC& inputNode, float segTileLength = SEGtileXY_LENGTH);
 
 	// Node - tile profiling functions
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
@@ -202,6 +205,15 @@ inline string NeuronStructExplorer::getNodeTileKey(const ImageMarker& inputMarke
 	string xLabel = to_string(int((inputMarker.x - 1) / nodeTileLength));
 	string yLabel = to_string(int((inputMarker.y - 1) / nodeTileLength));
 	string zLabel = to_string(int((inputMarker.z - 1) / (nodeTileLength / zRATIO)));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getSegTileKey(const NeuronSWC& inputNode, float segTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / segTileLength));
+	string yLabel = to_string(int(inputNode.y / segTileLength));
+	string zLabel = to_string(int(inputNode.z / segTileLength / zRATIO));
 	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 	return keyLabel;
 }

@@ -269,7 +269,7 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 			}
 		}
 
-		sort(delLocs.rbegin(), delLocs.rend());
+		std::sort(delLocs.rbegin(), delLocs.rend());
 		for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) inputList.erase(inputList.begin() + *delIt);
 		delLocs.clear();
 	}
@@ -285,46 +285,329 @@ map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& in
 	return outputNodeTypeMap;
 }
 
-NeuronTree NeuronStructUtil::removeDupNodes(const NeuronTree& inputTree)
+void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
 {
 	profiledTree inputProfiledTree(inputTree);
-	vector<ptrdiff_t> headDelLocs;
-	boost::container::flat_map<ptrdiff_t, ptrdiff_t> childLoc2tailLocMap;
-
-	for (auto& headSegTile : inputProfiledTree.segHeadMap)
+	if (inputProfiledTree.segs.size() == 1)
 	{
-		for (vector<int>::iterator segHeadIt = headSegTile.second.begin(); segHeadIt != headSegTile.second.end(); ++segHeadIt)
+		int somaLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.begin()->second.head);
+		if (inputProfiledTree.tree.listNeuron.at(somaLoc).type == 1)
 		{
-			ptrdiff_t headLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*segHeadIt).head);
-			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(headLoc);
-			if (inputProfiledTree.segTailMap.find(headSegTile.first) != inputProfiledTree.segTailMap.end())
+
+		}
+	}
+	
+	inputProfiledTree.nodeCoordKeySegMapGen();
+	
+	// ------- Generate a map: Type 1 root's coordinates -> IDs of segments that have type 1 head node on it ------- //
+	map<string, set<int>> somaCoordSegMap;
+	string trueSomaCoordKey;
+	int somaSegNum = 0;
+	for (auto& seg : inputProfiledTree.segs)
+	{
+		segUnit& curSeg = seg.second;
+		const NeuronSWC& headNode = curSeg.nodes.at(curSeg.seg_nodeLocMap.at(curSeg.head));
+		
+		if (headNode.type == 1)
+		{
+			if (curSeg.tails.size() > 1) continue;
+
+			string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+			if (somaCoordSegMap.find(headCoordKey) != somaCoordSegMap.end()) continue;
+
+			set<int> segIDs;
+			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(headCoordKey);			
+			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it < range.second; ++it) segIDs.insert(it->second);
+			somaCoordSegMap.insert({ headCoordKey, segIDs });
+
+			if (segIDs.size() > somaSegNum)
 			{
-				for (vector<int>::iterator segTailIt = inputProfiledTree.segTailMap.at(headSegTile.first).begin(); segTailIt != inputProfiledTree.segTailMap.at(headSegTile.first).end(); ++segTailIt)
+				somaSegNum = segIDs.size();
+				trueSomaCoordKey = headCoordKey;
+			}
+		}
+	}
+	// ------------------------------------------------------------------------------------------------------------- //
+
+	if (somaCoordSegMap.empty()) return;
+	for (auto& somaCoord : somaCoordSegMap)
+	{
+		for (auto& segID : somaCoordSegMap.at(somaCoord.first))
+		{
+			const segUnit& currSeg = inputProfiledTree.segs.at(segID);
+			for (auto& tailNodeID : currSeg.tails)
+			{
+				const NeuronSWC& tailNode = currSeg.nodes.at(currSeg.seg_nodeLocMap.at(tailNodeID));
+				string tailCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(tailCoordKey);
+				for (boost::container::flat_multimap<string, int>::iterator it = range.first; it < range.second; ++it)
 				{
-					for (auto& tailID : inputProfiledTree.segs.at(*segTailIt).tails)
-					{
-						ptrdiff_t tailLoc = inputProfiledTree.node2LocMap.at(tailID);
-						const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(tailLoc);
-						if (headNode.x == tailNode.x && headNode.y == tailNode.y && headNode.z == tailNode.z)
-						{
-							headDelLocs.push_back(headLoc);
-							for (auto& childLoc : inputProfiledTree.node2childLocMap.at(headNode.n)) 
-								childLoc2tailLocMap.insert(pair<ptrdiff_t, ptrdiff_t>(childLoc, tailLoc));
-						}
-					}
+					if (it->second == segID) continue;
+
+					int type = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.segs.at(it->second).head).type;
+					for (auto& node : currSeg.nodes) inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(node.n)].type = type;
+					break;
 				}
 			}
 		}
 	}
 
-	for (auto& childLoc : childLoc2tailLocMap)
+	for (auto& somaSeg : somaCoordSegMap.at(trueSomaCoordKey)) 
+		inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(somaSeg).head)].type = 1;
+}
+
+void NeuronStructUtil::getOverlappedCoordMap(profiledTree& inputProfiledTree)
+{
+	if (inputProfiledTree.segs.empty()) integratedDataTypes::profiledTreeReInit(inputProfiledTree);
+	inputProfiledTree.nodeCoordKeySegMapGen();
+
+	inputProfiledTree.overlappedCoordMap.clear();
+	for (auto& headSegTile : inputProfiledTree.segHeadMap)
+	{
+		for (auto& segHead : headSegTile.second)
+		{
+			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(segHead).head));
+			string headNodeCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(headNodeCoordKey);
+
+			if (range.second - range.first == 1) continue;
+			else
+			{
+				integratedDataTypes::overlappedCoord currCoord(headNode.x, headNode.y, headNode.z);
+				for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+				{
+					const segUnit& seg = inputProfiledTree.segs.at(it->second);
+
+					const NeuronSWC& currHeadNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(seg.head));
+					if (headNode.x == currHeadNode.x && headNode.y == currHeadNode.y && headNode.z == currHeadNode.z)
+					{
+						currCoord.involvedSegsOriMap[integratedDataTypes::head].insert(pair<int, int>(seg.segID, currHeadNode.n));
+						goto NODE_REGISTERED1;
+					}
+
+					for (auto& tail : seg.tails)
+					{
+						const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tail));
+						if (tailNode.x == headNode.x && tailNode.y == headNode.y && tailNode.z == headNode.z)
+						{
+							currCoord.involvedSegsOriMap[integratedDataTypes::tail].insert(pair<int, int>(seg.segID, tailNode.n));
+							goto NODE_REGISTERED1;
+						}
+					}
+
+					for (auto& bodyNode : seg.nodes)
+					{
+						if (bodyNode.x == headNode.x && bodyNode.y == headNode.y && bodyNode.z == headNode.z)
+						{
+							currCoord.involvedSegsOriMap[integratedDataTypes::body].insert(pair<int, int>(seg.segID, bodyNode.n));
+							break;
+						}
+					}
+
+				NODE_REGISTERED1:
+					continue;
+				}
+
+				inputProfiledTree.overlappedCoordMap.insert(pair<string, integratedDataTypes::overlappedCoord>(headNodeCoordKey, currCoord));
+			}
+		}
+	}
+
+	for (auto& tailSegTile : inputProfiledTree.segTailMap)
+	{
+		for (auto& segTail : tailSegTile.second)
+		{
+			for (auto& tailID : inputProfiledTree.segs.at(segTail).tails)
+			{
+				const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID));
+				string tailNodeCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
+				if (inputProfiledTree.overlappedCoordMap.find(tailNodeCoordKey) != inputProfiledTree.overlappedCoordMap.end()) continue;
+
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(tailNodeCoordKey);
+				if (range.second - range.first == 1) continue;
+				else
+				{
+					integratedDataTypes::overlappedCoord currCoord(tailNode.x, tailNode.y, tailNode.z);
+					for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+					{
+						const segUnit& seg = inputProfiledTree.segs.at(it->second);
+
+						for (auto& tail : seg.tails)
+						{
+							const NeuronSWC& currTailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tail));
+							if (tailNode.x == currTailNode.x && tailNode.y == currTailNode.y && tailNode.z == currTailNode.z)
+							{
+								currCoord.involvedSegsOriMap[integratedDataTypes::tail].insert(pair<int, int>(seg.segID, tailNode.n));
+								goto NODE_REGISTERED2;
+							}
+						}
+
+						for (auto& bodyNode : seg.nodes)
+						{
+							if (bodyNode.x == tailNode.x && bodyNode.y == tailNode.y && bodyNode.z == tailNode.z)
+							{
+								currCoord.involvedSegsOriMap[integratedDataTypes::body].insert(pair<int, int>(seg.segID, bodyNode.n));
+								break;
+							}
+						}
+
+					NODE_REGISTERED2:
+						continue;
+					}
+
+					inputProfiledTree.overlappedCoordMap.insert(pair<string, integratedDataTypes::overlappedCoord>(tailNodeCoordKey, currCoord));
+				}
+			}	
+		}
+	}
+}
+
+bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
+{
+	// This duplicated nodes removing method uses the head node of every segment as a guide to search for removable nodes.
+
+	profiledTree inputProfiledTree(inputTree);
+	if (inputProfiledTree.node2segMap.empty()) inputProfiledTree.nodeSegMapGen();
+	if (inputProfiledTree.nodeCoordKey2nodeIDMap.empty()) inputProfiledTree.nodeCoordKeyNodeIDmapGen();
+	boost::container::flat_map<ptrdiff_t, ptrdiff_t> childLoc2paLocMap;
+	
+	vector<ptrdiff_t> headDelLocs;
+	NeuronStructUtil::getOverlappedCoordMap(inputProfiledTree);
+	for (auto& dupCoord : inputProfiledTree.overlappedCoordMap)
+	{
+		if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head).size() > 0)
+		{
+			// Case 1: One or more head nodes overlapping with only one either tail or body node.
+			if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).size() + dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).size() == 1)
+			{
+				int targetNodeID;
+				if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).size() == 1) targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).begin()->second;
+				else targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).begin()->second;
+
+				for (auto& headSegNodePair : dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head))
+				{
+					headDelLocs.push_back(inputProfiledTree.node2LocMap.at(headSegNodePair.second));
+					for (auto& child : inputProfiledTree.node2childLocMap.at(headSegNodePair.second))
+						childLoc2paLocMap.insert(pair<ptrdiff_t, ptrdiff_t>(child, inputProfiledTree.node2LocMap.at(targetNodeID)));
+				}
+			}
+			// Case 2: One or more head nodes overlapping with only one body node, regardless if there's tail node or not.
+			else if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).size() == 1)
+			{
+				int targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).begin()->second;
+
+				for (auto& headSegNodePair : dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head))
+				{
+					headDelLocs.push_back(inputProfiledTree.node2LocMap.at(headSegNodePair.second));
+					for (auto& child : inputProfiledTree.node2childLocMap.at(headSegNodePair.second))
+						childLoc2paLocMap.insert(pair<ptrdiff_t, ptrdiff_t>(child, inputProfiledTree.node2LocMap.at(targetNodeID)));
+				}
+			}
+		}
+	}
+
+	int delHeadLocNum = headDelLocs.size();
+
+	for (auto& childLoc : childLoc2paLocMap)
 		inputProfiledTree.tree.listNeuron[childLoc.first].parent = inputProfiledTree.tree.listNeuron.at(childLoc.second).n;
+	
+	std::sort(headDelLocs.rbegin(), headDelLocs.rend());
+	for (auto& headDelLoc : headDelLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + headDelLoc);
+	inputTree = inputProfiledTree.tree;
 
-	sort(headDelLocs.rbegin(), headDelLocs.rend());
-	for (auto& headDelLoc : headDelLocs)
-		inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + headDelLoc);
+	return delHeadLocNum > 0 ? true : false;
+}
 
-	return inputProfiledTree.tree;
+bool NeuronStructUtil::multipleSegsCheck(const NeuronTree& inputTree)
+{
+	profiledTree inputProfiledTree(inputTree);
+	if (inputProfiledTree.segs.size() > 1) return true;
+	else return false;
+}
+
+NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
+{
+	// -------- Remove simiple shadow segments -------- //
+	// -- Simple shadow segments are simply identical segments. 
+	profiledTree inputProfiledTree(inputTree);
+	vector<segUnit> filteredSegs;
+	for (auto& seg : inputProfiledTree.segs)
+	{
+		for (vector<segUnit>::iterator it = filteredSegs.begin(); it != filteredSegs.end(); ++it)
+			if (*it == seg.second) goto SAME_SEG_FOUND;
+		filteredSegs.push_back(seg.second);
+
+	SAME_SEG_FOUND:
+		continue;
+	}
+	// ------------------------------------------------ //
+
+	// ------- Remove composite shadow segments ------- //
+	// -- Composite shadow segments are: 1) shadow segments that align through multiple segments
+	//									 2) partial shadow segments - embbeded segments
+	NeuronTree simpleShadowcleanedTree;
+	for (auto& outputSeg : filteredSegs) simpleShadowcleanedTree.listNeuron.append(outputSeg.nodes);
+	profiledTree profiledSimpleShadowCln(simpleShadowcleanedTree);
+	profiledSimpleShadowCln.nodeCoordKeySegMapGen();
+	set<int> compositeDupSegIDs;
+	vector<boost::container::flat_set<int>> coordKey2segIDs;
+	for (auto& seg : profiledSimpleShadowCln.segs)
+	{
+		boost::container::flat_set<int> segIDsPreNode;
+		for (auto& node : seg.second.nodes)
+		{
+			string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = profiledSimpleShadowCln.nodeCoordKey2segMap.equal_range(nodeCoordKey);
+			// a. Essential segment found - singular node that results in non-overlapping edges.
+			if (range.second - range.first == 1) goto TO_THE_NEXT_SEG; 
+			
+			// Record all involved segments other than self for every node in the segment in the same order.
+			boost::container::flat_set<int> segIDsCurrNode;
+			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+				if (it->second != seg.first) segIDsCurrNode.insert(it->second);
+			coordKey2segIDs.push_back(segIDsCurrNode);
+		}
+
+		// b. If a segment is an embedded shadow segment, it should have the same segment ID running through every node.
+		for (auto& segID : coordKey2segIDs.at(0))
+		{
+			for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
+				if (setIt->find(segID) == setIt->end()) goto NOT_EMBEDDED_SEG;
+			compositeDupSegIDs.insert(seg.first); // Found other segment overlapping throughout the current segment, i.e., the current segment is an embedded segment, or "partial shadow segment".
+			goto TO_THE_NEXT_SEG;
+		}
+
+		// c. If 2 adjacent nodes have some segment IDs that cannot be found in the other node, then this segment is a bridge segment and cannot be removed.
+	NOT_EMBEDDED_SEG:
+		for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
+		{
+			if (*setIt == *(setIt - 1)) continue;
+			for (auto& preNodeSegID : *(setIt - 1))
+			{
+				if (setIt->find(preNodeSegID) == setIt->end())
+				{
+					for (auto& currNodeSegID : *setIt)
+						if ((setIt - 1)->find(currNodeSegID) == (setIt - 1)->end()) goto TO_THE_NEXT_SEG; // Bridging situation found.
+				}
+			}
+		}
+		compositeDupSegIDs.insert(seg.first);
+
+	TO_THE_NEXT_SEG:
+		continue;
+	}
+
+	vector<ptrdiff_t> compositeDelLocs;
+	for (set<int>::iterator segIDIt = compositeDupSegIDs.begin(); segIDIt != compositeDupSegIDs.end(); ++segIDIt)
+	{
+		for (auto& node : profiledSimpleShadowCln.segs.at(*segIDIt).nodes)
+			compositeDelLocs.push_back(profiledSimpleShadowCln.node2LocMap.at(node.n));
+	}
+	std::sort(compositeDelLocs.rbegin(), compositeDelLocs.rend());
+	for (auto& loc : compositeDelLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
+	// ------------------------------------------------ //
+
+	return profiledSimpleShadowCln.tree;
 }
 
 NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type)
@@ -352,7 +635,7 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 			}
 			else continue;
 
-			sort(delLocs.rbegin(), delLocs.rend());
+			std::sort(delLocs.rbegin(), delLocs.rend());
 			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
 			delLocs.clear();
 		}
@@ -375,7 +658,7 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 			}
 			else continue;
 
-			sort(delLocs.rbegin(), delLocs.rend());
+			std::sort(delLocs.rbegin(), delLocs.rend());
 			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
 			{
 				if (targetTileIt->second.begin() + *delIt >= targetTileIt->second.end()) continue;
@@ -562,7 +845,7 @@ profiledTree NeuronStructUtil::treeDownSample(const profiledTree& inputProfiledT
 	vector<size_t> delLocs;
 	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
 		if (nodeIt->n == nodeIt->parent) delLocs.push_back(size_t(nodeIt - outputTree.listNeuron.begin()));
-	sort(delLocs.rbegin(), delLocs.rend());
+	std::sort(delLocs.rbegin(), delLocs.rend());
 	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
 	profiledTree outputProfiledTree(outputTree);
 
