@@ -12,6 +12,7 @@ using namespace std;
 #define MaxMorphometryID 999
 #define MinUserID 100
 #define MaxUserID 999
+#define MaxFileSize 99
 #define MImageType unsigned long
 #define MSomaType unsigned long
 #define MMorphoType unsigned int
@@ -51,19 +52,19 @@ struct mXYZ
 struct mSoma{
     MSomaType mSomaID;
     MImageType mImageID;//entance to image dataset
-    QString name,comments,region,cellType;
+    QString name,cellName,comments,region,cellType;
     RGBA8 color;
     mXYZ position;
     float intensity,radius,volume;
     QStringList dataNumberTitle,dataNumber;
     mSoma(){
         mSomaID=MinSomaID;mImageID=MinImageID;
-        name=comments=region=cellType="";
+        name=cellName=comments=region=cellType="";
         color.r=color.g=color.b=color.a=255;
         intensity=radius=volume=0.0;
         dataNumber.clear();this->setDataNumberTitle();
     }
-    QString getName(){
+    QString getcellName(){
         /* name=Z_X_Y*/
         this->name=QString::number(this->position.mz)+"_X_"+QString::number(this->position.mx)
                 +"_Y_"+QString::number(this->position.my);
@@ -74,7 +75,7 @@ struct mSoma{
         if(basic)
             this->dataNumberTitle<<"ImageID"<<"SomaID"<<"Name";
         else
-            dataNumberTitle<<"ImageID"<<"SomaID"<<"Name"
+            dataNumberTitle<<"ImageID"<<"SomaID"<<"Name"<<"CellName"
                           <<"X"<<"Y"<<"Z"<<"Radius"
                          <<"ColorR"<<"ColorG"<<"ColorB"<<"ColorA"
                         <<"Intensity"<<"Volume"
@@ -84,41 +85,51 @@ struct mSoma{
 };
 /*soma Morphometry read and write*/
 mSoma apo2mSoma(CellAPO inapo);
-mSoma createSomaMorphoFromQSL(QStringList inlist,bool basic=false);
+CellAPO mSoma2Apo(mSoma insoma);
+mSoma createmSomaFromQSL(QStringList inlist,bool basic=false);
 QList<mSoma> getSomalist(const QString& inpath,bool basic=false);
 bool writeSomalistToFile(const QString& topath,QList<mSoma> &insomalist,bool basic=false);
 /*morphometry morphology part*/
 struct mMorphometry{
     /*morphometry of an individual neuron*/
-    MMorphoType mMorphometryID;
-    QString name,morphometryType,comments,tag;
+    MMorphoType mMorphoID;
+    MImageType mImageID;
+    MSomaType mSomaID;
+    QString name,morphoType,comments,tag;
     /*QString timeStamp;
     int authorID;
     QList<int> listCheckers;*/
     QStringList dataNumberTitle,dataNumber;
-    /*store all the morphological files of an individual neuron, split in blank*/
-    QStringList morphoFileNamelist;
+    /*store all the morphological files of an individual neuron, split in ';' */
+    QStringList morphoFilelist;
     mMorphometry(){
         name=comments=tag="";
-        morphometryType="unknown";
-        mMorphometryID=MinMorphometryID;
+        morphoType="unknown";
+        mMorphoID=MinMorphometryID;
+        mImageID=MinImageID;mSomaID=MinSomaID;
         dataNumber.clear();dataNumberTitle.clear();
-        morphoFileNamelist.clear();
+        morphoFilelist.clear();
         dataNumberTitle<<"MorphoID"<<"Name"<<"MorphoType"<<"Tag"<<"Comments"<<"Files";
     }
-    QStringList getDataNumber();
-};
-struct mMorphometrylist{
-    /*for managing all the morphometries of an individual neuron*/
-    QList<mMorphometry> listMorphometry;
-    MImageType mImageID;
-    MSomaType mSomaID;
-    mMorphometrylist(){
-        listMorphometry.clear();
-        mImageID=MinImageID;mSomaID=MinSomaID;
+    QString getName(){
+        /* name=mImageID_mSomaID_mMorphoID*/
+        this->name=QString::number(this->mImageID)+"_"+QString::number(this->mSomaID)
+                +"_"+QString::number(this->mMorphoID);
+        return this->name;
     }
-    void reNamelistMorphometry();
+    void setDataNumberTitle(bool basic=false){
+        this->dataNumberTitle.clear();
+        if(basic)
+            this->dataNumberTitle<<"ImageID"<<"SomaID"<<"MorphoID"<<"Name";
+        else
+            dataNumberTitle<<"ImageID"<<"SomaID"<<"MorphoID"<<"Name"
+                          <<"MorphoType"<<"Tag"<<"Comments"<<"Files";
+    }
+    QStringList getDataNumber(bool basic=false);
 };
+mMorphometry createMorphoFromQSL(QStringList inlist, bool basic=false);
+QList<mMorphometry> getMorpholist(const QString& inpath,bool basic=false);
+bool writeMorpholistToFile(const QString& topath,QList<mMorphometry> &inMorpholist,bool basic=false);
 /*Image releated data structures*/
 struct mVoxelResolution{
     double rx,ry,rz;
@@ -255,30 +266,26 @@ struct mDatabase{
     QList<mImage> listImages; //entrance to image datasets
     QString img_metadata_path;/*file path that contains the metadata of a image*/
     mImage mImagePointer; //entrance to metadata of one image dataset
-
     //soma morphometry part
-    QString db_soma_metadata_path; //all the somata of database
-    QList<QList<mSoma>> listSomata; //entance to all the somata of database
+    QString db_soma_metadata_path;
+    /*record id of all the image datasets with somalist. initialization and update from `db_soma_metadata_path`*/
+    QList<mImage> listSomata;
     QString soma_metadata_path;/*<db>/metadata/soma/detail/<imageID>/soma.metadata*/
     QList<mSoma> mSomataPointer;//entrance to soma metadata of one image dataset
-
     //morphometry part
     QString morpho_db_path;
+    QList<mSoma> listMorpho;
     QString morpho_metadata_path;
-    /*all the managed morphometries in database is registered here in this list*/
-    QList<mMorphometrylist> listmMorphometry;
-
-    mDatabase(bool start=true){
-        dbInitialization(start);
-        imageInitialization(start);
-        somaInitialization(start);
-        morpho_db_path=morpho_metadata_path="";
-        listmMorphometry.clear();
+    QList<mMorphometry> mMorphoPointer;
+    mDatabase(){
+        dbInitialization();
+        imageInitialization();
+        somaInitialization();
+        morphoInitialization();
     }
     bool dbInitialization(bool start=true);
     bool createDB(const QString &inpath);
     bool loadDB(const QString &inpath);
-
     /*******************Image function part*************************/
     bool imageInitialization(bool start=true);
     QString getImg_metadata_path();
@@ -294,37 +301,42 @@ struct mDatabase{
     >   + get one of the resolution path of image dataset
     >   + get the image block
     >       + crop function : with a crop-center coordinates (3D) and crop size.*/
-
     /********************soma morphometry part********************/
     bool somaInitialization(bool start=true);
-    QString getSoma_metadata_path();
-    QString getSoma_metadata_path(MImageType queryID);
+    QString getSoma_metadata_path();//`basic/soma.metadata`
+    QString getSoma_metadata_path(MImageType qImageID);//`detail/<imageid>/soma.metadata`
     QString getSoma_metadata_path(const QString &insampleID);
-    bool createNewSomaMorpho_fromApo(const QString &inapo,MImageType inmImageID=MinImageID);
-    bool updateSomaMorpho_fromApo(const QString &inapo,MImageType inmImageID);
-    bool deleteSomaMorpho(MImageType removeID);
-    bool deleteSomaMorpho(const QString &insampleID);
-    /*init of listmsomata*/
-    QList<mSomaMorpho> getSomaMorpholist();
-    QList<mSomaMorpho> getSomaMorpholist(QList<mImage> queryImagelist);
-
+    bool getSomaPointer(MImageType qImageID);
+    bool getSomaPointer(const QString &insampleID);
+    bool updateListSomata(QList<mImage> newlist);
+    bool addSomalist(const QString &inapo,MImageType inmImageID);
+    bool deleteSomalist(MImageType removeID);
+    bool deleteSomalist(const QString &insampleID);
+    bool updateSomalist(const QString &inapo,MImageType inmImageID);
+    bool updateSomalist(const QString &inapo,const QString &insampleID);
+    bool updateSomalist(QList<mSoma> insoma,MImageType inmImageID);
     /*******************Morphometry dataset part*********************/
-    /*get the morphometry-list(listmMorphometry), load and write morphometry.metadata*/
-    /*create a new morphometry; delete or update a morphometry;*/
-    bool createMorpho(MImageType imageID=MinImageID,MSomaType somaID=MinSomaID);
-    QString getMorpho_db_path();
-    /*return the path of neurons of an image dataset*/
-    QString getMorpho_path(MImageType qImageID);
-    /*return the path of morphometries of a neuron*/
-    QString getMorpho_path(MImageType qImageID,MSomaType qSomaID);
+    bool morphoInitialization(bool start=true);
+    QString getMorpho_path();
+    QString getMorpho_path(MImageType qImageID);/*return the path of neurons of an image dataset*/
+    QString getMorpho_path(MImageType qImageID,MSomaType qSomaID);/*return the path of morphometries of a neuron*/
     /*return the path of a morphometry/arbor/version of a neuron*/
     QString getMorpho_path(MImageType qImageID,MSomaType qSomaID,MMorphoType qMorphoID);
-    //the path of all the basic metadata of morphometry
-    QString getMorpho_metadata_path();
-    /*return all the neurons of an image dataset*/
+    QString getMorpho_path(MImageType qImageID,MSomaType qSomaID,MMorphoType qMorphoID,const QString &qfilename);
+    QString getMorpho_metadata_path();//the path of all the basic metadata of morphometry
     QString getMorpho_metadata_path(MImageType qImageID);
-    /*return all the morphometries of a neuron*/
-    QString getMorpho_metadata_path(MImageType qImageID,MSomaType qSomaID);
+    QString getMorpho_metadata_path(MImageType qImageID,MSomaType qSomaID);/*return all the morphometries of a neuron*/
+    QString getMorpho_metadata_path(const QString &insampleID,MSomaType qSomaID);
+    /*get the morphometry-list(listmMorphometry), load and write morphometry.metadata*/
+    /*create a new morphometry; delete or update a morphometry;*/
+    bool getMorphoPointer(MImageType qImageID,MSomaType qSomaID);
+    bool getMorphoPointer(const QString &insampleID,MSomaType qSomaID);
+    bool addMorpho(MImageType qImageID,MSomaType qSomaID,QStringList infilelist);    
+    bool deleteMorpho(MImageType qImageID);
+    bool deleteMorpho(MImageType qImageID,MSomaType qSomaID);
+    bool deleteMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType qMorphoID);
+    bool deleteMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType qMorphoID,const QString &deleteFile);
+    bool updateMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType qMorphoID,mMorphometry inMorpho);
 };
 
 #endif // MORPHOHUB_DBMS_BASIC_H
