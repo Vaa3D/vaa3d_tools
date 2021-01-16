@@ -356,110 +356,27 @@ void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
 		inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(somaSeg).head)].type = 1;
 }
 
-void NeuronStructUtil::getOverlappedCoordMap(profiledTree& inputProfiledTree)
+void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 {
-	if (inputProfiledTree.segs.empty()) integratedDataTypes::profiledTreeReInit(inputProfiledTree);
-	inputProfiledTree.nodeCoordKeySegMapGen();
-
-	inputProfiledTree.overlappedCoordMap.clear();
-	for (auto& headSegTile : inputProfiledTree.segHeadMap)
+	vector<ptrdiff_t> delLocs;
+	for (auto& nodeID : inputProfiledTree.node2childLocMap)
 	{
-		for (auto& segHead : headSegTile.second)
+		const NeuronSWC& currNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(nodeID.first));
+		for (auto& childLoc : nodeID.second)
 		{
-			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(segHead).head));
-			string headNodeCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
-			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(headNodeCoordKey);
-
-			if (range.second - range.first == 1) continue;
-			else
+			const NeuronSWC& childNode = inputProfiledTree.tree.listNeuron.at(childLoc);
+			if (childNode.x == currNode.x && childNode.y == currNode.y && childNode.z == currNode.z)
 			{
-				integratedDataTypes::overlappedCoord currCoord(headNode.x, headNode.y, headNode.z);
-				for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
-				{
-					const segUnit& seg = inputProfiledTree.segs.at(it->second);
-
-					const NeuronSWC& currHeadNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(seg.head));
-					if (headNode.x == currHeadNode.x && headNode.y == currHeadNode.y && headNode.z == currHeadNode.z)
-					{
-						currCoord.involvedSegsOriMap[integratedDataTypes::head].insert(pair<int, int>(seg.segID, currHeadNode.n));
-						goto NODE_REGISTERED1;
-					}
-
-					for (auto& tail : seg.tails)
-					{
-						const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tail));
-						if (tailNode.x == headNode.x && tailNode.y == headNode.y && tailNode.z == headNode.z)
-						{
-							currCoord.involvedSegsOriMap[integratedDataTypes::tail].insert(pair<int, int>(seg.segID, tailNode.n));
-							goto NODE_REGISTERED1;
-						}
-					}
-
-					for (auto& bodyNode : seg.nodes)
-					{
-						if (bodyNode.x == headNode.x && bodyNode.y == headNode.y && bodyNode.z == headNode.z)
-						{
-							currCoord.involvedSegsOriMap[integratedDataTypes::body].insert(pair<int, int>(seg.segID, bodyNode.n));
-							break;
-						}
-					}
-
-				NODE_REGISTERED1:
-					continue;
-				}
-
-				inputProfiledTree.overlappedCoordMap.insert(pair<string, integratedDataTypes::overlappedCoord>(headNodeCoordKey, currCoord));
+				delLocs.push_back(childLoc);
+				if (inputProfiledTree.node2childLocMap.find(childNode.n) != inputProfiledTree.node2childLocMap.end())
+					for (auto& grandChildLoc : inputProfiledTree.node2childLocMap.at(childNode.n)) inputProfiledTree.tree.listNeuron[grandChildLoc].parent = currNode.n;
 			}
 		}
 	}
 
-	for (auto& tailSegTile : inputProfiledTree.segTailMap)
-	{
-		for (auto& segTail : tailSegTile.second)
-		{
-			for (auto& tailID : inputProfiledTree.segs.at(segTail).tails)
-			{
-				const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID));
-				string tailNodeCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
-				if (inputProfiledTree.overlappedCoordMap.find(tailNodeCoordKey) != inputProfiledTree.overlappedCoordMap.end()) continue;
-
-				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(tailNodeCoordKey);
-				if (range.second - range.first == 1) continue;
-				else
-				{
-					integratedDataTypes::overlappedCoord currCoord(tailNode.x, tailNode.y, tailNode.z);
-					for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
-					{
-						const segUnit& seg = inputProfiledTree.segs.at(it->second);
-
-						for (auto& tail : seg.tails)
-						{
-							const NeuronSWC& currTailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tail));
-							if (tailNode.x == currTailNode.x && tailNode.y == currTailNode.y && tailNode.z == currTailNode.z)
-							{
-								currCoord.involvedSegsOriMap[integratedDataTypes::tail].insert(pair<int, int>(seg.segID, tailNode.n));
-								goto NODE_REGISTERED2;
-							}
-						}
-
-						for (auto& bodyNode : seg.nodes)
-						{
-							if (bodyNode.x == tailNode.x && bodyNode.y == tailNode.y && bodyNode.z == tailNode.z)
-							{
-								currCoord.involvedSegsOriMap[integratedDataTypes::body].insert(pair<int, int>(seg.segID, bodyNode.n));
-								break;
-							}
-						}
-
-					NODE_REGISTERED2:
-						continue;
-					}
-
-					inputProfiledTree.overlappedCoordMap.insert(pair<string, integratedDataTypes::overlappedCoord>(tailNodeCoordKey, currCoord));
-				}
-			}	
-		}
-	}
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (auto& delLoc : delLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + delLoc);
+	profiledTreeReInit(inputProfiledTree);
 }
 
 bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
@@ -472,7 +389,7 @@ bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
 	boost::container::flat_map<ptrdiff_t, ptrdiff_t> childLoc2paLocMap;
 	
 	vector<ptrdiff_t> headDelLocs;
-	NeuronStructUtil::getOverlappedCoordMap(inputProfiledTree);
+	inputProfiledTree.overlappedCoordMapGen();
 	for (auto& dupCoord : inputProfiledTree.overlappedCoordMap)
 	{
 		if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head).size() > 0)
@@ -518,6 +435,59 @@ bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
 	return delHeadLocNum > 0 ? true : false;
 }
 
+void NeuronStructUtil::removeDupBranchingNodes(profiledTree& inputProfiledTree)
+{
+	if (inputProfiledTree.nodeCoordKey2segMap.empty()) inputProfiledTree.nodeCoordKeySegMapGen();
+
+	vector<ptrdiff_t> headDelLocs;
+	for (auto& seg : inputProfiledTree.segs)
+	{
+		const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(seg.second.head));
+		string headSegTileKey = NeuronStructExplorer::getSegTileKey(headNode);
+		if (inputProfiledTree.segTailMap.find(headSegTileKey) != inputProfiledTree.segTailMap.end())
+		{
+			for (auto& tailSegID : inputProfiledTree.segTailMap.at(headSegTileKey))
+			{
+				for (auto& tailID : inputProfiledTree.segs.at(tailSegID).tails)
+				{
+					const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID));
+					if (headNode.x == tailNode.x && headNode.y == tailNode.y && headNode.z == tailNode.z)
+					{
+						headDelLocs.push_back(inputProfiledTree.node2LocMap.at(headNode.n));
+						for (auto& childLoc : inputProfiledTree.node2childLocMap.at(headNode.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = tailNode.n;
+						goto HEADNODE_PICKED;
+					}
+				}
+			}
+		}
+
+		{
+			string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(headCoordKey);
+			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+			{
+				if (it->second == seg.first) continue;
+				for (auto& node : inputProfiledTree.segs.at(it->second).nodes)
+				{
+					if (node.parent == -1) continue;
+					if (node.x == headNode.x && node.y == headNode.y && node.z == headNode.z)
+					{
+						headDelLocs.push_back(inputProfiledTree.node2LocMap.at(headNode.n));
+						for (auto& childLoc : inputProfiledTree.node2childLocMap.at(headNode.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = node.n;
+					}
+				}
+			}
+		}
+
+	HEADNODE_PICKED:
+		continue;
+	}
+
+	sort(headDelLocs.rbegin(), headDelLocs.rend());
+	for (vector<ptrdiff_t>::iterator delIt = headDelLocs.begin(); delIt != headDelLocs.end(); ++delIt)
+		inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *delIt);
+}
+
 bool NeuronStructUtil::multipleSegsCheck(const NeuronTree& inputTree)
 {
 	profiledTree inputProfiledTree(inputTree);
@@ -527,7 +497,7 @@ bool NeuronStructUtil::multipleSegsCheck(const NeuronTree& inputTree)
 
 NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 {
-	// -------- Remove simiple shadow segments -------- //
+	// **************** Remove simiple shadow segments **************** //
 	// -- Simple shadow segments are simply identical segments. 
 	profiledTree inputProfiledTree(inputTree);
 	vector<segUnit> filteredSegs;
@@ -540,15 +510,15 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 	SAME_SEG_FOUND:
 		continue;
 	}
-	// ------------------------------------------------ //
+	// **************************************************************** //
 
-	// ------- Remove composite shadow segments ------- //
+	// ***************** Remove composite shadow segments ***************** //
 	// -- Composite shadow segments are: 1) shadow segments that align through multiple segments
 	//									 2) partial shadow segments - embbeded segments
 	NeuronTree simpleShadowcleanedTree;
 	for (auto& outputSeg : filteredSegs) simpleShadowcleanedTree.listNeuron.append(outputSeg.nodes);
 	profiledTree profiledSimpleShadowCln(simpleShadowcleanedTree);
-	profiledSimpleShadowCln.nodeCoordKeySegMapGen();
+	profiledSimpleShadowCln.nodeCoordKeySegMapGen(); // This step could be time consuming.
 	set<int> compositeDupSegIDs;
 	vector<boost::container::flat_set<int>> coordKey2segIDs;
 	for (auto& seg : profiledSimpleShadowCln.segs)
@@ -605,9 +575,51 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 	}
 	std::sort(compositeDelLocs.rbegin(), compositeDelLocs.rend());
 	for (auto& loc : compositeDelLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
-	// ------------------------------------------------ //
+	// ******************************************************************** //
 
 	return profiledSimpleShadowCln.tree;
+}
+
+void NeuronStructUtil::splitNodeList(const QList<NeuronSWC>& inputNodes, const int splittingNodeID, QList<NeuronSWC>& downStreamNodes, QList<NeuronSWC>& upStreamNodes)
+{
+	NeuronTree inputTree;
+	inputTree.listNeuron = inputNodes;
+	profiledTree inputProfiledTree(inputTree);
+	if (inputProfiledTree.segs.size() > 1 || inputProfiledTree.segs.empty())
+	{
+		cout << "Input node list constitutes no or multiple segments. Do nothing and return empty list." << endl;
+		return;
+	}
+
+	QList<NeuronSWC> parents;
+	QList<NeuronSWC> children;
+	parents.push_back(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(splittingNodeID)));
+	vector<size_t> childLocs;
+	vector<ptrdiff_t> delLocs;
+	do
+	{
+		children.clear();
+		childLocs.clear();
+		for (QList<NeuronSWC>::iterator pasIt = parents.begin(); pasIt != parents.end(); ++pasIt)
+		{
+			if (inputProfiledTree.node2childLocMap.find(pasIt->n) != inputProfiledTree.node2childLocMap.end()) childLocs = inputProfiledTree.node2childLocMap.at(pasIt->n);
+			else continue;
+
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				downStreamNodes.append(inputNodes.at(int(*childLocIt)));
+				delLocs.push_back(ptrdiff_t(*childLocIt));
+				children.push_back(inputNodes.at(int(*childLocIt)));
+			}
+		}
+		parents = children;
+	} while (childLocs.size() > 0);
+	downStreamNodes.push_front(inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(splittingNodeID)));
+	delLocs.push_back(inputProfiledTree.node2LocMap.at(splittingNodeID));
+
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (auto& loc : delLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
+	upStreamNodes = inputProfiledTree.tree.listNeuron;
 }
 
 NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type)
@@ -629,7 +641,10 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
 					{
 						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z)
+						{
 							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+							break; // This [break] here is needed, so that [checkIt1] won't be counted multiple times if there are repeated nodes in [refTree].
+						}
 					}
 				}
 			}
@@ -652,11 +667,14 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
 					{
 						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z && checkIt2->type == type)
+						{
 							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+							break; // This [break] here is needed, so that [checkIt1] won't be counted multiple times if there are repeated nodes in [refTree].
+						}
 					}
 				}
 			}
-			else continue;
+			else delLocs.clear();
 
 			std::sort(delLocs.rbegin(), delLocs.rend());
 			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
@@ -692,8 +710,12 @@ bool NeuronStructUtil::isSorted(const NeuronTree& inputNeuronTree) // ~~ Not imp
 	return true; 
 }
 
-NeuronTree NeuronStructUtil::sortTree(const NeuronTree& inputNeuronTree) // ~~ Not implemented yet ~~
+NeuronTree NeuronStructUtil::sortTree(const NeuronTree& inputNeuronTree, const float somaCoord[]) // ~~ Not implemented yet ~~
 {
+	profiledTree inputProfiledTree(inputNeuronTree);
+
+
+
 	NeuronTree outputTree;
 
 	return outputTree;

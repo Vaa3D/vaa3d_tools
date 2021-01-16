@@ -4,8 +4,8 @@
 #include "NeuronStructNavigatingTester.h"
 
 #define Main_Version_Num 1
-#define Sub_Version_Num 6
-#define Patch_Num 2
+#define Sub_Version_Num 7
+#define Patch_Num 0
 
 using NSlibTester = NeuronStructNavigator::Tester;
 

@@ -360,7 +360,7 @@ void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, co
 {
 	set<int> segs2BtypeChanged;
 	profiledTree currDisplayProfiledTree(displayingSegs.seg);
-	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen();
 
 	set<int> startingSegs = { seedSegID };
 	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
@@ -379,7 +379,7 @@ void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, co
 {
 	set<int> segs2BtypeChanged;
 	profiledTree currDisplayProfiledTree(displayingSegs.seg);
-	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen();
 	
 	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
 

@@ -112,13 +112,14 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 
-		bool reverse();
+		bool reverse(int nodeID = -1, bool middle = false);
 		V_NeuronSWC convert2V_NeuronSWC() const;
 
 		void reInit(segUnit& inputSegUnit);
 
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
+		QList<NeuronSWC> changeTreeHead(const int newHeadID, bool middle) const;
 	};
 	/***********************************************/
 
@@ -165,7 +166,6 @@ namespace integratedDataTypes
 
 		NeuronTree sortedTree;
 		map<string, float> morphFeatureMap;
-		void sortTree();
 		void getMorphFeatures();
 		
 		/* ================= Segment-related Data Members and Functions ================= */
@@ -181,6 +181,7 @@ namespace integratedDataTypes
 		
 		boost::container::flat_map<int, int> node2segMap;											 // node ID -> seg ID
 		boost::container::flat_multimap<string, int> nodeCoordKey2segMap;							 // node coord key -> seg ID
+		boost::container::flat_multimap<string, int> segEndCoordKey2segMap;							 // seg end node coord key -> seg ID
 		boost::container::flat_multimap<string, int> nodeCoordKey2nodeIDMap;						 // node coord key -> node ID
 		boost::container::flat_map<string, integratedDataTypes::overlappedCoord> overlappedCoordMap; // node coord key -> profiled overlapped coordinate
 
@@ -194,14 +195,25 @@ namespace integratedDataTypes
 
 		void nodeSegMapGen();
 		void nodeCoordKeySegMapGen();
+		void segEndCoordKeySegMapGen();
 		void nodeCoordKeyNodeIDmapGen();
+		void overlappedCoordMapGen();
+
+		set<set<int>> groupedTreeSegs;						// seg IDs of each geometrically grouped trees
+		map<int, segUnit> seg2MiddleBranchingMap;
+		void combSegs(int rootNodeID);
+		void assembleSegs2singleTree(int rootNodeID);
 
 	private:
-		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap);			
+		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap);		
 		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
+		void segEndCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& segEndCoordKey2segMap);
 		void nodeCoordKeyNodeIDmapGen(const QList<NeuronSWC>& nodeList, boost::container::flat_multimap<string, int>& nodeCoordKey2nodeIDmap);
 		
+		void rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs);
+		pair<int, segUnit> splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID);
 		/* ============ END of [Segment-related Data Members and Functions] ============ */
+
 	public:
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 

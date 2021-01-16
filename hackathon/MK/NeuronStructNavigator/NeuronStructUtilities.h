@@ -83,21 +83,26 @@ public:
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
+	static void splitNodeList(const QList<NeuronSWC>& inputNodes, const int splittingNodeID, QList<NeuronSWC>& downStreamNodes, QList<NeuronSWC>& upStreamNodes);
+
 	// Subtract refTree from targetTree.
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
 	// ------------ END of [Basic Operations] ------------- //
 	
 	// ------------- Higher level processing -------------- //
-	static bool isSorted(const NeuronTree& inputNeuronTree);       // ~~ Not implemented yet ~~
-	static NeuronTree sortTree(const NeuronTree& inputNeuronTree); // ~~ Not implemented yet ~~
+	static bool isSorted(const NeuronTree& inputNeuronTree);								// ~~ Not implemented yet ~~
+	static NeuronTree sortTree(const NeuronTree& inputNeuronTree, const float somaCoord[]); // ~~ Not implemented yet ~~
 
-	static void somaCleanUp(NeuronTree& inputTree);
-	//static void somaCleanUp(const profiledTree& inputProfiledTree);
+	static void somaCleanUp(NeuronTree& inputTree);	   // ~~ Incomplete ~~
+	
 	static bool multipleSegsCheck(const NeuronTree& inputTree);
-	static void getOverlappedCoordMap(profiledTree& inputProfiledTree);
-	static bool removeDupHeads(NeuronTree& inputTree);
-	//static NeuronTree itered_dupNodesRemove(NeuronTree& inputTree);
 	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
+
+	static void removeRedunNodes(profiledTree& inputProfiledTree);
+	static bool removeDupHeads(NeuronTree& inputTree); 
+	
+	static void removeDupBranchingNodes(profiledTree& inputProfiledTree); // Faster, but occasionally doesn't do the job right. 
+																		  // Probably resulted from segment combing function not thorough enough - [integratedDataTypes::profiledTree::combSegs()] 
 
 	static NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);

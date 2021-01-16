@@ -29,7 +29,7 @@ class NeuronStructExplorer
 	friend class Tester;
 
 public:
-	/***************** Constructors and Basic Profiling Data/Function Members *****************/
+	/***************** Constructors and Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
 	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
 
@@ -107,7 +107,7 @@ public:
 	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
 	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
-	/*****************************************************************************************/
+	/***********************************************************************************/
 
 
 	/*********************** Tree - Subtree Operations **************************/
@@ -121,6 +121,9 @@ public:
 
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
+
+	static boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree);
+	static void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID);
 	/****************************************************************************/
 
 
@@ -129,6 +132,7 @@ public:
 	static int getBranchNum(const NeuronTree& inputTree, bool onlyBifur = false);
 	static boost::container::flat_map<int, int> getOuterNodeBifurMap(const NeuronTree& inputTree, float outerFraction, bool onlyBifur = false);
 	/****************************************************************************/
+
 
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
 	// Computes the distance from every node to its nearest node in the given node lise.
