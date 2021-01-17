@@ -101,7 +101,7 @@ void ReconOperator::denAxonCombine(bool dupRemove)
 		trees.push_back(readSWC_file(axonFullName));
 		NeuronTree outputTree = NeuronStructUtil::swcCombine(trees);
 		
-		if (dupRemove) outputTree = NeuronStructUtil::removeDupNodes(outputTree);
+		//if (dupRemove) outputTree = NeuronStructUtil::removeDupNodes(outputTree);
 		QString outputSWCfullName = outputFolderName + axonFile;
 		writeSWC_file(outputSWCfullName, outputTree);
 	}
@@ -113,7 +113,7 @@ void ReconOperator::removeDupedNodes()
 {
 	QDir inputFolder(this->rootPath);
 	inputFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-	QStringList swcFileList = inputFolder.entryList();
+	QStringList fileList = inputFolder.entryList();
 
 	QString outputFolderQ = this->rootPath + "\\allCleanedUp\\";
 	QString remainingFolderQ = this->rootPath + "\\stillMoreThan1Root\\";
@@ -121,33 +121,95 @@ void ReconOperator::removeDupedNodes()
 	QDir remainingDir(remainingFolderQ);
 	if (!outputDir.exists()) outputDir.mkpath(".");
 
-	for (auto& file : swcFileList)
+	for (auto& file : fileList)
 	{
-		QString inputSWCFullName = this->rootPath + "\\" + file;
-		NeuronTree inputTree = readSWC_file(inputSWCFullName);
-		if (NeuronStructUtil::multipleSegsCheck(inputTree))
+		QString baseName;
+		if (file.endsWith(".swc")) baseName = file.left(file.length() - 4);
+		else if (file.endsWith(".eswc")) baseName = file.left(file.length() - 5);
+
+		bool apoFound = false;
+		CellAPO somaAPO;
+		QString targetAPOfileName = baseName + ".apo";
+		for (auto& file2 : fileList)
 		{
-			QString outputSWCfullName;
-			NeuronTree dupRemovedTree = NeuronStructUtil::removeDupNodes(inputTree);
-			if (!NeuronStructUtil::multipleSegsCheck(dupRemovedTree))
+			if (file2 == targetAPOfileName)
 			{
-				if (file.endsWith("eswc")) outputSWCfullName = outputFolderQ + file.left(file.length() - 4) + "swc";
-				else outputSWCfullName = outputFolderQ + file;
-				writeSWC_file(outputSWCfullName, dupRemovedTree);
-			}
-			else
-			{
-				if (file.endsWith("eswc")) outputSWCfullName = remainingFolderQ + file.left(file.length() - 4) + "swc";
-				else outputSWCfullName = remainingFolderQ + file;
-				if (!remainingDir.exists()) remainingDir.mkpath(".");
-				writeSWC_file(outputSWCfullName, dupRemovedTree);
+				somaAPO = *readAPO_file(this->rootPath + "\\" + file2).begin();
+				apoFound = true;
+				break;
 			}
 		}
-		else
+		
+		if (apoFound)
 		{
-			QString oldName = this->rootPath + "\\" + file;
-			QString newName = outputFolderQ + file;
-			QFile::copy(oldName, newName);
+			cout << "Input soma coordinate: " << somaAPO.x << " " << somaAPO.y << " " << somaAPO.z << endl;
+			QString inputSWCFullName = this->rootPath + "\\" + file;
+			NeuronTree inputTree = readSWC_file(inputSWCFullName);
+			NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+			profiledTree inputProfiledTree(noDupSegTree);
+			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
+			if (NeuronStructUtil::multipleSegsCheck(inputTree))
+			{
+				clock_t start = clock();
+				boost::container::flat_map<int, profiledTree> connectedTrees = NeuronStructExplorer::groupGeoConnectedTrees(inputProfiledTree.tree);
+				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
+				map<int, int> tree2HeadNodeMap;
+				int minNodeID, maxNodeID;
+				for (auto& connectedTree : connectedTrees)
+				{
+					cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
+					minNodeID = 10000000;
+					maxNodeID = 0;
+					if (connectedTree.second.node2LocMap.begin()->first < minNodeID) minNodeID = connectedTree.second.node2LocMap.begin()->first;
+					if (connectedTree.second.node2LocMap.rbegin()->first > maxNodeID) maxNodeID = connectedTree.second.node2LocMap.rbegin()->first;
+
+					int nearestNodeID = connectedTree.second.findNearestSegEndNodeID(somaAPO);
+					cout << "ID of the nearest node to soma coordinates " << nearestNodeID << " -> ";
+					const NeuronSWC& nearestNode = connectedTree.second.tree.listNeuron.at(connectedTree.second.node2LocMap.at(nearestNodeID));
+					float dist = sqrtf((nearestNode.x - somaAPO.x) * (nearestNode.x - somaAPO.x) + (nearestNode.y - somaAPO.y) * (nearestNode.y - somaAPO.y) + (nearestNode.z - somaAPO.z) * (nearestNode.z - somaAPO.z));
+					if (dist <= 35)
+					{
+						connectedTree.second.assembleSegs2singleTree(nearestNodeID);
+						tree2HeadNodeMap.insert({ connectedTree.first, nearestNodeID });
+						connectedTree.second.tree.listNeuron[connectedTree.second.node2LocMap.at(nearestNodeID)].type = 1;
+					}
+					else
+					{
+						cout << "Tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << " Not in the soma range." << endl;
+						if (connectedTree.second.segs.size() > 1)
+						{
+							cout << "  More than 1 segments are identified. Still needs to assemble segments." << endl;
+							connectedTree.second.assembleSegs2singleTree(nearestNodeID);
+						}
+						cout << "    Change node type to 7." << endl;
+						for (auto& node : connectedTree.second.tree.listNeuron) node.type = 7;
+						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
+					}
+				}
+				clock_t end = clock();
+				float duration = float(end - start) / CLOCKS_PER_SEC;
+				cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
+
+				NeuronSWC somaNode;
+				if (minNodeID > 1) somaNode.n = minNodeID - 1;					
+				else somaNode.n = maxNodeID + 1;
+
+				somaNode.x = somaAPO.x;
+				somaNode.y = somaAPO.y;
+				somaNode.z = somaAPO.z;
+				somaNode.parent = -1;
+				somaNode.type = 1;
+				for (auto& treeID : tree2HeadNodeMap)
+				{
+					profiledTree& currTree = connectedTrees[treeID.first];
+					currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
+				}
+
+				NeuronTree outputTree;
+				for (auto& connectedTree : connectedTrees) outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
+				outputTree.listNeuron.push_front(somaNode);				
+				writeSWC_file(outputFolderQ + baseName + ".swc", outputTree);
+			}	
 		}
 	}
 }

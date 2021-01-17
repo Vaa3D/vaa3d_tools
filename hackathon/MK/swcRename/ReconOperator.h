@@ -6,6 +6,7 @@
 #include <qfile.h>
 
 #include "NeuronStructUtilities.h"
+#include "NeuronStructExplorer.h"
 
 class ReconOperator
 {

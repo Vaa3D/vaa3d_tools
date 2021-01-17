@@ -823,7 +823,7 @@
               </size>
              </property>
              <property name="title">
-              <string>Remove duplicated nodes:</string>
+              <string>Assemble segments to single tree:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <item>

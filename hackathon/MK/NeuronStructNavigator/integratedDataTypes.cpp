@@ -613,20 +613,118 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 	}
 }
 
-int end2bodyCount = 0;
-void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
+int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inputAPO)
 {
-	if (this->node2segMap.empty()) this->nodeSegMapGen();
-	if (this->nodeCoordKey2segMap.empty()) this->nodeCoordKeySegMapGen();
-	if (this->segEndCoordKey2segMap.empty()) this->segEndCoordKeySegMapGen();
-	if (this->nodeCoordKey2nodeIDMap.empty()) this->nodeCoordKeyNodeIDmapGen();
-	int leadingSegID = this->node2segMap.at(rootNodeID);
-	set<int> checkedSegIDs = { this->node2segMap.at(rootNodeID) };
-	this->rc_reverseSegs(leadingSegID, rootNodeID, checkedSegIDs);
+	this->segEndClusterNodeMap.clear();
+	this->segEndCoordKeySegMapGen();
+	this->nodeCoordKey2segMap.clear();
+	this->nodeCoordKeySegMapGen();
 
-	cout << "original segment number: " << this->segs.size() << endl;
-	cout << "checked segment number: " << checkedSegIDs.size() << endl;
-	cout << "total end to body count: " << end2bodyCount << endl;
+	string targetNodeTileKey = NeuronStructExplorer::getNodeTileKey(inputAPO);
+	float dist = 100000;
+	int outputNodeID = 0;
+	vector<int> nodeIDs;
+	if (this->nodeTileMap.find(targetNodeTileKey) != this->nodeTileMap.end())
+	{
+		//cout << targetNodeTileKey << endl;
+		nodeIDs = this->nodeTileMap.at(targetNodeTileKey);
+		for (auto& nodeID : nodeIDs)
+		{
+			const NeuronSWC& node = this->tree.listNeuron.at(this->node2LocMap.at(nodeID));
+			string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+			if (this->segEndCoordKey2segMap.find(nodeCoordKey) != this->segEndCoordKey2segMap.end())
+			{
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(nodeCoordKey);
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(nodeCoordKey);
+				if (range.second - range.first == 1 && range2.second - range2.first == 1)
+				{
+					float currNodeDist = sqrtf((node.x - inputAPO.x) * (node.x - inputAPO.x) + (node.y - inputAPO.y) * (node.y - inputAPO.y) + (node.z - inputAPO.z) * (node.z - inputAPO.z));
+					if (currNodeDist < dist)
+					{
+						outputNodeID = nodeID;
+						dist = currNodeDist;
+					}
+				}
+			}
+		}
+		return outputNodeID;
+	}
+	else
+	{
+		for (int k = -1; k <= 1; ++k)
+		{
+			for (int j = -1; j <= 1; ++j)
+			{
+				for (int i = -1; i <= 1; ++i)
+				{
+					vector<string> tileKeyStrings;
+					stringstream ss(targetNodeTileKey);
+					while (ss.good())
+					{
+						string subStr;
+						getline(ss, subStr, '_');
+						tileKeyStrings.push_back(subStr);
+					}
+
+					int newXkey = stoi(tileKeyStrings[0]) - i;
+					int newYkey = stoi(tileKeyStrings[1]) - j;
+					int newZkey = stoi(tileKeyStrings[2]) - k;
+					string newTileKey = to_string(newXkey) + "_" + to_string(newYkey) + "_" + to_string(newZkey);
+					//cout << newTileKey << endl;
+					if (this->nodeTileMap.find(newTileKey) != this->nodeTileMap.end())
+					{
+						nodeIDs.clear();
+						nodeIDs = this->nodeTileMap.at(newTileKey);
+						for (auto& nodeID : nodeIDs)
+						{
+							const NeuronSWC& node = this->tree.listNeuron.at(this->node2LocMap.at(nodeID));
+							string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+							if (this->segEndCoordKey2segMap.find(nodeCoordKey) != this->segEndCoordKey2segMap.end())
+							{
+								pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(nodeCoordKey);
+								pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(nodeCoordKey);
+								if (range.second - range.first == 1 && range2.second - range2.first == 1)
+								{
+									float currNodeDist = sqrtf((node.x - inputAPO.x) * (node.x - inputAPO.x) + (node.y - inputAPO.y) * (node.y - inputAPO.y) + (node.z - inputAPO.z) * (node.z - inputAPO.z));
+									if (currNodeDist < dist)
+									{
+										outputNodeID = nodeID;
+										dist = currNodeDist;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (outputNodeID != 0) return outputNodeID;
+		else
+		{
+			for (auto& segEndCoord : this->segEndCoordKey2segMap)
+			{
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(segEndCoord.first);
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(segEndCoord.first);
+				if (range.second - range.first == 1 && range2.second - range2.first == 1)
+				{
+					const segUnit& currSeg = this->segs.at(segEndCoord.second);
+					const NeuronSWC& currHeadNode = currSeg.nodes.at(currSeg.seg_nodeLocMap.at(currSeg.head));
+					string headCoordKey = to_string(currHeadNode.x) + "_" + to_string(currHeadNode.y) + "_" + to_string(currHeadNode.z);
+					if (!headCoordKey.compare(segEndCoord.first)) return currSeg.head;
+					else
+					{
+						for (auto& tailID : currSeg.tails)
+						{
+							const NeuronSWC& tailNode = currSeg.nodes.at(currSeg.seg_nodeLocMap.at(tailID));
+							string tailCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
+							if (!tailCoordKey.compare(segEndCoord.first)) return tailID;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
@@ -642,7 +740,24 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 		}
 		NeuronStructUtil::removeDupHeads(this->tree);
 		profiledTreeReInit(*this);
+		cout << " --> segment number: " << this->segs.size() << endl;
 	}
+}
+
+//int end2bodyCount = 0;
+void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
+{
+	if (this->node2segMap.empty()) this->nodeSegMapGen();
+	if (this->nodeCoordKey2segMap.empty()) this->nodeCoordKeySegMapGen();
+	if (this->segEndCoordKey2segMap.empty()) this->segEndCoordKeySegMapGen();
+	if (this->nodeCoordKey2nodeIDMap.empty()) this->nodeCoordKeyNodeIDmapGen();
+	int leadingSegID = this->node2segMap.at(rootNodeID);
+	set<int> checkedSegIDs = { this->node2segMap.at(rootNodeID) };
+	this->rc_reverseSegs(leadingSegID, rootNodeID, checkedSegIDs);
+
+	cout << "original segment number: " << this->segs.size() << endl;
+	cout << "checked segment number: " << checkedSegIDs.size() << endl;
+	//cout << "total end to body count: " << end2bodyCount << endl;
 }
 
 void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs)
@@ -691,7 +806,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 			cout << "---------" << endl;
 			cout << "head to body: " << headNode.n << " -> " << it->second << endl;
 			cout << "---------" << endl << endl;
-			++end2bodyCount;
+			//++end2bodyCount;
 			this->rc_reverseSegs(this->node2segMap.at(it->second), it->second, checkedSegIDs);	
 		}
 	}
@@ -708,7 +823,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 			{
 				cout << "---------" << endl;
 				cout << "tail to body: " << tailNode.n << " -> " << it->second << endl;
-				++end2bodyCount;
+				//++end2bodyCount;
 				this->seg2MiddleBranchingMap.insert(this->splitSegWithMiddleHead(this->segs.at(this->node2segMap.at(it->second)), it->second));
 				cout << "---------" << endl << endl;
 				this->segs[this->node2segMap.at(it->second)].to_be_deleted = true;

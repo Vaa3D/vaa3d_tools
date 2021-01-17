@@ -1160,7 +1160,7 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 	{
 		set<int> groupedSegIDs;
 		groupedSegIDs.insert(*unGroupedSegIDs.begin());
-		cout << *unGroupedSegIDs.begin() << endl;
+		//cout << *unGroupedSegIDs.begin() << endl;
 		NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin());
 
 		NeuronTree outputTree;

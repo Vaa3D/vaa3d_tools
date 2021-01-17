@@ -79,22 +79,8 @@ int main(int argc, char* argv[])
 	{
 		NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
 		profiledTree inputProfiledTree(inputTree);
-		inputProfiledTree.assembleSegs2singleTree(stoi(paras.at(1)));
-		/*inputProfiledTree.combSegs(stoi(paras.at(1)));
-		NeuronTree outputTree;
-		for (auto& seg : inputProfiledTree.segs)
-		{
-			if (seg.second.to_be_deleted) outputTree.listNeuron.append(inputProfiledTree.seg2MiddleBranchingMap.at(seg.first).nodes);
-			else outputTree.listNeuron.append(seg.second.nodes);
-		}
-		profiledTree combedProfiledTree(outputTree);*/
-		//NeuronStructUtil::itered_removeDupHeads(combedProfiledTree.tree);
-		//profiledTree outputProfiledTree(NeuronStructUtil::itered_removeDupHeads(combedProfiledTree.tree));
-		/*int paNodeCount = 0;
-		for (auto& node : combedProfiledTree.tree.listNeuron)
-			if (node.parent == -1) ++paNodeCount;
-		cout << "parent node count: " << paNodeCount << endl;*/
-		//writeSWC_file(QString::fromStdString(paras.at(0)) + "_combed.swc", outputTree);
+		//inputProfiledTree.assembleSegs2singleTree(stoi(paras.at(1)));
+		NeuronStructUtil::removeDupBranchingNodes(inputProfiledTree);
 		writeSWC_file(QString::fromStdString(paras.at(0)) + "_dupRemoved.swc", inputProfiledTree.tree);
 		cout << "final segment number: " << inputProfiledTree.segs.size() << endl;
 	}

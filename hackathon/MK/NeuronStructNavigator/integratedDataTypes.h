@@ -199,11 +199,11 @@ namespace integratedDataTypes
 		void nodeCoordKeyNodeIDmapGen();
 		void overlappedCoordMapGen();
 
-		set<set<int>> groupedTreeSegs;						// seg IDs of each geometrically grouped trees
 		map<int, segUnit> seg2MiddleBranchingMap;
-		void combSegs(int rootNodeID);
+		int findNearestSegEndNodeID(const CellAPO inputAPO);
 		void assembleSegs2singleTree(int rootNodeID);
-
+		void combSegs(int rootNodeID);
+		
 	private:
 		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap);		
 		void nodeCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);

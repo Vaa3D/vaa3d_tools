@@ -52,6 +52,7 @@ public:
 	static inline string getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey(const CellAPO& inputAPO, float nodeTileLength = NODE_TILE_LENGTH);
 
 	// Returns the corresponding string segment tile key with the given node or marker.
 	static inline string getSegTileKey(const NeuronSWC& inputNode, float segTileLength = SEGtileXY_LENGTH);
@@ -209,6 +210,15 @@ inline string NeuronStructExplorer::getNodeTileKey(const ImageMarker& inputMarke
 	string xLabel = to_string(int((inputMarker.x - 1) / nodeTileLength));
 	string yLabel = to_string(int((inputMarker.y - 1) / nodeTileLength));
 	string zLabel = to_string(int((inputMarker.z - 1) / (nodeTileLength / zRATIO)));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getNodeTileKey(const CellAPO& inputAPO, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputAPO.x / nodeTileLength));
+	string yLabel = to_string(int(inputAPO.y / nodeTileLength));
+	string zLabel = to_string(int(inputAPO.z / (nodeTileLength / zRATIO)));
 	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 	return keyLabel;
 }
