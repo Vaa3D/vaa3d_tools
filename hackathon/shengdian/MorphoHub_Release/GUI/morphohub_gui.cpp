@@ -10,40 +10,17 @@ morphoHub_GUI::morphoHub_GUI(V3DPluginCallback2 &callback,QWidget *parent) :
     createStatusBar();
     createToolBar();
     createMenus();
-    createContentTreeWidget(true);
-    createTabWindow(true);
     setMainLayout();
-    checkUserState();
 }
 /*Initialization of MorphoHub, load settings*/
-void morphoHub_GUI::checkUserState()
-{
-    if(curOperator.UserID.isEmpty())
-    {
-        loginAction->setEnabled(true);
-        logoutAction->setEnabled(false);
-        toLogWindow("Warning: You have to sign in to get the advanced functions.");
-        userStatusLabel->setText("UserID: Nobody");
-    }
-    else
-    {
-        loginAction->setEnabled(false);
-        logoutAction->setEnabled(true);
-        toLogWindow(tr("Current UserID: %1").arg(curOperator.UserID));
-        userStatusLabel->setText(tr("UserID: %1").arg(curOperator.UserID));
-    }
-}
 void morphoHub_GUI::morphoHub_Init()
 {
     qDebug()<<"load settings"<<endl;
     QSettings settings("MorphoHub","Vaa3d");
     if(settings.contains("dbpath"))
-        mfs.setDBPath(settings.value("dbpath").toString());
+        mDB.loadDB(settings.value("dbpath").toString());
     else
         toLogWindow("Please set or load the database path!");
-    if(settings.contains("imgpath"))
-        mfs.setImgPath(settings.value("imgpath").toString());
-    curOperator.UserID=settings.value("UserID").toString();
 }
 void morphoHub_GUI::createMenus()
 {
@@ -55,16 +32,28 @@ void morphoHub_GUI::createMenus()
     dbMenu->addAction(settingsAction);
     //Management menu
     managementMenu=menuBar()->addMenu(tr("Management"));
-    managementMenu->addAction(imageManagementAction);
-    managementMenu->addAction(userManagementAction);
+    /*Image part*/
+    managementMenu->addAction(newImageAction);
+    managementMenu->addAction(deleteImageAction);
+    managementMenu->addAction(updateImageAction);
+    managementMenu->addAction(download_Img_metadataAction);
+    /*Soma part*/
+    managementMenu->addAction(newSomataAction);
+    managementMenu->addAction(deleteSomataAction);
+    managementMenu->addAction(updateSomataAction);
+    managementMenu->addAction(download_Soma_metadataAction);
+    /*Morphometry part*/
+    managementMenu->addAction(newMorphoAction);
+    managementMenu->addAction(deleteMorphoAction);
+    managementMenu->addAction(updateMorphoAction);
+    managementMenu->addAction(download_Morpho_metadataAction);
+    managementMenu->addAction(download_MorphoAction);
     //services menu
     servicesMenu = menuBar()->addMenu(tr("&Services"));
     servicesMenu->addAction(monitorAction);
 //    servicesMenu->addAction(errorCheckAction);
     //window menu
     menuWindow = menuBar()->addMenu(tr("&Window"));
-    menuWindow->addAction(loginAction);
-    menuWindow->addAction(logoutAction);
     //help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(helpAction);
@@ -72,16 +61,16 @@ void morphoHub_GUI::createMenus()
 void morphoHub_GUI::createActions()
 {
     //action for database
-    newDBAction = new QAction(tr("&NewDB"), this);
+    newDBAction = new QAction(tr("&Create Database"), this);
     newDBAction->setShortcuts(QKeySequence::New);
-    newDBAction->setStatusTip(tr("Set up a new DB"));
+    newDBAction->setStatusTip(tr("Create a new database"));
     connect(newDBAction, SIGNAL(triggered()), this, SLOT(newDBAction_slot()));
 
-    loadDBAction = new QAction(tr("&LoadDB"), this);
-    loadDBAction->setStatusTip(tr("load an exist DB"));
+    loadDBAction = new QAction(tr("&Load Database"), this);
+    loadDBAction->setStatusTip(tr("load an exist database"));
     connect(loadDBAction, SIGNAL(triggered()), this, SLOT(loadDBAction_slot()));
 
-    setImgPathAction=new QAction(tr("&setImagePath"), this);
+    setImgPathAction=new QAction(tr("&Set Image Path"), this);
     setImgPathAction->setStatusTip(tr("load image path"));
     connect(setImgPathAction, SIGNAL(triggered()), this, SLOT(setImgPathAction_slot()));
 
@@ -90,12 +79,45 @@ void morphoHub_GUI::createActions()
     connect(settingsAction, SIGNAL(triggered()), this, SLOT(settingsAction_slot()));
 
     //action for Management
-    imageManagementAction= new QAction(tr("&Image"), this);
-    imageManagementAction->setStatusTip(tr("Image Dataset Management"));
-    connect(imageManagementAction,SIGNAL(triggered()),this,SLOT(imageManagementAction_slot()));
-    userManagementAction= new QAction(tr("&User"), this);
-    userManagementAction->setToolTip(tr("User Management"));
-    connect(userManagementAction,SIGNAL(triggered()),this,SLOT(userManagementAction_slot()));
+    /*Image part*/
+    newImageAction = new QAction(tr("&New Image"), this);
+    newImageAction->setStatusTip(tr("Create a new image dataset"));
+    connect(newImageAction, SIGNAL(triggered()), this, SLOT(newImageAction_slot()));
+    deleteImageAction = new QAction(tr("&Delete Image"), this);
+    deleteImageAction->setStatusTip(tr("Delete an existed image dataset"));
+    connect(deleteImageAction, SIGNAL(triggered()), this, SLOT(deleteImageAction_slot()));
+
+    updateImageAction = new QAction(tr("&Update Image Metadata"), this);
+    connect(updateImageAction, SIGNAL(triggered()), this, SLOT(updateImageAction_slot()));
+    download_Img_metadataAction = new QAction(tr("&Download Image Metadata"), this);
+    connect(download_Img_metadataAction, SIGNAL(triggered()), this, SLOT(download_Img_metadataAction_slot()));
+    /*Soma part*/
+    newSomataAction = new QAction(tr("&New Soma"), this);
+    newSomataAction->setStatusTip(tr("Create a new soma metadata for specified Image"));
+    connect(newSomataAction, SIGNAL(triggered()), this, SLOT(newSomataAction_slot()));
+    deleteSomataAction = new QAction(tr("&Delete Soma"), this);
+    deleteSomataAction->setStatusTip(tr("Delete an existed soma metadata of an image dataset"));
+    connect(deleteSomataAction, SIGNAL(triggered()), this, SLOT(deleteSomataAction_slot()));
+
+    updateSomataAction = new QAction(tr("&Update Soma"), this);
+    updateSomataAction->setStatusTip(tr("Update soma metadata of an image dataset (from apo file)"));
+    connect(updateSomataAction, SIGNAL(triggered()), this, SLOT(updateSomataAction_slot()));
+    download_Soma_metadataAction = new QAction(tr("&Download Soma Metadata"), this);
+    connect(download_Soma_metadataAction, SIGNAL(triggered()), this, SLOT(download_Soma_metadataAction_slot()));
+    /*Morpho part*/
+    newMorphoAction = new QAction(tr("&New Morphometry"), this);
+    newMorphoAction->setStatusTip(tr("Create a new morphometry"));
+    connect(newMorphoAction, SIGNAL(triggered()), this, SLOT(newMorphoAction_slot()));
+    deleteMorphoAction = new QAction(tr("&Delete Morphometry"), this);
+    deleteMorphoAction->setStatusTip(tr("Delete an existed morphometry"));
+    connect(deleteMorphoAction, SIGNAL(triggered()), this, SLOT(deleteMorphoAction_slot()));
+
+    updateMorphoAction = new QAction(tr("&Update Morphometry"), this);
+    connect(updateMorphoAction, SIGNAL(triggered()), this, SLOT(updateMorphoAction_slot()));
+    download_Morpho_metadataAction = new QAction(tr("&Download Morphometry Metadata"), this);
+    connect(download_Morpho_metadataAction, SIGNAL(triggered()), this, SLOT(download_Morpho_metadataAction_slot()));
+    download_MorphoAction = new QAction(tr("&Download Morphometry data"), this);
+    connect(download_MorphoAction, SIGNAL(triggered()), this, SLOT(download_MorphoAction_slot()));
 
     //action for services
     monitorAction=new QAction(tr("Monitoring"),this);
@@ -103,15 +125,6 @@ void morphoHub_GUI::createActions()
     connect(monitorAction,SIGNAL(triggered()),this,SLOT(monitorAction_slot()));
 
     //Actions for window
-    loginAction=new QAction(tr("&Login"),this);
-    loginAction->setToolTip(tr("You have to sign in to get the advanced functions."));
-    loginAction->setEnabled(true);
-    connect(loginAction,SIGNAL(triggered()),this,SLOT(loginAction_slot()));
-
-    logoutAction=new QAction(tr("&Logout"),this);
-    logoutAction->setEnabled(false);
-    connect(logoutAction,SIGNAL(triggered()),this,SLOT(logoutAction_slot()));
-
     //action for Help
     helpAction=new QAction(tr("&Help"),this);
     helpAction->setToolTip(tr("MorphoHub documents"));
@@ -149,9 +162,6 @@ void morphoHub_GUI::createToolBar()
     dbToolBar=this->addToolBar(tr("DB"));
     dbToolBar->addAction(newDBAction);
     dbToolBar->addAction(loadDBAction);
-    loginToolbar=this->addToolBar(tr("User"));
-    loginToolbar->addAction(loginAction);
-    loginToolbar->addAction(logoutAction);
 }
 void morphoHub_GUI::setMainLayout()
 {
@@ -164,330 +174,18 @@ void morphoHub_GUI::setMainLayout()
     MainLogwidget->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetFloatable);
     MainLogwidget->setWidget(logtextedit);
     this->addDockWidget(Qt::BottomDockWidgetArea,MainLogwidget);
-
-    mainlayout->addWidget(contentTreewidget,1);
-    mainlayout->addWidget(dataTabwidget,6);
     mainWidget->setLayout(mainlayout);
     setCentralWidget(mainWidget);
 
-    if(mfs.dbPath.isEmpty())
+    if(mDB.getDBpath().isEmpty())
         toLogWindow("Warning: Please set the database path!");
     else
     {
-        toLogWindow(tr("Load Database: %1").arg(mfs.dbPath));
-        createTabWindow(false);
-        updateStatusBar(tr("Database: %1").arg(mfs.dbPath));
+        toLogWindow(tr("Load Database: %1").arg(mDB.getDBpath()));
+        updateStatusBar(tr("Database: %1").arg(mDB.getDBpath()));
     }
-}
-void morphoHub_GUI::createContentTreeWidget(bool init)
-{
-    if(init)
-    {
-        contentTreewidget=new QTreeWidget(this);
-        contentTreewidget->setColumnCount(1);
-        contentTreewidget->setHeaderLabel(tr("Morphometry"));
-        QList<QTreeWidgetItem*> contentitems;
-        content_morphometry=new QTreeWidgetItem(contentTreewidget,QStringList(QString("Image Datasets")));
-        contentitems.append(content_morphometry);
-        //create nodes with brain or image list, second node is morphology_id list, third is different morphometry versions
-        QStringList nodelist=mfs.mimagedb.getlistImage_name();
-        if(nodelist.size())
-        {
-            for(V3DLONG i=0;i<nodelist.size();i++)
-            {
-                QString tmpitem=nodelist.at(i);
-                QTreeWidgetItem *content_childnode=new QTreeWidgetItem(content_morphometry,QStringList(tmpitem));
-                content_morphometry->addChild(content_childnode);
-            }
-        }
-        //create parent node
-
-        contentTreewidget->insertTopLevelItems(0,contentitems);
-        contentTreewidget->setItemsExpandable(true);
-        contentTreewidget->expandAll();
-//        contentTreewidget->setCurrentItem(contentitems,0);
-        connect(contentTreewidget,SIGNAL(itemClicked(QTreeWidgetItem*,int)),this,SLOT(contentValueChange(QTreeWidgetItem*,int)));
-    }
-}
-void morphoHub_GUI::createTabWindow(bool init)
-{
-    if(init)
-    {
-        //new tab window
-        dataTabwidget=new QTabWidget();
-        dataTabwidget->setTabsClosable(false);
-        dataTabwidget->setMovable(false);
-    }
-    else
-    {
-        if(dataTabwidget->count()>0)
-        {
-            //set tab widget
-            dataTabwidget->disconnect();
-            //disconnect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
-            qDebug()<<"remove tab";
-            dataTabwidget->clear();
-        }
-        createdTables.clear();
-        createdTables_namelist.clear();
-
-        //update
-        //should have a list for shown tabs, define in filesystem
-        for(int i=0;i<mfs.morphometryType_showlist.size();i++)
-        {
-            QString tableName=mfs.morphometryType_showlist.at(i);
-            //get qlist for this table
-            if(i==0)
-            {
-                //soma
-                //get brainid
-                pointCloud_morphometry mpointcloud;
-                QStringList nodelist=mfs.mimagedb.getlistImage_name();
-                QString imagename=nodelist.at(0);
-//                qDebug()<<"Image name: "<<imagename<<endl;
-                //get soma path
-                QString confpath=
-                        mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".apo";
-                pointCloud_morphometry_list mlist=convertApo2pclist(confpath);
-                QList<QStringList> tableshowlist=getshowlistpointCloud(mlist);
-                if(tableshowlist.size())
-                {
-                    QTableWidget* creatingTable=new QTableWidget();
-                    creatingTable=createQTableWidget(tableshowlist,mpointcloud.showlist_name);//hh
-                    if(creatingTable)
-                    {
-                        qDebug()<<"create Tab: "<<tableName;
-                        createdTables_namelist.append(tableName);
-                        createdTables.append(creatingTable);
-                        dataTabwidget->addTab(creatingTable,tableName);
-                    }
-                }
-                //set tab widget
-//                connect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
-            }
-            else if(i==1)
-            {
-                //Auto traced
-                mMorphometry mtemp;
-                QStringList nodelist=mfs.mimagedb.getlistImage_name();
-                QString imagename=nodelist.at(0);
-                QString confpath=
-                        mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".conf";
-                qDebug()<<"conf path: "<<confpath<<endl;
-                mMorphometryDB mmdb=convertconf2mlist(confpath);
-                QList<QStringList> tableshowlist=getshowlistmMorphometry(mmdb);
-                if(tableshowlist.size())
-                {
-                    QTableWidget* creatingTable=new QTableWidget();
-                    creatingTable=createQTableWidget(tableshowlist,mtemp.showlist_name);//hh
-                    if(creatingTable)
-                    {
-                        qDebug()<<"create Tab: "<<tableName;
-                        createdTables_namelist.append(tableName);
-                        createdTables.append(creatingTable);
-                        dataTabwidget->addTab(creatingTable,tableName);
-                    }
-                }
-            }
-        }
-
-    }
-}
-QTableWidget* morphoHub_GUI::createQTableWidget(QList<QStringList> inlist,QStringList datatitle)
-{
-    int col = datatitle.size();
-    int row= inlist.size();
-    QTableWidget* t;
-    if(inlist.size()>0)
-    {
-        t= new QTableWidget(row,col, this);
-        t->setHorizontalHeaderLabels(datatitle);
-        for(V3DLONG i=0;i<inlist.size();i++)
-            for(int j=0;j<col;j++)
-                t->setItem(i,j,new QTableWidgetItem(inlist.at(i).at(j)));
-        t->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        t->setSelectionBehavior(QAbstractItemView::SelectRows);
-        t->setSelectionMode(QAbstractItemView::SingleSelection);
-        t->resizeColumnsToContents();
-        t->resizeRowsToContents();
-        //set content menu
-        t->setContextMenuPolicy(Qt::CustomContextMenu);
-//        connect(t,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ondataTab_customContextmenuRequested(QPoint)));
-        //get table cell info when clicked.
-//        connect(t,SIGNAL(cellClicked(int,int)),this,SLOT(celltableInfoUpdate(int,int)));
-        //double click to get a 3D view of the neuron
-//        connect(t,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(seeIn3Dview_slot(int,int)));
-        //sort Item
-        connect(t->horizontalHeader(),SIGNAL(sectionClicked(int)),this,SLOT(cellSortColumn(int)));
-    }
-    return t;
 }
 
-void morphoHub_GUI::contentValueChange(QTreeWidgetItem *item,int column)
-{
-    if(mfs.dbPath.isEmpty())
-    {
-        QMessageBox::warning(this,"Initializtion","Please set the database path!");
-        toLogWindow("Warning: Please set the database path!");
-        return;
-    }
-    QTreeWidgetItem *itemparent=item->parent();
-    if(itemparent==NULL)
-        return;
-    QString itemtext=item->text(column);
-    toLogWindow(itemtext);
-    //creat tab windows, update all the tabs
-//    if(datatabletitlelist.contains(itemtext))
-//    {
-//        //1.move to this tab
-//        int tabindex=datatabletitlelist.indexOf(itemtext);
-//        if(dataTabwidget->currentIndex()!=tabindex)
-//        {
-//            dataTabwidget->setCurrentIndex(tabindex);
-//        }
-//        else
-//        {
-//            //2.update the content of this tab
-//            QTableWidget *levelTable=datatablelist.at(tabindex);
-//            levelTable->clear();
-//            //get reconstructions info from this level
-//            QList<ReconstructionInfo> thislevelres;
-//            thislevelres=getReconstuctionsFromLevel(itemtext);
-//            updateTableDataLevel(levelTable,thislevelres);
-//            toLogWindow(tr("Tab: %1 update!").arg(itemtext));
-//        }
-//    }
-//    else
-//    {
-//        //get reconstructions info from this level
-//        QList<ReconstructionInfo> thislevelres;
-//        thislevelres=getReconstuctionsFromLevel(itemtext);
-//        if(thislevelres.size()>0)
-//        {
-//            QTableWidget* levelTable=new QTableWidget();
-//            levelTable=createTableDataLevel(thislevelres);
-//            if(levelTable)
-//            {
-//                datatabletitlelist.append(itemtext);
-//                datatablelist.append(levelTable);
-//                dataTabwidget->addTab(levelTable,itemtext);
-//                toLogWindow(tr("New Tab: %1 !").arg(itemtext));
-//            }
-//        }
-//    }
-    if(dataTabwidget->count()>0)
-    {
-        //set tab widget
-        dataTabwidget->disconnect();
-        //disconnect(dataTabwidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
-        qDebug()<<"remove tab";
-        dataTabwidget->clear();
-    }
-    createdTables.clear();
-    createdTables_namelist.clear();
-    //update
-    pointCloud_morphometry mpointcloud;
-    for(int i=0;i<mfs.morphometryType_showlist.size();i++)
-    {
-        QString tableName=mfs.morphometryType_showlist.at(i);
-        //get qlist for this table
-        if(i==0)
-        {
-            QString imagename=itemtext;
-            //get soma path
-            QString somapath=mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/SomaApo/"+imagename+".apo";
-            pointCloud_morphometry_list mlist=convertApo2pclist(somapath);
-            QList<QStringList> tableshowlist=getshowlistpointCloud(mlist);
-            if(tableshowlist.size())
-            {
-                QTableWidget* creatingTable=new QTableWidget();
-                creatingTable=createQTableWidget(tableshowlist,mpointcloud.showlist_name);//hh
-                if(creatingTable)
-                {
-                    qDebug()<<"create Tab: "<<tableName;
-                    createdTables_namelist.append(tableName);
-                    createdTables.append(creatingTable);
-                    dataTabwidget->addTab(creatingTable,tableName);
-                }
-            }
-            //set tab widget
-        }
-        else if(i==1)
-        {
-            //Auto traced
-            mMorphometry mtemp;
-            QStringList nodelist=mfs.mimagedb.getlistImage_name();
-            QString imagename=nodelist.at(0);
-            QString confpath=
-                    mfs.dbPath+"/"+mfs.basicDirs.at(CONFIGURATION)+"/"+mfs.morphometryType_showlist.at(i)+"/"+imagename+".conf";
-
-            mMorphometryDB mlist=convertconf2mlist(confpath);
-            QList<QStringList> tableshowlist=getshowlistmMorphometry(mlist);
-            if(tableshowlist.size())
-            {
-                QTableWidget* creatingTable=new QTableWidget();
-                creatingTable=createQTableWidget(tableshowlist,mtemp.showlist_name);//hh
-                if(creatingTable)
-                {
-                    qDebug()<<"create Tab: "<<tableName;
-                    createdTables_namelist.append(tableName);
-                    createdTables.append(creatingTable);
-                    dataTabwidget->addTab(creatingTable,tableName);
-                }
-            }
-        }
-    }
-}
-/*-------------------slot action-------------------*/
-void morphoHub_GUI::cellSortColumn(int c)
-{
-    if(c>=0)
-    {
-        int curtabindex=dataTabwidget->currentIndex();
-        QTableWidget *levelTable=createdTables.at(curtabindex);
-        if(levelTable->rowCount()>0)
-        {
-            levelTable->sortItems(c,Qt::AscendingOrder);
-//            levelTable->columnAt(0);
-        }
-    }
-}
-/*User management*/
-void morphoHub_GUI::userManagementAction_slot()
-{
-    QDir dbdir(mfs.dbPath);
-    if(!dbdir.exists())
-    {
-        QMessageBox::warning(this,"Dir Not Found","Please setup database path!");
-        return;
-    }
-    else
-    {
-        userManagementDialog=new UserManagement(mfs,this->mainparent);
-        userManagementDialog->show();
-        userManagementDialog->setMinimumSize(600,400);
-        userManagementDialog->setMaximumSize(800,800);
-        userManagementDialog->setGeometry(50,50,800,500);
-    }
-}
-/*Image data management:*/
-void morphoHub_GUI::imageManagementAction_slot()
-{
-    QDir dbdir(mfs.dbPath);
-    if(!dbdir.exists())
-    {
-        QMessageBox::warning(this,"Image Path Not Found","Please reset image path!");
-        return;
-    }
-    else
-    {
-        idataDialog=new ImageDataManagement(mfs,this->mainparent);
-        idataDialog->show();
-        idataDialog->setMinimumSize(600,400);
-        idataDialog->setMaximumSize(1200,1000);
-        idataDialog->setGeometry(50,50,1000,800);
-    }
-}
 /*Services slot*/
 void morphoHub_GUI::monitorAction_slot()
 {
@@ -499,74 +197,7 @@ void morphoHub_GUI::monitorAction_slot()
     MethodForBigScreenDisplay(*morphoHubcallback,mainparent,controlPara);
 }
 /*login and logout*/
-void morphoHub_GUI::loginAction_slot()
-{
-    loginDialog=new QDialog(this);
-    loginDialog->setWindowTitle("MorphoHub-Login-Window");
 
-    QLabel *userIDQLabel=new QLabel("UserID:");
-    loginUserIDQLineEdit=new QLineEdit();
-    QLabel *passwordQLabel=new QLabel("Password:");
-    loginPasswordQlineedit=new QLineEdit();
-
-    loginCancelButton =new QPushButton("Cancel");
-    connect(loginCancelButton,SIGNAL(clicked()),this,SLOT(loginCancelButton_slot()));
-    loginOkayButton=new QPushButton("Okay");
-    connect(loginOkayButton,SIGNAL(clicked()),this,SLOT(loginOkayButton_slot()));
-
-    loginMainlayout=new QGridLayout();
-    loginMainlayout->addWidget(userIDQLabel,1,0,1,2);
-    loginMainlayout->addWidget(loginUserIDQLineEdit,1,2,1,2);
-    loginMainlayout->addWidget(passwordQLabel,2,0,1,1);
-    loginMainlayout->addWidget(loginPasswordQlineedit,2,2,1,2);
-
-    loginMainlayout->addWidget(loginCancelButton,4,0,1,1);
-    loginMainlayout->addWidget(loginOkayButton,4,3,1,1);
-
-    loginDialog->setLayout(loginMainlayout);
-    loginDialog->raise();
-    loginDialog->setGeometry(100,100,400,400);
-    loginDialog->setModal(true);
-    loginDialog->show();
-}
-void morphoHub_GUI::loginOkayButton_slot()
-{
-    if(!loginUserIDQLineEdit->text().isEmpty())
-    {
-        //check the input at conf
-        //if yes
-        curOperator.UserID=loginUserIDQLineEdit->text().toUpper();
-        curOperator.workingplace="SEU";
-        curOperator.priority=APAdministrater;
-        loginDialog->close();
-        loginAction->setEnabled(false);
-        logoutAction->setEnabled(true);
-        userStatusLabel->setText(tr("UserID: %1").arg(curOperator.UserID));
-        toLogWindow(tr("Welcome %1 login.").arg(curOperator.UserID));
-        QSettings settings("MorphoHub","Vaa3d");
-        settings.setValue("UserID",curOperator.UserID);
-    }
-    else
-    {
-        QMessageBox::warning(this,"Input Errot","Please Input User ID!");
-        return;
-    }
-}
-void morphoHub_GUI::loginCancelButton_slot()
-{
-    loginDialog->close();
-}
-void morphoHub_GUI::logoutAction_slot()
-{
-    QString olduserID=curOperator.UserID;
-    curOperator.UserID="";
-    curOperator.workingplace="";
-    curOperator.priority=APvisitor;
-    loginAction->setEnabled(true);
-    logoutAction->setEnabled(false);
-    toLogWindow(tr("%1 logout").arg(olduserID));
-    userStatusLabel->setText(tr("UserID: Nobody"));
-}
 void morphoHub_GUI::newDBAction_slot()
 {
     //QMessageBox::information(this, tr("Information"), tr("Open"));
@@ -586,23 +217,12 @@ void morphoHub_GUI::newDBAction_slot()
             return;
         QDir::setCurrent(inputpath);
         QDir dir(QDir::currentPath());
-        bool setflag=mfs.setDBPath(dir.absolutePath());
+        bool setflag=mDB.createDB(dir.absolutePath());
         if(!setflag)
             return;
-        updateStatusBar(tr("Database path : %1").arg(mfs.dbPath));
-        //make new dir for basic db
-        for(int i=0;i<mfs.basicDirs.size();i++)
-        {
-            QString thisfolderpath=mfs.dbPath+"/"+mfs.basicDirs[i];
-            QDir dir(thisfolderpath);
-            if(!dir.exists())
-            {
-                dir.mkdir(thisfolderpath);
-                toLogWindow(tr("New Dir: %1").arg(thisfolderpath));
-            }
-        }
+        updateStatusBar(tr("Database path : %1").arg(mDB.getDBpath()));
         QSettings settings("MorphoHub","Vaa3d");
-        settings.setValue("dbpath",mfs.dbPath);
+        settings.setValue("dbpath",mDB.getDBpath());
     }
 }
 void morphoHub_GUI::loadDBAction_slot()
@@ -624,26 +244,12 @@ void morphoHub_GUI::loadDBAction_slot()
             return;
         QDir::setCurrent(inputpath);
         QDir dir(QDir::currentPath());
-        bool setflag=mfs.setDBPath(dir.absolutePath());
+        bool setflag=mDB.createDB(dir.absolutePath());
         if(!setflag)
             return;
-        //1.check the basic path of the database.
-        //if not exist, make new dir and give a note.
-        updateStatusBar(tr("Database path : %1").arg(mfs.dbPath));
-        toLogWindow(tr("Database path : %1").arg(mfs.dbPath));
-        //make new dir for basic db
-        for(int i=0;i<mfs.basicDirs.size();i++)
-        {
-            QString thisfolderpath=mfs.dbPath+"/"+mfs.basicDirs[i];
-            QDir dir(thisfolderpath);
-            if(!dir.exists())
-            {
-                dir.mkdir(thisfolderpath);
-                toLogWindow(tr("New Dir: %1").arg(thisfolderpath));
-            }
-        }
+        updateStatusBar(tr("Database path : %1").arg(mDB.getDBpath()));
         QSettings settings("MorphoHub","Vaa3d");
-        settings.setValue("dbpath",mfs.dbPath);
+        settings.setValue("dbpath",mDB.getDBpath());
     }
     else
     {
@@ -668,12 +274,12 @@ void morphoHub_GUI::setImgPathAction_slot()
             return;
         QDir::setCurrent(inputpath);
         QDir dir(QDir::currentPath());
-        bool setflag=mfs.setImgPath(dir.absolutePath());
+        bool setflag=mDB.setImgDBpath(dir.absolutePath());
         if(!setflag)
             return;
-        toLogWindow(tr("Database image datasets path : %1").arg(mfs.imgDBPath));
+        toLogWindow(tr("Database image datasets path : %1").arg(mDB.getImgDBpath()));
         QSettings settings("MorphoHub","Vaa3d");
-        settings.setValue("imgpath",mfs.imgDBPath);
+        settings.setValue("imgpath",mDB.getImgDBpath());
     }
     else
     {
@@ -683,7 +289,78 @@ void morphoHub_GUI::setImgPathAction_slot()
 }
 void morphoHub_GUI::settingsAction_slot()
 {
+    /*Parameters that need to be initialized.
+     * database:
+        *dbpath,imgdbpath
+        *db_init_1stlayer,db_init_2stlayer_metadata,db_init_3stlayer_metadata
+    */
     toLogWindow("hello, developing");
+
+}
+/*Image part*/
+void morphoHub_GUI::newImageAction_slot()
+{
+    /*All i need is to, get the input-para-list of Image, and call the database function
+     * 1. generate imageID (addImage)
+     * 2. set metadata (updateImage), use a dialog for inputing para-list
+    */
+    mImage newimage;
+    NewImage_gui *newImage_gui=new NewImage_gui(newimage,this->mainparent);
+    newImage_gui->setMinimumSize(200,300);
+    newImage_gui->setMaximumSize(400,400);
+    newImage_gui->setGeometry(50,50,800,500);
+    newImage_gui->exec();
+    toLogWindow(newimage.getName());
+}
+void morphoHub_GUI::deleteImageAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+void morphoHub_GUI::updateImageAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+void morphoHub_GUI::download_Img_metadataAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+/*Soma part*/
+void morphoHub_GUI::newSomataAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+void morphoHub_GUI::deleteSomataAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+void morphoHub_GUI::updateSomataAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+void morphoHub_GUI::download_Soma_metadataAction_slot()
+{
+    toLogWindow("hello, developing");
+}
+/*Morphometry part*/
+void morphoHub_GUI::newMorphoAction_slot()
+{
+
+}
+void morphoHub_GUI::deleteMorphoAction_slot()
+{
+
+}
+void morphoHub_GUI::updateMorphoAction_slot()
+{
+
+}
+void morphoHub_GUI::download_Morpho_metadataAction_slot()
+{
+
+}
+void morphoHub_GUI::download_MorphoAction_slot()
+{
+
 }
 void morphoHub_GUI::helpAction_slot()
 {
@@ -732,7 +409,6 @@ void morphoHub_GUI::helpAction_slot()
     textEdit->setFontPointSize(16);
     textEdit->show();
 }
-
 morphoHub_GUI::morphoHub_GUI()
 {
 }

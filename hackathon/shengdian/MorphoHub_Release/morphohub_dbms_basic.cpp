@@ -24,7 +24,7 @@ bool mDatabase::imageInitialization(bool start)
     if(start)
     {
         imgdbpath=db_img_metadata_path=img_metadata_path="";
-        listImages.clear();mImagePointer=new mImage();
+        listImages.clear();
     }
     else
     {
@@ -95,6 +95,13 @@ bool mDatabase::loadDB(const QString &inpath)
 {
     return createDB(inpath);
 }
+bool mDatabase::setImgDBpath(const QString &inpath)
+{
+    if(inpath.isEmpty()||!QDir(inpath).exists())
+        return false;
+    this->imgdbpath=inpath;
+    return true;
+}
 QString mDatabase::getImg_metadata_path()
 {
     QString outpath="";QDir dbDir(dbpath);
@@ -105,7 +112,7 @@ QString mDatabase::getImg_metadata_path()
     QFile metaFile(outpath);
     if(!metaFile.exists())
     {
-        qDebug()<<"Requested image metadata of "<<QString::number(qImageID)<<" is not existed.";
+        qDebug()<<"Requested all image metadata is not existed.";
     }
     return outpath;
 }
@@ -241,7 +248,7 @@ bool mDatabase::deleteImage(MImageType removeID)
     /*2*/
     QDir dstdir;
     dstdir.rmpath(QFileInfo(this->getImg_metadata_path(removeID)).absolutePath());
-    if(QDir(QFileInfo(this->getImg_metadata_path(newImage.mImageID)).absolutePath()).exists())
+    if(QDir(QFileInfo(this->getImg_metadata_path(removeID)).absolutePath()).exists())
         return false;
     /*3*/
     this->listImages.clear();
@@ -288,7 +295,7 @@ bool mDatabase::updateImage(mImage inImage)
     }
     return validatedID;
 }
-bool mDatabase::somaInitialization(bool start=true)
+bool mDatabase::somaInitialization(bool start)
 {
     if(start)
     {
@@ -320,7 +327,7 @@ QString mDatabase::getSoma_metadata_path()
     QFile metaFile(outpath);
     if(!metaFile.exists())
     {
-        qDebug()<<"Requested soma metadata of "<<QString::number(qImageID)<<" is not existed.";
+        qDebug()<<"Requested soma metadata is not existed.";
     }
     return outpath;
 }
@@ -658,7 +665,7 @@ bool mDatabase::updateSomalist(QList<mSoma> insoma,MImageType inmImageID)
         validated=writeSomalistToFile(this->getSoma_metadata_path(inmImageID),this->mSomataPointer);
     return validated;
 }
-bool mDatabase::morphoInitialization(bool start=true)
+bool mDatabase::morphoInitialization(bool start)
 {
     if(start)
     {
@@ -714,6 +721,8 @@ bool mDatabase::addMorpho(MImageType qImageID,MSomaType qSomaID,QStringList infi
         mMorphometry newMorpho;
         newMorpho.mImageID=qImageID;
         newMorpho.mSomaID=qSomaID;
+        if(!infilelist.size())
+            infilelist.append(db_init_2stlayer_metadata[SOMA]+".apo");
         if(this->mMorphoPointer.size())
         {
             //assgin morphoid
@@ -743,7 +752,7 @@ bool mDatabase::addMorpho(MImageType qImageID,MSomaType qSomaID,QStringList infi
                         &&QFile(infilelist.at(i)).exists())
                 {
                     ok=QFile::copy(infilelist.at(i),
-                                toMorphopath+QFileInfo(infilelist.at(i)).fileName());
+                                toMorphopath+"/"+QFileInfo(infilelist.at(i)).fileName());
                     if(!ok)
                         return false;
                 }
@@ -766,8 +775,8 @@ bool mDatabase::addMorpho(MImageType qImageID,MSomaType qSomaID,QStringList infi
             if(QDir(toMorphopath).exists())
             {
                 QList <CellAPO> toapolist; toapolist.clear();
-                toapolist.append(thisSoma);
-                ok=writeAPO_file(toMorphopath+QFileInfo(infilelist.at(i)).fileName(),toapolist);
+                toapolist.append(mSoma2Apo(thisSoma));
+                ok=writeAPO_file(toMorphopath+"/"+QFileInfo(infilelist.at(0)).fileName(),toapolist);
                 if(!ok)
                     return false;
             }
@@ -785,7 +794,7 @@ bool mDatabase::addMorpho(MImageType qImageID,MSomaType qSomaID,QStringList infi
         if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
             dstdir.mkpath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath());
         if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
-            ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mImagePointer);
+            ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mMorphoPointer);
         if(ok)
             return ok;
         else
@@ -819,19 +828,9 @@ bool mDatabase::updateMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType q
             mMorphometry temp=this->mMorphoPointer.at(i);
             if(temp.mMorphoID==qMorphoID)
             {
-                for(int j=0;j<temp.morphoFilelist.size();j++)
-                {
-                    if(QString::compare(temp.morphoFilelist.at(j),deleteFile))
-                    {
-                        validated=true;
-                        dstMorpho=temp;
-                        break;
-                    }
-                }
-                if(!validated)
-                    return false;
-                else
-                    continue;
+                validated=true;
+                dstMorpho=temp;
+                continue;
             }
             newMorphoPointer.append(temp);
         }
@@ -846,7 +845,7 @@ bool mDatabase::updateMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType q
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
         dstdir.mkpath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath());
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
-        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mImagePointer);
+        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mMorphoPointer);
     if(ok)
         return ok;
     else
@@ -885,16 +884,10 @@ bool mDatabase::deleteMorpho(MImageType qImageID)
         return false;
     //3
     //delete metadata path
-    QString rmpath_metadata=this->getMorpho_metadata_path(qImageID);
-    if(QDir(rmpath_metadata).exists())
-        QDir::rmpath(rmpath_metadata);
-    if(QDir(rmpath_metadata).exists())
+    if(!deletePath(this->getMorpho_metadata_path(qImageID)))
         return false;
     //delete db path
-    QString rmpath=this->getMorpho_path(qImageID);
-    if(QDir(rmpath).exists())
-        QDir::rmpath(rmpath);
-    if(QDir(rmpath).exists())
+    if(!deletePath(this->getMorpho_path(qImageID)))
         return false;
     return true;
 }
@@ -933,16 +926,10 @@ bool mDatabase::deleteMorpho(MImageType qImageID,MSomaType qSomaID)
         return false;
     //3
     //delete metadata path
-    QString rmpath_metadata=QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath();
-    if(QDir(rmpath_metadata).exists())
-        QDir::rmpath(rmpath_metadata);
-    if(QDir(rmpath_metadata).exists())
+    if(!deletePath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()))
         return false;
     //delete db path
-    QString rmpath=this->getMorpho_path(qImageID,qSomaID);
-    if(QDir(rmpath).exists())
-        QDir::rmpath(rmpath);
-    if(QDir(rmpath).exists())
+    if(!deletePath(this->getMorpho_path(qImageID,qSomaID)))
         return false;
     return true;
 }
@@ -977,19 +964,9 @@ bool mDatabase::deleteMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType q
             mMorphometry temp=this->mMorphoPointer.at(i);
             if(temp.mMorphoID==qMorphoID)
             {
-                for(int j=0;j<temp.morphoFilelist.size();j++)
-                {
-                    if(QString::compare(temp.morphoFilelist.at(j),deleteFile))
-                    {
-                        validated=true;
-                        dstMorpho=temp;
-                        break;
-                    }
-                }
-                if(!validated)
-                    return false;
-                else
-                    continue;
+                validated=true;
+                dstMorpho=temp;
+                continue;
             }
             newMorphoPointer.append(temp);
         }
@@ -1003,16 +980,13 @@ bool mDatabase::deleteMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType q
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
         dstdir.mkpath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath());
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
-        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mImagePointer);
+        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mMorphoPointer);
     if(ok)
         return ok;
     else
         dstdir.rmpath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath());
     //rm db path
-    QString rmpath=this->getMorpho_path(qImageID,qSomaID,qMorphoID);
-    if(QDir(rmpath).exists())
-        QDir::rmpath(rmpath);
-    if(QDir(rmpath).exists())
+    if(!deletePath(this->getMorpho_path(qImageID,qSomaID,qMorphoID)))
         return false;
     return true;
 }
@@ -1088,7 +1062,7 @@ bool mDatabase::deleteMorpho(MImageType qImageID,MSomaType qSomaID,MMorphoType q
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
         dstdir.mkpath(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath());
     if(!QDir(QFileInfo(this->getMorpho_metadata_path(qImageID,qSomaID)).absolutePath()).exists())
-        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mImagePointer);
+        ok=writeMorpholistToFile(this->getMorpho_metadata_path(qImageID,qSomaID),this->mMorphoPointer);
     if(ok)
         return ok;
     else
@@ -1175,7 +1149,9 @@ QString mDatabase::getMorpho_path(MImageType qImageID,MSomaType qSomaID,MMorphoT
     QString morpho_metadata_temp_path=this->getMorpho_metadata_path(qImageID,qSomaID);
     if(morpho_metadata_temp_path.isEmpty()||!QDir(morpho_metadata_temp_path).exists()) {outpath="";return outpath;}
     //read morpho list and init mMorphoPointer
-    this->mMorphoPointer=this->getMorphoPointer(qImageID,qSomaID);
+    bool ok=this->getMorphoPointer(qImageID,qSomaID);
+    if(!ok)
+        return outpath;
     for(V3DLONG j=0;j<this->mMorphoPointer.size();j++)
     {
         mMorphometry temp=this->mMorphoPointer.at(j);
@@ -1239,8 +1215,7 @@ QString mDatabase::getMorpho_metadata_path(MImageType qImageID)
     if(!metaFile.exists())
     {
         qDebug()<<"Requested morpho metadata of "
-               <<QString::number(qImageID)<<"_"<<QString::number(qSomaID)
-              <<" is not existed.";
+               <<QString::number(qImageID)<<" is not existed.";
     }
     return outpath;
 }
@@ -1382,7 +1357,7 @@ QStringList mMorphometry::getDataNumber(bool basic)
     out.append(outfiles);
     return out;
 }
-mMorphometry createMorphoFromQSL(QStringList inlist, bool basic=false)
+mMorphometry createMorphoFromQSL(QStringList inlist, bool basic)
 {
     mMorphometry out;
     out.mImageID=inlist.at(0).toLong();
@@ -1398,7 +1373,7 @@ mMorphometry createMorphoFromQSL(QStringList inlist, bool basic=false)
     out.morphoFilelist=outfiles.simplified().split(";");
     return out;
 }
-QList<mMorphometry> getMorpholist(const QString& inpath,bool basic=false)
+QList<mMorphometry> getMorpholist(const QString& inpath,bool basic)
 {
     QList<mMorphometry> outMorpholist;outMorpholist.clear();
     //1.scan conf path.
@@ -1426,7 +1401,7 @@ QList<mMorphometry> getMorpholist(const QString& inpath,bool basic=false)
     }
     return outMorpholist;
 }
-bool writeMorpholistToFile(const QString& topath,QList<mMorphometry> &inMorpholist,bool basic=false)
+bool writeMorpholistToFile(const QString& topath,QList<mMorphometry> &inMorpholist,bool basic)
 {
     if (topath.isEmpty()||inMorpholist.size()==0)
         return false;
@@ -1642,7 +1617,7 @@ QList<mImage> getImagelist(const QString& inpath,bool basic)
 }
 mImage getImage(const QString& inpath)
 {
-    mImage out=new mImage();
+    mImage out;
     QFile scanconffile(inpath);
     if(!scanconffile.exists())
         QMessageBox::warning(0,"File Not Found","Can't find configuration file at Input path!");
@@ -1702,4 +1677,19 @@ bool writeImagelistToFile(const QString &topath, QList<mImage> &inlist,bool basi
         return true;
     }
     return false;
+}
+bool deletePath(const QString &dpath)
+{
+    if(dpath.isEmpty()||!QDir(dpath).exists())
+        return false;
+    QDir dir(dpath);
+    return dir.rmpath(dpath);
+
+}
+bool deldeteFile(const QString &dfile)
+{
+    if(dfile.isEmpty()||!QFile(dfile).exists())
+        return false;
+    QDir dir(QFileInfo(dfile).absolutePath());
+    return dir.remove(QFileInfo(dfile).fileName());
 }

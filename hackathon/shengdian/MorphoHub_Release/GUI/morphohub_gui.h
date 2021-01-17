@@ -1,6 +1,6 @@
 #ifndef MORPHOHUB_GUI_H
 #define MORPHOHUB_GUI_H
-
+#include <QWidget>
 #include <QMainWindow>
 #include <QtGui>
 #include "v3d_interface.h"
@@ -15,9 +15,8 @@
 #include <QtCore>
 #include <QDir>
 #include <QSettings>
-#include "../basic_conf.h"
-#include "../Dialogs/imagedatamanagement.h"
-#include "../Dialogs/usermanagement.h"
+#include "morphohub_dbms_basic.h"
+#include "GUI/newimage_gui.h"
 #include "../Service/screenwall.h"
 #include "../Service/screenwall_func.h"
 using namespace std;
@@ -31,9 +30,8 @@ public:
     ~morphoHub_GUI();
 private:
     QWidget *mainparent;
-    mFileSystem mfs;
+    mDatabase mDB;
     V3DPluginCallback2 *morphoHubcallback;
-    Annotator curOperator;
 
     /*Initialization*/
     void morphoHub_Init();
@@ -43,20 +41,6 @@ private:
     void createToolBar();
     void createStatusBar();
     void updateStatusBar(const QString& showtext);
-    void checkUserState();
-
-    /*Qtreewidget for content*/
-    void createContentTreeWidget(bool init);
-    void createTabWindow(bool init);
-    QTreeWidget *contentTreewidget;
-    QTreeWidgetItem *content_morphometry;
-//    QTreeWidgetItem *content_images;
-
-    /*data tab*/
-    QTabWidget *dataTabwidget;
-    QList<QTableWidget*> createdTables;//all the created qtable will have a pointer here.
-    QStringList createdTables_namelist;//all the tab name of the created qtable
-    QTableWidget* createQTableWidget(QList<QStringList> inlist,QStringList datatitle);
 
     /*menu list*/
     QMenu *dbMenu;
@@ -77,25 +61,28 @@ private:
     QAction *setImgPathAction;
 
     /*action list: management*/
-    QAction *imageManagementAction;
-    ImageDataManagement *idataDialog;
+    /*Image part*/
+    QAction *newImageAction;
+    QAction *deleteImageAction;
+    QAction *updateImageAction;
+    QAction *download_Img_metadataAction;
+    /*Soma part*/
+    QAction *newSomataAction;/*from apo file; from metadata*/
+    QAction *deleteSomataAction;
+    QAction *updateSomataAction;
+    QAction *download_Soma_metadataAction;
+    /*Morphometry part*/
+    QAction *newMorphoAction;
+    QAction *deleteMorphoAction;
+    QAction *updateMorphoAction;
+    QAction *download_Morpho_metadataAction;
+    QAction *download_MorphoAction;
+    /*User part*/
 
-    UserManagement *userManagementDialog;
-    QAction *userManagementAction;
     /*action list:services*/
     QAction *monitorAction;
 
     /*login or out Dialog*/
-    QToolBar *loginToolbar;
-    QDialog *loginDialog;
-    QGridLayout *loginMainlayout;
-    QAction *loginAction;
-    QLineEdit *loginUserIDQLineEdit;
-    QLineEdit *loginPasswordQlineedit;
-    QPushButton *loginCancelButton;
-    QPushButton *loginOkayButton;
-    QAction *logoutAction;
-
     /*action list: help*/
     QAction *helpAction;
 
@@ -110,25 +97,31 @@ private:
 
 private slots:
     //content tab
-    void dataTabChange(int tabindex);
-    void contentValueChange(QTreeWidgetItem *item,int column);
-    //db slots
+    //database slots
     void newDBAction_slot();
     void loadDBAction_slot();
     void setImgPathAction_slot();
     void settingsAction_slot();
     //management action slot
-    void imageManagementAction_slot();
-    //user management
-    void userManagementAction_slot();
+    /*Image part*/
+    void newImageAction_slot();
+    void deleteImageAction_slot();
+    void updateImageAction_slot();
+    void download_Img_metadataAction_slot();
+    /*Soma part*/
+    void newSomataAction_slot();
+    void deleteSomataAction_slot();
+    void updateSomataAction_slot();
+    void download_Soma_metadataAction_slot();
+    /*Morphometry part*/
+    void newMorphoAction_slot();
+    void deleteMorphoAction_slot();
+    void updateMorphoAction_slot();
+    void download_Morpho_metadataAction_slot();
+    void download_MorphoAction_slot();
     //services action list
     void monitorAction_slot();
-    void cellSortColumn(int c);
     //login and logout
-    void loginAction_slot();
-    void loginOkayButton_slot();
-    void loginCancelButton_slot();
-    void logoutAction_slot();
     //help action slot
     void helpAction_slot();
 signals:

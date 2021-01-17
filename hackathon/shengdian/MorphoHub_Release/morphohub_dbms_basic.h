@@ -236,6 +236,8 @@ mImage createImageFromQSL(QStringList inlist,bool basic=false);
 QList<mImage> getImagelist(const QString& inpath,bool basic=false);
 mImage getImage(const QString& inpath);
 bool writeImagelistToFile(const QString& topath,QList<mImage> &inlist,bool basic=false);
+bool deletePath(const QString &dpath);
+bool deldeteFile(const QString &dfile);
 /*Definition of the MorphoHub-Database*/
 enum db_init_1stlayer_index{
     METADATA=0,
@@ -256,27 +258,31 @@ enum db_init_3stlayer_metadata_index{
 };
 struct mDatabase{
     //database part
-    QString dbpath ;
+private:
+    QString dbpath;
     QStringList db_init_1stlayer;
     QStringList db_init_2stlayer_metadata;
     QStringList db_init_3stlayer_metadata;
     //image part
     QString imgdbpath;/*optional, can be used for the visualization and annotation of image dataset*/
-    QString db_img_metadata_path;/*<db>/metadata/image/basic/image.metadata, for fast-indexing all the images at db*/
-    QList<mImage> listImages; //entrance to image datasets
-    QString img_metadata_path;/*file path that contains the metadata of a image*/
-    mImage mImagePointer; //entrance to metadata of one image dataset
+    QString db_img_metadata_path;/*<db>/metadata/image/basic/image.metadata, for fast-indexing all the images at db*/    
+    QString img_metadata_path;/*file path that contains the metadata of a image*/    
     //soma morphometry part
     QString db_soma_metadata_path;
-    /*record id of all the image datasets with somalist. initialization and update from `db_soma_metadata_path`*/
-    QList<mImage> listSomata;
+    /*record id of all the image datasets with somalist. initialization and update from `db_soma_metadata_path`*/   
     QString soma_metadata_path;/*<db>/metadata/soma/detail/<imageID>/soma.metadata*/
-    QList<mSoma> mSomataPointer;//entrance to soma metadata of one image dataset
     //morphometry part
     QString morpho_db_path;
-    QList<mSoma> listMorpho;
     QString morpho_metadata_path;
+
+public:
+    QList<mImage> listImages; //entrance to image datasets
+    mImage mImagePointer; //entrance to metadata of one image dataset
+    QList<mImage> listSomata;
+    QList<mSoma> mSomataPointer;//entrance to soma metadata of one image dataset
+    QList<mSoma> listMorpho;
     QList<mMorphometry> mMorphoPointer;
+
     mDatabase(){
         dbInitialization();
         imageInitialization();
@@ -284,6 +290,9 @@ struct mDatabase{
         morphoInitialization();
     }
     bool dbInitialization(bool start=true);
+    QString getDBpath(){return this->dbpath;}
+    QString getImgDBpath(){return this->imgdbpath;}
+    bool setImgDBpath(const QString &inpath);
     bool createDB(const QString &inpath);
     bool loadDB(const QString &inpath);
     /*******************Image function part*************************/
