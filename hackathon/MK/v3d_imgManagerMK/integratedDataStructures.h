@@ -45,6 +45,7 @@ namespace integratedDataStructures
 	};
 	/****************************************************************************************/
 
+	/******************* Connected Component and Brain Region Data Structure *******************/
 	struct connectedComponent
 	{
 		int islandNum;
@@ -63,7 +64,10 @@ namespace integratedDataStructures
 	};
 
 	inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
-	inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
+	
+	template<typename T>
+	inline void ChebyshevCenter(set<vector<T>> allCoords, float center[]); // The Chebyshev center will be stored in the input center array point.
+	
 	inline void ChebyshevCenter_connCompList(vector<connectedComponent>& inputCompList);
 	inline vector<int> getSliceBoundaries(boost::container::flat_set<vector<int>> inputSliceCoordSet);
 
@@ -75,6 +79,7 @@ namespace integratedDataStructures
 		void writeBrainRegion_file(string saveFileName);
 		void readBrainRegion_file(string inputFileName);
 	};
+	/*******************************************************************************************/
 
 	struct registeredImg
 	{
@@ -105,13 +110,14 @@ inline void integratedDataStructures::morphStructElement2D::printOutStructEle() 
 	}
 }	
 
-void integratedDataStructures::ChebyshevCenter(set<vector<int>> allCoords, float center[])
+template<typename T>
+void integratedDataStructures::ChebyshevCenter(set<vector<T>> allCoords, float center[])
 {
 	float lengthSum = 1000000;
-	for (set<vector<int>>::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
+	for (set<vector<T>>::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
 	{
 		float currLengthSum = 0;
-		for (set<vector<int>>::iterator checkCoordIt = allCoords.begin(); checkCoordIt != allCoords.end(); ++checkCoordIt)
+		for (set<vector<T>>::iterator checkCoordIt = allCoords.begin(); checkCoordIt != allCoords.end(); ++checkCoordIt)
 		{
 			float length = sqrt(float((checkCoordIt->at(0) - allCoordIt->at(0)) * (checkCoordIt->at(0) - allCoordIt->at(0)) +
 				(checkCoordIt->at(1) - allCoordIt->at(1)) * (checkCoordIt->at(1) - allCoordIt->at(1)) +

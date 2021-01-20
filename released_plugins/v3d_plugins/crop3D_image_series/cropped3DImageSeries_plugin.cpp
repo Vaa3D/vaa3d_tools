@@ -582,6 +582,13 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 				coords[4] = coords[4].remove(0, 1);
 				qDebug() << coords[4] << " " << coords[5] << " " << coords[6];
 
+                QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";
+
+                if(QFile::exists(saveName)){
+                    qDebug()<<saveName<<" is exist!";
+                    continue;
+                }
+
 				QList<QString> zC = coords[4].split(".");
 				QList<QString> xC = coords[5].split(".");
 				QList<QString> yC = coords[6].split(".");
@@ -591,20 +598,43 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 				long ycenter = yC[0].toLong() - 1;
 				cout << zcenter << " " << xcenter << " " << ycenter << endl;
 
+                V3DLONG x0 = xcenter-cubeSideLength2/2;
+                V3DLONG x1 = xcenter+cubeSideLength2/2;
+                V3DLONG y0 = ycenter-cubeSideLength1/2;
+                V3DLONG y1 = ycenter+cubeSideLength1/2;
+                V3DLONG z0 = zcenter-cubeSideLength3/2;
+                V3DLONG z1 = zcenter+cubeSideLength3/2;
+                cout<<"in_zz: "<<in_zz[0]<<" "<<in_zz[1]<<" "<<in_zz[2]<<endl;
+                cout<<"x0 x1 y0 y1 z0 z1: "<<x0<<" "<<x1<<" "<<y0<<" "<<y1<<" "<<z0<<" "<<z1<<endl;
+                if(x0<0 || x1>=in_zz[0] || y0<0 || y1>=in_zz[1] || z0<0 || z1>=in_zz[2]){
+                    qDebug()<<"the cordinate is out of size";
+//                    continue;
+                }
+//                if(x0<0) x0 = 0; if(x0>=in_zz[0]) x0 = in_zz[0]-1;
+//                if(x1<0) x1 = 0; if(x1>=in_zz[0]) x1 = in_zz[0]-1;
+//                if(y0<0) y0 = 0; if(y0>=in_zz[1]) y0 = in_zz[1]-1;
+//                if(y1<0) y1 = 0; if(y1>=in_zz[1]) y1 = in_zz[1]-1;
+//                if(z0<0) z0 = 0; if(z0>=in_zz[2]) z0 = in_zz[2]-1;
+//                if(z1<0) z1 = 0; if(z1>=in_zz[2]) z1 = in_zz[2]-1; //added by zx
+
 				unsigned char * cropped_image = 0;
                 cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(),
-                                                               (xcenter-cubeSideLength2/2), (xcenter+cubeSideLength2/2),
-                                                               (ycenter-cubeSideLength1/2), (ycenter+cubeSideLength1/2),
-															   (zcenter-cubeSideLength3/2), (zcenter+cubeSideLength3/2));
+                                                               x0, x1,
+                                                               y0, y1,
+                                                               z0, z1);//changed by zx;
 				if(cropped_image==NULL){
 					continue;
 				}
-				Image4DSimple* new4DImage = new Image4DSimple();
-				new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
-				QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";
+//				Image4DSimple* new4DImage = new Image4DSimple();
+//				new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
+
 				const char* fileName = saveName.toAscii();
 
 				simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
+
+                if(cropped_image){
+                    delete[] cropped_image;
+                }
 			}
 		}
 		inputFile.close();

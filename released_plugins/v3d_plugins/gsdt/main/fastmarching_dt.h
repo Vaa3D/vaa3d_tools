@@ -185,7 +185,7 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, V3DLONG sz0, V
 						{
 							if(phi[index] > new_dist)
 							{
-								cout<<"refrsh TRIAL"<<endl;
+//								cout<<"refrsh TRIAL"<<endl;
 								phi[index] = new_dist;
 								HeapElem * elem = elems[index];
 								heap.adjust(elem->heap_id, phi[index]);

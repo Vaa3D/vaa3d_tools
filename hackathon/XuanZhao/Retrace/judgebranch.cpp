@@ -705,8 +705,8 @@ void pruneNeuronTree(V3DPluginCallback2& callback){
     p2.initialize(callback);
     unsigned char* pdata = p2.p4dImage->getRawData();
     V3DLONG sz[4] = {p2.p4dImage->getXDim(),p2.p4dImage->getYDim(),p2.p4dImage->getZDim(),p2.p4dImage->getCDim()};
-    normalImage(pdata,sz);
-    BinaryProcess(pdata,sz);
+//    normalImage(pdata,sz);
+//    BinaryProcess(pdata,sz);
     p2.bkg_thresh = -1;
     proc_app2(p2);
     sortSWC(p2.result);
@@ -935,6 +935,7 @@ void getHierarchySegmentAllPointDirection(unsigned char*** data3d, V3DLONG* sz, 
         pt.x = segMarkers[i]->x;
         pt.y = segMarkers[i]->y;
         pt.z = segMarkers[i]->z;
+        pt.radius = segMarkers[i]->radius + 2;
         compute_rgn_stat_new(pt,data3d,channo,sz[0],sz[1],sz[2],sz[3],datatype,vec1,vec2,vec3,sigma1,sigma2,sigma3);
         XYZ pcaDirection =  XYZ(vec1[0],vec1[1],vec1[2]);
         double dotDirection = dot(pointDirection,pcaDirection);
@@ -950,7 +951,7 @@ void getHierarchySegmentAllPointDirection(unsigned char*** data3d, V3DLONG* sz, 
         }else {
             segMarkers[i]->type = 2;
         }
-        segMarkers[i]->radius = sigma1/((sigma2+sigma3)/2);
+        segMarkers[i]->radius = sigma1/sigma2;    
     }
     if(vec1){
         delete[] vec1;

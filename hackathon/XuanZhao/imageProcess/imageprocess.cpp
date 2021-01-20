@@ -6,7 +6,7 @@
 
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
-#include <thread>
+//#include <thread>
 #include <vector>
 
 
@@ -476,9 +476,424 @@ void joinImage(QString tifDir, QString outPath,int times, V3DPluginCallback2& ca
 
 }
 
+//Histogram Equalization
+void HE(unsigned char *data1d, long long *sz){
+    V3DLONG* HA = new V3DLONG[256];
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    memset(HA,0,256*sizeof(V3DLONG));
+    for(int i=0; i<tolSZ; i++){
+        HA[data1d[i]]++;
+    }
+    for(int i=1; i<256; i++){
+        HA[i] += HA[i-1];
+        qDebug()<<i<<" "<<HA[i];
+    }
+
+    for(int i=0; i<tolSZ; i++){
+        int tmp = HA[data1d[i]]*256/(double)tolSZ;
+//        qDebug()<<tmp;
+        if(tmp>255)
+            tmp = 255;
+        if(tmp<0)
+            tmp = 0;
+        data1d[i] = (unsigned char)tmp;
+    }
+    if(HA){
+        delete[] HA;
+        HA = 0;
+    }
+}
+
+void getColorMask(vector<double> &colorMask, double colorSigma){
+    for(int i=0; i<256; ++i){
+        double colorDiff = exp(-(i*i)/(2*colorSigma*colorSigma));
+        colorMask.push_back(colorDiff);
+    }
+}
+
+//void getGaussianMask(float* &mask, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
+//    V3DLONG tolSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
+//    mask = new float[tolSZ];
+//    V3DLONG kernelSZ01 = kernelSZ[0]*kernelSZ[1];
+//    int centerX = (kernelSZ[0] - 1) / 2;
+//    int centerY = (kernelSZ[1] - 1) / 2;
+//    int centerZ = (kernelSZ[2] - 1) / 2;
+//    double x,y,z;
+//    double sum = 0;
+
+//    for(int k=0; k<kernelSZ[2]; ++k){
+//        z = pow(k-centerZ,2);
+//        for(int j=0; j<kernelSZ[1]; ++j){
+//            y = pow(j-centerY,2);
+//            for(int i=0; i<kernelSZ[0]; ++i){
+//                x = pow(i-centerX,2);
+//                double g = exp(-(x+y)/(2*spaceSigmaXY*spaceSigmaXY)-z/(2*spaceSigmaZ*spaceSigmaZ));
+//                qDebug()<<g;
+//                V3DLONG index = k*kernelSZ01 + j*kernelSZ[0] + i;
+//                mask[index] = g;
+//                sum += g;
+//            }
+//        }
+//    }
+
+//    for(int i=0; i<tolSZ; i++){
+//        mask[i] /= sum;
+//    }
+//}
+
+void getGaussianMask(float* &mask, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
+    V3DLONG tolSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
+    mask = new float[tolSZ];
+    V3DLONG kernelSZ01 = kernelSZ[0]*kernelSZ[1];
+    int centerX = (kernelSZ[0] - 1) / 2;
+    int centerY = (kernelSZ[1] - 1) / 2;
+    int centerZ = (kernelSZ[2] - 1) / 2;
+    double x,y,z;
+    double sum = 0;
+
+    for(int k=0; k<kernelSZ[2]; ++k){
+        z = pow(k-centerZ,2);
+        for(int j=0; j<kernelSZ[1]; ++j){
+            y = pow(j-centerY,2);
+            for(int i=0; i<kernelSZ[0]; ++i){
+                x = pow(i-centerX,2);
+                double g =0;
+                if(spaceSigmaZ>0) g = exp(-(x+y)/(2*spaceSigmaXY*spaceSigmaXY)-z/(2*spaceSigmaZ*spaceSigmaZ));
+                else g = exp(-(x+y)/(2*spaceSigmaXY*spaceSigmaXY));
+                qDebug()<<g;
+                V3DLONG index = k*kernelSZ01 + j*kernelSZ[0] + i;
+                mask[index] = g;
+                sum += g;
+            }
+        }
+    }
+
+    for(int i=0; i<tolSZ; i++){
+        mask[i] /= sum;
+    }
+}
 
 
+void bilateralfilter(unsigned char* src, unsigned char* &dst, V3DLONG* sz, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
+    qDebug()<<"-----bilateralfilter-------";
+    vector<double> colorMask = vector<double>();
+    float* spaceMask = 0;
+    getColorMask(colorMask,colorSigma);
+    qDebug()<<"get color mask end";
+    getGaussianMask(spaceMask,kernelSZ,spaceSigmaXY,spaceSigmaZ);
+    qDebug()<<"get mask end";
 
+    V3DLONG tolKernelSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
+    float* mask = new float[tolKernelSZ];
+    int centerX = (kernelSZ[0] - 1) / 2;
+    int centerY = (kernelSZ[1] - 1) / 2;
+    int centerZ = (kernelSZ[2] - 1) / 2;
+
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    dst = new unsigned char[tolSZ];
+    V3DLONG tolNewSZ = (sz[0]+centerX*2)*(sz[1]+centerY*2)*(sz[2]+centerZ*2);
+    unsigned char* srcNew = new unsigned char[tolNewSZ];
+    for(int k=0; k<sz[2]+centerZ*2; ++k){
+        for(int j=0; j<sz[1]+centerY*2; ++j){
+            for(int i=0; i<sz[0]+centerX*2; ++i){
+                V3DLONG index = k*(sz[0]+centerX*2)*(sz[1]+centerY*2) + j*(sz[0]+centerX*2) + i;
+                V3DLONG srcX = i - centerX;
+                V3DLONG srcY = j - centerY;
+                V3DLONG srcZ = k - centerZ;
+                if(srcX<0) srcX = 0; if(srcX>=sz[0]) srcX = sz[0]-1;
+                if(srcY<0) srcY = 0; if(srcY>=sz[1]) srcY = sz[1]-1;
+                if(srcZ<0) srcZ = 0; if(srcZ>=sz[2]) srcZ = sz[2]-1;
+                V3DLONG srcIndex = srcZ*sz[0]*sz[1] + srcY*sz[0] +srcX;
+                srcNew[index] = src[srcIndex];
+            }
+        }
+    }
+    qDebug()<<"-------start--------";
+
+    for(int k=centerZ; k<sz[2]+centerZ; ++k){
+        for(int j=centerY; j<sz[1]+centerY; ++j){
+            for(int i=centerX; i<sz[0]+centerX; ++i){
+                double sum = 0;
+                double grayDiff = 0;
+                double spaceColorSum = 0;
+
+                for(int kk=-centerZ; kk<=centerZ; ++kk){
+                    for(int jj=-centerY; jj<=centerY; ++jj){
+                        for(int ii=-centerX; ii<=centerX; ++ii){
+                            V3DLONG index = k*(sz[0]+centerX*2)*(sz[1]+centerY*2) + j*(sz[0]+centerX*2) + i;
+                            int centerPix = srcNew[index];
+                            V3DLONG curIndex = (k+kk)*(sz[0]+centerX*2)*(sz[1]+centerY*2) + (j+jj)*(sz[0]+centerX*2) + (i+ii);
+                            int pix = srcNew[curIndex];
+                            grayDiff = abs(centerPix-pix);
+                            double colorWeight = colorMask[grayDiff];
+                            V3DLONG maskIndex = (kk+centerZ)*kernelSZ[0]*kernelSZ[1] + (jj+centerY)*kernelSZ[0] + (ii+centerX);
+                            mask[maskIndex] = colorWeight*spaceMask[maskIndex];
+                            spaceColorSum += mask[maskIndex];
+                        }
+                    }
+                }
+
+                for(int ii=0; ii<tolKernelSZ; ++ii){
+                    mask[ii] /= spaceColorSum;
+                }
+
+                for(int kk=-centerZ; kk<=centerZ; ++kk){
+                    for(int jj=-centerY; jj<=centerY; ++jj){
+                        for(int ii=-centerX; ii<=centerX; ++ii){
+                            V3DLONG curIndex = (k+kk)*(sz[0]+centerX*2)*(sz[1]+centerY*2) + (j+jj)*(sz[0]+centerX*2) + (i+ii);
+                            V3DLONG maskIndex = (kk+centerZ)*kernelSZ[0]*kernelSZ[1] + (jj+centerY)*kernelSZ[0] + (ii+centerX);
+                            sum += srcNew[curIndex]*mask[maskIndex];
+                        }
+                    }
+                }
+
+                if(sum<0)
+                    sum = 0;
+                if(sum>255)
+                    sum = 255;
+                V3DLONG dstIndex = (k-centerZ)*sz[0]*sz[1] + (j-centerY)*sz[0] + (i-centerX);
+//                qDebug()<<sum;
+                dst[dstIndex] = (unsigned char)sum;
+
+            }
+        }
+    }
+
+    colorMask.clear();
+    if(spaceMask){
+        delete[] spaceMask;
+        spaceMask = 0;
+    }
+    if(mask){
+        delete[] mask;
+        mask = 0;
+    }
+    if(srcNew){
+        delete[] srcNew;
+        srcNew = 0;
+    }
+
+}
+
+void im_roll(unsigned char * src, unsigned char * dst, V3DLONG* sz, int* d_roll)
+{
+//    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+//    dst = new unsigned char[tolSZ];
+
+    int centerX = d_roll[0];
+    int centerY = d_roll[1];
+    int centerZ = d_roll[2];
+
+    for(V3DLONG k=centerZ; k<sz[2]+centerZ; ++k){
+        for(V3DLONG j=centerY; j<sz[1]+centerY; ++j){
+            for(V3DLONG i=centerX; i<sz[0]+centerX; ++i){
+
+                V3DLONG x = i, y=j, z=k;
+
+                x = (x<0)?0:x;
+                y = (y<0)?0:y;
+                z = (z<0)?0:z;
+
+                x = (x>=sz[0])?sz[0]-1:x;
+                y = (y>=sz[1])?sz[1]-1:y;
+                z = (z>=sz[2])?sz[2]-1:z;
+                V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
+                V3DLONG index1 = (k-centerZ)*sz[0]*sz[1] + (j-centerY)*sz[0] + i-centerX;
+                dst[index1] = src[index];
+            }
+        }
+    }
+}
+
+void bilateralfilter2(unsigned char* src, unsigned char* &dst, V3DLONG* sz, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
+    qDebug()<<"-----bilateralfilter-------";
+
+    if (!src || !sz || sz[0]<=0 || sz[1]<=0 || sz[2]<=0 || sz[3]<=0 || kernelSZ[0]<=0 || kernelSZ[1]<=0 || kernelSZ[2]<=0)
+    {
+        v3d_msg("Invalid parameters to bilateral_filter().", 0);
+        return;
+    }
+
+    int centerX = (kernelSZ[0] - 1) / 2;
+    int centerY = (kernelSZ[1] - 1) / 2;
+    int centerZ = (kernelSZ[2] - 1) / 2;
+
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+
+    vector<double> colorMask = vector<double>();
+    getColorMask(colorMask, colorSigma);
+    float* spaceMask = 0;
+    getGaussianMask(spaceMask, kernelSZ, spaceSigmaXY, spaceSigmaZ);
+    dst = new unsigned char[tolSZ];
+    unsigned char* srcNew = new unsigned char[tolSZ];
+
+    double* wgt_sum = new double[tolSZ];
+
+    for (V3DLONG i=0; i<tolSZ; i++)
+    {
+        srcNew[i] = 0;
+        wgt_sum[i] = 0;
+    }
+
+    qDebug()<<"-------start--------";
+
+    for(int kk=-centerZ; kk<=centerZ; ++kk){
+        for(int jj=-centerY; jj<=centerY; ++jj){
+            for(int ii=-centerX; ii<=centerX; ++ii){
+
+                V3DLONG maskIndex = (kk+centerZ)*kernelSZ[0]*kernelSZ[1] + (jj+centerY)*kernelSZ[0] + (ii+centerX);
+
+                int d_roll[3]={ii, jj, kk};
+//                srcNew = 0;
+                im_roll(src, srcNew, sz, d_roll);
+                for(int ip=0; ip<tolSZ; ++ip)
+                {
+                    double tw = colorMask[abs(srcNew[ip]-src[ip])]*spaceMask[maskIndex];
+                    dst[ip] += tw*srcNew[ip];
+                    wgt_sum[ip] += tw;
+                }
+            }
+        }
+    }
+
+    for (V3DLONG i=0; i<tolSZ; i++)
+    {
+        dst[i] = dst[i]/wgt_sum[i];
+    }
+
+    if(srcNew){
+        delete[] srcNew;
+        srcNew = 0;
+    }
+}
+
+
+void changeContrast(unsigned char* data1d, V3DLONG* sz){
+    double imageMean = 0, imageStd = 0;
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    mean_and_std(data1d,tolSZ,imageMean,imageStd);
+    if(imageMean>30){
+        return;
+    }
+    double th1 = imageMean + imageStd*2;
+    double th2 = imageMean + imageStd*10;
+    double tmp;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(data1d[i]<th1){
+            tmp = (data1d[i]/th1)*80;
+            data1d[i] = (unsigned char)tmp;
+        }else if (data1d[i]<th2) {
+            tmp = ((data1d[i]-80)/(200-80))*(200-80) + 80;
+            data1d[i] = (unsigned char)tmp;
+        }else{
+            tmp = ((data1d[i]-200)/(255-200))*(255-200) + 200;
+            if(tmp>255)
+                tmp = 255;
+            data1d[i] = (unsigned char)tmp;
+        }
+    }
+}
+
+void changeContrast2(unsigned char* data1d, V3DLONG* sz, double percentDown, double percentUp){
+    qDebug()<<"in changeContrast2";
+    double th1,th2;
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    V3DLONG* hist = new V3DLONG[256];
+    memset(hist,0,256*sizeof(V3DLONG));
+    qDebug()<<"set 0";
+    for(V3DLONG i=0; i<tolSZ; i++){
+        hist[data1d[i]]++;
+    }
+    qDebug()<<"hist end";
+    V3DLONG count=0;
+    for(int i=0; i<256; i++){
+        count += hist[i];
+        if(count/(double)tolSZ>percentDown/100.0){
+            th1 = i;
+            break;
+        }
+    }
+    count = 0;
+    for(int i=255; i>=0; i--){
+        count += hist[i];
+        if(count/(double)tolSZ>(1-percentUp/100.0)){
+            th2 = i;
+            break;
+        }
+    }
+    qDebug()<<"th1,th2: "<<th1<<" "<<th2;
+
+    double tmp;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(data1d[i]<=th1){
+            tmp = 0;
+            data1d[i] = (unsigned char)tmp;
+        }else if(data1d[i]<th2){
+            tmp = ((data1d[i]-th1)/(th2-th1))*255;
+            data1d[i] = (unsigned char)tmp;
+        }else {
+            tmp = 255;
+            data1d[i] = (unsigned char)tmp;
+        }
+    }
+
+    if(hist){
+        delete[] hist;
+        hist = 0;
+    }
+}
+
+void convertDataTo0_255(unsigned char *data1d, long long *sz){
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    double iMin = INT_MAX;
+    double iMax = 0;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(data1d[i]>iMax){
+            iMax = data1d[i];
+        }
+        if(data1d[i]<iMin){
+            iMin = data1d[i];
+        }
+    }
+
+    for(V3DLONG i =0; i<tolSZ; i++){
+        double tmp = ((data1d[i]-iMin)/(iMax-iMin))*255;
+        if(tmp>255) tmp = 255;
+        data1d[i] = (unsigned char) tmp;
+    }
+}
+
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz){
+
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+    V3DLONG sz01 = sz[0]*sz[1];
+
+    unsigned imageMin = 255;
+    for(V3DLONG i=0; i<tolSZ; i++){
+        if(imageMin>data1d[i]){
+            imageMin = data1d[i];
+        }
+    }
+
+    for(int z=0; z<sz[2]; z++){
+        for(int y=0; y<sz[1]; y++){
+            double zyMean = 0;
+            for(int x=0; x<sz[0]; x++){
+                V3DLONG index = z*sz01 + y*sz[0] + x;
+                zyMean += data1d[index];
+            }
+            if(sz[0]>0){
+                zyMean /= (double)sz[0];
+            }
+            if(zyMean>64){
+                for(int x=0; x<sz[0]; x++){
+                    V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
+                    data1d[index] = imageMin;
+                }
+            }
+        }
+    }
+}
 
 
 

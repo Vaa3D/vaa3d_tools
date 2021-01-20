@@ -29,7 +29,7 @@ class NeuronStructExplorer
 	friend class Tester;
 
 public:
-	/***************** Constructors and Basic Profiling Data/Function Members *****************/
+	/***************** Constructors and Profiling Data/Function Members *****************/
 	NeuronStructExplorer() = default;	
 	NeuronStructExplorer(const NeuronTree& inputTree, const string treeName) { this->treeEntry(inputTree, treeName); }
 
@@ -47,11 +47,15 @@ public:
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
-	// Returns the corresponding string key with the given node or marker.
+	// Returns the corresponding string node tile key with the given node or marker.
 	static inline string getNodeTileKey(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey_noZratio(const NeuronSWC& inputNode, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const float nodeCoords[], float nodeTileLength = NODE_TILE_LENGTH);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline string getNodeTileKey(const CellAPO& inputAPO, float nodeTileLength = NODE_TILE_LENGTH);
+
+	// Returns the corresponding string segment tile key with the given node or marker.
+	static inline string getSegTileKey(const NeuronSWC& inputNode, float segTileLength = SEGtileXY_LENGTH);
 
 	// Node - tile profiling functions
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
@@ -104,7 +108,7 @@ public:
 	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
 	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
-	/*****************************************************************************************/
+	/***********************************************************************************/
 
 
 	/*********************** Tree - Subtree Operations **************************/
@@ -118,6 +122,9 @@ public:
 
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
+
+	static boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree);
+	static void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID);
 	/****************************************************************************/
 
 
@@ -126,6 +133,7 @@ public:
 	static int getBranchNum(const NeuronTree& inputTree, bool onlyBifur = false);
 	static boost::container::flat_map<int, int> getOuterNodeBifurMap(const NeuronTree& inputTree, float outerFraction, bool onlyBifur = false);
 	/****************************************************************************/
+
 
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
 	// Computes the distance from every node to its nearest node in the given node lise.
@@ -202,6 +210,24 @@ inline string NeuronStructExplorer::getNodeTileKey(const ImageMarker& inputMarke
 	string xLabel = to_string(int((inputMarker.x - 1) / nodeTileLength));
 	string yLabel = to_string(int((inputMarker.y - 1) / nodeTileLength));
 	string zLabel = to_string(int((inputMarker.z - 1) / (nodeTileLength / zRATIO)));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getNodeTileKey(const CellAPO& inputAPO, float nodeTileLength)
+{
+	string xLabel = to_string(int(inputAPO.x / nodeTileLength));
+	string yLabel = to_string(int(inputAPO.y / nodeTileLength));
+	string zLabel = to_string(int(inputAPO.z / (nodeTileLength / zRATIO)));
+	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+	return keyLabel;
+}
+
+inline string NeuronStructExplorer::getSegTileKey(const NeuronSWC& inputNode, float segTileLength)
+{
+	string xLabel = to_string(int(inputNode.x / segTileLength));
+	string yLabel = to_string(int(inputNode.y / segTileLength));
+	string zLabel = to_string(int(inputNode.z / segTileLength / zRATIO));
 	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 	return keyLabel;
 }

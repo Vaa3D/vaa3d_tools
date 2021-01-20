@@ -1,16 +1,20 @@
 #include "feature_analysis.h"
 #include <vector>
+#include <stack>
+#include <QMessageBox>
+
 #define FNUM 26
 #ifndef VOID
 #define VOID 1000000000
 #endif
 #define PI 3.14159265359
-#define min(a,b) (a)<(b)?(a):(b)
-#define max(a,b) (a)>(b)?(a):(b)
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a,b) ((a) < (b) ? (a) : (b))
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
 #define MAX_DOUBLE 1.79769e+308
+
 
 using namespace std;
 
@@ -2007,5 +2011,543 @@ QList<int> loop_detection(const NeuronTree & nt){
 //    }
 //    return;
 //}
+
+QList<TreeNode> tree(NeuronTree nt, int n){
+    QList<TreeNode> tree;
+    QList<int> plist;
+    QList<int> nlist;
+    for(int i=0; i<n;i++){
+        NeuronSWC node=nt.listNeuron.at(i);
+        plist.append(node.pn);
+        nlist.append(node.n);
+    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(n, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<n;i++)
+    {
+        int pid = nlist.lastIndexOf(nt.listNeuron.at(i).pn);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+    QList<int> branch;
+    QList<int> tip;
+    for(int i=0; i<n; i++){
+        if(children[i].size()>1){
+            branch.append(i);
+        }
+        if(children[i].size()==0){
+            tip.append(i);
+        }
+    }
+    for(int i=0; i<branch.size(); i++){
+        int child1=children[branch.at(i)].at(0);
+        int child2=children[branch.at(i)].at(1);
+        int tmp=1;
+        TreeNode p;
+        p.val=branch.at(i);
+        while (tmp ==1){
+            int b_tmp=branch.lastIndexOf(child1);
+            int t_tmp=tip.lastIndexOf(child1);
+            if(b_tmp>=0 || t_tmp >=0){
+                p.left=child1;
+                tmp=0;
+            }
+            else{
+                child1=children[child1].at(0);
+            }
+        }
+        tmp=1;
+        while (tmp ==1){
+            int b_tmp=branch.lastIndexOf(child2);
+            int t_tmp=tip.lastIndexOf(child2);
+            if(b_tmp>=0 || t_tmp >=0){
+                p.right=child2;
+                tmp=0;
+            }
+            else{
+                child2=children[child2].at(0);
+            }
+        }
+        tree.append(p);
+    }
+    return tree;
+}
+
+
+void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback)
+{
+    vector<char*> in, inparas, outfiles;
+    if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    bool hasOutput;
+    if(output.size() >= 1) {outfiles = *((vector<char*> *)output.at(0).p);hasOutput=true;} else {hasOutput=false;}
+    QString swc_file = in.at(0);
+    NeuronTree nt = readSWC_file(swc_file);
+    //V3DLONG newrootid = VOID;
+    //double thres = VOID;
+    //NeuronTree nt_sort = my_SortSWC(nt, newrootid, thres);
+    NeuronTree nt_sort=nt;
+    int n=nt_sort.listNeuron.size();
+    //cout<<"swc size "<<n<<endl;
+    QList<TreeNode> simple_tree;
+    simple_tree= tree(nt_sort, n);
+    QList<int> nlist;
+    for(int i=0; i<n;i++){
+        NeuronSWC node=nt_sort.listNeuron.at(i);
+        nlist.append(node.n);
+    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(n, QVector<V3DLONG>() );
+    QHash<int, int> parent;
+    parent.clear();
+    for (V3DLONG i=0;i<n;i++)
+    {
+        int pid = nlist.lastIndexOf(nt_sort.listNeuron.at(i).pn);
+        parent.insert(i,pid);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+    QList<int> tip;
+    QList<int> branch;
+    for (int i=0; i<n; i++){
+        if (children[i].size()==0){
+            tip.append(i);
+        }
+        if (children[i].size()>1){
+            branch.append(i);
+        }
+    }
+    QHash<int, int> child_parent;
+    child_parent.clear();
+    QHash< int, QList<int> > parent_child;
+    parent_child.clear();
+    //Bifurcation ampl
+    double bif_avg_angle;
+    double bif_max_angle=0;
+    //cout<<"simple tree size="<<simple_tree.size()<<endl;
+    for (int i=0; i<simple_tree.size(); i++){
+        int a= simple_tree.at(i).val;
+        int b1=simple_tree.at(i).left;
+        int b2=simple_tree.at(i).right;
+        child_parent.insert(b1, a);
+        child_parent.insert(b2, a);
+        QList<int> tmp;
+        tmp.clear();
+        tmp.push_back(b1);
+        tmp.push_back(b2);
+        parent_child.insert(a,tmp);
+        double ang=angle(nt_sort.listNeuron.at(a),nt_sort.listNeuron.at(b1),nt_sort.listNeuron.at(b2));
+        bif_avg_angle=bif_avg_angle+ang;
+        if(ang>bif_max_angle){
+            bif_max_angle=ang;
+        }
+    }
+    int maxdepth=0;
+    int mindepth=1000;
+    //cout<<"tip size ="<<tip.size()<<endl;
+    for(int i=0; i<tip.size();i++){
+        int tmp=1;
+        int id=tip.at(i);
+        while (child_parent.contains(id)){
+            id=child_parent.value(id);
+            tmp=tmp+1;
+        }
+        if(maxdepth<tmp){
+            maxdepth=tmp+1;
+        }
+        if(mindepth>tmp){
+            mindepth=tmp+1;
+        }
+    }
+    //cout<<maxdepth<<" "<<mindepth<<endl;
+
+    //branch_pathlength
+    double sum_path=0;
+    //cout<<"branch size "<<branch.size()<<endl;
+    //cout<<"p size "<<parent.size()<<endl;
+    for(int i=0; i<branch.size();i++){
+        int tmp_index=branch.at(i);
+        if (nt_sort.listNeuron.at(tmp_index).pn == -1){continue;}
+        int p_index=parent[tmp_index];
+        //cout<<"pindex "<<parent[18]<<endl;
+        double pathL=dist(nt_sort.listNeuron.at(tmp_index),nt_sort.listNeuron.at(p_index));
+        sum_path=sum_path+pathL;
+        //int countloop=1;
+        while (!branch.contains(p_index)){
+            if(nt_sort.listNeuron.at(p_index).pn == -1){break;}
+            sum_path=sum_path+dist(nt_sort.listNeuron.at(p_index),nt_sort.listNeuron.at(parent[p_index]));
+            p_index=parent[p_index];
+            //cout<<"parent "<<p_index<<endl;
+            //countloop++;
+        }
+    }
+    double avg_path=sum_path/branch.size();
+
+    //Terminal degree
+    QHash<int, int> tip_count;
+    tip_count.clear();
+    int terminal_deg=0;
+    //cout<<"tip size ="<<tip.size()<<endl;
+    for (int i=0; i<tip.size();i++){
+        int p_index=parent[tip.at(i)];
+        while(p_index != -1){
+            if(branch.contains(p_index)){
+                terminal_deg=terminal_deg+1;
+                if(!tip_count.contains(p_index)){
+                    tip_count.insert(p_index,1);
+                }
+                else{
+                    tip_count[p_index]=tip_count[p_index]+1;
+                }
+            }
+            p_index=parent[p_index];
+        }
+    }
+    double degree= terminal_deg/branch.size();
+
+    //cout<<"asymmetry"<<endl;
+    //Partition Asymmetry
+    double asymmetry=0;
+    QHash< int,QList<int> >::const_iterator it;
+    for (it = parent_child.constBegin(); it!=parent_child.constEnd(); ++it){
+        int left, right;
+        int left_id=it.value().at(0);
+        int right_id=it.value().at(1);
+        if(tip.contains(left_id)){
+            left=1;
+        }
+        else{
+            left=tip_count[left_id];
+        }
+        if(tip.contains(right_id)){
+            right=1;
+        }
+        else{
+            right=tip_count[right_id];
+        }
+        if(left+right == 2){
+            continue;
+        }
+        else{
+            asymmetry=(abs(left-right)/(left+right-2))+asymmetry;
+        }
+        //cout<<"asy "<<asymmetry<<endl;
+    }
+    double asy=asymmetry/parent_child.size();
+
+    QString neuron_id_split=QString(swc_file).split("/").last();
+    QList<QString> path_split=neuron_id_split.split(".");
+    QString neuron_split1=path_split.first();
+    ofstream myfile;
+    myfile.open ("/home/penglab/Desktop/sujun/analysis/arbor/LM.txt",ios::out | ios::app );
+    myfile <<neuron_split1.toStdString().c_str()<<" "<<mindepth<<" "<<bif_avg_angle<<" "<<bif_max_angle<<" "<<avg_path<<" "<<degree<<
+          " "<<asy<<endl;
+    myfile.close();
+}
+
+
+void arbor_main(V3DPluginCallback2 &callback, QWidget *parent){
+    QString InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all arbor swcs."),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
+    QString CsvName;
+    CsvName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.csv)"
+                ));
+    if(CsvName.isEmpty())
+        return;
+
+    bool flag_sort=TRUE;
+    QString title="Sort Function";
+    QString content="Do you want to sort swc files";
+    QMessageBox::StandardButton result=QMessageBox::information(0,title,content,QMessageBox::Yes|QMessageBox::No);
+    switch (result) {
+    case QMessageBox::Yes:
+        flag_sort=TRUE;
+        break;
+    case QMessageBox::No:
+        flag_sort=FALSE;
+        break;
+    }
+
+
+    QString OutputFolder = QFileDialog::getExistingDirectory(parent,
+                                                              QString(QObject::tr("Choose the output directory."))
+                                                              );
+    if(OutputFolder.size()==0){OutputFolder = InputfolderName;}
+    arbor_qc(InputfolderName, CsvName, flag_sort, OutputFolder);
+}
+
+
+// arbor analysis
+void arbor_qc(QString SwcFolder, QString CsvFile, bool flag_sort, QString OutputFolder){
+    QHash <QString, QString>  swc_celltype;
+    QHash <QString, QString> swc_region;
+    QFile f_type(CsvFile);
+    if(!f_type.open(QIODevice::ReadOnly)){
+        cout<<"cannot open swc!"<<endl;
+    }
+    else{
+        QString first_line=QString(f_type.readLine()).trimmed();
+        QStringList first_sp=first_line.split(",");
+        int reg_index=first_sp.indexOf("CellType_Rough");
+        int r_index=first_sp.indexOf("region");
+        while(!f_type.atEnd()){
+            QString line=QString(f_type.readLine()).trimmed();
+            QStringList line_sp=line.split(",");
+            swc_celltype.insert(line_sp.at(0),line_sp.at(r_index));
+            swc_region.insert(line_sp.at(0),line_sp.at(reg_index));
+        }
+    }
+
+    QString out, outgf;
+
+    outgf = OutputFolder+"/gf.csv";
+    out = OutputFolder+"/result.csv";
+
+    ofstream csvOutFile;
+    //cout<<outgf.toStdString()<<endl;
+    csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+    csvOutFile<<"Name,Region,Celltype_Rough,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
+    csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
+    csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
+    csvOutFile.close();
+    ofstream resultcsv;
+    resultcsv.open(out.toStdString().c_str(),ios::out | ios::app);
+    resultcsv<<"Name,Region,Celltype_Rough,Tips,Width,Height,Depth,Length,MaxBranchOrder,QC_result"<<endl;
+    resultcsv.close();
+
+    QDir dir(SwcFolder);
+    QStringList nameFilters;
+    nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
+    QStringList files = dir.entryList(nameFilters, QDir::Files|QDir::Readable, QDir::Name);
+
+    for(int i=0;i<files.size();i++){
+        QString swc_file = files.at(i);
+        QString swc_path=SwcFolder+"/"+swc_file;
+        if(!swc_region.contains(swc_file)){
+            v3d_msg(QString("File \"%1\" are not in the csv table. Please double check.").arg(swc_file));
+            continue;
+        }
+        arbor_analysis(swc_path,outgf, swc_celltype,out, swc_region, flag_sort);
+    }
+    swc_celltype.clear();
+    swc_region.clear();
+    ifstream readcsvOut, readresult;
+    int n_csvOut=0, n_result=0;
+    string tmp1, tmp2;
+    readcsvOut.open(outgf.toStdString().c_str(),ios::in);
+    while(getline(readcsvOut,tmp1)){
+        n_csvOut++;
+        if(n_csvOut>1){
+            break;
+        }
+    }
+    if(n_csvOut<2){
+        QFile fileTemp1(outgf.toStdString().c_str());
+        fileTemp1.remove();
+    }
+    readresult.open(out.toStdString().c_str(),ios::in);
+    while(getline(readresult,tmp2)){
+        n_result++;
+        if(n_result>1){
+            break;
+        }
+    }
+    if(n_csvOut<2){
+        QFile fileTemp2(out.toStdString().c_str());
+        fileTemp2.remove();
+    }
+}
+
+void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_celltype,
+                    QString out, QHash <QString, QString> swc_region, bool flag_sort){
+    //output
+    QFileInfo f(swc);
+    QString id=f.fileName();
+    QFileInfo outf(out);
+    QString outpath=outf.path();
+    QString fileSaveName;
+
+    ofstream csvOutFile, result;
+    cout<<outgf.toStdString()<<endl;
+    csvOutFile.open(outgf.toStdString().c_str(),ios::out | ios::app);
+    result.open(out.toStdString().c_str(),ios::out | ios::app);
+    if(!csvOutFile.is_open()){
+         cerr<<"out Error: cannot open file to save"<<endl;
+         return;
+    }
+    if(!result.is_open()){
+        cerr<<"out Error: cannot open file to save final results"<<endl;
+        return;
+    }
+
+    //sort
+    NeuronTree nt_sort;
+    if(flag_sort){
+        QDir sort_folder;
+        QString spath=outpath+"/sort";
+        sort_folder.mkdir(spath);
+        fileSaveName = spath+"/"+id+"_sorted.swc";
+        NeuronTree nt_unsorted = readSWC_file(swc);
+        QList<NeuronSWC> neuron_unsorted,sort_result;
+        neuron_unsorted=nt_unsorted.listNeuron;
+        if(neuron_unsorted.size()==0){
+            v3d_msg("Empty SWC file.");
+            return;
+        }
+        if (!SortSWC(neuron_unsorted, sort_result , VOID, VOID))
+        {
+            cout<<"Error in sorting swc"<<endl;
+        }
+        if (!export_list2file(sort_result, fileSaveName, swc))
+        {
+            cout<<"Error in writing swc to file"<<endl;
+        }
+        nt_sort = readSWC_file(fileSaveName);
+    }
+    else{
+        nt_sort = readSWC_file(swc);
+    }
+
+    //compute features
+    double * swc_features = new double[FNUM];
+    computeFeature(nt_sort,swc_features);
+
+    QString celltype;
+    QString region;
+    QHash<QString, QString>::iterator it;
+    for(it=swc_celltype.begin();it!=swc_celltype.end();++it){
+        if(it.key()==id){
+            celltype=it.value();
+            csvOutFile<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            result<<it.key().toStdString().c_str()<<","<<it.value().toStdString().c_str();
+            break;
+        }
+    }
+    for(it=swc_region.begin();it!=swc_region.end();++it){
+        if(it.key()==id){
+            region=it.value();
+            csvOutFile<<","<<it.value().toStdString().c_str();
+            result<<","<<it.value().toStdString().c_str();
+            break;
+        }
+    }
+
+    QList<int> feas_id;
+    QList<float> feas;
+    feas_id<<5<<6<<7<<8<<10<<15;
+    for (int i=0;i<feas_id.size();i++)
+    {
+        feas.append(swc_features[feas_id.at(i)]);
+        result<<","<<swc_features[feas_id.at(i)];
+    }
+    for(int i=0; i<FNUM; i++){
+        csvOutFile<<","<<swc_features[i];
+    }
+    csvOutFile<<endl;
+    csvOutFile.close();
+    //cout<<"################## "<<id.toStdString()<<" "<<region.toStdString()<<" "<<celltype.toStdString()<<endl;
+    //qc
+    if(region=="TH"){
+        if(celltype=="VPM"){
+            if((feas[0]>=29)&&(feas[0]<=93)&&(feas[1]>=5.48)&&(feas[1]<=13.759)&&(feas[2]>=7.189)&&(feas[2]<=19.258)&&(feas[3]>=5.153)&&(feas[3]<=15.497)
+                    &&(feas[4]>=93.281)&&(feas[4]<=402.169)&&(feas[5]>=5)&&(feas[5]<=14)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="VPL"){
+            if((feas[0]>=31)&&(feas[0]<=108)&&(feas[1]>=5.916)&&(feas[1]<=14.946)&&(feas[2]>=7.662)&&(feas[2]<=17.703)&&(feas[3]>=4.611)&&(feas[3]<=15.628)
+                    &&(feas[4]>=95.924)&&(feas[4]<=369.248)&&(feas[5]>=6)&&(feas[5]<=15)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="LGd"){
+            if((feas[0]>=47)&&(feas[0]<=82)&&(feas[1]>=6.816)&&(feas[1]<=13.477)&&(feas[2]>=3.949)&&(feas[2]<=18.641)&&(feas[3]>=5.125)&&(feas[3]<=16.95)
+                    &&(feas[4]>=126.229)&&(feas[4]<=358.143)&&(feas[5]>=7)&&(feas[5]<=11)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else if(celltype=="MG"){
+            if((feas[0]>=34)&&(feas[0]<=79)&&(feas[1]>=6.149)&&(feas[1]<=14.498)&&(feas[2]>=7.059)&&(feas[2]<=22.429)&&(feas[3]>=6.26)&&(feas[3]<=14.093)
+                    &&(feas[4]>=120.773)&&(feas[4]<=318.078)&&(feas[5]>=6)&&(feas[5]<=16)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+        else{
+            if((feas[0]>=29)&&(feas[0]<=111)&&(feas[1]>=6.132)&&(feas[1]<=19.839)&&(feas[2]>=7.010)&&(feas[2]<=21.136)&&(feas[3]>=6.29)&&(feas[3]<=21.51)
+                    &&(feas[4]>=118.877)&&(feas[4]<=499.613)&&(feas[5]>=5)&&(feas[5]<=20)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+    }
+    else if((region=="CNU")){
+        if(celltype=="CP"){
+            if(feas[4]<350){
+                if((feas[0]>=26)&&(feas[0]<=109)&&(feas[1]>=5.942)&&(feas[1]<=21.221)&&(feas[2]>=3.806)&&(feas[2]<=22.034)&&(feas[3]>=5.486)&&(feas[3]<=18.734)
+                        &&(feas[4]>=81.289)&&(feas[4]<=344.946)&&(feas[5]>=4)&&(feas[5]<=18)){
+                    result<<","<<1<<endl;
+                }
+                else{
+                    result<<","<<0<<endl;
+                }
+            }
+            else {
+                if((feas[0]>=40)&&(feas[0]<=208)&&(feas[1]>=13.271)&&(feas[1]<=66.578)&&(feas[2]>=12.03)&&(feas[2]<=72.919)&&(feas[3]>=11.288)&&(feas[3]<=54.891)
+                        &&(feas[4]>=263.618)&&(feas[4]<=1312.98)&&(feas[5]>=8)&&(feas[5]<=29)){
+                    result<<","<<1<<endl;
+                }
+                else{
+                    result<<","<<0<<endl;
+                }
+            }
+        }
+        else{
+            if((feas[0]>=1)&&(feas[0]<=67)&&(feas[1]>=2.665)&&(feas[1]<=20.478)&&(feas[2]>=2.687)&&(feas[2]<=32.034)&&(feas[3]>=0.956)&&(feas[3]<=20.952)
+                    &&(feas[4]>=6.028)&&(feas[4]<=263.696)&&(feas[5]>=1)&&(feas[5]<=12)){
+                result<<","<<1<<endl;
+            }
+            else{
+                result<<","<<0<<endl;
+            }
+        }
+
+    }
+    else if(region=="CTX"){
+        if((feas[0]>=22)&&(feas[0]<=121)&&(feas[1]>=6.77)&&(feas[1]<=31.354)&&(feas[2]>=6.683)&&(feas[2]<=46.143)&&(feas[3]>=6.36)&&(feas[3]<=35.99)
+                &&(feas[4]>=71.317)&&(feas[4]<=585.043)&&(feas[5]>=5)&&(feas[5]<=30)){
+            result<<","<<1<<endl;
+        }
+        else{
+            result<<","<<0<<endl;
+        }
+    }
+    else{
+        if((feas[0]>=21)&&(feas[0]<=125)&&(feas[1]>=6.132)&&(feas[1]<=38.328)&&(feas[2]>=6.353)&&(feas[2]<=46.256)&&(feas[3]>=5.592)&&(feas[3]<=39.227)
+                &&(feas[4]>=68.541)&&(feas[4]<=662.401)&&(feas[5]>=5)&&(feas[5]<=29)){
+            result<<","<<1<<endl;
+        }
+        else{
+            result<<","<<0<<endl;
+        }
+    }
+    result.close();
+}
 
 

@@ -66,6 +66,9 @@ public:
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
 
 	template<typename T>
+	static inline QList<CellAPO> apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale);
+
+	template<typename T>
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
 	
 	template<typename T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
@@ -80,13 +83,26 @@ public:
 	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
+	static void splitNodeList(const QList<NeuronSWC>& inputNodes, const int splittingNodeID, QList<NeuronSWC>& downStreamNodes, QList<NeuronSWC>& upStreamNodes);
+
 	// Subtract refTree from targetTree.
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); 
 	// ------------ END of [Basic Operations] ------------- //
 	
 	// ------------- Higher level processing -------------- //
-	static bool isSorted(const NeuronTree& inputNeuronTree);       // ~~ Not implemented yet ~~
-	static NeuronTree sortTree(const NeuronTree& inputNeuronTree); // ~~ Not implemented yet ~~
+	static bool isSorted(const NeuronTree& inputNeuronTree);								// ~~ Not implemented yet ~~
+	static NeuronTree sortTree(const NeuronTree& inputNeuronTree, const float somaCoord[]); // ~~ Not implemented yet ~~
+
+	static void somaCleanUp(NeuronTree& inputTree);	   // ~~ Incomplete ~~
+	
+	static bool multipleSegsCheck(const NeuronTree& inputTree);
+	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
+
+	static void removeRedunNodes(profiledTree& inputProfiledTree);
+	static bool removeDupHeads(NeuronTree& inputTree); 
+	
+	static void removeDupBranchingNodes(profiledTree& inputProfiledTree); // Faster, but occasionally doesn't do the job right. 
+																		  // Probably resulted from segment combing function not thorough enough - [integratedDataTypes::profiledTree::combSegs()] 
 
 	static NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
@@ -206,6 +222,22 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, T xSca
 	}
 
 	return outputTree;
+}
+
+template<typename T>
+inline QList<CellAPO> NeuronStructUtil::apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale)
+{
+	QList<CellAPO> outputApo;
+	for (QList<CellAPO>::const_iterator it = inputApo.begin(); it != inputApo.end(); ++it)
+	{
+		CellAPO newApo = *it;
+		newApo.x = it->x * xScale;
+		newApo.y = it->y * yScale;
+		newApo.z = it->z * zScale;
+		outputApo.push_back(newApo);
+	}
+
+	return outputApo;
 }
 
 template<typename T>

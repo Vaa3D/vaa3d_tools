@@ -284,6 +284,9 @@ set<int> FragmentEditor::getNodeTypesInSeg(const V_NeuronSWC& inputVneuronSWC)
 
 void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<int, vector<NeuronSWC>>& seg2includedNodeMap)
 {
+	this->CViewerPortal->printOutCViewerAddress();
+	cout << " -- FragmentEditor: " << displayingSegs.seg.size() << " segments." << endl;
+
 	map<int, set<int>> outputEditingSegInfo;
 	for (map<int, vector<NeuronSWC>>::const_iterator segIt = seg2includedNodeMap.begin(); segIt != seg2includedNodeMap.end(); ++segIt)
 	{
@@ -307,7 +310,6 @@ void FragmentEditor::erasingProcess(V_NeuronSWC_list& displayingSegs, const map<
 		for (auto& node : seg.second) cout << node << " ";
 		cout << endl;
 	}
-
 
  	this->erasingProcess_cuttingSeg(displayingSegs, outputEditingSegInfo);
 }
@@ -358,7 +360,7 @@ void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, co
 {
 	set<int> segs2BtypeChanged;
 	profiledTree currDisplayProfiledTree(displayingSegs.seg);
-	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen();
 
 	set<int> startingSegs = { seedSegID };
 	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
@@ -377,7 +379,7 @@ void FragmentEditor::sequencialTypeChanging(V_NeuronSWC_list& displayingSegs, co
 {
 	set<int> segs2BtypeChanged;
 	profiledTree currDisplayProfiledTree(displayingSegs.seg);
-	currDisplayProfiledTree.nodeCoordKeySegMapGen(currDisplayProfiledTree.segs, currDisplayProfiledTree.nodeCoordKey2segMap);
+	currDisplayProfiledTree.nodeCoordKeySegMapGen();
 	
 	this->rc_findConnectedSegs(currDisplayProfiledTree, startingSegs, segs2BtypeChanged);
 

@@ -28,6 +28,8 @@ struct paraApp2
 
     bool b_menu;
 
+    double f_length;
+
     NeuronTree result;
 
     paraApp2() {
@@ -50,6 +52,8 @@ struct paraApp2
         b_intensity = 0;
         b_brightfiled = 0;
         b_menu = true;
+
+        f_length = 30;
     }
 
     bool initialize(V3DPluginCallback2 &callback)
@@ -132,6 +136,8 @@ struct paraApp2
 };
 
 bool proc_app2(paraApp2 &p);
+
+bool proc_app2_getLine(paraApp2 &p);
 
 
 #endif // APP2_H

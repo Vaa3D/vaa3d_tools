@@ -3,6 +3,20 @@
 
 #include "v3d_interface.h"
 
+#define zx_dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
+struct partialFeature
+{
+    double Length = 0, Max_Path = 0;
+    int Max_Order = 0, N_bifs = 0, N_branch = 0, N_tips = 0;
+    partialFeature() {
+        Length = Max_Path = 0;
+        Max_Order = N_bifs = N_branch = N_tips = 0;
+    }
+};
+
+partialFeature computePartialFeature(NeuronTree &nt);
+
 bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result);
 bool sortSWC(NeuronTree& nt);
 
@@ -16,15 +30,15 @@ NeuronTree getApp2WithParameter(V3DPluginCallback2& callback, int downSampleTime
 
 vector<NeuronTree> getApp2NeuronTrees(int app2Th, V3DPluginCallback2& callback, QWidget* parent);
 
-NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple *inImg, LocationSimple m, V3DPluginCallback2& callback);
+NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple *inImg, LandmarkList m, V3DPluginCallback2& callback);
 
 int* getThresholdByKmeans(unsigned char* pdata, V3DLONG* sz, int k);
 int *getThresholdByKmeans(Image4DSimple* image, int k);
 
-NeuronTree getApp2RotateImage(Image4DSimple *image, LocationSimple m, int rotateAxis, int angle, int th);
+NeuronTree getApp2RotateImage(Image4DSimple *image, LandmarkList m, int rotateAxis, int angle, int th, bool b_256cube);
 
 void normalImage(unsigned char* pdata, V3DLONG* sz);
 
-bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCallback2& callback);
+bool consensus(QString imagePath, LandmarkList m, bool kmeansTh, V3DPluginCallback2& callback);
 
 #endif // CONCENSUSFUNCTION_H

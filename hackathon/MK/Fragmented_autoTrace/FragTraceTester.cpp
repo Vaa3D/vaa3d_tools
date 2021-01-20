@@ -225,3 +225,13 @@ void FragTraceTester::clusterColorGen_RGB(const map<int, set<vector<float>>>& cl
 	}
 	this->clusterSegEndNodeMaps.push_back(clusterSegEndNodeMap);
 }
+
+void FragTraceTester::printOutHiddenType16Info()
+{
+	int count = 0;
+	for (auto& hidden16 : *(*(this->sharedControlPanelPtr))->CViewerPortal->getDisplayingSegs())
+		if (hidden16.row.begin()->data[1] == 16 && hidden16.to_be_deleted) ++count;
+	cout << "CViewer (" << (*(this->sharedControlPanelPtr))->CViewerPortal->getViewerID() << "):            hidden type16 segs = " << count << endl;
+	cout << "FragTraceManager:      hidden type16 segs = " << (*(this->sharedTraceManagerPtr))->totalV_NeuronSWCs.size() << endl;
+	cout << "FragTraceControlPanel: hidden type16 segs = " << (*(this->sharedControlPanelPtr))->tracedType16Vsegs.size() << endl;
+}

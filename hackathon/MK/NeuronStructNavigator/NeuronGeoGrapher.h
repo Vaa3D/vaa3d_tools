@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@
 *    d. SWC-based connected component geometrical analysis
 *
 *  NeuronGeoGrapher produces basis information that is essential in other class, eg, TreeGrower, for further development in higher level of neuron data structure processing.
-*  Most methods in this class are static functions since most of them serve as utilities to the need of other classes.
+*  Most methods in this class are static functions since most of them serve as utilities for other classes.
 *
 ********************************************************************************/
 

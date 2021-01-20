@@ -27,7 +27,7 @@ QStringList getSomaFeaturePlugin::funclist() const
 {
 	return QStringList()
         <<tr("getSomaFeature")
-		<<tr("func2")
+        <<tr("getSomaFeature2")
 		<<tr("help");
 }
 
@@ -82,9 +82,35 @@ bool getSomaFeaturePlugin::dofunc(const QString & func_name, const V3DPluginArgL
         }
 
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("getSomaFeature2"))
 	{
-		v3d_msg("To be implemented.");
+        QString brainDir = infiles[0];
+
+        QFileInfoList brainPaths = QDir(brainDir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+        for(int i=0; i<brainPaths.size(); i++){
+            QString brainId = brainPaths[i].baseName();
+            qDebug()<<brainId;
+            ofstream csvFile;
+            csvFile.open((brainDir+"\\"+ brainId + "_somaFeature.csv").toStdString().c_str(),ios::out);
+            csvFile<<"brainId"<<','<<"name"<<','<<"anum"<<','<<"bnum"<<','<<"cnum"<<','<<"admean"<<','<<"bdmean"<<','<<"cdmean"
+                  <<','<<"bIntensityMean"<<','<<"bIntensityStd"<<','<<"th"<<','<<"somaIntensityMean"
+                 <<','<<"bIntensityPartialStd"<<','<<"thPercent"<<','<<"intensityPercent1"<<','<<"intensityPercent5"
+                <<','<<"multiType"<<','<<"isLowContrast"<<','<<"isLayered"<<endl;
+
+
+            QString brianPath = brainDir + "\\" + brainId;
+            qDebug()<<brianPath;
+            vector<somaFeature> somaFeatures = getBrainSomasFeature2(brianPath,callback);
+            for(int j=0; j<somaFeatures.size(); j++){
+                somaFeature& sf = somaFeatures[j];
+                csvFile<<brainId.toStdString().c_str()<<','<<sf.name.toStdString().c_str()<<','<<sf.anum<<','<<sf.bnum<<','<<sf.cnum<<','
+                      <<sf.admean<<','<<sf.bdmean<<','<<sf.cdmean<<','<<sf.bIntensityMean<<','
+                     <<sf.bIntensityStd<<','<<sf.th<<','<<sf.somaIntensityMean<<','
+                    <<sf.bIntensityPartialStd<<','<<sf.thPercent<<','<<sf.intensityPercent1<<','<<sf.intensityPercent5<<','
+                   <<sf.multiType<<','<<sf.isLowContrast<<','<<sf.isLayered<<endl;
+            }
+            csvFile.close();
+        }
 	}
 	else if (func_name == tr("help"))
 	{

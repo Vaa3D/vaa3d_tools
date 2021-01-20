@@ -25,6 +25,7 @@ QStringList TestPlugin::funclist() const
         <<tr("get_2d_image")
         <<tr("getSWCL0Image")
         <<tr("convertData")
+        <<tr("HE")
 		<<tr("help");
 }
 
@@ -89,6 +90,72 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         downSampleData(path,t,callback);
         QString outPath = outDir + "\\result.v3draw";
         joinImage(path,outPath,times,callback);
+    }
+    else if (func_name == "HE") {
+        QString imgPath = infiles[0];
+        QString imgNewPath = imgPath + "_HE.v3draw";
+        qDebug()<<imgNewPath;
+
+        unsigned char* data1d = 0;
+        V3DLONG sz[4] = {0,0,0,0};
+        int datatype = 0;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
+        HE(data1d,sz);
+        simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),data1d,sz,datatype);
+        if(data1d){
+            delete[] data1d;
+            data1d = 0;
+        }
+    }
+    else if (func_name == "bilateralfilter") {
+        QString imgPath = infiles[0];
+        QString imgNewPath = imgPath + "_bilateralfilter.v3draw";
+        qDebug()<<imgNewPath;
+
+        bool isNormal = inparas.size()>=1 ? atoi(inparas[0]) : 1;
+        double spaceSigmaXY = inparas.size()>=2 ? atof(inparas[1]) : 2;
+        double spaceSigmaZ = inparas.size()>=3 ? atof(inparas[2]) : 1;
+        double colorSigma = inparas.size()>=4 ? atof(inparas[3]) : 35;
+
+        unsigned char* data1d = 0;
+        V3DLONG sz[4] = {0,0,0,0};
+        int datatype = 0;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
+
+        removeAbnormalLine(data1d,sz);
+        if(isNormal){
+            convertDataTo0_255(data1d,sz);
+        }
+
+        unsigned char* dst = 0;
+        V3DLONG kernelSZ[3] = {spaceSigmaXY*4+1,spaceSigmaXY*4+1,spaceSigmaZ*4+1};
+        bilateralfilter(data1d,dst,sz,kernelSZ,spaceSigmaXY,spaceSigmaZ,colorSigma);
+        simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),dst,sz,datatype);
+        if(data1d){
+            delete[] data1d;
+            data1d = 0;
+        }
+        if(dst){
+            delete[] dst;
+            dst = 0;
+        }
+    }else if (func_name == tr("changeContrast")) {
+        QString imgPath = infiles[0];
+        QString imgNewPath = imgPath + "_enhance.v3draw";
+        double percentDown = inparas.size()>=1 ? atof(inparas[0]) : 0.1;
+        double percentUp = inparas.size()>=2 ? atof(inparas[1]) : 99.9;
+        qDebug()<<imgNewPath;
+
+        unsigned char* data1d = 0;
+        V3DLONG sz[4] = {0,0,0,0};
+        int datatype = 0;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,datatype);
+        changeContrast2(data1d,sz,percentDown,percentUp);
+        simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),data1d,sz,datatype);
+        if(data1d){
+            delete[] data1d;
+            data1d = 0;
+        }
     }
 	else if (func_name == tr("help"))
 	{

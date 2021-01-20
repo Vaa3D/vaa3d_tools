@@ -1,6 +1,8 @@
 #include "judgebranchdialog.h"
 
 
+
+
 JudgeBranchDialog::JudgeBranchDialog(QWidget* parent, V3DPluginCallback2& callback)
 {
     this->callback = &callback;
@@ -68,11 +70,12 @@ void JudgeBranchDialog::_slots_judgeBranch(){
         QMessageBox::information(0, "", "Random Forest is null!");
         return;
     }
-    judgeBranch(rf,callback);
+//    judgeBranch(rf,callback);
+    getPixelClassificationResult(rf,callback);
     QMessageBox::information(0, "", "judeg is ended!");
 }
 
 void JudgeBranchDialog::_slots_train(){
-    rf = train(rf,callback);
+    rf = trainPixelClassification(rf,callback);
     QMessageBox::information(0, "", "Train is ended!");
 }

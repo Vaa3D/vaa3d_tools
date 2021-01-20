@@ -23,18 +23,14 @@ void MessageServer::userLoad(ForAUTOSave foraotosave)
 
     QMap<quint32 ,QString> map=this->autoSave();//message index->autosave filename
     this->global_parameters->Map_Ip_NumMessage[managesocket->peerAddress().toString()]=map.keys().at(0);
-    qDebug()<<"success to 1";
+    qDebug()<<"success to 1"<<map.values().at(0);
 
-
-    try {
         fileserver_send->sendFile(ip,map.values().at(0));
-        qDebug()<<"success to 2";
+
         managesocket->write(QString(messageport+":messageport"+".\n").toUtf8());
         (*Map_File_MessageServer)[anofile_name]=this;
-        qDebug()<<"success to send";
-    } catch (...) {
-        qDebug()<<"failed to send";
-    }
+
+
 }
 
 MessageServer::MessageServer(QString filename,Global_Parameters *parameters,QObject *parent)
@@ -48,7 +44,7 @@ MessageServer::MessageServer(QString filename,Global_Parameters *parameters,QObj
         seg_temp.reverse();
         SS = V_NeuronSWC__2__NeuronTree(seg_temp);
         SS.name = "loaded_" + QString("%1").arg(i);
-        if (SS.listNeuron.size()>2)
+        if (SS.listNeuron.size()>=2)
             sketchedNTList.push_back(SS);
     }
     sketchNum=sketchedNTList.size();
@@ -93,7 +89,7 @@ void MessageServer::incomingConnection(int socketDesc)
 void MessageServer::MessageServerSlotAnswerMessageSocket_retype( QString MSG)
 {
     global_parameters->messageUsedIndex++;
-//    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
+    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
     orderList.push_back(QDateTime::currentDateTimeUtc().toString("yyyy/MM/dd hh:mm:ss ")+MSG);
     QRegExp Reg("/retype:(.*)__(.*)");
     QString delseg;
@@ -122,7 +118,7 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_retype( QString MSG)
          for (int j=0;j<sketchedNTList.size();j++)
          {
              NeuronTree NT=sketchedNTList.at(j);
-             if(NT.listNeuron.size()<=2) continue;
+             if(NT.listNeuron.size()<2) continue;
              NeuronSWC ss=NT.listNeuron.at(NT.listNeuron.size()-2);
              NeuronSWC ss0=NT.listNeuron.at(1);
 
@@ -280,7 +276,7 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_disconnected()
 void MessageServer::MessageServerSlotAnswerMessageSocket_addseg(QString MSG)
 {
     global_parameters->messageUsedIndex++;
-//    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
+    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
     orderList.push_back(QDateTime::currentDateTimeUtc().toString("yyyy/MM/dd hh:mm:ss ")+MSG);
     QRegExp Reg("/seg:(.*)__(.*)");
     QString seg;
@@ -289,7 +285,6 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_addseg(QString MSG)
     if(Reg.indexIn(MSG)!=-1)
     {
         username=Reg.cap(1);
-        qDebug()<< username;
         seg=Reg.cap(2).trimmed();
     }
 
@@ -389,55 +384,43 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_delseg(QString MSG)
 
     /*MSG=QString("/del_curve:"+user + "__" + msg)*/
     global_parameters->messageUsedIndex++;
-//    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex<<MSG;
+    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
     orderList.push_back(QDateTime::currentDateTimeUtc().toString("yyyy/MM/dd hh:mm:ss ")+MSG);
     QRegExp Reg("/del_curve:(.*)__(.*)"); //msg=node 1_node 2_....
     QString delseg;
     QString username;
-//    qDebug()<<"messageindex=7";
     if(Reg.indexIn(MSG)!=-1)
     {
         username=Reg.cap(1).trimmed();
-//        qDebug()<<"messageindex=8";
         delseg=Reg.cap(2).trimmed();
     }
 
 
-//    qDebug()<<"messageindex=1";
     QStringList delMSGs = delseg.split("_",QString::SkipEmptyParts);
 
     if(delMSGs.size()<2) return;
-
-    for(int i=0;i<delMSGs.size();i++)
-        qDebug()<<delMSGs.at(i);
-
     for(int i=1;i<delMSGs.size();i++)
     {
         QString tempNode=delMSGs.at(i);
         QStringList tempNodeList=tempNode.split(" ",QString::SkipEmptyParts);
 
-//        qDebug()<<"messageindex=2";
-        if(tempNodeList.size()<3) return ;
+        if(tempNodeList.size()<2) return ;
         float x=tempNodeList.at(0).toFloat();
         float y=tempNodeList.at(1).toFloat();
         float z=tempNodeList.at(2).toFloat();
 
-//        qDebug()<<"messageindex=3";
         for (int j=0;j<sketchedNTList.size();j++)
         {
 
             NeuronTree NT=sketchedNTList.at(j);
-            if(NT.listNeuron.size()<=2)
+            if(NT.listNeuron.size()<2)
             {
                 std::cerr<<j << "SIZE <=2"<<std::endl;
                 continue;
             }
 
-//            qDebug()<<"messageindex=3   "<<sketchedNTList.size()<<" "<<NT.listNeuron.size();
             NeuronSWC ss=NT.listNeuron.at(NT.listNeuron.size()-2);
             NeuronSWC ss0=NT.listNeuron.at(1);
-//            qDebug()<<"messageindex=3   "<<sketchedNTList.size();
-//            qDebug()<<"messageindex=9   "<<j;
             if(sqrt(pow(ss.x-x,2)+pow(ss.y-y,2)+pow(ss.z-z,2))<=0.01||sqrt(pow(ss0.x-x,2)+pow(ss0.y-y,2)+pow(ss0.z-z,2))<=0.01)
             {
                 RemoveInfo info;
@@ -463,11 +446,11 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_delseg(QString MSG)
     qDebug()<<"MessageServerSlotAnswerMessageSocket_delseg end=============";
 }
 
-void MessageServer::MessageServerSlotAnswerMessageSocket_addmarker(QString MSG,int flag)
+void MessageServer::MessageServerSlotAnswerMessageSocket_addmarker(QString MSG)
 {
-    if(!flag/100)
+
         global_parameters->messageUsedIndex++;
-//    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
+    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
     /*MSG=QString("/marker:" +user+"__"+markermsg)*/
     orderList.push_back(QDateTime::currentDateTimeUtc().toString("yyyy/MM/dd hh:mm:ss ")+MSG);
     QRegExp Reg("/marker:(.*)__(.*)");
@@ -487,8 +470,6 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_addmarker(QString MSG,i
     float mz = markerMSGs.at(2).toFloat();
     if(markerMSGs.size()==7)
         type=markerMSGs.at(6).toInt();
-    if(flag/100==1)
-        type=flag%100;
 
     CellAPO marker0;
     marker0.x=mx;marker0.y=my;marker0.z=mz;
@@ -565,9 +546,8 @@ void MessageServer::MessageServerSlotAnswerMessageSocket_addmarker(QString MSG,i
 //    global_parameters->messageUsedIndex++;
 }
 
-void MessageServer::MessageServerSlotAnswerMessageSocket_delmarker(QString MSG,bool flag)
+void MessageServer::MessageServerSlotAnswerMessageSocket_delmarker(QString MSG)
 {
-    if(!flag)
     global_parameters->messageUsedIndex++;
 //    qDebug()<<"messageindex="<<global_parameters->messageUsedIndex;
     orderList.push_back(QDateTime::currentDateTimeUtc().toString("yyyy/MM/dd hh:mm:ss ")+MSG);
@@ -653,7 +633,8 @@ QMap<quint32 ,QString> MessageServer::autoSave()
             writeAPO_file(QString("./autosave/%1.ano.apo").arg(tempname),global_parameters->wholePoint);
 
             map[cnt]=tempname+".ano";
-            qDebug()<<"map[cnt]"<<map[cnt];
+            qDebug()<<tempname+".ano";
+            qDebug()<<"111111map[cnt]"<<map[cnt]<<" "<<map.values().at(0);
             {
                 QString tempname ="./clouddata/"+filebaseName+".ano";
                 QFile anofile(tempname);

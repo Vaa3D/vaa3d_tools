@@ -108,7 +108,7 @@ QList <CellAPO> readAPO_file(const QString& filename)
         	mylist.append(S);
 		}
     }
-    qDebug("---------------------read %d lines, %d remained lines", count, mylist.size());
+//    qDebug("---------------------read %d lines, %d remained lines", count, mylist.size());
 
 	return mylist;
 }
@@ -359,7 +359,7 @@ NeuronTree readSWC_file(const QString& filename)
         	hashNeuron.insert(S.n, listNeuron.size()-1);
         }
     }
-    qDebug("---------------------read %d lines, %d remained lines", count, listNeuron.size());
+//    qDebug("---------------------read %d lines, %d remained lines", count, listNeuron.size());
 
     if (listNeuron.size()<1)
     	return nt;

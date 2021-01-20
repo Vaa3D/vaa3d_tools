@@ -79,7 +79,7 @@ NeuronTree V_NeuronSWC__2__NeuronTree(V_NeuronSWC & seg) // convert V_NeuronSWC 
 				hashNeuron.insert(S.n, listNeuron.size()-1);
 			}
 		}
-		printf("---------------------read %d lines, %d remained lines", count, listNeuron.size());
+//		printf("---------------------read %d lines, %d remained lines", count, listNeuron.size());
 		
 		SS.n = -1;
 		SS.color = XYZW(seg.color_uc[0],seg.color_uc[1],seg.color_uc[2],seg.color_uc[3]);

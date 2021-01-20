@@ -1,11 +1,88 @@
 #include "concensusfunction.h"
 
-#include "app2.h"
+#include "multiApp2.h"
 #include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"
 #include "marker_radius.h"
 #include "basic_memory.cpp"
 #include "swc_convert.h"
+
+partialFeature computePartialFeature(NeuronTree & nt){
+    partialFeature pf = partialFeature();
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    nt.hashNeuron.clear();
+    for(int i=0; i<neuronNum; i++){
+        nt.hashNeuron.insert(nt.listNeuron[i].n,i);
+    }
+
+    double* pathTotal = new double[neuronNum];
+    int* depth = new int[neuronNum];
+    QVector< QVector<V3DLONG> > childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    QStack<int> stack = QStack<int>();
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        pathTotal[i] = 0;
+        depth[i] = 0;
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par == -1){
+            stack.push(i);
+            continue;
+        }
+        XYZ p1 = XYZ(nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
+        int prtIdx = nt.hashNeuron.value(par);
+        XYZ p2 = XYZ(nt.listNeuron[prtIdx].x, nt.listNeuron[prtIdx].y, nt.listNeuron[prtIdx].z);
+        pf.Length += dist_L2(p1,p2);
+        childs[prtIdx].push_back(i);
+    }
+
+    int t,tmp;
+    double pathlength;
+    while(!stack.empty()){
+        t = stack.pop();
+        QVector<V3DLONG> child = childs[t];
+        for(int i=0; i<child.size(); i++){
+            pf.N_branch++;
+            tmp = child[i];
+
+            pathlength = zx_dist(nt.listNeuron[tmp],nt.listNeuron[t]);
+
+            while(childs[tmp].size() == 1){
+                int ch = childs[tmp][0];
+                pathlength += zx_dist(nt.listNeuron[ch],nt.listNeuron[tmp]);
+                tmp = ch;
+            }
+            int chsz = childs[tmp].size();
+            if(chsz>1){
+                stack.push(tmp);
+
+            }
+            pathTotal[tmp] = pathTotal[t] + pathlength;
+            depth[tmp] = depth[t] + 1;
+        }
+    }
+
+    for(int i=0; i<neuronNum; i++){
+        pf.Max_Path = max(pf.Max_Path,pathTotal[i]);
+        pf.Max_Order = max(pf.Max_Order,depth[i]);
+        if(childs[i].size() == 0){
+            pf.N_tips++;
+        }else if (childs[i].size() > 1) {
+            pf.N_bifs++;
+        }
+    }
+
+    if(pathTotal){
+        delete[] pathTotal;
+        pathTotal = 0;
+    }
+    if(depth){
+        delete[] depth;
+        depth = 0;
+    }
+
+    return pf;
+}
 
 bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result){
     return SortSWC(neurons,result,VOID,1);
@@ -300,16 +377,18 @@ NeuronTree getApp2WithParameter(V3DPluginCallback2& callback, int downSampleTime
 
 }
 
-NeuronTree getApp2RotateImage(Image4DSimple* image, LocationSimple m, int rotateAxis, int angle, int th){
+NeuronTree getApp2RotateImage(Image4DSimple* image, LandmarkList m, int rotateAxis, int angle, int th, bool b_256cube){
     paraApp2 p = paraApp2();
     p.p4dImage = image;
 //    QString imgFileName = QString(p.p4dImage->getFileName());
     V3DLONG inSZ[4] = {p.p4dImage->getXDim(),p.p4dImage->getYDim(),p.p4dImage->getZDim(),p.p4dImage->getCDim()};
-    p.b_256cube = false;
+    p.b_256cube = b_256cube;
     p.bkg_thresh = th;
     unsigned char* pdata = p.p4dImage->getRawData();
     int totalSZ = p.p4dImage->getTotalUnitNumber();
-    p.landmarks.push_back(m);
+    for(int i=0; i<m.size(); i++){
+        p.landmarks.push_back(m[i]);
+    }
 
     unsigned char* rdata = 0;
     V3DLONG rSZ[4] = {0,0,0,0};
@@ -356,7 +435,7 @@ NeuronTree getApp2RotateImage(Image4DSimple* image, LocationSimple m, int rotate
 
     }
 
-    proc_app2(p);
+    proc_multiApp2(p);
 
     NeuronTree app2NeuronTree = NeuronTree();
     app2NeuronTree.deepCopy(p.result);
@@ -409,13 +488,16 @@ vector<NeuronTree> getApp2NeuronTrees(int app2Th, V3DPluginCallback2& callback, 
 
 }
 
-NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSimple m, V3DPluginCallback2& callback){
+NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LandmarkList m, V3DPluginCallback2& callback){
     V3DLONG sz[4] = {inImg->getXDim(),inImg->getYDim(),inImg->getZDim(),inImg->getCDim()};
     V3DLONG totalSZ = sz[0]*sz[1]*sz[2];
     vector<unsigned char*> masks = vector<unsigned char*>();
     for(int i=0; i<trees.size(); i++){
         unsigned char* mask = 0;
         for(int j=0; j<trees[i].listNeuron.size(); j++){
+            if(trees[i].listNeuron[j].parent == -1){
+                continue;
+            }
             trees[i].listNeuron[j].r = 2;
         }
         vector<MyMarker*> markers = swc_convert(trees[i]);
@@ -431,7 +513,7 @@ NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSim
         for(int j=0; j<masks.size(); j++){
             if(masks[j][i] == 255)
                 count++;
-            if(count >= masks.size()*3/4){
+            if(count >= masks.size()/2){
                 consensusImgData1d[i] = pdata[i];
             }else {
                 consensusImgData1d[i] = 0;
@@ -448,8 +530,11 @@ NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSim
     }
 
     paraApp2 p = paraApp2();
-    p.bkg_thresh = 1;
-    p.landmarks.push_back(m);
+    p.bkg_thresh = 0;
+    for(int i=0 ; i<m.size(); i++){
+        p.landmarks.push_back(m[i]);
+    }
+    p.b_256cube = false;
 
     Image4DSimple* consensusImg = new Image4DSimple();
     consensusImg->setData(consensusImgData1d,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
@@ -459,13 +544,15 @@ NeuronTree consensus(vector<NeuronTree> trees, Image4DSimple* inImg, LocationSim
     p.yc1 = p.p4dImage->getYDim()-1;
     p.zc1 = p.p4dImage->getZDim()-1;
 
-    proc_app2(p);
+    proc_multiApp2(p);
 
     NeuronTree result = NeuronTree();
     result.deepCopy(p.result);
 
-    if(consensusImg)
+    if(consensusImg){
         delete consensusImg;
+        consensusImg = 0;
+    }
 
     return result;
 
@@ -568,36 +655,42 @@ int* getThresholdByKmeans(Image4DSimple *image, int k){
 void normalImage(unsigned char* pdata, V3DLONG* sz){
     V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
     double mean = 0;
+    double m = 80;
+
+    int max = 0;
+    int min = INT_MAX;
     for(int i=0; i<tolSZ; i++){
         mean += pdata[i];
-    }
-
-    if(tolSZ>0)
-        mean /= tolSZ;
-
-    int max = 80;
-    int min = INT_MAX;
-    if(mean>0.5*max){
-        max = mean*2;
-    }
-
-    for(int i=0; i<tolSZ; i++){
-        if(pdata[i]<min)
+        if(pdata[i]<min){
             min = pdata[i];
-        if(pdata[i]>max)
-            pdata[i] = max;
+        }
+        if (pdata[i]>max) {
+            max = pdata[i];
+        }
+    }
+    if(tolSZ>0){
+        mean /= (double)tolSZ;
+    }
+    if(mean>30){
+        return;
     }
 
     for(int i=0; i<tolSZ; i++){
-        int tmp = (unsigned char)(((pdata[i] - min)/(double) (max-min)) * 255 + 0.5);
+        int tmp;
+        if(pdata[i]>m){
+            tmp = ((pdata[i] - m)/(double) (max-m)) * 55 + m + 0.5;
+        }else{
+            tmp = ((pdata[i] - min)/(double) (m-min)) * 200 + 0.5;
+        }
+
         if(tmp>255) tmp = 255;
         if(tmp<0) tmp = 0;
-        pdata[i] = tmp;
+        pdata[i] = (unsigned char)tmp;
     }
 }
 
 
-bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCallback2 &callback){
+bool consensus(QString imagePath, LandmarkList m, bool kmeansTh, V3DPluginCallback2 &callback){
     unsigned char* pdata = 0;
     V3DLONG sz[4] = {0,0,0,0};
     int dataType = 1;
@@ -623,8 +716,10 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
         V3DLONG totalSZ = sz[0]*sz[1]*sz[2];
         mean_and_std(pdata,totalSZ,imgAve,imgStd);
         double td= (imgStd<10)? 10: imgStd;
-        app2Th = imgAve + 0.7*td;
+        app2Th = imgAve + 0.5*td;
     }
+
+    int adaTh = app2Th + 10;
 
     vector<NeuronTree> trees  = vector<NeuronTree>();
     paraApp2 p = paraApp2();
@@ -635,9 +730,34 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     p.yc1 = sz[1] - 1;
     p.zc1 = sz[2] - 1;
     p.b_256cube = false;
-    p.bkg_thresh = app2Th;
-    p.landmarks.push_back(m);
-    proc_app2(p);
+
+    for(int i=0; i<m.size(); i++){
+        p.landmarks.push_back(m[i]);
+    }
+    partialFeature pfM;
+    pfM.Length = 14931.6;
+    pfM.Max_Order = 32;
+    pfM.Max_Path = 1030.88;
+    pfM.N_tips = 143;
+    pfM.N_branch = 281;
+    pfM.N_bifs = 139;
+
+    for(;;adaTh--){
+        p.bkg_thresh = adaTh;
+        proc_multiApp2(p);
+        partialFeature pf = computePartialFeature(p.result);
+        if(pf.Length>pfM.Length || pf.Max_Order>pfM.Max_Order
+                || pf.Max_Path>pfM.Max_Path || pf.N_bifs>pfM.N_bifs
+                || pf.N_branch>pfM.N_branch || pf.N_tips>pfM.N_tips){
+            break;
+        }
+        if(adaTh == app2Th){
+            break;
+        }
+        QString swcPathTh = imagePath + "_" + QString::number(adaTh) + ".swc";
+        writeSWC_file(swcPathTh,p.result);
+    }
+
     NeuronTree app2NeuronTree1 = NeuronTree();
     app2NeuronTree1.deepCopy(p.result);
     for(int i=0 ;i<app2NeuronTree1.listNeuron.size(); i++){
@@ -648,7 +768,8 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
 
     //origin image, rotate 30 degrees around X axis
     int angle = 30;
-    NeuronTree app2NeuronTree2 = getApp2RotateImage(image,m,0,angle,app2Th);
+    bool b_256cube = false;
+    NeuronTree app2NeuronTree2 = getApp2RotateImage(image,m,0,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree2.listNeuron.size(); i++){
         app2NeuronTree2.listNeuron[i].type = 3;
     }
@@ -656,7 +777,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath2,app2NeuronTree2);
 
     //origin image, rotate 30 degrees around Y axis
-    NeuronTree app2NeuronTree3 = getApp2RotateImage(image,m,1,angle,app2Th);
+    NeuronTree app2NeuronTree3 = getApp2RotateImage(image,m,1,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree3.listNeuron.size(); i++){
         app2NeuronTree3.listNeuron[i].type = 4;
     }
@@ -664,7 +785,7 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath3,app2NeuronTree3);
 
     //origin image, rotate 30 degrees around Z axis
-    NeuronTree app2NeuronTree4 = getApp2RotateImage(image,m,2,angle,app2Th);
+    NeuronTree app2NeuronTree4 = getApp2RotateImage(image,m,2,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree4.listNeuron.size(); i++){
         app2NeuronTree4.listNeuron[i].type = 5;
     }
@@ -672,63 +793,36 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     writeSWC_file(swcPath4,app2NeuronTree4);
 
     //downSample image(2 times), don't rotate
-    unsigned char* downSampleData1d = 0;
-    V3DLONG downSampleSZ[4] = {0,0,0,0};
-    downsampling_img_xyz(pdata,sz,2,2,downSampleData1d,downSampleSZ);
-    Image4DSimple* downSampleImage = new Image4DSimple();
-    downSampleImage->setData(downSampleData1d,downSampleSZ[0],downSampleSZ[1],downSampleSZ[2],downSampleSZ[3],V3D_UINT8);
-
-    p.p4dImage = downSampleImage;
-    p.xc1 = downSampleSZ[0] - 1;
-    p.yc1 = downSampleSZ[1] - 1;
-    p.zc1 = downSampleSZ[2] - 1;
-    p.landmarks.clear();
-    LocationSimple mm;
-    mm.x = (m.x - 1)/2 +1;
-    mm.y = (m.y - 1)/2 +1;
-    mm.z = (m.z - 1)/2 +1;
-    p.landmarks.push_back(mm);
-
-    proc_app2(p);
+    b_256cube = true;
+    p.b_256cube = b_256cube;
+    proc_multiApp2(p);
     NeuronTree app2NeuronTree5 = NeuronTree();
     app2NeuronTree5.deepCopy(p.result);
     for(int i=0 ;i<app2NeuronTree5.listNeuron.size(); i++){
-        app2NeuronTree5.listNeuron[i].x *= 2;
-        app2NeuronTree5.listNeuron[i].y *= 2;
-        app2NeuronTree5.listNeuron[i].z *= 2;
         app2NeuronTree5.listNeuron[i].type = 6;
     }
     QString swcPath5 = imagePath + "_downSampleImage_2.swc";
     writeSWC_file(swcPath5,app2NeuronTree5);
 
     //downSample image(2 times), rotate 30 degrees around X axis
-    NeuronTree app2NeuronTree6 = getApp2RotateImage(downSampleImage,mm,0,angle,app2Th);
+    NeuronTree app2NeuronTree6 = getApp2RotateImage(image,m,0,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree6.listNeuron.size(); i++){
-        app2NeuronTree6.listNeuron[i].x *= 2;
-        app2NeuronTree6.listNeuron[i].y *= 2;
-        app2NeuronTree6.listNeuron[i].z *= 2;
         app2NeuronTree6.listNeuron[i].type = 7;
     }
     QString swcPath6 = imagePath + "_downSampleImage_2_rotateX_" + QString::number(angle) + ".swc";
     writeSWC_file(swcPath6,app2NeuronTree6);
 
     //downSample image(2 times), rotate 30 degrees around Y axis
-    NeuronTree app2NeuronTree7 = getApp2RotateImage(downSampleImage,mm,1,angle,app2Th);
+    NeuronTree app2NeuronTree7 = getApp2RotateImage(image,m,1,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree7.listNeuron.size(); i++){
-        app2NeuronTree7.listNeuron[i].x *= 2;
-        app2NeuronTree7.listNeuron[i].y *= 2;
-        app2NeuronTree7.listNeuron[i].z *= 2;
         app2NeuronTree7.listNeuron[i].type = 8;
     }
     QString swcPath7 = imagePath + "_downSampleImage_2_rotateY_" + QString::number(angle) + ".swc";
     writeSWC_file(swcPath7,app2NeuronTree7);
 
     //downSample image(2 times), rotate 30 degrees around Z axis
-    NeuronTree app2NeuronTree8 = getApp2RotateImage(downSampleImage,mm,2,angle,app2Th);
+    NeuronTree app2NeuronTree8 = getApp2RotateImage(image,m,2,angle,adaTh,b_256cube);
     for(int i=0 ;i<app2NeuronTree8.listNeuron.size(); i++){
-        app2NeuronTree8.listNeuron[i].x *= 2;
-        app2NeuronTree8.listNeuron[i].y *= 2;
-        app2NeuronTree8.listNeuron[i].z *= 2;
         app2NeuronTree8.listNeuron[i].type = 9;
     }
     QString swcPath8 = imagePath + "_downSampleImage_2_rotateZ_" + QString::number(angle) + ".swc";
@@ -744,7 +838,9 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     trees.push_back(app2NeuronTree7);
     trees.push_back(app2NeuronTree8);
 
-    NeuronTree consensusTree = consensus(trees,image,m,callback);
+    LandmarkList mm;
+    mm.push_back(m[0]);
+    NeuronTree consensusTree = consensus(trees,image,mm,callback);
 
     QString consensusSWCPath = imagePath +"_consensus.swc";
     writeSWC_file(consensusSWCPath,consensusTree);
@@ -752,11 +848,6 @@ bool consensus(QString imagePath, LocationSimple m, bool kmeansTh, V3DPluginCall
     if(image){
         delete image;
         image = 0;
-    }
-
-    if(downSampleImage){
-        delete downSampleImage;
-        downSampleImage = 0;
     }
 
     return true;

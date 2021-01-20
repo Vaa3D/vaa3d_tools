@@ -57,8 +57,8 @@ void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeNam
 void NeuronStructExplorer::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
 {
 	// This method profiles node-location node-child_location of a given NeuronTree.
-	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
-	// However, any tip node WILL NOT have an entry in node2childLocMap.
+	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size_t> is empty.
+	// *** [However, any tip node WILL NOT have an entry in node2childLocMap.] ***
 
 	nodeLocMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
@@ -1144,6 +1144,96 @@ void NeuronStructExplorer::wholeSingleTree_extract(const QList<NeuronSWC>& input
 		NeuronSWC rootNode = inputList.at(int(node2locMap.at(somaNodeID)));
 		NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
 	}
+}
+
+boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConnectedTrees(const NeuronTree& inputTree)
+{
+	profiledTree inputProfiledTree(inputTree);
+	if (inputProfiledTree.node2segMap.empty()) inputProfiledTree.nodeSegMapGen();
+	if (inputProfiledTree.nodeCoordKey2nodeIDMap.empty()) inputProfiledTree.nodeCoordKeyNodeIDmapGen();
+	if (inputProfiledTree.segEndCoordKey2segMap.empty()) inputProfiledTree.segEndCoordKeySegMapGen();
+	boost::container::flat_map<int, profiledTree> outputTreeSizeProfiledTreeMap;
+	set<int> unGroupedSegIDs;
+	for (auto& seg : inputProfiledTree.segs) unGroupedSegIDs.insert(seg.first);
+
+	while (!unGroupedSegIDs.empty())
+	{
+		set<int> groupedSegIDs;
+		groupedSegIDs.insert(*unGroupedSegIDs.begin());
+		//cout << *unGroupedSegIDs.begin() << endl;
+		NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin());
+
+		NeuronTree outputTree;
+		for (auto& id : groupedSegIDs)
+		{
+			//cout << id << " ";
+			outputTree.listNeuron.append(inputProfiledTree.segs.at(id).nodes);
+			if (unGroupedSegIDs.find(id) != unGroupedSegIDs.end()) unGroupedSegIDs.erase(unGroupedSegIDs.find(id));
+		}
+		profiledTree outputProfiledTree(outputTree);
+		outputTreeSizeProfiledTreeMap.insert(pair<int, profiledTree>(outputTree.listNeuron.size(), outputProfiledTree));
+		//cout << "unGroupedSegIDs size: " << unGroupedSegIDs.size() << endl << endl;
+	}
+
+	return outputTreeSizeProfiledTreeMap;
+}
+
+void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID)
+{
+	int currGroupedSegNum = groupedSegIDs.size();
+
+	//cout << "leading seg ID = " << leadingSegID << ": " << endl;
+	for (auto& node : inputProfiledTree.segs.at(leadingSegID).nodes)
+	{
+		string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+		if (inputProfiledTree.segEndCoordKey2segMap.find(nodeCoordKey) != inputProfiledTree.segEndCoordKey2segMap.end())
+		{
+			pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.segEndCoordKey2segMap.equal_range(nodeCoordKey);
+			for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+			{
+				if (it->second == leadingSegID || groupedSegIDs.find(it->second) != groupedSegIDs.end()) continue;
+				else
+				{
+					//cout << "  nodeCoordKey = " << nodeCoordKey << "-> " << it->second << " ";
+					groupedSegIDs.insert(it->second);
+					//cout << endl;
+					NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second);
+				}
+			}
+		}
+	}
+
+	const segUnit& curSeg = inputProfiledTree.segs.at(leadingSegID);	
+	const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(curSeg.head));
+	string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+	pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(headCoordKey);
+	for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+	{
+		if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
+		else
+		{
+			groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
+			NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+		}
+	}
+
+	for (auto& tailID : curSeg.tails)
+	{
+		const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID));
+		string tailCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
+		pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(tailCoordKey);
+		for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+		{
+			if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
+			else
+			{
+				groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
+				NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+			}
+		}
+	}
+
+	if (groupedSegIDs.size() == currGroupedSegNum) return;
 }
 /* ======================== END of [Tree - Subtree Operations] ======================== */
 

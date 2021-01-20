@@ -65,8 +65,8 @@ public slots:
 
     void MessageServerSlotAnswerMessageSocket_addseg(QString);
     void MessageServerSlotAnswerMessageSocket_delseg(QString);
-    void MessageServerSlotAnswerMessageSocket_addmarker(QString,int flag=0);
-    void MessageServerSlotAnswerMessageSocket_delmarker(QString,bool flag=0);
+    void MessageServerSlotAnswerMessageSocket_addmarker(QString);
+    void MessageServerSlotAnswerMessageSocket_delmarker(QString);
     void MessageServerSlotAnswerMessageSocket_retype(QString);
 //    void MessageServerSlotAnswerMessageSocket_insert(QString);
 //    void MessageServerSlotAnswerMessageSocket_directconnect(QString);

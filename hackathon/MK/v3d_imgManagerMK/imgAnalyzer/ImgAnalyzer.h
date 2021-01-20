@@ -15,11 +15,17 @@ using namespace integratedDataStructures;
 class ImgAnalyzer
 {	
 public:
-	ImgAnalyzer() : blobMergingReport(false) {};
-
+	ImgAnalyzer() : fragTrace(false), terminate(false) {};
+	bool fragTrace;		// true if ImgAnalyzer is called from Neuron Assembler app.
+	bool terminate;		// true to terminate ImgAnalyzer::connComp2D or ImgAnalyzer::findSignalBlobs
+	bool taskFinished;	// true if ImgAnalyzer::connComp2D or ImgAnalyzer::findSignalBlobs is finished 
+	int allowedProcTime;
 	enum processName { blobMerging };
 
 	/***************** Image Segmentation/Detection *****************/
+	// Identify 2D connected components in a given 2D slice.
+	bool connComp2D(vector<connectedComponent>& connList2D, const vector<unsigned char**>& inputSlicesVector, const int distThre, const boost::container::flat_set<vector<int>>& whitePixAddress);
+
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(const vector<unsigned char**>& inputSlicesVector, const int imgDims[], const int distThre, unsigned char* maxIP1D = nullptr);
 	
@@ -28,7 +34,7 @@ public:
 
 private:
 	// This method is called by ImgAnalyzer::findSignalBlobs because of its slice-by-slice approach. 
-	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
+	vector<connectedComponent> merge2DConnCompInto3D(const vector<connectedComponent>& inputConnCompList);
 	/****************************************************************/
 
 
@@ -40,6 +46,12 @@ private:
 	// This method is called by ImgAnalyzer::getSectionalCentroids to complete the task.
 	boost::container::flat_set<deque<float>> connCompSectionalProc(const vector<int>& dim1, const vector<int>& dim2, const vector<int>& sectionalDim, const int secDimStart, const int secDimEnd);
 	/**************************************************/
+
+
+	/***************** Process Monitoring *****************/	
+	clock_t timingStart, timingEnd;
+	void timing(int allowedProcTime, bool& terminate);
+	/******************************************************/
 
 
 public:
@@ -55,8 +67,6 @@ public:
 	condition_variable monitorSwitch;
 	mutex blobMergingMutex;
 
-	void reportProcess(ImgAnalyzer::processName processName);
-	bool blobMergingReport;
 	int progressReading;
 	/******************************************************/
 };

@@ -18,6 +18,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 {
 	this->finalSaveRootQ = "D:\\Work\\FragTrace";
 	this->myImgProcessor.blobTreeSavePathQ = this->finalSaveRootQ;
+	this->myImgProcessor.fragTrace = true;
 
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
@@ -25,6 +26,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	this->numProcs = stoi(numProcsString);
 
 	this->mode = mode;
+	this->MSTterminate = false;
+	this->fragTaskFinished = false;
 	this->partialVolumeTracing = false;
 	this->partialVolumeLowerBoundaries = { 0, 0, 0 };
 
@@ -90,7 +93,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	this->progressBarDiagPtr->setMinimumWidth(400);
 	this->progressBarDiagPtr->setRange(0, 100);
 	this->progressBarDiagPtr->setModal(true);
-	this->progressBarDiagPtr->setCancelButtonText("Abort");
+	this->progressBarDiagPtr->setCancelButtonText("Do Not Press This Button!!!");
 	// *************************************************************************************************************** //
 }
 
@@ -98,6 +101,7 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 {
 	this->finalSaveRootQ = "D:\\Work\\FragTrace";
 	this->myImgProcessor.blobTreeSavePathQ = this->finalSaveRootQ;
+	this->myImgProcessor.terminate = false;
 
 	char* numProcsC;
 	numProcsC = getenv("NUMBER_OF_PROCESSORS");
@@ -105,7 +109,11 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	this->numProcs = stoi(numProcsString);
 
 	this->mode = mode;
+	this->MSTterminate = false;
+	this->fragTaskFinished = false;
 	this->partialVolumeTracing = false;
+	this->myImgProcessor.terminate = false;
+	this->myImgProcessor.taskFinished = false;
 
 	int displayImgDim[3];
 	displayImgDim[0] = inputImg4DSimplePtr->getXDim();
@@ -170,7 +178,7 @@ void FragTraceManager::reinit(const Image4DSimple* inputImg4DSimplePtr, workMode
 	this->progressBarDiagPtr->setMinimumWidth(400);
 	this->progressBarDiagPtr->setRange(0, 100);
 	this->progressBarDiagPtr->setModal(true);
-	this->progressBarDiagPtr->setCancelButtonText("Abort");
+	this->progressBarDiagPtr->setCancelButtonText("Do Not Press This Button!!!");
 	// *************************************************************************************************************** //
 }
 
@@ -242,25 +250,35 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 			{
 				this->myImgProcessor.histThreImg3D("ada_cutoff", this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->stdFold);
 				
-				//clock_t begin = clock();
-				profiledTree profiledBlobTree(this->myImgProcessor.mask2swc(this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->signalBlobs));
+				clock_t timingStart = clock();
+				std::thread timingThread(&FragTraceManager::timingImgProc, this, this, this->allowedProcTime);
+				profiledTree profiledBlobTree(this->myImgProcessor.mask2swc(this->histThreImgName, this->fragTraceImgManager.imgDatabase, this->signalBlobs));				
+				clock_t timingEnd = clock();
+				int duration = int(timingEnd - timingStart) / CLOCKS_PER_SEC;
+				this->allowedProcTime -= duration;
+				if (profiledBlobTree.tree.listNeuron.isEmpty())
+				{
+					if (timingThread.joinable()) timingThread.join();
+					return false;
+				}
+				else
+				{
+					mutex imgProcMutex;
+					lock_guard<mutex> imgProcGruad(imgProcMutex);
+					this->myImgProcessor.taskFinished = true;
+					imgProcGruad.~lock_guard();
+					timingThread.detach();
+				}
+
 				this->fragTraceTreeManager.treeDataBase.insert({ "blobTree", profiledBlobTree });
-				//clock_t end = clock();
-				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
 			}
 		}
-	}
-	else
-	{
-		cerr << "Cut off intensity cannot be 0! Do nothing and return." << endl;
-		return false;
 	}
 	// ------------ END of [Image Preparation] ------------- //
 
 	/* ======= Tree is formed from signal blobs here =======*/
 	NeuronTree FINALOUTPUT_TREE, PRE_FINALOUTPUT_TREE, CONTINUOUS_AXON_PREFINAL_TREE;
-	this->treeAssembly(PRE_FINALOUTPUT_TREE);	
+	if (!this->treeAssembly(PRE_FINALOUTPUT_TREE)) return false;
 	/* =====================================================*/
 
 	this->myFragPostProcessor.scalingFactor = this->scalingFactor;
@@ -288,7 +306,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree profiledFINAL_BEFORE_DOT_REMOVE(FINALOUTPUT_TREE);
 		FINALOUTPUT_TREE = NeuronStructUtil::singleDotRemove(profiledFINAL_BEFORE_DOT_REMOVE, this->minNodeNum);
 
-		vector<ptrdiff_t> delLocs;
 		while (1)
 		{
 			for (map<int, segUnit>::iterator newSegIt = profiledNewTreePart.segs.begin(); newSegIt != profiledNewTreePart.segs.end(); ++newSegIt)
@@ -307,7 +324,9 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		OVERLAPPED_SEG_FOUND:
 			continue;
 		}
-		this->addV_NeuronSWCs(profiledNewTreePart);
+		
+		// totalV_NeuronSWC will eventually be sent to My4DImage::tracedNeuron.
+		this->addV_NeuronSWCs(profiledNewTreePart); // <-- all type-16 segments to be hidden
 		for (auto& vSeg : this->totalV_NeuronSWCs) vSeg.to_be_deleted = true; // Default segUnit.to_be_deleted is false, so is converted V_NeuronSWC.
 
 		// ------- Debug ------- //
@@ -348,7 +367,23 @@ bool FragTraceManager::treeAssembly(NeuronTree& PRE_FINALOUTPUT_TREE)
 	{
 		// 1. Generated skeletons of segmented blobs.
 		profiledTree objSkeletonProfiledTree;
-		if (!this->generateTree(axon, objSkeletonProfiledTree)) return false;;
+		std::thread timingThread(&FragTraceManager::timingFragGen, this, this, this->allowedProcTime);
+		if (!this->generateTree(axon, objSkeletonProfiledTree))
+		{
+			if (this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->close();
+			if (timingThread.joinable()) timingThread.join();
+			v3d_msg("Fragment generating has taken too long and exceeded your time limit.\nPlease adjust the settings.");
+
+			return false;
+		}
+		else
+		{
+			mutex fragMutex;
+			lock_guard<mutex> fragGuard(fragMutex);
+			this->fragTaskFinished = true;
+			fragGuard.~lock_guard();
+			timingThread.detach();
+		}
 
 		// 2. Break all branches.
 		NeuronTree MSTbranchBreakTree = TreeTrimmer::branchBreak(objSkeletonProfiledTree);
@@ -506,14 +541,16 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 	{		
 		vector<NeuronTree> objTrees;
 		NeuronTree finalCentroidTree;
+
 		for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 		{
-			qApp->processEvents();
+			//cout << int(it - this->signalBlobs.begin()) << " ";
+			/*qApp->processEvents();
 			if (this->progressBarDiagPtr->wasCanceled())
 			{
 				this->progressBarDiagPtr->setLabelText("Process aborted.");
 				return false;
-			}
+			}*/
 
 			if (it->size < voxelCount) continue;
 			if (int(it - this->signalBlobs.begin()) % 500 == 0)
@@ -542,6 +579,8 @@ bool FragTraceManager::generateTree(workMode mode, profiledTree& objSkeletonProf
 			profiledTree profiledMSTtree(MSTtree);				
 			//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
 			objTrees.push_back(profiledMSTtree.tree);
+
+			if (this->MSTterminate) return false;
 		}
 		cout << endl;
 
@@ -941,3 +980,28 @@ void FragTraceManager::addV_NeuronSWCs(const profiledTree& inputProfiledTree)
 	for (auto& seg : inputProfiledTree.segs) this->totalV_NeuronSWCs.push_back(seg.second.convert2V_NeuronSWC());
 }
 // *********************** END of [Traced Tree Editing] *********************** //
+
+
+// ******* Progress Monitor Dialog ******* //
+void FragTraceManager::timingImgProc(FragTraceManager* FragTraceMgrPtr, int allowedProcTime)
+{
+	chrono::seconds waitingTime(allowedProcTime);
+	this_thread::sleep_for(waitingTime);
+
+	mutex terminateMutex;
+	unique_lock<mutex> guard(terminateMutex);
+	if (!FragTraceMgrPtr->myImgProcessor.taskFinished) FragTraceMgrPtr->myImgProcessor.terminate = true;
+}
+
+void FragTraceManager::timingFragGen(FragTraceManager* FragTraceMgrPtr, int allowedProcTime)
+{
+	cout << " ==> Allowed time left: " << allowedProcTime << " seconds" << endl;
+
+	chrono::seconds waitingTime(allowedProcTime);
+	this_thread::sleep_for(waitingTime);
+
+	mutex terminateMutex;
+	lock_guard<mutex> guard(terminateMutex);
+	if (!FragTraceMgrPtr->fragTaskFinished) FragTraceMgrPtr->MSTterminate = true;
+}
+// *************************************** //

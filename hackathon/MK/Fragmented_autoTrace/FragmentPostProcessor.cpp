@@ -201,6 +201,56 @@ void FragmentPostProcessor::rc_getSegIDsFromClusterChain(boost::container::flat_
 			this->rc_getSegIDsFromClusterChain(segIDs, childCluster.second);
 	}
 }
+
+profiledTree FragmentPostProcessor::selectiveType16(const profiledTree& extendedTree, const profiledTree& autoTracedTree, int radius) const
+{
+	profiledTree outputProfiledTree;
+	if (extendedTree.tree.listNeuron.isEmpty())
+	{
+		cerr << "Extended tree is empty. Do nothing and return." << endl;
+		return outputProfiledTree;
+	}
+	if (autoTracedTree.segEndClusterNodeMap.empty() || autoTracedTree.segEndClusterCentroidMap.empty())
+	{
+		cerr << "Auto-traced tree doesn't have segEndClusterNodeMap or segEndClusterCentroidMap propagated." << endl;
+		cerr << "Do nothing and return." << endl;
+		return outputProfiledTree;
+	}
+
+	for (auto& cluster : autoTracedTree.segEndClusterCentroidMap)
+	{
+		cout << "cluster ID - " << cluster.first << endl;
+		for (auto& node : extendedTree.tree.listNeuron)
+		{
+			if (sqrtf((cluster.second.at(0) - node.x) * (cluster.second.at(0) - node.x) +
+					  (cluster.second.at(1) - node.y) * (cluster.second.at(1) - node.y) +
+					  (cluster.second.at(2) - node.z) * (cluster.second.at(2) - node.z)) <= radius)
+			{
+				for (auto& clusterNode : autoTracedTree.segEndClusterNodeMap.at(cluster.first))
+				{
+					string nodeKey = to_string(clusterNode.at(0)) + "_" + to_string(clusterNode.at(1)) + "_" + to_string(clusterNode.at(2));
+					pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = autoTracedTree.nodeCoordKey2segMap.equal_range(nodeKey);
+					for (boost::container::flat_multimap<string, int>::const_iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+					{
+						outputProfiledTree.tree.listNeuron.append(autoTracedTree.segs.at(rangeIt->second).nodes);
+						for (auto& node : autoTracedTree.segs.at(rangeIt->second).nodes)
+							cout << node.n << " " << node.x << " " << node.y << " " << node.z << " " << node.parent << endl;
+					}
+				}
+				goto SEGEND_CLUSTER_INCLUDED;
+			}
+		}
+
+	SEGEND_CLUSTER_INCLUDED:
+		cout << endl;
+		continue;
+	}
+	integratedDataTypes::profiledTreeReInit(outputProfiledTree);
+	cout << outputProfiledTree.segs.size() << endl;
+	writeSWC_file("D:\\Work\\FragTrace\\selective16.swc", outputProfiledTree.tree);
+
+	return outputProfiledTree;
+}
 /* ===================== END of [Extended Axon Tracing Methods] ======================== */
 
 

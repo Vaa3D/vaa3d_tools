@@ -6,6 +6,7 @@
 #include "integratedDataStructures.h"
 
 #include "ui_brainRegionListTest.h"
+#include "BrgScanner.h"
 
 using namespace integratedDataStructures;
 
@@ -39,6 +40,7 @@ public slots:
 
 private: 
 	V3DPluginCallback2* thisCallback;
+	BrgScanner brgScanner;
 };
 
 

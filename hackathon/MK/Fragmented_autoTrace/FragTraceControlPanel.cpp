@@ -39,15 +39,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	uiPtr->setupUi(this);
 	// ------------------------------------- //
 
-	// ------- Adding widgets not provided in Qt Designer ------- //
-	this->doubleSpinBox = new QDoubleSpinBox(uiPtr->frame_7);
-	this->doubleSpinBox->setObjectName(QString::fromUtf8("doubleSpinBox"));
-	this->doubleSpinBox->setGeometry(QRect(150, 10, 57, 22));
-	this->doubleSpinBox->setValue(0);
-	this->doubleSpinBox->setSingleStep(0.1);
-	this->doubleSpinBox->setRange(-5, 5);
-	//----------------------------------------------------------- //
-
 	QSettings callOldSettings("Allen-Neuronanatomy", "Neuron Assembler");
 
 	// ------- Image Format and Work Mode ------- //
@@ -107,7 +98,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		if (callOldSettings.value("histThre") == true)
 		{
 			uiPtr->groupBox_6->setChecked(true);
-			this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
+			uiPtr->doubleSpinBox_3->setValue(callOldSettings.value("histThre_std").toFloat());
 		}
 	}
 	// ---------------------------------------- //
@@ -135,6 +126,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 	}
 	uiPtr->spinBox_7->setValue(callOldSettings.value("axonCluster_range").toInt());
 	// ------------------------------- //
+
+	// ------- Process Monitoring ------- //
+	uiPtr->spinBox_3->setValue(callOldSettings.value("allowedProcessingTime").toInt());
+	// ---------------------------------- //
 
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
@@ -355,7 +350,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	if (uiPtr->groupBox_6->isChecked())
 	{
 		settings.setValue("histThre", true);
-		settings.setValue("histThre_std", this->doubleSpinBox->value());
+		settings.setValue("histThre_std", uiPtr->doubleSpinBox_3->value());
 	}
 	// ----------------------------------------- //
 
@@ -383,6 +378,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 	// ------------------------------- //
+
+	// ------- Process Monitoring ------- //
+	settings.setValue("allowedProcessingTime", uiPtr->spinBox_3->value());
+	// ---------------------------------- //
 }
 
 void FragTraceControlPanel::eraseButtonClicked()
@@ -411,26 +410,107 @@ void FragTraceControlPanel::connectButtonClicked()
 	else this->CViewerPortal->segEditing_setCursor("restore");
 }
 
-void FragTraceControlPanel::initDisplayingVsegs()
+void FragTraceControlPanel::getType16Locs()
 {
+	this->type16Locs.clear();
 	this->updatedHiddenSegLocs.clear();
-	this->permanentDelSegLocs.clear();
-	this->tracedVsegs = this->traceManagerPtr->getCurrentVolumeV_NeuronSWCs();
-	if (this->tracedVsegs.empty()) return;
-
-	for (vector<V_NeuronSWC>::iterator segIt = this->tracedVsegs.begin(); segIt != this->tracedVsegs.end(); ++segIt)
+	for (vector<V_NeuronSWC>::iterator segIt = this->CViewerPortal->getDisplayingSegs()->begin(); segIt != this->CViewerPortal->getDisplayingSegs()->end(); ++segIt)
 	{
-		if (segIt->row.begin()->data[1] == 16 && segIt->to_be_deleted)
+		if (segIt->row.begin()->data[1] == 16)
 		{
-			this->CViewerPortal->getDisplayingSegs()->push_back(*segIt);
-			this->updatedHiddenSegLocs.insert(this->CViewerPortal->getDisplayingSegs()->size() - 1);
+			this->type16Locs.push_back(segIt - this->CViewerPortal->getDisplayingSegs()->begin());
+			if (segIt->to_be_deleted) this->updatedHiddenSegLocs.insert(segIt - this->CViewerPortal->getDisplayingSegs()->begin());
 		}
+	}
+}
+
+void FragTraceControlPanel::updateDisplayingVsegProfile()
+{
+	// Refresh this->dist2VsegLocMap with current displaying status.
+
+	this->totalVsegNum = this->CViewerPortal->getDisplayingSegs()->size();
+	this->getType16Locs();
+
+	for (auto& dist : this->dist2VsegLocMap) dist.second.clear();
+	//for (auto& dist : this->dist2segUnitMap) dist.second.clear();
+	
+	this->distInterval = 25;
+	while (this->type16Locs.size() > 0)
+	{
+		vector<ptrdiff_t> delLocs;
+		for (vector<ptrdiff_t>::iterator locIt = this->type16Locs.begin(); locIt != this->type16Locs.end(); ++locIt)
+		{
+			for (vector<V_NeuronSWC>::iterator non16it = this->CViewerPortal->getDisplayingSegs()->begin(); non16it != this->CViewerPortal->getDisplayingSegs()->end(); ++non16it)
+			{
+				if (non16it->row.begin()->data[1] == 16) continue;
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = non16it->row.begin(); unitIt != non16it->row.end(); ++unitIt)
+				{
+					float headDist, tailDist;
+					headDist = sqrt((((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[2] - unitIt->data[2]) * (((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[2] - unitIt->data[2]) +
+									(((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[3] - unitIt->data[3]) * (((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[3] - unitIt->data[3]) +
+									(((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[4] - unitIt->data[4]) * (((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.end() - 1)->data[4] - unitIt->data[4]));
+					tailDist = sqrt(((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[2] - unitIt->data[2]) * ((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[2] - unitIt->data[2]) +
+									((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[3] - unitIt->data[3]) * ((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[3] - unitIt->data[3]) +
+									((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[4] - unitIt->data[4]) * ((this->CViewerPortal->getDisplayingSegs()->begin() + *locIt)->row.begin()->data[4] - unitIt->data[4]));
+					if (headDist <= this->distInterval || tailDist <= this->distInterval)
+					{
+						if (this->dist2VsegLocMap.find(this->distInterval) == this->dist2VsegLocMap.end())
+						{
+							boost::container::flat_set<ptrdiff_t> VsegSet = { *locIt };
+							this->dist2VsegLocMap.insert(pair<int, boost::container::flat_set<ptrdiff_t>>(this->distInterval, VsegSet));
+
+							//segUnit seg(this->CViewerPortal->getDisplayingSegs()->at(*locIt));
+							//boost::container::flat_set<segUnit> segUnitSet = { seg };
+							//this->dist2segUnitMap.insert(pair<int, boost::container::flat_set<segUnit>>(this->distInterval, segUnitSet));
+						}
+						else
+						{
+							this->dist2VsegLocMap[this->distInterval].insert(*locIt);
+
+							//segUnit seg(this->CViewerPortal->getDisplayingSegs()->at(*locIt));
+							//this->dist2segUnitMap[this->distInterval].insert(seg);
+						}
+
+						delLocs.push_back(int(locIt - type16Locs.begin()));
+						goto SEGMENT_RECORDED;
+					}
+				}
+			}
+
+		SEGMENT_RECORDED:
+			continue;
+		}
+
+		sort(delLocs.rbegin(), delLocs.rend());
+		for (auto& delLoc : delLocs) type16Locs.erase(type16Locs.begin() + delLoc);
+		delLocs.clear();
+		this->distInterval += 20;
+	}
+
+	if (this->currentDist == -1) this->type16showingPtr = this->dist2VsegLocMap.end();
+	else this->type16showingPtr = this->dist2VsegLocMap.find(this->currentDist);
+
+	for (auto& dist : this->dist2VsegLocMap)
+	{
+		cout << dist.first << ": ";
+		for (auto& segLoc : dist.second) cout << segLoc << " ";
+		cout << endl << endl;
 	}
 }
 
 void FragTraceControlPanel::showHideButtonClicked(bool clicked)
 {
-	if (clicked) // SHOW
+	// NOTE: If Esc is hit or a change of basic editing function is made, [My4DImage::tracedNeuron] is refreshed.
+	//       Therefore, show/hide data members need to be reinitialized.
+
+	if (FragTraceTester::isInstantiated())
+	{
+		FragTraceTester::getInstance()->printOutHiddenType16Info();
+	}
+
+	if (this->CViewerPortal->getDisplayingSegs()->size() != this->totalVsegNum) this->updateDisplayingVsegProfile();
+
+	if (clicked) // ------------------------ SHOW
 	{
 		if (!this->updatedHiddenSegLocs.empty())
 		{
@@ -446,23 +526,79 @@ void FragTraceControlPanel::showHideButtonClicked(bool clicked)
 		{
 			if (displayIt->row.begin()->data[1] == 16 && displayIt->to_be_deleted)
 			{
-				this->permanentDelSegLocs.insert(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()));
-				if (this->updatedHiddenSegLocs.find(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin())) != this->updatedHiddenSegLocs.end())
-					this->updatedHiddenSegLocs.erase(this->updatedHiddenSegLocs.find(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin())));
+				this->permanentDelSegLocs.insert(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin());
+				if (this->updatedHiddenSegLocs.find(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()) != this->updatedHiddenSegLocs.end())
+					this->updatedHiddenSegLocs.erase(this->updatedHiddenSegLocs.find(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()));
 			}
 			else if (displayIt->row.begin()->data[1] == 16 && !displayIt->to_be_deleted)
 			{
 				displayIt->to_be_deleted = true;
-				this->updatedHiddenSegLocs.insert(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()));
+				this->updatedHiddenSegLocs.insert(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin());
 			}
-			else if (displayIt->row.begin()->data[1] != 16 &&
-					 this->updatedHiddenSegLocs.find(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin())) != this->updatedHiddenSegLocs.end())
-			{
-				this->updatedHiddenSegLocs.erase(this->updatedHiddenSegLocs.find(int(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin())));
-			}
+			else if (displayIt->row.begin()->data[1] != 16 && this->updatedHiddenSegLocs.find(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()) != this->updatedHiddenSegLocs.end())
+				this->updatedHiddenSegLocs.erase(this->updatedHiddenSegLocs.find(displayIt - (*this->CViewerPortal->getDisplayingSegs()).begin()));
 		}
+
 		this->CViewerPortal->updateDisplayingSegs();
 	}
+}
+
+void FragTraceControlPanel::moveType16showPtr(bool increment)
+{
+	if (this->CViewerPortal->getDisplayingSegs()->size() != this->totalVsegNum) this->updateDisplayingVsegProfile();
+
+	if (increment)
+	{
+		while (this->type16showingPtr->second.empty() && this->type16showingPtr != this->dist2VsegLocMap.end())
+			++(this->type16showingPtr);
+
+		if (this->type16showingPtr != this->dist2VsegLocMap.end())
+		{
+			cout << "Segment location to be marked SHOWN (distance = " << this->type16showingPtr->first << ") :";
+			for (auto& loc:this->type16showingPtr->second)
+			{
+				cout << loc << " ";
+				if (this->incrementHiddenLocs.find(loc) != this->incrementHiddenLocs.end())
+					this->incrementHiddenLocs.erase(this->incrementHiddenLocs.find(loc));
+				(this->CViewerPortal->getDisplayingSegs()->begin() + loc)->to_be_deleted = false;
+			}		
+			cout << endl << endl; 
+
+			++(this->type16showingPtr);
+			if (this->type16showingPtr == this->dist2VsegLocMap.end()) this->currentDist = -1;
+			else this->currentDist = this->type16showingPtr->first;
+		}
+	}
+	else
+	{
+		if (this->type16showingPtr != this->dist2VsegLocMap.begin())
+		{
+			do --(this->type16showingPtr);
+			while (this->type16showingPtr->second.empty());
+			this->currentDist = this->type16showingPtr->first;
+
+			cout << "Segment location to be marked HIDDEN (distance = " << this->type16showingPtr->first << ") :";
+			vector<ptrdiff_t> delLocs;
+			for (auto& loc : this->type16showingPtr->second)
+			{
+				if ((this->CViewerPortal->getDisplayingSegs()->begin() + loc)->to_be_deleted || (this->CViewerPortal->getDisplayingSegs()->begin() + loc)->row.begin()->data[1] != 16)
+				{
+					delLocs.push_back(this->type16showingPtr->second.find(loc) - this->type16showingPtr->second.begin());
+					continue;
+				}
+
+				cout << loc << " ";
+				this->incrementHiddenLocs.insert(loc);
+				(this->CViewerPortal->getDisplayingSegs()->begin() + loc)->to_be_deleted = true;
+			}
+			cout << endl << endl;
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (auto& delLoc : delLocs) this->type16showingPtr->second.erase(this->type16showingPtr->second.begin() + delLoc);
+		}
+	}
+
+	this->CViewerPortal->updateDisplayingSegs();
 }
 
 void FragTraceControlPanel::sequentialTypeChangingToggled(bool toggle)
@@ -495,6 +631,7 @@ void FragTraceControlPanel::traceButtonClicked()
 			this->pa_objFilter();                              // object filter
 			this->pa_objBasedMST();                            // object-based MST node connecting
 			this->pa_axonContinuous();
+			this->traceManagerPtr->allowedProcTime = uiPtr->spinBox_3->value();
 			// ---------------------------------------------------------- //
 		}
 	}
@@ -534,8 +671,23 @@ void FragTraceControlPanel::traceButtonClicked()
 		v3d_msg(QString("The process has been terminated."));
 		return;
 	}
+	//this->initThread();
 	this->thisCallback->setSWCTeraFly(this->tracedTree);
-	this->initDisplayingVsegs();
+	
+	// -- Acquire all type-16 Vsegs that are to be hidden, and record their locations on [My4DImage::tracedNeuron.seg] -- //
+	this->tracedType16Vsegs = this->traceManagerPtr->getCurrentVolumeV_NeuronSWCs();
+	if (!this->tracedType16Vsegs.empty())
+	{
+		for (vector<V_NeuronSWC>::iterator segIt = this->tracedType16Vsegs.begin(); segIt != this->tracedType16Vsegs.end(); ++segIt)
+		{
+			this->CViewerPortal->getDisplayingSegs()->push_back(*segIt);
+			this->updatedHiddenSegLocs.insert(this->CViewerPortal->getDisplayingSegs()->size() - 1);
+		}
+		this->updateDisplayingVsegProfile();
+		this->type16showingPtr = this->dist2VsegLocMap.end();
+		this->totalVsegNum = this->CViewerPortal->getDisplayingSegs()->size();
+	}
+	// ------------------------------------------------------------------------------------------------------------------ //
 
 	// ------- SegEnd Cluster Debug ------- //
 	if (FragTraceTester::isInstantiated())
@@ -562,7 +714,10 @@ void FragTraceControlPanel::traceButtonClicked()
 void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 {
 	// This method prepares the image data for FragTraceManager to trace.
-	// The FRAGTRACEMANAGER INSTANCE IS CREATED HERE.
+
+	/**************************************************/
+	/* The FRAGTRACEMANAGER INSTANCE IS CREATED HERE. */
+	/**************************************************/
 
 	this->volumeAdjusted = this->CViewerPortal->getPartialVolumeCoords(this->globalCoords, this->volumeAdjustedCoords, this->displayingDims);
 	if (FragTraceTester::isInstantiated()) FragTraceTester::getInstance()->printOutVolInfo();
@@ -711,7 +866,7 @@ void FragTraceControlPanel::pa_maskGeneration()
 		this->traceManagerPtr->histThre = true;
 		this->traceManagerPtr->histThreImgName = uiPtr->groupBox_6->title().toStdString();
 		this->traceManagerPtr->imgThreSeq.push_back(this->traceManagerPtr->histThreImgName);
-		this->traceManagerPtr->stdFold = this->doubleSpinBox->value();
+		this->traceManagerPtr->stdFold = uiPtr->doubleSpinBox_3->value();
 	}
 	else this->traceManagerPtr->histThre = false;
 }
@@ -1000,6 +1155,13 @@ void FragTraceControlPanel::signalNA2retypeConnectedSegs(V_NeuronSWC_list& displ
 }
 /* =============== END of [Terafly/Editing Communicating Methods] =============== */
 
+
+
+/*bool FragTraceControlPanel::initThread()
+{
+	std::thread testThread(&FragTraceManager::imgProcPipe_wholeBlock, this->traceManagerPtr);
+	return true;
+}*/
 
 
 void FragTraceControlPanel::fillUpParamsForm()

@@ -2,8 +2,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = E:/v3d_2013/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS	+= Mean_Variance_plugin.h
 SOURCES	+= Mean_Variance_plugin.cpp \

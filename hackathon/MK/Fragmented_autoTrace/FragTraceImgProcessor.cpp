@@ -165,8 +165,9 @@ NeuronTree FragTraceImgProcessor::mask2swc(const string inputImgName, map<string
 
 	signalBlobs.clear();
 	signalBlobs = this->findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
-
-	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(signalBlobs, true);
+	NeuronTree blob3Dtree;
+	if (signalBlobs.empty()) return blob3Dtree;
+	else blob3Dtree = NeuronStructUtil::blobs2tree(signalBlobs, true);
 
 	QString blobTreeFullFilenameQ = this->blobTreeSavePathQ + "\\blob.swc";
 	//writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);

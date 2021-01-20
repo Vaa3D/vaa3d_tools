@@ -9,6 +9,7 @@
 #include <v3d_interface.h>
 #include <fstream>
 #include <math.h>
+#include <sstream>
 
 using namespace std;
 
@@ -21,7 +22,11 @@ using namespace std;
 
 
 Q_EXPORT_PLUGIN2(Mean_Variance, TestPlugin);
- 
+
+void getSwcMeanStd(unsigned char* pdata, V3DLONG* sz, const NeuronTree& nt, double& swcMean, double& swcStd, double &median);
+
+void getSwcMeanStd(QString imagePath, QString swcPath, double& swcMean, double& swcStd, double &median, V3DPluginCallback2 &callback);
+
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
@@ -222,9 +227,64 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             }
         }
 	}
-	else if (func_name == tr("func2"))
+	else if (func_name == tr("getSwcMeanStd"))
 	{
-		v3d_msg("To be implemented.");
+        QString csvPath = inparas[0];
+        QString csvOutPath = inparas[1];
+        ifstream csvFileIn;
+        csvFileIn.open(csvPath.toStdString().c_str(),ios::in);
+        vector<string> arrayList = vector<string>();
+        if(csvFileIn){
+            string str;
+            while(getline(csvFileIn,str)){
+                arrayList.push_back(str);
+            }
+        }else {
+            qDebug()<<"open csvFile failed";
+            return 0;
+        }
+        csvFileIn.close();
+        int rowSize = arrayList.size();
+        vector<QStringList> data = vector<QStringList>();
+
+        for(int i=0; i<rowSize; i++){
+            QString s = QString::fromStdString(arrayList[i]);
+            QStringList ss = s.split(',');
+            data.push_back(ss);
+        }
+        data[0].append("swcIMean");
+        data[0].append("swcIStd");
+        data[0].append("swcIMedian");
+
+        int columnSize = data[0].size();
+
+        for(int i=1; i<rowSize; i++){
+            QString imagePath = data[i][columnSize-5];
+            QString swcPath = data[i][columnSize-4];
+            qDebug()<<imagePath;
+            qDebug()<<swcPath;
+            double swcMean,swcStd,swcMedian;
+            getSwcMeanStd(imagePath,swcPath,swcMean,swcStd,swcMedian,callback);
+            data[i].append(QString::number(swcMean));
+            data[i].append(QString::number(swcStd));
+            data[i].append(QString::number(swcMedian));
+        }
+
+        ofstream csvFileOut;
+        csvFileOut.open(csvOutPath.toStdString().c_str(),ios::out);
+        for(int i=0; i<rowSize; i++){
+            for(int j=0; j<columnSize; j++){
+                csvFileOut<<data[i].at(j).toStdString().c_str();
+                if(j != columnSize-1){
+                    csvFileOut<<',';
+                }else {
+                    csvFileOut<<endl;
+                }
+            }
+        }
+        csvFileOut.close();
+
+
 	}
 	else if (func_name == tr("help"))
 	{
@@ -233,5 +293,52 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	else return false;
 
 	return true;
+}
+
+void getSwcMeanStd(unsigned char* pdata, V3DLONG* sz, const NeuronTree& nt, double& swcMean, double& swcStd, double& median){
+    int x,y,z;
+    int size =nt.listNeuron.size();
+    swcMean = swcStd = 0;
+    vector<unsigned char> intensity = vector<unsigned char>();
+    for(int i=0; i<size; i++){
+        x = (int)(nt.listNeuron[i].x + 0.5);
+        y = (int)(nt.listNeuron[i].y + 0.5);
+        z = (int)(nt.listNeuron[i].z + 0.5);
+        if(x<0) x=0; if(x>=sz[0]) x=sz[0]-1;
+        if(y<0) y=0; if(y>=sz[1]) y=sz[1]-1;
+        if(z<0) z=0; if(z>=sz[2]) z=sz[2]-1;
+        V3DLONG index = z*sz[0]*sz[1] + y*sz[0] + x;
+        intensity.push_back(pdata[index]);
+    }
+    sort(intensity.begin(),intensity.end());
+
+    median = intensity[size/2];
+
+    for(int i=0; i<size; i++){
+        swcMean += intensity[i];
+    }
+    if(size>0){
+        swcMean /= (double)size;
+    }
+    for(int i=0; i<size; i++){
+        swcStd += (intensity[i]-swcMean)*(intensity[i]-swcMean);
+    }
+    if(size>0){
+        swcStd = sqrt(swcStd/size);
+    }
+
+}
+
+void getSwcMeanStd(QString imagePath, QString swcPath, double &swcMean, double &swcStd, double &median, V3DPluginCallback2& callback){
+    unsigned char* pdata = 0;
+    V3DLONG sz[4] = {0,0,0,0};
+    int dataType = 1;
+    simple_loadimage_wrapper(callback,imagePath.toStdString().c_str(),pdata,sz,dataType);
+    NeuronTree nt = readSWC_file(swcPath);
+    getSwcMeanStd(pdata,sz,nt,swcMean,swcStd,median);
+    if(pdata){
+        delete[] pdata;
+        pdata = 0;
+    }
 }
 

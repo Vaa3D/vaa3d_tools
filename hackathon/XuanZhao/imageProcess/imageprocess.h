@@ -13,6 +13,7 @@
 //protected:
 //    void run(int i, int j);
 //};
+using namespace std;
 
 void enhanceImage(unsigned char* data1d, V3DLONG* sz);
 
@@ -35,5 +36,21 @@ void getSubImage(QString tifDir, QString outPath, size_t x0, size_t x1,
                  int downSampleTimes, int resolution, V3DPluginCallback2 &callback);
 
 void testThread();
+
+void HE(unsigned char* data1d, V3DLONG* sz);
+
+void getColorMask(vector<double> &colorMask, double colorSigma);
+
+void getGaussianMask(float *&mask, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ);
+
+void bilateralfilter(unsigned char* src, unsigned char* &dst, V3DLONG* sz, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma);
+
+void changeContrast(unsigned char* data1d, V3DLONG* sz);
+
+void changeContrast2(unsigned char* data1d, V3DLONG* sz, double percentDown, double percentUp);
+
+void convertDataTo0_255(unsigned char* data1d, V3DLONG* sz);
+
+void removeAbnormalLine(unsigned char* data1d, V3DLONG* sz);
 
 #endif // IMAGEPROCESS_H
