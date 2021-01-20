@@ -162,18 +162,14 @@ namespace integratedDataTypes
 		NeuronTree tree;
 		map<int, size_t> node2LocMap;
 		map<int, vector<size_t>> node2childLocMap;
-		map<string, vector<int>> nodeTileMap; // tile label -> node ID
-
-		NeuronTree sortedTree;
-		map<string, float> morphFeatureMap;
-		void getMorphFeatures();
+		map<string, vector<int>> nodeTileMap; // tile label -> node IDs
 		
 		/* ================= Segment-related Data Members and Functions ================= */
 		map<int, segUnit> segs;											  // key = seg ID
 		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
 		map<string, vector<int>> segTailMap;							  // tile label -> seg ID
 
-		// -- NOT INITIALIZED WHEN PROFILEDTREE IS CONSTRUCTED -- //
+		// --------- NOT INITIALIZED WHEN PROFILEDTREE IS CONSTRUCTED --------- //
 		boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label; cluster number -> all seg IDs with heads in the cluster
 		boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label; cluster number -> all seg IDs with tails in the cluster
 		boost::container::flat_map<int, int> headSeg2ClusterMap;						  // segment ID -> the cluster in which the segment head is located
@@ -186,23 +182,33 @@ namespace integratedDataTypes
 		boost::container::flat_map<string, integratedDataTypes::overlappedCoord> overlappedCoordMap; // node coord key -> profiled overlapped coordinate
 
 		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all seg end nodes' coordinates in the cluster
-		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster
+		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster	
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;						 // segEnd cluster -> all possible seg pair combinations in the cluster
+
+		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching)
+		// -------------------------------------------------------------------- //
 		
-		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap; // segEnd cluster -> all possible seg pair combinations in the cluster
-		// ------------------------------------------------------ //
-		void getSegEndClusterNodeMap();
-		void getSegEndClusterCentoirds();
+		void getSegEndClusterNodeMap();   // -> this->segEndClusterNodeMap
+		void getSegEndClusterCentoirds(); // -> this->segEndClusterCentroidMap
 
-		void nodeSegMapGen();
-		void nodeCoordKeySegMapGen();
-		void segEndCoordKeySegMapGen();
-		void nodeCoordKeyNodeIDmapGen();
-		void overlappedCoordMapGen();
+		void nodeSegMapGen();             // -> this->node2segMap
+		void nodeCoordKeySegMapGen();     // -> this->nodeCoordKey2segMap
+		void segEndCoordKeySegMapGen();   // -> this->segEndCoordKey2segMap
+		void nodeCoordKeyNodeIDmapGen();  // -> this->nodeCoordKey2nodeIDMap
+		void overlappedCoordMapGen();     // -> overlappedCoordMap
+		
+		// ----------------- Segment Assembling Methods ----------------- // 
+		// Pick up the nearst node to the given soma coordinate. The node has to be a singular node that doesn't overlap any other nodes.
+		// If no node is found within the soma node tile and its 26 surrounding tiles, then a random singular will be picked.
+		int findNearestSegEndNodeID(const CellAPO inputAPO); 
 
-		map<int, segUnit> seg2MiddleBranchingMap;
-		int findNearestSegEndNodeID(const CellAPO inputAPO);
-		void assembleSegs2singleTree(int rootNodeID);
+		// Clean up and organize the 'mess' of manually traced segments, so that the segments will be "combed through" with a given starting node.
+		// This method is required before running [this->assembleSegs2singleTree] to transform segments into a single tree. 
 		void combSegs(int rootNodeID);
+
+		// This method takes "combed" segments and assembles them to a single tree. (Only 1 segment)
+		void assembleSegs2singleTree(int rootNodeID);
+		// -------------------------------------------------------------- //
 		
 	private:
 		void nodeSegMapGen(const map<int, segUnit>& segMap, boost::container::flat_map<int, int>& node2segMap);		
@@ -210,7 +216,10 @@ namespace integratedDataTypes
 		void segEndCoordKeySegMapGen(const map<int, segUnit>& segMap, boost::container::flat_multimap<string, int>& segEndCoordKey2segMap);
 		void nodeCoordKeyNodeIDmapGen(const QList<NeuronSWC>& nodeList, boost::container::flat_multimap<string, int>& nodeCoordKey2nodeIDmap);
 		
+		// This method is called by [this->combSegs] to recursively examine every segment and correct the heading direction.
 		void rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs);
+		
+		// This method is called when it needs to be converted to a segment that self-branches from the node to which other segment's end is attached.
 		pair<int, segUnit> splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID);
 		/* ============ END of [Segment-related Data Members and Functions] ============ */
 

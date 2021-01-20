@@ -358,7 +358,8 @@ void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
 
 void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 {
-	vector<ptrdiff_t> delLocs;
+	boost::container::flat_set<int> delLocs;
+	boost::container::flat_set<int> nodeIDMarked;
 	for (auto& nodeID : inputProfiledTree.node2childLocMap)
 	{
 		const NeuronSWC& currNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(nodeID.first));
@@ -367,15 +368,30 @@ void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 			const NeuronSWC& childNode = inputProfiledTree.tree.listNeuron.at(childLoc);
 			if (childNode.x == currNode.x && childNode.y == currNode.y && childNode.z == currNode.z)
 			{
-				delLocs.push_back(childLoc);
+				for (auto& node : inputProfiledTree.tree.listNeuron)
+					if (node.parent == childNode.n) node.parent = currNode.n;
+
+				delLocs.insert(childLoc);
+				nodeIDMarked.insert(childNode.n);
 				if (inputProfiledTree.node2childLocMap.find(childNode.n) != inputProfiledTree.node2childLocMap.end())
-					for (auto& grandChildLoc : inputProfiledTree.node2childLocMap.at(childNode.n)) inputProfiledTree.tree.listNeuron[grandChildLoc].parent = currNode.n;
+				{
+					if (nodeIDMarked.find(currNode.n) == nodeIDMarked.end())
+					{
+						for (auto& grandChildLoc : inputProfiledTree.node2childLocMap.at(childNode.n)) inputProfiledTree.tree.listNeuron[grandChildLoc].parent = currNode.n;
+					}
+					else
+					{
+						int paNodeID = currNode.parent;
+						while (nodeIDMarked.find(paNodeID) != nodeIDMarked.end()) paNodeID = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(paNodeID)).parent;
+						for (auto& grandChildLoc : inputProfiledTree.node2childLocMap.at(childNode.n)) inputProfiledTree.tree.listNeuron[grandChildLoc].parent = paNodeID;
+					}
+				}
 			}
 		}
 	}
 
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (auto& delLoc : delLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + delLoc);
+	for (boost::container::flat_set<int>::reverse_iterator rit = delLocs.rbegin(); rit != delLocs.rend(); ++rit)
+		inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *rit);
 	profiledTreeReInit(inputProfiledTree);
 }
 

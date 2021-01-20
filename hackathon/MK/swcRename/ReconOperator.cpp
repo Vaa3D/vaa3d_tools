@@ -116,10 +116,12 @@ void ReconOperator::removeDupedNodes()
 	QStringList fileList = inputFolder.entryList();
 
 	QString outputFolderQ = this->rootPath + "\\allCleanedUp\\";
-	QString remainingFolderQ = this->rootPath + "\\stillMoreThan1Root\\";
 	QDir outputDir(outputFolderQ);
-	QDir remainingDir(remainingFolderQ);
 	if (!outputDir.exists()) outputDir.mkpath(".");
+
+	/*QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
+	QDir subTreeDir(subTreeFolderQ);
+	if (!subTreeDir.exists()) subTreeDir.mkpath(".");*/
 
 	for (auto& file : fileList)
 	{
@@ -150,6 +152,10 @@ void ReconOperator::removeDupedNodes()
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 			if (NeuronStructUtil::multipleSegsCheck(inputTree))
 			{
+				/*QString treesFolderQ = subTreeFolderQ + baseName + "\\";
+				QDir treesFolderDir(treesFolderQ);
+				if (!treesFolderDir.exists()) treesFolderDir.mkpath(".");*/
+
 				clock_t start = clock();
 				boost::container::flat_map<int, profiledTree> connectedTrees = NeuronStructExplorer::groupGeoConnectedTrees(inputProfiledTree.tree);
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
@@ -157,6 +163,9 @@ void ReconOperator::removeDupedNodes()
 				int minNodeID, maxNodeID;
 				for (auto& connectedTree : connectedTrees)
 				{
+					//writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
+
+					NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 					cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
 					minNodeID = 10000000;
 					maxNodeID = 0;
@@ -172,6 +181,7 @@ void ReconOperator::removeDupedNodes()
 						connectedTree.second.assembleSegs2singleTree(nearestNodeID);
 						tree2HeadNodeMap.insert({ connectedTree.first, nearestNodeID });
 						connectedTree.second.tree.listNeuron[connectedTree.second.node2LocMap.at(nearestNodeID)].type = 1;
+						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
 					}
 					else
 					{

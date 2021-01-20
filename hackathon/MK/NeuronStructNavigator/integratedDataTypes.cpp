@@ -626,7 +626,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 	vector<int> nodeIDs;
 	if (this->nodeTileMap.find(targetNodeTileKey) != this->nodeTileMap.end())
 	{
-		//cout << targetNodeTileKey << endl;
+		//cout << "soma node tile: " << targetNodeTileKey << endl;
 		nodeIDs = this->nodeTileMap.at(targetNodeTileKey);
 		for (auto& nodeID : nodeIDs)
 		{
@@ -647,9 +647,11 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 				}
 			}
 		}
-		return outputNodeID;
+		
+		if (outputNodeID != 0) return outputNodeID;
 	}
-	else
+	
+	if (this->nodeTileMap.find(targetNodeTileKey) == this->nodeTileMap.end() || outputNodeID == 0)
 	{
 		for (int k = -1; k <= 1; ++k)
 		{
@@ -670,7 +672,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 					int newYkey = stoi(tileKeyStrings[1]) - j;
 					int newZkey = stoi(tileKeyStrings[2]) - k;
 					string newTileKey = to_string(newXkey) + "_" + to_string(newYkey) + "_" + to_string(newZkey);
-					//cout << newTileKey << endl;
+					//cout << "surrounding tile: " << newTileKey << endl;
 					if (this->nodeTileMap.find(newTileKey) != this->nodeTileMap.end())
 					{
 						nodeIDs.clear();

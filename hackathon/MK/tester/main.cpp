@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "groupTree";
+	//string funcName = "removeRedunNode";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -71,9 +71,12 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("removeRedunNode"))
 	{
 		NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
+		//QString inputFileNameQ = "C:\\Users\\hkuo9\\Desktop\\the_cell_for_test_preprocess_\\dupSegs_composite4\\191812_3801-X5383-Y20989_finalized.ano.eswc";
+		//NeuronTree inputTree = readSWC_file(inputFileNameQ);
 		profiledTree inputProfiledTree(inputTree);
 		NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 		writeSWC_file(QString::fromStdString(paras.at(0)) + "_redunRemoved.swc", inputProfiledTree.tree);
+		//writeSWC_file("C:\\Users\\hkuo9\\Desktop\\the_cell_for_test_preprocess_\\dupSegs_composite4\\191812_3801-X5383-Y20989_finalized.ano.eswc_dupRemoved.swc", inputProfiledTree.tree);
 	}
 	else if (!funcName.compare("dupNodeRemove"))
 	{
@@ -98,16 +101,8 @@ int main(int argc, char* argv[])
 			clock_t start = clock();
 			//profiledTree inputProfiledTree(readSWC_file("C:\\Users\\hkuo9\\Desktop\\test1\\" + file));
 			profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
-			/*for (auto& seg : inputProfiledTree.segs)
-			{
-				cout << seg.first << ": " << endl;
-				for (auto& node : seg.second.nodes) cout << "(" << node.x << ", " << node.y << ", " << node.z << ")" << " ";
-				cout << endl;
-			}
-			cout << endl;*/
-			//inputProfiledTree.segEndCoordKeySegMapGen();
-			//for (auto& coordKey : inputProfiledTree.segEndCoordKey2segMap) cout << coordKey.first << " " << coordKey.second << endl;
 			boost::container::flat_map<int, profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
+			//boost::container::flat_map<int, profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(inputProfiledTree1.tree);
 			//vector<profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(readSWC_file("C:\\Users\\hkuo9\\Desktop\\test1\\" + file));
 			clock_t end = clock();
 
@@ -118,12 +113,6 @@ int main(int argc, char* argv[])
 			QString outputFolderQ = QString::fromStdString(paras.at(0)) + "\\" + file.left(file.length() - 4);
 			QDir outputDir(outputFolderQ);
 			if (!outputDir.exists()) outputDir.mkpath(".");
-
-			/*vector<>
-			for (boost::container::flat_map<int, profiledTree>::reverse_iterator rit = groupedProfiledTrees.rbegin(); rit != groupedProfiledTrees.rend(); ++rit)
-			{
-
-			}*/
 
 			for (boost::container::flat_map<int, profiledTree>::iterator it = groupedProfiledTrees.begin(); it != groupedProfiledTrees.end(); ++it)
 			{
