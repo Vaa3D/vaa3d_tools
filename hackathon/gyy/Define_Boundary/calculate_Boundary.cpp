@@ -5,6 +5,8 @@
 #include <QDebug>
 #include "point_class.h"
 
+#define Z_plane 3000
+
 using namespace std;
 int read_Excel_File(QString FileName, vector<vector<int> > &range_data_vec);
 int write_Excel_File(QWidget *parent, QString saveName, vector<vector<Point_class>> point_3channel_vec, int pos1[3], int pos2[3]);
@@ -33,7 +35,7 @@ bool calculate_tile_bountary(V3DPluginCallback2 &callback, QWidget *parent)
         cout<<"range_20_data_list = "<<range_20_data_list[i].fileName().toStdString()<<endl;
 
         set_3channel_range_20_data(range_data_vec, point_3channel_vec);
-        cout<<"filter_data1 = "<<point_3channel_vec[0][0].filter_data<<endl;
+        cout<<"filter_data1 = "<<point_3channel_vec[0][0].range_20_data<<endl;
         qDebug()<<__LINE__;
 
         //error
@@ -42,7 +44,7 @@ bool calculate_tile_bountary(V3DPluginCallback2 &callback, QWidget *parent)
         set_3channel_filter_thres_data(point_3channel_vec);
         qDebug()<<__LINE__;
         set_3channel_flag(point_3channel_vec);
-        int pos1[3] = {1, 1, 1}, pos2[3] = {1162,1162,1162};
+        int pos1[3] = {1, 1, 1}, pos2[3] = {Z_plane, Z_plane, Z_plane};
         qDebug()<<__LINE__;
         find_boundary_position(point_3channel_vec,pos1, pos2);
         qDebug()<<__LINE__;
@@ -61,7 +63,7 @@ bool calculate_tile_bountary(V3DPluginCallback2 &callback, QWidget *parent)
 
 void set_3channel_range_20_data(vector<vector<int>> range_data_vec, vector<vector<Point_class>> &point_3channel_vec)
 {
-    for(int j = 0; j < 1162; j ++)
+    for(int j = 0; j < Z_plane; j ++)
     {  
         vector<Point_class> point_vec;
         Point_class point1;
@@ -132,7 +134,7 @@ void set_3channel_filter_data(vector<vector<Point_class>> &point_3channel_vec)
         }
     }
 */
-    for(int m = 0; m < 1162; m ++)
+    for(int m = 0; m < Z_plane; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
@@ -145,7 +147,7 @@ void set_3channel_filter_data(vector<vector<Point_class>> &point_3channel_vec)
 
             }
 
-            else if(m == 1161)
+            else if(m == Z_plane-1)
             {
                 Point_class p1;
                 Point_class point_arr[2]={p1, point_3channel_vec[m-1][n]};
@@ -168,7 +170,7 @@ void set_3channel_filter_data(vector<vector<Point_class>> &point_3channel_vec)
 
 void set_3channel_filter_thres_data(vector<vector<Point_class>> &point_3channel_vec)
 {
-    for(int m = 4; m < 1162; m ++)
+    for(int m = 4; m < Z_plane; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
@@ -194,7 +196,7 @@ void set_3channel_filter_thres_data(vector<vector<Point_class>> &point_3channel_
 
 void set_3channel_flag(vector<vector<Point_class>> &point_3channel_vec)
 {
-    for(int m = 2; m < 1162; m ++)
+    for(int m = 2; m < Z_plane; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
@@ -202,7 +204,7 @@ void set_3channel_flag(vector<vector<Point_class>> &point_3channel_vec)
         }
     }
 
-    for(int m = 0; m < 1155; m ++)
+    for(int m = 0; m < Z_plane-7; m ++)
     {
         for(int n = 0; n < 3; n ++)
         {
@@ -215,7 +217,8 @@ void set_3channel_flag(vector<vector<Point_class>> &point_3channel_vec)
 void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int pos1[3], int pos2[3])
 {
     int count1[3] = {0};
-    for(int m = 0; m < 1162; m ++)
+    qDebug()<<__LINE__;
+    for(int m = 0; m < Z_plane; m ++)
     {
         if(point_3channel_vec[m][0].flag_data1 == 1)
         {
@@ -223,7 +226,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             if(count1[0] >= point_3channel_vec[0][0].flag_range)
             {
                 pos1[0] = m - point_3channel_vec[0][0].flag_range+1+1;
-                if(m+50<1162 && m>10)
+                if(m+50<Z_plane && m>10)
                     for(int n = m-10; n < m+20; n ++)
                     {
                         if(point_3channel_vec[n][1].flag_data1 == 1)
@@ -274,9 +277,10 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             break;
     }
 
+    qDebug()<<__LINE__;
 
     int count2[3] = {0};
-    for(int m = 1161; m > 0; m --)
+    for(int m = Z_plane; m > 0; m --)
     {
         if(point_3channel_vec[m][2].flag_data2 == 1)
         {
@@ -284,7 +288,7 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
             if(count2[2] >= point_3channel_vec[0][0].flag_range)
             {
                 pos2[2] = m + point_3channel_vec[0][0].flag_range;
-                if(m-50>0 && m+10<1161)
+                if(m-50>0 && m+10<(Z_plane-1))
                     for(int n = m+10; n > m-20; n --)
                     {
                         if(point_3channel_vec[n][1].flag_data2 == 1)
@@ -308,34 +312,38 @@ void find_boundary_position(vector<vector<Point_class>> point_3channel_vec, int 
                                     else
                                         count2[0] = 0;
                                 }
+
+                                qDebug()<<__LINE__;
                                 if(count2[0]<point_3channel_vec[0][0].flag_range)
                                 {
                                     count2[2] = 1;
                                     count2[1] = 1;
-                                    pos2[2] = 1162;
-                                    pos2[1] = 1162;
+                                    pos2[2] = Z_plane;
+                                    pos2[1] = Z_plane;
                                     break;
                                 }
                             }
                         }
                         else
                             count2[1] = 0;
-                        if(pos2[0]!=1162)
+                        if(pos2[0]!=Z_plane)
                             break;
                     }
+
+                qDebug()<<__LINE__;
                 if(count2[1] < point_3channel_vec[0][0].flag_range)
                 {
                         count2[2] = 0;
-                        pos2[2] = 1162;
+                        pos2[2] = Z_plane;
                 }
             }
         }
         else
             count2[2]=0;
-        if(pos2[1]!=1162)
+        if(pos2[1]!=Z_plane)
             break;
     }
-
+    qDebug()<<__LINE__;
 
 }
 
@@ -372,7 +380,8 @@ int read_Excel_File(QString FileName, vector<vector<int>> &range_data_vec)
     qDebug()<<"Excel columns = "<<intCols;
 
     //Load data in batches
-    QString Range = "B2:D1163";
+    QString num = QString::fromStdString(to_string(Z_plane+1));
+    QString Range = "B2:D"+num;
     cout<<"Excel Range: "<<Range.toStdString()<<endl;
 
     QAxObject *allExcelData = worksheet->querySubObject("Range(QString)", Range);
@@ -427,7 +436,7 @@ int write_Excel_File(QWidget *parent, QString saveName, vector<vector<Point_clas
 void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3channel_vec, int pos1[3], int pos2[3])
 {
     QList<QList<QVariant>> datas_sheet;
-    for(int i = 0; i < 1164; i ++)
+    for(int i = 0; i < Z_plane+2; i ++)
     {
         QList <QVariant> rows;
         if(i == 0)
@@ -686,7 +695,8 @@ void write_sheet_file(QAxObject *worksheet, vector<vector<Point_class>> point_3c
     for(auto v: datas_sheet)
         vars.append(QVariant(v));
     QVariant var = QVariant(vars);
-    QString big_range = "A1:AB1164";
+    QString num1 = QString::fromStdString(to_string(Z_plane+2));
+    QString big_range = "A1:AB"+num1;
     QAxObject *excel_property = worksheet -> querySubObject("Range(const QString&)", big_range);
     excel_property -> setProperty("Value", var);
     excel_property -> setProperty("HorizontalAlignment", -4108);

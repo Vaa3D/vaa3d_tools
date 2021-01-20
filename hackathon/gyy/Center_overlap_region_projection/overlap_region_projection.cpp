@@ -5,16 +5,18 @@
 #include <QAxObject>
 #include "math.h"
 
+const int X_length = 2000, Y_length = 1600, Z_plane = 3000, XY_overlapIni = 70, num_channel = 2;
+
 bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *parent);
-bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, vector<unsigned short *> &pdataCPlane, unsigned short *&pdataPro, QString orientation, int XY_length, int XY_overlapIni, int count);
+bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, vector<unsigned short *> &pdataCPlane, unsigned short *&pdataPro, QString orientation, int XY_overlapIni, int count);
 bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QFileInfoList imageList, QString saveTile1[3], QString saveTile2[3]);
 bool calculate_overlap_shift(V3DPluginCallback2 &callback, vector<vector<unsigned short *>> &pdataAllPlane1, vector<vector<unsigned short *>> &pdata_CPlane1, vector<vector<unsigned short *>> &pdataAllPlane2,
-                        vector<vector<unsigned short *>> &pdata_CPlane2, vector<vector<int>> & XY_overlap, vector<vector<int>> & XY_shift, int XY_length, QString orientation, int Z_shift);
-bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, QString orientation, int XY_length, int & XY_ocerlap_I, int & XY_shift_I, int num, int c);
-void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data, int XY_length);
+                        vector<vector<unsigned short *>> &pdata_CPlane2, vector<vector<int>> & XY_overlap, vector<vector<int>> & XY_shift, QString orientation, int Z_shift);
+bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, QString orientation, int & XY_ocerlap_I, int & XY_shift_I, int num, int c);
+void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data);
 bool setOrientation(QString & orientation1, QString & orientation2, string s1, string s2);
-void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QString orientation, int XY_length, int shift_XY[3], int shift_Z[3]);
-void calculate_expansion_ratio(vector<vector<int>> XY_overlap, vector<vector<int>> XY_shift, vector<vector<double>> &overlap_shift_Ratio, int XY_length, int Z_shift);
+void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QString orientation, int shift_XY[3], int shift_Z[3]);
+void calculate_expansion_ratio(vector<vector<int>> XY_overlap, vector<vector<int>> XY_shift, vector<vector<double>> &overlap_shift_Ratio, int Z_shift);
 void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2, QString orientation, int shift_XY[3], int shift_Z[3], vector<vector<int> > XY_overlap, vector<vector<int> > XY_shift, vector<vector<double>> overlap_shift_Ratio, int Z_shift);
 QAxObject * appendSheet(QAxObject * &worksheets, const QString sheetName);
 QString setTitleName(QString saveFolder, string s, QDir dir, QString orientation);
@@ -35,18 +37,21 @@ bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *
         return false;
 
     string sname1 = tileDir1.dirName().toStdString();
-    string s1 = sname1.substr(10, 2);
+    //string s1 = sname1.substr(10, 2);
     string sname2 = tileDir2.dirName().toStdString();
-    string s2 = sname2.substr(10, 2);
+    //string s2 = sname2.substr(10, 2);
 
-    int XY_length = 1880, XY_overlapIni = 254;
+
     QString orientation1, orientation2;
-
+    orientation1 = "left";
+    orientation2 = "right";
+    /*
     if(!setOrientation(orientation1, orientation2, s1, s2))
     {
         qDebug()<<__LINE__;
         return 0;
     }
+    */
     qDebug()<<__LINE__;
     cout<<"Orientation1 = "<<orientation1.toStdString().c_str()<<endl;
     cout<<"Orientation2 = "<<orientation2.toStdString().c_str()<<endl;
@@ -56,18 +61,18 @@ bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *
     tileDir2.setFilter(QDir::Dirs);
     QFileInfoList channelList2 = tileDir2.entryInfoList();
 
-    vector<vector<unsigned short *>> pdataAllPlane1(3, vector<unsigned short *>(1150, 0));
-    vector<vector<unsigned short *>> pdataAllPlane2(3, vector<unsigned short *>(1150, 0));
-    vector<unsigned short *> pdataPro1(3, 0);
-    vector<unsigned short *> pdataPro2(3, 0);
+    vector<vector<unsigned short *>> pdataAllPlane1(num_channel, vector<unsigned short *>(Z_plane, 0));
+    vector<vector<unsigned short *>> pdataAllPlane2(num_channel, vector<unsigned short *>(Z_plane, 0));
+    vector<unsigned short *> pdataPro1(num_channel, 0);
+    vector<unsigned short *> pdataPro2(num_channel, 0);
 
-    QDir dir1[3], dir2[3];
-    QFileInfoList imageList1[3], imageList2[3];
-    QString tileSave1[3], tileSave2[3];
+    QDir dir1[num_channel], dir2[num_channel];
+    QFileInfoList imageList1[num_channel], imageList2[num_channel];
+    QString tileSave1[num_channel], tileSave2[num_channel];
     int count = 0;
     for(int i = 0; i < channelList1.size()-2; i ++)
     {
-        qDebug()<<": i = "<<i;
+        qDebug()<<__LINE__<<": i = "<<i;
         dir1[i] = channelList1[i+2].filePath();
         dir2[i] = channelList2[i+2].filePath();
 
@@ -77,10 +82,10 @@ bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *
         imageList2[i] = dir2[i].entryInfoList(filters, QDir::Files);
 
         count ++;
-        if(!calculate_project(callback, imageList1[i], pdataAllPlane1[i], pdataPro1[i], orientation1, XY_length, XY_overlapIni, count))
+        if(!calculate_project(callback, imageList1[i], pdataAllPlane1[i], pdataPro1[i], orientation1, XY_overlapIni, count))
             return false;
         count ++;
-        if(!calculate_project(callback, imageList2[i], pdataAllPlane2[i], pdataPro2[i], orientation2, XY_length, XY_overlapIni, count))
+        if(!calculate_project(callback, imageList2[i], pdataAllPlane2[i], pdataPro2[i], orientation2, XY_overlapIni, count))
             return false;
 
         /*
@@ -93,32 +98,49 @@ bool calculate_overlap_region_projection(V3DPluginCallback2 &callback, QWidget *
 //    if(!save_projection_files(callback, pdataPro1, pdataPro2, imageList1[0], tileSave1, tileSave2))
 //        return false;
 
-    int shift_XY[3] = {0}, shift_Z[3] = {0};
-    calculate_tiles_shift(pdataPro1, pdataPro2, orientation1, XY_length, shift_XY, shift_Z);
+    int shift_XY[num_channel] = {0}, shift_Z[num_channel] = {0};
+    calculate_tiles_shift(pdataPro1, pdataPro2, orientation1, shift_XY, shift_Z);
 
-    int Z_shift = (int)((shift_Z[0]+shift_Z[1]+shift_Z[2]+0.0)/3+0.5);
-    vector<vector<unsigned short *>> pdata_CPlane1(3, vector<unsigned short *>(1150 - Z_shift, 0));
-    vector<vector<unsigned short *>> pdata_CPlane2(3, vector<unsigned short *>(1150 - Z_shift, 0));
-    vector<vector<int>> XY_overlap(3, vector<int>(1150, 0));
-    vector<vector<int>> XY_shift(3, vector<int>(1150, 0));
-    vector<vector<double>> overlap_shift_Ratio(3, vector<double>(1150, 0));
+    int sum_z = 0;
+    for(int i = 0; i < num_channel; i ++)
+        sum_z += shift_Z[i];
+    int Z_shift = (int)((sum_z+0.0)/num_channel+0.5);
 
-    calculate_overlap_shift(callback, pdataAllPlane1, pdata_CPlane1, pdataAllPlane2, pdata_CPlane2, XY_overlap, XY_shift, XY_length, orientation1, Z_shift);
+    vector<vector<unsigned short *>> pdata_CPlane1(num_channel, vector<unsigned short *>(Z_plane - Z_shift, 0));
+    vector<vector<unsigned short *>> pdata_CPlane2(num_channel, vector<unsigned short *>(Z_plane - Z_shift, 0));
+    vector<vector<int>> XY_overlap(num_channel, vector<int>(Z_plane, 0));
+    vector<vector<int>> XY_shift(num_channel, vector<int>(Z_plane, 0));
+    vector<vector<double>> overlap_shift_Ratio(num_channel, vector<double>(Z_plane, 0));
+
+    calculate_overlap_shift(callback, pdataAllPlane1, pdata_CPlane1, pdataAllPlane2, pdata_CPlane2, XY_overlap, XY_shift, orientation1, Z_shift);
     qDebug()<<__LINE__<<": Z_shift = "<<Z_shift;
-    calculate_expansion_ratio(XY_overlap, XY_shift, overlap_shift_Ratio, XY_length, Z_shift);
-    save_tiles_shift(parent, SaveFolder, s1, s2, orientation1, shift_XY, shift_Z, XY_overlap, XY_shift, overlap_shift_Ratio, Z_shift);
+    calculate_expansion_ratio(XY_overlap, XY_shift, overlap_shift_Ratio, Z_shift);
+    save_tiles_shift(parent, SaveFolder, sname1, sname2, orientation1, shift_XY, shift_Z, XY_overlap, XY_shift, overlap_shift_Ratio, Z_shift);
 
 }
 
-bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, vector<unsigned short *> &pdataCPlane, unsigned short * &pdataPro, QString orientation, int XY_length, int XY_overlapIni, int count)
+bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, vector<unsigned short *> &pdataCPlane, unsigned short * &pdataPro, QString orientation, int XY_overlapIni, int count)
 {
-    vector<unsigned char *> data1d_vec(1150);
-    vector<V3DLONG *> in_sz_vec(1150);
-    vector<int> datatype_vec(1150);
-    for(V3DLONG i = 0; i < 1150; i++)
+    vector<unsigned char *> data1d_vec(Z_plane);
+    vector<V3DLONG *> in_sz_vec(Z_plane);
+    vector<int> datatype_vec(Z_plane);
+    for(V3DLONG i = 0; i < Z_plane; i++)
     {
         cout<<"This is "<<i+1<<" image for "<<count<<"."<<endl;
         in_sz_vec[i] = new V3DLONG[4];
+        if(!simple_loadimage_wrapper(callback, imageList[i].filePath().toStdString().c_str(), data1d_vec[i], in_sz_vec[i], datatype_vec[i]))
+        {
+            qDebug()<< "Error happens in reading the subject file.";
+            return false;
+        }
+
+        unsigned short* pdata_temp= new unsigned short[in_sz_vec[i][0]*in_sz_vec[i][1]*in_sz_vec[i][2]*in_sz_vec[i][3] *datatype_vec[i]/2];
+        memcpy(pdata_temp, data1d_vec[i], in_sz_vec[i][0]*in_sz_vec[i][1]*in_sz_vec[i][2]*in_sz_vec[i][3]*datatype_vec[i]);
+        cut_planes_edge(pdata_temp, pdataCPlane[i]);
+    }
+
+
+        /*
         if(count == 1 || count == 2)
         {
             if(!simple_loadimage_wrapper(callback, imageList[i].filePath().toStdString().c_str(), data1d_vec[i], in_sz_vec[i], datatype_vec[i]))
@@ -141,33 +163,30 @@ bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, ve
                 qDebug()<< "Error happens in reading the subject file.";
                 return false;
             }
+        */
 
-        unsigned short* pdata_temp= new unsigned short[in_sz_vec[i][0]*in_sz_vec[i][1]*in_sz_vec[i][2]*in_sz_vec[i][3] *datatype_vec[i]/2];
-        memcpy(pdata_temp, data1d_vec[i], in_sz_vec[i][0]*in_sz_vec[i][1]*in_sz_vec[i][2]*in_sz_vec[i][3]*datatype_vec[i]);
-        cut_planes_edge(pdata_temp, pdataCPlane[i], XY_length);
-    }
 
     if(pdataPro){delete []pdataPro; pdataPro = 0;}
-    pdataPro = new unsigned short[in_sz_vec[0][0]*1150*datatype_vec[0]/2];
+    pdataPro = new unsigned short[in_sz_vec[0][0]*Z_plane*datatype_vec[0]/2];
 
     V3DLONG centerOverlap = 0;
     if(orientation == "left" || orientation == "right")
     {
         if(orientation == "left")
-            centerOverlap = XY_length-XY_overlapIni/2;
+            centerOverlap = X_length-XY_overlapIni/2;
         else
             centerOverlap = XY_overlapIni/2;
 
-        for(int i = 0; i < 1150; i ++)
+        for(int i = 0; i < Z_plane; i ++)
         {
-            for(int j = 0; j < XY_length; j ++)
+            for(int j = 0; j < Y_length; j ++)
             {
-                int maxValue = pdataCPlane[i][j*XY_length+centerOverlap-10];
+                int maxValue = pdataCPlane[i][j*Y_length+centerOverlap-10];
                 for(int k = centerOverlap-10; k < centerOverlap+10; k++)
                 {
-                    maxValue = ((maxValue >= pdataCPlane[i][j*XY_length+k]) ? maxValue : pdataCPlane[i][j*XY_length+k]);
+                    maxValue = ((maxValue >= pdataCPlane[i][j*Y_length+k]) ? maxValue : pdataCPlane[i][j*Y_length+k]);
                 }
-                pdataPro[i*XY_length+j] = maxValue;
+                pdataPro[i*Y_length+j] = maxValue;
             }
         }
 
@@ -176,32 +195,32 @@ bool calculate_project(V3DPluginCallback2 &callback, QFileInfoList imageList, ve
     else if(orientation == "up" || orientation == "down")
     {
         if(orientation == "up")
-            centerOverlap = XY_length - XY_overlapIni/2;
+            centerOverlap = Y_length - XY_overlapIni/2;
         else
             centerOverlap = XY_overlapIni/2;
 
-        for(int i = 0; i < 1150; i ++)
+        for(int i = 0; i < Z_plane; i ++)
         {
-            for(int j = 0; j < XY_length; j ++)
+            for(int j = 0; j < X_length; j ++)
             {
-                int maxValue = pdataCPlane[i][(centerOverlap-10)*XY_length+j];
+                int maxValue = pdataCPlane[i][(centerOverlap-10)*X_length+j];
                 for(int k = centerOverlap-10; k < centerOverlap+10; k ++)
                 {
-                    maxValue = ((maxValue >= pdataCPlane[i][k*XY_length+j]) ? maxValue : pdataCPlane[i][k*XY_length+j]);
+                    maxValue = ((maxValue >= pdataCPlane[i][k*X_length+j]) ? maxValue : pdataCPlane[i][k*X_length+j]);
                 }
-                pdataPro[i*XY_length+j] = maxValue;
+                pdataPro[i*X_length+j] = maxValue;
             }
         }
     }
     qDebug()<<__LINE__<<": pdataPro[0][0] = "<<pdataPro[0];
 }
 
-void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QString orientation, int XY_length, int shift_XY[3], int shift_Z[3])
+void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QString orientation, int shift_XY[3], int shift_Z[3])
 {
-    const int XY_shift_range = 5, Z_shift_range = 20;
+    const int XY_shift_range = 20, Z_shift_range = 20;
     if(orientation == "left" || orientation == "right")
     {
-        for(int i = 0; i < 3; i ++)
+        for(int i = 0; i < num_channel; i ++)
         {
             double sum[XY_shift_range*Z_shift_range] = {0};
             int difference[XY_shift_range*Z_shift_range] = {0};
@@ -211,15 +230,15 @@ void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned s
             {
                 for(int ss = 0; ss < Z_shift_range; ss ++)
                 {
-                    for(int row = 0; row < 1150-sz; row ++)
+                    for(int row = 0; row < Z_plane-sz; row ++)
                     {
-                        for(int col = 0; col < XY_length-ss; col ++)
+                        for(int col = 0; col < Y_length-ss; col ++)
                         {
                             int diff;
                             if(orientation == "left")
-                                diff = pdataPro1[i][(row+sz)*XY_length+col]-pdataPro2[i][row*XY_length+col+ss];
+                                diff = pdataPro1[i][(row+sz)*Y_length+col]-pdataPro2[i][row*Y_length+col+ss];
                             else
-                                diff = pdataPro2[i][(row+sz)*XY_length+col]-pdataPro1[i][row*XY_length+col+ss];
+                                diff = pdataPro2[i][(row+sz)*Y_length+col]-pdataPro1[i][row*Y_length+col+ss];
                             sum[sz*Z_shift_range+ss] += diff * diff;
                             count[sz*Z_shift_range+ss] +=1;
                         }
@@ -245,7 +264,7 @@ void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned s
 
     else if(orientation == "up" || orientation == "down")
     {
-        for(int i = 0; i < 3; i ++)
+        for(int i = 0; i < num_channel; i ++)
         {
             double sum[XY_shift_range*Z_shift_range] = {0};
             int difference[XY_shift_range*Z_shift_range] = {0};
@@ -255,11 +274,11 @@ void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned s
             {
                 for(int ss = 0; ss < Z_shift_range; ss ++)
                 {
-                    for(int row = 0; row < 1150-sz; row ++)
+                    for(int row = 0; row < Z_plane-sz; row ++)
                     {
-                        for(int col = 0; col < XY_length-ss; col ++)
+                        for(int col = 0; col < X_length-ss; col ++)
                         {
-                            int diff = pdataPro1[i][row*XY_length+col+ss]-pdataPro2[i][(row+sz)*XY_length+col];
+                            int diff = pdataPro1[i][row*X_length+col+ss]-pdataPro2[i][(row+sz)*X_length+col];
                             sum[sz*Z_shift_range+ss] += diff * diff;
                             count[sz*Z_shift_range+ss] ++;
                         }
@@ -284,7 +303,7 @@ void calculate_tiles_shift(vector<unsigned short *> pdataPro1, vector<unsigned s
     }
 }
 
-bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QFileInfoList imageList, QString saveTile1[3], QString saveTile2[3])
+bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *> pdataPro1, vector<unsigned short *> pdataPro2, QFileInfoList imageList, QString saveTile1[num_channel], QString saveTile2[num_channel])
 {
     unsigned char * data1d = 0;
     V3DLONG in_sz[4]={0};
@@ -299,12 +318,12 @@ bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *
     qDebug()<<__LINE__<<": datatype = "<<datatype;
 
     qDebug()<<__LINE__<<": pdataPro[0][0] = "<<pdataPro1[0][0];
-    for(int i = 0; i < 3; i ++)
+    for(int i = 0; i < num_channel; i ++)
     {
         // Save tile1
-        unsigned char * data1dTile1 = new unsigned char[in_sz[0]*1150*datatype];
-        memcpy(data1dTile1, pdataPro1[i], in_sz[0]*1150*datatype);
-        V3DLONG in_sz_pro1[4] = {in_sz[0], 1150, 1, 1};
+        unsigned char * data1dTile1 = new unsigned char[in_sz[0]*Z_plane*datatype];
+        memcpy(data1dTile1, pdataPro1[i], in_sz[0]*Z_plane*datatype);
+        V3DLONG in_sz_pro1[4] = {in_sz[0], Z_plane, 1, 1};
         qDebug()<<__LINE__<<": data1dTile1[0] = "<<data1dTile1[0];
         if(simple_saveimage_wrapper(callback, saveTile1[i].toStdString().c_str(), data1dTile1, in_sz_pro1, datatype))
         {
@@ -312,9 +331,9 @@ bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *
         }
 
         // Save tile2
-        unsigned char * data1dTile2 = new unsigned char[in_sz[0]*1150*datatype];
-        memcpy(data1dTile2, pdataPro2[i], in_sz[0]*1150*datatype);
-        V3DLONG in_sz_pro2[4] = {in_sz[0], 1150, 1, 1};
+        unsigned char * data1dTile2 = new unsigned char[in_sz[0]*Z_plane*datatype];
+        memcpy(data1dTile2, pdataPro2[i], in_sz[0]*Z_plane*datatype);
+        V3DLONG in_sz_pro2[4] = {in_sz[0], Z_plane, 1, 1};
         qDebug()<<__LINE__<<": data1dTile2[0] = "<<data1dTile2[0];
         if(simple_saveimage_wrapper(callback, saveTile2[i].toStdString().c_str(), data1dTile2, in_sz_pro2, datatype))
         {
@@ -325,27 +344,27 @@ bool save_projection_files(V3DPluginCallback2 &callback, vector<unsigned short *
 }
 
 bool calculate_overlap_shift(V3DPluginCallback2 &callback, vector<vector<unsigned short *>> &pdataAllPlane1, vector<vector<unsigned short *>> &pdata_CPlane1, vector<vector<unsigned short *>> &pdataAllPlane2,
-                        vector<vector<unsigned short *>> &pdata_CPlane2, vector<vector<int> > &XY_overlap, vector<vector<int> > &XY_shift, int XY_length, QString orientation, int Z_shift)
+                        vector<vector<unsigned short *>> &pdata_CPlane2, vector<vector<int> > &XY_overlap, vector<vector<int> > &XY_shift, QString orientation, int Z_shift)
 {
     qDebug()<<__LINE__<<": Calculate overlap and shift!";
-    for(int c = 0; c < 3; c ++)
+    for(int c = 0; c < num_channel; c ++)
     {
         if(orientation == "left")
         {
             qDebug()<<__LINE__<<": orientation = "<<orientation.toStdString().c_str();
-            for(int i = 0; i < 1150 - Z_shift; i ++)
+            for(int i = 0; i < Z_plane - Z_shift; i ++)
             {
                 if(pdata_CPlane1[c][i]){delete []pdata_CPlane1[c][i]; pdata_CPlane1[c][i] = 0;}
-                pdata_CPlane1[c][i] = new unsigned short[XY_length*XY_length*1*1*2/2];
-                memcpy(pdata_CPlane1[c][i], pdataAllPlane1[c][i+Z_shift], XY_length*XY_length*1*1*2);
+                pdata_CPlane1[c][i] = new unsigned short[X_length*Y_length*1*1*2/2];
+                memcpy(pdata_CPlane1[c][i], pdataAllPlane1[c][i+Z_shift], X_length*Y_length*1*1*2);
 
                 if(pdata_CPlane2[c][i]){delete []pdata_CPlane2[c][i]; pdata_CPlane2[c][i] = 0;}
-                pdata_CPlane2[c][i] = new unsigned short[XY_length*XY_length*1*1*2/2];
-                memcpy(pdata_CPlane2[c][i], pdataAllPlane2[c][i], XY_length*XY_length*1*1*2);
+                pdata_CPlane2[c][i] = new unsigned short[X_length*Y_length*1*1*2/2];
+                memcpy(pdata_CPlane2[c][i], pdataAllPlane2[c][i], X_length*Y_length*1*1*2);
             }
-            for(int i = 0; i < 1150-Z_shift; i ++)
+            for(int i = 0; i < Z_plane-Z_shift; i ++)
             {
-                if(!calculate_2Img_overlap_shift(pdata_CPlane1[c][i], pdata_CPlane2[c][i], orientation, XY_length, XY_overlap[c][i], XY_shift[c][i], i, c))
+                if(!calculate_2Img_overlap_shift(pdata_CPlane1[c][i], pdata_CPlane2[c][i], orientation, XY_overlap[c][i], XY_shift[c][i], i, c))
                     return false;
             }
         }
@@ -353,21 +372,21 @@ bool calculate_overlap_shift(V3DPluginCallback2 &callback, vector<vector<unsigne
         else if(orientation == "right" || orientation == "up")
         {
             qDebug()<<__LINE__<<": orientation = "<<orientation.toStdString().c_str();
-            for(int i = 0; i < 1150 - Z_shift; i ++)
+            for(int i = 0; i < Z_plane - Z_shift; i ++)
             {
                 if(pdata_CPlane1[c][i]){delete []pdata_CPlane1[c][i]; pdata_CPlane1[c][i] = 0;}
-                pdata_CPlane1[c][i] = new unsigned short[XY_length*XY_length*1*1*2/2];
-                memcpy(pdata_CPlane1[c][i], pdataAllPlane1[c][i], XY_length*XY_length*1*1*2);
+                pdata_CPlane1[c][i] = new unsigned short[X_length*Y_length*1*1*2/2];
+                memcpy(pdata_CPlane1[c][i], pdataAllPlane1[c][i], X_length*Y_length*1*1*2);
 
                 if(pdata_CPlane2[c][i]){delete []pdata_CPlane2[c][i]; pdata_CPlane2[c][i] = 0;}
-                pdata_CPlane2[c][i] = new unsigned short[XY_length*XY_length*1*1*2/2];
-                memcpy(pdata_CPlane2[c][i], pdataAllPlane2[c][i+Z_shift], XY_length*XY_length*1*1*2);
+                pdata_CPlane2[c][i] = new unsigned short[X_length*Y_length*1*1*2/2];
+                memcpy(pdata_CPlane2[c][i], pdataAllPlane2[c][i+Z_shift], X_length*Y_length*1*1*2);
             }
             qDebug()<<__LINE__<<": pdata_CPlane1[0][0] = "<<pdata_CPlane1[0][0][0];
             qDebug()<<__LINE__<<": pdata_CPlane2[0][0] = "<<pdata_CPlane2[0][0][0];
-            for(int i = 0; i < 1150-Z_shift; i ++)
+            for(int i = 0; i < Z_plane-Z_shift; i ++)
             {
-                if(!calculate_2Img_overlap_shift(pdata_CPlane1[c][i], pdata_CPlane2[c][i], orientation, XY_length, XY_overlap[c][i], XY_shift[c][i], i, c))
+                if(!calculate_2Img_overlap_shift(pdata_CPlane1[c][i], pdata_CPlane2[c][i], orientation, XY_overlap[c][i], XY_shift[c][i], i, c))
                     return false;
             }
         }
@@ -376,11 +395,11 @@ bool calculate_overlap_shift(V3DPluginCallback2 &callback, vector<vector<unsigne
 }
 
 
-bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, QString orientation, int XY_length, int & XY_ocerlap_I, int & XY_shift_I, int num, int c)
+bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdata2, QString orientation, int & XY_ocerlap_I, int & XY_shift_I, int num, int c)
 {
     qDebug()<<"Calculate the overlap and shift between the "<<num+1<<" pairs for "<<c+1<<" channel.";
 
-    const int overlap_range = 30, shift_range = 20;
+    const int overlap_range = 300, shift_range = 20;
     double sum[overlap_range * shift_range] = {0};
     int difference[overlap_range * shift_range] = {0};
     int count[overlap_range * shift_range] = {0};
@@ -388,20 +407,20 @@ bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdat
 
     if(orientation == "left" || orientation == "right")
     {
-        for(int ss1 = 240; ss1 < 240+overlap_range; ss1 ++)
+        for(int ss1 = 10; ss1 < 10+overlap_range; ss1 ++)
         {
             for(int ss2 = 0; ss2 < shift_range; ss2 ++)
             {
-                int indexOL = shift_range*(ss1-240)+ss2;
-                for(int row = 0; row < XY_length-ss2; row ++)
+                int indexOL = shift_range*(ss1-10)+ss2;
+                for(int row = 0; row < Y_length-ss2; row ++)
                 {
                     for(int col = 0; col < ss1; col ++)
                     {
                         int diff;
                         if(orientation == "left")
-                            diff = pdata1[row*XY_length+XY_length-ss1+col]-pdata2[(row+ss2)*XY_length+col];
+                            diff = pdata1[row*X_length+Y_length-ss1+col]-pdata2[(row+ss2)*X_length+col];
                         else
-                            diff = pdata2[row*XY_length+XY_length-ss1+col]-pdata1[(row+ss2)*XY_length+col];
+                            diff = pdata2[row*X_length+Y_length-ss1+col]-pdata1[(row+ss2)*X_length+col];
                         sum[indexOL] += diff * diff;
                         count[indexOL] += 1;
                     }
@@ -420,16 +439,16 @@ bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdat
 
     else if(orientation == "up" || orientation == "down")
     {
-        for(int ss1 = 240; ss1 < 240+overlap_range; ss1 ++)
+        for(int ss1 = 10; ss1 < 10+overlap_range; ss1 ++)
         {
             for(int ss2 = 0; ss2 < shift_range; ss2 ++)
             {
-                int indexOL = shift_range*(ss1-240)+ss2;
+                int indexOL = shift_range*(ss1-10)+ss2;
                 for(int row = 0; row < ss1; row ++)
                 {
-                    for(int col = 0; col < XY_length-ss2; col ++)
+                    for(int col = 0; col < X_length-ss2; col ++)
                     {
-                        int diff = pdata1[(XY_length-ss1+row)*XY_length+ss2+col]-pdata2[row*XY_length+col];
+                        int diff = pdata1[(Y_length-ss1+row)*X_length+ss2+col]-pdata2[row*X_length+col];
                         sum[indexOL] += diff * diff;
                         count[indexOL] += 1;
                     }
@@ -449,27 +468,27 @@ bool calculate_2Img_overlap_shift(unsigned short * pdata1, unsigned short * pdat
 }
 
 
-void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data, int XY_length)
+void cut_planes_edge(unsigned short *pdata, unsigned short * &p_cut_data)
 {
     if(p_cut_data){delete []p_cut_data; p_cut_data = 0;}
-    p_cut_data = new unsigned short[XY_length * XY_length];
-    for(int i = 0; i < XY_length; i ++)
-        for(int j = 0; j < XY_length; j ++)
+    p_cut_data = new unsigned short[X_length * Y_length];
+    for(int i = 0; i < X_length; i ++)
+        for(int j = 0; j < Y_length; j ++)
         {
-            p_cut_data[i*XY_length+j] = pdata[(i+20)*(XY_length+40)+(20+j)];
+            p_cut_data[i*X_length+j] = pdata[(i+20)*(X_length+40)+(20+j)];
         }
 }
 
-void calculate_expansion_ratio(vector<vector<int>> XY_overlap, vector<vector<int>> XY_shift, vector<vector<double>> & overlap_shift_Ratio, int XY_length, int Z_shift)
+void calculate_expansion_ratio(vector<vector<int>> XY_overlap, vector<vector<int>> XY_shift, vector<vector<double>> & overlap_shift_Ratio, int Z_shift)
 {
     qDebug()<<__LINE__<<"Calculae expansion ratio!";
-    for(int c = 0; c < 3; c ++)
+    for(int c = 0; c < num_channel; c ++)
     {
-        double expansion_para_1 = sqrt(pow((XY_length-XY_overlap[c][0]), 2) + pow(XY_shift[c][0], 2) + 0.0);
-        for(int i = 0; i < 1150-Z_shift; i ++)
+        double expansion_para_1 = sqrt(pow((X_length-XY_overlap[c][0]), 2) + pow(XY_shift[c][0], 2) + 0.0);
+        for(int i = 0; i < Z_plane-Z_shift; i ++)
         {
             //overlap_shift_Ratio[c][i] = sqrt((pow((1880-XY_overlap[c][i]), 2) + pow(XY_shift[c][i], 2) + 0.0)/(pow((1880-XY_overlap[c][i+1]), 2) + pow(XY_shift[c][i+1], 2) + 0.0));
-            double expansion_para_i = sqrt(pow((XY_length-XY_overlap[c][i]), 2) + pow(XY_shift[c][i], 2) + 0.0);
+            double expansion_para_i = sqrt(pow((X_length-XY_overlap[c][i]), 2) + pow(XY_shift[c][i], 2) + 0.0);
             overlap_shift_Ratio[c][i] = expansion_para_i/expansion_para_1;
         }
     }
@@ -497,7 +516,7 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
 
     string sname1 = "T"+s1+"-T"+s2;
     QString qname1 = QString :: fromStdString(sname1);
-    for(int i = 0 ; i < 4; i ++)
+    for(int i = 0 ; i < num_channel+1; i ++)
     {
         QList<QVariant> rows1;
         if(i == 0)
@@ -519,7 +538,7 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
         datas_sheet1.append(rows1);
     }
 
-    for(int i = 0; i < 1150 - Z_shift + 2; i ++)
+    for(int i = 0; i < Z_plane - Z_shift + 2; i ++)
     {
         QList<QVariant> rows2;
         if(i == 0)
@@ -595,23 +614,27 @@ void save_tiles_shift(QWidget *parent, QString saveFolder, string s1, string s2,
             rows2.append(i-1);
             rows2.append(XY_overlap[0][i-2]);
             rows2.append(XY_overlap[1][i-2]);
-            rows2.append(XY_overlap[2][i-2]);
+            //rows2.append(XY_overlap[2][i-2]);
+            rows2.append("");
             double ave1 = (XY_overlap[0][i-2]+XY_overlap[1][i-2]+XY_overlap[2][i-2]+0.0)/3;
             rows2.append(ave1);
             rows2.append("");
 
             rows2.append(XY_shift[0][i-2]);
             rows2.append(XY_shift[1][i-2]);
-            rows2.append(XY_shift[2][i-2]);
+            //rows2.append(XY_shift[2][i-2]);
+            rows2.append("");
             double ave2 = (XY_shift[0][i-2]+XY_shift[1][i-2]+XY_shift[2][i-2]+0.0)/3;
             rows2.append(ave2);
 
             rows2.append("");
             rows2.append(overlap_shift_Ratio[0][i-2]);
             rows2.append(overlap_shift_Ratio[1][i-2]);
-            rows2.append(overlap_shift_Ratio[2][i-2]);
-            double ave3 = (overlap_shift_Ratio[0][i-2]+overlap_shift_Ratio[1][i-2]+overlap_shift_Ratio[2][i-2]+0.0)/3;
-            rows2.append(ave3);
+            //rows2.append(overlap_shift_Ratio[2][i-2]);
+            rows2.append("");
+            rows2.append("");
+            //double ave3 = (overlap_shift_Ratio[0][i-2]+overlap_shift_Ratio[1][i-2]+overlap_shift_Ratio[2][i-2]+0.0)/3;
+            //rows2.append(ave3);
         }
         datas_sheet2.append(rows2);
     }

@@ -92,7 +92,7 @@ void MyWin::slot_btn_change()
             f.rename(str_dir + "/" + str);
         }
         bar->setValue(i+1);
- //       QThread::msleep(2000/files.size()); //纯属装X
+ //       QThread::msleep(2000/files.size());
     }
 }
 void MyWin::slot_btn_dir()
