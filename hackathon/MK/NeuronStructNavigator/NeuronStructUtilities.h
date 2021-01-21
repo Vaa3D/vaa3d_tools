@@ -98,7 +98,9 @@ public:
 	static bool multipleSegsCheck(const NeuronTree& inputTree);
 	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
 
-	static void removeRedunNodes(profiledTree& inputProfiledTree);
+	// Remove duplicated nodes that are structurally connected -> child node and parent node share the same coordinate.
+	// Note: not to be confused with [NeuronStructUtil::removeDupHeads] that is dedicated to integrating geometrically connected segments altogether.
+	static void removeRedunNodes(profiledTree& inputProfiledTree); 
 	static bool removeDupHeads(NeuronTree& inputTree); 
 	
 	static void removeDupBranchingNodes(profiledTree& inputProfiledTree); // Faster, but occasionally doesn't do the job right. 

@@ -64,12 +64,16 @@ namespace integratedDataTypes
 
 	struct overlappedCoord
 	{
+		// This data structure profiles coordinates that have multiple nodes sitting on it.
+
 		overlappedCoord() = default;
 		overlappedCoord(float x, float y, float z);
 		overlappedCoord(string coordKey);
 		float x, y, z;
 		string coordKey;
-		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap;
+
+		// This map essentially reconds how segments are connected by specifying the spatial orientation on the overlapped (connected) node.
+		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap; 
 	};
 
 	struct topoCharacter
@@ -112,14 +116,14 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 
-		bool reverse(int nodeID = -1, bool middle = false);
+		bool reverse(int nodeID = -1); 
 		V_NeuronSWC convert2V_NeuronSWC() const;
 
 		void reInit(segUnit& inputSegUnit);
 
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
-		QList<NeuronSWC> changeTreeHead(const int newHeadID, bool middle) const;
+		QList<NeuronSWC> changeTreeHead(const int newHeadID) const;
 	};
 	/***********************************************/
 
