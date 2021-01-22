@@ -729,7 +729,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 
 void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 {
-	// This method iteratively calls [this->combSegs] to integrate all segments to become a single tree structure (segment).
+	// This method iteratively calls [this->combSegs] to link all segments to become a single tree structure (segment).
 
 	while (this->segs.size() > 1)
 	{
@@ -767,7 +767,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 	// Taking the leading segment as upstream, any segments that are attached to it need to be connected with their heads. This is the idea of "combing through".
 	// The process goes on recursively until all segments are checked and arranged.
 	// -- Note, running this method only once doesn't guarantee that the all connected segments are arranged in the right orientation down the stream. 
-	//    This is the reason why [this->assembleSegs2singleTree] calls this method with [this->combSegs] iteratively until all segments have been integrated and become 1 single structure (segment).
+	//    This is the reason why [this->assembleSegs2singleTree] calls this method with [this->combSegs] iteratively until all segments have been linked and become 1 single structure (segment).
 
 	checkedSegIDs.insert(leadingSegID);
 
@@ -952,6 +952,9 @@ void integratedDataTypes::profiledTree::nodeCoordKeyNodeIDmapGen(const QList<Neu
 
 void integratedDataTypes::profiledTree::overlappedCoordMapGen()
 {
+	// Figuring how segments are spatially involved with a given coordinate is mostly for the purpose of linking segments.
+	// Therefore, the search is done by examining each segment's head and tail nodes.
+
 	if (this->segs.empty()) integratedDataTypes::profiledTreeReInit(*this);
 	this->nodeCoordKeySegMapGen();
 

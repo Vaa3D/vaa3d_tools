@@ -93,14 +93,21 @@ public:
 	static bool isSorted(const NeuronTree& inputNeuronTree);								// ~~ Not implemented yet ~~
 	static NeuronTree sortTree(const NeuronTree& inputNeuronTree, const float somaCoord[]); // ~~ Not implemented yet ~~
 
-	static void somaCleanUp(NeuronTree& inputTree);	   // ~~ Incomplete ~~
+	static void somaCleanUp(NeuronTree& inputTree);	   // ~~ Incomplete ~~ may not needed at all.
 	
 	static bool multipleSegsCheck(const NeuronTree& inputTree);
+
+	// Remove any segment that is "in the shadow" of other segments, i.e., every node of the segment is overlapped with nodes of other segments.
+	// The overlapping situation could be 1. Simple shadow segments: identical segments
+	//									  2. Composite shadow segments: a) shadow segments that align through multiple segments
+	//																	b) partial shadow segments - embbeded segments
 	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
 
-	// Remove duplicated nodes that are structurally connected -> child node and parent node share the same coordinate.
-	// Note: not to be confused with [NeuronStructUtil::removeDupHeads] that is dedicated to integrating geometrically connected segments altogether.
+	// Remove duplicated nodes that are linked -> child node and parent node share the same coordinate.
+	// Note: Not to be confused with [NeuronStructUtil::removeDupHeads], which is dedicated to linking geometrically connected segments altogether.
 	static void removeRedunNodes(profiledTree& inputProfiledTree); 
+
+	// Use [integratedDatatypes::profiledTree::overlappedCoordMap] to search for removable head nodes and determine how links should be made.
 	static bool removeDupHeads(NeuronTree& inputTree); 
 	
 	static void removeDupBranchingNodes(profiledTree& inputProfiledTree); // Faster, but occasionally doesn't do the job right. 

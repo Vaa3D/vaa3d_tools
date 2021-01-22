@@ -72,7 +72,8 @@ namespace integratedDataTypes
 		float x, y, z;
 		string coordKey;
 
-		// This map essentially reconds how segments are connected by specifying the spatial orientation on the overlapped (connected) node.
+		// [integratedDatatypes::head or tail or body] -> set of pair<segment ID, ID of the node that sitting on this coordinate>
+		// This map reveals how segments are spatially involved in this coordinatethe, i.e., which segments have head nodes, tail nodes, or body nodes sitting on this coordiniate.
 		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap; 
 	};
 
@@ -199,7 +200,7 @@ namespace integratedDataTypes
 		void nodeCoordKeySegMapGen();     // -> this->nodeCoordKey2segMap
 		void segEndCoordKeySegMapGen();   // -> this->segEndCoordKey2segMap
 		void nodeCoordKeyNodeIDmapGen();  // -> this->nodeCoordKey2nodeIDMap
-		void overlappedCoordMapGen();     // -> overlappedCoordMap
+		void overlappedCoordMapGen();     // -> this->overlappedCoordMap
 		
 		// ----------------- Segment Assembling Methods ----------------- // 
 		// Pick up the nearst node to the given soma coordinate. The node has to be a singular node that doesn't overlap any other nodes.

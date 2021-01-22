@@ -123,12 +123,17 @@ public:
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 
-	static boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree);
-	static void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID);
+	// Group geometrically connected segments into different [profiledTree]s. 
+	boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree);
+private:
+	// Recursively look for geometrically connected segments, i.e., segments that have end-to-end or end-to-body overlapping nodes, then group them into different [profiledTree]s.
+	// This method is set to be private and called by [this->groupGeoConnectedTrees].
+	void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID);
 	/****************************************************************************/
 
 
 	/************************** Morphological Features **************************/
+public:
 	static pair<NeuronSWC, NeuronSWC> getMaxEucliDistNode(const NeuronTree& inputTree);
 	static int getBranchNum(const NeuronTree& inputTree, bool onlyBifur = false);
 	static boost::container::flat_map<int, int> getOuterNodeBifurMap(const NeuronTree& inputTree, float outerFraction, bool onlyBifur = false);

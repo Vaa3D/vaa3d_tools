@@ -155,9 +155,9 @@ void ReconOperator::removeDupedNodes()
 				/*QString treesFolderQ = subTreeFolderQ + baseName + "\\";
 				QDir treesFolderDir(treesFolderQ);
 				if (!treesFolderDir.exists()) treesFolderDir.mkpath(".");*/
-
+				NeuronStructExplorer myNeuronStructExplorer;
 				clock_t start = clock();
-				boost::container::flat_map<int, profiledTree> connectedTrees = NeuronStructExplorer::groupGeoConnectedTrees(inputProfiledTree.tree);
+				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
 				map<int, int> tree2HeadNodeMap;
 				int minNodeID, maxNodeID;
