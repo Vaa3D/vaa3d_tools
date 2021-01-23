@@ -58,7 +58,7 @@ bool MorphoHub::dofunc(const QString & func_name, const V3DPluginArgList & input
 	}
 	else if (func_name == tr("Bouton_Generation"))
 	{
-		v3d_msg("To be implemented.");
+
 	}
 	else if (func_name == tr("help"))
 	{
