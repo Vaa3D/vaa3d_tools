@@ -6,21 +6,14 @@ MatSource::MatSource(QString fileName, int basicOverlap1, int basicOverlap2, int
      this->basicOverlap2 = basicOverlap2;
      this->MIPsize = MIPsize;
      readMat(fileName);
-     iniSrc();
 }
+
 void MatSource::readMat(QString fileName)
 {
     QDir file(fileName);
 
 }
-void MatSource::iniSrc()
-{
 
-}
-void MatSource::tiles_z_shift()
-{
-
-}
 vector<String> MatSource::readMats(QString fileName)
 {
 
@@ -39,42 +32,41 @@ vector<String> MatSource::readMats(QString fileName)
    }
    return tile;
 }
-int MatSource::A_B_z_shift(const vector<String>& tileA,const vector<String>& tileB,int basicOverlap,QString orientation,int rows,int cols,int MIPsize)
+
+x_y_shift MatSource::A_B_y_z_shift(const vector<String>& tileA,const vector<String>& tileB,int basicOverlap,QString orientation,int rows,int cols,int MIPsize)
 {
-    int a_b_z_shift;
 //计算
     Mat MIPA, MIPB;
   if (orientation=="left" )
   {
       MIPA=getMIP(tileA,basicOverlap,"left",rows,cols,MIPsize);
       MIPB=getMIP(tileB,basicOverlap,"right",rows,cols,MIPsize);
-  }
 
+  }
   if (orientation=="right" )
   {
       MIPA=getMIP(tileA,basicOverlap,"right",rows,cols,MIPsize);
       MIPB=getMIP(tileB,basicOverlap,"left",rows,cols,MIPsize);
-  }
 
+  }
   if (orientation=="up" )
   {
       MIPA=getMIP(tileA,basicOverlap,"up",rows,cols,MIPsize);
       MIPB=getMIP(tileB,basicOverlap,"down",rows,cols,MIPsize);
-  }
 
+  }
   if (orientation=="down" )
   {
       MIPA=getMIP(tileA,basicOverlap,"down",rows,cols,MIPsize);
       MIPB=getMIP(tileB,basicOverlap,"up",rows,cols,MIPsize);
+
   }
 
+  //结果
+  return mat_x_y_shift(MIPA, MIPB,"leftright",0);
 
-  a_b_z_shift=mat_x_y_shift(MIPA, MIPB,"leftright",0).y;
-
-
-//结果
-    return a_b_z_shift;
 }
+
 vector<x_y_shift> MatSource::tile_x_y_shift(const vector<String>& tileA,const vector<String>& tileB,QString orientation,int basicOverlap)
 {
     vector<x_y_shift> result;
@@ -88,6 +80,7 @@ vector<x_y_shift> MatSource::tile_x_y_shift(const vector<String>& tileA,const ve
     }
     return result;
 }
+
 x_y_shift MatSource::mat_x_y_shift(const Mat& matA,const Mat& matB,QString orientation,int basicOverlap)
 {
 
@@ -325,9 +318,10 @@ x_y_shift MatSource::mat_x_y_shift(const Mat& matA,const Mat& matB,QString orien
 
  x_y=x_y_shift(overlap,shift);
 
-//结果
+//results
     return  x_y;
 }
+
 double MatSource::getMatDistortionK1UseOverLapAndShift(const Mat& matA,const Mat& matB,QString orientation,int overlap,int shift,int num)
 {
 
@@ -360,9 +354,9 @@ double MatSource::getMatDistortionK1UseOverLapAndShift(const Mat& matA,const Mat
         x.push_back(half-distortLine[i]);
         y.push_back(fabs(start1+i*range+range/2.0-center));
     }
-    x.push_back(half-distortLine[num]);//将y=0点放入
-    y.push_back(0.0);//将y=0点放入
-  //计算畸变
+    x.push_back(half-distortLine[num]);//put into y=0
+    y.push_back(0.0);//put into y=0
+  //distortion
 
     double temp1=0.0,temp2=0.0,temp3=0.0;
     for(int i=0;i<num;i++)
@@ -375,8 +369,9 @@ double MatSource::getMatDistortionK1UseOverLapAndShift(const Mat& matA,const Mat
 
     k1=(x[num]-temp3)/(temp3*temp3*temp3);
 
-    return  k1/2;//左右
+    return  k1/2;//left-right
 }
+
 double MatSource::tileZEnlargeRatioUseOverLapAndShift(const vector<String>& tileA,const vector<String>& tileB, int basicOverlap)
 {
   double zEnlargeRatio = 0.0;
@@ -388,6 +383,7 @@ double MatSource::tileZEnlargeRatioUseOverLapAndShift(const vector<String>& tile
 
   return zEnlargeRatio;
 }
+
 Mat MatSource::getMIP(const vector<String>& tileA,int basicOverlap,QString orientation,int rows,int cols,int MIPsize)
 {
 
@@ -412,7 +408,7 @@ Mat MatSource::getMIP(const vector<String>& tileA,int basicOverlap,QString orien
     int MIPCols=cols;
     if (orientation=="left" ||orientation=="right")MIPCols=rows;
     Mat MIP = Mat::zeros(tileA.size(),MIPCols, CV_16UC1);
-//计算
+//calculation
     int centerOverlap;
     if(orientation == "left" || orientation == "right")
     {
@@ -457,7 +453,7 @@ Mat MatSource::getMIP(const vector<String>& tileA,int basicOverlap,QString orien
             }
         }
     }
- //结果
+ //results
     for(int i=0;i< tileA.size();i++)
         {
         delete tile[i];
@@ -466,6 +462,7 @@ Mat MatSource::getMIP(const vector<String>& tileA,int basicOverlap,QString orien
 
     return MIP;
 }
+
 vector<int> MatSource::getMatDistortionOverLaps(const Mat& matA,const Mat& matB,QString orientation,int overlap,int shift,int num)
 {
     int rows=(matA.rows<matB.rows)?matA.rows:matB.rows;
@@ -511,14 +508,11 @@ vector<int> MatSource::getMatDistortionOverLaps(const Mat& matA,const Mat& matB,
         if(shift>0)
         {
             for(int i=0;i<num;i++)
-            {//cout<<"fff"<<endl;cout<<cols<<endl;cout<<range<<endl;cout<<start1<<endl;cout<<start1+range*num<<endl;
-                //Mat tempA=Mat(matA,matA.colRange(start1+i*range,start1+i*range+range));
-                //Mat tempB=Mat(matB,matB.colRange(start2+i*range,start2+i*range+range));
+            {
                 Mat tempA=matA.colRange(start1+i*range,start1+i*range+range);
                 Mat tempB=matB.colRange(start2+i*range,start2+i*range+range);
                result.push_back(mat_x_y_shift(tempA,tempB,orientation,overlap).x);
-               //cout<<tempA.cols<<"   "<<tempA.rows<<"   "<<overlap<<endl;
-               //cout<<mat_x_y_shift(tempA,tempB,orientation,overlap).x<<endl;
+
             }
             Mat tempA=matA.colRange(cols/2-range/2,cols/2+range/2);
             Mat tempB=matB.colRange(abs(shift)+cols/2-range/2,abs(shift)+cols/2+range/2);
@@ -540,6 +534,7 @@ vector<int> MatSource::getMatDistortionOverLaps(const Mat& matA,const Mat& matB,
 
     return result;
 }
+
 vector<vector<double>> MatSource::getDistortK1andZenlargeByOverlapandShift(const vector<String> &tileA, const vector<String> &tileB, QString orientation, vector<x_y_shift> tlieABoverlapsAndSshifts)
 {
     vector<vector<double>> result;

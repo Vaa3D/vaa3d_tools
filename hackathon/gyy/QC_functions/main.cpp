@@ -20,18 +20,23 @@ using namespace std;
 static vector<Mat> tiles_vec;
 static vector<tifMapScribe> tms;
 
+static vector<vector<Mat>> tiles_vec_vec;
+static vector<vector<tifMapScribe>> tms_vec_vec;
+
 void background_correction_one_image();
 int tile_region_background_ave_rows();
 int correction_tiles_via_background();
 int correction_tile_via_ave_region_peak();
 
 void stitch_one_plane();
+int stitch_all_planes_24tiles();
 int stitch_2img_down_cover_up();
 
 bool polynomial_curve_fit(vector<unsigned short> fitValue_vec, int n, Mat & A);
 int equalization_image();
 int image_distorted_correction();
 int shift_global_optimization();
+int cut_one_image();
 
 bool compareNat(const std::string& a, const std::string& b);
 int XZ_YZ_projection_20px_MIP();
@@ -46,20 +51,20 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    cout<<"Start!"<<endl;
-
     //background_correction_one_image();
     //tile_region_background_ave_rows();
-    correction_tiles_via_background();
+    //correction_tiles_via_background();
     //correction_tile_via_ave_region_peak();
 
 
     //stitch_one_plane();
+    stitch_all_planes_24tiles();
     //stitch_2img_down_cover_up();
 
     //shift_global_optimization();
     //equalization_image();
     //image_distorted_correction();
+    //cut_one_image();
 
     //XZ_YZ_projection_20px_MIP_24Tiles();
     //XZ_YZ_projection_20px_MIP();
@@ -101,6 +106,23 @@ unsigned short getdeep(int x, int y, vector<tifMapScribe>::size_type n)
        }
 
        return deep;
+}
+
+unsigned short getdeepImageI(int x, int y, vector<tifMapScribe>::size_type n, int image_i)
+{
+    unsigned short deep = 0;
+
+    if((x>tms_vec_vec[image_i][n].rightUpX || x<tms_vec_vec[image_i][n].leftDownX) || (y>tms_vec_vec[image_i][n].rightUpY || y<tms_vec_vec[image_i][n].leftDownY))
+    {
+        deep = 0;
+    }
+
+    else
+    {
+         deep = tiles_vec_vec[image_i][n].at<unsigned short>( y-tms_vec_vec[image_i][n].leftDownY, x-tms_vec_vec[image_i][n].leftDownX);
+    }
+
+    return deep;
 }
 
 int shift_global_optimization()
@@ -914,6 +936,30 @@ int image_distorted_correction()
     warpAffine(warp2, dst2, affineTrans2, src2.size(), INTER_NEAREST);
     QString saveName2 = saveImageDir + "\\" + imageInfo2.baseName() + "_after.tif";
     imwrite(saveName2.toStdString(), dst2);
+
+    return 1;
+}
+
+int cut_one_image()
+{
+    cout<<"Start!"<<endl;
+    QString imagePath = QFileDialog::getOpenFileName(nullptr, "Select Image", "D:\\");
+    cout<<"ImagePath: "<<imagePath.toStdString().c_str()<<endl;
+    QString saveImageDir = QFileDialog::getExistingDirectory(nullptr, "Save Images", imagePath);
+    cout<<"saveImageDir: "<<saveImageDir.toStdString().c_str()<<endl;
+
+    QFileInfo imageInfo(imagePath);
+    Mat src = imread(imageInfo.filePath().toStdString(), -1);
+    Mat result = Mat::zeros(8795, 7397, CV_16UC1);
+    for(int i = 0; i < 8795; i ++)
+    {
+        for(int j = 0; j < 7397; j ++)
+        {
+            result.at<unsigned short>(i, j) = src.at<unsigned short>(i, j);
+        }
+    }
+    QString saveName = saveImageDir + "\\" + "TeraStitched_cut.tif";
+    imwrite(saveName.toStdString(), result);
 
     return 1;
 }
@@ -1823,13 +1869,17 @@ void stitch_one_plane()
 {
     QString folderFile = QFileDialog::getExistingDirectory(nullptr, "Select images folder", "D:\\");
     cout<<"Input folder: "<<folderFile.toStdString().c_str()<<endl;
+    QString saveFolder = QFileDialog::getExistingDirectory(nullptr, "Select a folder to save", folderFile);
+    cout<<"Save folder: "<<saveFolder.toStdString().c_str()<<endl;
+
 
     QDir folderDir(folderFile);
     QStringList filters;
-    filters << "*.tif"<<"*.tiff";
+    filters << "*.tif"<<"*.tiff"<<"*.jpg";
     QFileInfoList imagesList = folderDir.entryInfoList(filters, QDir::Files);
     cout<<__LINE__<<": imagesList.size = "<<imagesList.size()<<endl;
 
+    vector<Mat> tiles_vec;
     for(int image_i = 0; image_i < imagesList.size(); image_i ++)
     {
         Mat img_tmp = imread(imagesList[image_i].filePath().toStdString(), -1);
@@ -1838,8 +1888,9 @@ void stitch_one_plane()
 
     }
 
-    //Mat result = Mat::zeros(10071, 8444, CV_16UC1);
-    Mat result = Mat::zeros(3104, 3876, CV_16UC1);
+    // result += 60
+    Mat result = Mat::zeros(8857, 7518, CV_16UC1);
+    //Mat result = Mat::zeros(3104, 3876, CV_16UC1);
 
 
     for(int i = 0; i < imagesList.size(); i ++)
@@ -1848,41 +1899,38 @@ void stitch_one_plane()
     }
     cout<<__LINE__<<endl;
 
-/*
-    tms[0].set(0, 0);
-    tms[1].set(1613, -10);
-    tms[2].set(3232, -20);
-    tms[3].set(4848, -30);
-    tms[4].set(6470, -38);
-    tms[5].set(6476, 1581);
-    tms[6].set(4858, 1591);
-    tms[7].set(3241, 1601);
-    tms[8].set(1621, 1611);
-    tms[9].set(7, 1621);
-    tms[10].set(18, 3239);
-    tms[11].set(1631, 3229);
-    tms[12].set(3251, 3219);
-    tms[13].set(4867, 3209);
-    tms[14].set(6488, 3200);
-    tms[15].set(6494, 4819);
-    tms[16].set(4876, 4829);
-    tms[17].set(3259, 4839);
-    tms[18].set(1639, 4850);
-    tms[19].set(24, 4860);
-    tms[20].set(35, 6479);
-    tms[21].set(1647, 6470);
-    tms[22].set(3267, 6461);
-    tms[23].set(4883, 6452);
-    tms[24].set(6504, 6443);
-    tms[25].set(4894, 8071);
-    tms[26].set(3277, 8082);
-    tms[27].set(1656, 8093);
-*/
 
+    tms[0].set(0, 0);
+    tms[1].set(1783, 0);
+    tms[2].set(3584, -1);
+    tms[3].set(5384, -1);
+    tms[4].set(0, 1440);
+    tms[5].set(1798, 1438);
+    tms[6].set(3599, 1436);
+    tms[7].set(5400, 1434);
+    tms[8].set(15, 2876);
+    tms[9].set(1812, 2875);
+    tms[10].set(3611, 2875);
+    tms[11].set(5411, 2875);
+    tms[12].set(28, 4318);
+    tms[13].set(1826, 4318);
+    tms[14].set(3626, 4317);
+    tms[15].set(5426, 4317);
+    tms[16].set(44, 5758);
+    tms[17].set(1842, 5757);
+    tms[18].set(3642, 5756);
+    tms[19].set(5442, 5756);
+    tms[20].set(60, 7196);
+    tms[21].set(1858, 7195);
+    tms[22].set(3658, 7194);
+    tms[23].set(5458, 7193);
+
+/*
     tms[0].set(0, 0);
     tms[1].set(1802, -1);
     tms[2].set(15, 1443);
     tms[3].set(1816, 1442);
+*/
 
     int lowx = 0;
     int lowy = 0;
@@ -1937,12 +1985,12 @@ void stitch_one_plane()
        }
    }
 
-   for(int j = 0; j < 3104; j ++)
-   //for(int j = 0; j < 10071; j ++)
+   //for(int j = 0; j < 3104; j ++)
+   for(int j = 0; j < 8857; j ++)
    {
        //cout<<__LINE__<<"j = "<<j<<endl;
-       for(int k = 0; k < 3876; k ++)
-       //for(int k = 0; k < 8444; k ++)
+       //for(int k = 0; k < 3876; k ++)
+       for(int k = 0; k < 7518; k ++)
        {
            int sum = 0;
            for(vector<tifMapScribe>::size_type i = 0; i < imagesList.size(); i ++)
@@ -1963,8 +2011,8 @@ void stitch_one_plane()
                 r[i][j] = 0;
         }
     }
-    cout<<"highy + 1 = "<<highy+1<<endl;
-    cout<<"highx + 1 = "<<highx+1<<endl;
+    cout<<__LINE__<<": highy + 1 = "<<highy+1<<endl;
+    cout<<__LINE__<<": highx + 1 = "<<highx+1<<endl;
 //    Mat result = Mat::zeros(highy+1, highx+1, CV_16UC1);
 //    10071, 8444
     for(int i = 0; i <= highy; i ++)
@@ -1975,9 +2023,204 @@ void stitch_one_plane()
         }
     }
 
-    imwrite("C:/Users/yanya/Desktop/To_do_list/20201215/stripe_test/mixing_image.tif", result);
+    QString saveName = saveFolder + "\\" + "mixing_image_24tiles.tif";
+    imwrite(saveName.toStdString(), result);
 
     cout<<"Finished!"<<endl;
+}
+
+int stitch_all_planes_24tiles()
+{
+    QString allTileName = QFileDialog::getExistingDirectory(nullptr, "Select tile1 folder","D:\\");
+    cout<<"allTileName: "<<allTileName.toStdString().c_str()<<endl;
+    QString savePath = QFileDialog::getExistingDirectory(nullptr, "Select a folder to save",allTileName);
+    cout<<"savePath: "<<savePath.toStdString().c_str()<<endl;
+
+    QDir allTileDir(allTileName);
+    allTileDir.setFilter(QDir::Dirs);
+    QFileInfoList tilesListCols = allTileDir.entryInfoList();
+
+    vector<QFileInfoList> tilesListRows;
+    for(int i = 0; i < tilesListCols.size()-2; i ++)
+    {
+        QDir rowsTileDir(tilesListCols[i+2].filePath());
+        rowsTileDir.setFilter(QDir::Dirs);
+        tilesListRows.push_back(rowsTileDir.entryInfoList());
+    }
+
+    vector<QFileInfoList> allTileImagesList;
+    int num_planes = INT_MAX;
+    for(int i = 0; i < tilesListRows.size(); i ++)
+    {
+        for(int j = 0; j <tilesListRows[i].size()-2; j ++)
+        {
+            cout<<__LINE__<<": tileList["<<i*tilesListRows.size()+j<<"] Name: "<<tilesListRows[i][j+2].fileName().toStdString().c_str()<<endl;
+            QDir folderDir(tilesListRows[i][j+2].filePath());
+            QStringList filters;
+            filters << "*.tif"<<"*.tiff"<<"*.jpg";
+            QFileInfoList imagesList = folderDir.entryInfoList(filters, QDir::Files);
+            cout<<__LINE__<<": imagesList.size() = "<<imagesList.size()<<endl;
+            num_planes = (imagesList.size()<num_planes) ? imagesList.size() : num_planes;
+            allTileImagesList.push_back(imagesList);
+        }
+    }
+    cout<<__LINE__<<": num_planes = "<<num_planes<<endl;
+
+    for(int image_i = 0; image_i < num_planes; image_i ++)
+    {
+        vector<Mat> tiles_vec_tmp;
+        for(int i = 0; i < allTileImagesList.size(); i ++)
+        {
+            Mat img_tmp = imread(allTileImagesList[i][image_i].filePath().toStdString(), -1);
+
+            tiles_vec_tmp.push_back(img_tmp);
+        }
+        tiles_vec_vec.push_back(tiles_vec_tmp);
+
+        Mat result = Mat::zeros(8857, 7518, CV_16UC1);
+
+
+        vector<tifMapScribe> tms_tmp;
+        for(int i = 0; i < allTileImagesList.size(); i ++)
+        {
+            tms_tmp.push_back(tifMapScribe());
+        }
+        tms_vec_vec.push_back(tms_tmp);
+
+        cout<<__LINE__<<endl;
+        tms_vec_vec[image_i][0].set(0, 0);
+        tms_vec_vec[image_i][6].set(1783, 0);
+        tms_vec_vec[image_i][12].set(3584, -1);
+        tms_vec_vec[image_i][18].set(5384, -1);
+        tms_vec_vec[image_i][1].set(0, 1440);
+        tms_vec_vec[image_i][7].set(1798, 1438);
+        tms_vec_vec[image_i][13].set(3599, 1436);
+        tms_vec_vec[image_i][19].set(5400, 1434);
+        tms_vec_vec[image_i][2].set(15, 2876);
+        tms_vec_vec[image_i][8].set(1812, 2875);
+        tms_vec_vec[image_i][14].set(3611, 2875);
+        tms_vec_vec[image_i][20].set(5411, 2875);
+        tms_vec_vec[image_i][3].set(28, 4318);
+        tms_vec_vec[image_i][9].set(1826, 4318);
+        tms_vec_vec[image_i][15].set(3626, 4317);
+        tms_vec_vec[image_i][21].set(5426, 4317);
+        tms_vec_vec[image_i][4].set(44, 5758);
+        tms_vec_vec[image_i][10].set(1842, 5757);
+        tms_vec_vec[image_i][16].set(3642, 5756);
+        tms_vec_vec[image_i][22].set(5442, 5756);
+        tms_vec_vec[image_i][5].set(60, 7196);
+        tms_vec_vec[image_i][11].set(1858, 7195);
+        tms_vec_vec[image_i][17].set(3658, 7194);
+        tms_vec_vec[image_i][23].set(5458, 7193);
+
+
+        int lowx = 0;
+        int lowy = 0;
+        int highx = 0;
+        int highy = 0;
+
+        for(unsigned int i = 0; i < tms_vec_vec[image_i].size(); i ++)
+        {
+            if(lowx > tms_vec_vec[image_i][i].leftDownX) lowx = tms_vec_vec[image_i][i].leftDownX;
+            if(lowy > tms_vec_vec[image_i][i].leftDownY) lowy = tms_vec_vec[image_i][i].leftDownY;
+            if(highx < tms_vec_vec[image_i][i].rightUpX) highx = tms_vec_vec[image_i][i].rightUpX;
+            if(highy < tms_vec_vec[image_i][i].rightUpY) highy = tms_vec_vec[image_i][i].rightUpY;
+        }
+
+        if(lowx < 0)
+        {
+            for(vector<tifMapScribe>::size_type i = 0; i < allTileImagesList.size(); i ++)
+            {
+                tms_vec_vec[image_i][i].move(-lowx, 0);
+            }
+            highx -= lowx;
+        }
+
+        if(lowy < 0)
+        {
+            for(vector<tifMapScribe>::size_type i = 0; i < allTileImagesList.size(); i ++)
+            {
+                tms_vec_vec[image_i][i].move(0, -lowy);
+            }
+            highy -= lowy;
+        }
+
+        for(vector<tifMapScribe>::size_type i = 0; i < allTileImagesList.size(); i ++)
+        {
+            tms_vec_vec[image_i][i].move(30, 30);
+        }
+
+        highx += 60;
+        highy += 60;
+        int **r = new int *[highy + 1];
+
+        for(int i = 0; i < highy + 1; i ++)
+        {
+            r[i] = new int[highx + 1];
+        }
+
+       for(int i = 0; i < highy+1; i ++)
+       {
+           for(int j = 0; j < highx+1; j++)
+           {
+              r[i][j] = -1;
+           }
+       }
+
+       cout<<__LINE__<<endl;
+       for(int j = 0; j < 8857; j ++)
+       {
+           for(int k = 0; k < 7518; k ++)
+           {
+               cout<<__LINE__<<": j = "<<j<<"; k = "<<k<<endl;
+               int sum = 0;
+               for(vector<tifMapScribe>::size_type i = 0; i < allTileImagesList.size(); i ++)
+                   sum += tms_vec_vec[image_i][i].distance(k, j);
+
+               cout<<__LINE__<<": sum = "<<sum<<endl;
+               r[j][k] = 0;
+               for(vector<tifMapScribe>::size_type i = 0; i < allTileImagesList.size(); i ++)
+               {
+                   //cout<<"value1 = "<<tms_vec_vec[image_i][i].distance(k, j)<<endl;
+                   //cout<<"value2 = "<<getdeepImageI(k, j, i, image_i)<<endl;
+                   r[j][k] += (int)((tms_vec_vec[image_i][i].distance(k, j)+0.0)/sum * getdeepImageI(k, j, i, image_i));
+               }
+
+            }
+        }
+
+       cout<<__LINE__<<endl;
+        for(int i = 0; i <= highy; i ++)
+        {
+            for(int j = 0; j <= highx; j ++)
+            {
+                if(r[i][j] == -1)
+                    r[i][j] = 0;
+            }
+        }
+
+        cout<<__LINE__<<endl;
+        for(int i = 0; i <= highy; i ++)
+        {
+            for(int j = 0; j <= highx; j ++)
+            {
+                result.at<unsigned short>(i, j) = (unsigned short)r[i][j];
+            }
+        }
+
+        cout<<__LINE__<<endl;
+        string num_str = to_string(image_i);
+        while(num_str.size() < 4)
+        {
+            num_str = "0" + num_str;
+        }
+
+        QString saveName = savePath + "\\" + "stitched_Z"+QString::fromStdString(num_str)+".tif";
+        imwrite(saveName.toStdString(), result);
+        cout<<__LINE__<<": Saved "<<saveName.toStdString().c_str()<<endl;
+    }
+
+    return 1;
 }
 
 int stitch_2img_down_cover_up()

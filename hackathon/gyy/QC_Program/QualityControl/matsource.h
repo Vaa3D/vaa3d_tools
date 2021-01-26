@@ -33,11 +33,9 @@ private:
     int SrcColNumbers;//数据集列数
     int ChannelMatNumbers;//一个channel内图片数量
     void readMat(QString fileName);//读取指定文件种的数据集
-    void iniSrc();//初始化图像基本特征属性
-    void tiles_z_shift();//计算数据集不同tiles之间zshift
 public:
     static vector<String> readMats(QString fileName);
-    static int A_B_z_shift(const vector<String>& tileA,const vector<String>& tileB,int basicOverlap,QString orientation,int rows,int cols,int MIPsize);//计算不同tile同一channel之间z_shift
+    static x_y_shift A_B_y_z_shift(const vector<String>& tileA,const vector<String>& tileB,int basicOverlap,QString orientation,int rows,int cols,int MIPsize);//计算不同tile同一channel之间z_shift
     static x_y_shift mat_x_y_shift(const Mat& matA,const Mat& matB,QString orientation,int basicOverlap); //计算相邻mat之间下x：overlap,y: shift,已知方向
     static double getMatDistortionK1UseOverLapAndShift(const Mat& matA,const Mat& matB,QString orientation,int overlap,int shift,int num=50);//使用overlap和shift计算切向畸变K1
     static double tileZEnlargeRatioUseOverLapAndShift(const vector<String>& tileA,const vector<String>& tileB,int basicOverlap);//使用overlap和shift计算tlie内Z方向上从0平面开始以0平面为基础线性放大率

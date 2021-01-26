@@ -21,18 +21,20 @@ LIBS += D:\software\OpenCV\x64\mingw\lib\libopencv_*.a
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Functions.cpp \
     main.cpp \
-    mainwindow.cpp \
     mathtouse.cpp \
     matprocess.cpp \
     matsource.cpp \
+    tifMapScribe.cpp \
     x_y_shift.cpp
 
 HEADERS += \
-    mainwindow.h \
+    Functions.h \
     mathtouse.h \
     matprocess.h \
     matsource.h \
+    tifMapScribe.h \
     x_y_shift.h
 
 FORMS += \
@@ -42,5 +44,3 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-
