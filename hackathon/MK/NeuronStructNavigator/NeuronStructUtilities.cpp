@@ -368,11 +368,16 @@ void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 			const NeuronSWC& childNode = inputProfiledTree.tree.listNeuron.at(childLoc);
 			if (childNode.x == currNode.x && childNode.y == currNode.y && childNode.z == currNode.z)
 			{
+				// [childNode] here is to be deleted, thus any node whose parent is the [childNode] should be changed to [childNode]'s parent, which is [currNode].
 				for (auto& node : inputProfiledTree.tree.listNeuron)
 					if (node.parent == childNode.n) node.parent = currNode.n;
 
 				delLocs.insert(childLoc);
 				nodeIDMarked.insert(childNode.n);
+				
+				// Not sure the following is still needed. The for-loop above seems to handle all cases already, but may be slower.
+				// If theres only this part without the for-loop, it doesn't take care of the case where there are 3+ redundant nodes being examined structurally backward.
+				// -- Need test to decide whether to keep this part.
 				if (inputProfiledTree.node2childLocMap.find(childNode.n) != inputProfiledTree.node2childLocMap.end())
 				{
 					if (nodeIDMarked.find(currNode.n) == nodeIDMarked.end())
@@ -397,7 +402,7 @@ void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 
 bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
 {
-	// This duplicated nodes removing method uses the head node of every segment as a guide to search for removable nodes.
+	// This duplicated nodes removing method uses the head node of every segment as a guide to determine whether their head nodes can be removed.
 
 	profiledTree inputProfiledTree(inputTree);
 	if (inputProfiledTree.node2segMap.empty()) inputProfiledTree.nodeSegMapGen();
@@ -411,10 +416,11 @@ bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
 		if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head).size() > 0)
 		{
 			// Case 1: One or more head nodes overlapping with only one either tail or body node.
+			//         -> All head nodes should be the downstreams linking to the only tail or body node.
 			if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).size() + dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).size() == 1)
 			{
 				int targetNodeID;
-				if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).size() == 1) targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).begin()->second;
+				if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).size() == 1) targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::tail).begin()->second; 
 				else targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).begin()->second;
 
 				for (auto& headSegNodePair : dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::head))
@@ -424,7 +430,7 @@ bool NeuronStructUtil::removeDupHeads(NeuronTree& inputTree)
 						childLoc2paLocMap.insert(pair<ptrdiff_t, ptrdiff_t>(child, inputProfiledTree.node2LocMap.at(targetNodeID)));
 				}
 			}
-			// Case 2: One or more head nodes overlapping with only one body node, regardless if there's tail node or not.
+			// Case 2: One or more head nodes overlapping with only one body node. With case 1, is this still neccessary?
 			else if (dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).size() == 1)
 			{
 				int targetNodeID = dupCoord.second.involvedSegsOriMap.at(integratedDataTypes::body).begin()->second;

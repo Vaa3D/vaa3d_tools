@@ -99,8 +99,8 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 	/******************************************************************************************************/
 	// Important Note: 
 	//   [segUnit.seg_childLocMap] does NOT have tail node registered freshly coming out of [NeuronStructExplorer::node2loc_node2childLocMap].
-	//   Adding tail nodes into the map with empty child locations here for the purpose of 
-	//   avoiding memory violations by accessing non-existent pair in the map.
+	//   Adding tail nodes into the map with empty child locations here for the purpose of avoiding memory violations by accessing non-existent pair in the map.
+	//   Many operations are performed on segment base, it is more conveniend to have tails also possess entries in [this->seg_childLocMap].
 	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);
 	for (QList<NeuronSWC>::iterator nodeIt = this->nodes.begin(); nodeIt != this->nodes.end(); ++nodeIt)
 	{
@@ -195,7 +195,7 @@ void integratedDataTypes::segUnit::reInit(segUnit& inputSegUnit)
 	inputSegUnit = reInitUnit; // Copy reInitUnit to the memory where inputSegUnit refers to -- OK.
 }
 
-bool integratedDataTypes::segUnit::reverse(int nodeID, bool middle)
+bool integratedDataTypes::segUnit::reverse(int nodeID)
 {
 	if (nodeID == -1 && this->tails.size() > 1) return false;
 	else if (this->nodes.at(this->seg_nodeLocMap.at(nodeID)).parent != -1 && !this->seg_childLocMap.at(nodeID).empty()) return false;
@@ -222,15 +222,15 @@ bool integratedDataTypes::segUnit::reverse(int nodeID, bool middle)
 		this->reInit(*this);
 		return true;
 	}
-	else //if (find(this->tails.begin(), this->tails.end(), nodeID) != this->tails.end())
+	else
 	{
-		this->nodes = this->changeTreeHead(nodeID, middle);
+		this->nodes = this->changeTreeHead(nodeID);
 		this->reInit(*this);
 		return true;
 	}
 }
 
-QList<NeuronSWC> integratedDataTypes::segUnit::changeTreeHead(const int newHeadID, bool middle) const
+QList<NeuronSWC> integratedDataTypes::segUnit::changeTreeHead(const int newHeadID) const
 {
 	QList<NeuronSWC> outputNodes;
 	NeuronSWC newHeadNode = this->nodes.at(this->seg_nodeLocMap.at(newHeadID));
@@ -241,7 +241,6 @@ QList<NeuronSWC> integratedDataTypes::segUnit::changeTreeHead(const int newHeadI
 	NeuronSWC currDominoNode, previousDominoNode = newHeadNode;
 	while (currDominoID != this->head)
 	{
-		//if (middle) cout << currDominoID << " ";
 		currDominoNode = this->nodes.at(this->seg_nodeLocMap.at(currDominoID));
 		currDominoNode.parent = previousDominoNode.n;
 		outputNodes.append(currDominoNode);
@@ -263,7 +262,6 @@ QList<NeuronSWC> integratedDataTypes::segUnit::changeTreeHead(const int newHeadI
 		previousDominoNode = currDominoNode;
 		currDominoID = this->nodes.at(this->seg_nodeLocMap.at(currDominoID)).parent;
 	}
-	//if (middle) cout << endl;
 
 	currDominoNode = this->nodes.at(this->seg_nodeLocMap.at(this->head));
 	currDominoNode.parent = previousDominoNode.n;
@@ -731,6 +729,8 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 
 void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 {
+	// This method iteratively calls [this->combSegs] to link all segments to become a single tree structure (segment).
+
 	while (this->segs.size() > 1)
 	{
 		this->combSegs(rootNodeID);
@@ -764,13 +764,20 @@ void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
 
 void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs)
 {
+	// Taking the leading segment as upstream, any segments that are attached to it need to be connected with their heads. This is the idea of "combing through".
+	// The process goes on recursively until all segments are checked and arranged.
+	// -- Note, running this method only once doesn't guarantee that the all connected segments are arranged in the right orientation down the stream. 
+	//    This is the reason why [this->assembleSegs2singleTree] calls this method with [this->combSegs] iteratively until all segments have been linked and become 1 single structure (segment).
+
 	checkedSegIDs.insert(leadingSegID);
 
+	// If the given startingEndNodeID is some segment's end, then the input segment needs to be reversed first.
 	if (find(this->segs.at(leadingSegID).tails.begin(), this->segs.at(leadingSegID).tails.end(), startingEndNodeID) != this->segs.at(leadingSegID).tails.end())
 		this->segs.find(leadingSegID)->second.reverse(startingEndNodeID);
 	const NeuronSWC& leadingSegHeadNode = this->tree.listNeuron.at(this->node2LocMap.at(this->segs.at(leadingSegID).head));
 	string leadingSegHeadCoordKey = to_string(leadingSegHeadNode.x) + "_" + to_string(leadingSegHeadNode.y) + "_" + to_string(leadingSegHeadNode.z);
 
+	// ******* Scanning through every node in the segment and see if it's connected with other segment's end ******* //
 	for (auto& node : this->segs.at(leadingSegID).nodes)
 	{
 		string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
@@ -795,7 +802,9 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 			}	
 		}
 	}
+	// ************************************************************************************************************ //
 
+	// **************** Checking if the current segment ends are attaching to other segment's body **************** //
 	const segUnit& curSeg = this->segs.at(leadingSegID);
 	const NeuronSWC& headNode = this->tree.listNeuron.at(this->node2LocMap.at(curSeg.head));
 	string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
@@ -833,6 +842,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 			}
 		}
 	}
+	// ************************************************************************************************************ //
 }
 
 pair<int, segUnit> integratedDataTypes::profiledTree::splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID)
@@ -862,7 +872,7 @@ pair<int, segUnit> integratedDataTypes::profiledTree::splitSegWithMiddleHead(con
 	//for (auto& node : upstreamSeg.nodes) cout << node.n << " ";
 	//cout << endl << endl;
 	
-	upstreamSeg.reverse(newHeadPaID, true);
+	upstreamSeg.reverse(newHeadPaID);
 	upstreamSeg.nodes.begin()->parent = newHeadID;
 	cout << "reversed upstream node list:" << endl;
 	for (auto& node : upstreamSeg.nodes) cout << node.n << " " << node.parent << endl;
@@ -942,6 +952,9 @@ void integratedDataTypes::profiledTree::nodeCoordKeyNodeIDmapGen(const QList<Neu
 
 void integratedDataTypes::profiledTree::overlappedCoordMapGen()
 {
+	// Figuring how segments are spatially involved with a given coordinate is mostly for the purpose of linking segments.
+	// Therefore, the search is done by examining each segment's head and tail nodes.
+
 	if (this->segs.empty()) integratedDataTypes::profiledTreeReInit(*this);
 	this->nodeCoordKeySegMapGen();
 

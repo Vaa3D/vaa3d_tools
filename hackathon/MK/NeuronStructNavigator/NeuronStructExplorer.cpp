@@ -1182,7 +1182,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 {
 	int currGroupedSegNum = groupedSegIDs.size();
 
-	//cout << "leading seg ID = " << leadingSegID << ": " << endl;
+	// --------- Looking for other segment's end touching any of leading segment's node --------- //
 	for (auto& node : inputProfiledTree.segs.at(leadingSegID).nodes)
 	{
 		string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
@@ -1194,15 +1194,15 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 				if (it->second == leadingSegID || groupedSegIDs.find(it->second) != groupedSegIDs.end()) continue;
 				else
 				{
-					//cout << "  nodeCoordKey = " << nodeCoordKey << "-> " << it->second << " ";
 					groupedSegIDs.insert(it->second);
-					//cout << endl;
 					NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second);
 				}
 			}
 		}
 	}
+	// ------------------------------------------------------------------------------------------ //
 
+	// --------- Examining if the current leading segment's end nodes touching other segment's body node --------- //
 	const segUnit& curSeg = inputProfiledTree.segs.at(leadingSegID);	
 	const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(curSeg.head));
 	string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
@@ -1232,6 +1232,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 			}
 		}
 	}
+	// ----------------------------------------------------------------------------------------------------------- //
 
 	if (groupedSegIDs.size() == currGroupedSegNum) return;
 }

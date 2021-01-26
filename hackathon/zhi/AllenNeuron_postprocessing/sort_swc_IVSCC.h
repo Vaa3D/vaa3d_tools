@@ -28,10 +28,10 @@ using namespace std;
 
 
 //#define PI 3.14159265359
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define _getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
-#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
+#define _angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 
 #ifndef MAX_DOUBLE
 #define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
@@ -366,10 +366,10 @@ NeuronTree pruneswc(NeuronTree nt, double length)
         if (childs[i].size()==0 && list.at(i).parent >=0)
         {
             int index_tip = 0;
-            int parent_tip = getParent(i,nt);
+            int parent_tip = _getParent(i,nt);
             while(childs[parent_tip].size()<2)
             {
-                parent_tip = getParent(parent_tip,nt);
+                parent_tip = _getParent(parent_tip,nt);
                 index_tip++;
                 if(parent_tip == 1000000000)
                     break;
@@ -378,11 +378,11 @@ NeuronTree pruneswc(NeuronTree nt, double length)
             {
                 flag[i] = -1;
 
-                int parent_tip = getParent(i,nt);
+                int parent_tip = _getParent(i,nt);
                 while(childs[parent_tip].size()<2)
                {
                     flag[parent_tip] = -1;
-                    parent_tip = getParent(parent_tip,nt);
+                    parent_tip = _getParent(parent_tip,nt);
                     if(parent_tip == 1000000000)
                         break;
                }
@@ -537,7 +537,7 @@ bool analysis_swc(QString fileOpenName ,bool bmenu)
 
     for (int i=0;i<list.size();i++)
     {
-        int parent_node = getParent(i,nt);
+        int parent_node = _getParent(i,nt);
         if(parent_node == 1000000000 || 0)
             swc_file[i]->type = 0;
         else if (childs[parent_node].size()<=1)
@@ -1132,8 +1132,8 @@ void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double
                 if(dis<mtdis){
                     if(connNum.at(id)<1){//tips
                         V3DLONG tmpid=cand.indexOf(id);
-                        double local_ang1 = angle(nt.listNeuron.at(tip_pair[tid].first),nt.listNeuron.at(tip_pair[tid].second),nt.listNeuron.at(tip_pair[tmpid].first));
-                        double local_ang2 = angle(nt.listNeuron.at(tip_pair[tmpid].first),nt.listNeuron.at(tip_pair[tmpid].second),nt.listNeuron.at(tip_pair[tid].first));
+                        double local_ang1 = _angle(nt.listNeuron.at(tip_pair[tid].first),nt.listNeuron.at(tip_pair[tid].second),nt.listNeuron.at(tip_pair[tmpid].first));
+                        double local_ang2 = _angle(nt.listNeuron.at(tip_pair[tmpid].first),nt.listNeuron.at(tip_pair[tmpid].second),nt.listNeuron.at(tip_pair[tid].first));
                         if(local_ang1 >= angThr && local_ang2 >= angThr){
                             mtdis=dis;
                             mtid=id;

@@ -64,12 +64,17 @@ namespace integratedDataTypes
 
 	struct overlappedCoord
 	{
+		// This data structure profiles coordinates that have multiple nodes sitting on it.
+
 		overlappedCoord() = default;
 		overlappedCoord(float x, float y, float z);
 		overlappedCoord(string coordKey);
 		float x, y, z;
 		string coordKey;
-		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap;
+
+		// [integratedDatatypes::head or tail or body] -> set of pair<segment ID, ID of the node that sitting on this coordinate>
+		// This map reveals how segments are spatially involved in this coordinatethe, i.e., which segments have head nodes, tail nodes, or body nodes sitting on this coordiniate.
+		map<integratedDataTypes::connectOrientation, set<pair<int, int>>> involvedSegsOriMap; 
 	};
 
 	struct topoCharacter
@@ -112,14 +117,14 @@ namespace integratedDataTypes
 
 		bool to_be_deleted;
 
-		bool reverse(int nodeID = -1, bool middle = false);
+		bool reverse(int nodeID = -1); 
 		V_NeuronSWC convert2V_NeuronSWC() const;
 
 		void reInit(segUnit& inputSegUnit);
 
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
-		QList<NeuronSWC> changeTreeHead(const int newHeadID, bool middle) const;
+		QList<NeuronSWC> changeTreeHead(const int newHeadID) const;
 	};
 	/***********************************************/
 
@@ -195,7 +200,7 @@ namespace integratedDataTypes
 		void nodeCoordKeySegMapGen();     // -> this->nodeCoordKey2segMap
 		void segEndCoordKeySegMapGen();   // -> this->segEndCoordKey2segMap
 		void nodeCoordKeyNodeIDmapGen();  // -> this->nodeCoordKey2nodeIDMap
-		void overlappedCoordMapGen();     // -> overlappedCoordMap
+		void overlappedCoordMapGen();     // -> this->overlappedCoordMap
 		
 		// ----------------- Segment Assembling Methods ----------------- // 
 		// Pick up the nearst node to the given soma coordinate. The node has to be a singular node that doesn't overlap any other nodes.
