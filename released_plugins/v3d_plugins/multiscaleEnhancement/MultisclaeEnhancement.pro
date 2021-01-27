@@ -6,6 +6,7 @@ CONFIG	+= qt plugin warn_off
 V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH += $$V3DMAINPATH/v3d
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 
 macx{

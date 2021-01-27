@@ -56,16 +56,17 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	NeuronTree nt2 = readSWC_file(name_nt2);
     QFileInfo file(name_nt1);
     QString name=file.baseName();
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres,name);
+    //NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres,name);
+    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres);
 
     qDebug()<<"--------------------";
         ofstream myfile;
         myfile.open (((vector<char*> *)(output.at(0).p))->at(0));
-        myfile<<"same:"<<tmp_score.dist1<<endl;
-        myfile<<"different:"<<tmp_score.dist2<<endl;
-        myfile<<"mul:"<<tmp_score.dist3<<endl;
-        myfile<<"single:"<<tmp_score.dist4<<endl;
-        myfile<<"single2:"<<tmp_score.dist5<<endl;
+        //myfile<<"same:"<<tmp_score.dist1<<endl;
+        //myfile<<"different:"<<tmp_score.dist2<<endl;
+        //myfile<<"mul:"<<tmp_score.dist3<<endl;
+        //myfile<<"single:"<<tmp_score.dist4<<endl;
+        //myfile<<"single2:"<<tmp_score.dist5<<endl;
         myfile << "input1 = ";
         myfile << name_nt1.toStdString().c_str()  ;
         myfile << "\ninput2 = ";

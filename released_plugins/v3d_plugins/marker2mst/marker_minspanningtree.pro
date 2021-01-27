@@ -6,6 +6,7 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include/
+INCLUDEPATH	+= $$V3DMAINPATH/v3d
 
 INCLUDEPATH     += $$V3DMAINPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/include
 HEADERS += $$V3DMAINPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/include/ANN/ANN.h

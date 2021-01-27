@@ -2,15 +2,15 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external/v3d_main
-INCLUDEPATH	+= $$VAA3DPATH/v3d $$VAA3DPATH/basic_c_fun $$VAA3DPATH/common_lib/include
+V3DMAINPATH = ../../../../v3d_external/v3d_main
+INCLUDEPATH	+= $$V3DMAINPATH/v3d $$V3DMAINPATH/basic_c_fun $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += functions
 
 
 HEADERS	+= PSF_zhi_plugin.h
 SOURCES	+= PSF_zhi_plugin.cpp
-SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
-SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 
 SOURCES	+= functions/PreProcessDataImage.cpp
@@ -26,4 +26,4 @@ SOURCES += functions/EigenDec_2D.cpp
 SOURCES += functions/extractTree.cpp
 
 TARGET	= $$qtLibraryTarget(PSF_zhi)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/PSF_tracing/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_tracing/PSF_tracing/

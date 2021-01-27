@@ -10,6 +10,7 @@ V3DMAINPATH     =  ../../../../v3d_external/v3d_main
 #include necessary paths
 INCLUDEPATH     += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH     += $$V3DMAINPATH/v3d
 
 win32{
     LIBS +=  -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff

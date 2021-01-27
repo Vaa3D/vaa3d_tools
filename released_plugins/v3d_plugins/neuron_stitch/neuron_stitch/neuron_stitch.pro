@@ -4,6 +4,8 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../..
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/v3d
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/3drenderer/
 INCLUDEPATH += ../
 

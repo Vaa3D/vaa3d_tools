@@ -1,7 +1,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 INCLUDEPATH	+= ./include
 macx{
     LIBS += ./lib/mac/libz.a    
@@ -27,7 +29,7 @@ unix:!macx {
 
 HEADERS	+= NifTi_reader_plugin.h
 SOURCES	+= NifTi_reader_plugin.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(NifTi_reader)
-DESTDIR	= $$VAA3DPATH/bin/plugins/data_IO/NIFTI_file_reader
+DESTDIR	= $$V3DMAINPATH/bin/plugins/data_IO/NIFTI_file_reader

@@ -2,8 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 
 HEADERS	+= shape_extractor_plugin.h \
     shape_dialog.h \
@@ -12,7 +14,7 @@ HEADERS	+= shape_extractor_plugin.h \
 SOURCES	+= shape_extractor_plugin.cpp \
     shape_dialog.cpp \
     extract_fun.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(shape_extractor)
-DESTDIR	= $$VAA3DPATH/bin/plugins/shape_analysis/shape_extractor/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/shape_analysis/shape_extractor/

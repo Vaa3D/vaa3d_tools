@@ -2,8 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 INCLUDEPATH     += /usr/local/MATLAB/MATLAB_Runtime/v85/extern/include
 #INCLUDEPATH     += /home/g/grad/zhihaozh/bigneuron/VaaTrace3DMatlab
 INCLUDEPATH     += matlab_lib
@@ -21,7 +23,7 @@ HEADERS += func.h
 
 SOURCES	+= VaaPortTest_plugin.cpp
 SOURCES += func.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(VaaPortTest)
-DESTDIR = $$VAA3DPATH/bin/plugins/neuron_tracing/aVaaTrace3D/
+DESTDIR = $$V3DMAINPATH/bin/plugins/neuron_tracing/aVaaTrace3D/

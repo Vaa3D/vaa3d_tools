@@ -12,8 +12,10 @@ else{
     SOURCES = ./libs/ITK_include/itkLightProcessObject.cxx
 }
 
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 
 
 #INCLUDEPATH += ./libs/liblbfgs-1.10/include
@@ -25,13 +27,13 @@ INCLUDEPATH += ./libs/ITK_include
 INCLUDEPATH += ./libs/regression
 INCLUDEPATH += ./libs/sqb_0.1/src/MatrixSQB
 INCLUDEPATH += ./libs/boost_1_58_0
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/common_lib/include
 
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
+LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib -lv3dtiff
 
 
 
@@ -54,7 +56,7 @@ HEADERS += ./libs/regression/regressor.h
 HEADERS	+= RegressionTubularityAC_plugin.h
 
 
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= ./libs/regression/sep_conv.cpp
 SOURCES	+= ./libs/regression/sampling.cpp
 SOURCES	+= ./libs/regression/regressor.cpp
@@ -68,4 +70,4 @@ QMAKE_LFLAGS += -fopenmp
 
 
 TARGET	= $$qtLibraryTarget(RegressionTubularityAC)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_segmentation/RegressionTubularityAC/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/image_segmentation/RegressionTubularityAC/

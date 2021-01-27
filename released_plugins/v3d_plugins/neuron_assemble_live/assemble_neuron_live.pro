@@ -2,34 +2,34 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../
+V3DMAINPATH = ../../../
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
 
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/v3d
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/3drenderer
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/basic_c_fun/customary_structs
-INCLUDEPATH     += $$VAA3DPATH/v3d_main
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/v3d
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/3drenderer
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/basic_c_fun/customary_structs
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main
 INCLUDEPATH     += $$QT_PATH/demos/shared
 
 macx{
-    INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/hdf5
-    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lhdf5 -lszip -lz
-    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
+    INCLUDEPATH += $$V3DMAINPATH/v3d_main/common_lib/include/hdf5
+    LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib_mac64 -lhdf5 -lszip -lz
+    LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
 }
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$V3DMAINPATH/v3d_main/common_lib/winlib64 -llibtiff
     } else {
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib -llibtiff
+    LIBS     += -L$$V3DMAINPATH/v3d_main/common_lib/winlib -llibtiff
     }
 }
 
 unix {
-INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/hdf5
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_unix64 -lhdf5 -lszip -lz -ldl
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/common_lib/include/hdf5
+LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib_unix64 -lhdf5 -lszip -lz -ldl
 }
 
 HEADERS	+= assemble_neuron_live_plugin.h \
@@ -38,8 +38,8 @@ HEADERS	+= assemble_neuron_live_plugin.h \
 SOURCES	+= assemble_neuron_live_plugin.cpp \
         openSWCDialog.cpp \
     assemble_neuron_live_dialog.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= ../neurontracing_vn2/app2/my_surf_objs.cpp
 
 INCLUDEPATH += ../terastitcher/include
@@ -146,4 +146,4 @@ SOURCES += ../terastitcher/src/core/iomanager/plugins/tiff2D/tiff2D.cpp
 SOURCES += ../terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
 TARGET	= $$qtLibraryTarget(assemble_neuron_live)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/assemble_neuron_live/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/neuron_utilities/assemble_neuron_live/

@@ -6,6 +6,7 @@ V3DMAINPATH = ../../../../v3d_external/v3d_main
 
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun 
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH  += $$V3DMAINPATH/v3d 
 
 #include the headers used in the project
 HEADERS	+= fastmarching_spanningtree_plugin.h

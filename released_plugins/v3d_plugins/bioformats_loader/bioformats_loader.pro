@@ -8,6 +8,7 @@ win32{V3DMAINPATH = ..\\..\\..\\v3d_main
 }
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH += $$V3DMAINPATH/v3d
 
 HEADERS	+= bioformats_loader_plugin.h
 SOURCES	+= bioformats_loader_plugin.cpp

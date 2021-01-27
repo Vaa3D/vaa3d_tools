@@ -6,6 +6,7 @@ V3DMAINDIR = ../../../v3d_main
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 INCLUDEPATH  += $$V3DMAINDIR/neuron_editing
+INCLUDEPATH  += $$V3DMAINDIR/v3d
 
 HEADERS      += $$V3DMAINDIR/basic_c_fun/basic_surf_objs.h
 HEADERS      += Neuron_tracing.h

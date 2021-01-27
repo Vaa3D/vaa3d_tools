@@ -1,4 +1,4 @@
-VAA3DPATH = ../../../../v3d_external
+V3DMAINPATH = ../../../../v3d_external
 
 TEMPLATE = lib
 CONFIG += qt plugin release
@@ -6,16 +6,17 @@ CONFIG += qt plugin release
 TARGET = $$qtLibraryTarget(SIGEN)
 
 # http://stackoverflow.com/questions/2580934
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/SIGEN/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/neuron_tracing/SIGEN/
 
 unix{
     QMAKE_CXXFLAGS += -Wall -Wextra -Wshadow -Wno-c++11-extensions
 }
 
-INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
-INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/v3d
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 HEADERS += SIGEN_plugin.h
 SOURCES += SIGEN_plugin.cpp

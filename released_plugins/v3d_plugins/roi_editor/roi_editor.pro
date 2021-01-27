@@ -1,6 +1,8 @@
 TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 INCLUDEPATH  += ../../../v3d_main/basic_c_fun
+INCLUDEPATH  += ../../../v3d_main/common_lib/include
+INCLUDEPATH  += ../../../v3d_main/v3d
 HEADERS       = roi_editor.h
 SOURCES       = roi_editor.cpp
 SOURCES      += ../../../v3d_main/basic_c_fun/v3d_message.cpp
