@@ -702,6 +702,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 		if (outputNodeID != 0) return outputNodeID;
 		else
 		{
+			//cout << "No nearest node found." << endl;
 			for (auto& segEndCoord : this->segEndCoordKey2segMap)
 			{
 				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(segEndCoord.first);

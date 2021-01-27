@@ -1,3 +1,6 @@
+#ifndef FILENAMECHANGERINDEXER_H
+#define FILENAMECHANGERINDEXER_H
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -33,3 +36,5 @@ private:
 	bool getCoordsFromSWC(const QList<NeuronSWC>& inputNodes, vector<float>& somaCoords);
 	void SEUnameChange(const map<string, set<string>>& seuNameMap, bool table);
 };
+
+#endif

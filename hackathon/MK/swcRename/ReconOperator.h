@@ -1,3 +1,8 @@
+#ifndef RECONOPERATOR_H
+#define RECONOPERATOR_H
+
+//#define SUBTREE_DEBUG
+
 #include <iostream>
 
 #include <qstring.h>
@@ -21,3 +26,5 @@ public:
 
 	void removeDupedNodes();
 };
+
+#endif

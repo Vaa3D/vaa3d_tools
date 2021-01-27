@@ -119,9 +119,11 @@ void ReconOperator::removeDupedNodes()
 	QDir outputDir(outputFolderQ);
 	if (!outputDir.exists()) outputDir.mkpath(".");
 
-	/*QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
+#ifdef SUBTREE_DEBUG
+	QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
 	QDir subTreeDir(subTreeFolderQ);
-	if (!subTreeDir.exists()) subTreeDir.mkpath(".");*/
+	if (!subTreeDir.exists()) subTreeDir.mkpath(".");
+#endif
 
 	for (auto& file : fileList)
 	{
@@ -152,9 +154,12 @@ void ReconOperator::removeDupedNodes()
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 			if (NeuronStructUtil::multipleSegsCheck(inputTree))
 			{
-				/*QString treesFolderQ = subTreeFolderQ + baseName + "\\";
+#ifdef SUBTREE_DEBUG
+				QString treesFolderQ = subTreeFolderQ + baseName + "\\";
 				QDir treesFolderDir(treesFolderQ);
-				if (!treesFolderDir.exists()) treesFolderDir.mkpath(".");*/
+				if (!treesFolderDir.exists()) treesFolderDir.mkpath(".");
+#endif
+
 				NeuronStructExplorer myNeuronStructExplorer;
 				clock_t start = clock();
 				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
@@ -163,7 +168,11 @@ void ReconOperator::removeDupedNodes()
 				int minNodeID, maxNodeID;
 				for (auto& connectedTree : connectedTrees)
 				{
-					//writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
+#ifdef SUBTREE_DEBUG
+					writeSWC_file(subTreeFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
+#endif
+
+					if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
 
 					NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 					cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
@@ -216,7 +225,8 @@ void ReconOperator::removeDupedNodes()
 				}
 
 				NeuronTree outputTree;
-				for (auto& connectedTree : connectedTrees) outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
+				for (auto& connectedTree : connectedTrees)
+					if (connectedTree.second.tree.listNeuron.size() > 1) outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
 				outputTree.listNeuron.push_front(somaNode);				
 				writeSWC_file(outputFolderQ + baseName + ".swc", outputTree);
 			}	
