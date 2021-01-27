@@ -55,7 +55,10 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+# create by macos
+*DS_Store
+# create by qmake
+*qmake.stash
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
