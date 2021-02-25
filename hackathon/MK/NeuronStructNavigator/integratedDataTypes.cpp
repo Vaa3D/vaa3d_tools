@@ -732,8 +732,17 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 {
 	// This method iteratively calls [this->combSegs] to link all segments to become a single tree structure (segment).
 
+	if (this->segs.size() == 1)
+	{
+		this->combSegs(rootNodeID);
+		this->tree.listNeuron = this->segs.begin()->second.nodes;
+		profiledTreeReInit(*this);
+		return;
+	}
+
 	while (this->segs.size() > 1)
 	{
+		int currSegSize = this->segs.size();
 		this->combSegs(rootNodeID);
 		this->tree.listNeuron.clear();
 		for (auto& seg : this->segs)
@@ -744,6 +753,8 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 		NeuronStructUtil::removeDupHeads(this->tree);
 		profiledTreeReInit(*this);
 		cout << " --> segment number: " << this->segs.size() << endl;
+		
+		if (this->segs.size() == currSegSize) return;
 	}
 }
 
@@ -772,7 +783,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 
 	checkedSegIDs.insert(leadingSegID);
 
-	// If the given startingEndNodeID is some segment's end, then the input segment needs to be reversed first.
+	// If the given startingEndNodeID is some segment's tail, then the input segment needs to be reversed first.
 	if (find(this->segs.at(leadingSegID).tails.begin(), this->segs.at(leadingSegID).tails.end(), startingEndNodeID) != this->segs.at(leadingSegID).tails.end())
 		this->segs.find(leadingSegID)->second.reverse(startingEndNodeID);
 	const NeuronSWC& leadingSegHeadNode = this->tree.listNeuron.at(this->node2LocMap.at(this->segs.at(leadingSegID).head));
@@ -1120,13 +1131,13 @@ void integratedDataTypes::profiledTree::getSegEndClusterCentoirds()
 		integratedDataTypes::segEndClusterCentroid(segEndCluster.second, this->segEndClusterCentroidMap[segEndCluster.first]);
 	}
 
-	if (!NSlibTester::isInstantiated())
+	/*if (!NSlibTester::isInstantiated())
 	{
 		NSlibTester::instance();
 		NSlibTester::getInstance()->checkClusterNodeMap(*this, "D:\\Work\\FragTrace\\");
 		NSlibTester::getInstance()->checkClusterCentroidMap(*this, "D:\\Work\\FragTrace\\");
 		NSlibTester::uninstance();
-	}
+	}*/
 }
 
 void integratedDataTypes::profiledTree::addTopoUnit(int nodeID)

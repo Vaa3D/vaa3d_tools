@@ -285,6 +285,16 @@ map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& in
 	return outputNodeTypeMap;
 }
 
+int NeuronStructUtil::findSomaNodeID(const NeuronTree& inputTree)
+{
+	for (auto& node : inputTree.listNeuron)
+	{
+		if (node.type == 1 && node.parent == -1) return node.n;
+	}
+
+	return -1;
+}
+
 void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
 {
 	profiledTree inputProfiledTree(inputTree);

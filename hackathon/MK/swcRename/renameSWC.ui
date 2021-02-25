@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>581</width>
-    <height>712</height>
+    <width>748</width>
+    <height>711</height>
    </rect>
   </property>
   <property name="font">
@@ -37,6 +37,360 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string>Assemble Segments To Single Tree</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_3">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_3">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>696</width>
+            <height>630</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <item>
+            <widget class="QGroupBox" name="groupBox_12">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>350</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Assemble segments to single tree:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <widget class="QGroupBox" name="groupBox_14">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>150</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Remove Spikes</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_13">
+                 <item>
+                  <widget class="QFrame" name="frame_3">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_3">
+                      <property name="text">
+                       <string>Node number limit:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spinBox">
+                      <property name="value">
+                       <number>3</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>366</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="frame_10">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_18">
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_4">
+                      <property name="text">
+                       <string>Voxel distance limit:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_11">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>354</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_15">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Connect close segments</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_14">
+                 <item>
+                  <widget class="QFrame" name="frame_12">
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_20">
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_6">
+                      <property name="text">
+                       <string>Voxel distance limit:</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+                      <property name="enabled">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_13">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>358</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_13">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>1000</width>
+                  <height>80</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select a folder to process:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_12">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>600</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_9">
+                   <property name="maximumSize">
+                    <size>
+                     <width>80</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_9">
+                <property name="maximumSize">
+                 <size>
+                  <width>1000</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_15">
+                 <item>
+                  <spacer name="horizontalSpacer_10">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>259</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="buttonBox_7">
+                   <property name="maximumSize">
+                    <size>
+                     <width>180</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>File Name Managememt</string>
@@ -52,8 +406,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>529</width>
-            <height>631</height>
+            <width>696</width>
+            <height>630</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -127,7 +481,7 @@
             <widget class="QGroupBox" name="groupBox_2">
              <property name="maximumSize">
               <size>
-               <width>600</width>
+               <width>1000</width>
                <height>180</height>
               </size>
              </property>
@@ -158,7 +512,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>200000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -184,7 +538,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>400</width>
+                     <width>600</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -223,7 +577,7 @@
                <widget class="QFrame" name="frame">
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>2000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -257,7 +611,7 @@
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>259</width>
+                     <width>500</width>
                      <height>20</height>
                     </size>
                    </property>
@@ -330,7 +684,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>2000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -395,7 +749,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>2000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -454,7 +808,7 @@
                <widget class="QFrame" name="frame_2">
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>2000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -507,6 +861,19 @@
              </layout>
             </widget>
            </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -528,8 +895,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>508</width>
-            <height>814</height>
+            <width>696</width>
+            <height>630</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -543,7 +910,7 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>600</width>
+               <width>1000</width>
                <height>240</height>
               </size>
              </property>
@@ -574,7 +941,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>100</height>
                  </size>
                 </property>
@@ -600,7 +967,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>400</width>
+                     <width>600</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -761,7 +1128,7 @@
                <widget class="QFrame" name="frame_4">
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>50</height>
                  </size>
                 </property>
@@ -815,146 +1182,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_12">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>180</height>
-              </size>
-             </property>
-             <property name="title">
-              <string>Assemble segments to single tree:</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_11">
-              <item>
-               <widget class="QGroupBox" name="groupBox_13">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>500</width>
-                  <height>100</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Calibri</family>
-                  <pointsize>10</pointsize>
-                  <weight>50</weight>
-                  <bold>false</bold>
-                 </font>
-                </property>
-                <property name="title">
-                 <string>Select a folder to process:</string>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_17">
-                 <item>
-                  <widget class="QLineEdit" name="lineEdit_12">
-                   <property name="minimumSize">
-                    <size>
-                     <width>350</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>400</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_9">
-                   <property name="maximumSize">
-                    <size>
-                     <width>80</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Browse</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QFrame" name="frame_9">
-                <property name="maximumSize">
-                 <size>
-                  <width>500</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_15">
-                 <item>
-                  <spacer name="horizontalSpacer_10">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>259</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QDialogButtonBox" name="buttonBox_7">
-                   <property name="maximumSize">
-                    <size>
-                     <width>180</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="standardButtons">
-                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
             <widget class="QGroupBox" name="groupBox_5">
              <property name="maximumSize">
               <size>
@@ -976,7 +1203,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>100</height>
                  </size>
                 </property>
@@ -1002,7 +1229,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>400</width>
+                     <width>600</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1041,7 +1268,7 @@
                <widget class="QFrame" name="frame_7">
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>50</height>
                  </size>
                 </property>
@@ -1116,7 +1343,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>100</height>
                  </size>
                 </property>
@@ -1142,7 +1369,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>400</width>
+                     <width>600</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1181,7 +1408,7 @@
                <widget class="QFrame" name="frame_8">
                 <property name="maximumSize">
                  <size>
-                  <width>500</width>
+                  <width>1000</width>
                   <height>50</height>
                  </size>
                 </property>
@@ -1269,8 +1496,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>272</y>
+     <x>685</x>
+     <y>216</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1285,8 +1512,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>333</y>
+     <x>685</x>
+     <y>277</y>
     </hint>
     <hint type="destinationlabel">
      <x>438</x>
@@ -1301,8 +1528,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>333</y>
+     <x>685</x>
+     <y>277</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1317,8 +1544,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>489</y>
+     <x>685</x>
+     <y>405</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1333,8 +1560,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>618</y>
+     <x>685</x>
+     <y>534</y>
     </hint>
     <hint type="destinationlabel">
      <x>527</x>
@@ -1349,8 +1576,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>618</y>
+     <x>685</x>
+     <y>534</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1365,7 +1592,7 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>496</x>
+     <x>685</x>
      <y>275</y>
     </hint>
     <hint type="destinationlabel">
@@ -1381,7 +1608,7 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>496</x>
+     <x>685</x>
      <y>275</y>
     </hint>
     <hint type="destinationlabel">
@@ -1397,8 +1624,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>518</x>
-     <y>564</y>
+     <x>685</x>
+     <y>480</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1413,7 +1640,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>496</x>
+     <x>685</x>
      <y>161</y>
     </hint>
     <hint type="destinationlabel">
@@ -1429,8 +1656,8 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>647</y>
+     <x>685</x>
+     <y>462</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1445,8 +1672,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>647</y>
+     <x>685</x>
+     <y>462</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1461,8 +1688,8 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>832</y>
+     <x>685</x>
+     <y>648</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1477,8 +1704,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>832</y>
+     <x>685</x>
+     <y>648</y>
     </hint>
     <hint type="destinationlabel">
      <x>546</x>
@@ -1493,8 +1720,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>590</y>
+     <x>685</x>
+     <y>404</y>
     </hint>
     <hint type="destinationlabel">
      <x>575</x>
@@ -1509,12 +1736,60 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>497</x>
-     <y>775</y>
+     <x>685</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
      <x>575</x>
      <y>537</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dialog</receiver>
+   <slot>preProcessParam(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>171</x>
+     <y>158</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>740</x>
+     <y>159</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_4</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dialog</receiver>
+   <slot>preProcessParam(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>157</x>
+     <y>209</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>741</x>
+     <y>293</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_6</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dialog</receiver>
+   <slot>preProcessParam(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>158</x>
+     <y>323</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>743</x>
+     <y>348</y>
     </hint>
    </hints>
   </connection>
@@ -1525,12 +1800,12 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>461</x>
-     <y>388</y>
+     <x>632</x>
+     <y>410</y>
     </hint>
     <hint type="destinationlabel">
-     <x>571</x>
-     <y>251</y>
+     <x>743</x>
+     <y>412</y>
     </hint>
    </hints>
   </connection>
@@ -1541,12 +1816,12 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>348</x>
-     <y>455</y>
+     <x>564</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>574</x>
-     <y>550</y>
+     <x>737</x>
+     <y>486</y>
     </hint>
    </hints>
   </connection>
@@ -1557,12 +1832,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>458</x>
-     <y>450</y>
+     <x>643</x>
+     <y>470</y>
     </hint>
     <hint type="destinationlabel">
-     <x>578</x>
-     <y>590</y>
+     <x>744</x>
+     <y>555</y>
     </hint>
    </hints>
   </connection>
@@ -1572,5 +1847,6 @@
   <slot>okClicked()</slot>
   <slot>undoClicked()</slot>
   <slot>okClicked2()</slot>
+  <slot>preProcessParam(bool)</slot>
  </slots>
 </ui>

@@ -82,6 +82,10 @@ public slots:
 	void showHideButtonClicked(bool clicked);
 	void sequentialTypeChangingToggled(bool toggle);
 	// ---------------------------- //
+
+	// - Capture Active 3D Viewer - //
+	void captureImgName(QString newImgNameQ);
+	// ---------------------------- //
 	/* ======= END of [User Interface Configuration Buttons] ======= */
 
 
@@ -112,6 +116,7 @@ private:
 
 
 	/* ============== Marker Detection ============== */
+	v3dhandle currHandle;
 	int surType;
 	QList<ImageMarker> updatedMarkerList;
 	QList<ImageMarker> selectedMarkerList;
@@ -162,7 +167,7 @@ private:
 
 
 private slots:	
-	void refreshSomaCoords();
+void refreshSomaCoords();
 
 
 private:

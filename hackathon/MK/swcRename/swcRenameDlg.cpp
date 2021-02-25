@@ -45,6 +45,43 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_12->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
+void SWC_renameDlg::preProcessParam(bool toggle)
+{
+	QObject* signalSender = sender();
+	QString objName = signalSender->objectName();
+
+	if (objName == "radioButton_3")
+	{
+		if (toggle)
+		{
+			uiPtr->spinBox->setEnabled(true);
+			uiPtr->radioButton_4->setChecked(false);
+			uiPtr->doubleSpinBox->setEnabled(false);
+		}
+		else
+		{
+			uiPtr->spinBox->setEnabled(false);
+			uiPtr->radioButton_4->setChecked(true);
+			uiPtr->doubleSpinBox->setEnabled(true);
+		}
+	}
+	else if (objName == "radioButton_4")
+	{
+		if (toggle)
+		{
+			uiPtr->doubleSpinBox->setEnabled(true);
+			uiPtr->radioButton_3->setChecked(false);
+			uiPtr->spinBox->setEnabled(false);
+		}
+		else
+		{
+			uiPtr->doubleSpinBox->setEnabled(false);
+			uiPtr->radioButton_3->setChecked(true);
+			uiPtr->spinBox->setEnabled(true);
+		}
+	}
+}
+
 void SWC_renameDlg::changeName()
 {
 	QObject* signalSender = sender();
@@ -134,6 +171,14 @@ void SWC_renameDlg::reconOp()
 		this->rootPath.replace("/", "\\");
 		this->myOperator.rootPath = this->rootPath;
 
+		if (uiPtr->groupBox_14->isChecked())
+		{
+			if (uiPtr->radioButton_3->isChecked())
+			{
+				this->myOperator.removeSpike = true;
+				this->myOperator.branchNodeMin = uiPtr->spinBox->text().toInt();
+			}
+		}
 		this->myOperator.removeDupedNodes();
 	}
 }

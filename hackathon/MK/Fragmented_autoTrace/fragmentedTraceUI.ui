@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>865</width>
-    <height>733</height>
+    <height>802</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -61,13 +61,13 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>150</height>
+          <height>160</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>155</height>
+          <height>160</height>
          </size>
         </property>
         <property name="font">
@@ -96,65 +96,193 @@
         <property name="checkable">
          <bool>false</bool>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QFrame" name="frame_2">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>30</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-           <widget class="QCheckBox" name="checkBox">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>81</width>
-              <height>31</height>
-             </rect>
-            </property>
-            <property name="font">
-             <font>
-              <family>Calibri</family>
-              <pointsize>10</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Terafly</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
+        <widget class="QFrame" name="frame_2">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>20</y>
+           <width>348</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>150</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <property name="lineWidth">
+          <number>1</number>
+         </property>
+         <property name="midLineWidth">
+          <number>0</number>
+         </property>
+         <widget class="QCheckBox" name="checkBox">
+          <property name="geometry">
+           <rect>
+            <x>12</x>
+            <y>12</y>
+            <width>324</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>15</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Calibri</family>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Terafly</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QFrame" name="frame_6">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>30</y>
+            <width>324</width>
+            <height>95</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>95</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>95</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QRadioButton" name="radioButton">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Calibri</family>
+               <pointsize>10</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Axon mode</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_2">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Calibri</family>
+               <pointsize>10</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Dendrite mode</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_3">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Calibri</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Axon-bouton mode (not available now)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+        <widget class="QFrame" name="frame_4">
+         <property name="geometry">
+          <rect>
+           <x>390</x>
+           <y>20</y>
+           <width>421</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_14">
+          <item>
            <widget class="QCheckBox" name="checkBox_2">
-            <property name="geometry">
-             <rect>
-              <x>100</x>
-              <y>0</y>
-              <width>231</width>
-              <height>31</height>
-             </rect>
-            </property>
             <property name="font">
              <font>
               <family>Calibri</family>
@@ -167,73 +295,100 @@
              <string>Image stack (basic 3D viewer)</string>
             </property>
            </widget>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="lineWidth">
-            <number>1</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="radioButton">
-           <property name="font">
-            <font>
-             <family>Calibri</family>
-             <pointsize>10</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Axon mode</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="radioButton_2">
-           <property name="font">
-            <font>
-             <family>Calibri</family>
-             <pointsize>10</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Dendrite mode</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="radioButton_3">
-           <property name="font">
-            <font>
-             <family>Calibri</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Axon-bouton mode (not available now)</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+          </item>
+          <item>
+           <widget class="QFrame" name="frame_8">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>60</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <widget class="QLabel" name="label_10">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>10</y>
+               <width>111</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Focused Viewer:</string>
+             </property>
+            </widget>
+            <widget class="QComboBox" name="comboBox">
+             <property name="geometry">
+              <rect>
+               <x>120</x>
+               <y>10</y>
+               <width>271</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <family>Calibri</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="editable">
+              <bool>false</bool>
+             </property>
+             <property name="currentIndex">
+              <number>-1</number>
+             </property>
+             <property name="maxCount">
+              <number>2147483646</number>
+             </property>
+             <property name="minimumContentsLength">
+              <number>0</number>
+             </property>
+             <property name="modelColumn">
+              <number>0</number>
+             </property>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>5</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="Line" name="line">
+         <property name="geometry">
+          <rect>
+           <x>373</x>
+           <y>20</y>
+           <width>16</width>
+           <height>131</height>
+          </rect>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
        </widget>
       </item>
       <item>
@@ -274,7 +429,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>417</height>
+               <height>476</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -685,8 +840,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>770</width>
-               <height>444</height>
+               <width>791</width>
+               <height>476</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -853,8 +1008,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>413</width>
-                         <height>170</height>
+                         <width>434</width>
+                         <height>200</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout">
@@ -959,7 +1114,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>417</height>
+               <height>476</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1134,7 +1289,7 @@
                <x>0</x>
                <y>0</y>
                <width>791</width>
-               <height>417</height>
+               <height>476</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -1600,7 +1755,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>676</x>
-     <y>733</y>
+     <y>767</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1616,7 +1771,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>753</x>
-     <y>733</y>
+     <y>767</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1632,7 +1787,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>830</x>
-     <y>733</y>
+     <y>767</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1663,8 +1818,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>153</x>
-     <y>134</y>
+     <x>217</x>
+     <y>128</y>
     </hint>
     <hint type="destinationlabel">
      <x>8</x>
@@ -1679,8 +1834,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>94</x>
-     <y>109</y>
+     <x>158</x>
+     <y>102</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1700,7 +1855,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>210</x>
-     <y>978</y>
+     <y>801</y>
     </hint>
    </hints>
   </connection>
@@ -1712,7 +1867,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>791</x>
-     <y>637</y>
+     <y>671</y>
     </hint>
     <hint type="destinationlabel">
      <x>796</x>
@@ -1743,8 +1898,8 @@
    <slot>imgFmtChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>220</x>
-     <y>71</y>
+     <x>544</x>
+     <y>78</y>
     </hint>
     <hint type="destinationlabel">
      <x>305</x>
@@ -1759,8 +1914,8 @@
    <slot>imgFmtChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>79</x>
-     <y>78</y>
+     <x>133</x>
+     <y>73</y>
     </hint>
     <hint type="destinationlabel">
      <x>80</x>
@@ -1779,7 +1934,7 @@
      <y>311</y>
     </hint>
     <hint type="destinationlabel">
-     <x>882</x>
+     <x>864</x>
      <y>146</y>
     </hint>
    </hints>
@@ -1791,11 +1946,11 @@
    <slot>sequentialTypeChangingToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>76</x>
-     <y>388</y>
+     <x>96</x>
+     <y>428</y>
     </hint>
     <hint type="destinationlabel">
-     <x>888</x>
+     <x>864</x>
      <y>36</y>
     </hint>
    </hints>
@@ -1811,7 +1966,7 @@
      <y>423</y>
     </hint>
     <hint type="destinationlabel">
-     <x>887</x>
+     <x>864</x>
      <y>270</y>
     </hint>
    </hints>
@@ -1823,12 +1978,28 @@
    <slot>showHideButtonClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>269</x>
-     <y>299</y>
+     <x>286</x>
+     <y>311</y>
     </hint>
     <hint type="destinationlabel">
      <x>864</x>
      <y>232</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox</sender>
+   <signal>activated(QString)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>captureImgName(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>801</x>
+     <y>111</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>862</x>
+     <y>105</y>
     </hint>
    </hints>
   </connection>
@@ -1849,5 +2020,6 @@
   <slot>sequentialTypeChangingToggled(bool)</slot>
   <slot>markerMonitorOption(bool)</slot>
   <slot>showHideButtonClicked(bool)</slot>
+  <slot>captureImgName(QString)</slot>
  </slots>
 </ui>

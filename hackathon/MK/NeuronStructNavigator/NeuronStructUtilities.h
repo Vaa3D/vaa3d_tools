@@ -93,6 +93,7 @@ public:
 	static bool isSorted(const NeuronTree& inputNeuronTree);								// ~~ Not implemented yet ~~
 	static NeuronTree sortTree(const NeuronTree& inputNeuronTree, const float somaCoord[]); // ~~ Not implemented yet ~~
 
+	static int findSomaNodeID(const NeuronTree& inputTree);
 	static void somaCleanUp(NeuronTree& inputTree);	   // ~~ Incomplete ~~ may not needed at all.
 	
 	static bool multipleSegsCheck(const NeuronTree& inputTree);

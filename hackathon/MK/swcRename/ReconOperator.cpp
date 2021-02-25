@@ -1,3 +1,5 @@
+#include "TreeTrimmer.h"
+
 #include "ReconOperator.h"
 
 void ReconOperator::downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor)
@@ -166,10 +168,11 @@ void ReconOperator::removeDupedNodes()
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
 				map<int, int> tree2HeadNodeMap;
 				int minNodeID, maxNodeID;
+				bool somaNodeAssigned = false;
 				for (auto& connectedTree : connectedTrees)
 				{
 #ifdef SUBTREE_DEBUG
-					writeSWC_file(subTreeFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
+					writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
 #endif
 
 					if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
@@ -187,7 +190,9 @@ void ReconOperator::removeDupedNodes()
 					float dist = sqrtf((nearestNode.x - somaAPO.x) * (nearestNode.x - somaAPO.x) + (nearestNode.y - somaAPO.y) * (nearestNode.y - somaAPO.y) + (nearestNode.z - somaAPO.z) * (nearestNode.z - somaAPO.z));
 					if (dist <= 35)
 					{
+						//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
 						connectedTree.second.assembleSegs2singleTree(nearestNodeID);
+						//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
 						tree2HeadNodeMap.insert({ connectedTree.first, nearestNodeID });
 						connectedTree.second.tree.listNeuron[connectedTree.second.node2LocMap.at(nearestNodeID)].type = 1;
 						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
@@ -200,28 +205,38 @@ void ReconOperator::removeDupedNodes()
 							cout << "  More than 1 segments are identified. Still needs to assemble segments." << endl;
 							connectedTree.second.assembleSegs2singleTree(nearestNodeID);
 						}
-						cout << "    Change node type to 7." << endl;
-						for (auto& node : connectedTree.second.tree.listNeuron) node.type = 7;
-						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
+
+						if (NeuronStructUtil::findSomaNodeID(connectedTree.second.tree) != -1)
+						{
+							cout << "    Change node type to 7." << endl;
+							for (auto& node : connectedTree.second.tree.listNeuron) node.type = 7;
+							cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
+						}
 					}
 				}
 				clock_t end = clock();
 				float duration = float(end - start) / CLOCKS_PER_SEC;
 				cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
 
-				NeuronSWC somaNode;
-				if (minNodeID > 1) somaNode.n = minNodeID - 1;					
-				else somaNode.n = maxNodeID + 1;
+				if (this->removeSpike)
+					for (auto& tree : connectedTrees) tree.second = TreeTrimmer::spikeRemoval(tree.second, this->branchNodeMin);
 
+				NeuronSWC somaNode;
+				if (minNodeID > 1) somaNode.n = minNodeID - 1;
+				else somaNode.n = maxNodeID + 1;
 				somaNode.x = somaAPO.x;
 				somaNode.y = somaAPO.y;
 				somaNode.z = somaAPO.z;
 				somaNode.parent = -1;
 				somaNode.type = 1;
+
 				for (auto& treeID : tree2HeadNodeMap)
 				{
-					profiledTree& currTree = connectedTrees[treeID.first];
-					currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
+					if (NeuronStructUtil::findSomaNodeID(connectedTrees[treeID.first].tree) == -1)
+					{
+						profiledTree& currTree = connectedTrees[treeID.first];
+						currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
+					}
 				}
 
 				NeuronTree outputTree;

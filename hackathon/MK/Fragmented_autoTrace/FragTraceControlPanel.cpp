@@ -194,8 +194,65 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 			this->CViewerPortal = nullptr;
 			uiPtr->checkBox->setChecked(false);
 			uiPtr->pushButton_2->setEnabled(false);
-			this->refreshSomaCoords();
-			uiPtr->groupBox_15->setChecked(false);
+			
+			v3dhandleList imgWindowList = this->thisCallback->getImageWindowList();		
+			vector<v3dhandle> winVec;
+			int currItemNum = uiPtr->comboBox->count();
+			set<int> index2beRemoved;
+			for (int i = 0; i < currItemNum; ++i) index2beRemoved.insert(i);
+			for (auto& win : imgWindowList)
+			{
+				QWidget* winPtr = static_cast<QWidget*>(win);
+				if (!winPtr->windowTitle().contains("ID"))
+				{
+					winVec.push_back(winPtr);
+					QString imgFullNameQ = static_cast<QWidget*>(*(winVec.end() - 1))->windowTitle();
+					QString imgNameQ = *(imgFullNameQ.split("/").end() - 1);
+					int currIndex = uiPtr->comboBox->findText(imgNameQ);
+					if (currIndex == -1) uiPtr->comboBox->addItem(imgNameQ);
+					else index2beRemoved.erase(index2beRemoved.find(currIndex));
+				}
+			}
+			for (auto& index : index2beRemoved) uiPtr->comboBox->removeItem(index);
+
+			if (uiPtr->comboBox->currentText().isEmpty())
+			{
+				if (!winVec.empty())
+				{
+					QString imgFullNameQ = static_cast<QWidget*>(*winVec.begin())->windowTitle();
+					QString imgNameQ = *(imgFullNameQ.split("/").end() - 1);
+					uiPtr->comboBox->addItem(imgNameQ);
+					this->currHandle = *winVec.begin();
+					this->refreshSomaCoords();
+				}
+				else
+				{
+					this->currHandle = nullptr;
+					return;
+				}
+			}
+			else
+			{
+				if (winVec.empty())
+				{
+					uiPtr->comboBox->clear();
+					uiPtr->comboBox->clearEditText();
+					this->currHandle = nullptr;
+					return;
+				}
+
+				QString currImgNameQ = uiPtr->comboBox->currentText();
+				for (auto& win : winVec)
+				{
+					if (static_cast<QWidget*>(win)->windowTitle().contains(currImgNameQ))
+					{
+						this->currHandle = win;
+						this->refreshSomaCoords();
+					}
+				}
+			}
+
+			uiPtr->groupBox_15->setChecked(false); // -> This line will invoke [this->multiSomaTraceChecked()].
 		}
 	}
 }
@@ -240,16 +297,19 @@ void FragTraceControlPanel::markerMonitorOption(bool checked)
 	}	
 }
 
-void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; [Marker / Point Cloud Monitor]
+void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // This is the connected slot for groupBox_15; [Marker/Point Cloud Monitor]. 
 {
 	if (checked)
 	{
 		if (uiPtr->checkBox->isChecked()) this->refreshSomaCoords();
 		else if (uiPtr->checkBox_2->isChecked())
 		{
-			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
-			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
-			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);	
+			//v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+			//QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+			//V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);	
+			if (this->currHandle == nullptr) return;
+			qDebug() << static_cast<QWidget*>(this->currHandle)->windowTitle();
+			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(static_cast<QWidget*>(this->currHandle)->windowTitle());
 			this->thisCallback->set3DViewerMarkerDetectorStatus(true, currMainWindow);
 		}
 	}
@@ -257,9 +317,12 @@ void FragTraceControlPanel::multiSomaTraceChecked(bool checked) // groupBox_15; 
 	{
 		if (uiPtr->checkBox_2->isChecked())
 		{
-			v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
-			QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
-			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+			//v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+			//QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+			//V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+			if (this->currHandle == nullptr) return;
+			qDebug() << static_cast<QWidget*>(this->currHandle)->windowTitle();
+			V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(static_cast<QWidget*>(this->currHandle)->windowTitle());
 			this->thisCallback->set3DViewerMarkerDetectorStatus(false, currMainWindow);
 		}
 	}
@@ -281,9 +344,12 @@ void FragTraceControlPanel::refreshSomaCoords()
 	}
 	else if (uiPtr->checkBox_2->isChecked())
 	{
-		v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
-		QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
-		V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+		if (this->currHandle == nullptr) return;
+		qDebug() << static_cast<QWidget*>(this->currHandle)->windowTitle();
+		//v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+		//QString imageName = this->thisCallback->getImageName(this->thisCallback->currentImageWindow());
+		//V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(imageName);
+		V3dR_MainWindow* currMainWindow = this->thisCallback->find3DViewerByName(static_cast<QWidget*>(this->currHandle)->windowTitle());
 		this->thisCallback->refreshSelectedMarkers(currMainWindow);
 	}
 
@@ -605,6 +671,19 @@ void FragTraceControlPanel::sequentialTypeChangingToggled(bool toggle)
 {
 	if (toggle) this->fragEditorPtr->sequentialTypeToggled = true;
 	else if (!toggle) this->fragEditorPtr->sequentialTypeToggled = false;
+}
+
+void FragTraceControlPanel::captureImgName(QString newImgNameQ)
+{
+	v3dhandle currImgWindow = this->thisCallback->currentImageWindow();
+	V3dR_MainWindow* currMainWindow = static_cast<V3dR_MainWindow*>(currImgWindow);
+	this->thisCallback->set3DViewerMarkerDetectorStatus(false, currMainWindow);
+	
+	//qDebug() << newImgNameQ;
+	for (auto& handle : this->thisCallback->getImageWindowList())
+		if (static_cast<QWidget*>(handle)->windowTitle().contains(newImgNameQ)) this->currHandle = handle;	
+	V3dR_MainWindow* newMainWindow = this->thisCallback->find3DViewerByName(static_cast<QWidget*>(this->currHandle)->windowTitle());
+	this->thisCallback->set3DViewerMarkerDetectorStatus(true, newMainWindow);
 }
 /* ====================== END of [User Interface Buttons] ======================= */
 

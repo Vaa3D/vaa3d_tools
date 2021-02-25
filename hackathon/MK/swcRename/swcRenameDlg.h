@@ -27,6 +27,7 @@ public:
 
 public slots:
 	void browseFolderClicked();
+	void preProcessParam(bool toggle);
 	void okClicked() { this->changeName(); }
 	void okClicked2() { this->reconOp(); }
 	void undoClicked();
