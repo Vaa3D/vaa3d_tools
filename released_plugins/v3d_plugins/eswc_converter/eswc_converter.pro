@@ -3,6 +3,8 @@ CONFIG	+= qt plugin warn_off
 CONFIG  -= bundle_off
 V3DMAINPATH  =  ../../../v3d_main   
 INCLUDEPATH +=  $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH +=  $$V3DMAINPATH/common_lib/include
+INCLUDEPATH +=  $$V3DMAINPATH/v3d
 
 HEADERS	+= eswc_converter_plugin.h
 HEADERS	+= eswc_converter_func.h

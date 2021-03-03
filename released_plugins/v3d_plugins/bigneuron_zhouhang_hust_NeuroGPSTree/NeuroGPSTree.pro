@@ -6,14 +6,15 @@ mac{
 }
 
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 INCLUDEPATH	+= ./eigen3.2.2
-INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include/eigen_3_3_4
+INCLUDEPATH     += $$V3DMAINPATH/v3d_main/common_lib/include/eigen_3_3_4
 
 win32 {
-LIBS += $$VAA3DPATH/v3d_main/common_lib/src_packages/Pre-built.2/lib/pthreadVC2.lib
+LIBS += $$V3DMAINPATH/v3d_main/common_lib/src_packages/Pre-built.2/lib/pthreadVC2.lib
 }
 
 unix {
@@ -61,8 +62,8 @@ SOURCES	+= NeuroGPSTree_plugin.cpp \
     ngtypes/volume.cpp \
     Function/Trace/WeakSWCFilter.cpp \
     Function/IO/treewriter.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(NeuroGPSTree)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/HUST_NeuroGPSTree/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/neuron_tracing/HUST_NeuroGPSTree/

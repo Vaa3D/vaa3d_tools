@@ -7,6 +7,8 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d
 
 HEADERS += reset_xyz_resolution.h
 SOURCES  = reset_xyz_resolution.cpp

@@ -2,16 +2,17 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
+V3DMAINPATH = ../../../../v3d_external
 V3DTOOLPATH = ../../..
 V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$V3DMAINPATH/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 INCLUDEPATH += ./
 
 TARGET	= $$qtLibraryTarget(smartTrace)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/smartTrace/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/neuron_tracing/smartTrace/
 
 macx{
     LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff

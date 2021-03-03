@@ -103,11 +103,11 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
         // rnorm
         rnorm.push_back( DIAM[p] / baseline[p]);
         // slope
-        if( abs( ARC[p] - ARC[p-1] ) < 1.0e-6){
-            if( abs( DIAM[p] - DIAM[p-1] ) < 1.0e-6){
+        if( fabs( ARC[p] - ARC[p-1] ) < 1.0e-6){
+            if( fabs( DIAM[p] - DIAM[p-1] ) < 1.0e-6){
                 slope.push_back(0.0); // ATENTION!!! equal points are not removed! slope is set to zero!
             }else{
-                double sign = ( DIAM[p] - DIAM[p-1] ) / abs( DIAM[p] - DIAM[p-1] );
+                double sign = ( DIAM[p] - DIAM[p-1] ) / fabs( DIAM[p] - DIAM[p-1] );
                 slope.push_back( 2.0 * sign * bump_slope); // ATENTION!!! same (x,y,z) but abrupt change in r! give the slope trigger
             }
         }else{// normal case
@@ -122,7 +122,7 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
     std::vector<double> signal_cor;
     signal_cor.push_back(0);
     for(unsigned p =1; p<Npoints ;p++){
-        if( abs( slope[p] ) < bump_slope && abs( rnorm[p] - 1 ) < bump_rnorm ){
+        if( fabs( slope[p] ) < bump_slope && fabs( rnorm[p] - 1 ) < bump_rnorm ){
             signal_cor.push_back(0);
         }else{
             signal_cor.push_back(1);
@@ -156,7 +156,7 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
             }
 			
             double delta_x = ARC[p2]-ARC[p1];
-            if (abs(delta_x)>1.0e-6){
+            if (fabs(delta_x)>1.0e-6){
                 // this IS a bump; remove according with the locations of p1 and p2
 
                 //choose r0 according to the location of p1
@@ -192,7 +192,7 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
                     //p2 is a node
                     //force end diam to baseline level
                     m = (baseline[p2]-r0) / delta_x;
-                    if(m > bump_slope || abs(DIAM[p2]/baseline[p2] - 1) > bump_rnorm){
+                    if(m > bump_slope || fabs(DIAM[p2]/baseline[p2] - 1) > bump_rnorm){
                         m = (MEDIAN(DIAM)-r0) / delta_x;
                     }
                 }
@@ -205,7 +205,7 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
                     //printf("%g\n",DIAM_new[i]);
                 }
 
-            }else{//abs(delta_x)<=1.0e-6
+            }else{//fabs(delta_x)<=1.0e-6
                 for (long i=p1;i<=p2;i=i+1){
                     DIAM_new[i] = baseline[i];
                 }
@@ -231,7 +231,7 @@ void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned de
     }else{
 
         for(unsigned ii=0;ii<Npoints;ii=ii+1){
-            if(abs(DIAM[ii]-DIAM_new[ii])<1e-6){
+            if(fabs(DIAM[ii]-DIAM_new[ii])<1e-6){
                 signal_cor[ii]=0;
             }else{
                 signal_cor[ii]=1;

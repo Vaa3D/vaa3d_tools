@@ -2,8 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
 
 HEADERS	+= \
     mean_shift_dialog.h \
@@ -22,9 +24,9 @@ SOURCES	+= \
     mean_shift_fun.cpp \
     gradient_transform_dialog.cpp
 
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(mean_shift_center_finder)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_analysis/mean_shift_center_finder/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/image_analysis/mean_shift_center_finder/

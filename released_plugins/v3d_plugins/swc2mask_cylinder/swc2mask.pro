@@ -5,6 +5,7 @@ CONFIG	+= qt plugin warn_off
 VAA3D_DIR = ../../../v3d_main
 INCLUDEPATH	+= $$VAA3D_DIR/basic_c_fun
 INCLUDEPATH     += $$VAA3D_DIR/common_lib/include
+INCLUDEPATH	+= $$VAA3D_DIR/v3d
 
 HEADERS	+= swc2mask_plugin.h
 HEADERS += my_surf_objs.h

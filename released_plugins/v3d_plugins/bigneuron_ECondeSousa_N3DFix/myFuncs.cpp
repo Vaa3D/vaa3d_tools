@@ -120,7 +120,7 @@ double RandGen(double A, double B) {
         A=B;
         B=temp;
     }
-    if (abs(B-A)<1e-6){
+    if (fabs(B-A)<1e-6){
         return A;
     }else{
         double random = ((double) rand()) / (double) RAND_MAX;
@@ -151,14 +151,14 @@ void Calculate_Baseline( std::vector<double> DIAM,std::vector<double> ARC, std::
 
     median_D = MEDIAN(DIAM);
     for(unsigned i = 0; i < Npoints; i = i + 1) {
-        r_mad[i] = abs( DIAM[i] - median_D );
+        r_mad[i] = fabs( DIAM[i] - median_D );
     }
     mad = MEDIAN(r_mad);
 
     // use fitting weights to exclude the outliers
     if( mad > 1.0e-6 ) {
         for(unsigned i = 0; i < Npoints; i = i + 1 ) {
-            r_mad[i] = abs( DIAM[i] - median_D ) / mad;
+            r_mad[i] = fabs( DIAM[i] - median_D ) / mad;
             if( r_mad[i] > outlier_cutoff ) {
                 weights[i] = 0.0;
             } else {
@@ -175,13 +175,13 @@ void Calculate_Baseline( std::vector<double> DIAM,std::vector<double> ARC, std::
         }
         median_D = MEDIAN(DIAM_noise);
         for(unsigned i = 0; i < Npoints; i = i + 1) {
-            r_mad[i] = abs( DIAM_noise[i] - median_D );
+            r_mad[i] = fabs( DIAM_noise[i] - median_D );
         }
         mad = MEDIAN(r_mad);
 
         if( mad > 1.0e-6 ) {
             for(unsigned i = 0; i < Npoints; i = i + 1 ) {
-                r_mad[i] = abs( DIAM_noise[i] - median_D ) / mad;
+                r_mad[i] = fabs( DIAM_noise[i] - median_D ) / mad;
                 if( r_mad[i] > outlier_cutoff ) {
                     weights[i] = 0.0;
                 } else {
@@ -193,7 +193,7 @@ void Calculate_Baseline( std::vector<double> DIAM,std::vector<double> ARC, std::
             double s = STDEV(DIAM);
             median_D = MEDIAN(DIAM);
             for(unsigned i = 0; i < Npoints; i = i + 1 ) {
-                if( abs( DIAM[i] - median_D ) > 2.0 * s ) {
+                if( fabs( DIAM[i] - median_D ) > 2.0 * s ) {
                     weights[i] = 0.0;
                 } else {
                     weights[i] = 1.0;

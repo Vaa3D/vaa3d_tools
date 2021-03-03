@@ -3,6 +3,8 @@ CONFIG       += qt plugin warn_off
 
 V3DMAINPATH  += ../../../../v3d_external/v3d_main/
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH  += $$V3DMAINPATH/v3d
 
 HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
 HEADERS      += global_neuron_feature.h

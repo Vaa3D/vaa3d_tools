@@ -2,10 +2,11 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/newmat11
-INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
+V3DMAINPATH = ../../../../v3d_external
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/jba/newmat11
+INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/v3d
+INCLUDEPATH += $$V3DMAINPATH/v3d_main/common_lib/include
 
 HEADERS	+= blastneuron_plugin.h
 SOURCES	+= blastneuron_plugin.cpp
@@ -36,22 +37,22 @@ SOURCES += pointcloud_match/q_pointcloud_match_refinematch_manifold.cpp
 SOURCES += pointcloud_match/q_pointcloud_match_initialmatch.cpp
 SOURCES += pointcloud_match/q_pointcloud_match_basic.cpp
 
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
     INCLUDEPATH	+= C:/gnuwin32/include
     INCLUDEPATH	+= ./
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
+    LIBS     += -L$$V3DMAINPATH/v3d_main/common_lib/winlib64 -llibnewmat
     } else {
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib -llibnewmat
+    LIBS     += -L$$V3DMAINPATH/v3d_main/common_lib/winlib -llibnewmat
     }
 }
 
 unix {
-    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/v3d_main/jba/c++ -lv3dnewmat
 }
 TARGET	= $$qtLibraryTarget(blastneuron)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/blastneuron/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/neuron_utilities/blastneuron/

@@ -2,10 +2,11 @@
 TEMPLATE = lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../..
-V3DMAINPATH = $$VAA3DPATH/v3d_main
+V3DMAINPATH = ../../..
+V3DMAINPATH = $$V3DMAINPATH/v3d_main
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
+INCLUDEPATH += $$V3DMAINPATH/v3d
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 INCLUDEPATH += $$V3DMAINPATH/jba/c++
 
@@ -54,5 +55,5 @@ unix {
 }
 
 TARGET	= $$qtLibraryTarget(brainaligner)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_registration/brainaligner/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/image_registration/brainaligner/
 

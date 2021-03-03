@@ -7,6 +7,7 @@ V3DMAINDIR = ../../../v3d_main
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
+INCLUDEPATH  += $$V3DMAINDIR/v3d
 
 HEADERS       = istitch.h 
 HEADERS      +=	istitch_gui.h

@@ -4,7 +4,9 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
 V3DMAINFOLER = ../../../v3d_main
-INCLUDEPATH     += $$V3DMAINFOLER/basic_c_fun $$V3DMAINFOLER/common_lib/include
+INCLUDEPATH     += $$V3DMAINFOLER/basic_c_fun 
+INCLUDEPATH     += $$V3DMAINFOLER/common_lib/include
+INCLUDEPATH     += $$V3DMAINFOLER/v3d 
 LIBS += -L. -lv3dtiff -L$$V3DMAINFOLER/common_lib/lib
 
 HEADERS = lobeseg_plugin.h
