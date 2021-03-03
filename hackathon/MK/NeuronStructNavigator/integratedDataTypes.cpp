@@ -611,9 +611,9 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 	}
 }
 
-int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inputAPO)
+int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inputAPO, int threshold)
 {
-	this->segEndClusterNodeMap.clear();
+	this->segEndCoordKey2segMap.clear();
 	this->segEndCoordKeySegMapGen();
 	this->nodeCoordKey2segMap.clear();
 	this->nodeCoordKeySegMapGen();
@@ -645,11 +645,10 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 				}
 			}
 		}
-		
-		if (outputNodeID != 0) return outputNodeID;
 	}
 	
-	if (this->nodeTileMap.find(targetNodeTileKey) == this->nodeTileMap.end() || outputNodeID == 0)
+	if (outputNodeID != 0 && dist <= threshold) return outputNodeID;
+	else
 	{
 		for (int k = -1; k <= 1; ++k)
 		{
@@ -699,7 +698,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 			}
 		}
 
-		if (outputNodeID != 0) return outputNodeID;
+		if (outputNodeID != 0 && dist <= threshold) return outputNodeID;
 		else
 		{
 			//cout << "No nearest node found." << endl;
@@ -1180,7 +1179,7 @@ void integratedDataTypes::profiledTree::addTopoUnit(int nodeID)
 
 void integratedDataTypes::profiledTreeReInit(profiledTree& inputProfiledTree)
 {
-	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
+	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.nodeTileSize, inputProfiledTree.segTileSize);
 	inputProfiledTree = tempTree; // Copy tempTree to the memory where [inputProfiledTree] refers to -- OK.
 }
 

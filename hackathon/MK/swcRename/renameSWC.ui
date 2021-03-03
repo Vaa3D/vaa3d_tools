@@ -144,8 +144,14 @@
                    <layout class="QHBoxLayout" name="horizontalLayout_18">
                     <item>
                      <widget class="QRadioButton" name="radioButton_4">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
                       <property name="text">
                        <string>Voxel distance limit:</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
                       </property>
                       <property name="checked">
                        <bool>false</bool>
@@ -219,9 +225,9 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-                      <property name="enabled">
-                       <bool>true</bool>
+                     <widget class="QSpinBox" name="spinBox_2">
+                      <property name="value">
+                       <number>30</number>
                       </property>
                      </widget>
                     </item>

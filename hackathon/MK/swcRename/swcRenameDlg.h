@@ -9,6 +9,7 @@
 
 #include "v3d_interface.h"
 
+#include "NeuronReconFileManager_Define.h"
 #include "ui_renameSWC.h"
 #include "FileNameChangerIndexer.h"
 #include "ReconOperator.h"

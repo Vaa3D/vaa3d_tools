@@ -275,6 +275,16 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 	}
 }
 
+bool NeuronStructUtil::checkNodeType(const NeuronTree& inputTree, int nodeType)
+{
+	for (auto& node : inputTree.listNeuron)
+	{
+		if (node.type == nodeType) return true;
+	}
+
+	return false;
+}
+
 map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& inputTree)
 {
 	map<int, QList<NeuronSWC>> outputNodeTypeMap;

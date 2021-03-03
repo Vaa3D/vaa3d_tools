@@ -1,7 +1,7 @@
 #ifndef RECONOPERATOR_H
 #define RECONOPERATOR_H
 
-#define SUBTREE_DEBUG
+//#define SUBTREE_DEBUG
 
 #include <iostream>
 
@@ -16,13 +16,15 @@
 class ReconOperator
 {
 public:
-	ReconOperator() : removeSpike(false), branchNodeMin(-1) {}
+	ReconOperator() : autoConnect(false), removeSpike(false), branchNodeMin(-1), connectThreshold(-1) {}
 
 	QString rootPath;
 	int xFactor, yFactor, zFactor;
 
+	bool autoConnect;
 	bool removeSpike;
 	int branchNodeMin;
+	int connectThreshold;
 
 	void downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor);
 

@@ -31,17 +31,17 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
-	for (int i = 2; i < argc; ++i)
+	/*for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "removeRedunNode";
+	string funcName = "nearTree";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -68,6 +68,29 @@ int main(int argc, char* argv[])
 			cout << "time elapsed: " << duration << endl << endl;
 		}
 	}
+	else if (!funcName.compare("nearTree"))
+	{
+		QString tree1NameQ = "C:\\Users\\hkuo9\\Desktop\\test\\test2\\subTrees_assemmbled\\191807_5031-X5620-Y23074_finalized.ano\\1.swc";
+		QString tree2NameQ = "C:\\Users\\hkuo9\\Desktop\\test\\test2\\subTrees_assemmbled\\191807_5031-X5620-Y23074_finalized.ano\\10.swc";
+		NeuronTree tree1 = readSWC_file(tree1NameQ);
+		NeuronTree tree2 = readSWC_file(tree2NameQ);
+		profiledTree profiledTree1(tree1);
+		profiledTree profiledTree2(tree2);
+
+		map<float, pair<int, int>> distMap = NeuronStructExplorer::nearestSegEnd2targetTree(profiledTree1.segs.begin()->second, profiledTree2);
+		for (auto& dist : distMap) cout << dist.first << ": " << dist.second.first << " -> " << dist.second.second << endl;
+	}
+	else if (!funcName.compare("nearestNodeTest"))
+	{
+		//profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0))));
+		//string nodeTileKey = paras.at(1) + "_" + paras.at(2) + "_" + paras.at(3);
+		QString inputSWCNameQ = "C:\\Users\\hkuo9\\Desktop\\test\\test\\subTrees\\191807_4114-X3589-Y10280_finalized.ano\\test\\191807_4114-X3589-Y10280_finalized.ano.swc";
+		profiledTree inputProfiledTree(readSWC_file(inputSWCNameQ));
+		QString somaFileNameQ = "C:\\Users\\hkuo9\\Desktop\\test\\test\\subTrees\\191807_4114-X3589-Y10280_finalized.ano\\test\\191807_4114-X3589-Y10280_finalized.ano.apo";
+		QList<CellAPO> apoList = readAPO_file(somaFileNameQ);
+		int nearestNodeID = inputProfiledTree.findNearestSegEndNodeID(*apoList.begin());
+		cout << nearestNodeID << endl;
+	}
 	else if (!funcName.compare("removeRedunNode"))
 	{
 		NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
@@ -86,44 +109,6 @@ int main(int argc, char* argv[])
 		NeuronStructUtil::removeDupBranchingNodes(inputProfiledTree);
 		writeSWC_file(QString::fromStdString(paras.at(0)) + "_dupRemoved.swc", inputProfiledTree.tree);
 		cout << "final segment number: " << inputProfiledTree.segs.size() << endl;
-	}
-	else if (!funcName.compare("groupTree"))
-	{
-		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
-		//QDir inputFolderQ("C:\\Users\\hkuo9\\Desktop\\test1");
-		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		QStringList fileNameListQ = inputFolderQ.entryList();
-
-		float totalTime = 0;
-		for (auto& file : fileNameListQ)
-		{
-			qDebug() << file;
-			clock_t start = clock();
-			//profiledTree inputProfiledTree(readSWC_file("C:\\Users\\hkuo9\\Desktop\\test1\\" + file));
-			profiledTree inputProfiledTree(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
-			boost::container::flat_map<int, profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(readSWC_file(QString::fromStdString(paras.at(0)) + "\\" + file));
-			//boost::container::flat_map<int, profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(inputProfiledTree1.tree);
-			//vector<profiledTree> groupedProfiledTrees = NeuronStructExplorer::groupGeoConnectedTrees(readSWC_file("C:\\Users\\hkuo9\\Desktop\\test1\\" + file));
-			clock_t end = clock();
-
-			float duration = float(end - start) / CLOCKS_PER_SEC;
-			//cout << "  -> time elapsed: " << duration << endl << endl;
-			//cout << "  " << groupedProfiledTrees.size() << " trees, time elapsed: " << duration << endl << endl;
-
-			QString outputFolderQ = QString::fromStdString(paras.at(0)) + "\\" + file.left(file.length() - 4);
-			QDir outputDir(outputFolderQ);
-			if (!outputDir.exists()) outputDir.mkpath(".");
-
-			for (boost::container::flat_map<int, profiledTree>::iterator it = groupedProfiledTrees.begin(); it != groupedProfiledTrees.end(); ++it)
-			{
-				QString treeNameQ = outputFolderQ + "\\" + QString::number(int(it - groupedProfiledTrees.begin() + 1)) + ".swc";
-				writeSWC_file(treeNameQ, it->second.tree);
-			}
-
-			totalTime += duration;
-		}
-
-		cout << "Total Time Used: " << totalTime << endl;
 	}
 	else if (!funcName.compare("treeRedirect"))
 	{

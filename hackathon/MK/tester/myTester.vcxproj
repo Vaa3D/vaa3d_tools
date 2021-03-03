@@ -128,36 +128,45 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgAnalyzer;C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\boostLibs\boost_1_61_0;C:\opencv-3.4.0\VS2013_build\install\include;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>D:\Qt\4.8.6\demos\shared;D:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\include;D:\Vaa3D_2013_Qt486\v3d_external\v3d_main\v3d;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;D:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgAnalyzer;D:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;D:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;D:\boostLibs\boost_1_72_0;C:\opencv-3.4.0\VS2013_build\install\include;D:\Qt\4.8.6\include\QtGui;D:\Qt\4.8.6\include\QtCore;D:\Qt\4.8.6\include;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;C:\boostLibs\boost_1_61_0\lib64-msvc-12.0;C:\opencv-3.4.0\VS2013_build\install\x64\vc12\lib;C:\Qt\4.8.6\lib;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgProcessorMK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>StatsLearner.lib;NeuronStructNavigator.lib;v3d_imgManagerMK.lib;QtCore4.lib;QtGui4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\StatsLearner;D:\boostLibs\boost_1_72_0\lib64-msvc-12.0;D:\Qt\4.8.6\lib;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;D:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NeuronStructNavigator.lib;v3d_imgManagerMK.lib;QtCore4.lib;QtGui4.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StackReserveSize>
       </StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="file_directoryHandler.cpp" />
     <ClCompile Include="imgTester.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SWCtester.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="file_directoryHandler.h" />
     <ClInclude Include="imgTester.h" />
     <ClInclude Include="processMonitoringTester.h" />
     <ClInclude Include="SWCtester.h" />

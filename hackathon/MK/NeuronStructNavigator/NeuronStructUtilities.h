@@ -81,6 +81,7 @@ public:
 	static NeuronTree swcCombine(const map<string, NeuronTree>& inputTreesMap);
 	static NeuronTree swcCombine(const map<string, profiledTree>& inputProfiledTreesMap);
 	
+	static bool checkNodeType(const NeuronTree& inputTree, int nodeType);
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 
 	static void splitNodeList(const QList<NeuronSWC>& inputNodes, const int splittingNodeID, QList<NeuronSWC>& downStreamNodes, QList<NeuronSWC>& upStreamNodes);

@@ -205,7 +205,7 @@ namespace integratedDataTypes
 		// ----------------- Segment Assembling Methods ----------------- // 
 		// Pick up the nearst node to the given soma coordinate. The node has to be a singular node that doesn't overlap any other nodes.
 		// If no node is found within the soma node tile and its 26 surrounding tiles, then a random singular will be picked.
-		int findNearestSegEndNodeID(const CellAPO inputAPO); 
+		int findNearestSegEndNodeID(const CellAPO inputAPO, int threshold = 35); 
 
 		// Clean up and organize the 'mess' of manually traced segments, so that the segments will be "combed through" with a given starting node.
 		// This method is required before running [this->assembleSegs2singleTree] to transform segments into a single tree. 

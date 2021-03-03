@@ -21,6 +21,10 @@ SWC_renameDlg::SWC_renameDlg(QWidget* parent, V3DPluginCallback2* callback) : ui
 
 	this->fileManager.fileNameAddition.clear();
 
+	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
+	QString windowTitleQ = "Neuron File Manager v" + QString::fromStdString(versionString);
+	this->setWindowTitle(windowTitleQ);
+
 	this->show();
 }
 
@@ -179,6 +183,16 @@ void SWC_renameDlg::reconOp()
 				this->myOperator.branchNodeMin = uiPtr->spinBox->text().toInt();
 			}
 		}
+
+		if (uiPtr->groupBox_15->isChecked())
+		{
+			if (uiPtr->radioButton_6->isChecked())
+			{
+				this->myOperator.autoConnect = true;
+				this->myOperator.connectThreshold = uiPtr->spinBox_2->text().toInt();
+			}
+		}
+
 		this->myOperator.removeDupedNodes();
 	}
 }

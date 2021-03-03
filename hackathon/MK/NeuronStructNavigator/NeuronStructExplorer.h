@@ -124,6 +124,7 @@ public:
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 
 	// Group geometrically connected segments into different [profiledTree]s. 
+	// Output: key = tree size -> value = profiledTree
 	boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree);
 private:
 	// Recursively look for geometrically connected segments, i.e., segments that have end-to-end or end-to-body overlapping nodes, then group them into different [profiledTree]s.
@@ -141,7 +142,11 @@ public:
 
 
 	/************************* Inter/Intra-SWC Comparison/Analysis ***************************/
-	// Computes the distance from every node to its nearest node in the given node lise.
+	// Find the nearest node-node distances of 2 given trees
+	// Output: distance -> pair<input segEnd node ID -> target node ID>
+	static map<float, pair<int, int>> nearestSegEnd2targetTree(const segUnit& inputSeg, const profiledTree& targetProfiledTree, float thresh = 30);
+	
+	// Computes the distance from every node to its nearest node in the given node list.
 	// The output is a map of 4 measures: mean, std, var, median.
 	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
 
@@ -187,7 +192,7 @@ inline string NeuronStructExplorer::getNodeTileKey(const NeuronSWC& inputNode, f
 {
 	string xLabel = to_string(int(inputNode.x / nodeTileLength));
 	string yLabel = to_string(int(inputNode.y / nodeTileLength));
-	string zLabel = to_string(int(inputNode.z / nodeTileLength / zRATIO));
+	string zLabel = to_string(int(inputNode.z / (nodeTileLength / zRATIO)));
 	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 	return keyLabel;
 }
@@ -205,7 +210,7 @@ inline string NeuronStructExplorer::getNodeTileKey(const float inputNodeCoords[]
 {
 	string xLabel = to_string(int((inputNodeCoords[0]) / nodeTileLength));
 	string yLabel = to_string(int((inputNodeCoords[1]) / nodeTileLength));
-	string zLabel = to_string(int((inputNodeCoords[2]) / nodeTileLength / zRATIO));
+	string zLabel = to_string(int((inputNodeCoords[2]) / (nodeTileLength / zRATIO)));
 	string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 	return keyLabel;
 }
@@ -239,6 +244,7 @@ inline string NeuronStructExplorer::getSegTileKey(const NeuronSWC& inputNode, fl
 
 inline void NeuronStructExplorer::nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength)
 {
+	nodeTileMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		string xLabel = to_string(int(it->x / nodeTileLength));

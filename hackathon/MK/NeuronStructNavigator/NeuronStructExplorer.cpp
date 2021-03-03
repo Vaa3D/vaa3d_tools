@@ -1770,6 +1770,95 @@ profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledT
 
 
 /* ============================================== Inter/Intra-SWC Comparison/Analysis ============================================== */
+map<float, pair<int, int>> NeuronStructExplorer::nearestSegEnd2targetTree(const segUnit& inputSeg, const profiledTree& targetProfiledTree, float thresh)
+{
+	map<float, pair<int, int>> outputMap;
+
+	const NeuronSWC headNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(inputSeg.head));
+	string headNodeTileKey = NeuronStructExplorer::getNodeTileKey(headNode);
+	for (int k = -1; k <= 1; ++k)
+	{
+		for (int j = -1; j <= 1; ++j)
+		{
+			for (int i = -1; i <= 1; ++i)
+			{
+				vector<string> tileKeyStrings;
+				stringstream ss(headNodeTileKey);
+				while (ss.good())
+				{
+					string subStr;
+					getline(ss, subStr, '_');
+					tileKeyStrings.push_back(subStr);
+				}
+
+				int newXkey = stoi(tileKeyStrings[0]) - i;
+				int newYkey = stoi(tileKeyStrings[1]) - j;
+				int newZkey = stoi(tileKeyStrings[2]) - k;
+				string newNodeTileKey = to_string(newXkey) + "_" + to_string(newYkey) + "_" + to_string(newZkey);
+
+				if (targetProfiledTree.nodeTileMap.find(newNodeTileKey) != targetProfiledTree.nodeTileMap.end())
+				{
+					for (auto& nodeID : targetProfiledTree.nodeTileMap.at(newNodeTileKey))
+					{
+						const NeuronSWC testingNode = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nodeID));
+						float dist = sqrtf((headNode.x - testingNode.x) * (headNode.x - testingNode.x) + (headNode.y - testingNode.y) * (headNode.y - testingNode.y) + (headNode.z - testingNode.z) * (headNode.z - testingNode.z));
+						if (dist <= thresh)
+						{
+							pair<int, int> nodeIDpair({ inputSeg.head, nodeID });
+							outputMap.insert({ dist, nodeIDpair });
+						}
+					}
+				}
+			}
+		}
+	}
+	
+
+	for (auto& tailID : inputSeg.tails)
+	{
+		const NeuronSWC tailNode = inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(tailID));
+		string tailNodeTileKey = NeuronStructExplorer::getNodeTileKey(tailNode);
+		for (int k = -1; k <= 1; ++k)
+		{
+			for (int j = -1; j <= 1; ++j)
+			{
+				for (int i = -1; i <= 1; ++i)
+				{
+					vector<string> tileKeyStrings;
+					stringstream ss(tailNodeTileKey);
+					while (ss.good())
+					{
+						string subStr;
+						getline(ss, subStr, '_');
+						tileKeyStrings.push_back(subStr);
+					}
+
+					int newXkey = stoi(tileKeyStrings[0]) - i;
+					int newYkey = stoi(tileKeyStrings[1]) - j;
+					int newZkey = stoi(tileKeyStrings[2]) - k;
+					string newNodeTileKey = to_string(newXkey) + "_" + to_string(newYkey) + "_" + to_string(newZkey);
+
+					if (targetProfiledTree.nodeTileMap.find(newNodeTileKey) != targetProfiledTree.nodeTileMap.end())
+					{
+						for (auto& nodeID : targetProfiledTree.nodeTileMap.at(newNodeTileKey))
+						{
+							const NeuronSWC testingNode = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nodeID));
+							float dist = sqrtf((tailNode.x - testingNode.x) * (tailNode.x - testingNode.x) + (tailNode.y - testingNode.y) * (tailNode.y - testingNode.y) + (tailNode.z - testingNode.z) * (tailNode.z - testingNode.z));
+							if (dist <= thresh)
+							{
+								pair<int, int> nodeIDpair({ tailID, nodeID });
+								outputMap.insert({ dist, nodeIDpair });
+							}
+						}
+					}
+				}
+			}
+		}	
+	}
+
+	return outputMap;
+}
+
 map<string, float> NeuronStructExplorer::selfNodeDist(const QList<NeuronSWC>& inputNodeList)
 {
 	boost::container::flat_map<string, vector<NeuronSWC>> labeledNodeMap;
