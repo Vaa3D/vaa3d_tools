@@ -5,6 +5,10 @@
 #include "swc_convert.h"
 #include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
+void setTmpImageDir(QString imageDir){
+    tmpImageDir = imageDir;
+}
+
 void BinaryProcess(unsigned char* &apsInput, V3DLONG* in_sz){
     V3DLONG tolSZ = in_sz[0]*in_sz[1]*in_sz[2];
     unsigned char* bdata = new unsigned char[tolSZ];
@@ -261,14 +265,14 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
         saveImageDir.mkdir("D:\\reTraceTest");
     }
 
-    QString saveImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+    QString saveImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
             QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
             QString::number(end_z) + ".v3draw";
     simple_saveimage_wrapper(callback,saveImagePath.toStdString().c_str(),pdata,in_sz,1);
 
     unsigned char* maskImage = pdata;
 //    getMaskImage(pdata,maskImage,in_sz,maskR);
-//    QString maskImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+//    QString maskImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
 //            QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
 //            QString::number(end_z) + "_mask.v3draw";
 //    simple_saveimage_wrapper(callback,maskImagePath.toStdString().c_str(),maskImage,in_sz,1);
@@ -278,7 +282,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     qDebug()<<"maskImage meanStd: "<<imageMean<<" "<<imageStd;
     BinaryProcess(maskImage,in_sz);
 
-    QString maskThresImagePath = "D:\\reTraceTest\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+    QString maskThresImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
             QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
             QString::number(end_z) + "_maskThres.v3draw";
     simple_saveimage_wrapper(callback,maskThresImagePath.toStdString().c_str(),maskImage,in_sz,1);
@@ -302,7 +306,7 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     LocationSimple m = LocationSimple(startMarker.x + 1 - start_x, startMarker.y + 1 - start_y, startMarker.z + 1 - start_z);
     QList<ImageMarker> ms;
     ms.push_back(ImageMarker(m.x,m.y,m.z));
-    QString saveMarkerPath = "D:\\reTraceTest\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+    QString saveMarkerPath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
             QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" + QString::number(end_z) + ".marker";
     writeMarker_file(saveMarkerPath,ms);
 
@@ -676,8 +680,9 @@ void ultratracerAxonTerafly(V3DPluginCallback2 &callback, QWidget *parent){
     callback.setSWCTeraFly(resultTree);
 }
 
-NeuronTree ultratracerAxonTerafly(QString brainPath, NeuronTree ori, V3DPluginCallback2 &callback){
+NeuronTree ultratracerAxonTerafly(QString brainPath, NeuronTree ori, QString imageDir, V3DPluginCallback2 &callback){
 //    sortSWC(ori);
+    setTmpImageDir(imageDir);
     mergeFinalResult(ori);
     BoundingBox box = getGlobalBoundingBox(brainPath);
     NeuronTree resultTree = ultratracerAxon(brainPath,box,ori,callback);

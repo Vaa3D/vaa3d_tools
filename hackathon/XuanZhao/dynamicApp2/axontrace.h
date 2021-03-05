@@ -11,6 +11,9 @@ using namespace std;
 
 static NeuronTree finalResult;
 
+static QString tmpImageDir;
+
+void setTmpImageDir(QString imageDir);
 
 template <class T>
 void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)
@@ -109,7 +112,7 @@ NeuronTree mergeNeuronTrees(vector<NeuronTree> neuronTrees);
 
 void mergeFinalResult(NeuronTree nt);
 
-NeuronTree ultratracerAxonTerafly(QString brainPath, NeuronTree ori, V3DPluginCallback2 &callback);
+NeuronTree ultratracerAxonTerafly(QString brainPath, NeuronTree ori, QString imageDir, V3DPluginCallback2 &callback);
 
 
 #endif // AXONTRACE_H

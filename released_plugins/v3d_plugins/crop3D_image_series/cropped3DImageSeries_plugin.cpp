@@ -579,24 +579,45 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 				QString line = in.readLine();
 				QList<QString> coords = line.split(",");
 				if (coords[0] == "##n") continue;
-				coords[4] = coords[4].remove(0, 1);
+//				coords[4] = coords[4].remove(0, 1);
+                coords[4] = coords[4].remove(" ");
+                coords[5] = coords[5].remove(" ");
+                coords[6] = coords[6].remove(" "); //changed by zx 20201210
 				qDebug() << coords[4] << " " << coords[5] << " " << coords[6];
 
-                QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";
+//                QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";
+
+//                if(QFile::exists(saveName)){
+//                    qDebug()<<saveName<<" is exist!";
+//                    continue;
+//                }
+
+//				QList<QString> zC = coords[4].split(".");
+//				QList<QString> xC = coords[5].split(".");
+//				QList<QString> yC = coords[6].split(".");
+
+//				long zcenter = zC[0].toLong() - 1;
+//				long xcenter = xC[0].toLong() - 1;
+//				long ycenter = yC[0].toLong() - 1;
+//				cout << zcenter << " " << xcenter << " " << ycenter << endl;
+
+                //changed by zx 20210303
+
+                long zC  = round(coords[4].toFloat());
+                long xC  = round(coords[5].toFloat());
+                long yC  = round(coords[6].toFloat());
+
+                long zcenter = zC - 1;
+                long xcenter = xC - 1;
+                long ycenter = yC - 1;
+                cout << zcenter << " " << xcenter << " " << ycenter << endl;
+
+                QString saveName = savePath + "/" + QString::number(xC) + "_" + QString::number(yC) + "_" + QString::number(zC) + ".v3draw";
 
                 if(QFile::exists(saveName)){
                     qDebug()<<saveName<<" is exist!";
                     continue;
                 }
-
-				QList<QString> zC = coords[4].split(".");
-				QList<QString> xC = coords[5].split(".");
-				QList<QString> yC = coords[6].split(".");
-
-				long zcenter = zC[0].toLong() - 1;
-				long xcenter = xC[0].toLong() - 1;
-				long ycenter = yC[0].toLong() - 1;
-				cout << zcenter << " " << xcenter << " " << ycenter << endl;
 
                 V3DLONG x0 = xcenter-cubeSideLength2/2;
                 V3DLONG x1 = xcenter+cubeSideLength2/2;

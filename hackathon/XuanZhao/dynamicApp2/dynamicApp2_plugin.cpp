@@ -90,8 +90,10 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
         QString brainPath = infiles.size()>=2 ? infiles[1] : "";
         QString outSwcPath = swcPath + "_result.swc";
 
+        QString tmpImageDir = infiles.size()>=3 ? infiles[2] : "";
+
         NeuronTree ori = readSWC_file(swcPath);
-        NeuronTree resultTree = ultratracerAxonTerafly(brainPath,ori,callback);
+        NeuronTree resultTree = ultratracerAxonTerafly(brainPath,ori,tmpImageDir,callback);
         writeSWC_file(outSwcPath,resultTree);
 
     }

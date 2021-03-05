@@ -6,7 +6,8 @@
 TEMPLATE      = lib
 CONFIG       += qt plugin warn_off 
 
-INCLUDEPATH  += ../../../v3d_main/basic_c_fun  
+INCLUDEPATH  += ../../../v3d_main/basic_c_fun
+INCLUDEPATH  += ../../../v3d_main/common_lib/include
 
 HEADERS       = linker_file_generator.h
 SOURCES       = linker_file_generator.cpp

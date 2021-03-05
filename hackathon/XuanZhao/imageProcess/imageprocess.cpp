@@ -476,6 +476,138 @@ void joinImage(QString tifDir, QString outPath,int times, V3DPluginCallback2& ca
 
 }
 
+
+void joinImage2(QString tifDir, QString outPath,int resolution, V3DPluginCallback2& callback){
+//    int gx = 0, gy = 0, gz = 0;
+//    vector<vector<int> > oris = vector<vector<int> >();
+    qDebug()<<"-------in joinImage---------";
+
+    unsigned long long gx = tifDir.split("x")[1].toInt();
+    unsigned long long gy = tifDir.split("x")[0].split("(")[1].toInt();
+    unsigned long long gz = tifDir.split("x")[2].split(")")[0].toInt();
+
+
+
+    int t = resolution;
+    qDebug()<<"t: "<<t;
+//    gx /= t, gy /= t, gz /= t;
+
+//    gx += 1, gy += 1, gz += 1;
+
+    unsigned long long tolSZ = gx*gy*gz;
+
+    qDebug()<<"tolSZ: "<<tolSZ<<" gx: "<<gx<<" gy: "<<gy<<" gz: "<<gz;
+
+
+    qDebug()<<"start to allocate";
+    unsigned char* data = new unsigned char[tolSZ];
+    if(!data){
+        qDebug()<<"allocate memory failed";
+    }else {
+        qDebug()<<"allocate memory successed";
+    }
+
+    memset(data,0,tolSZ*sizeof(unsigned char));
+
+
+
+
+    QFileInfoList dirList1 = QDir(tifDir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+    for(int i=0; i<dirList1.size(); i++){
+//        qDebug()<<"dir1: "<<dirList1[i].absoluteFilePath();
+        QDir dir1 = QDir(dirList1[i].absoluteFilePath());
+        QFileInfoList dirList2 = dir1.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+        for(int j=0; j<dirList2.size(); j++){
+//            qDebug()<<"dir2: "<<dirList2[j].absoluteFilePath();
+            QDir dir2 = QDir(dirList2[j].absoluteFilePath());
+            QFileInfoList fileList = dir2.entryInfoList(QDir::Files);
+            for(int k=0; k<fileList.size(); k++){
+//                qDebug()<<"file: "<<fileList[k].absoluteFilePath();
+                QString file = fileList[k].absoluteFilePath();
+
+                QString fileName = fileList[k].baseName();
+//                qDebug()<<"fileName: "<<fileName;
+
+                int ox = fileName.split("_")[1].toInt();
+                int oy = fileName.split("_")[0].toInt();
+                int oz = fileName.split("_")[2].toInt();
+
+                ox /= (t*10);
+                oy /= (t*10);
+                oz /= (t*10);
+
+                qDebug()<<"ox: "<<ox<<" oy: "<<oy<<" oz: "<<oz;
+
+                unsigned char* pdata = 0;
+                V3DLONG sz[4] = {0,0,0,0};
+                int dataType = 1;
+                simple_loadimage_wrapper(callback,file.toStdString().c_str(),pdata,sz,dataType);
+                qDebug()<<"dataType: "<<dataType;
+
+                qDebug()<<"sz012: "<<sz[0]<<" "<<sz[1]<<" "<<sz[2];
+
+                unsigned short* sdata = (unsigned short*)pdata;
+
+                for(int z=0; z<sz[2]; z++){
+                    for(int y=0; y<sz[1]; y++){
+                        for(int x=0; x<sz[0]; x++){
+                            int pIndex = z*sz[0]*sz[1] + y*sz[0] + x;
+                            unsigned long long dz = (z+oz)>(gz-1)? gz-1 : z+oz;
+                            unsigned long long dy = (y+oy)>(gy-1)? gy-1 : y+oy;
+                            unsigned long long dx = (x+ox)>(gx-1)? gx-1 : x+ox;
+
+                            unsigned long long index = dz*gx*gy + dy*gx + dx;
+                            if(index>tolSZ || index<0){
+//                                qDebug()<<"dz dy dx"<<dz<<" "<<dy<<" "<<dx;
+//                                qDebug()<<"index: "<<index;
+                                continue;
+                            }
+//                            qDebug()<<"index: "<<index;
+                            unsigned char tmp = 0;
+                            if(dataType == 1){
+                                tmp = pdata[pIndex];
+                            }else if(dataType == 2){
+
+                                int t = ((double)sdata[pIndex]/4096.0)*255 + 0.5;
+                                tmp = t;
+                                if(t<0) tmp = 0;
+                                if(t>255) tmp = 255;
+                            }
+                            data[index] = tmp;
+//                            if(data[index]>20){
+//                                qDebug()<<index<<" : "<<(int)data[index];
+//                            }
+
+                        }
+                    }
+                }
+
+                if(pdata){
+                    delete[] pdata;
+                    pdata = 0;
+                }
+            }
+        }
+    }
+
+
+    V3DLONG outSZ[4];
+    outSZ[0] = gx;
+    outSZ[1] = gy;
+    outSZ[2] = gz;
+    outSZ[3] = 1;
+    bool a = simple_saveimage_wrapper(callback,outPath.toStdString().c_str(),data,outSZ,1);
+    qDebug()<<"a: "<<a;
+    qDebug()<<"save image end";
+
+    if(data){
+        qDebug()<<"delete data";
+        delete[] data;
+        data = 0;
+    }
+
+}
+
 //Histogram Equalization
 void HE(unsigned char *data1d, long long *sz){
     V3DLONG* HA = new V3DLONG[256];
@@ -541,7 +673,7 @@ void getColorMask(vector<double> &colorMask, double colorSigma){
 //    }
 //}
 
-void getGaussianMask(float* &mask, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
+void getGaussianMask(float* &mask, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
     V3DLONG tolSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
     mask = new float[tolSZ];
     V3DLONG kernelSZ01 = kernelSZ[0]*kernelSZ[1];
@@ -705,7 +837,7 @@ void im_roll(unsigned char * src, unsigned char * dst, V3DLONG* sz, int* d_roll)
     }
 }
 
-void bilateralfilter2(unsigned char* src, unsigned char* &dst, V3DLONG* sz, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
+void bilateralfilter2(unsigned char* src, unsigned char* &dst, V3DLONG* sz, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
     qDebug()<<"-----bilateralfilter-------";
 
     if (!src || !sz || sz[0]<=0 || sz[1]<=0 || sz[2]<=0 || sz[3]<=0 || kernelSZ[0]<=0 || kernelSZ[1]<=0 || kernelSZ[2]<=0)
