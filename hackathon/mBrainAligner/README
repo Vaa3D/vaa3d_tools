@@ -3,17 +3,17 @@ This code repository hosts source code for mBrainAligner.
 
 Folder structure:
 
-* removal_stripe
+* preprocessing: removal of stripe artifact
 * global_registration: robust point matching based automatic global registration
-* 2.5D_corner_detection
 * local_registration: coherent landmark mapping (CLM) based automatic local registration
 * Semi_automatic_registration
+* 2.5D_corner_detection
 * demo
 
 
 * How to compile and use:
-In the "removal_stripe" folder, the code is based on MATLAB.  
-In the "global_registration", "2.5D_corner_detection" and "local_registration" folders, the provided code is based on C++ and  
+In the "preprocessing" folder, the code is based on MATLAB.  
+In the "global_registration", "local_registration" and "2.5D_corner_detection" folders, the provided code is based on C++ and  
 also provides a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
 
 Prerequisites:
