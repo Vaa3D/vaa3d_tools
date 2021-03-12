@@ -13,7 +13,7 @@ Folder structure:
 
 * How to compile and use:
 In the "preprocessing" folder, the code is based on MATLAB.  
-In the "global_registration", "local_registration" and "2.5D_corner_detection" folders, the provided code is based on C++ and  
+In the "global_registration", "local_registration" and "Tools" folders, the provided code is based on C++ and  
 also provides a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
 
 Prerequisites:
