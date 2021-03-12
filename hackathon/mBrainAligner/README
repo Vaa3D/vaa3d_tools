@@ -15,7 +15,7 @@ Please follow this link to build Vaa3D on Windows with qmake using VS2013 and Qt
 https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-(QMake)
 
 Configure and Build:
-*	Enter "PATH\ vaa3d_tools\hackathon\mBrainAligner\"folder.
-*	Use MS Visual Studio 2013 to open "******.vcxproj".
-*	Make sure it's configured Release and x64 as the platform, then build the solution.
+*Enter "PATH\ vaa3d_tools\hackathon\mBrainAligner\"folder.
+*Use MS Visual Studio 2013 to open "******.vcxproj".
+*Make sure it's configured Release and x64 as the platform, then build the solution.
 
