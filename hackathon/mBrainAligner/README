@@ -1,1 +1,21 @@
+This code base contains all the source code of mBrainAligner.
+
+
+Folder structure:
+* preprocessing: removal of stripe artifact 
+* global_registration: robust point matching based automatic global registration
+* local_registration: coherent landmark mapping (CLM) based automatic local registration
+* demo
+
+* How to compile and use:
+In each folder, we provide the source code and a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
+
+Prerequisites：
+Please follow this link to build Vaa3D on Windows with qmake using VS2013 and Qt4.8.6:
+https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-(QMake)
+
+Configure and Build:
+*	Enter "PATH\ vaa3d_tools\hackathon\mBrainAligner\"folder.
+*	Use MS Visual Studio 2013 to open "******.vcxproj".
+*	Make sure it's configured Release and x64 as the platform, then build the solution.
 
