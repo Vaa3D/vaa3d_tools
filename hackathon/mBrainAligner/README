@@ -12,15 +12,16 @@ Folder structure:
 
 
 * How to compile and use:
-in the removal_stripe folder，.in the global_registration, 2.5D_corner_detection and local_registration folders, we provide the source code and  
-a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
+In the "PATH\vaa3d_tools\hackathon\mBrainAligner\removal_stripe" folder, the code is based on MATLAB.  
+In the "global_registration", "2.5D_corner_detection" and "local_registration" folders, the provided code is based on C++ and  
+also provides a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
 
 Prerequisites:
 Please follow this link to build Vaa3D on Windows with qmake using VS2013 and Qt4.8.6:
 https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-(QMake)
 
 Configure and Build:
-* Enter "PATH\vaa3d_tools\hackathon\mBrainAligner\"folder.
+* Enter "PATH\vaa3d_tools\hackathon\mBrainAligner\" folder.
 * Use MS Visual Studio 2013 to open "******.vcxproj".
 * Make sure it's configured Release and x64 as the platform, then build the solution.
 
