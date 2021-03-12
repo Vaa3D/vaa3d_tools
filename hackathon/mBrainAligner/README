@@ -12,7 +12,7 @@ Folder structure:
 
 
 * How to compile and use:
-In the "PATH\vaa3d_tools\hackathon\mBrainAligner\removal_stripe" folder, the code is based on MATLAB.  
+In the "removal_stripe" folder, the code is based on MATLAB.  
 In the "global_registration", "2.5D_corner_detection" and "local_registration" folders, the provided code is based on C++ and  
 also provides a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
 
