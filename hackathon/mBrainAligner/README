@@ -7,6 +7,7 @@ Folder structure:
 * local_registration: coherent landmark mapping (CLM) based automatic local registration
 * demo
 
+
 * How to compile and use:
 In each folder, we provide the source code and a MS Visual Studio 2013 project file "******.vcxproj" for compilation.
 
