@@ -1,5 +1,7 @@
 
 
+
+
 #include "mBrainAligner.h"
 #include "calHogFeature.h"
 #include "preprocessing.h"
@@ -41,9 +43,9 @@ bool q_mutualinformation2(float *&I1, float *&I2, long long npixels, float &nmi)
 		if (hist12[i] > 10e-10)	HAB += -hist12[i] * log(hist12[i]);
 
 	//mutual information
-	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),Ô½´óÔ½Æ¥Åä
-	double mi = HA + HB - HAB;//MI(Mutual Information)»¥ĞÅÏ¢Ô½´ó£¬ËµÃ÷Ïà»¥°üº¬µÄĞÅÏ¢¶à£¬¼´Ô½Æ¥Åä
-	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)£¬Ô½´óÔ½Æ¥Åä
+	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),è¶Šå¤§è¶ŠåŒ¹é…
+	double mi = HA + HB - HAB;//MI(Mutual Information)äº’ä¿¡æ¯è¶Šå¤§ï¼Œè¯´æ˜ç›¸äº’åŒ…å«çš„ä¿¡æ¯å¤šï¼Œå³è¶ŠåŒ¹é…
+	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)ï¼Œè¶Šå¤§è¶ŠåŒ¹é…
 	nmi = ecc;
 
 	if (hist1) 	{ delete[]hist1;	hist1 = 0; }
@@ -848,13 +850,13 @@ bool Dic_brain(unsigned char * p_img_test, QString &dic_brain_file, QString &bas
 		return -1;
 	}
 
-	//È¡µ½ËùÓĞµÄÎÄ¼şºÍÎÄ¼şÃû£¬µ«ÊÇÈ¥µô.ºÍ..µÄÎÄ¼ş¼Ğ£¨ÕâÊÇQTÄ¬ÈÏÓĞµÄ£©
+	//å–åˆ°æ‰€æœ‰çš„æ–‡ä»¶å’Œæ–‡ä»¶åï¼Œä½†æ˜¯å»æ‰.å’Œ..çš„æ–‡ä»¶å¤¹ï¼ˆè¿™æ˜¯QTé»˜è®¤æœ‰çš„ï¼‰
 	dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-	//ÎÄ¼ş¼ĞÓÅÏÈ
+	//æ–‡ä»¶å¤¹ä¼˜å…ˆ
 	dir.setSorting(QDir::DirsFirst);
 
-	//×ª»¯³ÉÒ»¸ölist
+	//è½¬åŒ–æˆä¸€ä¸ªlist
 	QFileInfoList list_norm = dir.entryInfoList();
 	if (list_norm.size()< 1) {
 		return -1;
@@ -1458,7 +1460,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 		//{
 		//	fre_region_constraint = input_Parameter.fre_global_constraint;
 		//}
-		if (input_Parameter.Select_modal ==0)
+		if (input_Parameter.Select_modal <2)
 		{
 			if ((iter) % fre_region_constraint == 0)
 			{
@@ -1569,7 +1571,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 			sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
 			sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
 
-		if (input_Parameter.Select_modal ==0)
+		if (input_Parameter.Select_modal <2)
 		{
 			if ((iter) % int(input_Parameter.fre_global_constraint) == 0 && iter> input_Parameter.iterations_number / 2)
 			{
@@ -1608,87 +1610,87 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 
 			}
 
-			//·ÖÄÚÍâwarp 
-			if (iter == input_Parameter.iterations_number / 2 - 1 && input_Parameter.Select_modal==0)
-			{
-				vector<point3D64F> aver_corner_raw = aver_corner, vec_corners_ouline, fine_sub_outline;
-				vec_corners_ouline.clear();
-				fine_sub_outline.clear();
-				for (int i = 0; i < vec_corners.size(); i++)
-				{
-					if (vec_corners[i].outline == 1)
-					{
-						vec_corners_ouline.push_back(aver_corner[i]);
-						fine_sub_outline.push_back(vec_corner_new[i]);
+			//åˆ†å†…å¤–warp 
+			//if (iter == input_Parameter.iterations_number / 2 - 1 && input_Parameter.Select_modal==1)
+			//{
+			//	vector<point3D64F> aver_corner_raw = aver_corner, vec_corners_ouline, fine_sub_outline;
+			//	vec_corners_ouline.clear();
+			//	fine_sub_outline.clear();
+			//	for (int i = 0; i < vec_corners.size(); i++)
+			//	{
+			//		if (vec_corners[i].outline == 1)
+			//		{
+			//			vec_corners_ouline.push_back(aver_corner[i]);
+			//			fine_sub_outline.push_back(vec_corner_new[i]);
 
-					}
-				}
+			//		}
+			//	}
 
-				bool outline = true;
-				float at_lam = 0.2;
-				auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
+			//	bool outline = true;
+			//	float at_lam = 0.2;
+			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
 
-				vec_corners_ouline.clear();
-				fine_sub_outline.clear();
-				for (int i = 0; i < vec_corners.size(); i++)
-				{
-					if (vec_corners[i].outline == 1)
-					{
-						vec_corners_ouline.push_back(fine_sub_corner[i]);
-						fine_sub_outline.push_back(vec_corner_new[i]);
-					}
-				}
+			//	vec_corners_ouline.clear();
+			//	fine_sub_outline.clear();
+			//	for (int i = 0; i < vec_corners.size(); i++)
+			//	{
+			//		if (vec_corners[i].outline == 1)
+			//		{
+			//			vec_corners_ouline.push_back(fine_sub_corner[i]);
+			//			fine_sub_outline.push_back(vec_corner_new[i]);
+			//		}
+			//	}
 
-				outline = false;
-				auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, vec_corner_new, outline);
+			//	outline = false;
+			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, vec_corner_new, outline);
 
-				vec_corners_ouline.clear();
-				fine_sub_outline.clear();
-				for (int i = 0; i < vec_corners.size(); i++)
-				{
-					if (vec_corners[i].outline == 1)
-					{
-						vec_corners_ouline.push_back(aver_corner_raw[i]);
-						fine_sub_outline.push_back(aver_corner[i]);
-					}
-				}
-				outline = false;
-				auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
+			//	vec_corners_ouline.clear();
+			//	fine_sub_outline.clear();
+			//	for (int i = 0; i < vec_corners.size(); i++)
+			//	{
+			//		if (vec_corners[i].outline == 1)
+			//		{
+			//			vec_corners_ouline.push_back(aver_corner_raw[i]);
+			//			fine_sub_outline.push_back(aver_corner[i]);
+			//		}
+			//	}
+			//	outline = false;
+			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
 
-				vec_corner_new = aver_corner;
+			//	vec_corner_new = aver_corner;
 
-				QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
-				for (long long i = 0; i < vec_corners.size(); i++)
-				{
-					ImageMarker tmp;
-					tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
-					tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
-					tmp.x = aver_corner[i].x; tmp.y = aver_corner[i].y; tmp.z = aver_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_aver.push_back(tmp);
-				}
+			//	QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
+			//	for (long long i = 0; i < vec_corners.size(); i++)
+			//	{
+			//		ImageMarker tmp;
+			//		tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
+			//		tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
+			//		tmp.x = aver_corner[i].x; tmp.y = aver_corner[i].y; tmp.z = aver_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_aver.push_back(tmp);
+			//	}
 
-				char filename[2000];
-				//save as marker files
-				sprintf(filename, "%s%d_update_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
-				sprintf(filename, "%s%d_update_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
-				sprintf(filename, "%s%d_update_aver.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_aver);
+			//	char filename[2000];
+			//	//save as marker files
+			//	sprintf(filename, "%s%d_update_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
+			//	sprintf(filename, "%s%d_update_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
+			//	sprintf(filename, "%s%d_update_aver.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_aver);
 
-				V3DLONG szBlock_x, szBlock_y, szBlock_z;
-				szBlock_x = szBlock_y = szBlock_z = 4;
-				int		i_interpmethod_df = 1;		//default B-spline
-				int		i_interpmethod_img = 0;		//default trilinear
+			//	V3DLONG szBlock_x, szBlock_y, szBlock_z;
+			//	szBlock_x = szBlock_y = szBlock_z = 4;
+			//	int		i_interpmethod_df = 1;		//default B-spline
+			//	int		i_interpmethod_img = 0;		//default trilinear
 
-				unsigned char *p_img_warp = 0;
-				imgwarp_smallmemory(p_img_sub, sz_img_tar, ql_marker_tar, ql_marker_sub,
-					szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
-					p_img_warp);
-				filename[2000];
-				sprintf(filename, "%s%d_update.v3draw", qPrintable(input_Parameter.save_path), iter);
-				saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
-				if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
+			//	unsigned char *p_img_warp = 0;
+			//	imgwarp_smallmemory(p_img_sub, sz_img_tar, ql_marker_tar, ql_marker_sub,
+			//		szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
+			//		p_img_warp);
+			//	filename[2000];
+			//	sprintf(filename, "%s%d_update.v3draw", qPrintable(input_Parameter.save_path), iter);
+			//	saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
+			//	if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
 
-			}
+			//}
 		}
-		else if ((iter) % int(input_Parameter.fre_global_constraint) == 0)
+		else 
 		{
 			//STPS all point, but update interior point
 			Matrix x4x4_affine, xnx4_c, xnxn_K;
