@@ -2,6 +2,10 @@
 #define RECONOPERATOR_H
 
 //#define SUBTREE_DEBUG
+<<<<<<< HEAD
+//#define DUPSEG_REMOVE
+=======
+>>>>>>> 0ffe00a584d35588e86f5063ca57565605c6b052
 
 #include <iostream>
 

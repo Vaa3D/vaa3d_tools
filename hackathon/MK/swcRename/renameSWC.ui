@@ -227,7 +227,11 @@
                     <item>
                      <widget class="QSpinBox" name="spinBox_2">
                       <property name="value">
+<<<<<<< HEAD
+                       <number>5</number>
+=======
                        <number>30</number>
+>>>>>>> 0ffe00a584d35588e86f5063ca57565605c6b052
                       </property>
                      </widget>
                     </item>

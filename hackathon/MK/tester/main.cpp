@@ -68,6 +68,250 @@ int main(int argc, char* argv[])
 			cout << "time elapsed: " << duration << endl << endl;
 		}
 	}
+	else if (!funcName.compare("somaRegion"))
+	{
+		QDir inputFolderQ1(QString::fromStdString(paras.at(0)));
+		inputFolderQ1.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList regionNameList = inputFolderQ1.entryList();
+		map<string, NeuronTree> regionTreeMap;
+		for (auto& regionName : regionNameList)
+		{
+			QString regionFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + regionName;
+			NeuronTree regionTree = readSWC_file(regionFullNameQ);
+			regionTreeMap.insert({ regionTree.name.toStdString(), regionTree });
+		}
+
+		QDir inputFolderQ2(QString::fromStdString(paras.at(1)));
+		inputFolderQ2.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList neuronNameList = inputFolderQ2.entryList();
+		map<string, NeuronTree> neuronTreeMap;
+		for (auto& neuronName : neuronNameList)
+		{
+			if (neuronName.contains("csv")) continue;
+			cout << endl << neuronName.toStdString() << endl;
+			QString neuronFullNameQ = QString::fromStdString(paras.at(1)) + "\\" + neuronName;
+			NeuronTree neuronTree = readSWC_file(neuronFullNameQ);
+			neuronTreeMap.insert({ neuronTree.name.toStdString(), neuronTree });
+		}
+
+		string outputFileName = paras.at(1) + "\\somaRegion.csv";
+		ofstream outFile(outputFileName);
+		outFile << "Neuron Name" << "," << "Region(s)" << endl;
+		bool upperX, lowerX, upperY, lowerY, upperZ, lowerZ;
+		//set<string> regionCandidates;
+		for (auto& neuron : neuronTreeMap)
+		{
+			outFile << neuron.first << ",";
+			NeuronSWC somaNode;
+			somaNode = neuron.second.listNeuron.at(0);
+			for (auto& regionTree : regionTreeMap)
+			{
+				for (auto& regionNodeXY : regionTree.second.listNeuron)
+				{
+					if (int(regionNodeXY.x) == int(somaNode.x) && int(regionNodeXY.y) == int(somaNode.y))
+					{
+						for (auto& regionNodeYZ : regionTree.second.listNeuron)
+						{
+							if (int(regionNodeYZ.y) == int(somaNode.y) && int(regionNodeYZ.z) == int(somaNode.z))
+							{
+								for (auto& regionNodeXZ : regionTree.second.listNeuron)
+								{
+									if (int(regionNodeXZ.x) == int(somaNode.x) && int(regionNodeXZ.z) == int(somaNode.z))
+									{
+										//outFile << regionTree.first << " ";
+										goto CANDIDATE_FOUND;
+									}
+								}
+							}
+						}
+					}						
+				}
+				goto REGION_PROCESSED;
+
+			CANDIDATE_FOUND:
+				upperX = false, lowerX = false, upperY = false, lowerY = false, upperZ = false, lowerZ = false;
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.x) + i == int(regionNode.x))
+						{
+							upperX = true;
+							break;
+						}
+					}
+					if (upperX) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.x) - i == int(regionNode.x))
+						{
+							lowerX = true;
+							break;
+						}
+					}
+					if (lowerY) break;
+				}
+				
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.y) + i == int(regionNode.y))
+						{
+							upperY = true;
+							break;
+						}
+					}
+					if (upperY) break;
+				}			
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.y) - i == int(regionNode.y))
+						{
+							lowerY = true;
+							break;
+						}
+					}
+					if (lowerY) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.z) + i == int(regionNode.z))
+						{
+							upperZ = true;
+							break;
+						}
+					}
+					if (upperZ) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.z) - i == int(regionNode.z))
+						{
+							upperZ = true;
+							break;
+						}
+					}
+					if (upperZ) break;
+				}
+
+				if (/*upperX && lowerX &&*/ upperY && lowerY && upperZ && lowerZ) outFile << regionTree.first << " ";
+
+				continue;
+
+			REGION_PROCESSED:
+				continue;
+			}
+
+			outFile << endl;
+		}
+		
+		if (outFile.is_open()) outFile.close();
+
+		cout << neuronTreeMap.size() << endl;
+	}
+	else if (!funcName.compare("extractSoma"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree soma;
+			for (auto& node : inputTree.listNeuron)
+			{
+				if (node.type == 1 && node.parent == -1)
+				{
+					soma.listNeuron.push_back(node);
+					break;
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 3 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 4 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 2 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, soma);
+		}
+	}
+	else if (!funcName.compare("swcConvert"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			vector<NeuronTree> trees = NeuronStructUtil::convertHUSTswc(fileFullNameQ);
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, trees.at(0));
+		}
+	}
+	else if (!funcName.compare("treeShift"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree = NeuronStructUtil::swcShift(inputTree, 0, -500, 0);
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
 	else if (!funcName.compare("nearTree"))
 	{
 		QString tree1NameQ = "C:\\Users\\hkuo9\\Desktop\\test\\test2\\subTrees_assemmbled\\191807_5031-X5620-Y23074_finalized.ano\\1.swc";

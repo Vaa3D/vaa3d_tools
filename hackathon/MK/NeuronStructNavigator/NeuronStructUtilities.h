@@ -172,6 +172,9 @@ public:
 	/***************************** Miscellaneous ******************************/ 
 	// Generates linker file for swc
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
+
+	// Convert HUST swc
+	static vector<NeuronTree> convertHUSTswc(QString inputQ);
 	/**************************************************************************/
 
 

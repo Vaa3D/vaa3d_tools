@@ -4,7 +4,7 @@
 
 void ReconOperator::downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor)
 {
-	QString newFolderName = this->rootPath + "\\downsampled";
+	QString newFolderName = this->rootPath + "\\downscaled";
 	QDir newDir(newFolderName);
 	if (!newDir.exists()) newDir.mkpath(".");
 
@@ -156,6 +156,12 @@ void ReconOperator::removeDupedNodes()
 			QString inputSWCFullName = this->rootPath + "\\" + file;
 			NeuronTree inputTree = readSWC_file(inputSWCFullName);
 			NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+
+#ifdef DUPSEG_REMOVE
+			QString supSegsRemovedTreeNameQ = this->rootPath + "\\" + baseName + "_dupSegRemoved.swc";
+			writeSWC_file(supSegsRemovedTreeNameQ, noDupSegTree);
+#endif
+
 			profiledTree inputProfiledTree(noDupSegTree);
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
 			if (NeuronStructUtil::multipleSegsCheck(inputTree))
