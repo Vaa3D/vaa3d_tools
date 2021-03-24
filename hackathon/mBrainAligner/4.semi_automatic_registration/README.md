@@ -1,10 +1,7 @@
 # semi_automatic_registration
 
-Unzip `semi_automatic_registration.7z`, then download the `fixed_image.7z` compressed package from 
+Unzip `semi_automatic_registration.7z`, then download the `fixed_image.7z` from 
 
 https://drive.google.com/file/d/1uPT02C0iSzLMYh56JVH-kUvNa4pqwrcV/view?usp=sharing, unzip it and put 
 
-the unzipped folder into the data folder under the `semi_automatic_registration` folder. Then, you can 
-
-run it by clicking on the `Semi_auto.exe` executable file.
-
+the unzipped folder into the `semi_automatic_registration\data\` folder. Then, you can run `Semi_auto.exe`.
