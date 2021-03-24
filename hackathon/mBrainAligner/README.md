@@ -94,7 +94,9 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 
 ├─mBrainAligner_data
 │  ├─3rdparty :                 		  the folder where the final executable and `dlls` will copied to
+
 │  ├─data:                          	      `mBrainAligner` necessary files,including ` CCFv3, markers, config.txt, etc`.
+
 │  └─Seg:									 Deep feature    
 
 ├─ stripremove.m           
