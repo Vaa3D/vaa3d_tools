@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <math.h>
 #include <numeric>
-#include "stackutil.h"
-#include "basic_surf_objs.h"
-#include "../../basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 #include "edge_detection.h"
 #include "rpm.h"
 #include "getopt.h"
+#include "stackutil.h"
+#include "basic_surf_objs.h"
+#include "../../basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 #include "../../jba/newmat11/newmatio.h"
 
 using namespace std;
@@ -251,22 +251,10 @@ int main(int argc, char *argv[])
 	Mat x, y;
 	float *tmp_array = 0;
 	tmp_array = new(std::nothrow) float[3 * vec_fix_edge.size()]();
-	QList<ImageMarker> ql_marker_outline;
 	for (unsigned long i = 0; i < vec_fix_edge.size(); i++)
 	{
-		ImageMarker marker;
-		marker.radius = 3;
-		marker.color.r = 255;
-		marker.color.g = 255;
-		marker.color.b = 255;
-		marker.shape = 1;
-		marker.x = vec_fix_edge[i].x; marker.y = vec_fix_edge[i].y; marker.z = vec_fix_edge[i].z;
 		tmp_array[3 * i] = vec_fix_edge[i].x; tmp_array[3 * i + 1] = vec_fix_edge[i].y; tmp_array[3 * i + 2] = vec_fix_edge[i].z;
-		ql_marker_outline.push_back(marker);
-	}
-	
-	//writeMarker_file(qPrintable(qs_filename_tar_marker), ql_marker_outline);
-
+	}	
 	y = Mat::zeros(vec_fix_edge.size(), 3, CV_64F);
 	for (int i = 0; i < vec_fix_edge.size(); i++)
 	{
@@ -276,7 +264,6 @@ int main(int argc, char *argv[])
 			yptr[j] = tmp_array[3 * i + j];
 		}
 	}
-
 	float *tmp_array1 = 0;
 	tmp_array1 = new(std::nothrow) float[3 * vec_mov_edge.size()]();
 	QList<ImageMarker> ql_marker_inner;
@@ -399,7 +386,7 @@ int main(int argc, char *argv[])
 		x4x4(2, 1) = vec_mov_edge[i].y;
 		x4x4(3, 1) = vec_mov_edge[i].z;
 		x4x4(4, 1) = 1.0;
-		x_pt = x4x4_affinematrix*x4x4; //不是逆是因为要和swc配准统一
+		x_pt = x4x4_affinematrix*x4x4; 
 		temp.x = x_pt(1, 1);
 		temp.y = x_pt(2, 1);
 		temp.z = x_pt(3, 1);
@@ -422,12 +409,12 @@ int main(int argc, char *argv[])
 	if (!my_img_affine_warp(T, p_img_sub, sz_img_sub, sz_img_tar, p_img_affine)){
 		return false;
 	}
-	
+
 	saveImage(qPrintable(qs_filename_output_path), (unsigned char*)p_img_affine, sz_img_tar, 1);
 
 	printf("8. free the memory. \n");
 	if (sz_img_tar) 			{ delete[]sz_img_tar;			sz_img_tar = 0; }
-	if (p_img_sub) 			{ delete[]p_img_sub;			p_img_sub = 0; }
+	if (p_img_sub) 			    { delete[]p_img_sub;			p_img_sub = 0;  }
 	if (sz_img_sub) 			{ delete[]sz_img_sub;			sz_img_sub = 0; }
 
 	return 0;
