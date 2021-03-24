@@ -115,4 +115,5 @@ Note: The above is the result under the default parameters.  If you want to chan
 python demo.py -h
 ```
 
-The results produced are stored in the `/Result` folder.
+The registration result can be obtained after 3 hours, and all the results will be stored in the `/Result` folder.
+
