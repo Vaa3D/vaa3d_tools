@@ -115,5 +115,7 @@ Note: The above is the result under the default parameters.  If you want to chan
 python demo.py -h
 ```
 
-The registration result can be obtained after 3 hours, and all the results will be stored in the `/Result` folder.
+The registration result can be obtained after 3.5 hours, and all the results will be stored in the `/Result` folder.
+
+Note: The original fmost mouse brain data is very large, so we provide a small brain data as a sample file for the demo. If you need the original data, you can contact us by email:qulei@ahu.edu.cn
 
