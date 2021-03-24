@@ -1,7 +1,5 @@
 
 
-
-
 #include "mBrainAligner.h"
 #include "calHogFeature.h"
 #include "preprocessing.h"
@@ -1002,20 +1000,20 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 		downsample3dvol(p_img32f_sub_bk_resample, p_img32f_sub_bk, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
 		downsample3dvol(p_img_sub_resample, p_img_sub, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
 
-		char filename[2000];
+		/*char filename[2000];
 		sprintf(filename, "%s/p_img32f_tar_resample.v3draw", qPrintable(input_Parameter.save_path));
 		saveImage(filename, (unsigned char *)p_img32f_tar_resample, sz_img_sub_resample, 4);
 		sprintf(filename, "%s/p_img32f_sub_bk_resample.v3draw", qPrintable(input_Parameter.save_path));
 		saveImage(filename, (unsigned char *)p_img32f_sub_bk_resample, sz_img_sub_resample, 4);
 		sprintf(filename, "%s/p_img_sub_resample.v3draw", qPrintable(input_Parameter.save_path));
-		saveImage(filename, (unsigned char *)p_img_sub_resample, sz_img_sub_resample, 1);
+		saveImage(filename, (unsigned char *)p_img_sub_resample, sz_img_sub_resample, 1);*/
 
 		tag = 1;
 		if (input_Parameter.Select_modal < 2)
 		{
 			downsample3dvol(p_img32_sub_label_resample, p_img32_sub_label, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
-			sprintf(filename, "%s/p_img32_sub_label.v3draw", qPrintable(input_Parameter.save_path));
-			saveImage(filename, (unsigned char *)p_img32_sub_label_resample, sz_img_sub_resample, 4);
+			/*sprintf(filename, "%s/p_img32_sub_label.v3draw", qPrintable(input_Parameter.save_path));
+			saveImage(filename, (unsigned char *)p_img32_sub_label_resample, sz_img_sub_resample, 4);*/
 		}
 		
 		float * fmost_label_edge_resample = 0;
@@ -1046,11 +1044,11 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 			tmp.radius = 2, tmp.shape = 1;ql_marker_aver.push_back(tmp);
 
 		}
-		sprintf(filename, "%s/tar_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
+		/*sprintf(filename, "%s/tar_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
 		sprintf(filename, "%s/sub_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
-		sprintf(filename, "%s/average_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);
+		sprintf(filename, "%s/average_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);*/
 
-		if (input_Parameter.resample != 1)
+		/*if (input_Parameter.resample != 1)
 		{
 			QList<ImageMarker> ql_marker_tar_x4, ql_marker_sub_x4, ql_marker_aver_x4;
 			for (long long i = 0; i < vec_corners.size(); i++)
@@ -1069,7 +1067,7 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 			sprintf(filename, "%s/sub_ori.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
 			sprintf(filename, "%s/average_ori.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver_x4);
 
-		}
+		}*/
 		
 		if (mBrainAligner(input_Parameter, vec_corners_resample, fine_sub_corner_resample, aver_corner_resample, label, sz_img_tar_resample, 
 			p_img32f_tar_resample, p_img32f_sub_bk_resample, p_img32_sub_label_resample, p_img_sub_resample, density_map_sub_resample, fmost_label_edge_4d_resample))
@@ -1228,7 +1226,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 	
 	int interval_search_star = search_radius / 4, interval_search=1;
 
-	for (int iter = input_Parameter.star_iter; iter < max_iteration; iter++)
+	for (int iter = input_Parameter.star_iter; iter <= max_iteration; iter++)
 	{
 		printf("iter:[%d]....\n", iter);
 		
@@ -1558,18 +1556,18 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 		}
 
 		//{
-			QList<ImageMarker> ql_marker_tar, ql_marker_sub;
-			for (long long i = 0; i < vec_corners.size(); i++)
-			{
-				ImageMarker tmp;
-				tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
-				tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
-			}
+			//QList<ImageMarker> ql_marker_tar, ql_marker_sub;
+			//for (long long i = 0; i < vec_corners.size(); i++)
+			//{
+			//	ImageMarker tmp;
+			//	tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
+			//	tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
+			//}
 
-			char filename[2000];
-			//save as marker files
-			sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
-			sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
+			//char filename[2000];
+			////save as marker files
+			//sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
+			//sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
 
 		if (input_Parameter.Select_modal <2)
 		{
@@ -1725,7 +1723,8 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 
 		//warp subject image based on updated landmark position
 
-		if ((iter) % int(input_Parameter.fre_save) == 0)
+		if (iter == max_iteration)
+		/*if ((iter) % int(input_Parameter.fre_save) == 0)*/
 		{
 			QList<ImageMarker> ql_marker_tar, ql_marker_sub;
 			for (long long i = 0; i < vec_corners.size(); i++)
@@ -1748,13 +1747,14 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 					szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
 					p_img_warp);
 				char filename[2000];
-				sprintf(filename, "%s%d.v3draw", qPrintable(input_Parameter.save_path), iter);
+				QString save_file = input_Parameter.save_path + "registered_image.v3draw";
+				sprintf(filename, "%s", qPrintable(save_file));
 				saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
 				if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
 
 				//save as marker files
-				sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
-				sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
+				sprintf(filename, "%sregistered_tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
+				sprintf(filename, "%sregistered_sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
 				if (input_Parameter.resample != 1)
 				{
 					QList<ImageMarker> ql_marker_tar_x4, ql_marker_sub_x4;
@@ -1764,8 +1764,8 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 						ql_marker_tar_x4[i].x *= input_Parameter.resample;	ql_marker_tar_x4[i].y *= input_Parameter.resample;	ql_marker_tar_x4[i].z *= input_Parameter.resample;
 						ql_marker_sub_x4[i].x *= input_Parameter.resample;	ql_marker_sub_x4[i].y *= input_Parameter.resample;	ql_marker_sub_x4[i].z *= input_Parameter.resample;
 					}
-					sprintf(filename, "%s%d_tar_x4.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar_x4);
-					sprintf(filename, "%s%d_sub_x4.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub_x4);
+					sprintf(filename, "%sregistered_tar_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar_x4);
+					sprintf(filename, "%sregistered_sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
 				}
 				
 			}
