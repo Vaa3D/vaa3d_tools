@@ -120,5 +120,5 @@ The registration result can be obtained after 3.5 hours, and all the results wil
 Note: The original fmost mouse brain data is very large, so we provide a small brain data as a sample file for the demo. If you need the original data, you can contact us by email:  qulei@ahu.edu.cn
 
 # License
-https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
+mBrainAligner used a slightly modified revised MIT license unless specifically stated for some rare cases, see detail here: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
 
