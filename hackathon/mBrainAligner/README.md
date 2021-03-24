@@ -93,9 +93,9 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 >matlab_io_basicdatatype:	matlab toolbox,you can be obtained from `Vaa3d _external`
 
 >mBrainAligner_data
->>3rdparty :                 		  the folder where the final executable and 'dlls' will copied to
->>data:                           `mBrainAligner` necessary files,including 'CCFv3, markers, config.txt, etc'
->>seg:									           Deep feature    
+>>3rdparty :                 		  the folder where the final executable and 'dlls' will copied to.
+>>data:                           `mBrainAligner` necessary files,including 'CCFv3, markers, config.txt, etc'.
+>>Seg:									           Deep feature    
 
 >stripremove.m           
 
