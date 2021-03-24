@@ -48,7 +48,7 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 	}
 
 	int rang_tar,rang_sub, x_space, y_space, z_space;
-	rang_tar = 30;//25
+	rang_tar = ceil(max(max(sz_tar[0], sz_tar[1]), sz_tar[2]) / 25);
 	x_space = sz_tar[0] / rang_tar;
 	y_space = sz_tar[1] / rang_tar;
 	z_space = sz_tar[2] / rang_tar;
@@ -136,7 +136,6 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 	}
 	unsigned int direction_size = sz_sub[2];
 	vector<vector<Coord3D_PCM>> points_s(direction_size);
-	//xy slice
 	for (int z = 0; z < sz_sub[2]; z++)
 	{
 		vector<vector<Point>> contours;
@@ -167,7 +166,7 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 			}
 		}
 	}
-	rang_sub = ceil(max(max(sz_sub[0], sz_sub[1]), sz_sub[2]) / 25);	//21¡ª¡ª>25
+	rang_sub = ceil(max(max(sz_sub[0], sz_sub[1]), sz_sub[2]) / 25);
 	x_space = sz_sub[0] / rang_sub;
 	y_space = sz_sub[1] / rang_sub;
 	z_space = sz_sub[2] / rang_sub;
