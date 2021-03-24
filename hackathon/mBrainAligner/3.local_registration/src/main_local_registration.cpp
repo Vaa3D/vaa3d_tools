@@ -17,14 +17,14 @@ void printHelp()
 	printf("\n");
 	printf("\t [-p <input_parameter_file>]         This is .txt file which containing all the parameter Settings .\n");
 	printf("\t [-s <input_subject_image>]           .raw/.tif/.lsm file containing 3D subject which will deform/warp to best appriximate the geometry of the template/target. The .raw file is in V3D's RAW format.\n");
-	printf("\t [-m <input_subject_image>]          This is segmentation file path which containing the segmentation results of the 3D subject image.\n");
-	printf("\t [-g <input_subject_image>]          This is  .raw/.tif/.lsm file path containing several 3D images,\
+	printf("\t [-m <input_segmentation_image>]          This is segmentation file path which containing the segmentation results of the 3D subject image.\n");
+	printf("\t [-g <input_dta_file>]          This is  .raw/.tif/.lsm file path containing several 3D images,\
 		                                            eg: average_template_25_u8_xpad.v3draw: target image \
 													 landmarker_tar.marker,\
 													 region_attention.v3draw,\
 													 average_sub.marker,average_tar.marker ,edge.v3draw.\n");
-	printf("\t [-f <input_subject_image>]          If you interrupt during iteration registration, you can continue running based on the previous results.\n");
-	printf("\t [-S <input_subject_image>]          This file path can save all result .\n");
+	printf("\t [-f <finetune data>]          If you interrupt during iteration registration, you can continue running based on the previous results.\n");
+	printf("\t [-S <save result file>]          This file path can save all result .\n");
 
 	printf("\n===================================================================================================\n\n");
 	return;
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 	input_Parameter.resample = configSettings.Read("resample", input_Parameter.resample);
 	input_Parameter.star_lamda_inner = configSettings.Read("star_lamda_inner", input_Parameter.star_lamda_inner);
 	input_Parameter.save_path = save_path;
-	
+
 	//-----------------------------------------------------------------------------------------
 	// loda image data 
 	//-----------------------------------------------------------------------------------------
