@@ -56,7 +56,7 @@ After Vaa3D is successfully installed, enter the directory where the [mBrainAlig
 
 ## Matlab Code
 
-Open the `stripremove.m` file directly with MATLAB 2016b
+`1.preprocessing/StripreMove/stripremove.m` need to run using MATLAB 2016b
 
 ## C++ Code
 
