@@ -99,7 +99,7 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 >>
 >>Seg:									           Deep feature    
 >>
->>Manual_marker:                  affine marker
+>>Manual_marker:                  affine marker,including`tar.marker,sub.marker`.
 
 >stripremove.m           
 
