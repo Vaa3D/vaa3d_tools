@@ -146,8 +146,11 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 				img2_xy.at<uchar>(y, x) = (int)img_sub[z*sz_sub[1] * sz_sub[0] + y*sz_sub[0] + x];
 			}
 		Mat imageOtsu;
-		medianBlur(img2_xy, img2_xy, 11);
-		threshold(img2_xy, imageOtsu, 20, 255, CV_THRESH_OTSU);
+		int blur_w = ceil(max(max(sz_sub[0], sz_sub[1]), sz_sub[2]) / 30);
+		if (blur_w % 2 == 0)
+			blur_w += 1;
+		medianBlur(img2_xy, img2_xy, blur_w);   //src  11
+		threshold(img2_xy, imageOtsu, 0, 255, CV_THRESH_OTSU);
 		findContours(imageOtsu, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 		Mat linePic = Mat::zeros(img2_xy.rows, img2_xy.cols, CV_8UC1);
 		for (int index = 0; index < contours.size(); index++)
