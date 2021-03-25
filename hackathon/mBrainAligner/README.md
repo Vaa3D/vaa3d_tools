@@ -111,7 +111,7 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 python demo.py 
 ```
 
-Note: The above is the result under the default parameters.  If you want to change the parameter settings, you can refer to the help document.
+Note: Some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods, if you choose the first and third method, you need to update the "/Seg" file in the demo, later We will upload the segmentation model so that you can try all the registration methods. In addition, if you want to change other parameter settings, you can refer to the help document.
 
 ```
 python demo.py -h
