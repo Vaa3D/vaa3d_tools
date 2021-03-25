@@ -98,6 +98,8 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 >>data:                           `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
 >>
 >>Seg:									           Deep feature    
+>>
+>>Manual_marker:                  affine marker
 
 >stripremove.m           
 
