@@ -103,7 +103,6 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 >>
 >>Seg:									           Deep feature    
 >>
->>Manual_marker:                  affine marker,including`tar.marker,sub.marker`.
 
 >stripremove.m           
 
@@ -114,16 +113,14 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 ```
 python demo.py 
 ```
+The registration result can be obtained after 0.5 hours, and all the results will be stored in the `/Result` folder.
 
-Note: Some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods, if you choose the first and third method, you need to update the "/Seg" file in the demo, later We will upload the segmentation model so that you can try all the registration methods. In addition, if you want to change other parameter settings, you can refer to the help document.
+Note: The original fixed and moving mouse brain data is very large, so we provide a small brain data as a sample file for the demo. If you need the original data, you can download data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). And if you use original data, you need to update the "/Seg" file in the demo, later We will upload the segmentation model so that you can try all the registration methods.
+In addition, some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods.And help document can help you understand all parameter settings.
 
 ```
 python demo.py -h
 ```
 
-The registration result can be obtained after 6 hours, and all the results will be stored in the `/Result` folder.
-
-
 # License
 mBrainAligner used a slightly modified revised MIT license unless specifically stated for some rare cases, see detail here: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
-
