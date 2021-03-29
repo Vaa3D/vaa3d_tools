@@ -115,7 +115,7 @@ python demo.py
 ```
 The registration result can be obtained after 0.5 hours, and all the results will be stored in the `/Result` folder.
 
-Note: The original fixed and moving mouse brain data is very large, so we provide a small brain data as a sample file for the demo (original data can get more perfect result). If you need the original data, you can download data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). And if you use original data, you need to update the "/Seg" file in the demo, later We will upload the segmentation model so that you can try all the registration methods.
+Note: The original fixed and moving mouse brain data is very large, so we provide a small brain data as a sample file for the demo (original data can get more perfect result). If you need the original data, you can download data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). And if you use original data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model so that you can try all the registration methods.
 In addition, some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods. And help document can help you understand all parameter settings.
 
 ```
