@@ -1,4 +1,4 @@
-# mBrainAligner:Cross-Modality Coherent Registration of Whole Mouse Brains
+# mBrainAligner: Cross-Modality Coherent Registration of Whole Mouse Brains
 
 # Contents
 
