@@ -20,7 +20,7 @@ mBrainAligner contains three decoupled modules: (1) image preprocessing and glob
 
 ## Hardware requirements
 
-The  `mBrainAligner`  package requires only a standard computer with enough RAM to support the operations defined by a user. For optimal performance, we recommend a computer with the following specs:
+`mBrainAligner` can works on standard PC, the required RAM capacity depends on the size of the image to be processed. For optimal performance, we recommend a computer with the following specs: 
 
 RAM: 32+ GB
 CPU: 10+ cores, 2.30+ GHz/core
@@ -31,15 +31,13 @@ The runtimes below are generated using a computer with the recommended specs (64
 
 ### OS Requirements
 
-This package is supported for *Windows* . The package has been tested on the following systems:
+The package has been tested on the following systems:
 
 - Windows:  Win10
 
 ###  Dependencies
 
 ```
-Microsoft Visual Studio 2013
-MATLAB 2016b 
 Vaa3D
 Opencv3.1.0
 ```
@@ -56,7 +54,7 @@ https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-with-qmake-using
 
 # Setting up the development environment
 
-After Vaa3D is successfully installed, enter the directory where the [mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner) package is located. In the `1.preprocessing ` folder, the code is based on Matlab.  In the `2.global_registration`,`3.local_registration` and `Tools` folders, the code is based on C++ and  also provides a Visual Studio 2013 project file **".vcxproj"** for compilation.
+After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. In the `1.preprocessing ` folder, the code is based on Matlab.  In the `2.global_registration`,`3.local_registration` and `Tools` folders, the code is based on C++ and  also provides a Visual Studio 2013 project file **".vcxproj"** for compilation, During the compilation process, when there is an error that opencv related files cannot be opened, please manually configure the opencv3.1.0 environment in the project.
 
 ## Matlab Code
 
