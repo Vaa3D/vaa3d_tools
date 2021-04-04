@@ -54,7 +54,7 @@ https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-with-qmake-using
 
 # Setting up the development environment
 
-After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. In the `1.preprocessing ` folder, the code is based on Matlab.  In the `2.global_registration`,`3.local_registration` and `Tools` folders, the code is based on C++ and  also provides a Visual Studio 2013 project file **".vcxproj"** for compilation, During the compilation process, when there is an error that opencv related files cannot be opened, please manually configure the opencv3.1.0 environment in the project.
+After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. Install opencv3.1.0 and configure the project according to your opencv intallation directory. 
 
 ## Matlab Code
 
@@ -62,7 +62,7 @@ After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\
 
 ## C++ Code
 
-Any C++11 compiler should work. If your compiler has the C++11 features that are available in Visual Studio 2013 then it will work.
+Any C++11 compiler should work. If your compiler supports C++11 (e.g. Visual Studio 2013) then it will work.
 
 - Use Microsoft Visual Studio 2013 to open **".vcxproj"**.
 - Under Build -> Configuration Manager:
@@ -86,7 +86,7 @@ python setup.py install
 
 ## Data
 
-We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting documents can be obtained from:
+We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. 
 
 ### Sub-Folder
 
@@ -95,7 +95,7 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 >matlab_io_basicdatatype:	        matlab toolbox
 
 >mBrainAligner_data
->>3rdparty:                 		  the folder where the final executable and `dlls` will copied to.
+>>3rdparty:                 		  the folder where the final executable and `dlls` will be copied to.
 >>
 >>data:                           `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
 >>
@@ -111,9 +111,10 @@ We provide a fMOST mouse brain `18458.v3draw` to be registered  and supporting d
 ```
 python demo.py 
 ```
-The registration result can be obtained after 0.5 hours, and all the results will be stored in the `/Result` folder.
+The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/Result` folder.
 
-Note: For convenience, we provide a resampled demo data set (reducing the size of the data and reducing the number of markers). Raw data can get more perfect result, if you need the raw data, you can download fix data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn) to obtain other data. And if you use raw data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model so that you can try all the registration methods.
+Note: 
+For convenience, we provide a resampled demo data set (reducing the size of the data and reducing the number of markers). Raw data can get more perfect result, if you need the raw data, you can download fix data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn) to obtain other data. And if you use raw data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model so that you can try all the registration methods.
 In addition, some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods. And help document can help you understand all parameter settings.
 
 ```
