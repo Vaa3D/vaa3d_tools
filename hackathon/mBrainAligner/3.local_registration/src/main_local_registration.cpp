@@ -129,8 +129,9 @@ int main(int argc, char *argv[])
 	Parameter input_Parameter;
 	input_Parameter.Select_modal = configSettings.Read("Select_modal", input_Parameter.Select_modal);
 	input_Parameter.iterations_number = configSettings.Read("iterations_number", input_Parameter.iterations_number);
-	input_Parameter.star_lamda = configSettings.Read("star_lamda", input_Parameter.star_lamda);
+	input_Parameter.star_lamda_outline = configSettings.Read("star_lamda_outline", input_Parameter.star_lamda_outline);
 	input_Parameter.kernel_radius = configSettings.Read("kernel_radius", input_Parameter.kernel_radius);
+	input_Parameter.search_radius = configSettings.Read("search_radius", input_Parameter.search_radius);
 	input_Parameter.fre_save = configSettings.Read("fre_save", input_Parameter.fre_save);
 	input_Parameter.fre_region_constraint = configSettings.Read("fre_region_constraint", input_Parameter.fre_region_constraint);
 	input_Parameter.fre_global_constraint = configSettings.Read("fre_global_constraint", input_Parameter.fre_global_constraint);
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
 	input_Parameter.resample = configSettings.Read("resample", input_Parameter.resample);
 	input_Parameter.star_lamda_inner = configSettings.Read("star_lamda_inner", input_Parameter.star_lamda_inner);
 	input_Parameter.save_path = save_path;
-
+	
 	//-----------------------------------------------------------------------------------------
 	// loda image data 
 	//-----------------------------------------------------------------------------------------
@@ -174,12 +175,17 @@ int main(int argc, char *argv[])
 
 	float *fmost_label_edge = 0;
 	float  ****fmost_label_edge_4d = 0;
+
 	if(!LoadLandmarksData(vec_corners, fine_sub_corner, aver_corner, region_label, data_file, fine_filename,sz_img, input_Parameter, p_img_label_4d,
 		qs_filename_img_sub_seg, density_map_sub, fmost_label_edge,fmost_label_edge_4d))
 	{
 		printf("ERROR: LoadLandmarksData().\n");
 		return false;
 	}
+	if (fmost_label_edge) 		{ delete[]fmost_label_edge;		fmost_label_edge = 0; }
+	if (fmost_label_edge_4d)		{ delete4dpointer(fmost_label_edge_4d, sz_img[0], sz_img[1], sz_img[2], sz_img[3]); }
+
+
 
 	printf("============================================================================================ \n");	
 	if (input_Parameter.Select_modal==0)
@@ -192,16 +198,16 @@ int main(int argc, char *argv[])
 	printf("Load %d subject landmarks. \n", fine_sub_corner.size());
 	printf("The iterations_number: %d. \n", input_Parameter.iterations_number);
 	printf("mul_scale_mBrainAligner: %d. \n", input_Parameter.resample);
-	printf("The STPS d_lamda: %d. \n", input_Parameter.star_lamda);
 	printf("save_file_path:%s \n",qPrintable(save_path));
 	printf("============================================================================================ \n");
+
 
 	//-----------------------------------------------------------------------------------------
 	printf("\n 3. Do Local registration. \n");
 	//-----------------------------------------------------------------------------------------
 		
 	if (!mul_scale_mBrainAligner(input_Parameter, vec_corners, fine_sub_corner, aver_corner, region_label, sz_img, p_img32f_tar, p_img32f_sub_bk,
-		p_img32_sub_label, p_img_sub, density_map_sub,fmost_label_edge, fmost_label_edge_4d))
+		p_img32_sub_label, p_img_sub, density_map_sub))
 	{
 		printf("ERROR: mul_scale_mBrainAligner().\n");
 		return false;
@@ -219,5 +225,3 @@ int main(int argc, char *argv[])
 	printf("Program exit success.\n");
 	return true;
 }
-
-
