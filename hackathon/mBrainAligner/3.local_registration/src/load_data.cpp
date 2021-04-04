@@ -6,10 +6,10 @@
 bool load_density_map(QString qs_filename_img_sub_seg,  map <int, float *> & density_map_sub)
 {
 	
-	int array[10] =  { 62, 75, 80, 100, 145, 159, 168, 237, 249 };
+	int array[10] =  { 62, 75, 80, 100, 145, 159, 168, 249 };
 	
 	vector<int> label_map;
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		QString map_file_path = qs_filename_img_sub_seg  + QString::number(i + 1) + ".v3draw";
 		unsigned char *p_img_map = 0;
@@ -259,7 +259,8 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 			printf("ERROR:landmark_region()!!!! \n");
 			return true;
 		}
-		
+
+
 		if (input_Parameter.Select_modal == 0)
 		{
 		/*	printf("Registration modal: fMOST to CCF \n");*/
@@ -279,64 +280,37 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 					i_tmp.x = average_tar_file[i].x; i_tmp.y = average_tar_file[i].y; i_tmp.z = average_tar_file[i].z; i_tmp.label = average_tar_file[i].color.b; average_tar.push_back(i_tmp);
 					i_tmp.x = average_sub_file[i].x; i_tmp.y = average_sub_file[i].y; i_tmp.z = average_sub_file[i].z; i_tmp.label = average_tar_file[i].color.b; average_sub.push_back(i_tmp);
 				}
-
-				vector<vector<double>> label_sp;
-				{
-					vector<double> label_s;
-					label_s.push_back(75);
-					label_s.push_back(80);
-					label_sp.push_back(label_s);
-					label_s.clear();
-					label_s.push_back(237);
-					label_sp.push_back(label_s);
-					label_s.clear();
-					int array[10] = { 62, 100, 145, 159, 168, 249 };
-					for (int i = 0; i < 6; i++)
-					{
-						label_s.push_back(array[i]);
-					}
-					label_sp.push_back(label_s);
-				}
-
-				aver_corner = vec_corners;
-				for (int i = 0; i < label_sp.size(); i++)
-				{
-					vector<double> label_av = label_sp[i];
-					vector<point3D64F> vec_corners_region, fine_sub_region;
-					for (int j = 0; j < average_tar.size(); j++)
-					{
-						bool update_marker = false;
-						for (int k = 0; k < label_av.size(); k++)
-						{
-							if (average_tar[j].label == label_av[k])
-							{
-								update_marker = true;
-								break;
-							}
-						}
-						if (update_marker)
-						{
-							vec_corners_region.push_back(average_tar[j]);
-							fine_sub_region.push_back(average_sub[j]);
-						}
-					
-					}
-					auto_warp_average_marker(label_av, vec_corners_region, fine_sub_region, aver_corner);
-					
-				}
+				float lam = 0.5;
+				auto_warp_marker(lam, average_tar, average_sub, aver_corner);
 
 				fine_sub_corner = aver_corner;
-
+			
 				/// update fine_sub_corner based on fmost segmentation result
 								
 				update_sub_corner(qs_filename_img_sub_seg, fmost_label_edge, fmost_label_edge_4d,  fine_sub_corner);
 				
-			
 			}
 			else
 			{
 				update_average_landmarker(vec_corners, fine_sub_corner, aver_corner);
 			}
+
+			vector<point3D64F> vec_corners1 = fine_sub_corner;
+			QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
+			for (long long i = 0; i < vec_corners.size(); i++)
+			{
+
+				ImageMarker tmp;
+				tmp.x = vec_corners[i].x;	tmp.y = vec_corners[i].y;	tmp.z = vec_corners[i].z; tmp.comment = vec_corners[i].label; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
+				tmp.x = fine_sub_corner[i].x;	tmp.y = fine_sub_corner[i].y;	tmp.z = fine_sub_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
+				tmp.x = aver_corner[i].x;	tmp.y = aver_corner[i].y;	tmp.z = aver_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_aver.push_back(tmp);
+
+
+			}
+			char filename[2000];
+			sprintf(filename, "%s/tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
+			sprintf(filename, "%s/sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
+			sprintf(filename, "%s/average.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);
 
 			// load density map 
 			printf("2-3 load ten subject density map \n");
@@ -357,6 +331,9 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 		sort(vec_corners.begin(), vec_corners.end(), compare_label);
 		sort(fine_sub_corner.begin(), fine_sub_corner.end(), compare_label);
 		sort(aver_corner.begin(), aver_corner.end(), compare_label);
+
+
+
 	}
 	else if (input_Parameter.Select_modal == 2)
 	{
@@ -364,24 +341,6 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 		aver_corner = vec_corners;
 	}
 	
-	//====================================================================================================================
-	//save landmarks
-
-	/*{
-		QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
-
-		for (long long i = 0; i < vec_corners.size(); i++)
-		{
-			ImageMarker tmp;
-			tmp.x = vec_corners[i].x;	tmp.y = vec_corners[i].y;	tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
-			tmp.x = fine_sub_corner[i].x;	tmp.y = fine_sub_corner[i].y;	tmp.z = fine_sub_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
-			tmp.x = aver_corner[i].x;	tmp.y = aver_corner[i].y;	tmp.z = aver_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_aver.push_back(tmp);
-		}
-		char filename[2000];
-		sprintf(filename, "%s/tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
-		sprintf(filename, "%s/sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
-		sprintf(filename, "%s/average.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);
-	}*/
 }
 
 bool outline_detec(float *& p_img_input, long long *& sz_img_input, float *& img_edge)
@@ -422,6 +381,7 @@ bool outline_detec(float *& p_img_input, long long *& sz_img_input, float *& img
 
 bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, float  **** &fmost_label_4d,  vector<point3D64F> & fine_sub_corner)
 {
+	
 	vector<point3D64F> fine_sub_corner_raw = fine_sub_corner;
 	QString fmost_label_file = qs_filename_img_sub_seg +  "seg.v3draw";
 	unsigned char * fmost_label_char = 0;
@@ -449,46 +409,50 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 	fmost_label_edge = new(std::nothrow) float[l_npixels]();
 
 	outline_detec(fmost_label, label_size, fmost_label_edge);
-	
-	char filename[2000];
-	
-	int array[10] = {0, 62, 75, 80, 100, 145, 159, 168, 237, 249 };
-	/*int array[1] = {100 };*/
+
+	float * fmost_label_outline = 0, * fmost_label_outline_edge = 0;
+
+	fmost_label_outline = new(std::nothrow) float[l_npixels]();
+	fmost_label_outline_edge = new(std::nothrow) float[l_npixels]();
+	for (int i = 0; i < l_npixels; i++)
+	{
+		if (fmost_label[i] != 0)
+			fmost_label_outline[i] = 255;
+	}
+
+	outline_detec(fmost_label_outline, label_size, fmost_label_outline_edge);
 
 	for (int i = 0; i < l_npixels; i++)
 	{
 		if (fmost_label_edge[i] != 0)
 		{
-			fmost_label_edge[i] = array[int(fmost_label[i])];
+			fmost_label_edge[i] = int(fmost_label[i]);
+		}
+		if (fmost_label_outline_edge[i] != 0)
+		{
+			fmost_label_outline_edge[i] = int(fmost_label[i]);
 		}
 		if (fmost_label[i] != 0)
 		{
-			fmost_label[i] = array[int(fmost_label[i])];
+			fmost_label[i] = int(fmost_label[i]);
 		}
-			
 	}
-	float ****fmost_label_edge_4d = 0;
+
+	float ****fmost_label_edge_4d = 0, ****fmost_label_outline_edge_4d=0;
 	new4dpointer(fmost_label_edge_4d, label_size[0], label_size[1], label_size[2], label_size[3], fmost_label_edge);
 	new4dpointer(fmost_label_4d, label_size[0], label_size[1], label_size[2], label_size[3], fmost_label);
+	new4dpointer(fmost_label_outline_edge_4d, label_size[0], label_size[1], label_size[2], label_size[3], fmost_label_outline_edge);
 
-	int se_radius;
+	int se_radius=10;
 #pragma omp parallel for
 	for (int i = 0; i < fine_sub_corner.size(); i++)
 	{
-		if (i == 16)
-		{
-			cout << fine_sub_corner[i].x << endl;
-			cout << fine_sub_corner[i].y << endl;
-			cout << fine_sub_corner[i].z << endl;
-		}
-		if (fine_sub_corner[i].outline == 1)
-			se_radius = 10;
-		else
-			se_radius = 2;
+		if (fine_sub_corner[i].outline == 0)
+			continue;
 		float dis = 1000;
 		int iter = 0;
 		while (dis == 1000)
-		{
+		{	
 			iter = iter + 1;
 			
 			/*cout << iter << endl;*/
@@ -504,7 +468,7 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 						if (x<0 || y<0 || z<0 || x >= label_size[0] || y >= label_size[1] || z >= label_size[2])
 							continue;
 
-						if (s_dis < dis && int(fmost_label_edge_4d[0][z][y][x]) == fine_sub_corner[i].label)
+						if (s_dis < dis && int(fmost_label_outline_edge_4d[0][z][y][x]) == fine_sub_corner[i].label)
 						{
 							dis = s_dis;
 							X = x;
@@ -515,30 +479,20 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 			
 			if (dis != 1000)
 			{
-				if (se_radius>30)
-				{
-					cout << fine_sub_corner[i].x << endl;
-					cout << fine_sub_corner[i].y << endl;
-					cout << fine_sub_corner[i].z << endl;
-				}
 				fine_sub_corner[i].x = X;
 				fine_sub_corner[i].y = Y;
 				fine_sub_corner[i].z = Z;
 			}
 			else
 			{
-				if (fine_sub_corner[i].outline == 1)
-					se_radius = se_radius + 20;
-				else
-					dis = dis - 10;
+				
+			 se_radius = se_radius + 20;
+			
 			}
 
 		}
 	
 	}
-	
-
-	
 
 	vector<point3D64F> vec_corners_ouline, fine_sub_outline;
 	
@@ -553,7 +507,8 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 
 	bool outline = false;
 	float at_lam = 0.2;
-	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, fine_sub_corner, outline);
+	if (vec_corners_ouline.size()>10)
+		auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, fine_sub_corner, outline);
 
 #pragma omp parallel for
 	for (int i = 0; i < fine_sub_corner.size(); i++)
@@ -580,7 +535,7 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 						if (x<0 || y<0 || z<0 || x >= label_size[0] || y >= label_size[1] || z >= label_size[2])
 							continue;
 
-						if (s_dis < dis && int(fmost_label_edge_4d[0][z][y][x]) == fine_sub_corner[i].label)
+						if (s_dis < dis && int(fmost_label_edge_4d[0][z][y][x]) == fine_sub_corner[i].label )
 						{
 							dis = s_dis;
 							X = x;
@@ -596,9 +551,6 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 			}
 			else
 			{
-				if (fine_sub_corner[i].outline == 1)
-					se_radius = se_radius + 20;
-				else
 					dis = dis - 10;
 			}
 
@@ -607,7 +559,7 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 	}
 
 	vector<point3D64F> warp_corner = fine_sub_corner_raw;
-	at_lam =500;
+	at_lam =100;
 	auto_warp_marker(at_lam, fine_sub_corner_raw, fine_sub_corner, warp_corner);
 	fine_sub_corner = warp_corner;
 	if (fmost_label_edge) 			{ delete[]fmost_label_edge;		fmost_label_edge = 0; }

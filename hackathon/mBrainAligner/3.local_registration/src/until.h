@@ -18,7 +18,7 @@
 #include "../../basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 #include "getopt.h"
 #include "q_imgwarp_tps_quicksmallmemory.cpp"
-//#include "opencv2/opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "calHogFeature.h"
 #include "q_derivatives3D.h"
 
@@ -56,14 +56,15 @@ struct BlockParam
 class Parameter
 {
 public:
-	int  Select_modal, iterations_number, star_lamda, kernel_radius, fre_save, fre_global_constraint, 
+	int  Select_modal, iterations_number, star_lamda_outline, kernel_radius, search_radius, fre_save, fre_global_constraint,
 		fre_region_constraint, star_iter, lam_end_inner, lam_end_out, resample, star_lamda_inner;
 	QString save_path;
 	Parameter() {
 		Select_modal = 0;
 		iterations_number = 0;
-		star_lamda = 0;
+		star_lamda_outline = 0;
 		kernel_radius = 0;
+		search_radius = 0;
 		fre_save = 0;
 		fre_region_constraint = 0;
 		fre_global_constraint = 0;
@@ -74,14 +75,15 @@ public:
 		star_lamda_inner = 0;
 		save_path = "";
 	}
-	Parameter(int Select_modal0, int iterations_number0, int star_lamda0, int kernel_radius0, int fre_save0,
+	Parameter(int Select_modal0, int iterations_number0, int star_lamda_outline0, int kernel_radius0, int search_radius0, int fre_save0,
 		int fre_region_constraint0, int fre_global_constraint0, int star_iter0, int lam_end_inner0, int lam_end_out0,
 		int resample0, int star_lamda_inner0,  QString save_path0)
 	{
 		Select_modal = Select_modal0;
 		iterations_number = iterations_number0;
-		star_lamda = star_lamda0;
+		star_lamda_outline = star_lamda_outline0;
 		kernel_radius = kernel_radius0;
+		search_radius = search_radius0;
 		fre_save = fre_save0;
 		fre_region_constraint = fre_region_constraint0;
 		fre_global_constraint = fre_global_constraint0;
