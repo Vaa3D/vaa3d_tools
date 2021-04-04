@@ -41,9 +41,9 @@ bool q_mutualinformation2(float *&I1, float *&I2, long long npixels, float &nmi)
 		if (hist12[i] > 10e-10)	HAB += -hist12[i] * log(hist12[i]);
 
 	//mutual information
-	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),Ë∂äÂ§ßË∂äÂåπÈÖç
-	double mi = HA + HB - HAB;//MI(Mutual Information)‰∫í‰ø°ÊÅØË∂äÂ§ßÔºåËØ¥ÊòéÁõ∏‰∫íÂåÖÂê´ÁöÑ‰ø°ÊÅØÂ§öÔºåÂç≥Ë∂äÂåπÈÖç
-	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)ÔºåË∂äÂ§ßË∂äÂåπÈÖç
+	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),‘Ω¥Û‘Ω∆•≈‰
+	double mi = HA + HB - HAB;//MI(Mutual Information)ª•–≈œ¢‘Ω¥Û£¨Àµ√˜œ‡ª•∞¸∫¨µƒ–≈œ¢∂‡£¨º¥‘Ω∆•≈‰
+	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)£¨‘Ω¥Û‘Ω∆•≈‰
 	nmi = ecc;
 
 	if (hist1) 	{ delete[]hist1;	hist1 = 0; }
@@ -135,7 +135,7 @@ bool q_ncc(float *&I1, float *&I2, long long npixels, float &ncc)
 		mean2 += (float)I2[m];
 	}
 
-	if (npixel_valid == 0)
+	if (npixel_valid == 0 || mean1 == 0 || mean2 == 0)
 	{
 		ncc = 0;
 		return true;
@@ -200,7 +200,7 @@ bool q_mse(float *&I1, float *&I2, long long npixels, float &mse)
 		mse += diff*diff;
 	}
 	//make it the bigger the better
-	if (npixel_valid == 0)
+	if (npixel_valid == 0 || mean1 == 0 || mean2==0)
 		mse = 0;
 	else
 		mse = exp(-sqrt(mse / npixel_valid) / 10);
@@ -647,10 +647,12 @@ bool get_tar_patch(int Select_modal, vector<float *> &vec_pkernels, vector<float
 		
 		vector<float> HogFeature, map_HogFeature;
 
-		calHogFeature(p_kernel, kernel_width, 7, 9, 2, HogFeature);
+		int cell_size = floor(kernel_width / 3.0);
+
+		calHogFeature(p_kernel, kernel_width, cell_size, 9, 2, HogFeature);
 		vec_pkernels_Hog[i] = new(std::nothrow) float[HogFeature.size()]();
 
-		calHogFeature(p_kernel_map, kernel_width, 7, 9, 2, map_HogFeature);
+		calHogFeature(p_kernel_map, kernel_width, cell_size, 9, 2, map_HogFeature);
 		vec_pkernels_Hog_map[i] = new(std::nothrow) float[map_HogFeature.size()]();
 		
 		for (int index_i = 0; index_i < HogFeature.size(); index_i++)
@@ -668,7 +670,7 @@ bool Compute_source_fMOST(float * & p_kernel_map, float *p_kernel, int & kernel_
 	vector<point3D64F> &or_sub, float **** & p_img32f_sub_4d, float **** & p_img_label, int  ind_landmark, bool select,
 	long long  npixels_kernel, long long  index_fetmap, long long  index_source, int X, int  Y, int  Z, vector<float *> & Source, vector< float * > & vec2d_pfeatmaps,
 	float  *&p_kernel_Hog_map, int  kernel_width, float  *& p_kernel_Hog, long long & patch_size_all,
-	vector<point3D64F> &vec_corners_last, map <int, float ****> density_map_sub_4d, double outline,float  ****&fmost_label_edge_4d)
+	vector<point3D64F> &vec_corners_last, map <int, float ****> density_map_sub_4d, double outline)
 {
 	float  *p_patch = new(std::nothrow) float[kernel_width * kernel_width * kernel_width]();
 	float  *p_patch_H = new(std::nothrow) float[patch_size_all]();
@@ -707,9 +709,9 @@ bool Compute_source_fMOST(float * & p_kernel_map, float *p_kernel, int & kernel_
 
 	vector<float> HogFeature_p;
 	vector<float> HogFeature_p_map;
-
-	calHogFeature(p_patch_map, kernel_width, 7, 9, 2, HogFeature_p_map);
-	calHogFeature(p_patch, kernel_width, 7, 9, 2, HogFeature_p);
+	int cell_size = floor(kernel_width / 3.0);
+	calHogFeature(p_patch_map, kernel_width, cell_size, 9, 2, HogFeature_p_map);
+	calHogFeature(p_patch, kernel_width, cell_size, 9, 2, HogFeature_p);
 	for (int index_i = 0; index_i < HogFeature_p.size(); index_i++)
 	{
 		p_patch_H_map[index_i] = HogFeature_p_map[index_i];
@@ -774,8 +776,8 @@ bool Compute_source(float * & p_kernel_map, float *p_kernel, int & kernel_radius
 	long long sz_img32f_nmi[4] = { kernel_width, kernel_width, kernel_width, 1 };
 
 	vector<float> HogFeature_p;
-	
-	calHogFeature(p_patch, kernel_width, 7, 9, 2, HogFeature_p);
+	int cell_size = floor(kernel_width / 3.0);
+	calHogFeature(p_patch, kernel_width, cell_size, 9, 2, HogFeature_p);
 	for (int index_i = 0; index_i < HogFeature_p.size(); index_i++)
 	{
 		p_patch_H[index_i] = HogFeature_p[index_i];
@@ -848,13 +850,13 @@ bool Dic_brain(unsigned char * p_img_test, QString &dic_brain_file, QString &bas
 		return -1;
 	}
 
-	//ÂèñÂà∞ÊâÄÊúâÁöÑÊñá‰ª∂ÂíåÊñá‰ª∂ÂêçÔºå‰ΩÜÊòØÂéªÊéâ.Âíå..ÁöÑÊñá‰ª∂Â§πÔºàËøôÊòØQTÈªòËÆ§ÊúâÁöÑÔºâ
+	//»°µΩÀ˘”–µƒŒƒº˛∫ÕŒƒº˛√˚£¨µ´ «»•µÙ.∫Õ..µƒŒƒº˛º–£®’‚ «QTƒ¨»œ”–µƒ£©
 	dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-	//Êñá‰ª∂Â§π‰ºòÂÖà
+	//Œƒº˛º–”≈œ»
 	dir.setSorting(QDir::DirsFirst);
 
-	//ËΩ¨ÂåñÊàê‰∏Ä‰∏™list
+	//◊™ªØ≥…“ª∏ˆlist
 	QFileInfoList list_norm = dir.entryInfoList();
 	if (list_norm.size()< 1) {
 		return -1;
@@ -973,14 +975,8 @@ bool downsapmle_3Dmarker(vector<point3D64F> & out_marker, vector<point3D64F> inp
 
 bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vector<point3D64F> fine_sub_corner, 
 	vector<point3D64F> aver_corner, vector<int> label, long long * sz_img , float * p_img32f_tar, 
-	float * p_img32f_sub_bk, float * p_img32_sub_label, unsigned char * p_img_sub, map <int, float *> & density_map_sub, float*& fmost_label_edge, float  ****&fmost_label_edge_4d)
+	float * p_img32f_sub_bk, float * p_img32_sub_label, unsigned char * p_img_sub, map <int, float *> & density_map_sub)
 {
-	/*vector<point3D64F> aver_corner_1, vec_corners_1, fine_sub_corner_1;
-	aver_corner_1.push_back(aver_corner[1285]);
-	vec_corners_1.push_back(vec_corners[1285]);
-	fine_sub_corner_1.push_back(fine_sub_corner[1285]);
-	aver_corner = aver_corner_1; vec_corners = vec_corners_1; fine_sub_corner = fine_sub_corner_1;*/
-
 	if (input_Parameter.resample != 1)
 	{
 		cout << "Downsample registration:" << input_Parameter.resample << endl;
@@ -1000,36 +996,24 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 		downsample3dvol(p_img32f_sub_bk_resample, p_img32f_sub_bk, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
 		downsample3dvol(p_img_sub_resample, p_img_sub, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
 
-		/*char filename[2000];
-		sprintf(filename, "%s/p_img32f_tar_resample.v3draw", qPrintable(input_Parameter.save_path));
-		saveImage(filename, (unsigned char *)p_img32f_tar_resample, sz_img_sub_resample, 4);
-		sprintf(filename, "%s/p_img32f_sub_bk_resample.v3draw", qPrintable(input_Parameter.save_path));
-		saveImage(filename, (unsigned char *)p_img32f_sub_bk_resample, sz_img_sub_resample, 4);
-		sprintf(filename, "%s/p_img_sub_resample.v3draw", qPrintable(input_Parameter.save_path));
-		saveImage(filename, (unsigned char *)p_img_sub_resample, sz_img_sub_resample, 1);*/
-
 		tag = 1;
 		if (input_Parameter.Select_modal < 2)
 		{
 			downsample3dvol(p_img32_sub_label_resample, p_img32_sub_label, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
-			/*sprintf(filename, "%s/p_img32_sub_label.v3draw", qPrintable(input_Parameter.save_path));
-			saveImage(filename, (unsigned char *)p_img32_sub_label_resample, sz_img_sub_resample, 4);*/
 		}
 		
 		float * fmost_label_edge_resample = 0;
-		int array[10] = { 62, 75, 80, 100, 145, 159, 168, 237, 249 };
+		int array[10] = { 62, 75, 80, 100, 145, 159, 168, 249 };
 		if (input_Parameter.Select_modal == 0)
 		{
-			for (int i = 0; i<9; i++)
+			for (int i = 0; i<8; i++)
 			{
 				float * map_resample = 0;
 				downsample3dvol(map_resample, density_map_sub[array[i]], sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
 				density_map_sub_resample.insert(pair<int, float*>(array[i], map_resample));
 			}
-			downsample3dvol(fmost_label_edge_resample, fmost_label_edge, sz_img, sz_img_sub_resample, input_Parameter.resample, tag);
+			
 		}
-		float **** fmost_label_edge_4d_resample = 0;
-		new4dpointer(fmost_label_edge_4d_resample, sz_img_sub_resample[0], sz_img_sub_resample[1], sz_img_sub_resample[2], sz_img_sub_resample[3], fmost_label_edge_resample);
 		
 		QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
 		for (long long i = 0; i < vec_corners.size(); i++)
@@ -1044,33 +1028,9 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 			tmp.radius = 2, tmp.shape = 1;ql_marker_aver.push_back(tmp);
 
 		}
-		/*sprintf(filename, "%s/tar_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
-		sprintf(filename, "%s/sub_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
-		sprintf(filename, "%s/average_resample.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);*/
-
-		/*if (input_Parameter.resample != 1)
-		{
-			QList<ImageMarker> ql_marker_tar_x4, ql_marker_sub_x4, ql_marker_aver_x4;
-			for (long long i = 0; i < vec_corners.size(); i++)
-			{
-
-				ImageMarker tmp;
-				tmp.x = vec_corners_resample[i].x*input_Parameter.resample;	tmp.y = vec_corners_resample[i].y*input_Parameter.resample;	tmp.z = vec_corners_resample[i].z*input_Parameter.resample;
-				tmp.radius = 5, tmp.shape = 1; ql_marker_tar_x4.push_back(tmp);
-				tmp.x = fine_sub_corner_resample[i].x*input_Parameter.resample;	tmp.y = fine_sub_corner_resample[i].y*input_Parameter.resample;	tmp.z = fine_sub_corner_resample[i].z*input_Parameter.resample;
-				tmp.radius = 5, tmp.shape = 1; ql_marker_sub_x4.push_back(tmp);
-				tmp.x = aver_corner_resample[i].x*input_Parameter.resample;	tmp.y = aver_corner_resample[i].y*input_Parameter.resample;	tmp.z = aver_corner_resample[i].z*input_Parameter.resample;
-				tmp.radius = 5, tmp.shape = 1; ql_marker_aver_x4.push_back(tmp);
-
-			}
-			sprintf(filename, "%s/tar_ori.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar_x4);
-			sprintf(filename, "%s/sub_ori.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
-			sprintf(filename, "%s/average_ori.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver_x4);
-
-		}*/
 		
 		if (mBrainAligner(input_Parameter, vec_corners_resample, fine_sub_corner_resample, aver_corner_resample, label, sz_img_tar_resample, 
-			p_img32f_tar_resample, p_img32f_sub_bk_resample, p_img32_sub_label_resample, p_img_sub_resample, density_map_sub_resample, fmost_label_edge_4d_resample))
+			p_img32f_tar_resample, p_img32f_sub_bk_resample, p_img32_sub_label_resample, p_img_sub_resample, density_map_sub_resample))
 		{
 			fine_sub_corner = fine_sub_corner_resample;
 		}
@@ -1104,7 +1064,7 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 	printf("<< Raw sacle registration ... \n");
 
 	if (!mBrainAligner(input_Parameter, vec_corners, fine_sub_corner, aver_corner, label, sz_img,p_img32f_tar,p_img32f_sub_bk, 
-		p_img32_sub_label, p_img_sub, density_map_sub, fmost_label_edge_4d))
+		p_img32_sub_label, p_img_sub, density_map_sub))
 	{
 		printf("ERROR::  Raw sacle registration is wrong!!!!");
 		return false;
@@ -1115,7 +1075,7 @@ bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_co
 
 bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vector<point3D64F> &fine_sub_corner, vector<point3D64F> aver_corner,
 	vector<int> label, long long * sz_img_tar, float * p_img32f_tar, float * p_img32f_sub_bk, float * p_img32_sub_label,
-	unsigned char * p_img_sub, map <int, float *> & density_map_sub, float  ****&fmost_label_edge_4d)
+	unsigned char * p_img_sub, map <int, float *> & density_map_sub)
 {
 	float  ****p_img32f_tar_4d = 0, ****p_img32f_sub_4d = 0, ****p_img_label = 0;
 	new4dpointer(p_img32f_tar_4d, sz_img_tar[0], sz_img_tar[1], sz_img_tar[2], sz_img_tar[3], p_img32f_tar);
@@ -1128,9 +1088,8 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 	map <int, float ****>  density_map_sub_4d;
 	if (input_Parameter.Select_modal == 0)
 	{
-		int array[10] =  { 62, 75, 80, 100, 145, 159, 168, 237, 249 };
-		/*int array[1] = { 145 };*/
-		for (int i = 0; i < 9; i++)
+		int array[10] =  { 62, 75, 80, 100, 145, 159, 168, 249 };
+		for (int i = 0; i < 8; i++)
 		{
 			float **** map_4d = 0;
 			new4dpointer(map_4d, sz_img_tar[0], sz_img_tar[1], sz_img_tar[2], sz_img_tar[3], density_map_sub[array[i]]);
@@ -1141,7 +1100,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 	
 	//paras
 	int nfeature = 3;
-	int search_radius = 10;
+	int search_radius = input_Parameter.search_radius;
 	int nneighbors = 1;//+1 for include itself
 	int kernel_width = 2 * input_Parameter.kernel_radius + 1;
 	int featmap_width = 2 * search_radius + 1;
@@ -1291,7 +1250,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 										or_sub, p_img32f_sub_4d, p_img_label, ind_landmark,select,
 										 npixels_kernel,  index_fetmap, index_source, X, Y, Z,Source,vec2d_pfeatmaps,
 										p_kernel_Hog_map,kernel_width, p_kernel_Hog, patch_size_all,
-										vec_corners_last, density_map_sub_4d, fine_sub_corner[ind_landmark].outline, fmost_label_edge_4d))
+										vec_corners_last, density_map_sub_4d, fine_sub_corner[ind_landmark].outline))
 									{
 										printf("Error tar Compute_source() is wrong!");
 										/*return false;*/
@@ -1323,7 +1282,7 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 									or_sub, p_img32f_sub_4d, p_img_label, ind_landmark, select,
 									npixels_kernel, index_fetmap, index_source, X, Y, Z, Source, vec2d_pfeatmaps,
 									p_kernel_Hog_map, kernel_width, p_kernel_Hog, patch_size_all,
-									vec_corners_last, density_map_sub_4d, fine_sub_corner[ind_landmark].outline, fmost_label_edge_4d))
+									vec_corners_last, density_map_sub_4d, fine_sub_corner[ind_landmark].outline))
 								{
 									printf("Error tar Compute_source() is wrong!");
 									/*return false;*/
@@ -1454,10 +1413,6 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 		vec_corners_last = vec_corner_new;
 		int fre_region_constraint = input_Parameter.fre_region_constraint;
 
-		//if (iter<max_iteration/2)
-		//{
-		//	fre_region_constraint = input_Parameter.fre_global_constraint;
-		//}
 		if (input_Parameter.Select_modal <2)
 		{
 			if ((iter) % fre_region_constraint == 0)
@@ -1469,10 +1424,12 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 				if (iter > input_Parameter.iterations_number / 2)
 				{
 					double lam = input_Parameter.star_lamda_inner*pow(0.99, iter);// 5000 * pow(0.95, iter);
+					if (lam < input_Parameter.lam_end_inner)
+						lam = input_Parameter.lam_end_inner;
 
 					for (int label_i = 0; label_i < label.size(); label_i++)
 					{
-						vector<point3D64F> stps_vec_sub, stps_vec_tar;
+						vector<point3D64F> stps_vec_sub, stps_vec_tar, stps_vec_sub_warp;
 
 						for (long i = 0; i < vec_corners.size(); i++)
 						{
@@ -1483,35 +1440,26 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 							}
 						}
 
-						if (!q_TPS_cd(stps_vec_tar, stps_vec_sub, lam, x4x4_affine, xnx4_c, xnxn_K))
-						{
-							printf("ERROR: (inner) q_TPS_cd() return false!\n");
-							return false;
-						}
-						Matrix x_ori(stps_vec_sub.size(), 4), x_tps(stps_vec_sub.size(), 4);
-						for (unsigned V3DLONG i = 0; i < stps_vec_sub.size(); i++)
-						{
-							x_ori(i + 1, 1) = 1.0;
-							x_ori(i + 1, 2) = stps_vec_tar[i].x;
-							x_ori(i + 1, 3) = stps_vec_tar[i].y;
-							x_ori(i + 1, 4) = stps_vec_tar[i].z;
-						}
-						x_tps = x_ori*x4x4_affine + xnxn_K*xnx4_c;
+						float lam1 = lam;
+						stps_vec_sub_warp = stps_vec_tar;
+						auto_warp_marker(lam1, stps_vec_tar, stps_vec_sub, stps_vec_sub_warp);
+					
 						for (unsigned V3DLONG i = 0; i < stps_vec_tar.size(); i++)
 						{
 							if (vec_corner_new[number + i].outline == 0)
 							{
-								vec_corner_new[number + i].x = x_tps(i + 1, 2);
-								vec_corner_new[number + i].y = x_tps(i + 1, 3);
-								vec_corner_new[number + i].z = x_tps(i + 1, 4);
+								vec_corner_new[number + i].x = stps_vec_sub_warp[i].x;
+								vec_corner_new[number + i].y = stps_vec_sub_warp[i].y;
+								vec_corner_new[number + i].z = stps_vec_sub_warp[i].z;
 							}
 						}
+
 						number = number + stps_vec_tar.size();
 					}
 				}
 				else
 				{
-					double lam = input_Parameter.star_lamda*pow(0.99, iter);// 5000 * pow(0.95, iter);
+					double lam = input_Parameter.star_lamda_outline*pow(0.99, iter);// 5000 * pow(0.95, iter);
 					if (lam < input_Parameter.lam_end_out)
 						lam = input_Parameter.lam_end_out;
 
@@ -1555,20 +1503,6 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 			}
 		}
 
-		//{
-			//QList<ImageMarker> ql_marker_tar, ql_marker_sub;
-			//for (long long i = 0; i < vec_corners.size(); i++)
-			//{
-			//	ImageMarker tmp;
-			//	tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
-			//	tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
-			//}
-
-			//char filename[2000];
-			////save as marker files
-			//sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
-			//sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
-
 		if (input_Parameter.Select_modal <2)
 		{
 			if ((iter) % int(input_Parameter.fre_global_constraint) == 0 && iter> input_Parameter.iterations_number / 2)
@@ -1608,91 +1542,12 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 
 			}
 
-			//ÂàÜÂÜÖÂ§ñwarp 
-			//if (iter == input_Parameter.iterations_number / 2 - 1 && input_Parameter.Select_modal==1)
-			//{
-			//	vector<point3D64F> aver_corner_raw = aver_corner, vec_corners_ouline, fine_sub_outline;
-			//	vec_corners_ouline.clear();
-			//	fine_sub_outline.clear();
-			//	for (int i = 0; i < vec_corners.size(); i++)
-			//	{
-			//		if (vec_corners[i].outline == 1)
-			//		{
-			//			vec_corners_ouline.push_back(aver_corner[i]);
-			//			fine_sub_outline.push_back(vec_corner_new[i]);
-
-			//		}
-			//	}
-
-			//	bool outline = true;
-			//	float at_lam = 0.2;
-			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
-
-			//	vec_corners_ouline.clear();
-			//	fine_sub_outline.clear();
-			//	for (int i = 0; i < vec_corners.size(); i++)
-			//	{
-			//		if (vec_corners[i].outline == 1)
-			//		{
-			//			vec_corners_ouline.push_back(fine_sub_corner[i]);
-			//			fine_sub_outline.push_back(vec_corner_new[i]);
-			//		}
-			//	}
-
-			//	outline = false;
-			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, vec_corner_new, outline);
-
-			//	vec_corners_ouline.clear();
-			//	fine_sub_outline.clear();
-			//	for (int i = 0; i < vec_corners.size(); i++)
-			//	{
-			//		if (vec_corners[i].outline == 1)
-			//		{
-			//			vec_corners_ouline.push_back(aver_corner_raw[i]);
-			//			fine_sub_outline.push_back(aver_corner[i]);
-			//		}
-			//	}
-			//	outline = false;
-			//	auto_warp_marker_sp(at_lam, vec_corners_ouline, fine_sub_outline, aver_corner, outline);
-
-			//	vec_corner_new = aver_corner;
-
-			//	QList<ImageMarker> ql_marker_tar, ql_marker_sub, ql_marker_aver;
-			//	for (long long i = 0; i < vec_corners.size(); i++)
-			//	{
-			//		ImageMarker tmp;
-			//		tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
-			//		tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
-			//		tmp.x = aver_corner[i].x; tmp.y = aver_corner[i].y; tmp.z = aver_corner[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_aver.push_back(tmp);
-			//	}
-
-			//	char filename[2000];
-			//	//save as marker files
-			//	sprintf(filename, "%s%d_update_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
-			//	sprintf(filename, "%s%d_update_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
-			//	sprintf(filename, "%s%d_update_aver.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_aver);
-
-			//	V3DLONG szBlock_x, szBlock_y, szBlock_z;
-			//	szBlock_x = szBlock_y = szBlock_z = 4;
-			//	int		i_interpmethod_df = 1;		//default B-spline
-			//	int		i_interpmethod_img = 0;		//default trilinear
-
-			//	unsigned char *p_img_warp = 0;
-			//	imgwarp_smallmemory(p_img_sub, sz_img_tar, ql_marker_tar, ql_marker_sub,
-			//		szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
-			//		p_img_warp);
-			//	filename[2000];
-			//	sprintf(filename, "%s%d_update.v3draw", qPrintable(input_Parameter.save_path), iter);
-			//	saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
-			//	if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
-
-			//}
 		}
 		else 
 		{
 			//STPS all point, but update interior point
 			Matrix x4x4_affine, xnx4_c, xnxn_K;
-			double lam = (input_Parameter.star_lamda)*pow(0.99, iter);// 5000 * pow(0.95, iter);
+			double lam = (input_Parameter.star_lamda_outline)*pow(0.99, iter);// 5000 * pow(0.95, iter);
 
 
 			if (lam < input_Parameter.lam_end_inner)
@@ -1721,10 +1576,14 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 			}
 		}
 
+
+
+
+
 		//warp subject image based on updated landmark position
 
-		if (iter == max_iteration)
-		/*if ((iter) % int(input_Parameter.fre_save) == 0)*/
+		/*if (iter == max_iteration)*/
+		if ((iter) % int(input_Parameter.fre_save) == 0)
 		{
 			QList<ImageMarker> ql_marker_tar, ql_marker_sub;
 			for (long long i = 0; i < vec_corners.size(); i++)
@@ -1765,11 +1624,56 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 						ql_marker_sub_x4[i].x *= input_Parameter.resample;	ql_marker_sub_x4[i].y *= input_Parameter.resample;	ql_marker_sub_x4[i].z *= input_Parameter.resample;
 					}
 					sprintf(filename, "%sregistered_tar_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar_x4);
-					sprintf(filename, "%sregistered_sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
+					sprintf(filename, "%sregistered_sub_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
 				}
 				
 			}
 		}
+		//if ((iter) % int(input_Parameter.fre_save) == 0)
+		//{
+		//	QList<ImageMarker> ql_marker_tar, ql_marker_sub;
+		//	for (long long i = 0; i < vec_corners.size(); i++)
+		//	{
+		//		ImageMarker tmp;
+		//		tmp.x = vec_corners[i].x; tmp.y = vec_corners[i].y; tmp.z = vec_corners[i].z; tmp.radius = 5, tmp.shape = 1; ql_marker_tar.push_back(tmp);
+		//		tmp.x = vec_corner_new[i].x; tmp.y = vec_corner_new[i].y; tmp.z = vec_corner_new[i].z; tmp.radius = 5, tmp.shape = 1;	ql_marker_sub.push_back(tmp);
+		//	}
+
+		//	//warp float type image for next iteration
+		//	V3DLONG szBlock_x, szBlock_y, szBlock_z;
+		//	szBlock_x = szBlock_y = szBlock_z = 4;
+		//	int		i_interpmethod_df = 1;		//default B-spline
+		//	int		i_interpmethod_img = 0;		//default trilinear
+
+		//	//warp uint8 type image for save
+		//	{
+		//		unsigned char *p_img_warp = 0;
+		//		imgwarp_smallmemory(p_img_sub, sz_img_tar, ql_marker_tar, ql_marker_sub,
+		//			szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
+		//			p_img_warp);
+		//		char filename[2000];
+		//		sprintf(filename, "%s%d.v3draw", qPrintable(input_Parameter.save_path), iter);
+		//		saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
+		//		if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
+
+		//		//save as marker files
+		//		sprintf(filename, "%s%d_tar.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar);
+		//		sprintf(filename, "%s%d_sub.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub);
+		//		if (input_Parameter.resample != 1)
+		//		{
+		//			QList<ImageMarker> ql_marker_tar_x4, ql_marker_sub_x4;
+		//			ql_marker_tar_x4 = ql_marker_tar; ql_marker_sub_x4 = ql_marker_sub;
+		//			for (long i = 0; i < vec_corners.size(); i++)
+		//			{
+		//				ql_marker_tar_x4[i].x *= input_Parameter.resample;	ql_marker_tar_x4[i].y *= input_Parameter.resample;	ql_marker_tar_x4[i].z *= input_Parameter.resample;
+		//				ql_marker_sub_x4[i].x *= input_Parameter.resample;	ql_marker_sub_x4[i].y *= input_Parameter.resample;	ql_marker_sub_x4[i].z *= input_Parameter.resample;
+		//			}
+		//			sprintf(filename, "%s%d_tar_x4.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_tar_x4);
+		//			sprintf(filename, "%s%d_sub_x4.marker", qPrintable(input_Parameter.save_path), iter);	writeMarker_file(filename, ql_marker_sub_x4);
+		//		}
+
+		//	}
+		//}
 
 		for (int i = 0; i < vec_corners.size(); i++)
 		{
