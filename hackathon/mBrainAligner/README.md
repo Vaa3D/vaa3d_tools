@@ -62,7 +62,7 @@ After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\
 
 ## C++ Code
 
-Any C++11 compiler should work. If your compiler supports C++11 (e.g. Visual Studio 2013) then it will work.
+Any C++11 compiler should work. If your use Visual Studio 2013, please follow the instructions below to compile the code.
 
 - Use Microsoft Visual Studio 2013 to open **".vcxproj"**.
 - Under Build -> Configuration Manager:
@@ -113,7 +113,7 @@ python demo.py
 ```
 The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/Result` folder.
 
-Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use raw data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model of different size.
+Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correpondingly. We will upload the segmentation model of different size later.
 
 Please refer to the 'help' of mBrainAligner for more information: 
 ```
