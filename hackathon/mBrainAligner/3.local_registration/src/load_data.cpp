@@ -565,4 +565,3 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 	if (fmost_label_edge) 			{ delete[]fmost_label_edge;		fmost_label_edge = 0; }
 }
 	
-
