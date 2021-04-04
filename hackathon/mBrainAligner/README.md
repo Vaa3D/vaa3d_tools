@@ -58,7 +58,7 @@ After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\
 
 ## Matlab Code
 
-`1.preprocessing/StripreMove/stripremove.m` need to run using MATLAB 2016b
+`1.preprocessing/StripreMove/stripremove.m` need to be run using MATLAB, make sure MATLAB(>=2016b) is installed .
 
 ## C++ Code
 
@@ -74,9 +74,9 @@ Any C++11 compiler should work. If your compiler supports C++11 (e.g. Visual Stu
 
 ## prerequisites
 
-- Python 3.3, 3.4 and 3.5 not support python 3.6
+- Python 3.3 or 3.4 or 3.5 (python 3.6 is not supported)
 
-This demo needs to load the matlab engine, engine API for python. if you don't have the API, you can found `\matlab\extern\engines\python` .Before extern is the matlab installation directory, and the subsequent is the fixed directory. Enter 
+The python script needs to load the matlab engine. If you don't have MATLAB Engine API for Python intalled, you can enter Matlab installation directory `\matlab\extern\engines\python`, and run 
 
 ```
 python setup.py install
@@ -113,10 +113,9 @@ python demo.py
 ```
 The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/Result` folder.
 
-Note: 
-For convenience, we provide a resampled demo data set (reducing the size of the data and reducing the number of markers). Raw data can get more perfect result, if you need the raw data, you can download fix data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn) to obtain other data. And if you use raw data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model so that you can try all the registration methods.
-In addition, some default parameters are set in the code. For example, we provide four registration methods, but the default is the second one, you can choose other registration methods. And help document can help you understand all parameter settings.
+Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use raw data, you need to update the "/Seg" file in the demo, later we will upload the segmentation model of different size.
 
+Please refer to the 'help' of mBrainAligner for more information: 
 ```
 python demo.py -h
 ```
