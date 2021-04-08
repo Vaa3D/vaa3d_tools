@@ -62,10 +62,10 @@ public:
 	template<typename T>
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb);
 
-	template<typename T>
+	template<typename T> // Scailing by multiplication.
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
 
-	template<typename T>
+	template<typename T> // Scailing by multiplication.
 	static inline QList<CellAPO> apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale);
 
 	template<typename T> // Shifting by addition.
