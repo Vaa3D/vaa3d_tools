@@ -31,17 +31,17 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "nearTree";
+	//string funcName = "nearTree";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -66,6 +66,55 @@ int main(int argc, char* argv[])
 			clock_t end = clock();
 			float duration = float(end - start) / CLOCKS_PER_SEC;
 			cout << "time elapsed: " << duration << endl << endl;
+		}
+	}
+	else if (!funcName.compare("HUSTrotate"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree = NeuronStructUtil::swcRotateX_degree(inputTree, 90, 228, 296);	
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
+	else if (!funcName.compare("HUSTshift"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree = NeuronStructUtil::swcShift(inputTree, 0, -68, -68);
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
+	else if (!funcName.compare("HUSTcleanUp"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree;
+			for (auto& node : inputTree.listNeuron)
+			{
+				if (!node.type == 0) outputTree.listNeuron.append(node);
+			}
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
 		}
 	}
 	else if (!funcName.compare("somaRegion"))
@@ -462,21 +511,6 @@ int main(int argc, char* argv[])
 
 		for (auto& brNum : swcBrNums) cout << brNum.first << " " << brNum.second << endl;
 		cout << endl;
-	}
-	else if (!funcName.compare("testVsegConvert"))
-	{
-		profiledTree profiledInputTree(readSWC_file(QString::fromStdString(paras.at(0))));
-		for (auto& seg : profiledInputTree.segs)
-		{
-			//cout << "segID " << seg.first << ": " << endl;
-			//for (auto& node : seg.second.nodes)
-			//	cout << "  " << node.n << endl;
-			//cout << endl;
-			V_NeuronSWC convertedSeg = seg.second.convert2V_NeuronSWC();
-			//for (auto& node : convertedSeg.row)
-			//	cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6] << endl;
-			//cout << seg.second.nodes.size() << " " << seg.second.seg_childLocMap.size() << endl << endl;
-		}
 	}
 	else if (!funcName.compare("getMaxEucliDist"))
 	{
@@ -899,44 +933,6 @@ int main(int argc, char* argv[])
 			}
 		}
 		writeSWC_file(saveNameQ, terminalTree);
-	}
-	else if (!funcName.compare("simple_thre"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-		ImgManager myManager(folderNameQ);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
-		{
-			myManager.inputSingleCaseFullPath = caseIt->second;
-			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
-
-			int imgDims[3];
-			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
-			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
-			imgDims[2] = 1;
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			//map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, 10);
-
-			V3DLONG saveDims[4];
-			saveDims[0] = imgDims[0];
-			saveDims[1] = imgDims[1];
-			saveDims[2] = 1;
-			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
-			string saveFileName = saveFileNameQ.toStdString();
-			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-			myManager.imgDatabase.clear();
-		}
 	}
 	else if (!funcName.compare("generateBrainRegionSWC_f"))
 	{
