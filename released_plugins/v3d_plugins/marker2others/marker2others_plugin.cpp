@@ -125,9 +125,60 @@ bool others2marker(QString inswc_file)
 
     writeMarker_file(outmarker_file,listLandmarks);
     QString FinishMsg = QString("Marker file [") + outmarker_file + QString("] has been generated.");
-    v3d_msg(FinishMsg);
+    qDebug()<<FinishMsg;
     return true;
 }
+bool others2marker(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if(infiles.empty())
+    {
+        cerr<<"Need input swc file"<<endl;
+        return false;
+    }
+
+    QString  inswc_file =  infiles[0];
+    QString  outmarker_file = inswc_file+".marker";
+    if(outfiles.size())
+        outmarker_file =  outfiles[0];
+
+    int k=0;
+    double scale;
+    if (input.size()>=2)
+    {
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        scale = paras.empty() ? 1.0 : atof(paras[k]);
+    }
+
+    NeuronTree nt=readSWC_file(inswc_file);
+    QList <ImageMarker> listLandmarks;
+    if(!nt.listNeuron.size())
+        return false;
+    for(int i=0; i<nt.listNeuron.size();i++)
+    {
+        ImageMarker m;
+        m.x=nt.listNeuron[i].x*scale;
+        m.y=nt.listNeuron[i].y*scale;
+        m.z=nt.listNeuron[i].z*scale;
+        m.n=nt.listNeuron[i].n;
+        m.name="";
+        m.type=0;
+        m.shape=0;
+        m.radius=1;
+        m.color.r = 255;
+        m.color.g = 0;
+        m.color.b = 0;
+        listLandmarks.append(m);
+    }
+
+    writeMarker_file(outmarker_file,listLandmarks);
+    return true;
+}
+
 bool marker2apo(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     vector<char*> infiles, inparas, outfiles;
@@ -283,17 +334,20 @@ bool apo2marker(QString inapo_file)
 
     writeMarker_file(outmarker_file,listLandmarks);
     QString FinishMsg = QString("Marker file [") + outmarker_file + QString("] has been generated.");
-    v3d_msg(FinishMsg);
-
+    qDebug()<<FinishMsg;
     return true;
 }
 void printHelp(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3d_msg("This plugin converts and saves an image's marker to the SWC format. ");
+    qDebug()<<"This plugin also can convert apo or swc file to marker format";
 }
-void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
+
+void printHelp()
 {
-    v3d_msg("Not implemented yet", 0);
+    qDebug()<<"vaa3d -x <libname:marker2others> -f marker2apo -i <input_marker_file> -o <out_apo_file>";
+    qDebug()<<"vaa3d -x <libname:marker2others> -f apo2marker -i <input_apo_file> -o <out_marker_file>";
+    qDebug()<<"vaa3d -x <libname:marker2others> -f swc2marker -i <input_swc_file> -o <out_marker_file>";
     return;
 }
 //
@@ -312,6 +366,7 @@ QStringList Marker2OthersPlugin::funclist() const
 	return QStringList()
         <<tr("marker2apo")
        <<tr("apo2marker")
+      <<tr("swc2marker")
 		<<tr("help");
 }
 
@@ -365,9 +420,14 @@ bool Marker2OthersPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         apo2marker(input,output);
         return true;
     }
+    else if (func_name == tr("swc2marker"))
+    {
+        others2marker(input,output);
+        return true;
+    }
 	else if (func_name == tr("help"))
 	{
-		printHelp(input,output);
+        printHelp();
         return true;
 	}
 	return false;
