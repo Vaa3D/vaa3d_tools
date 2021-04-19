@@ -323,6 +323,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string inimg_file = infiles[0];
         QString inswc_file = infiles[1];
         int maskRadius=(inparas.size()>=1)?atoi(inparas[0]):12;
+        int erosion_kernel_size=(inparas.size()>=2)?atoi(inparas[1]):0;
         QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
         //read img
         unsigned char * inimg1d = 0;
@@ -336,9 +337,10 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         {
             path.mkpath(out_path);
         }
-        QString save_path_img =out_path+"/"+QFileInfo(inswc_file).baseName()+"_maskRadius_"+QString::number(maskRadius)+".v3draw";
+        QString save_path_img =out_path+"/"+QFileInfo(inswc_file).baseName()+"_mR_"+QString::number(maskRadius)
+                +"_eR_"+QString::number(erosion_kernel_size)+".v3draw";
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
-        maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius);
+        maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius,erosion_kernel_size);
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
     else if (func_name==tr("Crop_terafly_block"))
@@ -381,8 +383,8 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
 
-        int threshold=(inparas.size()>=1)?atoi(inparas[0]):40;
-        int useNeighborArea=(inparas.size()>=2)?atoi(inparas[1]):0;
+        int gu_thre_size=(inparas.size()>=1)?atoi(inparas[0]):64;
+        int useNeighborArea=(inparas.size()>=2)?atoi(inparas[1]):2;
         int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
         //read img
         unsigned char * inimg1d = 0;
@@ -397,7 +399,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
         string outswc_file = inswc_file + "_IntensityResult.eswc";
         writeESWC_file(QString::fromStdString(outswc_file),nt);
-        QList <CellAPO> apolist=getBouton(nt,threshold,allnode);
+        QList <CellAPO> apolist=getBouton(nt,gu_thre_size,allnode);
         //remove duplicated bouton at branch point
         apolist=removeBoutons(apolist);
         string apo_file_path = inswc_file + "_bouton.apo";
@@ -577,8 +579,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         printHelp();
 	}
 	else return false;
-
-	return true;
+    return true;
 }
 void printHelp()
 {

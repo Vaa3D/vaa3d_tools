@@ -67,7 +67,7 @@ QList <CellAPO> removeBoutons(QList <CellAPO> inapo,V3DLONG removed_dist_thre=2)
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0,int ne_area=2);
 void getSWCIntensityInTerafly(V3DPluginCallback2 &callback,string imgPath, QString inswc_file);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size=32);
-void maskImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,QString outpath,V3DLONG in_sz[4], NeuronTree& nt,int maskRadius=12);
+void maskImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,QString outpath,V3DLONG in_sz[4], NeuronTree& nt,int maskRadius=12,int erosion_kernel_size=0);
 void erosionImg(unsigned char * & inimg1d,V3DLONG in_sz[4],int kernelSize=3);
 void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int cropx=1024,int cropy=1024,int cropz=512);
 QList <CellAPO> getBouton(NeuronTree nt,int in_thre,int allnode=0);
@@ -76,5 +76,5 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
 void getNodeRadius(unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt);
 void printHelp();
 NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size=2);
-QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size=128);
+QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size=64);
 #endif // BOUTONDETECTION_FUN_H

@@ -148,7 +148,7 @@ QList <CellAPO> getBouton(NeuronTree nt, int in_thre,int allnode)
         hashchild.insert(i,0);
     }
     QHash<V3DLONG,int> gau_thre;gau_thre.clear();
-    gau_thre=getIntensityStd(nt,64);
+    gau_thre=getIntensityStd(nt,in_thre);
     /*Two level threshold seperate the region into three intervals:
      *p1 maybe is a P-site or maybe not. if p1 is a P-site, it should be known by its child.
      *So consider the situation below, p1 is not a P-site, which means it has a low intensity:
@@ -156,7 +156,7 @@ QList <CellAPO> getBouton(NeuronTree nt, int in_thre,int allnode)
      *R1(~,Ip1),R2(Ip1,threshold),R3(threshold,~)
     */
     cout<<"-------Internal bouton detection---------------"<<endl;
-    V3DLONG bouton_dist_thre=5;
+    V3DLONG bouton_dist_thre=3;
     cout<<"--default bouton intensity threshold is more than "<<in_thre<< " --"<<endl;
     cout<<"------default bouton distance is more than "<<bouton_dist_thre<< " pixels-----"<<endl;
     for (V3DLONG i=0;i<siz;i++)
@@ -773,7 +773,7 @@ void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize)
     if(im_transfer) {delete []im_transfer; im_transfer=0;}
 }
 
-void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius)
+void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size)
 {
     /*for all the pixels in the dst block*/
     QList<NeuronSWC> listNeuron =  nt.listNeuron;
@@ -827,7 +827,8 @@ void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outp
         }
     }
     //erosion
-    //erosionImg(im_transfer,in_sz,3);
+    if(erosion_kernel_size)
+        erosionImg(im_transfer,in_sz,erosion_kernel_size);
     //save img
     simple_saveimage_wrapper(callback, outpath.toStdString().c_str(),(unsigned char *)im_transfer,in_sz,1);
     //release pointer
@@ -1065,21 +1066,23 @@ void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DL
     }
 
     cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
-    long sz01 = in_sz[0] * in_sz[1];
-    long sz0 = in_sz[0];
+    V3DLONG sz01 = in_sz[0] * in_sz[1];
+    V3DLONG sz0 = in_sz[0];
     double imgave,imgstd;
     V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
     mean_and_std(inimg1d,total_size,imgave,imgstd);
+    cout<<"mean: "<<imgave<<", and std: "<<imgstd<<endl;
     for(V3DLONG i=0;i<siz;i++)
     {
         //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
         NeuronSWC s = listNeuron[i];
         if(s.level==1)
         {
-            int thisx,thisy,thisz;
-            thisx=s.x;
-            thisy=s.y;
-            thisz=s.z;
+            V3DLONG thisx,thisy,thisz,dstpos;
+            thisx=s.x;thisy=s.y;thisz=s.z;
+            dstpos=long(thisz * sz01 + thisy * sz0 + thisx);
+            if (dstpos>=total_size)
+                    continue;
             listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
             if(useNeighborArea!=0)
             {
