@@ -10,7 +10,8 @@ BrainAtlasManager::BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callba
 {	
 	regionListUI->setupUi(this);
 
-	QString brgFilePath = "./BrainAtlas/brgs";
+	QString brgFilePath = ".\\BrainAtlas\\brgs";
+	//QString brgFilePath = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs";
 	QDir inputDir(brgFilePath);
 	inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	QStringList brgFileList = inputDir.entryList();
@@ -30,7 +31,7 @@ BrainAtlasManager::BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callba
 		float portion = float(it - brgFileList.begin()) / brgFileList.size();
 		int percentage = int(portion * 100);
 		
-		string regionFileFullName = (brgFilePath + "/" + *it).toStdString();
+		string regionFileFullName = (brgFilePath + "\\" + *it).toStdString();
 		brainRegion thisRegion;
 		thisRegion.readBrainRegion_file(regionFileFullName);
 		this->regionMap.insert(pair<string, brainRegion>(thisRegion.name, thisRegion));
@@ -40,7 +41,7 @@ BrainAtlasManager::BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callba
 	iniProgressBarPtr->setValue(100);
 	if (iniProgressBarPtr->isVisible()) iniProgressBarPtr->close();
 
-	regionListUI->tableWidget->installEventFilter(this);
+	//regionListUI->tableWidget->installEventFilter(this);
 	regionListUI->tableWidget->setHorizontalHeaderLabels(QStringList() << tr("Display") << tr("Region Name"));
 	for (boost::container::flat_map<string, brainRegion>::iterator it = this->regionMap.begin(); it != this->regionMap.end(); ++it)
 	{
@@ -65,19 +66,76 @@ BrainAtlasManager::BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callba
 		nameItemPtr->setText(regionNameQ);
 		nameItemPtr->setTextAlignment(Qt::AlignCenter);
 		regionListUI->tableWidget->setItem(regionCount, 1, nameItemPtr);
+
+		this->region2UIindexMap.insert({ regionNameQ.toStdString(), regionCount });
 	}
 
 	this->curWin = this->thisCallback->currentImageWindow();
 	this->cur3DViewer = this->thisCallback->find3DViewerByName(this->thisCallback->getImageName(this->curWin));
+	this->thisCallback->setBrainAtlasStatus(true, this->cur3DViewer);
 	
 	qDebug() << this->thisCallback->getImageName(this->curWin);
 
+	this->connect(regionListUI->tableWidget, SIGNAL(cellChanged(int, int)), this, SLOT(regionSelected(int, int)));
 	this->show();
-	this->scanCheckBoxes_list();
+	//this->scanCheckBoxes_list();
 	
 }
 
-void BrainAtlasManager::scanCheckBoxes_list()
+BrainAtlasManager::~BrainAtlasManager()
+{
+	this->curWin = this->thisCallback->currentImageWindow();
+	this->cur3DViewer = this->thisCallback->find3DViewerByName(this->thisCallback->getImageName(this->curWin));
+	this->thisCallback->setBrainAtlasStatus(false, this->cur3DViewer);
+}
+
+void BrainAtlasManager::regionSelected(int row, int col, bool rightClick)
+{
+	if (rightClick)
+	{
+		
+		if (regionListUI->tableWidget->item(row, 0)->checkState() == Qt::Unchecked) regionListUI->tableWidget->item(row, 0)->setCheckState(Qt::Checked);
+		else if (regionListUI->tableWidget->item(row, 0)->checkState() == Qt::Checked) regionListUI->tableWidget->item(row, 0)->setCheckState(Qt::Unchecked); 
+		
+	}
+
+	string regionName = regionListUI->tableWidget->item(row, 1)->text().toStdString();
+	if (regionListUI->tableWidget->item(row, 0)->checkState() == Qt::Checked)
+	{
+		if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
+		{
+			if (!this->surfaceStatus.at(regionName))
+			{
+				this->thisCallback->displaySWC(this->cur3DViewer, this->surface2indexMap.at(regionName));
+				this->surfaceStatus[regionName] = true;
+			}
+		}
+		else
+		{
+			this->loadedRegions.insert(regionName);
+			//QString swcPathQ = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(regionName) + ".swc";
+			QString swcPathQ = ".\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(regionName) + ".swc";
+			string swcPath = swcPathQ.toStdString();
+			const char* swcPathC = swcPath.c_str();
+			int index = this->thisCallback->setSWC_noDecompose(this->cur3DViewer, swcPathC);
+			this->surface2indexMap.insert({ regionName, index });
+			this->surfaceStatus.insert({ regionName, true });
+		}
+	}
+	else if (regionListUI->tableWidget->item(row, 0)->checkState() == Qt::Unchecked)
+	{
+		if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
+		{
+			if (this->surfaceStatus.at(regionName))
+			{
+				this->thisCallback->hideSWC(this->cur3DViewer, this->surface2indexMap.at(regionName));
+				this->surfaceStatus[regionName] = false;
+			}
+		}
+	}
+}
+
+/*void BrainAtlasManager::scanCheckBoxes_list()
 {
 	for (int i = 0; i < regionListUI->tableWidget->rowCount(); ++i)
 	{
@@ -95,7 +153,8 @@ void BrainAtlasManager::scanCheckBoxes_list()
 			else
 			{
 				this->loadedRegions.insert(regionName);
-				QString swcPathQ = "./BrainAtlas/brain_regionSurfaces/" + QString::fromStdString(regionName) + ".swc";
+				//QString swcPathQ = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(regionName) + ".swc";
+				QString swcPathQ = ".\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(regionName) + ".swc";
 				string swcPath = swcPathQ.toStdString();
 				const char* swcPathC = swcPath.c_str();
 				int index = this->thisCallback->setSWC_noDecompose(this->cur3DViewer, swcPathC);
@@ -116,15 +175,19 @@ void BrainAtlasManager::scanCheckBoxes_list()
 		}
 	}
 	QTimer::singleShot(500, this, SLOT(scanCheckBoxes_list()));
-}
+}*/
 
 void BrainAtlasManager::neuronInvolvedRegionClicked()
 {
 	QList<string> loadedRegionsQ;
 	for (set<string>::iterator regionIt = this->loadedRegions.begin(); regionIt != this->loadedRegions.end(); ++regionIt)
 		loadedRegionsQ.append(*regionIt);
-	QList<NeuronTree> neurons = this->thisCallback->loadedNeurons(this->cur3DViewer, loadedRegionsQ);
-	
+	QList<NeuronTree> inputNeurons = this->thisCallback->loadedNeurons(this->cur3DViewer, loadedRegionsQ);
+	NeuronTree mergedNeuronTree;
+	for (auto& inputNeuron : inputNeurons) mergedNeuronTree.listNeuron.append(inputNeuron.listNeuron);
+	QList<NeuronTree> neurons;
+	neurons.push_back(mergedNeuronTree);
+
 	map<string, set<string>> neuron2regionMap;
 	set<string> regionSet;
 	for (QList<NeuronTree>::iterator it = neurons.begin(); it != neurons.end(); ++it)
@@ -137,7 +200,8 @@ void BrainAtlasManager::neuronInvolvedRegionClicked()
 		string buffer;
 		vector<string> lineSplit;
 		map<string, vector<vector<int>>> regionBoundsMap;
-		ifstream inputFile("./BrainAtlas/regionBoundaries.txt");
+		//ifstream inputFile("D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\regionBoundaries.txt");
+		ifstream inputFile(".\\BrainAtlas\\regionBoundaries.txt");
 		if (inputFile.is_open())
 		{
 			while (getline(inputFile, line))
@@ -191,7 +255,8 @@ void BrainAtlasManager::neuronInvolvedRegionClicked()
 		cout << "candidate regions number: " << regionBoundsMap.size() << endl;
 
 		vector<brainRegion> regionList;
-		string inputRegionFolder = "./BrainAtlas/brgs/";
+		//string inputRegionFolder = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\";
+		string inputRegionFolder = ".\\BrainAtlas\\brgs\\";
 		for (map<string, vector<vector<int>>>::iterator candidateIt = regionBoundsMap.begin(); candidateIt != regionBoundsMap.end(); ++candidateIt)
 		{
 			string inputRegionFullName = inputRegionFolder + candidateIt->first + ".brg";
@@ -237,7 +302,9 @@ void BrainAtlasManager::neuronInvolvedRegionClicked()
 		QList<NeuronSWC> copiedList = it->listNeuron;
 		for (vector<brainRegion>::iterator brainRegionIt = regionList.begin(); brainRegionIt != regionList.end(); ++brainRegionIt)
 		{
-			cout << brainRegionIt->name << ": ";
+			cout << brainRegionIt->name << ": " << this->region2UIindexMap.at(brainRegionIt->name) << endl;
+			string swcPath = ".\\BrainAtlas\\brain_regionSurfaces\\" + brainRegionIt->name + ".swc";
+			this->thisCallback->sendBrRegionSWCpath(swcPath);
 			for (vector<connectedComponent>::iterator compIt = brainRegionIt->regionBodies.begin(); compIt != brainRegionIt->regionBodies.end(); ++compIt)
 			{
 				for (QList<NeuronSWC>::iterator nodeIt = copiedList.begin(); nodeIt < copiedList.end() - 10; nodeIt = nodeIt + 10)
@@ -308,4 +375,144 @@ void BrainAtlasManager::neuronInvolvedRegionClicked()
 	}
 
 	v3d_msg(disp_text);
+}
+
+void BrainAtlasManager::rightClickBrgShow(QString inputCoordKey)
+{
+	QStringList coordSplit = inputCoordKey.split("_");
+	NeuronSWC tempNode;
+	tempNode.x = stof(coordSplit.at(0).toStdString());
+	tempNode.y = stof(coordSplit.at(1).toStdString());
+	tempNode.z = stof(coordSplit.at(2).toStdString());
+
+	//QList<string> loadedRegionsQ;
+	//for (set<string>::iterator regionIt = this->loadedRegions.begin(); regionIt != this->loadedRegions.end(); ++regionIt)
+	//	loadedRegionsQ.append(*regionIt);
+
+	set<string> regionSet;
+	vector<int> swcBounds = { int(tempNode.x - 1), int(tempNode.x + 1), int(tempNode.y - 1), int(tempNode.y + 1), int(tempNode.z - 1), int(tempNode.z + 1) };
+	string line;
+	string buffer;
+	vector<string> lineSplit;
+	map<string, vector<vector<int>>> regionBoundsMap;
+	//ifstream inputFile("D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\regionBoundaries.txt");
+	ifstream inputFile(".\\BrainAtlas\\regionBoundaries.txt");
+	if (inputFile.is_open())
+	{
+		while (getline(inputFile, line))
+		{
+			stringstream ss(line);
+			while (ss >> buffer) lineSplit.push_back(buffer);
+
+			string name = lineSplit.at(0);
+			vector<vector<int>> boundaries;
+			int count = 0;
+			vector<int> currBounds;
+			for (vector<string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); ++it)
+			{
+				currBounds.push_back(stoi(*it));
+				++count;
+				if (count % 6 == 0)
+				{
+					boundaries.push_back(currBounds);
+					count = 0;
+					currBounds.clear();
+				}
+			}
+
+			//for (vector<int>::iterator it1 = swcBounds.begin(); it1 != swcBounds.end(); ++it1) cout << *it1 << " ";
+			//cout << endl;
+			//cout << lineSplit.at(0) << ": ";
+			for (vector<vector<int>>::iterator it = boundaries.begin(); it != boundaries.end(); ++it)
+			{
+				//cout << it->at(0) << " " << it->at(1) << " " << it->at(2) << " " << it->at(3) << " " << it->at(4) << " " << it->at(5) << endl;
+
+				if (swcBounds.at(0) < it->at(1) && swcBounds.at(1) > it->at(0) &&
+					swcBounds.at(2) < it->at(3) && swcBounds.at(3) > it->at(2) &&
+					swcBounds.at(4) < it->at(5) && swcBounds.at(5) > it->at(4))
+				{
+					regionBoundsMap.insert({ lineSplit.at(0), boundaries });
+					break;
+				}
+				else continue;
+			}
+			//cout << endl;
+			//for (vector<string>::iterator it = lineSplit.begin(); it != lineSplit.end(); ++it) cout << *it << " ";
+			//cout << endl;
+			lineSplit.clear();
+			boundaries.clear();
+		}
+	}
+	inputFile.close();
+
+	for (map<string, vector<vector<int>>>::iterator candidateIt = regionBoundsMap.begin(); candidateIt != regionBoundsMap.end(); ++candidateIt) cout << candidateIt->first << " ";
+	cout << endl;
+	cout << "candidate regions number: " << regionBoundsMap.size() << endl;
+
+	vector<brainRegion> regionList;
+	//string inputRegionFolder = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\";
+	string inputRegionFolder = ".\\BrainAtlas\\brgs\\";
+	for (map<string, vector<vector<int>>>::iterator candidateIt = regionBoundsMap.begin(); candidateIt != regionBoundsMap.end(); ++candidateIt)
+	{
+		string inputRegionFullName = inputRegionFolder + candidateIt->first + ".brg";
+		cout << candidateIt->first << endl;
+		brainRegion region;
+		region.name = candidateIt->first;
+		region.readBrainRegion_file(inputRegionFullName);
+		for (vector<connectedComponent>::iterator compIt = region.regionBodies.begin(); compIt != region.regionBodies.end(); ++compIt)
+		{	
+			if (int(tempNode.x) > compIt->xMin && int(tempNode.x) < compIt->xMax &&
+				int(tempNode.y) > compIt->yMin && int(tempNode.y) < compIt->yMax &&
+				int(tempNode.z) > compIt->zMin && int(tempNode.z) < compIt->zMax)
+			{
+				vector<int> xyVec = { int(tempNode.x), int(tempNode.y) };
+				vector<int> xzVec = { int(tempNode.x), int(tempNode.z) };
+				vector<int> yzVec = { int(tempNode.y), int(tempNode.z) };
+
+				if (compIt->xyProjection.find(xyVec) != compIt->xyProjection.end() && compIt->xzProjection.find(xzVec) != compIt->xzProjection.end() && compIt->yzProjection.find(yzVec) != compIt->yzProjection.end())
+				{
+					regionList.push_back(region);
+					goto REGION_FOUND;
+				}
+			}			
+		}
+
+	REGION_FOUND:
+		continue;
+	}
+
+	cout << endl << "targeted region: ";
+	for (auto& brRegion : regionList)
+	{	
+		cout << brRegion.name << " ";
+		QString swcPathQ = ".\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(brRegion.name) + ".swc";
+		string swcPath = swcPathQ.toStdString();
+		const char* swcPathC = swcPath.c_str();
+		//this->thisCallback->sendBrRegionSWCpath(swcPathC);
+		//int index = this->thisCallback->setSWC_noDecompose(this->cur3DViewer, swcPathC);
+		/*if (loadedRegions.find(brRegion.name) == loadedRegions.end())
+		{
+			this->loadedRegions.insert(brRegion.name);
+			QString swcPathQ = ".\\BrainAtlas\\brain_regionSurfaces\\" + QString::fromStdString(brRegion.name) + ".swc";
+			string swcPath = swcPathQ.toStdString();
+			const char* swcPathC = swcPath.c_str();
+			int index = this->thisCallback->setSWC_noDecompose(this->cur3DViewer, swcPathC);
+			this->surface2indexMap.insert({ brRegion.name, index });
+			this->surfaceStatus.insert({ brRegion.name, true });
+		}
+		else
+		{
+			if (this->surfaceStatus.at(brRegion.name))
+			{
+				this->thisCallback->hideSWC(this->cur3DViewer, this->surface2indexMap.at(brRegion.name));
+				this->surfaceStatus[brRegion.name] = false;
+			}
+			else
+			{
+				this->thisCallback->displaySWC(this->cur3DViewer, this->surface2indexMap.at(brRegion.name));
+				this->surfaceStatus[brRegion.name] = true;
+			}
+		}*/
+	}
+	cout << endl;
 }

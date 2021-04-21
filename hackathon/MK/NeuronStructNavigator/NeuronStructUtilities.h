@@ -183,7 +183,8 @@ public:
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
 
 	// Convert HUST swc
-	static vector<NeuronTree> convertHUSTswc(QString inputQ);
+	static NeuronTree convertHUSTswc(QString inputFileNameQ);
+	static vector<NeuronTree> convertHUSTswc_old(QString inputQ);
 	/**************************************************************************/
 
 

@@ -674,5 +674,6 @@
  </connections>
  <slots>
   <slot>neuronInvolvedRegionClicked()</slot>
+  <slot>regionSelected(int,int)</slot>
  </slots>
 </ui>

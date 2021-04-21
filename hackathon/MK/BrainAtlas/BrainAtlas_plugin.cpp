@@ -8,7 +8,7 @@
 #include "v3d_message.h"
 
 #include "BrainAtlas_plugin.h"
-#include "BrainAtlasManager.h"
+//#include "BrainAtlasManager.h"
 
 using namespace std;
 
@@ -34,8 +34,16 @@ void BrainAtlasApp::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
 	if (menu_name == tr("Start_Brain_Atlas"))
 	{
-		BrainAtlasManager* managerPtr = new BrainAtlasManager(parent, &callback);
-		managerPtr->exec();
+		//BrainAtlasManager* brAtlasManager = new BrainAtlasManager(parent, &callback);
+		//brAtlasManager->exec();
+		string imgPath = ".\\BrainAtlas\\annotation_25_recolor.tif";
+		const char* imgPathC = imgPath.c_str();
+		Image4DSimple* CCFimgPtr = callback.loadImage(&imgPath.at(0));
+		v3dhandle newwin = callback.newImageWindow();
+		callback.setImage(newwin, CCFimgPtr);
+		callback.open3DWindow(newwin);
+		this->brAtlasManagerPtr = new BrainAtlasManager(parent, &callback);
+		this->brAtlasManagerPtr->exec();
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -55,9 +63,11 @@ bool BrainAtlasApp::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+	if (func_name == tr("rightClick"))
 	{
-		v3d_msg("To be implemented.");
+		QString inputParam = input.at(1).type;
+		qDebug() << inputParam;
+		this->brAtlasManagerPtr->rightClickBrgShow(inputParam);
 	}
 	else if (func_name == tr("func2"))
 	{

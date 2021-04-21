@@ -1362,7 +1362,45 @@ NeuronTree NeuronStructUtil::nodeSpheresGen(float sphereRadius, float density, f
 
 
 /* =========================================== Miscellaneous ============================================ */
-vector<NeuronTree> NeuronStructUtil::convertHUSTswc(QString inputQ)
+NeuronTree NeuronStructUtil::convertHUSTswc(QString inputFileNameQ)
+{
+	NeuronTree outputTree;
+	string inputName = inputFileNameQ.toStdString();
+	string line, element;
+	ifstream inFile(inputName);
+	vector<string> lineSplit;
+	if (inFile.is_open())
+	{
+		while (getline(inFile, line))
+		{
+			stringstream ss(line);
+			while (ss >> element) lineSplit.push_back(element);
+			//for (auto& ele : lineSplit) cout << ele << " ";
+			//cout << endl;
+
+			NeuronSWC newNode;
+			newNode.n = stoi(lineSplit.at(0));
+			newNode.type = stoi(lineSplit.at(1));
+			newNode.x = stof(lineSplit.at(4));
+			newNode.y = stof(lineSplit.at(3));
+			newNode.z = 11400 - stof(lineSplit.at(2));
+			newNode.parent = stoi(lineSplit.at(6));
+			newNode.radius = stof(lineSplit.at(5));
+			if (newNode.n == 0 || newNode.type == 0 || newNode.parent == 0)
+			{
+				lineSplit.clear();
+				continue;
+			}
+			outputTree.listNeuron.append(newNode);
+
+			lineSplit.clear();
+		}
+	}
+	
+	return outputTree;
+}
+
+vector<NeuronTree> NeuronStructUtil::convertHUSTswc_old(QString inputQ)
 {
 	vector<NeuronTree> outputTrees;
 
@@ -1391,6 +1429,7 @@ vector<NeuronTree> NeuronStructUtil::convertHUSTswc(QString inputQ)
 				newNode.z = 11400 - stof(lineSplit.at(3));
 				newNode.parent = stoi(lineSplit.at(6));
 				newNode.radius = stof(lineSplit.at(5));
+				if (newNode.n == 0 || newNode.type == 0 || newNode.parent == 0) continue;
 				outputTree.listNeuron.append(newNode);
 
 				lineSplit.clear();
@@ -1425,6 +1464,7 @@ vector<NeuronTree> NeuronStructUtil::convertHUSTswc(QString inputQ)
 					newNode.z = 11400 - stof(lineSplit.at(3));
 					newNode.parent = stoi(lineSplit.at(6));
 					newNode.radius = stof(lineSplit.at(5));
+					if (newNode.n == 0 || newNode.type == 0 || newNode.parent == 0) continue;
 					outputTree.listNeuron.append(newNode);
 
 					lineSplit.clear();
