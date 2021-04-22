@@ -54,7 +54,7 @@ https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-with-qmake-using
 
 # Setting up the development environment
 
-After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. Install opencv3.1.0 and configure the project according to your opencv intallation directory. 
+After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. Install opencv3.1.0 and configure the project according to your opencv intallation directory. And configure the project in Release and x64 mode according to your Qt4.8.6 installation directory.
 
 ## Matlab Code
 
