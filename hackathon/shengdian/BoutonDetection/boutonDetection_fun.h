@@ -7,7 +7,16 @@
 #include "color_xyz.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <numeric>
+#include "neuron_format_converter.h"
+#include "v_neuronswc.h"
+#include <functional>
 using namespace std;
+#define MaxIntensity 1000;
+#define MinIntensity -1000;
 struct Bouton_Color_Basic
 {
     int color_ele_r;
@@ -36,7 +45,6 @@ struct BoutonMarker
         color.color_ele_r=color.color_ele_g=0;color.color_ele_b=255;
     }
 };
-
 struct Bouton_Color_List
 {
     QList <Bouton_Color_Basic> listcolor;
@@ -63,18 +71,20 @@ struct Bouton_Color_List
     }
 };
 NeuronTree removeDupNodes(NeuronTree nt,V3DLONG removed_dist_thre=1);
-QList <CellAPO> removeBoutons(QList <CellAPO> inapo,V3DLONG removed_dist_thre=2);
+QList <CellAPO> rmNearMarkers(QList <CellAPO> inapo,V3DLONG removed_dist_thre=4);
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0,int ne_area=2);
-void getSWCIntensityInTerafly(V3DPluginCallback2 &callback,string imgPath, QString inswc_file);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size=32);
 void maskImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,QString outpath,V3DLONG in_sz[4], NeuronTree& nt,int maskRadius=12,int erosion_kernel_size=0);
 void erosionImg(unsigned char * & inimg1d,V3DLONG in_sz[4],int kernelSize=3);
-void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int cropx=1024,int cropy=1024,int cropz=512);
 QList <CellAPO> getBouton(NeuronTree nt,int in_thre,int allnode=0);
 NeuronTree getBouton_toSWC(NeuronTree nt,int in_thre,int allnode=0,float dis_thre=2.0);
-void getBoutonInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea);
+void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea);
+NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
 void getNodeRadius(unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt);
 void printHelp();
 NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size=2);
+std::vector<double> get_sorted_level_of_seg(V_NeuronSWC inseg);
+std::vector<int> smoothedZScore(std::vector<float> input,float threshold=2.0,float influence=0.5,int lag=10);
+std::vector<int> peaks_in_seg(std::vector<double> input,float delta=0.5);
 QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size=64);
 #endif // BOUTONDETECTION_FUN_H

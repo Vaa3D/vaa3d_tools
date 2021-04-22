@@ -9,7 +9,8 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "basic_surf_objs.h"
-
+#include "neuron_format_converter.h"
+#include "v_neuronswc.h"
 class BoutonDectectionPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
