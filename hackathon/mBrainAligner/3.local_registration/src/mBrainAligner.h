@@ -66,11 +66,11 @@ bool Dic_brain(unsigned char * p_img_test, QString &dic_brain_file, QString &bas
 
 bool mul_scale_mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vector<point3D64F> fine_sub_corner,
 	vector<point3D64F> aver_corner, vector<int> label, long long * sz_img_tar,  float * p_img32f_tar,
-	float * p_img32f_sub_bk, float * p_img32_sub_label, unsigned char * p_img_sub, map <int, float *> & density_map_sub, float  *& fmost_label_edge, float  ****&fmost_label_edge_4d);
+	float * p_img32f_sub_bk, float * p_img32_sub_label, unsigned char * p_img_sub, map <int, float *> & density_map_sub);
 
 bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vector<point3D64F> &fine_sub_corner, vector<point3D64F> aver_corner,
 	vector<int> label, long long * sz_img_tar, float * p_img32f_tar, float * p_img32f_sub_bk, float * p_img32_sub_label,
-	unsigned char * p_img_sub, map <int, float *> & density_map_sub, float  ****&fmost_label_edge_4d);
+	unsigned char * p_img_sub, map <int, float *> & density_map_sub);
 
 bool downsapmle_3Dmarker(vector<point3D64F> & out_marker, vector<point3D64F> input_marker, int resample);
 
