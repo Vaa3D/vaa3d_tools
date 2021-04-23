@@ -331,3 +331,43 @@ void ReconOperator::removeDupedNodes()
 		}
 	}
 }
+
+void ReconOperator::markerApo2swc()
+{
+	QDir inputFolder(this->rootPath);
+	inputFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	QStringList fileList = inputFolder.entryList();
+
+	QString outputFolderQ = this->rootPath + "\\apoMarker2swc\\";
+	QDir outputDir(outputFolderQ);
+	if (!outputDir.exists()) outputDir.mkpath(".");
+
+	for (auto& fileName : fileList)
+	{
+		QString baseName;
+		if (fileName.endsWith(".apo")) 
+		{
+			baseName = fileName.left(fileName.length() - 4);
+			QString fullFileName = this->rootPath + "\\" + fileName;
+			QList<CellAPO> inputApoList = readAPO_file(fullFileName);
+			
+			NeuronTree outputSWC;
+			outputSWC.listNeuron.clear();
+			for (auto& apo : inputApoList)
+			{
+				NeuronSWC newNode;
+				newNode.x = apo.x;
+				newNode.y = apo.y;
+				newNode.z = apo.z;
+				newNode.parent = -1;
+				newNode.type = 0;
+				newNode.radius = 10;
+				outputSWC.listNeuron.append(newNode); 
+			}
+
+			QString outputFileName = outputFolderQ + baseName + ".swc";
+			writeSWC_file(outputFileName, outputSWC);
+		}
+		else if (fileName.endsWith(".marker")) baseName = fileName.left(fileName.length() - 7);
+	}
+}

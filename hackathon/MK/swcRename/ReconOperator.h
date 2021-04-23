@@ -33,6 +33,8 @@ public:
 	void denAxonCombine(bool dupRemove);
 
 	void removeDupedNodes();
+
+	void markerApo2swc();
 };
 
 #endif
