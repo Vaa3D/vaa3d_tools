@@ -26,13 +26,11 @@ QStringList BoutonDectectionPlugin::funclist() const
     return QStringList()
             <<tr("Intensity_profile_terafly")
            <<tr("BoutonDection_Img")
-          <<tr("BoutonDection_filter")
+          <<tr("InitialBouton_filter")
          <<tr("BoutonAsPeak_terafly")
          <<tr("BoutonAsPeak_Image")
         <<tr("BoutonDection_filter_toSWC")
-       <<tr("ReconstructionComplexity")
-      <<tr("mask_img_from_swc")
-     <<tr("help");
+       <<tr("help");
 }
 
 void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -294,8 +292,85 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             writeESWC_file(outswc_file,nt_out);
         }
     }
-    else if (func_name == tr("BoutonDection_filter"))
+    else if (func_name == tr("InitialBouton_filter"))
     {
+        string inswc_file,inimg_file;
+        if(infiles.size()>=2) {inimg_file = infiles[0];inswc_file = infiles[1];}
+        else {  printHelp(); return false;}
+        //read para list
+        int min_bouton_dist=(inparas.size()>=1)?atoi(inparas[0]):3;
+
+        //read input swc to neuron-tree
+       NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+       if(!nt.listNeuron.size()) return false;
+        //1. neuron tree to segment list
+        V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt);
+        cout<<"seg list size: "<<nt_nslist.seg.size()<<endl;
+        //4. peak detection
+        QList <CellAPO> apolist;apolist.clear();
+        for(int i=0;i<nt_nslist.seg.size();i++)
+        {
+            V_NeuronSWC curseg=nt_nslist.seg.at(i);
+            vector<double> seg_levels; seg_levels.clear();
+            seg_levels=get_sorted_level_of_seg(curseg);
+            std::vector<int> outflag=peaks_in_seg(seg_levels);
+            for(int io=0;io<outflag.size();io++)
+            {
+                if(outflag[io])
+                {
+                    CellAPO apo;
+                    apo.n=apolist.size()+1;
+                    apo.x=curseg.row[io].x;
+                    apo.y=curseg.row[io].y;
+                    apo.z=curseg.row[io].z;
+                    apo.intensity=curseg.row[io].r;
+                    apo.volsize=curseg.row[io].level;
+                    apo.color.r=200;
+                    apo.color.g=0;
+                    apo.color.b=0;
+                    apo.comment="bouton site";
+                    apolist.push_back(apo);
+                }
+            }
+        }
+        cout<<"initial peaks: "<<apolist.size()<<endl;
+        //5.
+        // out to apo
+        QList <CellAPO> apolist_out;apolist_out.clear();
+        apolist_out=rmNearMarkers(apolist,min_bouton_dist);
+        //list to neurontree
+        NeuronTree nt_interpolated2;nt_interpolated2.listNeuron.clear();nt_interpolated2.hashNeuron.clear();
+        nt_interpolated2=V_NeuronSWC_list__2__NeuronTree(nt_nslist);
+        //bouton out to swc
+        NeuronTree nt_interpolated3;nt_interpolated3.listNeuron.clear();nt_interpolated3.hashNeuron.clear();
+        nt_interpolated3.copy(nt_interpolated2);
+        for(V3DLONG i=0;i<nt_interpolated3.listNeuron.size();i++)
+        {
+            for(V3DLONG b=0;b<apolist_out.size();b++)
+            {
+                if(nt_interpolated3.listNeuron[i].x==apolist_out[b].x
+                        &&nt_interpolated3.listNeuron[i].y==apolist_out[b].y
+                        &&nt_interpolated3.listNeuron[i].z==apolist_out[b].z)
+                {nt_interpolated3.listNeuron[i].type=4;break;}
+            }
+        }
+        //crop 3D bouton block and mip image
+        if(outfiles.size()>=1)
+        {
+            //get out path
+            string out_path=outfiles[0];
+            int bouton_crop_size=(inparas.size()>=2)?atoi(inparas[1]):8;
+            int get_mip=(inparas.size()>=3)?atoi(inparas[2]):0;
+            getBoutonBlock(callback,inimg_file,apolist_out,out_path,bouton_crop_size,get_mip);
+        }
+        //save to file: intensity_file, bouton_apo_file, bouton_eswc_file
+        string out_swc_file=(outfiles.size()>=2)?outfiles[1]:(inswc_file + "_intensity.eswc");
+        string out_bouton_apo_file=(outfiles.size()>=3)?outfiles[2]:(inswc_file + "_bouton.apo");
+        string out_bouton_swc_file=(outfiles.size()>=4)?outfiles[3]:(inswc_file + "_bouton.eswc");
+        writeESWC_file(QString::fromStdString(out_swc_file),nt_interpolated2);
+        writeESWC_file(QString::fromStdString(out_bouton_swc_file),nt_interpolated3);
+        writeAPO_file(QString::fromStdString(out_bouton_apo_file),apolist_out);
+       /* old version
         string inswc_file,inimg_file;
         if(infiles.size()==1) { inswc_file = infiles[0];}
         else if(infiles.size()==2) { inimg_file = infiles[0]; inswc_file = infiles[1];}
@@ -327,6 +402,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         }
         else if(outfiles.size()>1)
             printHelp();return false;
+*/
     }
     else if (func_name == tr("BoutonAsPeak_terafly"))
     {
@@ -556,48 +632,10 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         writeESWC_file(QString::fromStdString(out_bouton_swc_file),nt_interpolated3);
         writeAPO_file(QString::fromStdString(out_bouton_apo_file),apolist_out);
     }
-    else if (func_name==tr("mask_img_from_swc"))
-    {
-        /*20200903:there is a v3dplugin: swc_to_mask is just like this
-         *according to swc, mask img block
-         *Input img block
-         *Input swc file
-         *Input para for mask size of x, y and z
-         *output path is the save path for processed img block.
-        */
-
-        if(infiles.size() != 2)
-        {
-            cerr<<"Invalid input"<<endl;
-            cout<<"Input file size="<<infiles.size()<<endl;
-            return false;
-        }
-        string inimg_file = infiles[0];
-        QString inswc_file = infiles[1];
-        int maskRadius=(inparas.size()>=1)?atoi(inparas[0]):12;
-        int erosion_kernel_size=(inparas.size()>=2)?atoi(inparas[1]):0;
-        QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
-        //read img
-        unsigned char * inimg1d = 0;
-        V3DLONG in_sz[4];
-        int datatype;
-        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
-        //read swc
-        NeuronTree nt = readSWC_file(inswc_file);
-        QDir path(out_path);
-        if(!path.exists())
-        {
-            path.mkpath(out_path);
-        }
-        QString save_path_img =out_path+"/"+QFileInfo(inswc_file).baseName()+"_mR_"+QString::number(maskRadius)
-                +"_eR_"+QString::number(erosion_kernel_size)+".v3draw";
-        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
-        maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius,erosion_kernel_size);
-        if(inimg1d) {delete []inimg1d; inimg1d=0;}
-    }
     else if (func_name == tr("BoutonDection_Img"))
     {
-        /*Input1: img block path; Input2: SWC;*/
+        /*this is an old version
+         * Input1: img block path; Input2: SWC;*/
         if(infiles.size() != 2)
         {
             cerr<<"Invalid input"<<endl;
@@ -628,136 +666,6 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         apolist=rmNearMarkers(apolist);
         string apo_file_path = inswc_file + "_bouton.apo";
         writeAPO_file(QString::fromStdString(apo_file_path),apolist);
-    }
-    else if (func_name == tr("ReconstructionComplexity"))
-    {
-        /*Input: img path*/
-        if(infiles.size() != 1)
-        {
-            cerr<<"Invalid input"<<endl;
-            cout<<"Input file size="<<infiles.size()<<endl;
-            return false;
-        }
-        string inimg_file = infiles[0];
-        int threshold=(inparas.size()>=1)?atoi(inparas[0]):1;
-        cout<<"In threshold "<<threshold<<endl;
-        //read img
-        unsigned char * inimg1d = 0;
-        V3DLONG in_sz[4];
-        int datatype;
-        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
-         cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
-         long sz01 = in_sz[0] * in_sz[1];
-         long sz0 = in_sz[0];
-         double total_num, background_num;
-
-         double imgave,imgstd;
-         V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
-         mean_and_std(inimg1d,total_size,imgave,imgstd);
-         cout<<"img avearge intensity="<<imgave<<endl;
-         cout<<"img std intensity="<<imgstd<<endl;
-
-         //save
-         unsigned char * im_cropped = 0;
-         V3DLONG pagesz=total_size;
-         try {im_cropped = new unsigned char [pagesz];}
-         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
-         im_cropped=inimg1d;
-         bool issaved=false;
-         int finalth=imgave;
-         for(int th=(imgave+1*imgstd);th<(imgave+7*imgstd);th++)
-         {
-             total_num = background_num = 0;
-             for(V3DLONG ix=0;ix<in_sz[0];ix++)
-             {
-                 for(V3DLONG iy=0;iy<in_sz[1];iy++)
-                 {
-                     for(V3DLONG iz=0;iz<in_sz[2];iz++)
-                     {
-                         total_num++;
-                         int thisx,thisy,thisz;
-                         thisx=ix;
-                         thisy=iy;
-                         thisz=iz;
-                         float thisNodeIntensity=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                         if(thisNodeIntensity<th)
-                         {
-                             background_num++;
-                         }
-
-                     }
-                 }
-             }
-             float rcomplexity=1-background_num/total_num;
-             cout<<"bg threhold :"<<th<<", ratio :"<<rcomplexity<<endl;
-             //save the img
-             if(rcomplexity*1000<threshold && !issaved)
-             {
-                 issaved=true;
-                 for(V3DLONG ix=0;ix<in_sz[0];ix++)
-                 {
-                     for(V3DLONG iy=0;iy<in_sz[1];iy++)
-                     {
-                         for(V3DLONG iz=0;iz<in_sz[2];iz++)
-                         {
-                             total_num++;
-                             int thisx,thisy,thisz;
-                             thisx=ix;
-                             thisy=iy;
-                             thisz=iz;
-                             float thisNodeIntensity=im_cropped[thisz * sz01 + thisy * sz0 + thisx];
-                             if(thisNodeIntensity<th)
-                             {
-                                 background_num++;
-                                 im_cropped[thisz * sz01 + thisy * sz0 + thisx]=0;
-                             }
-
-                         }
-                     }
-                 }
-                 finalth=th;
-                 cout<<"in "<<finalth<<endl;
-                 break;
-             }
-             if(th==int(imgave+7*imgstd-1)&& !issaved)
-             {
-                 issaved=true;
-                 for(V3DLONG ix=0;ix<in_sz[0];ix++)
-                 {
-                     for(V3DLONG iy=0;iy<in_sz[1];iy++)
-                     {
-                         for(V3DLONG iz=0;iz<in_sz[2];iz++)
-                         {
-                             total_num++;
-                             int thisx,thisy,thisz;
-                             thisx=ix;
-                             thisy=iy;
-                             thisz=iz;
-                             float thisNodeIntensity=im_cropped[thisz * sz01 + thisy * sz0 + thisx];
-                             if(thisNodeIntensity<th)
-                             {
-                                 background_num++;
-                                 im_cropped[thisz * sz01 + thisy * sz0 + thisx]=0;
-                             }
-
-                         }
-                     }
-                 }
-                 finalth=th;
-                 cout<<"in "<<finalth<<endl;
-                 break;
-             }
-         }
-
-         QString tmpstr = "";
-         tmpstr.append("_threshold").append(QString("%1").arg(finalth));
-         QString save_path_img = QString::fromStdString(inimg_file)+tmpstr+".tif";
-         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
-         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
-         cout<<"Done:"<<endl;
-
-         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
-         if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
     else if (func_name == tr("help"))
     {

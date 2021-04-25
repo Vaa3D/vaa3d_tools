@@ -35,6 +35,7 @@ QStringList UnsortedPlugin::funclist() const
            <<tr("somaBlockCrop")
           <<tr("MIP_Zslices")
          <<tr("swc_combine")
+        <<tr("mask_img_from_swc")
          <<tr("help");
 }
 void UnsortedPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -116,6 +117,45 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         }
         writeESWC_file(QString::fromStdString(out_swc_file),outswc);
         return true;
+    }
+    else if (func_name==tr("mask_img_from_swc"))
+    {
+        /*20200903:there is a v3dplugin: swc_to_mask is just like this
+         *according to swc, mask img block
+         *Input img block
+         *Input swc file
+         *Input para for mask size of x, y and z
+         *output path is the save path for processed img block.
+        */
+
+        if(infiles.size() != 2)
+        {
+            cerr<<"Invalid input"<<endl;
+            cout<<"Input file size="<<infiles.size()<<endl;
+            return false;
+        }
+        string inimg_file = infiles[0];
+        QString inswc_file = infiles[1];
+        int maskRadius=(inparas.size()>=1)?atoi(inparas[0]):12;
+        int erosion_kernel_size=(inparas.size()>=2)?atoi(inparas[1]):0;
+        QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
+        //read img
+        unsigned char * inimg1d = 0;
+        V3DLONG in_sz[4];
+        int datatype;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
+        //read swc
+        NeuronTree nt = readSWC_file(inswc_file);
+        QDir path(out_path);
+        if(!path.exists())
+        {
+            path.mkpath(out_path);
+        }
+        QString save_path_img =out_path+"/"+QFileInfo(inswc_file).baseName()+"_mR_"+QString::number(maskRadius)
+                +"_eR_"+QString::number(erosion_kernel_size)+".v3draw";
+        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius,erosion_kernel_size);
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
     else if (func_name==tr("renderingSWC"))
     {

@@ -75,8 +75,6 @@ QList <CellAPO> rmNearMarkers(QList <CellAPO> inapo,V3DLONG removed_dist_thre=4)
 void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0,int ne_area=2);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size=8,uint mip_flag=0);
 void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
-void maskImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,QString outpath,V3DLONG in_sz[4], NeuronTree& nt,int maskRadius=12,int erosion_kernel_size=0);
-void erosionImg(unsigned char * & inimg1d,V3DLONG in_sz[4],int kernelSize=3);
 QList <CellAPO> getBouton(NeuronTree nt,int in_thre,int allnode=0);
 void getBoutonBlock_inImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, long in_sz[], QList <CellAPO> apolist, string outpath, int block_size=16);
 NeuronTree getBouton_toSWC(NeuronTree nt,int in_thre,int allnode=0,float dis_thre=2.0);

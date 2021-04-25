@@ -630,3 +630,128 @@ void getSWCIntensityInTerafly(V3DPluginCallback2 &callback, string imgPath, QStr
     writeESWC_file(outswc_name,nt);
     cout<<"Done:"<<endl;
 }
+void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize)
+{
+    /*Img processing: erosion
+     *kernel size: default=3
+     *revise the value of each pixels to it's local minimal
+    */
+    cout<<"Img processing: erosion"<<endl;
+    long sz01 = in_sz[0] * in_sz[1];
+    long sz0 = in_sz[0];
+    long startx,starty,startz;
+    long endx,endy,endz;
+    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
+    unsigned char * im_transfer = 0;
+    V3DLONG pagesz;
+    pagesz = sz01*sz0;
+    try {im_transfer = new unsigned char [pagesz];}
+    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+//    im_transfer=inimg1d;
+    //back up
+    for(long ix=0;ix<in_sz[0];ix++)
+    {
+        for(long iy=0;iy<in_sz[1];iy++)
+        {
+            for(long iz=0;iz<in_sz[2];iz++)
+            {
+                im_transfer[iz * sz01 + iy * sz0 + ix]=inimg1d[iz * sz01 + iy * sz0 + ix];
+            }
+        }
+    }
+    cout<<"copy img pointer"<<endl;
+    for(long ix=0;ix<in_sz[0];ix++)
+    {
+        for(long iy=0;iy<in_sz[1];iy++)
+        {
+            for(long iz=0;iz<in_sz[2];iz++)
+            {
+//                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
+                //get the local area
+                startx=(ix-kernelSize>=0)?(ix-kernelSize):0;
+                endx=(ix+kernelSize<in_sz[0])?(ix+kernelSize):in_sz[0];
+                starty=(iy-kernelSize>=0)?(iy-kernelSize):0;
+                endy=(iy+kernelSize<in_sz[1])?(iy+kernelSize):in_sz[1];
+                startz=(iz-kernelSize>=0)?(iz-kernelSize):0;
+                endz=(iz+kernelSize<in_sz[2])?(iz+kernelSize):in_sz[2];
+                long tmpIntensity=im_transfer[iz * sz01 + iy * sz0 + ix];
+                for(long kx=startx;kx<endx;kx++)
+                {
+                    for(long ky=starty;ky<endy;ky++)
+                    {
+                        for(long kz=startz;kz<endz;kz++)
+                        {
+                            long thistmpIntensity=im_transfer[kz * sz01 + ky * sz0 + kx];
+                            tmpIntensity=(thistmpIntensity<tmpIntensity)?thistmpIntensity:tmpIntensity;
+
+                        }
+                    }
+                }
+                //erosion
+                inimg1d[iz * sz01 + iy * sz0 + ix]=tmpIntensity;
+            }
+        }
+    }
+    if(im_transfer) {delete []im_transfer; im_transfer=0;}
+}
+void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size)
+{
+    /*for all the pixels in the dst block*/
+    QList<NeuronSWC> listNeuron =  nt.listNeuron;
+    V3DLONG siz = listNeuron.size();
+    if(siz<1) return;
+    long sz01 = in_sz[0] * in_sz[1];
+    long sz0 = in_sz[0];
+    int startx,starty,startz;
+    int endx,endy,endz;
+    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
+    unsigned char * im_transfer = 0;
+    V3DLONG pagesz;
+    pagesz = sz01*sz0;
+    try {im_transfer = new unsigned char [pagesz];}
+    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+    for(int ix=0;ix<in_sz[0];ix++)
+    {
+        for(int iy=0;iy<in_sz[1];iy++)
+        {
+            for(int iz=0;iz<in_sz[2];iz++)
+            {
+                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
+            }
+        }
+    }
+
+    for(int is=0;is<siz;is++)
+    {
+        int ix,iy,iz;
+        NeuronSWC thiss = listNeuron[is];
+        ix=int(thiss.x);
+        iy=int(thiss.y);
+        iz=int(thiss.z);
+        startx=(ix-maskRadius>=0)?(ix-maskRadius):0;
+        endx=(ix+maskRadius<in_sz[0])?(ix+maskRadius):in_sz[0];
+        starty=(iy-maskRadius>=0)?(iy-maskRadius):0;
+        endy=(iy+maskRadius<in_sz[1])?(iy+maskRadius):in_sz[1];
+        startz=(iz-maskRadius>=0)?(iz-maskRadius):0;
+        endz=(iz+maskRadius<in_sz[2])?(iz+maskRadius):in_sz[2];
+        // for the surrounding area
+        for(long iix=startx;iix<(endx);iix++)
+        {
+            for(long iiy=starty;iiy<(endy);iiy++)
+            {
+                for(long iiz=startz;iiz<(endz);iiz++)
+                {
+                    im_transfer[iiz * sz01 + iiy * sz0 + iix]=inimg1d[iiz * sz01 + iiy * sz0 + iix];
+
+                }
+            }
+        }
+    }
+    //erosion
+    if(erosion_kernel_size)
+        erosionImg(im_transfer,in_sz,erosion_kernel_size);
+    //save img
+    simple_saveimage_wrapper(callback, outpath.toStdString().c_str(),(unsigned char *)im_transfer,in_sz,1);
+    //release pointer
+     if(im_transfer) {delete []im_transfer; im_transfer=0;}
+}

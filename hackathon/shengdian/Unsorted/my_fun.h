@@ -20,4 +20,6 @@ void getTipBlock(V3DPluginCallback2 &callback, string imgPath, QString inswc_fil
 //void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath, QString inapo, QString outpath, int cropx, int cropy, int cropz);
 NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size=4);
 void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz);
+void maskImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,QString outpath,V3DLONG in_sz[4], NeuronTree& nt,int maskRadius=12,int erosion_kernel_size=0);
+void erosionImg(unsigned char * & inimg1d,V3DLONG in_sz[4],int kernelSize=3);
 #endif // MY_FUN_H
