@@ -31,6 +31,8 @@ void _downSampleData(QString tifPath, int times, V3DPluginCallback2 &callback);
 
 void joinImage(QString tifDir, QString outPath, int times, V3DPluginCallback2 &callback);
 
+void joinImage2(QString tifDir, QString outPath,int resolution, V3DPluginCallback2& callback);
+
 void getSubImage(QString tifDir, QString outPath, size_t x0, size_t x1,
                  size_t y0, size_t y1, size_t z0, size_t z1,
                  int downSampleTimes, int resolution, V3DPluginCallback2 &callback);

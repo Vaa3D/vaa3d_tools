@@ -6145,7 +6145,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     QString s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
             + "_init0.swc";
-    saveSWC_file(s.toStdString(),tmptree);
+//    saveSWC_file(s.toStdString(),tmptree);
 
     /*
     vector<vector<MyMarker*> > markersVec;
@@ -6399,7 +6399,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
         s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                 + "_init1.swc";
-        saveSWC_file(s.toStdString(),tmptree);
+//        saveSWC_file(s.toStdString(),tmptree);
 
         computeLocalPcaEigVec2(tmptree,sz0,sz1,sz2,pc1,pc2,pc3,vec1,vec2,vec3);
         qDebug()<<"after: "<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
@@ -6450,7 +6450,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
             + "_p1.swc";
-    saveSWC_file(s.toStdString(),tmpMarkers);
+//    saveSWC_file(s.toStdString(),tmpMarkers);
 
     twoPointsToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
 //    segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FAR);
@@ -6489,11 +6489,11 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                 +  "_init2.swc";
-    saveSWC_file(s.toStdString(),tmptree2);
+//    saveSWC_file(s.toStdString(),tmptree2);
 
     s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                 +  "_p2.swc";
-    saveSWC_file(s.toStdString(),tmpMarkers2);
+//    saveSWC_file(s.toStdString(),tmpMarkers2);
 
     twoPointsToMask(state,tmpMarkers.back(),tMarker2,sz0,sz1,sz2,maskR,FAR);
 
@@ -6576,7 +6576,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
         imageName = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                     + "_init3.v3draw";
-        saveMaskImage(inimg1d,state,maskImage,sz0,sz1,sz2,imageName,callback);
+//        saveMaskImage(inimg1d,state,maskImage,sz0,sz1,sz2,imageName,callback);
 
 //        segToMask(state,tMarker3,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FINAL);
 //        segToMask(state,tMakrer,tForeMarker,sz0,sz1,sz2,maskR,FINAL);
@@ -6590,11 +6590,11 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
         s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                     +  "_init3.swc";
-        saveSWC_file(s.toStdString(),tmptree);
+//        saveSWC_file(s.toStdString(),tmptree);
 
         s = "D:\\testDynamicTracing\\" + QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                     +  "_p3.swc";
-        saveSWC_file(s.toStdString(),tmpMarkers);
+//        saveSWC_file(s.toStdString(),tmpMarkers);
 
 
         twoPointsToMask(state,tMarker4,tmpMarkers2.front(),sz0,sz1,sz2,maskR,FAR);

@@ -91,6 +91,12 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString outPath = outDir + "\\result.v3draw";
         joinImage(path,outPath,times,callback);
     }
+    else if (func_name == tr("convertTeraflyDataTov3draw")){
+        QString path = infiles.size()>=1 ? infiles[0] : "";
+        QString outPath = outfiles.size()>=1 ? outfiles[0] : "";
+        int resolution = atoi(inparas[0]);
+        joinImage2(path,outPath,resolution,callback);
+    }
     else if (func_name == "HE") {
         QString imgPath = infiles[0];
         QString imgNewPath = imgPath + "_HE.v3draw";

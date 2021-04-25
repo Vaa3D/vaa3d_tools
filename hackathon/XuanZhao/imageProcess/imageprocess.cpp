@@ -29,14 +29,22 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-    QString input_swc=infiles.at(0);
+
+    QStringList input_swcs;
+//    QString input_swc=infiles.at(0);
+    for(int i=0 ;i<infiles.size(); ++i){
+        QString input_swc = infiles.at(i);
+        input_swcs.append(input_swc);
+    }
+
     QString input_image=inparas.at(0);
 //    QString output_2d_dir=outfiles.at(0);
 //    if(!output_2d_dir.endsWith("/")){
 //        output_2d_dir = output_2d_dir+"/";
 //    }
     cout<<"+++++++++++"<<endl;
-    QStringList list=input_swc.split(".");
+//    QStringList list=input_swc.split(".");
+    QStringList list=input_image.split(".");
     list.pop_back();
     QString mipoutput = list.join(".") + "_2d.tif";
 //    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
@@ -49,12 +57,23 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 //    QString flag1=flag.left(flag.length()-4);
 //    //printf("______________:%s\n",output_2d_dir.data());
     qDebug()<<input_image;
-    qDebug()<<input_swc;
+//    qDebug()<<input_swc;
     qDebug("number:%s",qPrintable(mipoutput));
-    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
-    for(int i=0; i<nt_crop_sorted.listNeuron.size(); i++){
-        nt_crop_sorted.listNeuron[i].r = 1;
+//    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+
+    vector<NeuronTree> nts_crop_sorted;
+
+    for(int i=0; i<input_swcs.size(); ++i){
+        NeuronTree nt_crop_sorted=readSWC_file(input_swcs[i]);
+        for(int i=0; i<nt_crop_sorted.listNeuron.size(); i++){
+            nt_crop_sorted.listNeuron[i].r = 1;
+        }
+        nts_crop_sorted.push_back(nt_crop_sorted);
     }
+
+//    for(int i=0; i<nt_crop_sorted.listNeuron.size(); i++){
+//        nt_crop_sorted.listNeuron[i].r = 1;
+//    }
 //    NeuronTree nt_crop_sorted=revise_radius(nt_crop_sorted1,1);
 
     qDebug()<<"start to load img";
@@ -81,27 +100,49 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     //printf("+++++++++++:%p\n",p4dImage);
 
    V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
-   unsigned char* data1d_mask = 0;
-   data1d_mask = new unsigned char [pagesz];
-   memset(data1d_mask,0,pagesz*sizeof(unsigned char));
-   double margin=0;//by PHC 20170531
-   QList<int> mark_others;
-   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2],margin, mark_others,false);
+
+   vector<unsigned char*> data1d_masks;
+
+   for(int i =0 ; i<nts_crop_sorted.size(); ++i){
+       qDebug()<<"i: "<<i<<" mask image";
+       unsigned char* data1d_mask = 0;
+       data1d_mask = new unsigned char [pagesz];
+       memset(data1d_mask,0,pagesz*sizeof(unsigned char));
+       double margin=0;//by PHC 20170531
+       QList<int> mark_others;
+       ComputemaskImage(nts_crop_sorted[i], data1d_mask, mysz[0], mysz[1], mysz[2],margin, mark_others,false);
+
+       data1d_masks.push_back(data1d_mask);
+   }
+
+
    //QString labelSaveString = pathname + ".v3draw_label.tif";
    //simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
 
    V3DLONG stacksz =mysz[0]*mysz[1];
    unsigned char *image_mip=0;
    image_mip = new unsigned char [stacksz];//2D orignal image
-   unsigned char *label_mip=0;
-   label_mip = new unsigned char [stacksz];//2D annotation
+
+   vector<unsigned char*> labels_mip;
+   for(int i=0; i<data1d_masks.size(); ++i){
+       unsigned char *label_mip=0;
+       label_mip = new unsigned char [stacksz];//2D annotation
+       labels_mip.push_back(label_mip);
+   }
+
+
    for(V3DLONG iy = 0; iy < mysz[1]; iy++)
    {
        V3DLONG offsetj = iy*mysz[0];
        for(V3DLONG ix = 0; ix < mysz[0]; ix++)
        {
            int max_mip = 0;
-           int max_label = 0;
+           vector<int> max_labels;
+           for(int i=0; i<labels_mip.size(); i++){
+               int max_label = 0;
+               max_labels.push_back(max_label);
+           }
+
            for(V3DLONG iz = 0; iz < mysz[2]; iz++)
            {
                V3DLONG offsetk = iz*mysz[1]*mysz[0];
@@ -110,14 +151,20 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                    image_mip[iy*mysz[0] + ix] = data1d_crop[offsetk + offsetj + ix];
                    max_mip = data1d_crop[offsetk + offsetj + ix];
                }
-               if(data1d_mask[offsetk + offsetj + ix] >= max_label)
-               {
-                   label_mip[iy*mysz[0] + ix] = data1d_mask[offsetk + offsetj + ix];
-                   max_label = data1d_mask[offsetk + offsetj + ix];
+               for(int i=0; i<labels_mip.size(); ++i){
+                   if(data1d_masks[i][offsetk + offsetj + ix] >= max_labels[i])
+                   {
+                       labels_mip[i][iy*mysz[0] + ix] = data1d_masks[i][offsetk + offsetj + ix];
+                       max_labels[i] = data1d_masks[i][offsetk + offsetj + ix];
+                   }
                }
+
            }
        }
    }
+
+   qDebug()<<"label end";
+
    unsigned char* data1d_2D = 0;
    data1d_2D = new unsigned char [3*stacksz*2];//3 channels image, 2 block
 //channel 1
@@ -131,8 +178,19 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    for(V3DLONG i=mysz[0]; i<mysz[0]*2; i++){
        for(V3DLONG j=0; j<mysz[1]; j++){
            int index = j*mysz[0]*2 + i;
+           int indexChannel0 = j*mysz[0]*2 + i;
+           int indexChannel1 = j*mysz[0]*2 + i + stacksz*2;
+           int indexChannel2 = j*mysz[0]*2 + i + stacksz*4;
+
            int mipIndex = j*mysz[0] + i - mysz[0];
-           data1d_2D[index] = (label_mip[mipIndex] == 255) ? 0 : image_mip[mipIndex];
+           if(labels_mip.size()>0){
+               data1d_2D[indexChannel0] = (labels_mip[0][mipIndex] == 255) ? 255 : image_mip[mipIndex];
+               data1d_2D[indexChannel1] = (labels_mip[0][mipIndex] == 255) ? 0 : image_mip[mipIndex];
+               data1d_2D[indexChannel2] = (labels_mip[0][mipIndex] == 255) ? 0 : image_mip[mipIndex];
+           }else{
+               data1d_2D[index] = image_mip[mipIndex];
+           }
+
        }
    }
 //channel 2
@@ -145,9 +203,25 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    }
    for(V3DLONG i=mysz[0]; i<mysz[0]*2; i++){
        for(V3DLONG j=0; j<mysz[1]; j++){
-           int index = j*mysz[0]*2 + i+ stacksz*2;
+//           int index = j*mysz[0]*2 + i+ stacksz*2;
+           int indexChannel0 = j*mysz[0]*2 + i;
+           int indexChannel1 = j*mysz[0]*2 + i + stacksz*2;
+           int indexChannel2 = j*mysz[0]*2 + i + stacksz*4;
+
            int mipIndex = j*mysz[0] + i - mysz[0];
-           data1d_2D[index] = (label_mip[mipIndex] == 255) ? 255 : image_mip[mipIndex];
+           if(labels_mip.size()>1){
+               if(labels_mip[1][mipIndex] == 255){
+                   data1d_2D[indexChannel0] = 0;
+                   data1d_2D[indexChannel1] = 255;
+                   data1d_2D[indexChannel2] = 0;
+               }else{
+                   data1d_2D[indexChannel0] = (labels_mip[0][mipIndex] == 255) ? data1d_2D[indexChannel0] : image_mip[mipIndex];
+                   data1d_2D[indexChannel1] = (labels_mip[0][mipIndex] == 255) ? data1d_2D[indexChannel1] : image_mip[mipIndex];
+                   data1d_2D[indexChannel2] = (labels_mip[0][mipIndex] == 255) ? data1d_2D[indexChannel2] : image_mip[mipIndex];
+               }
+
+           }
+
        }
    }
 //channel 3
@@ -160,11 +234,34 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    }
    for(V3DLONG i=mysz[0]; i<mysz[0]*2; i++){
        for(V3DLONG j=0; j<mysz[1]; j++){
-           int index = j*mysz[0]*2 + i + stacksz*4;
+//           int index = j*mysz[0]*2 + i + stacksz*4;
+           int indexChannel0 = j*mysz[0]*2 + i;
+           int indexChannel1 = j*mysz[0]*2 + i + stacksz*2;
+           int indexChannel2 = j*mysz[0]*2 + i + stacksz*4;
+
            int mipIndex = j*mysz[0] + i - mysz[0];
-           data1d_2D[index] = (label_mip[mipIndex] == 255) ? 0 : image_mip[mipIndex];
+           if(labels_mip.size()>2){
+               if(labels_mip[2][mipIndex] == 255){
+                   data1d_2D[indexChannel0] = 0;
+                   data1d_2D[indexChannel1] = 0;
+                   data1d_2D[indexChannel2] = 255;
+               }else{
+                   if(labels_mip[1][mipIndex] == 255 || labels_mip[0][mipIndex] == 255){
+                       data1d_2D[indexChannel0] = data1d_2D[indexChannel0];
+                       data1d_2D[indexChannel1] = data1d_2D[indexChannel1];
+                       data1d_2D[indexChannel2] = data1d_2D[indexChannel2];
+                   }else{
+                       data1d_2D[indexChannel0] = image_mip[mipIndex];
+                       data1d_2D[indexChannel1] = image_mip[mipIndex];
+                       data1d_2D[indexChannel2] = image_mip[mipIndex];
+                   }
+
+               }
+           }
        }
    }
+
+   qDebug()<<"MIP end";
 
 //   for(V3DLONG i=0; i<stacksz; i++)
 //       data1d_2D[i] = image_mip[i];
@@ -182,10 +279,20 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 //   QString mipoutput = output_2d_dir +"result"+".tiff";
    simple_saveimage_wrapper(callback,mipoutput.toStdString().c_str(),(unsigned char *)data1d_2D,mysz,1);
    if(data1d_crop) {delete [] data1d_crop; data1d_crop=0;}
-   if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
+//   if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
+   for(int i=0; i<data1d_masks.size(); i++){
+       unsigned char* data1d_mask = data1d_masks[i];
+       if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
+   }
    if(data1d_2D) {delete [] data1d_2D; data1d_2D=0;}
    if(image_mip) {delete [] image_mip; image_mip=0;}
-   if(label_mip) {delete [] label_mip; label_mip=0;}
+//   if(label_mip) {delete [] label_mip; label_mip=0;}
+
+   for(int i=0; i<labels_mip.size(); i++){
+       unsigned char* label_mip = labels_mip[i];
+       if(label_mip) {delete [] label_mip; label_mip=0;}
+   }
+
    //listNeuron.clear();
 }
 
@@ -476,6 +583,138 @@ void joinImage(QString tifDir, QString outPath,int times, V3DPluginCallback2& ca
 
 }
 
+
+void joinImage2(QString tifDir, QString outPath,int resolution, V3DPluginCallback2& callback){
+//    int gx = 0, gy = 0, gz = 0;
+//    vector<vector<int> > oris = vector<vector<int> >();
+    qDebug()<<"-------in joinImage---------";
+
+    unsigned long long gx = tifDir.split("x")[1].toInt();
+    unsigned long long gy = tifDir.split("x")[0].split("(")[1].toInt();
+    unsigned long long gz = tifDir.split("x")[2].split(")")[0].toInt();
+
+
+
+    int t = resolution;
+    qDebug()<<"t: "<<t;
+//    gx /= t, gy /= t, gz /= t;
+
+//    gx += 1, gy += 1, gz += 1;
+
+    unsigned long long tolSZ = gx*gy*gz;
+
+    qDebug()<<"tolSZ: "<<tolSZ<<" gx: "<<gx<<" gy: "<<gy<<" gz: "<<gz;
+
+
+    qDebug()<<"start to allocate";
+    unsigned char* data = new unsigned char[tolSZ];
+    if(!data){
+        qDebug()<<"allocate memory failed";
+    }else {
+        qDebug()<<"allocate memory successed";
+    }
+
+    memset(data,0,tolSZ*sizeof(unsigned char));
+
+
+
+
+    QFileInfoList dirList1 = QDir(tifDir).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+    for(int i=0; i<dirList1.size(); i++){
+//        qDebug()<<"dir1: "<<dirList1[i].absoluteFilePath();
+        QDir dir1 = QDir(dirList1[i].absoluteFilePath());
+        QFileInfoList dirList2 = dir1.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+        for(int j=0; j<dirList2.size(); j++){
+//            qDebug()<<"dir2: "<<dirList2[j].absoluteFilePath();
+            QDir dir2 = QDir(dirList2[j].absoluteFilePath());
+            QFileInfoList fileList = dir2.entryInfoList(QDir::Files);
+            for(int k=0; k<fileList.size(); k++){
+//                qDebug()<<"file: "<<fileList[k].absoluteFilePath();
+                QString file = fileList[k].absoluteFilePath();
+
+                QString fileName = fileList[k].baseName();
+//                qDebug()<<"fileName: "<<fileName;
+
+                int ox = fileName.split("_")[1].toInt();
+                int oy = fileName.split("_")[0].toInt();
+                int oz = fileName.split("_")[2].toInt();
+
+                ox /= (t*10);
+                oy /= (t*10);
+                oz /= (t*10);
+
+                qDebug()<<"ox: "<<ox<<" oy: "<<oy<<" oz: "<<oz;
+
+                unsigned char* pdata = 0;
+                V3DLONG sz[4] = {0,0,0,0};
+                int dataType = 1;
+                simple_loadimage_wrapper(callback,file.toStdString().c_str(),pdata,sz,dataType);
+                qDebug()<<"dataType: "<<dataType;
+
+                qDebug()<<"sz012: "<<sz[0]<<" "<<sz[1]<<" "<<sz[2];
+
+                unsigned short* sdata = (unsigned short*)pdata;
+
+                for(int z=0; z<sz[2]; z++){
+                    for(int y=0; y<sz[1]; y++){
+                        for(int x=0; x<sz[0]; x++){
+                            int pIndex = z*sz[0]*sz[1] + y*sz[0] + x;
+                            unsigned long long dz = (z+oz)>(gz-1)? gz-1 : z+oz;
+                            unsigned long long dy = (y+oy)>(gy-1)? gy-1 : y+oy;
+                            unsigned long long dx = (x+ox)>(gx-1)? gx-1 : x+ox;
+
+                            unsigned long long index = dz*gx*gy + dy*gx + dx;
+                            if(index>tolSZ || index<0){
+//                                qDebug()<<"dz dy dx"<<dz<<" "<<dy<<" "<<dx;
+//                                qDebug()<<"index: "<<index;
+                                continue;
+                            }
+//                            qDebug()<<"index: "<<index;
+                            unsigned char tmp = 0;
+                            if(dataType == 1){
+                                tmp = pdata[pIndex];
+                            }else if(dataType == 2){
+
+                                int t = ((double)sdata[pIndex]/4096.0)*255 + 0.5;
+                                tmp = t;
+                                if(t<0) tmp = 0;
+                                if(t>255) tmp = 255;
+                            }
+                            data[index] = tmp;
+//                            if(data[index]>20){
+//                                qDebug()<<index<<" : "<<(int)data[index];
+//                            }
+
+                        }
+                    }
+                }
+
+                if(pdata){
+                    delete[] pdata;
+                    pdata = 0;
+                }
+            }
+        }
+    }
+
+
+    V3DLONG outSZ[4];
+    outSZ[0] = gx;
+    outSZ[1] = gy;
+    outSZ[2] = gz;
+    outSZ[3] = 1;
+    bool a = simple_saveimage_wrapper(callback,outPath.toStdString().c_str(),data,outSZ,1);
+    qDebug()<<"a: "<<a;
+    qDebug()<<"save image end";
+
+    if(data){
+        qDebug()<<"delete data";
+        delete[] data;
+        data = 0;
+    }
+
+}
+
 //Histogram Equalization
 void HE(unsigned char *data1d, long long *sz){
     V3DLONG* HA = new V3DLONG[256];
@@ -541,7 +780,7 @@ void getColorMask(vector<double> &colorMask, double colorSigma){
 //    }
 //}
 
-void getGaussianMask(float* &mask, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
+void getGaussianMask(float* &mask, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
     V3DLONG tolSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
     mask = new float[tolSZ];
     V3DLONG kernelSZ01 = kernelSZ[0]*kernelSZ[1];
@@ -705,7 +944,7 @@ void im_roll(unsigned char * src, unsigned char * dst, V3DLONG* sz, int* d_roll)
     }
 }
 
-void bilateralfilter2(unsigned char* src, unsigned char* &dst, V3DLONG* sz, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
+void bilateralfilter2(unsigned char* src, unsigned char* &dst, V3DLONG* sz, V3DLONG* kernelSZ, double spaceSigmaXY, double spaceSigmaZ, double colorSigma){
     qDebug()<<"-----bilateralfilter-------";
 
     if (!src || !sz || sz[0]<=0 || sz[1]<=0 || sz[2]<=0 || sz[3]<=0 || kernelSZ[0]<=0 || kernelSZ[1]<=0 || kernelSZ[2]<=0)
