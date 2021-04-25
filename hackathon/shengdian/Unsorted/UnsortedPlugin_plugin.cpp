@@ -13,7 +13,36 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(UnsortedPlugin, UnsortedPlugin);
- 
+
+QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    if (method_code ==1)
+        imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+    else if (method_code ==2)
+        imgSuffix<<"*.marker";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
 QStringList UnsortedPlugin::menulist() const
 {
 	return QStringList() 
@@ -34,9 +63,9 @@ QStringList UnsortedPlugin::funclist() const
             <<tr("SomaRefinement")
            <<tr("somaBlockCrop")
           <<tr("MIP_Zslices")
+         <<tr("swc_combine")
          <<tr("help");
 }
-
 void UnsortedPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("menu1"))
@@ -49,7 +78,6 @@ void UnsortedPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 			"Developed by Shengdian, 2020-8-29"));
 	}
 }
-
 bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
@@ -85,6 +113,42 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         else
             cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
+    }
+    else if (func_name==tr("swc_combine"))
+    {
+        /*this fun will combine swc files in one dir*/
+        if (input.size() < 1) return false;
+        /*
+         *1. read swc list
+         * 2.
+        */
+        string inswc_path;
+        if(infiles.size()>=1) {inswc_path = infiles[0];}
+        string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_path+"/combine.eswc");
+        QStringList swcList = importFileList_addnumbersort(QString::fromStdString(inswc_path), 1);
+        NeuronTree outswc;outswc.listNeuron.clear();outswc.hashNeuron.clear();
+        QList<V3DLONG> out_id;out_id.clear();
+        for(V3DLONG i = 0; i < swcList.size(); i++)
+        {
+            NeuronTree curSwc = readSWC_file(swcList.at(i));
+            if(!curSwc.listNeuron.size()) continue;
+            QHash<V3DLONG,V3DLONG> cur_id;cur_id.clear();
+            for(V3DLONG d = 0; d < curSwc.listNeuron.size(); d++)
+                cur_id.insert(curSwc.listNeuron[d].n,d+1);
+            V3DLONG last_out_size=out_id.size();
+             for(V3DLONG d = 0; d < curSwc.listNeuron.size(); d++)
+             {
+                 NeuronSWC s=curSwc.listNeuron[d];
+                 s.n=last_out_size+d+1;
+                 if(s.parent>0&&cur_id.contains(s.parent))
+                     s.parent=last_out_size+cur_id.value(s.parent);
+                 out_id.append(s.n);
+                 outswc.listNeuron.append(s);
+                 outswc.hashNeuron.insert(s.n,outswc.listNeuron.size()-1);
+             }
+        }
+        writeESWC_file(QString::fromStdString(out_swc_file),outswc);
+        return true;
     }
     else if (func_name==tr("renderingSWC"))
     {
@@ -721,8 +785,6 @@ void getTipComponent(QString inswc_file, QString outpath, int cropx, int cropy, 
         }
     }
 }
-
-
 void getTipBlock(V3DPluginCallback2 &callback, string imgPath, QString inswc_file, QString outpath, int cropx, int cropy, int cropz)
 {
 
@@ -849,7 +911,6 @@ void getTipBlock(V3DPluginCallback2 &callback, string imgPath, QString inswc_fil
     cout<<"# Tip Block: "<<tipTotal<<endl;
     cout<<"Save to "<<outpath.toStdString()<<endl;
 }
-
 NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size)
 {
     //return the intensity of the input node
@@ -935,7 +996,6 @@ void getSomaBlock(V3DPluginCallback2 &callback, string imgPath, QString inapo_fi
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
 }
-
 void getMarkerRadius(unsigned char *&inimg1d, long in_sz[], NeuronSWC& s)
 {
     long sz01 = in_sz[0] * in_sz[1];

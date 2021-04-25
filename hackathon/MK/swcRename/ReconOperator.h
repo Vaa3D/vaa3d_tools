@@ -2,6 +2,7 @@
 #define RECONOPERATOR_H
 
 //#define SUBTREE_DEBUG
+//#define DUPSEG_REMOVE
 
 #include <iostream>
 
@@ -32,6 +33,8 @@ public:
 	void denAxonCombine(bool dupRemove);
 
 	void removeDupedNodes();
+
+	void markerApo2swc();
 };
 
 #endif

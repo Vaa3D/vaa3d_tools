@@ -16,11 +16,13 @@ class BrainAtlasManager : public QDialog
 
 public:
 	BrainAtlasManager(QWidget* parent, V3DPluginCallback2* callback);
+	~BrainAtlasManager();
 
 	boost::container::flat_map<string, brainRegion> regionMap;
 	boost::container::flat_map<string, NeuronTree> regionTreeMap;
 	set<string> loadedRegions;
 	map<string, int> surface2indexMap;
+	map<string, int> region2UIindexMap;
 	map<string, bool> surfaceStatus;
 
 	Ui::Dialog* regionListUI;
@@ -31,12 +33,12 @@ public:
 
 	vector<NeuronTree> loadedTree;
 
-public slots:
-	void scanCheckBoxes_list();
-	void neuronInvolvedRegionClicked();
+	void rightClickBrgShow(QString inputCoordKey);
 
 public slots:
-	//void displayRegion();
+    void regionSelected(int row, int col, bool rightClick = false);
+	//void scanCheckBoxes_list();
+	void neuronInvolvedRegionClicked();
 
 private: 
 	V3DPluginCallback2* thisCallback;

@@ -12,7 +12,8 @@
 #include <iostream>
 #include "my_surf_objs.h"
 #include "../IVSCC_sort_swc/openSWCDialog.h"
-#include "../../../released_plugins/v3d_plugins/global_neuron_feature/compute.h"
+//changed by zx 20200827
+#include "../../../v3d_main/neuron_editing/global_feature_compute.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 
 

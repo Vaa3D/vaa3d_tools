@@ -31,6 +31,7 @@ public slots:
 	void preProcessParam(bool toggle);
 	void okClicked() { this->changeName(); }
 	void okClicked2() { this->reconOp(); }
+	void okClicked3() { this->fileConversion(); }
 	void undoClicked();
 
 private:
@@ -42,6 +43,7 @@ private:
 
 	void changeName();
 	void reconOp();
+	void fileConversion();
 
 	vector<string> connToken;
 	string getBrainID(string& inputFileName);

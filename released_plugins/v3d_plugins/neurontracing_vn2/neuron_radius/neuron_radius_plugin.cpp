@@ -27,6 +27,7 @@ QStringList SWCRadiusPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("neuron_radius")
+          <<tr("neuron_radius_terafly")
 		<<tr("help");
 }
 
@@ -464,8 +465,9 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
         //string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
-        string outswc_file=outfiles[0];
-        if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
+        string outswc_file= inswc_file + ".out.swc";
+        if(outfiles.size())
+            outswc_file = outfiles[0];
 
         double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
         if(bkg_thresh==atof("AUTO")) bkg_thresh=-1;
@@ -479,8 +481,7 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         cout<<"will use adaptive threshold"<<endl;
         ada_thresh=true;
         }
-
-
+        double blockSize=64;
         cout<<"bkg_thresh="<<bkg_thresh<<endl;
         //cout<<" ada_tresh?="<<(int)is_ada<<endl;
         cout<<"is2d = "<< (int)is_2d <<endl;
@@ -504,12 +505,12 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
             int start_x,end_x,start_y,end_y,start_z,end_z;
             if(inswc[i]->radius == -1)
             {
-                start_x = inswc[i]->x - 512; if(start_x<0) start_x = 0;
-                end_x = inswc[i]->x + 512; if(end_x > in_zz[0]) end_x = in_zz[0];
-                start_y = inswc[i]->y - 512;if(start_y<0) start_y = 0;
-                end_y = inswc[i]->y + 512;if(end_y > in_zz[1]) end_y = in_zz[1];
-                start_z = inswc[i]->z - 512;if(start_z<0) start_z = 0;
-                end_z = inswc[i]->z + 512;if(end_z > in_zz[2]) end_z = in_zz[2];
+                start_x = inswc[i]->x - blockSize; if(start_x<0) start_x = 0;
+                end_x = inswc[i]->x + blockSize; if(end_x > in_zz[0]) end_x = in_zz[0];
+                start_y = inswc[i]->y - blockSize;if(start_y<0) start_y = 0;
+                end_y = inswc[i]->y + blockSize;if(end_y > in_zz[1]) end_y = in_zz[1];
+                start_z = inswc[i]->z - blockSize;if(start_z<0) start_z = 0;
+                end_z = inswc[i]->z + blockSize;if(end_z > in_zz[2]) end_z = in_zz[2];
 
                 V3DLONG *in_sz = new V3DLONG[4];
                 in_sz[0] = end_x - start_x;
@@ -528,9 +529,6 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
                 bkg_thresh= imgave+0.7*imgstd+30;
                 }
                 cout<<"threshold="<<bkg_thresh<<endl;
-
-
-
                 for(int j = 0; j < inswc.size(); j++)
                 {
                     if(inswc[j]->radius == -1 && inswc[j]->x >= start_x+10 && inswc[j]->x <end_x-10
@@ -541,9 +539,6 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
                         marker.x = inswc[j]->x-start_x;
                         marker.y = inswc[j]->y-start_y;
                         marker.z = inswc[j]->z-start_z;
-
-
-
                         if(is_2d)
                             inswc[j]->radius = markerRadiusXY(inimg1d, in_sz, marker, bkg_thresh);
                         else

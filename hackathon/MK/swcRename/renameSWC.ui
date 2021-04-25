@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>748</width>
+    <width>894</width>
     <height>711</height>
    </rect>
   </property>
@@ -52,7 +52,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>696</width>
+            <width>842</width>
             <height>630</height>
            </rect>
           </property>
@@ -227,7 +227,7 @@
                     <item>
                      <widget class="QSpinBox" name="spinBox_2">
                       <property name="value">
-                       <number>30</number>
+                       <number>5</number>
                       </property>
                      </widget>
                     </item>
@@ -286,7 +286,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>600</width>
+                     <width>1000</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -412,7 +412,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>696</width>
+            <width>842</width>
             <height>630</height>
            </rect>
           </property>
@@ -455,7 +455,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>250</width>
+                  <width>1000</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -466,19 +466,6 @@
                  </font>
                 </property>
                </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </widget>
@@ -544,7 +531,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>600</width>
+                     <width>1000</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -901,7 +888,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>696</width>
+            <width>842</width>
             <height>630</height>
            </rect>
           </property>
@@ -973,7 +960,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>600</width>
+                     <width>1000</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1038,6 +1025,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lineEdit_5">
+                   <property name="maximumSize">
+                    <size>
+                     <width>50</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <weight>50</weight>
@@ -1054,9 +1047,12 @@
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
                    </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Minimum</enum>
+                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>40</width>
+                     <width>20</width>
                      <height>20</height>
                     </size>
                    </property>
@@ -1077,6 +1073,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lineEdit_6">
+                   <property name="maximumSize">
+                    <size>
+                     <width>50</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <weight>50</weight>
@@ -1093,9 +1095,12 @@
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
                    </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Minimum</enum>
+                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>40</width>
+                     <width>20</width>
                      <height>20</height>
                     </size>
                    </property>
@@ -1116,6 +1121,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lineEdit_7">
+                   <property name="maximumSize">
+                    <size>
+                     <width>50</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <weight>50</weight>
@@ -1126,6 +1137,19 @@
                     <string>8</string>
                    </property>
                   </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_7">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
                  </item>
                 </layout>
                </widget>
@@ -1196,7 +1220,7 @@
               </size>
              </property>
              <property name="title">
-              <string>Separate dentrite (including apical dendrite) from axon</string>
+              <string>Separate dentrite (including apical dendrite) from axon:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
@@ -1235,7 +1259,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>600</width>
+                     <width>1000</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1336,7 +1360,7 @@
               </size>
              </property>
              <property name="title">
-              <string>Combine dendrite and axon SWCs</string>
+              <string>Combine dendrite and axon SWCs:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>
@@ -1375,7 +1399,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>600</width>
+                     <width>1000</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -1489,6 +1513,185 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>File Conversion</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_19">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_4">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_4">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>842</width>
+            <height>630</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_16">
+           <item>
+            <widget class="QGroupBox" name="groupBox_16">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>180</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Convert marker/apo file to SWC:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <item>
+               <widget class="QGroupBox" name="groupBox_17">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>1000</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Calibri</family>
+                  <pointsize>10</pointsize>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Select a folder to process:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_21">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_13">
+                   <property name="minimumSize">
+                    <size>
+                     <width>350</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>1000</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_10">
+                   <property name="maximumSize">
+                    <size>
+                     <width>80</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_11">
+                <property name="maximumSize">
+                 <size>
+                  <width>1000</width>
+                  <height>50</height>
+                 </size>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_22">
+                 <item>
+                  <spacer name="horizontalSpacer_12">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>259</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDialogButtonBox" name="buttonBox_8">
+                   <property name="maximumSize">
+                    <size>
+                     <width>180</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>10</pointsize>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="standardButtons">
+                    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>
@@ -1502,7 +1705,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>216</y>
     </hint>
     <hint type="destinationlabel">
@@ -1550,7 +1753,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>405</y>
     </hint>
     <hint type="destinationlabel">
@@ -1630,7 +1833,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>480</y>
     </hint>
     <hint type="destinationlabel">
@@ -1646,7 +1849,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>161</y>
     </hint>
     <hint type="destinationlabel">
@@ -1726,7 +1929,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>404</y>
     </hint>
     <hint type="destinationlabel">
@@ -1742,7 +1945,7 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
+     <x>831</x>
      <y>590</y>
     </hint>
     <hint type="destinationlabel">
@@ -1806,8 +2009,8 @@
    <slot>browseFolderClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>632</x>
-     <y>410</y>
+     <x>831</x>
+     <y>423</y>
     </hint>
     <hint type="destinationlabel">
      <x>743</x>
@@ -1822,8 +2025,8 @@
    <slot>okClicked2()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>564</x>
-     <y>466</y>
+     <x>831</x>
+     <y>480</y>
     </hint>
     <hint type="destinationlabel">
      <x>737</x>
@@ -1838,12 +2041,60 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>643</x>
-     <y>470</y>
+     <x>831</x>
+     <y>480</y>
     </hint>
     <hint type="destinationlabel">
      <x>744</x>
      <y>555</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_10</sender>
+   <signal>clicked()</signal>
+   <receiver>dialog</receiver>
+   <slot>browseFolderClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>787</x>
+     <y>147</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>885</x>
+     <y>143</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_8</sender>
+   <signal>accepted()</signal>
+   <receiver>dialog</receiver>
+   <slot>okClicked3()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>714</x>
+     <y>206</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>886</x>
+     <y>235</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox_8</sender>
+   <signal>rejected()</signal>
+   <receiver>dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>792</x>
+     <y>206</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>889</x>
+     <y>190</y>
     </hint>
    </hints>
   </connection>
@@ -1854,5 +2105,6 @@
   <slot>undoClicked()</slot>
   <slot>okClicked2()</slot>
   <slot>preProcessParam(bool)</slot>
+  <slot>okClicked3()</slot>
  </slots>
 </ui>

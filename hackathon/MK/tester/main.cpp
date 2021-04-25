@@ -31,17 +31,17 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "nearTree";
+	//string funcName = "nearTree";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -66,6 +66,284 @@ int main(int argc, char* argv[])
 			clock_t end = clock();
 			float duration = float(end - start) / CLOCKS_PER_SEC;
 			cout << "time elapsed: " << duration << endl << endl;
+		}
+	}
+	else if (!funcName.compare("HUSTrotate"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree = NeuronStructUtil::swcRotateX_degree(inputTree, stoi(paras.at(2)), stoi(paras.at(3)), stoi(paras.at(4)));
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
+	else if (!funcName.compare("HUSTshift"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree = NeuronStructUtil::swcShift(inputTree, stoi(paras.at(2)), stoi(paras.at(3)), stoi(paras.at(4)));
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
+	else if (!funcName.compare("HUSTcleanUp"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree outputTree;
+			for (auto& node : inputTree.listNeuron)
+			{
+				if (!node.type == 0) outputTree.listNeuron.append(node);
+			}
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, outputTree);
+		}
+	}
+	else if (!funcName.compare("swcConvert"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree tree = NeuronStructUtil::convertHUSTswc(fileFullNameQ);
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, tree);
+		}
+	}
+	else if (!funcName.compare("somaRegion"))
+	{
+		QDir inputFolderQ1(QString::fromStdString(paras.at(0)));
+		inputFolderQ1.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList regionNameList = inputFolderQ1.entryList();
+		map<string, NeuronTree> regionTreeMap;
+		for (auto& regionName : regionNameList)
+		{
+			QString regionFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + regionName;
+			NeuronTree regionTree = readSWC_file(regionFullNameQ);
+			regionTreeMap.insert({ regionTree.name.toStdString(), regionTree });
+		}
+
+		QDir inputFolderQ2(QString::fromStdString(paras.at(1)));
+		inputFolderQ2.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList neuronNameList = inputFolderQ2.entryList();
+		map<string, NeuronTree> neuronTreeMap;
+		for (auto& neuronName : neuronNameList)
+		{
+			if (neuronName.contains("csv")) continue;
+			cout << endl << neuronName.toStdString() << endl;
+			QString neuronFullNameQ = QString::fromStdString(paras.at(1)) + "\\" + neuronName;
+			NeuronTree neuronTree = readSWC_file(neuronFullNameQ);
+			neuronTreeMap.insert({ neuronTree.name.toStdString(), neuronTree });
+		}
+
+		string outputFileName = paras.at(1) + "\\somaRegion.csv";
+		ofstream outFile(outputFileName);
+		outFile << "Neuron Name" << "," << "Region(s)" << endl;
+		bool upperX, lowerX, upperY, lowerY, upperZ, lowerZ;
+		//set<string> regionCandidates;
+		for (auto& neuron : neuronTreeMap)
+		{
+			outFile << neuron.first << ",";
+			NeuronSWC somaNode;
+			somaNode = neuron.second.listNeuron.at(0);
+			for (auto& regionTree : regionTreeMap)
+			{
+				for (auto& regionNodeXY : regionTree.second.listNeuron)
+				{
+					if (int(regionNodeXY.x) == int(somaNode.x) && int(regionNodeXY.y) == int(somaNode.y))
+					{
+						for (auto& regionNodeYZ : regionTree.second.listNeuron)
+						{
+							if (int(regionNodeYZ.y) == int(somaNode.y) && int(regionNodeYZ.z) == int(somaNode.z))
+							{
+								for (auto& regionNodeXZ : regionTree.second.listNeuron)
+								{
+									if (int(regionNodeXZ.x) == int(somaNode.x) && int(regionNodeXZ.z) == int(somaNode.z))
+									{
+										//outFile << regionTree.first << " ";
+										goto CANDIDATE_FOUND;
+									}
+								}
+							}
+						}
+					}						
+				}
+				goto REGION_PROCESSED;
+
+			CANDIDATE_FOUND:
+				upperX = false, lowerX = false, upperY = false, lowerY = false, upperZ = false, lowerZ = false;
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.x) + i == int(regionNode.x))
+						{
+							upperX = true;
+							break;
+						}
+					}
+					if (upperX) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.x) - i == int(regionNode.x))
+						{
+							lowerX = true;
+							break;
+						}
+					}
+					if (lowerX) break;
+				}
+				
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.y) + i == int(regionNode.y))
+						{
+							upperY = true;
+							break;
+						}
+					}
+					if (upperY) break;
+				}			
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.y) - i == int(regionNode.y))
+						{
+							lowerY = true;
+							break;
+						}
+					}
+					if (lowerY) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.z) + i == int(regionNode.z))
+						{
+							upperZ = true;
+							break;
+						}
+					}
+					if (upperZ) break;
+				}
+
+				for (int i = 1; i <= 100; ++i)
+				{
+					for (auto& regionNode : regionTree.second.listNeuron)
+					{
+						if (int(somaNode.z) - i == int(regionNode.z))
+						{
+							lowerZ = true;
+							break;
+						}
+					}
+					if (lowerZ) break;
+				}
+
+				if (upperX && lowerX && upperY && lowerY && upperZ && lowerZ) outFile << regionTree.first << " ";
+
+				continue;
+
+			REGION_PROCESSED:
+				continue;
+			}
+
+			outFile << endl;
+		}
+		
+		if (outFile.is_open()) outFile.close();
+
+		cout << neuronTreeMap.size() << endl;
+	}
+	else if (!funcName.compare("extractSoma"))
+	{
+		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
+		inputFolderQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputFolderQ.entryList();
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			QString fileFullNameQ = QString::fromStdString(paras.at(0)) + "\\" + fileNameQ;
+			NeuronTree inputTree = readSWC_file(fileFullNameQ);
+			NeuronTree soma;
+			for (auto& node : inputTree.listNeuron)
+			{
+				if (node.type == 1 && node.parent == -1)
+				{
+					soma.listNeuron.push_back(node);
+					break;
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 3 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 4 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			if (soma.listNeuron.size() == 0)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.type == 2 && node.parent == -1)
+					{
+						soma.listNeuron.push_back(node);
+						break;
+					}
+				}
+			}
+
+			QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + fileNameQ;
+			writeSWC_file(saveNameQ, soma);
 		}
 	}
 	else if (!funcName.compare("nearTree"))
@@ -218,21 +496,6 @@ int main(int argc, char* argv[])
 
 		for (auto& brNum : swcBrNums) cout << brNum.first << " " << brNum.second << endl;
 		cout << endl;
-	}
-	else if (!funcName.compare("testVsegConvert"))
-	{
-		profiledTree profiledInputTree(readSWC_file(QString::fromStdString(paras.at(0))));
-		for (auto& seg : profiledInputTree.segs)
-		{
-			//cout << "segID " << seg.first << ": " << endl;
-			//for (auto& node : seg.second.nodes)
-			//	cout << "  " << node.n << endl;
-			//cout << endl;
-			V_NeuronSWC convertedSeg = seg.second.convert2V_NeuronSWC();
-			//for (auto& node : convertedSeg.row)
-			//	cout << node.data[0] << " " << node.data[2] << " " << node.data[3] << " " << node.data[4] << " " << node.data[6] << endl;
-			//cout << seg.second.nodes.size() << " " << seg.second.seg_childLocMap.size() << endl << endl;
-		}
 	}
 	else if (!funcName.compare("getMaxEucliDist"))
 	{
@@ -656,54 +919,82 @@ int main(int argc, char* argv[])
 		}
 		writeSWC_file(saveNameQ, terminalTree);
 	}
-	else if (!funcName.compare("simple_thre"))
+	else if (!funcName.compare("generateBrainRegionNew"))
 	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-		ImgManager myManager(folderNameQ);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
-		{
-			myManager.inputSingleCaseFullPath = caseIt->second;
-			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
-
-			int imgDims[3];
-			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
-			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
-			imgDims[2] = 1;
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			//map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, 10);
-
-			V3DLONG saveDims[4];
-			saveDims[0] = imgDims[0];
-			saveDims[1] = imgDims[1];
-			saveDims[2] = 1;
-			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
-			string saveFileName = saveFileNameQ.toStdString();
-			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-			myManager.imgDatabase.clear();
-		}
-	}
-	else if (!funcName.compare("generateBrainRegionSWC_f"))
-	{
-		ifstream inputFile("C:\\Users\\hsienchik\\Desktop\\CCF\\idValue2regionName.txt");
+		ifstream inputFile("D:\\Work\\CCF_brainAtlas\\idValue2regionName.txt");
 		string line;
 		string buffer;
 		vector<string> lineSplit;
-		map<float, string> idValue2nameMap;
-		boost::container::flat_set<float> valueSet;
-		map<float, int> nonRecogNum;
-		map<float, int> idValue2assignedMap;
+		//map<pair<int, string>, NeuronTree> regionIDvalueTreeMap;
+		//map<int, string> ID2regionMap;
+		//multimap<string, int> name2assignedMap;
+		map<pair<float, string>, NeuronTree> regionIDvalueTreeMap;
+		map<float, string> ID2regionMap;
+		multimap<string, float> name2assignedMap;
+		set<string> allRegions;
+		int assignedI = 0;
+		if (inputFile.is_open())
+		{
+			NeuronTree emptyTree;
+			emptyTree.listNeuron.clear();
+			while (getline(inputFile, line))
+			{
+				stringstream ss(line);
+				while (ss >> buffer) lineSplit.push_back(buffer);
+
+				++assignedI;
+				int typeValue = assignedI % 20;
+				//ID2regionMap.insert({ stoi(lineSplit.at(0)), lineSplit.at(1) });
+				//regionIDvalueTreeMap.insert({ pair<int, string>(stoi(lineSplit.at(0)), lineSplit.at(1)), emptyTree });
+				ID2regionMap.insert({ stof(lineSplit.at(0)), lineSplit.at(1) });
+				regionIDvalueTreeMap.insert({ pair<float, string>(stoi(lineSplit.at(0)), lineSplit.at(1)), emptyTree });
+				name2assignedMap.insert({ lineSplit.at(1), assignedI });
+				allRegions.insert(lineSplit.at(1));
+				lineSplit.clear();
+			}
+		}
+		
+		ImgManager myManager;
+		int imgDims[3];
+		myManager.inputSingleCaseFullPath = "D:\\Work\\CCF_brainAtlas\\annotation_25.v3draw";
+		myManager.imgEntry("CCFstack", ImgManager::singleCase);
+		cout << "Datatype: " << myManager.imgDatabase.at("CCFstack").dataType << endl;
+		imgDims[0] = myManager.imgDatabase.at("CCFstack").dims[0];
+		imgDims[1] = myManager.imgDatabase.at("CCFstack").dims[1];
+		imgDims[2] = myManager.imgDatabase.at("CCFstack").dims[2];
+		cout << "Demension: " << imgDims[0] << " " << imgDims[1] << " " << imgDims[2] << endl;
+
+		set<string> allRegionCopy = allRegions;
+		for (int zi = 1; zi <= imgDims[2]; ++zi)
+		{
+			cout << zi << " ";
+			for (int yi = 1; yi <= imgDims[1]; ++yi)
+			{
+				for (int xi = 1; xi <= imgDims[0]; ++xi)
+				{
+					float value = ImgProcessor::getPixValue<float>(myManager.imgDatabase.at("CCFstack").floatSlicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
+					if (ID2regionMap.find(value) != ID2regionMap.end())
+					{
+						//cout << ID2regionMap.at(value) << endl;
+						if (allRegionCopy.find(ID2regionMap.at(value)) != allRegionCopy.end()) allRegionCopy.erase(allRegionCopy.find(ID2regionMap.at(value)));
+					}
+				}
+			}
+		}
+		
+		for (auto& leftRegion : allRegionCopy) cout << leftRegion << endl;
+		cout << allRegionCopy.size() << endl;
+	}
+	else if (!funcName.compare("generateBrainRegionSWC_f"))
+	{
+		ifstream inputFile("D:\\Work\\CCF_brainAtlas\\idValue2regionName.txt");
+		string line;
+		string buffer;
+		vector<string> lineSplit;
+		map<int, string> idValue2nameMap;
+		boost::container::flat_set<int> valueSet;
+		map<int, int> nonRecogNum;
+		map<int, int> idValue2assignedMap;
 		int assignedI = 0;
 		if (inputFile.is_open())
 		{
@@ -714,28 +1005,30 @@ int main(int argc, char* argv[])
 
 				++assignedI;
 				int typeValue = assignedI % 20;
-				idValue2assignedMap.insert({ stof(lineSplit.at(0)), typeValue });
-				idValue2nameMap.insert({ stof(lineSplit.at(0)), lineSplit.at(1) });
-				//cout << lineSplit.at(1) << " " << lineSplit.at(2) << " " << lineSplit.at(3) << " " << lineSplit.at(4) << endl;
-				valueSet.insert(stof(lineSplit.at(0)));
+				idValue2assignedMap.insert({ stoi(lineSplit.at(0)), typeValue });
+				idValue2nameMap.insert({ stoi(lineSplit.at(0)), lineSplit.at(1) });
+				valueSet.insert(stoi(lineSplit.at(0)));
 
 				lineSplit.clear();
 			}
 		}
 
 		map<string, NeuronTree> name2treeMap;
-		map<string, float> name2idValueMap;
-		for (map<float, string>::iterator it = idValue2nameMap.begin(); it != idValue2nameMap.end(); ++it)
+		map<string, int> name2idValueMap;
+		for (map<int, string>::iterator it = idValue2nameMap.begin(); it != idValue2nameMap.end(); ++it)
 		{
 			NeuronTree newTree;
 			name2treeMap.insert({ it->second, newTree });
 			name2idValueMap.insert({ it->second, it->first });
 			cout << it->second << " " << it->first << endl;
 		}
+		cout << name2idValueMap.at("VISrl") << " " << name2idValueMap.at("VISrl1") << " " << name2idValueMap.at("VISrl2_3") << " " << name2idValueMap.at("VISrl4") << " " << name2idValueMap.at("VISrl5") << " " << name2idValueMap.at("VISrl6a") << " " << name2idValueMap.at("VISrl6b") << endl;
+		cout << name2idValueMap.at("VISli") << " " << name2idValueMap.at("VISli1") << " " << name2idValueMap.at("VISli2_3") << " " << name2idValueMap.at("VISli4") << " " << name2idValueMap.at("VISli5") << " " << name2idValueMap.at("VISli6a") << " " << name2idValueMap.at("VISli6b") << endl;
+		cout << name2idValueMap.at("VISa") << " " << name2idValueMap.at("VISa1") << " " << name2idValueMap.at("VISa2_3") << " " << name2idValueMap.at("VISa4") << " " << name2idValueMap.at("VISa5") << " " << name2idValueMap.at("VISa6a") << " " << name2idValueMap.at("VISa6b") << endl;
 
 		ImgManager myManager;
 		int imgDims[3];
-		myManager.inputSingleCaseFullPath = "C:\\Users\\hsienchik\\Desktop\\CCF\\annotation_25.v3draw";
+		myManager.inputSingleCaseFullPath = "D:\\Work\\CCF_brainAtlas\\annotation_25.v3draw";
 		myManager.imgEntry("CCFstack", ImgManager::singleCase);
 		cout << myManager.imgDatabase.at("CCFstack").dataType << endl;
 		imgDims[0] = myManager.imgDatabase.at("CCFstack").dims[0];
@@ -748,6 +1041,7 @@ int main(int argc, char* argv[])
 		map<float, int> nonRecogValue2typeMap;
 		map<int, int> slice0map;
 		int nonRecgType = 0;
+		map<int, int> missingMap;
 		for (int zi = 1; zi <= imgDims[2]; ++zi)
 		{
 			cout << zi << " ";
@@ -756,48 +1050,132 @@ int main(int argc, char* argv[])
 			{
 				for (int xi = 1; xi <= imgDims[0]; ++xi)
 				{
-					float value = ImgProcessor::getPixValue(myManager.imgDatabase.at("CCFstack").floatSlicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
-					//int intValue = int(floor(value));
+					float value = ImgProcessor::getPixValue<float>(myManager.imgDatabase.at("CCFstack").floatSlicePtrs.begin()->second.get(), imgDims, xi, yi, zi);
+					int intValue = int(floor(value));
 
-					if (value == 0)
+					if (intValue == 0)
 					{
-						slice0map.at(zi) += 1;
+						slice0map[zi] += 1;
 					}
 					else
 					{
-						string regionName = idValue2nameMap.at(value);
-						NeuronSWC newNode;
-						newNode.x = xi - 1;
-						newNode.y = yi - 1;
-						newNode.z = zi - 1;
-						newNode.parent = -1;
-						newNode.type = idValue2assignedMap.at(value);
-						name2treeMap.at(regionName).listNeuron.push_back(newNode);
+						switch (intValue)
+						{
+						case 417:
+							missingMap[417] += 1;
+							break;
+						case 312782604:
+							missingMap[312782604] += 1;
+							break;
+						case 312782608:
+							missingMap[312782608] += 1;
+							break;
+						case 312782612:
+							missingMap[312782612] += 1;
+							break;
+						case 312782616:
+							missingMap[312782616] += 1;
+							break;
+						case 312782620:
+							missingMap[312782620] += 1;
+							break;
+						case 312782624:
+							missingMap[312782624] += 1;
+							break;
+						case 312782574:
+							missingMap[312782574] += 1;
+							break;
+						case 312782578:
+							missingMap[312782578] += 1;
+							break;
+						case 312782582:
+							missingMap[312782582] += 1;
+							break;
+						case 312782586:
+							missingMap[312782586] += 1;
+							break;
+						case 312782590:
+							missingMap[312782590] += 1;
+							break;
+						case 312782594:
+							missingMap[312782594] += 1;
+							break;
+						case 312782598:
+							missingMap[312782598] += 1;
+							break;
+						case 312782546:
+							missingMap[312782546] += 1;
+							break;
+						case 312782550:
+							missingMap[312782550] += 1;
+							break;
+						case 312782554:
+							missingMap[312782554] += 1;
+							break;
+						case 312782558:
+							missingMap[312782558] += 1;
+							break;
+						case 312782562:
+							missingMap[312782562] += 1;
+							break;
+						case 312782566:
+							missingMap[312782566] += 1;
+							break;
+						case 312782570:
+							missingMap[312782570] += 1;
+							break;
+						default:
+							break;
+						}
+
+						if (idValue2assignedMap.find(intValue) != idValue2assignedMap.end())
+						{
+							string regionName = idValue2nameMap.at(int(intValue));
+							NeuronSWC newNode;
+							newNode.x = xi - 1;
+							newNode.y = yi - 1;
+							newNode.z = zi - 1;
+							newNode.parent = -1;
+							newNode.type = idValue2assignedMap.at(int(intValue));
+							name2treeMap[regionName].listNeuron.append(newNode);
+						}
+						//else cout << intValue << " ";
 					}
 				}
 			}
 		}
+		cout << endl;
+		cout << missingMap.size() << endl;
+		for (auto& missingRegion : missingMap) cout << missingRegion.first << " " << missingRegion.second << endl;
+		//cout << name2treeMap.at("VISrl").listNeuron.size() << " " << name2treeMap.at("VISrl1").listNeuron.size() << " " << name2treeMap.at("VISrl2_3").listNeuron.size() << " " << name2treeMap.at("VISrl4").listNeuron.size() << " " << name2treeMap.at("VISrl5").listNeuron.size() << " " << name2treeMap.at("VISrl6").listNeuron.size() << endl;
+		//cout << name2treeMap.at("VISli").listNeuron.size() << " " << name2treeMap.at("VISli1").listNeuron.size() << " " << name2treeMap.at("VISli2_3").listNeuron.size() << " " << name2treeMap.at("VISli4").listNeuron.size() << " " << name2treeMap.at("VISli5").listNeuron.size() << " " << name2treeMap.at("VISli6").listNeuron.size() << endl;
+		//cout << name2treeMap.at("VISa").listNeuron.size() << " " << name2treeMap.at("VISa1").listNeuron.size() << " " << name2treeMap.at("VISa2_3").listNeuron.size() << " " << name2treeMap.at("VISa4").listNeuron.size() << " " << name2treeMap.at("VISa5").listNeuron.size() << " " << name2treeMap.at("VISa6").listNeuron.size() << endl;
 
-		QString savingRoot = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions\\";
+		QString savingRoot = "D:\\Work\\CCF_brainAtlas\\check\\";
 		for (map<string, NeuronTree>::iterator it = name2treeMap.begin(); it != name2treeMap.end(); ++it)
 		{
-			QString saveFullName = savingRoot + QString::fromStdString(it->first) + "-" + QString::fromStdString(to_string(name2idValueMap.at(it->first))) + ".swc";
-			qDebug() << saveFullName;
-			writeSWC_file(saveFullName, it->second);
+			if (!it->first.compare("VISli") || !it->first.compare("VISli1") || !it->first.compare("VISli2_3") || !it->first.compare("VISli4") || !it->first.compare("VISli5") || !it->first.compare("VISli6a") || !it->first.compare("VISli6b") ||
+				!it->first.compare("VISrl") || !it->first.compare("VISrl1") || !it->first.compare("VISrl2_3") || !it->first.compare("VISrl4") || !it->first.compare("VISrl5") || !it->first.compare("VISrl6a") || !it->first.compare("VISrl6b") ||
+				!it->first.compare("VISa") || !it->first.compare("VISa1") || !it->first.compare("VISa2_3") || !it->first.compare("VISa4") || !it->first.compare("VISa5") || !it->first.compare("VISa6a") || !it->first.compare("VISa6b"))
+			{
+				QString saveFullName = savingRoot + QString::fromStdString(it->first) + "-" + QString::fromStdString(to_string(name2idValueMap.at(it->first))) + ".swc";
+				qDebug() << saveFullName;
+				writeSWC_file(saveFullName, it->second);
+			}
 		}
 
-		for (map<float, int>::iterator it = nonRecogNum.begin(); it != nonRecogNum.end(); ++it) cout << it->first << " " << it->second << endl;
+		/*for (map<float, int>::iterator it = nonRecogNum.begin(); it != nonRecogNum.end(); ++it) cout << it->first << " " << it->second << endl;
 		//QString savingRoot = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regions\\";
 		for (map<float, NeuronTree>::iterator it = nonRecogValueTrees.begin(); it != nonRecogValueTrees.end(); ++it)
 		{
-			QString saveFullName = savingRoot + QString::fromStdString(to_string(it->first)) + ".swc";
-			qDebug() << saveFullName;
-			writeSWC_file(saveFullName, it->second);
+		QString saveFullName = savingRoot + QString::fromStdString(to_string(it->first)) + ".swc";
+		qDebug() << saveFullName;
+		writeSWC_file(saveFullName, it->second);
 		}
 
 		for (map<int, int>::iterator it = slice0map.begin(); it != slice0map.end(); ++it)
-			cout << it->first << " " << it->second << endl;
-		cout << endl;
+		cout << it->first << " " << it->second << endl;
+		cout << endl;*/
 	}
 	else if (!funcName.compare("swcSurfs"))
 	{

@@ -62,14 +62,23 @@ public:
 	template<typename T>
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb);
 
-	template<typename T>
+	template<typename T> // Scailing by multiplication.
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
 
-	template<typename T>
+	template<typename T> // Scailing by multiplication.
 	static inline QList<CellAPO> apoScale(const QList<CellAPO>& inputApo, T xScale, T yScale, T zScale);
 
-	template<typename T>
+	template<typename T> // Shifting by addition.
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
+
+	template<typename T> // Y points downward, Z points to the right, posiive degree for counter clock-wise.
+	static inline NeuronTree swcRotateX_degree(const NeuronTree& inputTree, T degree, T yOrigin = 0, T zOrigin = 0);
+
+	template<typename T> // X points downward, Z points to the right, posiive degree for counter clock-wise.
+	static inline NeuronTree swcRotateY_degree(const NeuronTree& inputTree, T degree, T xOrigin = 0, T zOrigin = 0);
+
+	template<typename T> // X points downward, Y points to the right, posiive degree for counter clock-wise.
+	static inline NeuronTree swcRotateZ_degree(const NeuronTree& inputTree, T degree, T xOrigin = 0, T yOrigin = 0);
 	
 	template<typename T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
 	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
@@ -172,6 +181,10 @@ public:
 	/***************************** Miscellaneous ******************************/ 
 	// Generates linker file for swc
 	static inline void linkerFileGen_forSWC(string swcFullFileName);	
+
+	// Convert HUST swc
+	static NeuronTree convertHUSTswc(QString inputFileNameQ);
+	static vector<NeuronTree> convertHUSTswc_old(QString inputQ);
 	/**************************************************************************/
 
 
@@ -263,6 +276,72 @@ inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, T xShi
 		newNode.y = it->y + yShift;
 		newNode.z = it->z + zShift;
 		outputTree.listNeuron.push_back(newNode);
+	}
+
+	return outputTree;
+}
+
+template<typename T>
+inline NeuronTree NeuronStructUtil::swcRotateX_degree(const NeuronTree& inputTree, T degree, T yOrigin, T zOrigin)
+{
+	NeuronTree outputTree;
+	float inputRad = (float(degree) / 180) * PI_MK;
+	for (auto& node : inputTree.listNeuron)
+	{
+		NeuronSWC newNode = node;
+		newNode.y = newNode.y - yOrigin;
+		newNode.z = newNode.z - zOrigin;
+		float oldY = newNode.y;
+		float oldZ = newNode.z;
+		newNode.y = oldY * std::cosf(inputRad) - oldZ * std::sinf(inputRad);
+		newNode.z = oldY * std::sinf(inputRad) + oldZ * std::cosf(inputRad);
+		newNode.y = newNode.y + yOrigin;
+		newNode.z = newNode.z + zOrigin;
+		outputTree.listNeuron.append(newNode);
+	}
+
+	return outputTree;
+}
+
+template<typename T>
+inline NeuronTree NeuronStructUtil::swcRotateY_degree(const NeuronTree& inputTree, T degree, T xOrigin, T zOrigin)
+{
+	NeuronTree outputTree;
+	float inputRad = (float(degree) / 180) * PI_MK;
+	for (auto& node : inputTree.listNeuron)
+	{
+		NeuronSWC newNode = node;
+		newNode.x = newNode.x - xOrigin;
+		newNode.z = newNode.z - zOrigin;
+		float oldX = newNode.x;
+		float oldZ = newNode.z;
+		newNode.x = oldX * std::cosf(inputRad) - oldZ * std::sinf(inputRad);
+		newNode.z = oldX * std::sinf(inputRad) + oldZ * std::cosf(inputRad);
+		newNode.x = newNode.x + xOrigin;
+		newNode.z = newNode.z + zOrigin;
+		outputTree.listNeuron.append(newNode);
+	}
+
+	return outputTree;
+}
+
+template<typename T>
+inline NeuronTree NeuronStructUtil::swcRotateZ_degree(const NeuronTree& inputTree, T degree, T xOrigin, T yOrigin)
+{
+	NeuronTree outputTree;
+	float inputRad = (float(degree) / 180) * PI_MK;
+	for (auto& node : inputTree.listNeuron)
+	{
+		NeuronSWC newNode = node;
+		newNode.x = newNode.x - xOrigin;
+		newNode.y = newNode.y - yOrigin;
+		float oldX = newNode.x;
+		float oldY = newNode.y;
+		newNode.x = oldX * std::cosf(inputRad) - oldY * std::sinf(inputRad);
+		newNode.y = oldX * std::cosf(inputRad) + oldY * std::sinf(inputRad);
+		newNode.x = newNode.x + xOrigin;
+		newNode.y = newNode.y + yOrigin;
+		outputTree.listNeuron.append(newNode);
 	}
 
 	return outputTree;
