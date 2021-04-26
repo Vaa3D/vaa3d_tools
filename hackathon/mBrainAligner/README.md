@@ -1,6 +1,6 @@
 # mBrainAligner: Cross-Modality Coherent Registration of Whole Mouse Brains
 
-![image](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/result_example.tif)
+![result_example](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/result_example.tif)
 
 # Contents
 
