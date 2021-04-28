@@ -94,7 +94,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 		}
 		this->nodes.begin()->parent = -1;
 	}
-	this->head = this->nodes.begin()->n;
+	if (!this->nodes.isEmpty()) this->head = this->nodes.begin()->n;
 	
 	/******************************************************************************************************/
 	// Important Note: 
