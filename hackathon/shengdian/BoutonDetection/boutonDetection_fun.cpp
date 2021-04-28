@@ -589,21 +589,82 @@ NeuronTree getBouton_toSWC(NeuronTree nt, int in_thre, int allnode,float dis_thr
     cout<<"Detected Bouton: "<<bouton_final.listNeuron.size()<<endl;
     return bouton_final;
 }
-void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size)
+void getBoutonBlock_inImg(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_zz[],QList <CellAPO> apolist,string outpath,int block_size)
+{
+    /*crop 3d image-block
+     * get mip img
+    */
+    if(!apolist.size()) {return;}
+    QString save_path = QString::fromStdString(outpath);
+    QDir path(save_path);
+    if(!path.exists())
+        path.mkpath(save_path);
+    for(V3DLONG i=0;i<apolist.size();i++)
+    {
+        CellAPO s = apolist[i];
+        long start_x,start_y,start_z,end_x,end_y,end_z;
+        start_x = s.x - block_size; if(start_x<0) {start_x = 0;}
+        end_x = s.x + block_size; if(end_x >= in_zz[0]) {end_x = in_zz[0]-1;}
+        start_y =s.y - block_size;if(start_y<0) {start_y = 0;}
+        end_y = s.y + block_size;if(end_y >= in_zz[1]) {end_y = in_zz[1]-1;}
+        start_z = s.z - block_size;if(start_z<0) {start_z = 0;}
+        end_z = s.z + block_size;if(end_z >= in_zz[2]) {end_z = in_zz[2]-1;}
+
+//        V3DLONG *in_sz = new V3DLONG[4];
+        V3DLONG in_sz [4];
+        in_sz[0] =end_x-start_x+1;
+        in_sz[1] = end_y-start_y+1;
+        in_sz[2] = end_z-start_z+1;
+        in_sz[3]=in_zz[3];
+        long sz01 = in_sz[0] * in_sz[1];
+        long sz0 = in_sz[0];
+        unsigned char * im_cropped = 0;
+        V3DLONG pagesz= in_sz[0] * in_sz[1]*in_sz[2]*in_sz[3];
+        try {im_cropped = new unsigned char [pagesz];}
+        catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+        for(V3DLONG iz=0;iz<in_sz[2];iz++)
+        {
+            for(V3DLONG iy=0;iy<in_sz[1];iy++)
+            {
+                for(V3DLONG ix=0;ix<in_sz[0];ix++)
+                {
+                    im_cropped[iz * sz01 + iy * sz0 + ix]=
+                            inimg1d[(start_z+iz) * in_zz[0]*in_zz[1]
+                            +(start_y+ iy) *in_zz[0] + (start_x+ix)];
+                }
+            }
+        }
+        QString tmpstr = "";
+        tmpstr.append("_n_").append(QString("%1").arg(s.n));
+        tmpstr.append("_x_").append(QString("%1").arg(s.x));
+        tmpstr.append("_y_").append(QString("%1").arg(s.y));
+        tmpstr.append("_z_").append(QString("%1").arg(s.z));
+        QString default_name = "Bouton"+tmpstr+".tif";
+//        QString default_name_apo="Bouton"+tmpstr+".apo";
+        QString save_path_img =save_path+"/"+default_name;
+        simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
+        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+    }
+}
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int block_size,uint mip_flag)
 {
     cout<<"Welcome into bouton detection: crop part"<<endl;
     cout<<"get bouton apo file and crop img out"<<endl;
     V3DLONG siz = apolist.size();
-    V3DLONG *in_zz = 0;
-    if(!callback.getDimTeraFly(imgPath,in_zz))
-    {
-        cout<<"can't load terafly img"<<endl;
-        return;
+    V3DLONG *in_zz = 0;    if(!callback.getDimTeraFly(imgPath,in_zz)){cout<<"can't load terafly img"<<endl;return;}
+    QString save_path_3d = QString::fromStdString(outpath)+"/3d";
+    QDir path(save_path_3d);    if(!path.exists()) { path.mkpath(save_path_3d);}
+    QString save_path_mip="";
+    if(mip_flag){
+         save_path_mip= QString::fromStdString(outpath)+"/mip";
+        QDir path_mip(save_path_mip);    if(!path_mip.exists()) { path_mip.mkpath(save_path_mip);}
     }
+
     for(V3DLONG i=0;i<siz;i++)
     {
         CellAPO s = apolist[i];
-        long start_x,start_y,start_z,end_x,end_y,end_z;
+        V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
         start_x = s.x - block_size; if(start_x<0) start_x = 0;
         end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
         start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -612,165 +673,71 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO>
         end_z = s.z + block_size;if(end_z > in_zz[2]) end_z = in_zz[2];
 
         V3DLONG *in_sz = new V3DLONG[4];
-        in_sz[0] = block_size*2;
-        in_sz[1] = block_size*2;
-        in_sz[2] = block_size*2;
+        in_sz[0] =end_x-start_x+1;
+        in_sz[1] = end_y-start_y+1;
+        in_sz[2] = end_z-start_z+1;
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = (end_x-start_x)*(end_y-start_y)*(end_z-start_z);
+        pagesz =in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-
-        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x,start_y,end_y,start_z,end_z);
-        if(im_cropped==NULL){
-            cout<<"Crop fail"<<endl;
-            continue;
-        }
+        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+        if(im_cropped==NULL){ cout<<"Crop fail"<<endl;continue; }
+        //3d image block
         QString tmpstr = "";
-        tmpstr.append("_x").append(QString("%1").arg(s.x));
-        tmpstr.append("_y").append(QString("%1").arg(s.y));
-        tmpstr.append("_z").append(QString("%1").arg(s.z));
+        tmpstr.append("_n_").append(QString("%1").arg(s.n));
+        tmpstr.append("_x_").append(QString("%1").arg(s.x));
+        tmpstr.append("_y_").append(QString("%1").arg(s.y));
+        tmpstr.append("_z_").append(QString("%1").arg(s.z));
         QString default_name = "Bouton"+tmpstr+".tif";
-//        QString default_name_apo="Bouton"+tmpstr+".apo";
-        QString save_path = QString::fromStdString(outpath);
-        QDir path(save_path);
-        if(!path.exists())
-        {
-            path.mkpath(save_path);
-        }
-        QString save_path_img =save_path+"/"+default_name;
-        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        QString save_path_img =save_path_3d+"/"+default_name;
+//        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),(unsigned char *)im_cropped,in_sz,1);
+        //2d mip
+        if(mip_flag)
+        {
+            QString mip_save_path_img =save_path_mip+"/"+"Bouton"+tmpstr+".tif";
+            getBoutonMIP(callback,im_cropped,in_sz, mip_save_path_img);
+        }
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
-
 }
-void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize)
+void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d, V3DLONG in_sz[], QString outpath)
 {
-    /*Img processing: erosion
-     *kernel size: default=3
-     *revise the value of each pixels to it's local minimal
-    */
-    cout<<"Img processing: erosion"<<endl;
-    long sz01 = in_sz[0] * in_sz[1];
-    long sz0 = in_sz[0];
-    long startx,starty,startz;
-    long endx,endy,endz;
-    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
-    unsigned char * im_transfer = 0;
-    V3DLONG pagesz;
-    pagesz = sz01*sz0;
-    try {im_transfer = new unsigned char [pagesz];}
-    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-//    im_transfer=inimg1d;
-    //back up
-    for(long ix=0;ix<in_sz[0];ix++)
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG mip_sz[4];
+    mip_sz[0] = N;
+    mip_sz[1] = M;
+    mip_sz[2] = 1;
+    mip_sz[3] = 1;
+
+    V3DLONG pagesz_mip = mip_sz[0]*mip_sz[1]*mip_sz[2];
+    unsigned char *image_mip=0;
+    try {image_mip = new unsigned char [pagesz_mip];}
+    catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return ;}
+
+    for(V3DLONG ix = 0; ix < N; ix++)
     {
-        for(long iy=0;iy<in_sz[1];iy++)
+        for(V3DLONG iy = 0; iy < M; iy++)
         {
-            for(long iz=0;iz<in_sz[2];iz++)
+            int max_mip = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
             {
-                im_transfer[iz * sz01 + iy * sz0 + ix]=inimg1d[iz * sz01 + iy * sz0 + ix];
-            }
-        }
-    }
-    cout<<"copy img pointer"<<endl;
-    for(long ix=0;ix<in_sz[0];ix++)
-    {
-        for(long iy=0;iy<in_sz[1];iy++)
-        {
-            for(long iz=0;iz<in_sz[2];iz++)
-            {
-//                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
-                //get the local area
-                startx=(ix-kernelSize>=0)?(ix-kernelSize):0;
-                endx=(ix+kernelSize<in_sz[0])?(ix+kernelSize):in_sz[0];
-                starty=(iy-kernelSize>=0)?(iy-kernelSize):0;
-                endy=(iy+kernelSize<in_sz[1])?(iy+kernelSize):in_sz[1];
-                startz=(iz-kernelSize>=0)?(iz-kernelSize):0;
-                endz=(iz+kernelSize<in_sz[2])?(iz+kernelSize):in_sz[2];
-                long tmpIntensity=im_transfer[iz * sz01 + iy * sz0 + ix];
-                for(long kx=startx;kx<endx;kx++)
+                if(inimg1d[N*M*iz + N*iy + ix] >= max_mip)
                 {
-                    for(long ky=starty;ky<endy;ky++)
-                    {
-                        for(long kz=startz;kz<endz;kz++)
-                        {
-                            long thistmpIntensity=im_transfer[kz * sz01 + ky * sz0 + kx];
-                            tmpIntensity=(thistmpIntensity<tmpIntensity)?thistmpIntensity:tmpIntensity;
-
-                        }
-                    }
-                }
-                //erosion
-                inimg1d[iz * sz01 + iy * sz0 + ix]=tmpIntensity;
-            }
-        }
-    }
-    if(im_transfer) {delete []im_transfer; im_transfer=0;}
-}
-void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size)
-{
-    /*for all the pixels in the dst block*/
-    QList<NeuronSWC> listNeuron =  nt.listNeuron;
-    V3DLONG siz = listNeuron.size();
-    if(siz<1) return;
-    long sz01 = in_sz[0] * in_sz[1];
-    long sz0 = in_sz[0];
-    int startx,starty,startz;
-    int endx,endy,endz;
-    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
-    unsigned char * im_transfer = 0;
-    V3DLONG pagesz;
-    pagesz = sz01*sz0;
-    try {im_transfer = new unsigned char [pagesz];}
-    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-    for(int ix=0;ix<in_sz[0];ix++)
-    {
-        for(int iy=0;iy<in_sz[1];iy++)
-        {
-            for(int iz=0;iz<in_sz[2];iz++)
-            {
-                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
-            }
-        }
-    }
-
-    for(int is=0;is<siz;is++)
-    {
-        int ix,iy,iz;
-        NeuronSWC thiss = listNeuron[is];
-        ix=int(thiss.x);
-        iy=int(thiss.y);
-        iz=int(thiss.z);
-        startx=(ix-maskRadius>=0)?(ix-maskRadius):0;
-        endx=(ix+maskRadius<in_sz[0])?(ix+maskRadius):in_sz[0];
-        starty=(iy-maskRadius>=0)?(iy-maskRadius):0;
-        endy=(iy+maskRadius<in_sz[1])?(iy+maskRadius):in_sz[1];
-        startz=(iz-maskRadius>=0)?(iz-maskRadius):0;
-        endz=(iz+maskRadius<in_sz[2])?(iz+maskRadius):in_sz[2];
-        // for the surrounding area
-        for(long iix=startx;iix<(endx);iix++)
-        {
-            for(long iiy=starty;iiy<(endy);iiy++)
-            {
-                for(long iiz=startz;iiz<(endz);iiz++)
-                {
-                    im_transfer[iiz * sz01 + iiy * sz0 + iix]=inimg1d[iiz * sz01 + iiy * sz0 + iix];
-
+                    image_mip[iy*N + ix] = inimg1d[N*M*iz + N*iy + ix];
+                    max_mip = inimg1d[N*M*iz + N*iy + ix];
                 }
             }
         }
     }
-    //erosion
-    if(erosion_kernel_size)
-        erosionImg(im_transfer,in_sz,erosion_kernel_size);
-    //save img
-    simple_saveimage_wrapper(callback, outpath.toStdString().c_str(),(unsigned char *)im_transfer,in_sz,1);
-    //release pointer
-     if(im_transfer) {delete []im_transfer; im_transfer=0;}
+    simple_saveimage_wrapper(callback,outpath.toStdString().c_str(), (unsigned char *)image_mip, mip_sz, 1);
+    if(image_mip) {delete []image_mip; image_mip = 0;}
 }
+
 NeuronTree removeDupNodes(NeuronTree nt,V3DLONG removed_dist_thre)
 {
     QList<NeuronSWC> listNeuron =  nt.listNeuron;
@@ -1097,6 +1064,67 @@ NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels)
     }
     return nt_out;
 }
+void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int useNeighborArea)
+{
+    cout<<"Terafly dataset: get intensity of each node in a neuron tree"<<endl;
+    QList<NeuronSWC>& listNeuron =  nt.listNeuron;
+    //load terafly img
+    V3DLONG siz = listNeuron.size();
+    for (V3DLONG i=0;i<siz;i++)
+         listNeuron[i].level=1;
+    V3DLONG *in_zz = 0;    if(!callback.getDimTeraFly(imgPath,in_zz)){cout<<"can't load terafly img"<<endl;return;}
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+        NeuronSWC s = listNeuron[i];
+        //get a block
+        long start_x,start_y,start_z,end_x,end_y,end_z;
+        int block_size=8;
+        start_x = s.x - block_size; if(start_x<0) start_x = 0;
+        end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
+        start_y =s.y - block_size;if(start_y<0) start_y = 0;
+        end_y = s.y + block_size;if(end_y > in_zz[1]) end_y = in_zz[1];
+        start_z = s.z - block_size;if(start_z<0) start_z = 0;
+        end_z = s.z + block_size;if(end_z > in_zz[2]) end_z = in_zz[2];
+
+        V3DLONG *in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x+1;
+        in_sz[1] = end_y - start_y+1;
+        in_sz[2] = end_z - start_z+1;
+        in_sz[3]=in_zz[3];
+        V3DLONG sz01 = in_sz[0] * in_sz[1];
+        V3DLONG sz0 = in_sz[0];
+        unsigned char * inimg1d = 0;
+        V3DLONG pagesz= in_sz[0] * in_sz[1]*in_sz[2]*in_sz[3];
+        try {inimg1d = new unsigned char [pagesz];}
+        catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+        inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+        if(inimg1d==NULL){ cout<<"Crop fail"<<endl;continue; }
+
+        V3DLONG thisx,thisy,thisz;
+        thisx=s.x-start_x;
+        thisy=s.y-start_y;
+        thisz=s.z-start_z;
+        listNeuron[i].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+        //refine the node to local maximal(surrounding area)
+        double imgave,imgstd;
+        mean_and_std(inimg1d,pagesz,imgave,imgstd);
+        if(useNeighborArea!=0)
+        {
+            NeuronSWC out=nodeRefine(inimg1d,thisx,thisy,thisz,in_sz,useNeighborArea);
+            if(listNeuron[i].level+imgstd<out.level)
+            {
+                listNeuron[i].level=out.level;
+                listNeuron[i].x=start_x+out.x;
+                listNeuron[i].y=start_y+out.y;
+                listNeuron[i].z=start_z+out.z;
+            }
+        }
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    }
+    //release pointer
+    if(in_zz) {delete []in_zz; in_zz=0;}
+}
 void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea)
 {
     cout<<"Get intensity of each node in a neuron tree"<<endl;
@@ -1114,7 +1142,7 @@ void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1
     V3DLONG sz01 = in_sz[0] * in_sz[1];
     V3DLONG sz0 = in_sz[0];
     double imgave,imgstd;
-    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
     mean_and_std(inimg1d,total_size,imgave,imgstd);
     cout<<"mean: "<<imgave<<", and std: "<<imgstd<<endl;
     for(V3DLONG i=0;i<siz;i++)
