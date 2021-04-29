@@ -81,9 +81,37 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+	if (func_name == tr("batch_process"))
 	{
-		v3d_msg("To be implemented.");
+		QString inputFolderQ = infiles.at(0);
+		QString inputRootIDQ = inparas.at(0);
+		QString inputThresQ = inparas.at(1);
+		QString outputFolderQ = outfiles.at(0);
+
+		QDir inputDir(inputFolderQ); 
+		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameListQ = inputDir.entryList();
+
+		QDir outputDir(outputFolderQ);
+		if (!outputDir.exists()) outputDir.mkpath(".");
+
+		for (auto& fileNameQ : fileNameListQ)
+		{
+			if (fileNameQ.endsWith(".swc"))
+			{
+				QString inputFullNameQ = inputFolderQ + "\\" + fileNameQ;
+				NeuronTree inputTree = readSWC_file(inputFullNameQ);
+				NeuronTree outputTree = SortSWC_pipeline(inputTree.listNeuron, inputRootIDQ.toInt(), inputThresQ.toDouble());
+				QString outputFullNameQ = outputFolderQ + "\\" + fileNameQ;
+				writeSWC_file(outputFullNameQ, outputTree);
+			}
+		}
+	}
+	else if (func_name == tr("usage"))
+	{
+		cout << endl << "Usage: .\\vaa3d_msvc.exe /x IVSCC_sort_swc /f batch_process /i <absolute input folder path> /p <root ID> <connecting threshold> /o <absolute output folder path>" << endl;
+		cout << "Note: 1. set <root ID> = 0 if using the 1st root node in the file." << endl;
+		cout << "      2. set <connecting threshold> = 0 if no new link is to be created; -1 if forcing all nodes to be connected." << endl << endl;
 	}
 	else return false;
 
