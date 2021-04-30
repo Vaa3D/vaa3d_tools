@@ -432,7 +432,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         //read para list
         int Min_Interpolation_Pixels=(inparas.size()>=1)?atoi(inparas[0]):2;
         int Shift_Pixels=(inparas.size()>=2)?atoi(inparas[1]):1;
-        int min_bouton_dist=(inparas.size()>=3)?atoi(inparas[2]):3;
+        int min_bouton_dist=(inparas.size()>=3)?atoi(inparas[2]):4;
         int allnode=(inparas.size()>=4)?atoi(inparas[3]):0;
 
         //read input swc to neuron-tree
@@ -462,7 +462,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt_interpolated);
         cout<<"seg list size: "<<nt_nslist.seg.size()<<endl;
         //4. peak detection
-        QList <CellAPO> apolist;apolist.clear();
+        QList <CellAPO> apolist_init_boutons;apolist_init_boutons.clear();
         for(int i=0;i<nt_nslist.seg.size();i++)
         {
             V_NeuronSWC curseg=nt_nslist.seg.at(i);
@@ -474,39 +474,35 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
                 if(outflag[io])
                 {
                     CellAPO apo;
-                    apo.n=apolist.size()+1;
-                    apo.x=curseg.row[io].x;
-                    apo.y=curseg.row[io].y;
-                    apo.z=curseg.row[io].z;
+                    apo.n=apolist_init_boutons.size()+1;
+                    apo.x=curseg.row[io].x; apo.y=curseg.row[io].y; apo.z=curseg.row[io].z;
                     apo.intensity=curseg.row[io].r;
-                    apo.volsize=curseg.row[io].level;
-                    apo.color.r=200;
-                    apo.color.g=0;
-                    apo.color.b=0;
-                    apo.comment="bouton site";
-                    apolist.push_back(apo);
+                    apo.volsize=curseg.row[io].level; //intensity value
+                    apo.color.r=200; apo.color.g=0; apo.color.b=0;
+                    apo.comment="Initial bouton site";
+                    apolist_init_boutons.push_back(apo);
                 }
             }
         }
-        cout<<"initial peaks: "<<apolist.size()<<endl;
+        cout<<"initial peaks: "<<apolist_init_boutons.size()<<endl;
         //5.
         // out to apo
-        QList <CellAPO> apolist_out;apolist_out.clear();
-        apolist_out=rmNearMarkers(apolist,min_bouton_dist);
+        QList <CellAPO> apo_boutons;apo_boutons.clear();
+        apo_boutons=rmNearMarkers(apolist_init_boutons,min_bouton_dist);
         //list to neurontree
-        NeuronTree nt_interpolated2;nt_interpolated2.listNeuron.clear();nt_interpolated2.hashNeuron.clear();
-        nt_interpolated2=V_NeuronSWC_list__2__NeuronTree(nt_nslist);
+        NeuronTree nt_intensity;nt_intensity.listNeuron.clear();nt_intensity.hashNeuron.clear();
+        nt_intensity=V_NeuronSWC_list__2__NeuronTree(nt_nslist);
         //bouton out to swc
-        NeuronTree nt_interpolated3;nt_interpolated3.listNeuron.clear();nt_interpolated3.hashNeuron.clear();
-        nt_interpolated3.copy(nt_interpolated2);
-        for(V3DLONG i=0;i<nt_interpolated3.listNeuron.size();i++)
+        NeuronTree nt_bouton;nt_bouton.listNeuron.clear();nt_bouton.hashNeuron.clear();
+        nt_bouton.copy(nt_intensity);
+        for(V3DLONG i=0;i<nt_bouton.listNeuron.size();i++)
         {
-            for(V3DLONG b=0;b<apolist_out.size();b++)
+            for(V3DLONG b=0;b<apo_boutons.size();b++)
             {
-                if(nt_interpolated3.listNeuron[i].x==apolist_out[b].x
-                        &&nt_interpolated3.listNeuron[i].y==apolist_out[b].y
-                        &&nt_interpolated3.listNeuron[i].z==apolist_out[b].z)
-                {nt_interpolated3.listNeuron[i].type=4;break;}
+                if(float(nt_bouton.listNeuron[i].x)==apo_boutons[b].x
+                        &&float(nt_bouton.listNeuron[i].y)==apo_boutons[b].y
+                        &&float(nt_bouton.listNeuron[i].z)==apo_boutons[b].z)
+                {nt_bouton.listNeuron[i].type=4;break;}
             }
         }
         //crop 3D bouton block and mip image
@@ -514,17 +510,20 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         {
             //get out path
             string out_path=outfiles[0];
-            int bouton_crop_size=(inparas.size()>=5)?atoi(inparas[4]):8;
+            int bouton_half_crop_size=(inparas.size()>=5)?atoi(inparas[4]):8;
             int get_mip=(inparas.size()>=6)?atoi(inparas[5]):0;
-            getBoutonBlock(callback,inimg_file,apolist_out,out_path,bouton_crop_size,get_mip);
+            getBoutonBlock(callback,inimg_file,apo_boutons,out_path,bouton_half_crop_size,get_mip);
+            getBoutonBlockSWC(nt_bouton,out_path,bouton_half_crop_size);
         }
         //save to file: intensity_file, bouton_apo_file, bouton_eswc_file
         string out_swc_file=(outfiles.size()>=2)?outfiles[1]:(inswc_file + "_intensity.eswc");
         string out_bouton_apo_file=(outfiles.size()>=3)?outfiles[2]:(inswc_file + "_bouton.apo");
         string out_bouton_swc_file=(outfiles.size()>=4)?outfiles[3]:(inswc_file + "_bouton.eswc");
-        writeESWC_file(QString::fromStdString(out_swc_file),nt_interpolated2);
-        writeESWC_file(QString::fromStdString(out_bouton_swc_file),nt_interpolated3);
-        writeAPO_file(QString::fromStdString(out_bouton_apo_file),apolist_out);
+        string out_init_bouton_apo_file=(outfiles.size()>=5)?outfiles[4]:(inswc_file + "_initial_bouton.eswc");
+        writeESWC_file(QString::fromStdString(out_swc_file),nt_intensity);
+        writeESWC_file(QString::fromStdString(out_bouton_swc_file),nt_bouton);
+        writeAPO_file(QString::fromStdString(out_bouton_apo_file),apo_boutons);
+        writeAPO_file(QString::fromStdString(out_init_bouton_apo_file),apolist_init_boutons);
     }
     else if (func_name == tr("BoutonAsPeak_Image"))
     {
@@ -669,27 +668,6 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
     }
     else if (func_name == tr("help"))
     {
-        /* Version one,20200801
-        1.Basic idea: get the intensity value of the reconstruction nodes and consider big intensity changes among child-parent nodes as bouton.
-        2.If threshold of the intensity changes is low, there will be more bouton results.
-        3.Input swc need to be refined, if the reconstructed nodes don't place at the center of the signal, the performance will be extremly ugly.
-        (Maybe consider to add refinement in future version)
-        Future:
-        1. For testing purpose:
-               1)crop img blocks and swc_in_block,in this way, the performance is easy to compute and visualize;
-               2)(Vertical)move reconstruction nodes to signal, which is so-called refinement;
-               3)(Horizontal)move reconstruction nodes to a local maxmimal intensity point, need to define the surrounding region, and may also need a purning afterwards.
-               4) The threshold parameter is a place to improve the overall performance. (maybe the avearge of the intensity of listneuron)
-        */
-        /*
-         *Version two:20200828
-         *1.split swc into block, mask the signal,refine the swc into center line: refinement
-         *2.get the candidate bouton
-         *3.use the way smartTracing did to decompose
-         *4. use wavelet representation
-         *5.use mRMR get features
-         *6.Use SVM or CNN classifier the subvolume into bouton and non-bouton
-        */
         printHelp();
 	}
 	else return false;
