@@ -115,6 +115,10 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         arbor_qc(inputfolder, type_csv, flag_sort, outfolder);
 
     }
+    else if (func_name == tr("truncate"))
+    {
+        arbor_truncate(input, output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

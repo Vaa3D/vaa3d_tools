@@ -2239,7 +2239,7 @@ void tree_structure(const V3DPluginArgList & input, V3DPluginArgList & output,V3
     QList<QString> path_split=neuron_id_split.split(".");
     QString neuron_split1=path_split.first();
     ofstream myfile;
-    myfile.open ("/home/penglab/Desktop/sujun/analysis/arbor/LM.txt",ios::out | ios::app );
+    myfile.open ("/home/penglab/Desktop/LM_CV.txt",ios::out | ios::app );
     myfile <<neuron_split1.toStdString().c_str()<<" "<<mindepth<<" "<<bif_avg_angle<<" "<<bif_max_angle<<" "<<avg_path<<" "<<degree<<
           " "<<asy<<endl;
     myfile.close();
@@ -2540,7 +2540,7 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
     }
     else{
         if((feas[0]>=21)&&(feas[0]<=125)&&(feas[1]>=6.132)&&(feas[1]<=38.328)&&(feas[2]>=6.353)&&(feas[2]<=46.256)&&(feas[3]>=5.592)&&(feas[3]<=39.227)
-                &&(feas[4]>=68.541)&&(feas[4]<=662.401)&&(feas[5]>=5)&&(feas[5]<=29)){
+                &&(feas[4]>=68.434)&&(feas[4]<=662.401)&&(feas[5]>=5)&&(feas[5]<=29)){
             result<<","<<1<<endl;
         }
         else{
@@ -2548,6 +2548,168 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
         }
     }
     result.close();
+}
+
+
+
+void arbor_truncate(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback){
+    vector<char*> in, inparas, outfiles;
+    if(input.size() >= 1) in = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString swc_file = in.at(0);
+    NeuronTree nt = readSWC_file(swc_file);
+    V3DLONG newrootid = VOID;
+    double thres = VOID;
+    NeuronTree nt_sort = my_SortSWC(nt, newrootid, thres);
+    int n=nt_sort.listNeuron.size();
+    //cube calculation
+    QVector<int> cube_count(n,0);
+    QList<int> nlist;
+    for(int i=0; i<n; i++){
+        NeuronSWC node=nt_sort.listNeuron.at(i);
+        nlist.append(node.n);
+        for(int j=0; j<n; j++){
+            double d_tmp=dist(nt_sort.listNeuron.at(i),nt_sort.listNeuron.at(j));
+            if(d_tmp<10){
+                cube_count[i]++;
+            }
+        }
+    }
+    QList<int> flag;
+    int start_point;
+    QList<int> keep_ids;
+    QList<int> nlist2,plist;
+    for(int i=0; i<n; i++){
+        if(nt_sort.listNeuron.at(i).pn == -1){
+            start_point=i;
+        }
+        if(cube_count[i]>6){
+            flag.append(1);
+            keep_ids.append(i);
+            nlist2.append(nt_sort.listNeuron.at(i).n);
+            plist.append(nt_sort.listNeuron.at(i).pn);
+        }
+        else{
+            flag.append(0);
+        }
+    }
+
+    // ensure the completeness
+    QVector<QVector<V3DLONG> > children;
+    QHash<int, int> parent;
+    parent.clear();
+    children = QVector< QVector<V3DLONG> >(n, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<n;i++)
+    {
+        int pid = nlist.lastIndexOf(nt_sort.listNeuron.at(i).pn);
+        parent.insert(i,pid);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+
+
+    //check if broken
+    bool broken=false;
+    QList<int> Ps;
+    for(int i=0; i<keep_ids.size();i++){
+        int pid=nlist2.lastIndexOf(plist[i]);
+        if (pid<0){
+            Ps.append(keep_ids[i]);
+        }
+    }
+    if (Ps.size()>1){
+        broken=true;
+    }
+
+    NeuronTree result;
+    if(broken){
+        cout<<"broken"<<endl;
+        QList<int> add_ID;
+        for(int i=0;i<Ps.size();i++){
+            int pid=Ps[i];
+            cout<<"flag pid:"<<flag[pid]<<endl;
+            int change_state=0;
+            QList<int> adds_tmp;
+            QList<int> twointerval;
+            while(parent.contains(pid)){
+                int previous=pid;
+                pid=parent[pid];
+                cout<<"flag:"<<flag[pid]<<endl;
+                if (((flag[previous]==1)&&(flag[pid]==0))|((flag[previous]==0)&&(flag[pid]==1))){
+                    change_state++;
+                    if(flag[pid]==1){
+                        twointerval.append(previous);
+                    }
+                }
+                cout<<"change state:"<<change_state<<endl;
+                if(change_state%2==1){
+                    adds_tmp.append(pid);
+                }
+            }
+            cout<<"add:"<<adds_tmp.size()<<endl;
+            cout<<"add elements:";
+            for(int k=0; k<adds_tmp.size(); k++){
+                cout<<adds_tmp.at(k)<<",";
+            }
+            cout<<endl;
+            if(floor(change_state/2)>0){
+                int stop_index;
+                if(change_state%2==1){
+                    stop_index=adds_tmp.lastIndexOf(twointerval[(change_state-3)/2]);
+                    cout<<"pid:"<<twointerval[(change_state-3)/2]<<endl;
+                }
+                else{
+                    stop_index=adds_tmp.lastIndexOf(twointerval[change_state/2-1]);
+                    cout<<"pid:"<<twointerval[change_state/2-1]<<endl;
+                }
+                //cout<<"stop:"<<stop_index<<endl;
+                for(int j=0;j<stop_index+1;j++){
+                    add_ID.append(adds_tmp.at(j));
+                }
+            }
+            adds_tmp.clear();
+            twointerval.clear();
+            //cout<<"change state:"<<change_state<<endl;
+        }
+        add_ID=add_ID.toSet().toList();
+        if(add_ID.size()>0){
+            for(int i =0; i<add_ID.size();i++){
+                NeuronSWC node=nt_sort.listNeuron.at(add_ID.at(i));
+                result.listNeuron.append(node);
+            }
+        }
+        for(int i=0;i<keep_ids.size();i++){
+            NeuronSWC node=nt_sort.listNeuron.at(keep_ids.at(i));
+            result.listNeuron.append(node);
+        }
+    }
+    else{
+        for(int i=0;i<keep_ids.size();i++){
+            NeuronSWC node=nt_sort.listNeuron.at(keep_ids.at(i));
+            result.listNeuron.append(node);
+        }
+
+    }
+
+    QString outputfolder,outname;
+    QString swc_name=swc_file.split("/").last();
+    QString id=swc_name.split(".").first();
+    if(output.size() >= 1){
+        outfiles = *((vector<char*> *)output.at(0).p);
+        outputfolder= QString(outfiles.at(0));
+        outname=outputfolder+"/"+swc_name;
+    }
+    else{
+        QStringList pathlist=swc_file.split("/");
+        outputfolder=pathlist[0];
+        for(int i=1; i<pathlist.size()-1;i++){
+            outputfolder="/"+pathlist.at(i);
+        }
+        outname=outputfolder+"/"+id+".swc";
+    }
+    cout<<"size:"<<result.listNeuron.size()<<endl;
+    writeSWC_file(outname,result);
 }
 
 
