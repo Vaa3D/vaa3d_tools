@@ -180,7 +180,7 @@ void ReconOperator::removeDupedNodes()
 				
 				// ------- Remove type1 nodes ------- //
 				// This block exists because of the segment decomposition - [NeuronTree__2__V_NeuronSWC_list] in neuron_format_converter.cpp.
-				// The decomposition algorithm seems to result in a more complicated situation at soma location where many segments come to connect to the same node, and that a lot more (more than the number of connected segments) repeated nodes at soma are created. 
+				// The decomposition algorithm seems to create a more complicated situation at soma location where many segments come to connect to the same, and that a lot more (more than the number of connected segments) repeated nodes at soma are created. 
 				// [NeuronStructUtil::removeRedunNodes] not only cleans up redundant nodes but also transform soma into a normal branching node, making it misrecongnized in line 212: [profiledTree::findNearestSegEndNodeID].
 				// As a result, the whole neuron tree becomes green after the 2nd run and so on.
 				vector<ptrdiff_t> somaRemoveLocs;

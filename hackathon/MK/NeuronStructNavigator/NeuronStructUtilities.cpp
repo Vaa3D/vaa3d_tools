@@ -395,8 +395,8 @@ void NeuronStructUtil::removeRedunNodes(profiledTree& inputProfiledTree)
 				delLocs.insert(childLoc);
 				nodeIDMarked.insert(childNode.n);
 				
-				// Not sure the following is still needed. The for-loop above seems to handle all cases already, but may be slower.
-				// If theres only this part without the for-loop, it doesn't take care of the case where there are 3+ redundant nodes being examined structurally backward.
+				// Not sure the following is still needed. The for-loop above seems to handle all cases already, although it may be slower.
+				// If there's only this part without the for-loop, it doesn't take care of the case where there are 3+ redundant nodes when [nodeID] goes structurally backward.
 				// -- Need test to decide whether to keep this part.
 				if (inputProfiledTree.node2childLocMap.find(childNode.n) != inputProfiledTree.node2childLocMap.end())
 				{

@@ -68,6 +68,50 @@ int main(int argc, char* argv[])
 			cout << "time elapsed: " << duration << endl << endl;
 		}
 	}
+	else if (!funcName.compare("formatCorrect"))
+	{
+		ifstream infile(paras.at(0));
+		ofstream outfile(paras.at(1));
+		if (infile.is_open())
+		{
+			string line;
+			while (getline(infile, line))
+			{
+				cout << line << " ";
+				bool changed = false;
+				string newLine;
+				int underScoreCount = 0;
+				for (int i = 0; i < line.length(); ++i)
+				{
+					if (line.at(i) == '_')
+					{
+						++underScoreCount;
+						if (underScoreCount > 1)
+						{
+							newLine += "-";
+							++underScoreCount;
+							continue;
+						}
+					}
+					else if (line.at(i) == 'x')
+					{
+						newLine += "X";
+						continue;
+					}
+					else if (line.at(i) == 'y')
+					{
+						newLine += "Y";
+						continue;
+					}
+
+					newLine += line.at(i);
+				}
+
+				cout << newLine << endl;
+				outfile << newLine << endl;
+			}
+		}
+	}
 	else if (!funcName.compare("HUSTrotate"))
 	{
 		QDir inputFolderQ(QString::fromStdString(paras.at(0)));

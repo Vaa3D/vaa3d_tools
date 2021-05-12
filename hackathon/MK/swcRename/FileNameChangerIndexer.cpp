@@ -13,7 +13,7 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 		QDir newDir(newSavingPathQ);
 		if (!newDir.exists()) newDir.mkpath(".");
 
-		QString unProcessedSavingPathQ = this->rootPath + "\\files_MoreThan1RootNode";
+		QString unProcessedSavingPathQ = this->rootPath + "\\noSomaOrMoreThan1Soma";
 		QDir unProcessedDir(unProcessedSavingPathQ);		
 		
 		string indexFileName = this->rootPath.toStdString() + "\\formalName_WMU_map.csv";
@@ -154,7 +154,7 @@ bool FileNameChangerIndexer::getCoordsFromSWC(const QList<NeuronSWC>& inputNodes
 	somaCoords.clear();
 	for (auto& node : inputNodes)
 	{
-		if (node.parent == -1)
+		if (node.parent == -1 && node.type == 1)
 		{
 			somaCoords.push_back(node.z);
 			somaCoords.push_back(node.x);
