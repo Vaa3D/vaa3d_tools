@@ -55,4 +55,5 @@ void arbor_main(V3DPluginCallback2 &callback, QWidget *parent);
 void arbor_qc(QString input1, QString input2, bool flag_sort, QString OutputFolder);
 void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_celltype,
                     QString out, QHash <QString, QString> swc_region, bool flag_sort);
+void arbor_truncate(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 & callback);
 #endif // FEATURE_ANALYSIS_H
