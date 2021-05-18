@@ -52,7 +52,9 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 
 				QString oldFullNameQ = this->rootPath + "\\" + fileNameQ;
 				QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(newFileName);
+				QString newFullBaseRenameQ = this->rootPath + "\\" + QString::fromStdString(newFileName);
 				QString newFullNameQ = newFullBaseNameQ + ".swc";
+				QString newFullRenameQ = newFullBaseRenameQ + ".swc";
 				
 				NeuronTree inputTree = readSWC_file(oldFullNameQ);
 				vector<float> somaCoords;
@@ -108,11 +110,15 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 					QList<CellAPO> somaList;
 					somaList.push_back(somaMarker);
 					QString fullAPOnameQ = newFullBaseNameQ + ".apo";
-					writeAPO_file(fullAPOnameQ, somaList);
+					QString fullAPOrenameQ = newFullBaseRenameQ + ".apo";
+					//writeAPO_file(fullAPOnameQ, somaList);
+					writeAPO_file(fullAPOrenameQ, somaList);
 
 					QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
+					QString outputANOfullRenameQ = newFullBaseRenameQ + ".ano";
 					QFile anoFile;
-					anoFile.setFileName(outputANOfullNameQ);
+					//anoFile.setFileName(outputANOfullNameQ);
+					anoFile.setFileName(outputANOfullRenameQ);
 					anoFile.open(QIODevice::ReadWrite);
 					QTextStream anoOut(&anoFile);
 					QString swcNameQ = QString::fromStdString(newFileName) + ".swc";
@@ -297,7 +303,7 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 		QDir newDir(newSavingPathQ);
 		if (!newDir.exists()) newDir.mkpath(".");
 
-		QString unProcessedSavingPathQ = this->rootPath + "\\files_MoreThan1RootNode";
+		QString unProcessedSavingPathQ = this->rootPath + "\\noSomaOrMoreThan1Soma";
 		QDir unProcessedDir(unProcessedSavingPathQ);
 
 		string indexFileName = this->rootPath.toStdString() + "\\formalName_SEU_map.csv";

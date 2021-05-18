@@ -30,18 +30,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
-	for (int i = 2; i < argc; ++i)
+	/*for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "nearTree";
+	string funcName = "groupTree";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -413,24 +413,59 @@ int main(int argc, char* argv[])
 		int nearestNodeID = inputProfiledTree.findNearestSegEndNodeID(*apoList.begin());
 		cout << nearestNodeID << endl;
 	}
-	else if (!funcName.compare("removeRedunNode"))
+	else if (!funcName.compare("groupTree"))
 	{
-		NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
-		//QString inputFileNameQ = "C:\\Users\\hkuo9\\Desktop\\the_cell_for_test_preprocess_\\dupSegs_composite4\\191812_3801-X5383-Y20989_finalized.ano.eswc";
-		//NeuronTree inputTree = readSWC_file(inputFileNameQ);
-		profiledTree inputProfiledTree(inputTree);
+		//NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
+		QString inputTreeFullNameQ = "C:\\Users\\hkuo9\\Desktop\\test1\\17109_4772-X9038-Y27257.ano.eswc";
+		NeuronTree inputTree = readSWC_file(inputTreeFullNameQ);
+		NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+		profiledTree inputProfiledTree(noDupSegTree);
+		cout << "original seg num: " << inputProfiledTree.segs.size() << endl;
 		NeuronStructUtil::removeRedunNodes(inputProfiledTree);
-		writeSWC_file(QString::fromStdString(paras.at(0)) + "_redunRemoved.swc", inputProfiledTree.tree);
-		//writeSWC_file("C:\\Users\\hkuo9\\Desktop\\the_cell_for_test_preprocess_\\dupSegs_composite4\\191812_3801-X5383-Y20989_finalized.ano.eswc_dupRemoved.swc", inputProfiledTree.tree);
-	}
-	else if (!funcName.compare("dupNodeRemove"))
-	{
-		NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
-		profiledTree inputProfiledTree(inputTree);
-		//inputProfiledTree.assembleSegs2singleTree(stoi(paras.at(1)));
-		NeuronStructUtil::removeDupBranchingNodes(inputProfiledTree);
-		writeSWC_file(QString::fromStdString(paras.at(0)) + "_dupRemoved.swc", inputProfiledTree.tree);
-		cout << "final segment number: " << inputProfiledTree.segs.size() << endl;
+
+		vector<ptrdiff_t> somaRemoveLocs;
+		for (auto& node : inputProfiledTree.tree.listNeuron)
+		{
+			if (node.type == 1)
+			{
+				if (node.parent == -1)
+				{
+					somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+					//for (auto& childLoc : inputProfiledTree.node2childLocMap.at(node.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = -1;
+				}
+				else
+				{
+					if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1) somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+					else
+					{
+						node.parent = -1;
+						node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+					}
+				}
+			}
+		}
+		sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
+		for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
+		cout << inputTree.listNeuron.size() << " " << inputProfiledTree.tree.listNeuron.size() << endl;
+		//writeSWC_file(QString::fromStdString(paras.at(0)) + "_redunRemoved.swc", inputProfiledTree.tree);
+		QString saveNameQ = "C:\\Users\\hkuo9\\Desktop\\test1\\type1removed\\17109_4772-X9038-Y27257.ano.swc";
+		writeSWC_file(saveNameQ, inputProfiledTree.tree);
+
+		boost::container::flat_map<int, profiledTree> groupedTrees = myExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
+		if (groupedTrees.empty())
+		{
+			cout << "error encountered" << endl;
+		}
+		else
+		{
+			for (boost::container::flat_map<int, profiledTree>::iterator it = groupedTrees.begin(); it != groupedTrees.end(); ++it)
+			{
+				//QString saveNameQ = QString::fromStdString(paras.at(1)) + "\\" + QString::fromStdString(to_string(it->first)) + ".swc";
+				QString saveNameQ = "C:\\Users\\hkuo9\\Desktop\\test1\\groupedTrees\\" + QString::fromStdString(to_string(it->first)) + ".swc";
+				writeSWC_file(saveNameQ, it->second.tree);
+			}
+		}
+		std::system("pause");
 	}
 	else if (!funcName.compare("treeRedirect"))
 	{

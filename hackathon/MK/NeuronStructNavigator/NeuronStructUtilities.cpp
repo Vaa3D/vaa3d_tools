@@ -539,8 +539,14 @@ bool NeuronStructUtil::multipleSegsCheck(const NeuronTree& inputTree)
 
 NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 {
-	// **************** Remove simiple shadow segments **************** //
-	// -- Simple shadow segments are simply identical segments. 
+	// This method removes any shadowing segment without altering the structure. 
+	// There are 3 types of segments to be removed in this method:
+	//		1. Twin segment
+	//		2(a) Composite shadow segment
+	//		2(b) Embedded shadow segment
+	// This method has been greatly tested and is unlikely to be the cause of errors in the call chain.
+
+	// ****************** Remove identical segments (twin segments) ******************* //
 	profiledTree inputProfiledTree(inputTree);
 	vector<segUnit> filteredSegs;
 	for (auto& seg : inputProfiledTree.segs)
@@ -552,11 +558,12 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 	SAME_SEG_FOUND:
 		continue;
 	}
-	// **************************************************************** //
+	// ******************************************************************************** //
 
-	// ***************** Remove composite shadow segments ***************** //
-	// -- Composite shadow segments are: 1) shadow segments that align through multiple segments
-	//									 2) partial shadow segments - embbeded segments
+	// ***************** Remove composite or embedded shadow segments ***************** //
+	// Composite shadow segment is a segment that aligns through multiple segments without bridging situation.
+	// Embbeded shadow segment a segment that is shorter and hides within another segment
+
 	NeuronTree simpleShadowcleanedTree;
 	for (auto& outputSeg : filteredSegs) simpleShadowcleanedTree.listNeuron.append(outputSeg.nodes);
 	profiledTree profiledSimpleShadowCln(simpleShadowcleanedTree);
@@ -573,23 +580,24 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 			// a. Essential segment found - singular node that results in non-overlapping edges.
 			if (range.second - range.first == 1) goto TO_THE_NEXT_SEG; 
 			
-			// Record all involved segments other than self for every node in the segment in the same order.
+			// Record all segments that are involved with the current segment in the order of the current segment's node in [coordKey2segIDs]: vector<[segIDsCurrNode]>.
+			// Note, the current segment ID is not included.
 			boost::container::flat_set<int> segIDsCurrNode;
 			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
 				if (it->second != seg.first) segIDsCurrNode.insert(it->second);
 			coordKey2segIDs.push_back(segIDsCurrNode);
 		}
 
-		// b. If a segment is an embedded shadow segment, it should have the same segment ID running through every node.
+		// b. Check for 2(b) embedded shadow segment.
 		for (auto& segID : coordKey2segIDs.at(0))
 		{
 			for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
 				if (setIt->find(segID) == setIt->end()) goto NOT_EMBEDDED_SEG;
-			compositeDupSegIDs.insert(seg.first); // Found other segment overlapping throughout the current segment, i.e., the current segment is an embedded segment, or "partial shadow segment".
+			compositeDupSegIDs.insert(seg.first); // Found other segment fully overlapping throughout the current segment, i.e., the current segment is an 2), embedded shadow segment.
 			goto TO_THE_NEXT_SEG;
 		}
 
-		// c. If 2 adjacent nodes have some segment IDs that cannot be found in the other node, then this segment is a bridge segment and cannot be removed.
+		// c. If two adjacent nodes have some segment IDs that cannot be found in the other node, then this segment is a bridge segment and cannot be removed.
 	NOT_EMBEDDED_SEG:
 		for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
 		{
@@ -603,9 +611,10 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 				}
 			}
 		}
-		compositeDupSegIDs.insert(seg.first);
+		compositeDupSegIDs.insert(seg.first); // This means the current segment is a 2(a) composite shadow segment.
 
 	TO_THE_NEXT_SEG:
+		coordKey2segIDs.clear();
 		continue;
 	}
 
@@ -617,7 +626,7 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 	}
 	std::sort(compositeDelLocs.rbegin(), compositeDelLocs.rend());
 	for (auto& loc : compositeDelLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
-	// ******************************************************************** //
+	// ******************************************************************************** //
 
 	return profiledSimpleShadowCln.tree;
 }

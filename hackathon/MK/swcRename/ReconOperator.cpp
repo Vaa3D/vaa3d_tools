@@ -121,6 +121,9 @@ void ReconOperator::removeDupedNodes()
 	QDir outputDir(outputFolderQ);
 	if (!outputDir.exists()) outputDir.mkpath(".");
 
+	QString errorFolderQ = this->rootPath + "\\notAssembled\\";
+	QDir errorDir(errorFolderQ);
+
 #ifdef SUBTREE_DEBUG
 	QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
 	QDir subTreeDir(subTreeFolderQ);
@@ -129,6 +132,12 @@ void ReconOperator::removeDupedNodes()
 	QString subTreeAssembleFolderQ = this->rootPath + "\\subTrees_assemmbled\\";
 	QDir subTree_assembleDir(subTreeAssembleFolderQ);
 	if (!subTree_assembleDir.exists()) subTree_assembleDir.mkpath(".");
+#endif
+
+#ifdef TYPE1_REMOVE
+	QString noType1FolderQ = this->rootPath + "\\type1removed\\";
+	QDir noType1Dir(noType1FolderQ);
+	if (!noType1Dir.exists()) noType1Dir.mkpath(".");
 #endif
 
 	for (auto& file : fileList)
@@ -188,24 +197,63 @@ void ReconOperator::removeDupedNodes()
 				{
 					if (node.type == 1)
 					{
-						if (node.parent == -1) somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-						else
+						if (node.parent == -1)
+						{	
+							// soma node (type 1, root node) 
+							somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+							if (inputProfiledTree.node2childLocMap.find(node.n)!=inputProfiledTree.node2childLocMap.end())
+								for (auto& childLoc : inputProfiledTree.node2childLocMap.at(node.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = -1;
+						}
+						else				  
 						{
-							if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1) somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+							// type 1, but not a root.
+							if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1) 
+								// The child node type = 1.
+								somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 							else
 							{
-								node.parent = -1;
-								node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+								// The child node type is not 1, taking out type 1 nodes stops here. Changing that child node to root.
+								for (auto& childNodeLoc : inputProfiledTree.node2childLocMap.at(node.n))
+								{
+									inputProfiledTree.tree.listNeuron[childNodeLoc].parent = -1;
+									//node.parent = -1;
+									//node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+								}
+								somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 							}
 						}
 					}
 				}
-				sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
-				for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
+				if (somaRemoveLocs.size() > 0)
+				{
+					sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
+					for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
+				}
+#ifdef TYPE1_REMOVE
+				QString noType1NameQ = noType1FolderQ + "\\" + baseName + "_noType1.swc";
+				writeSWC_file(noType1NameQ, inputProfiledTree.tree);
+#endif
 				// -- END of [Remove type1 nodes] -- //
 
 				clock_t start = clock();
 				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
+				if (connectedTrees.empty())
+				{
+					cout << " -- There's an error in this cell structure. Skip to the next cell." << endl << endl;
+
+					if (!errorDir.exists()) errorDir.mkpath(".");
+					QString inputFileFullNameQ = this->rootPath + "\\" + file;
+					QString renamedFullNameQ = errorFolderQ + file;
+					QFile::rename(inputFileFullNameQ, renamedFullNameQ);
+					QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
+					QString renamedAPOfullNameQ = errorFolderQ + baseName + ".apo";
+					QFile::rename(inputAPOfullNameQ, renamedAPOfullNameQ);
+					QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
+					QString renamedANOfullNameQ = errorFolderQ + baseName;
+					QFile::rename(inputANOfullNameQ, renamedANOfullNameQ);
+
+					continue;
+				}
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
 				map<int, int> tree2HeadNodeMap;
 				int minNodeID, maxNodeID;

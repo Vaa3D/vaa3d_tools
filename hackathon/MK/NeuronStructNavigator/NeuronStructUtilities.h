@@ -109,13 +109,14 @@ public:
 	static bool multipleSegsCheck(const NeuronTree& inputTree);
 
 	// Remove any segment that is "in the shadow" of other segments, i.e., every node of the segment is overlapped with nodes of other segments.
-	// The overlapping situation could be 1. Simple shadow segments: identical segments
-	//									  2. Composite shadow segments: a) shadow segments that align through multiple segments
-	//																	b) partial shadow segments - embbeded segments
+	// The overlapping situation could be 1. Identical, or "twin" segments
+	//									  2. Shadow segments: a) composite shadow segments that align through multiple segments
+	//														  b) embedded shadow segments that are shorter but still align with other segments
 	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
 
 	// Remove duplicated nodes that are linked -> child node and parent node share the same coordinate.
 	// Note: Not to be confused with [NeuronStructUtil::removeDupHeads], which is dedicated to linking geometrically connected segments altogether.
+	//       This method hasn't been thoroughly tested yet. 
 	static void removeRedunNodes(profiledTree& inputProfiledTree); 
 
 	// Use [integratedDatatypes::profiledTree::overlappedCoordMap] to search for removable head nodes and determine how links should be made.

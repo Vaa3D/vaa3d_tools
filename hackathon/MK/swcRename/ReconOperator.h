@@ -3,6 +3,7 @@
 
 //#define SUBTREE_DEBUG
 //#define DUPSEG_REMOVE
+//#define TYPE1_REMOVE
 
 #include <iostream>
 

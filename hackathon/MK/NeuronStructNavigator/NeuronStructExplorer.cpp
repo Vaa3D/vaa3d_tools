@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -98,6 +98,8 @@ void NeuronStructExplorer::node2loc_node2childLocMap(const QList<NeuronSWC>& inp
 map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap)
 {
 	// -- This method profiles all segments in a given input tree.
+	// -- Extensively tested and confirmed the correctness. *** DO NOT MAKE CHANGES TO THIS FUNCTION! *** 
+	//                                                                                                    MK, 2019
 
 	map<int, segUnit> segs;
 	vector<NeuronSWC> inputNodes;
@@ -107,6 +109,8 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 	int segCount = 0;
 	for (vector<NeuronSWC>::iterator nodeIt = inputNodes.begin(); nodeIt != inputNodes.end(); ++nodeIt)
 	{
+		// All segments are first identified with their head nodes, then followed by the segment profiling process.
+		// Therefore, headless segments (ghost segments), WILL NOT be identified. 
 		if (nodeIt->parent == -1)
 		{
 			// ------------ Identify segments ------------
@@ -358,8 +362,8 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	//              4. Merge tail clusters that have segments in common.
 	//                 -> This step is required because there is a tail cluster step after 1. and 2. Consequently, there could be duplicated clusters.
 	//
-	// -- This method has been intensively tested. Apart from the mentioned minor issue that could cause insignificant errors, overall it's running correctly. 
-	// -- Any necessary modification should be contrained in the current framework to avoid complications.
+	// -- This method has been intensively tested. Apart from the mentioned minor issue that could cause insignificant errors, overall it's running correctly and hasn't been the cause of erros in the call chain.
+	// -- Any necessary modification should be constrained in the current framework to avoid complications.
 
 	boost::container::flat_set<string> processedHeadTiles;
 	boost::container::flat_set<string> processedTailTiles;
@@ -1155,14 +1159,24 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 	boost::container::flat_map<int, profiledTree> outputTreeSizeProfiledTreeMap;
 	set<int> unGroupedSegIDs;
 	for (auto& seg : inputProfiledTree.segs) unGroupedSegIDs.insert(seg.first);
+	//cout << "Total number of segments: " << unGroupedSegIDs.size() << endl;
 
 	while (!unGroupedSegIDs.empty())
 	{
 		set<int> groupedSegIDs;
 		groupedSegIDs.insert(*unGroupedSegIDs.begin());
-		//cout << *unGroupedSegIDs.begin() << endl;
-		NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin());
+		try { NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin()); }
+		catch (int problemSwitch)
+		{
+			if (problemSwitch == 1)
+			{
+				cout << "Ghost segment found in the input tree. Grouping process has been interupted." << endl;
+				outputTreeSizeProfiledTreeMap.clear();
+				return outputTreeSizeProfiledTreeMap;
+			}
+		}
 
+		//cout << "Grouped segment IDs: ";
 		NeuronTree outputTree;
 		for (auto& id : groupedSegIDs)
 		{
@@ -1170,6 +1184,7 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 			outputTree.listNeuron.append(inputProfiledTree.segs.at(id).nodes);
 			if (unGroupedSegIDs.find(id) != unGroupedSegIDs.end()) unGroupedSegIDs.erase(unGroupedSegIDs.find(id));
 		}
+		//cout << endl;
 		profiledTree outputProfiledTree(outputTree);
 		outputTreeSizeProfiledTreeMap.insert(pair<int, profiledTree>(outputTree.listNeuron.size(), outputProfiledTree));
 		//cout << "unGroupedSegIDs size: " << unGroupedSegIDs.size() << endl << endl;
@@ -1203,12 +1218,15 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 	// ------------------------------------------------------------------------------------------ //
 
 	// --------- Examining if the current leading segment's end nodes touching other segment's body node --------- //
+	// Head Node:
 	const segUnit& curSeg = inputProfiledTree.segs.at(leadingSegID);	
 	const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(curSeg.head));
 	string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
 	pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(headCoordKey);
 	for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 	{
+		if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end()) throw 1;
+		
 		if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
 		else
 		{
@@ -1217,6 +1235,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 		}
 	}
 
+	// Tail Node(s):
 	for (auto& tailID : curSeg.tails)
 	{
 		const NeuronSWC& tailNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(tailID));
@@ -1224,6 +1243,8 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 		pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(tailCoordKey);
 		for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 		{
+			if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end()) throw 1;
+			
 			if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
 			else
 			{
