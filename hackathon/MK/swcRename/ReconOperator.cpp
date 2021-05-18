@@ -124,6 +124,9 @@ void ReconOperator::removeDupedNodes()
 	QString errorFolderQ = this->rootPath + "\\notAssembled\\";
 	QDir errorDir(errorFolderQ);
 
+	QString tooFarType7folderQ = this->rootPath + "\\subtreeNotConnected\\";
+	QDir type7dir(tooFarType7folderQ);
+
 #ifdef SUBTREE_DEBUG
 	QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
 	QDir subTreeDir(subTreeFolderQ);
@@ -187,7 +190,7 @@ void ReconOperator::removeDupedNodes()
 
 				NeuronStructExplorer myNeuronStructExplorer;
 				
-				// ------- Remove type1 nodes ------- //
+				// ----------------- Remove type1 nodes ----------------- //
 				// This block exists because of the segment decomposition - [NeuronTree__2__V_NeuronSWC_list] in neuron_format_converter.cpp.
 				// The decomposition algorithm seems to create a more complicated situation at soma location where many segments come to connect to the same, and that a lot more (more than the number of connected segments) repeated nodes at soma are created. 
 				// [NeuronStructUtil::removeRedunNodes] not only cleans up redundant nodes but also transform soma into a normal branching node, making it misrecongnized in line 212: [profiledTree::findNearestSegEndNodeID].
@@ -233,10 +236,12 @@ void ReconOperator::removeDupedNodes()
 				QString noType1NameQ = noType1FolderQ + "\\" + baseName + "_noType1.swc";
 				writeSWC_file(noType1NameQ, inputProfiledTree.tree);
 #endif
-				// -- END of [Remove type1 nodes] -- //
+				// ------------- END of [Remove type1 nodes] ------------ //
 
 				clock_t start = clock();
 				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
+				
+				// -- Found ghost segment, move to 'notAssembled' folder and skip to the next cell -- //
 				if (connectedTrees.empty())
 				{
 					cout << " -- There's an error in this cell structure. Skip to the next cell." << endl << endl;
@@ -254,6 +259,9 @@ void ReconOperator::removeDupedNodes()
 
 					continue;
 				}
+				// ---------------------------------------------------------------------------------- //
+
+				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
 				map<int, int> tree2HeadNodeMap;
 				int minNodeID, maxNodeID;
@@ -303,10 +311,14 @@ void ReconOperator::removeDupedNodes()
 				clock_t end = clock();
 				float duration = float(end - start) / CLOCKS_PER_SEC;
 				cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
+				/****************************** END of [START ASSEMBLING EACH SUBTREE] *******************************/
 
+				// ------- Remove Splikes ------- //
 				if (this->removeSpike)
 					for (auto& tree : connectedTrees) tree.second = TreeTrimmer::spikeRemoval(tree.second, this->branchNodeMin);
+				// ------------------------------ //
 
+				// ------- Reassign Soma and Connect ------- //
 				NeuronSWC somaNode;
 				if (minNodeID > 1) somaNode.n = minNodeID - 1;
 				else somaNode.n = maxNodeID + 1;
@@ -321,7 +333,9 @@ void ReconOperator::removeDupedNodes()
 					profiledTree& currTree = connectedTrees[treeID.first];
 					currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
 				}
+				// ----------------------------------------- //
 
+				/***************** LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES *****************/
 				if (this->autoConnect)
 				{
 					bool autoConnect;
@@ -369,13 +383,43 @@ void ReconOperator::removeDupedNodes()
 						}
 					} while (autoConnect == true);
 				}
+				/************* END of [LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES] ************/
 
 				NeuronTree outputTree;
+				bool type7exist = false;
 				for (auto& connectedTree : connectedTrees)
-					if (connectedTree.second.tree.listNeuron.size() > 1) outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
-				outputTree.listNeuron.push_front(somaNode);				
-				writeSWC_file(outputFolderQ + baseName + ".swc", outputTree);
+				{
+					if (connectedTree.second.tree.listNeuron.size() > 1)
+					{
+						if (connectedTree.second.tree.listNeuron.at(0).type == 7) type7exist = true;
+						outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
+					}
+				}
+				outputTree.listNeuron.push_front(somaNode);
+
+				if (type7exist)
+				{
+					writeSWC_file(tooFarType7folderQ + baseName + ".swc", outputTree);
+					QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
+					QString copyAPOfullNameQ = tooFarType7folderQ + "\\" + baseName + ".apo";
+					QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
+					QString copyANOfullNameQ = tooFarType7folderQ + "\\" + baseName;
+					QFile::copy(inputAPOfullNameQ, copyAPOfullNameQ);
+					QFile::copy(inputANOfullNameQ, copyANOfullNameQ);
+				}
+				else 
+				{
+					writeSWC_file(outputFolderQ + baseName + ".swc", outputTree);
+					//QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
+					//QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
+				}
 			}	
+		}
+		else
+		{
+			QString outputMsgQ = "The apo file of " + file + " not found. Process has been canceled and skip to the next cell.";
+			v3d_msg(outputMsgQ);
+			continue;
 		}
 	}
 }

@@ -49,6 +49,8 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_12->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_10")
 		uiPtr->lineEdit_13->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+	else if (objName == "pushButton_2")
+		uiPtr->lineEdit_3->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::preProcessParam(bool toggle)
@@ -124,6 +126,23 @@ void SWC_renameDlg::changeName()
 		this->fileNameList = seuFileFolder.entryList();
 
 		this->fileManager.nameChange(this->fileNameList, FileNameChangerIndexer::SEU_index);
+	}
+	else if (objName == "buttonBox_3")
+	{
+		this->rootPath = uiPtr->lineEdit_3->text();
+		this->rootPath.replace("/", "\\");
+		this->fileManager.rootPath = this->rootPath;
+		this->fileManager.fileNameAddition = uiPtr->lineEdit_8->text();
+
+		QDir swcFolder(this->rootPath);
+		swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->fileNameList.clear();
+		this->fileNameList = swcFolder.entryList();
+
+		this->oldNewMap.clear();
+		if (uiPtr->radioButton_5->isChecked()) this->fileManager.generalApoANO = true;
+		else this->fileManager.generalApoANO = false;
+		this->fileManager.nameChange_fromAssemble(this->fileNameList);
 	}
 }
 

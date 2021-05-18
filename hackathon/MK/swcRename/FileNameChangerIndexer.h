@@ -19,13 +19,14 @@ class FileNameChangerIndexer
 public:
 	enum nameChangingMode { WMU_name, WMU_index, SEU_index };
 
-	bool WMUapoAno;
+	bool WMUapoAno, generalApoANO;
 	vector<string> connToken;
 	QString rootPath;
 	QString fileNameAddition;
 	QString mappingTableFullName;
 	map<string, set<string>> seuCellMap;
 	void nameChange(const QStringList& fileNameList, nameChangingMode mode, map<string, string>* oldMapPtr = nullptr);
+	void nameChange_fromAssemble(const QStringList& fileNameList);
 
 private:
 	string getBrainID(string& inputFileName);

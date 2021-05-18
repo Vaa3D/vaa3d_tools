@@ -5,6 +5,54 @@
 
 using namespace std;
 
+void FileNameChangerIndexer::nameChange_fromAssemble(const QStringList& fileNameList)
+{
+	for (auto& fileNameQ : fileNameList)
+	{
+		QString baseNameQ = fileNameQ.left(fileNameQ.length() - 4);
+
+		QString oldFullNameQ = this->rootPath + "\\" + fileNameQ;
+		NeuronTree inputTree = readSWC_file(oldFullNameQ);
+
+		string brainID = this->getBrainID(fileNameQ.toStdString());
+		string newFileName = brainID + connToken.at(0);
+
+		vector<float> somaCoords;
+		this->getCoordsFromSWC(inputTree.listNeuron, somaCoords);
+		newFileName = newFileName + to_string(int(somaCoords.at(0))) + connToken.at(1) + "X" + to_string(int(somaCoords.at(1))) + connToken.at(2) + "Y" + to_string(int(somaCoords.at(2)));
+		QString newFullFileNameQ = this->rootPath + "\\" + QString::fromStdString(newFileName) + ".swc";
+		QFile::rename(oldFullNameQ, newFullFileNameQ);
+
+		if (this->generalApoANO)
+		{
+			CellAPO somaMarker;
+			RGBA8 color;
+			color.r = 0;
+			color.g = 0;
+			color.b = 0;
+			somaMarker.x = somaCoords.at(1);
+			somaMarker.y = somaCoords.at(2);
+			somaMarker.z = somaCoords.at(0);
+			somaMarker.color = color;
+			somaMarker.volsize = 500;
+			QList<CellAPO> somaList;
+			somaList.push_back(somaMarker);
+			QString fullAPOnameQ = this->rootPath + "\\" + QString::fromStdString(newFileName) + ".apo";
+			writeAPO_file(fullAPOnameQ, somaList);
+			
+			QString outputANOfullNameQ = this->rootPath + "\\" + QString::fromStdString(newFileName) + ".ano";
+			QFile anoFile;
+			anoFile.setFileName(outputANOfullNameQ);
+			anoFile.open(QIODevice::ReadWrite);
+			QTextStream anoOut(&anoFile);
+			QString swcNameQ = QString::fromStdString(newFileName) + ".swc";
+			QString apoNameQ = QString::fromStdString(newFileName) + ".apo";
+			anoOut << "SWCFILE=" << swcNameQ << "\nAPOFILE=" << apoNameQ << "\n";
+			anoFile.close();
+		}
+	}
+}
+
 void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNameChangerIndexer::nameChangingMode mode, map<string, string>* oldMapPtr)
 {
 	if (mode == FileNameChangerIndexer::WMU_name)
@@ -52,9 +100,9 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 
 				QString oldFullNameQ = this->rootPath + "\\" + fileNameQ;
 				QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(newFileName);
-				QString newFullBaseRenameQ = this->rootPath + "\\" + QString::fromStdString(newFileName);
+				//QString newFullBaseRenameQ = this->rootPath + "\\" + QString::fromStdString(newFileName);
 				QString newFullNameQ = newFullBaseNameQ + ".swc";
-				QString newFullRenameQ = newFullBaseRenameQ + ".swc";
+				//QString newFullRenameQ = newFullBaseRenameQ + ".swc";
 				
 				NeuronTree inputTree = readSWC_file(oldFullNameQ);
 				vector<float> somaCoords;
@@ -110,15 +158,15 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 					QList<CellAPO> somaList;
 					somaList.push_back(somaMarker);
 					QString fullAPOnameQ = newFullBaseNameQ + ".apo";
-					QString fullAPOrenameQ = newFullBaseRenameQ + ".apo";
-					//writeAPO_file(fullAPOnameQ, somaList);
-					writeAPO_file(fullAPOrenameQ, somaList);
+					//QString fullAPOrenameQ = newFullBaseRenameQ + ".apo";
+					writeAPO_file(fullAPOnameQ, somaList);
+					//writeAPO_file(fullAPOrenameQ, somaList);
 
 					QString outputANOfullNameQ = newFullBaseNameQ + ".ano";
-					QString outputANOfullRenameQ = newFullBaseRenameQ + ".ano";
+					//QString outputANOfullRenameQ = newFullBaseRenameQ + ".ano";
 					QFile anoFile;
-					//anoFile.setFileName(outputANOfullNameQ);
-					anoFile.setFileName(outputANOfullRenameQ);
+					anoFile.setFileName(outputANOfullNameQ);
+					//anoFile.setFileName(outputANOfullRenameQ);
 					anoFile.open(QIODevice::ReadWrite);
 					QTextStream anoOut(&anoFile);
 					QString swcNameQ = QString::fromStdString(newFileName) + ".swc";
