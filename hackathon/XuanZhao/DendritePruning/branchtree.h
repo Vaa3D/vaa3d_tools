@@ -1,12 +1,15 @@
 #ifndef BRANCHTREE_H
 #define BRANCHTREE_H
 
-
 #include "v3d_interface.h"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
+
+#include <vector>
+#include <queue>
+#include <algorithm>
 
 #include "../jba/newmat11/newmatap.h"
 #include "../jba/newmat11/newmatio.h"
@@ -14,7 +17,13 @@
 #define zx_dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define PI 3.14157292653589793238
 
-using namespace std;
+#define ToDeleteType 11
+#define InFlectionType 12
+#define AdjacentSomaType 13
+#define BreakType 14
+
+#define BigBranchNumber 1000
+
 
 template <class T>
 bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
@@ -133,87 +142,92 @@ bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
 }
 
 
-struct Branch{
-    V3DLONG headPointIndex,endPointIndex;
-    Branch* parent;
-    int level,rLevel;
-    float length, distance;
-    float lengthToSoma, weight, sWeight;
+struct BranchTree;
 
+struct Branch
+{
+    BranchTree* bt;
+    V3DLONG headPointIndex,endPointIndex;
+    int parentIndex;
+    vector<int> childrenIndex;
+
+    int level, rLevel;
+    float length, distance;
     float localAngle1,localAngle2,localAngle3;
     float globalAngle1,globalAngle2,globalAngle3;
 
-    int isNormalY;
-    int isNeighbor;
+    float intensityMean, intensityStd;
 
-    int inflectionNum;
-
-    Branch():level(-1),rLevel(-1),headPointIndex(-1),endPointIndex(-1),length(0),distance(0),lengthToSoma(0),weight(0),sWeight(0)
-    {
-        isNormalY = true;
-        isNeighbor = false;
-        inflectionNum = 0;
-        parent=0;
+    Branch() : level(-1),rLevel(-1),length(0),distance(0),
+        localAngle1(-1),localAngle2(-1),localAngle3(-1),intensityMean(0),intensityStd(0){
+        childrenIndex.clear();
+        bt = 0;
     }
-    ~Branch(){}
 
-    bool get_pointsIndex_of_branch(vector<V3DLONG> &points,NeuronTree &nt);
-    bool get_r_pointsIndex_of_branch(vector<V3DLONG> &r_points, NeuronTree &nt);
-    void calculateMidPointsLocalAngle(NeuronTree &nt, ofstream &csvFile, double toBifurcationD);
+    bool get_pointsIndex_of_branch(vector<V3DLONG> &points);
+    bool get_r_pointsIndex_of_branch(vector<V3DLONG> &r_points);
 
-    void findInflectionPoint(NeuronTree &nt, double d, double cosAngleThres, ofstream &csvFile);
-    
-    void checkInflectionPoint(NeuronTree &nt, unsigned char *inimg1d, long *sz);
+    void setBranchType(int type, bool isBreak = false);
 
-    bool operator <(const Branch& other) const;
+    float getBranchIntensity(unsigned char* pdata, V3DLONG* sz);
+    float getBranchPcaValue(unsigned char* pdata, V3DLONG* sz, int r = 5);
+
+    void findBranchInflectionPoint(double d, double cosAngleThres);
+    bool checkBranchInflectionPoint(unsigned char *inimg1d, V3DLONG *sz);
+
+    bool calAngle();
+
+    double distToNeuronTree(NeuronTree* otherTree);
+
+    int distToNeuronTree2(NeuronTree *otherTree, double dTh);
+
+    int distToNeuronTree3(BranchTree otherbt, NeuronTree *otherTree, double dTh, int &pmbi);
+
 };
 
-struct BranchTree
+class BranchTree
 {
-    vector<Branch> branches;
+public:
+
     NeuronTree nt;
-    float maxWeight;
-    BranchTree():nt()
-    {
-        branches.clear();
-        maxWeight = 0;
-    }
-    ~BranchTree(){
+    vector<Branch> branches;
+
+    V3DLONG somaIndex;
+
+    BranchTree(){
         branches.clear();
     }
 
     bool initialize(NeuronTree t);
-    bool get_level_index(vector<int> &level_index,int level);
-    int get_max_level();
 
-    void calculateBranchMidPointsLocalAngle(ofstream &csvFile, double toBifurcationD);
 
-    void findBranchInflectionPoint(ofstream &csvFile, double d, double cosAngleThres);
-    void checkBranchInflectionPoint(unsigned char *inimg1d, long *sz);
+    bool pruningByLength(unsigned char *pdata, long long *sz, int length, double linearityTh);
+    bool pruningSoma(double times);
+    bool pruningAdjacentSoma(double somaRTh);
+    bool pruningAdjacentSoma2(const QString &multiMarkerPath);
+    bool pruningCross(double angleTh, double lengthTh);
+    bool pruningInflectionPoints(unsigned char *inimg1d, V3DLONG *sz, double d, double cosAngleThres);
+    bool pruningSuspectedBranch(unsigned char *inimg1d, V3DLONG *sz, double angleTh, double lengthTh);
 
-    void groupBifurcationPoint(ofstream &csvFile, double d);
-    void groupBifurcationPoint2(ofstream &csvFile, double d);
 
-    void groupBifurcationPoint3(ofstream &csvFile, double d);
+    bool getLevelIndex(vector<int> &levelIndex, int level);
 
-    XYZ getBranchVector(vector<V3DLONG> pointsIndex, double d);
+    bool setChildenBranchType(int branchIndex, int type);
+    bool setChildenBranchDeleteType(int branchIndex);
+    bool setParentBranchRLevel(int branchIndex);
 
     XYZ getBranchLocalVector(vector<V3DLONG> pointsIndex, double d);
-
     XYZ getBranchGlobalVector(vector<V3DLONG> pointsIndex);
 
-    void saveMarkerFlag(QString markerPath);
+    void show(unsigned char* pdata, V3DLONG* sz);
 
-    void refineBifurcationPoint();
+    void calRlevel0Branches(unsigned char* pdata, V3DLONG* sz, ofstream &csvFile);
+    void calBifurcationLocalAngle(ofstream &csvFile);
 
-    void judgeIsNormalY(int i, vector<vector<int> > branchChildren, double d);
 
-    void pruningCross(double d);
-
-    void calculateChildrenBranchAngle(ofstream &csvFile, double d);
-
-    void calculateChildrenBranchGlobalAngle(ofstream &csvFile, double d);
-
+    bool update();
+    bool saveNeuronTree(QString path);
+    bool savePrunedNeuronTree(QString path);
 
 };
 

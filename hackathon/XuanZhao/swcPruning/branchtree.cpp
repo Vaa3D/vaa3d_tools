@@ -4,6 +4,10 @@
 
 #include "neuron_sim_scores.h"
 
+#include "fastmarching_tree.h"
+
+#include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"
+
 bool Branch::get_r_pointsIndex_of_branch(vector<V3DLONG> &r_points, NeuronTree &nt)
 {
     int tmp = endPointIndex;
@@ -198,6 +202,114 @@ void Branch::findInflectionPoint(NeuronTree &nt, double d, double cosAngleThres,
         path = 0;
     }
 
+
+}
+
+void Branch::checkInflectionPoint(NeuronTree &nt, unsigned char* inimg1d, long* sz){
+    qDebug()<<"in checkInflectionPoint";
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+
+    vector<V3DLONG> pointsIndex = vector<V3DLONG>();
+    this->get_r_pointsIndex_of_branch(pointsIndex,nt);
+    int pointsSize = pointsIndex.size();
+    double* path = new double[pointsSize];
+    memset(path,0,sizeof(double)*pointsSize);
+
+    if(pointsSize<2){
+        return;
+    }
+
+    for(int i=1; i<pointsSize; i++){
+        double tmpD = zx_dist(nt.listNeuron[pointsIndex[i]],nt.listNeuron[pointsIndex[i-1]]);
+        path[i] = path[i-1] + tmpD;
+    }
+
+    if(path[pointsSize-1]<20){
+        return;
+    }
+
+    for(int i=1; i<pointsSize; i++){
+        int index = pointsIndex[i];
+        if(nt.listNeuron[index].type == 6){
+            qDebug()<<"there is a inflectionPoint";
+            int startI = 0;
+            int endI = pointsSize-1;
+            for(int j=0; j<i; j++){
+                if((path[i]-path[j])>10){
+                    startI = j;
+                    break;
+                }
+            }
+            for(int j=i+1; j<pointsSize; j++){
+                if((path[j] - path[i])>10){
+                    endI = j;
+                    break;
+                }
+            }
+            qDebug()<<"startI: "<<startI<<" endI: "<<endI;
+            MyMarker root = MyMarker(nt.listNeuron[pointsIndex[endI]].x,
+                                     nt.listNeuron[pointsIndex[endI]].y,
+                                     nt.listNeuron[pointsIndex[endI]].z);
+            vector<MyMarker*> outLine;
+            fastmarching_tree_constraint(root,inimg1d,outLine,sz[0],sz[1],sz[2],3,1,false,25);
+            qDebug()<<"end fastmartching_tree";
+            XYZ p1 = XYZ(nt.listNeuron[index].x - root.x,
+                         nt.listNeuron[index].y - root.y,
+                         nt.listNeuron[index].z - root.z);
+            XYZ p2 = XYZ(outLine[outLine.size()/2]->x - root.x,
+                    outLine[outLine.size()/2]->y - root.y,
+                    outLine[outLine.size()/2]->z - root.z);
+            qDebug()<<"outLine size: "<<outLine.size();
+            double tmpCosAngle = dot(normalize(p1),normalize(p2));
+
+            qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+            if(tmpCosAngle<0.5){
+                vector<MyMarker*> maskMarkers;
+                maskMarkers.insert(maskMarkers.begin(),outLine.begin(),outLine.begin()+outLine.size()/2);
+                unsigned char* maskFlag = 0;
+                swc2mask(maskFlag,maskMarkers,sz[0],sz[1],sz[2]);
+                qDebug()<<"mask end";
+
+                for(long j=0; j<tolSZ; j++){
+                    if(maskFlag[j] == (unsigned char)255){
+                        maskFlag[j] = 0;
+                    }else{
+                        maskFlag[j] = inimg1d[j];
+                    }
+                }
+                outLine.clear();
+                fastmarching_tree_constraint(root,maskFlag,outLine,sz[0],sz[1],sz[2],3,1,false,25);
+                qDebug()<<"end fastmartching_tree 2";
+                if(maskFlag){
+                    delete[] maskFlag;
+                    maskFlag = 0;
+                }
+            }
+
+            NeuronTree* origin = new NeuronTree();
+            for(int j=0; j<=endI; j++){
+                NeuronSWC s = nt.listNeuron[pointsIndex[j]];
+                if(j == 0){
+                    s.parent = -1;
+                }
+                origin->listNeuron.push_back(s);
+            }
+            qDebug()<<"origin size: "<<origin->listNeuron.size();
+            if(outLine.size()<1)
+                return;
+            XYZ pt = XYZ(outLine[0]->x,outLine[0]->y,outLine[0]->z);
+            double targetD = dist_pt_to_swc(pt,origin);
+            qDebug()<<"targetD: "<<targetD;
+            if(targetD>2){
+                for(int j=0; j<pointsSize; j++){
+                    if(j == i)
+                        continue;
+                    nt.listNeuron[pointsIndex[j]].type = 7;
+                }
+                return;
+            }
+        }
+    }
 
 }
 
@@ -410,6 +522,12 @@ void BranchTree::findBranchInflectionPoint(ofstream &csvFile, double d, double c
     }
 }
 
+void BranchTree::checkBranchInflectionPoint(unsigned char *inimg1d, long *sz){
+    for(int i=0; i<branches.size(); i++){
+        branches[i].checkInflectionPoint(nt,inimg1d,sz);
+    }
+}
+
 void BranchTree::groupBifurcationPoint(ofstream &csvFile, double d){
     map<Branch*,int> branchMap = map<Branch*,int>();
     for(int i=0; i<branches.size(); ++i){
@@ -525,19 +643,20 @@ void BranchTree::groupBifurcationPoint(ofstream &csvFile, double d){
 
     for(int i=0; i<branches.size(); i++){
         int flag = 0;
-        if(branches[i].isNormalY == 0){
-            for(int j=0; j<branchChildren[i].size(); j++){
-                int cIndex = branchChildren[i][j];
-                if(branches[cIndex].isNormalY == 0){
-                    flag = 1;
+//        if(branches[i].isNormalY == 0){
+//            for(int j=0; j<branchChildren[i].size(); j++){
+//                int cIndex = branchChildren[i][j];
+//                if(branches[cIndex].isNormalY == 0){
+//                    flag = 1;
 
-                    nt.listNeuron[branches[i].endPointIndex].type = 13;
-                    break;
-                }
-            }
-        }
+//                    nt.listNeuron[branches[i].endPointIndex].type = 13;
+//                    break;
+//                }
+//            }
+//        }
 
         csvFile<<branches[i].level<<','<<branches[i].rLevel<<','
+              <<branches[i].length<<','<<branches[i].distance<<','
               <<branches[i].lengthToSoma<<','<<branches[i].weight<<','
              <<branches[i].sWeight<<','
             <<branches[i].localAngle1<<','<<branches[i].localAngle2<<','

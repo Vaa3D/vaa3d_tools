@@ -135,6 +135,12 @@ bool swcPruningPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
     }
     else if (func_name == tr("getCandidateFalsePoint")) {
         QString swcPath = infiles[0];
+        QString imgPath = infiles[1];
+
+        unsigned char* inimg1d = 0;
+        V3DLONG szs[4] = {0,0,0,0};
+        int dataType = 1;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),inimg1d,szs,dataType);
 
         bool isStandardSwc = (inparas.size()>=1) ? atoi(inparas[0]) : false;
         double d = (inparas.size()>=2) ? atof(inparas[1]) : 10;
@@ -165,18 +171,24 @@ bool swcPruningPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         BranchTree bt;
         bt.initialize(nt);
 
-        bt.refineBifurcationPoint();
+//        bt.refineBifurcationPoint();
 
         bt.findBranchInflectionPoint(csvFile,d,cosAngleThres);
         csvFile.close();
 
-//        csvFile.open(bifurcationPointCsvPath.toStdString().c_str(),ios::out);
-//        csvFile<<"level"<<','<<"rLevel"<<','
-//              <<"lengtToSoma"<<','<<"weight"<<','<<"sWeight"<<','
-//             <<"localAngle1"<<','<<"localAngle2"<<','<<"localAngle3"<<','
-//            <<"globalAngle1"<<','<<"globalAngle2"<<','<<"globalAngle3"<<','
-//           <<"isT"<<endl;
-//        bt.groupBifurcationPoint(csvFile,d);
+        long* sz = new long[4];
+        for(int i=0; i<4; i++)
+            sz[i] = (long)szs[i];
+
+        bt.checkBranchInflectionPoint(inimg1d,sz);
+
+        csvFile.open(bifurcationPointCsvPath.toStdString().c_str(),ios::out);
+        csvFile<<"level"<<','<<"rLevel"<<','<<"length"<<','<<"distance"<<','
+              <<"lengtToSoma"<<','<<"weight"<<','<<"sWeight"<<','
+             <<"localAngle1"<<','<<"localAngle2"<<','<<"localAngle3"<<','
+            <<"globalAngle1"<<','<<"globalAngle2"<<','<<"globalAngle3"<<','
+           <<"isT"<<endl;
+        bt.groupBifurcationPoint(csvFile,d);
 //        bt.groupBifurcationPoint2(csvFile,d);
 
         QString markerPath = swcPath + "_out.marker";

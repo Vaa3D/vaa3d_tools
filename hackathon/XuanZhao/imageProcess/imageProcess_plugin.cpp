@@ -70,6 +70,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         get_2d_image(input,output,callback);
 	}
+    else if (func_name == tr("get_2dimage2")){
+        get_2d_image2(input,output,callback);
+    }
     else if (func_name == tr("getSWCL0Image"))
     {
         QString swcPath = infiles[0];
