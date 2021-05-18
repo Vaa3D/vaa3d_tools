@@ -74,53 +74,20 @@ Any C++11 compiler should work. If your use Visual Studio 2013, please follow th
 
 # Demo
 
-## prerequisites
-
-- Python 3.3 or 3.4 or 3.5 (python 3.6 is not supported)
-
-The python script needs to load the matlab engine. If you don't have MATLAB Engine API for Python intalled, you can enter Matlab installation directory `\matlab\extern\engines\python`, and run 
-
-```
-python setup.py install
-```
-
- to install the Matlab engine.
+We provide two binary files for mBrainAligner corresponding to global registration and local registration respectively.And provide `main_mbrainaligner.bat` with default parameters.Of course, you can also modify it as needed.
 
 ## Data
 
-We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. 
-
-### Sub-Folder
-
->Data:			                 		   the folder where the `18458.v3draw` will be copied to
-
->matlab_io_basicdatatype:	        matlab toolbox
-
->mBrainAligner_data
->>3rdparty:                 		  the folder where the final executable and `dlls` will be copied to.
->>
->>data:                           `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
->>
->>Seg:									           Deep feature    
->>
-
->stripremove.m           
-
->demo.py            
+We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. At the same time, some necessary files are stored in `mBrainAligner_data`.
 
 ### Run
 
-```
-python demo.py 
-```
-The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/Result` folder.
+Just run the `main_mbrainaligner.bat`.
+
+The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/result` folder.
 
 Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correpondingly. We will upload the segmentation model of different size later.
 
-Please refer to the 'help' of mBrainAligner for more information: 
-```
-python demo.py -h
-```
 
 # License
 mBrainAligner used a slightly modified revised MIT license unless specifically stated for some rare cases, see detail here: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
