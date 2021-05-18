@@ -2094,12 +2094,14 @@ template<class T> bool fastmarching_tree_constraint(MyMarker root,
             else marker1->parent = marker2;
             //tmp_map[ind]->parent = tmp_map[ind2];
         }
-        MyMarker* lastMarker = tmp_map[maxIndex];
-        while (lastMarker->parent != 0) {
+        if(tmp_map.find(maxIndex) != tmp_map.end()){
+            MyMarker* lastMarker = tmp_map[maxIndex];
+            while (lastMarker->parent != 0) {
+                outtree.push_back(lastMarker);
+                lastMarker = lastMarker->parent;
+            }
             outtree.push_back(lastMarker);
-            lastMarker = lastMarker->parent;
         }
-        outtree.push_back(lastMarker);
     }
     // over
 

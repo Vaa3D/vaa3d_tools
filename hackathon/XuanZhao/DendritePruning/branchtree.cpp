@@ -153,6 +153,7 @@ bool Branch::checkBranchInflectionPoint(unsigned char *inimg1d, long long *sz){
     V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
 
     NeuronTree& nt = this->bt->nt;
+    vector<Branch>& branches = this->bt->branches;
     V3DLONG somaIndex = this->bt->somaIndex;
 
     vector<V3DLONG> pointsIndex = vector<V3DLONG>();
@@ -197,7 +198,7 @@ bool Branch::checkBranchInflectionPoint(unsigned char *inimg1d, long long *sz){
                                      nt.listNeuron[pointsIndex[endI]].y,
                                      nt.listNeuron[pointsIndex[endI]].z);
             vector<MyMarker*> outLine;
-            fastmarching_tree_constraint(root,inimg1d,outLine,sz[0],sz[1],sz[2],3,1,false,25);
+            fastmarching_tree_constraint(root,inimg1d,outLine,sz[0],sz[1],sz[2],3,0,false,25);
             qDebug()<<"end fastmartching_tree";
             XYZ p1 = XYZ(nt.listNeuron[index].x - root.x,
                          nt.listNeuron[index].y - root.y,
@@ -209,6 +210,11 @@ bool Branch::checkBranchInflectionPoint(unsigned char *inimg1d, long long *sz){
             double tmpCosAngle = dot(normalize(p1),normalize(p2));
 
             qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+
+//            NeuronTree outswcBefore = swc_convert(outLine);
+//            QString savePathBefore = QString("F:\\manual\\") + QString::number(this->endPointIndex) + "fastmartching_before.swc";
+//            writeSWC_file(savePathBefore,outswcBefore);
+
             if(tmpCosAngle<0.5){
                 vector<MyMarker*> maskMarkers;
                 maskMarkers.insert(maskMarkers.begin(),outLine.begin(),outLine.begin()+outLine.size()/2);
@@ -227,30 +233,87 @@ bool Branch::checkBranchInflectionPoint(unsigned char *inimg1d, long long *sz){
                     }
                 }
                 outLine.clear();
-                fastmarching_tree_constraint(root,maskFlag,outLine,sz[0],sz[1],sz[2],3,1,false,25);
+                fastmarching_tree_constraint(root,maskFlag,outLine,sz[0],sz[1],sz[2],3,0,false,25);
                 qDebug()<<"end fastmartching_tree 2";
                 if(maskFlag){
                     delete[] maskFlag;
                     maskFlag = 0;
                 }
+//                NeuronTree outswc = swc_convert(outLine);
+//                QString savePath = QString("F:\\manual\\") + QString::number(this->endPointIndex) + "fastmartching.swc";
+//                writeSWC_file(savePath,outswc);
             }
 
             NeuronTree* origin = new NeuronTree();
-            for(int j=0; j<=endI; j++){
+            for(int j=1; j<=endI; ++j){
                 NeuronSWC s = nt.listNeuron[pointsIndex[j]];
-                if(j == 0){
-                    s.parent = -1;
-                }
+//                if(j == 0){
+//                    s.parent = -1;
+//                }
                 origin->listNeuron.push_back(s);
             }
+            int parentIndex = this->parentIndex;
+            int count = 0;
+            if(parentIndex != -1){
+                vector<V3DLONG> tmpPointsIndex;
+                tmpPointsIndex.clear();
+                branches[parentIndex].get_pointsIndex_of_branch(tmpPointsIndex);
+                for(int j=0; j<tmpPointsIndex.size(); ++j){
+                    NeuronSWC s = nt.listNeuron[tmpPointsIndex[j]];
+                    if(j == 0){
+                        s.parent = -1;
+                    }
+                    origin->listNeuron.push_back(s);
+                }
+                queue<int> branchQ;
+                for(int j=0; j<branches[parentIndex].childrenIndex.size(); j++){
+                    int cIndex = branches[parentIndex].childrenIndex[j];
+                    tmpPointsIndex.clear();
+                    branches[cIndex].get_pointsIndex_of_branch(tmpPointsIndex);
+                    if(tmpPointsIndex.size()>1 && tmpPointsIndex[1] == pointsIndex[1]){
+                        continue;
+                    }
+                    branchQ.push(cIndex);
+                }
+
+
+                while (!branchQ.empty() && count<5) {
+                    int tmpBranchIndex = branchQ.front();
+                    count++;
+                    branchQ.pop();
+                    tmpPointsIndex.clear();
+                    branches[tmpBranchIndex].get_pointsIndex_of_branch(tmpPointsIndex);
+                    for(int j=1; j<tmpPointsIndex.size(); ++j){
+                        NeuronSWC s = nt.listNeuron[tmpPointsIndex[j]];
+                        origin->listNeuron.push_back(s);
+                    }
+                    for(int j=0; j<branches[tmpBranchIndex].childrenIndex.size(); ++j){
+                        int cIndex = branches[tmpBranchIndex].childrenIndex[j];
+                        branchQ.push(cIndex);
+                    }
+                }
+            }
+
+
+
+
             qDebug()<<"origin size: "<<origin->listNeuron.size();
             if(outLine.size()<1)
                 return true;
-            NeuronTree outswc = swc_convert(outLine);
-            QString savePath = QString("F:\\manual\\") + QString::number(this->endPointIndex) + "fastmartching.swc";
-            writeSWC_file(savePath,outswc);
-            XYZ pt = XYZ(outLine[0]->x,outLine[0]->y,outLine[0]->z);
-            double targetD = dist_pt_to_swc(pt,origin);
+
+
+            XYZ pt;
+            double targetD = 0;
+            count = 0;
+            for(int j=0; j<outLine.size()/2; ++j){
+                pt = XYZ(outLine[j]->x,outLine[j]->y,outLine[j]->z);
+                targetD += dist_pt_to_swc(pt,origin);
+                count++;
+            }
+            if(count>0){
+                targetD /= count;
+            }
+
             qDebug()<<"targetD: "<<targetD;
             if(targetD>2){
                 for(int j=0; j<pointsSize; j++){
@@ -258,8 +321,12 @@ bool Branch::checkBranchInflectionPoint(unsigned char *inimg1d, long long *sz){
                         continue;
                     nt.listNeuron[pointsIndex[j]].type = ToDeleteType;
                 }
+                if(origin)
+                    delete origin;
                 return false;
             }
+            if(origin)
+                delete origin;
         }
     }
     return true;
@@ -412,6 +479,178 @@ double Branch::distToNeuronTree(NeuronTree* otherTree){
     }
 }
 
+int Branch::distToNeuronTree2(NeuronTree *otherTree, double dTh){
+    NeuronTree& nt = this->bt->nt;
+    vector<V3DLONG> pointsIndex;
+    this->get_pointsIndex_of_branch(pointsIndex);
+    double dToTree = 0;
+    for(int i=1; i<pointsIndex.size()-1; ++i){
+        V3DLONG index = pointsIndex[i];
+        XYZ pt = XYZ(nt.listNeuron[index].x,nt.listNeuron[index].y,nt.listNeuron[index].z);
+        double tmp = dist_pt_to_swc(pt,otherTree);
+        dToTree += tmp;
+    }
+    if(pointsIndex.size()>2){
+        double d = dToTree/(pointsIndex.size()-2);
+        if(d<dTh){
+            return 0;
+        }else{
+            for(int i=0; i<pointsIndex.size()-1; ++i){
+                V3DLONG index = pointsIndex[i];
+                XYZ pt = XYZ(nt.listNeuron[index].x,nt.listNeuron[index].y,nt.listNeuron[index].z);
+                double tmp = dist_pt_to_swc(pt,otherTree);
+                if(tmp>dTh*1.5){
+                    if(zx_dist(nt.listNeuron[index],nt.listNeuron[pointsIndex[0]])>10)
+                        return index;
+                    else
+                        return -1;
+                }
+            }
+            return pointsIndex[pointsIndex.size()-1];
+        }
+    }else{
+        return 0;
+
+    }
+}
+
+int Branch::distToNeuronTree3(BranchTree otherbt, NeuronTree* otherTree, double dTh, int& pmbi){
+    NeuronTree& nt = this->bt->nt;
+    vector<V3DLONG> pointsIndex;
+    this->get_pointsIndex_of_branch(pointsIndex);
+    double dToTree = 0;
+
+    vector<NeuronTree*> otherSegments;
+    vector<V3DLONG> tmpPointsIndex;
+    for(int i=0; i<otherbt.branches.size(); ++i){
+        NeuronTree* segment = new NeuronTree();
+        tmpPointsIndex.clear();
+        otherbt.branches[i].get_pointsIndex_of_branch(tmpPointsIndex);
+        for(int j=0; j<tmpPointsIndex.size(); ++j){
+            NeuronSWC s = otherbt.nt.listNeuron[tmpPointsIndex[j]];
+            if(j == 0)
+                s.parent = -1;
+            segment->listNeuron.push_back(s);
+        }
+        otherSegments.push_back(segment);
+    }
+//    qDebug()<<"start compare";
+
+    map<int,int,greater<int>> segmentMap;
+    for(int i=1; i<pointsIndex.size()-1; ++i){
+        V3DLONG index = pointsIndex[i];
+        XYZ pt = XYZ(nt.listNeuron[index].x,nt.listNeuron[index].y,nt.listNeuron[index].z);
+
+        float dmin = 1000000;
+        int indexMin = -1;
+        for(int j=0; j<otherSegments.size(); ++j){
+            float dtmp = dist_pt_to_swc(pt,otherSegments[j]);
+            if(dtmp<dmin){
+                dmin = dtmp;
+                indexMin = j;
+            }
+        }
+        if(segmentMap.find(indexMin) == segmentMap.end()){
+            segmentMap[indexMin] = 1;
+        }else {
+            segmentMap[indexMin]++;
+        }
+        dToTree += dmin;
+    }
+
+//    qDebug()<<"compare end";
+
+    for(int i=0; i<otherSegments.size(); ++i){
+        delete otherSegments[i];
+    }
+
+    if(pointsIndex.size()>2){
+        double d = dToTree/(pointsIndex.size()-2);
+//        qDebug()<<nt.listNeuron[endPointIndex].n<<" d: "<<d;
+        if(d < dTh){
+            if(parentIndex == -1 || segmentMap.empty()){
+                return 0;
+            }
+//            qDebug()<<"segment map size:"<<segmentMap.size();
+
+
+
+            map<int,int>::iterator it = segmentMap.begin();
+            int segmentIndex = it->first;
+            int countMax = it->second;
+            while (it != segmentMap.end()) {
+//                qDebug()<<"it: "<<it->first<<" "<<it->second;
+                if(it->second>countMax){
+                    segmentIndex = it->first;
+                    countMax = it->second;
+                }
+                it++;
+            }
+            if(pmbi == segmentIndex){
+                return 0;
+            }
+            pmbi = segmentIndex;
+
+//            qDebug()<<"segmentIndex: "<<segmentIndex<<" "<<countMax;
+
+            NeuronTree* parentTree = new NeuronTree();
+            int otherParentIndex = otherbt.branches[segmentIndex].parentIndex;
+            if(this->length > otherbt.branches[segmentIndex].length*0.5)
+                otherParentIndex = otherbt.branches[segmentIndex].parentIndex;
+            while(otherParentIndex != -1){
+                tmpPointsIndex.clear();
+                otherbt.branches[otherParentIndex].get_pointsIndex_of_branch(tmpPointsIndex);
+                for(int j=0; j<tmpPointsIndex.size(); ++j){
+                    NeuronSWC s = otherbt.nt.listNeuron[tmpPointsIndex[j]];
+                    parentTree->listNeuron.push_back(s);
+                }
+                otherParentIndex = otherbt.branches[otherParentIndex].parentIndex;
+            }
+//            qDebug()<<"parent Tree size: "<<parentTree->listNeuron.size();
+            if(parentTree->listNeuron.size()<2){
+                delete parentTree;
+                return 0;
+            }
+
+            float dp = 0;
+            tmpPointsIndex.clear();
+            this->bt->branches[parentIndex].get_pointsIndex_of_branch(tmpPointsIndex);
+            for(int j=0; j<tmpPointsIndex.size(); ++j){
+                V3DLONG index = tmpPointsIndex[j];
+                XYZ pt = XYZ(nt.listNeuron[index].x,nt.listNeuron[index].y,nt.listNeuron[index].z);
+                float dptmp = dist_pt_to_swc(pt,parentTree);
+                dp += dptmp;
+            }
+//            qDebug()<<"tmpPoints size: "<<tmpPointsIndex.size();
+            dp /= tmpPointsIndex.size();
+//            qDebug()<<"dp: "<<dp;
+            if(parentTree)
+                delete parentTree;
+            if(dp < dTh)
+                return 0;
+            else
+                return -1;
+
+        }else{
+            for(int i=0; i<pointsIndex.size()-1; ++i){
+                V3DLONG index = pointsIndex[i];
+                XYZ pt = XYZ(nt.listNeuron[index].x,nt.listNeuron[index].y,nt.listNeuron[index].z);
+                double tmp = dist_pt_to_swc(pt,otherTree);
+                if(tmp>dTh*1.5){
+                    if(zx_dist(nt.listNeuron[index],nt.listNeuron[pointsIndex[0]])>10)
+                        return index;
+                    else
+                        return -1;
+                }
+            }
+            return pointsIndex[pointsIndex.size()-1];
+        }
+    }else{
+        return 0;
+    }
+
+}
+
 
 
 bool BranchTree::initialize(NeuronTree t){
@@ -545,12 +784,13 @@ bool BranchTree::initialize(NeuronTree t){
 XYZ BranchTree::getBranchLocalVector(vector<long long> pointsIndex, double d){
     XYZ p1,p2;
     int pointsSize = pointsIndex.size();
-//    double* path = new double[pointsSize];
-//    memset(path,0,sizeof(double)*pointsSize);
+//    qDebug()<<"n: "<<nt.listNeuron[pointsIndex[0]].n;
+    double* path = new double[pointsSize];
+    memset(path,0,sizeof(double)*pointsSize);
     double length = 0;
     for(int i=1; i<pointsSize; i++){
         double tmpD = zx_dist(nt.listNeuron[pointsIndex[i]],nt.listNeuron[pointsIndex[i-1]]);
-//        path[i] = path[i-1] + tmpD;
+        path[i] = path[i-1] + tmpD;
         length += tmpD;
     }
 
@@ -569,7 +809,15 @@ XYZ BranchTree::getBranchLocalVector(vector<long long> pointsIndex, double d){
             p2.y /= (double)(pointsSize-1);
             p2.z /= (double)(pointsSize-1);
         }else{
+            if(path){
+                delete[] path;
+                path = 0;
+            }
             return XYZ(0,0,0);
+        }
+        if(path){
+            delete[] path;
+            path = 0;
         }
         return p2-p1;
     }else {
@@ -577,27 +825,53 @@ XYZ BranchTree::getBranchLocalVector(vector<long long> pointsIndex, double d){
                 nt.listNeuron[pointsIndex[0]].y,
                 nt.listNeuron[pointsIndex[0]].z);
         int count =0;
+        p2 = XYZ(0,0,0);
         for(int i=1; i<pointsSize; i++){
-//            if(path[i]<d){
-//                continue;
-//            }
+            if(path[i]<d){
+                continue;
+            }
             count++;
             p2.x += nt.listNeuron[pointsIndex[i]].x;
             p2.y += nt.listNeuron[pointsIndex[i]].y;
             p2.z += nt.listNeuron[pointsIndex[i]].z;
-            if(nt.listNeuron[pointsIndex[i]].type == InFlectionType){
+            if(nt.listNeuron[pointsIndex[i]].type == InFlectionType && path[i]>d){
+//                qDebug()<<"path[i]: "<<path[i];
                 break;
             }
         }
+
         if(count>0){
             p2.x /= (double)count;
             p2.y /= (double)count;
             p2.z /= (double)count;
         }else {
+            if(path){
+                delete[] path;
+                path = 0;
+            }
             return XYZ(0,0,0);
+        }
+//        qDebug()<<"p2 x y z"<<p2.x<<" "<<p2.y<<" "<<p2.z;
+        if(path){
+            delete[] path;
+            path = 0;
         }
         return p2-p1;
     }
+
+}
+
+XYZ BranchTree::getBranchGlobalVector(vector<long long> pointsIndex){
+    XYZ p1,p2;
+    int pointsSize = pointsIndex.size();
+
+    p1 = XYZ(nt.listNeuron[pointsIndex[0]].x,
+            nt.listNeuron[pointsIndex[0]].y,
+            nt.listNeuron[pointsIndex[0]].z);
+    p2 = XYZ(nt.listNeuron[pointsIndex[pointsSize-1]].x,
+            nt.listNeuron[pointsIndex[pointsSize-1]].y,
+            nt.listNeuron[pointsIndex[pointsSize-1]].z);
+    return p2-p1;
 }
 
 bool BranchTree::setChildenBranchType(int branchIndex, int type){
@@ -649,7 +923,7 @@ bool BranchTree::getLevelIndex(vector<int> &levelIndex, int level){
     return true;
 }
 
-bool BranchTree::pruningByLength(unsigned char* pdata, V3DLONG* sz, int length){
+bool BranchTree::pruningByLength(unsigned char* pdata, V3DLONG* sz, int length, double linearityTh){
     bool isCompleted = false;
     while(!isCompleted){
         isCompleted = true;
@@ -669,7 +943,7 @@ bool BranchTree::pruningByLength(unsigned char* pdata, V3DLONG* sz, int length){
         if(branches[i].rLevel == 0 && branches[i].length<80){
             float pc12 = branches[i].getBranchPcaValue(pdata,sz,10);
             int prtIndex = branches[i].parentIndex;
-            if(pc12<2 || (prtIndex != -1 && branches[prtIndex].length<length)){
+            if(pc12<linearityTh || (prtIndex != -1 && branches[prtIndex].length<length)){
                 branches[i].rLevel = -1;
                 this->setParentBranchRLevel(i);
                 branches[i].setBranchType(ToDeleteType);
@@ -827,7 +1101,136 @@ bool BranchTree::pruningAdjacentSoma(double somaRTh){
     return true;
 }
 
+bool BranchTree::pruningAdjacentSoma2(const QString &multiMarkerPath){
+    qDebug()<<"------pruningAdjacentSoma2------";
+
+    QList<ImageMarker> markers = readMarker_file(multiMarkerPath);
+    if(markers.size()<=1)
+        return true;
+
+    vector<int> level0Index;
+    this->getLevelIndex(level0Index,0);
+    queue<int> branchQ;
+    for(int i=0; i<level0Index.size(); ++i){
+        int branchIndex = level0Index[i];
+        if(branches[branchIndex].rLevel != -1){
+            branchQ.push(branchIndex);
+        }
+    }
+
+    double somaR = nt.listNeuron[somaIndex].r;
+
+    vector<vector<int> > branchesIndexVector;
+
+    while (!branchQ.empty()) {
+        int branchIndex = branchQ.front();
+        branchQ.pop();
+        if(branches[branchIndex].rLevel == -1){
+            continue;
+        }
+        vector<V3DLONG> pointsIndex;
+        branches[branchIndex].get_pointsIndex_of_branch(pointsIndex);
+        bool meetOtherSoma = false;
+        for(int i=0; i<pointsIndex.size(); ++i){
+            V3DLONG curIndex = pointsIndex[i];
+            bool isNearSoma = false;
+            for(int j=0; j<markers.size(); j++){
+                if(zx_dist(markers[j],nt.listNeuron[curIndex])<10){
+                    isNearSoma = true;
+                    break;
+                }
+            }
+            if(isNearSoma && zx_dist(nt.listNeuron[somaIndex],nt.listNeuron[curIndex])>somaR*2){
+                nt.listNeuron[curIndex].type = BreakType;
+                branches[branchIndex].setBranchType(ToDeleteType,true);
+                nt.listNeuron[curIndex].type = AdjacentSomaType;
+                meetOtherSoma = true;
+                vector<int> branchesIndex;
+                branchesIndex.push_back(branchIndex);
+                while (branches[branchIndex].parentIndex != -1) {
+                    branchIndex = branches[branchIndex].parentIndex;
+                    branchesIndex.push_back(branchIndex);
+                }
+                reverse(branchesIndex.begin(),branchesIndex.end());
+                branchesIndexVector.push_back(branchesIndex);
+                break;
+            }
+        }
+
+        if(meetOtherSoma){
+//            this->setChildenBranchDeleteType(branchIndex);
+        }else{
+            for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
+                int cIndex = branches[branchIndex].childrenIndex[j];
+                if(branches[cIndex].rLevel != -1){
+                    branchQ.push(cIndex);
+                }
+            }
+        }
+    }
+
+    qDebug()<<"other soma size: "<<branchesIndexVector.size();
+
+    for(int i=0; i<branchesIndexVector.size(); ++i){
+        int size = branchesIndexVector[i].size();
+//        qDebug()<<"i: "<<i;
+        vector<bool> flag = vector<bool>(size,false);
+        for(int j=0; j<size-1; ++j){
+            int branchIndex = branchesIndexVector[i][j];
+            int childrenSize = branches[branchIndex].childrenIndex.size();
+            branches[branchIndex].calAngle();
+
+
+
+            if(childrenSize>2){
+                flag[j] = false;
+            }else{
+                int cIndex1 = branches[branchIndex].childrenIndex[0];
+                if(cIndex1 == branchesIndexVector[i][j+1]){
+                    if(branches[branchIndex].localAngle2>branches[branchIndex].localAngle3){
+                        flag[j] = true;
+                    }else{
+                        flag[j] = false;
+                    }
+                }else{
+                    if(branches[branchIndex].localAngle1>branches[branchIndex].localAngle3){
+                        flag[j] = true;
+                    }else{
+                        flag[j] = false;
+                    }
+                }
+            }
+
+//            qDebug()<<"j: "<<j<<" "<<branchIndex<<branches[branchIndex].length<<" "<<childrenSize<<" "<<flag[j];
+        }
+
+        for(int j=0; j<size-1; ++j){
+            if((flag[j] == false && flag[j+1] == false) || j == size-2){
+                int branchIndex = branchesIndexVector[i][j];
+//                qDebug()<<"branchIndex: "<<branchIndex;
+                branches[branchIndex].rLevel = 0;
+                this->setChildenBranchDeleteType(branchIndex);
+                this->setParentBranchRLevel(branchIndex);
+                break;
+            }
+        }
+//        for(int j=0; j<size-1; ++j){
+//            qDebug()<<"flag j: "<<flag[j];
+//            int branchIndex = branchesIndexVector[i][j];
+//            branches[branchIndex].setBranchType(4);
+//        }
+    }
+
+    return true;
+}
+
 bool BranchTree::pruningCross(double angleTh, double lengthTh){
+
+    if(this->branches.size()>BigBranchNumber){
+        qDebug()<<"the branch number is too big, do nothing!";
+        return false;
+    }
+
     vector<int> level0Index;
     this->getLevelIndex(level0Index,0);
     queue<int> branchQ;
@@ -847,7 +1250,15 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
         if(branches[branchIndex].rLevel == -1){
             continue;
         }
-        if(branches[branchIndex].rLevel>0 && branches[branchIndex].calAngle() && branches[branchIndex].localAngle3>angleTh){
+        bool isTrivial= true;
+        for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
+            int cIndex = branches[branchIndex].childrenIndex[j];
+            if(branches[cIndex].rLevel>2){
+                isTrivial = false;
+            }
+        }
+        if(isTrivial && branches[branchIndex].rLevel>0
+                && branches[branchIndex].calAngle() && branches[branchIndex].localAngle3>angleTh){
             if(branches[branchIndex].length<lengthTh){
                 this->setChildenBranchDeleteType(branchIndex);
                 branches[branchIndex].setBranchType(ToDeleteType);
@@ -874,18 +1285,23 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
     level0Index.clear();
     this->getLevelIndex(level0Index,0);
 
+    set<int> branchSet;
+
     for(int i=0; i<level0Index.size(); ++i){
         int branchIndex = level0Index[i];
         if(branches[branchIndex].rLevel != -1){
             branchQ.push(branchIndex);
+            branchSet.insert(branchIndex);
         }
     }
     qDebug()<<"branchQ size: "<<branchQ.size();
 
-    int d = 5;
+    int d = 20;
+
     while (!branchQ.empty()) {
         int branchIndex = branchQ.front();
         branchQ.pop();
+        branchSet.erase(branchIndex);
         if(branches[branchIndex].rLevel <= 0){
             continue;
         }
@@ -893,7 +1309,10 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
             for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
                 int cIndex = branches[branchIndex].childrenIndex[j];
                 if(branches[cIndex].rLevel != -1){
-                    branchQ.push(cIndex);
+                    if(branchSet.find(cIndex) == branchSet.end()){
+                        branchSet.insert(cIndex);
+                        branchQ.push(cIndex);
+                    }
                 }
             }
             continue;
@@ -901,16 +1320,21 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
         qDebug()<<branches[branchIndex].rLevel<<" "<<branches[branchIndex].length;
         if(branches[branchIndex].length<lengthTh*2){
             vector<int> candidateBranchIndex;
+            vector<int> allBranchIndex;
             vector<XYZ> candidateBranchVector;
             int branchParentIndex = branches[branchIndex].parentIndex;
             for(int i=0; i<branches[branchParentIndex].childrenIndex.size(); ++i){
                 int tmpBranchIndex = branches[branchParentIndex].childrenIndex[i];
-                if(tmpBranchIndex != branchIndex){
+                allBranchIndex.push_back(tmpBranchIndex);
+                if(tmpBranchIndex != branchIndex && branches[tmpBranchIndex].rLevel<=2){
                     candidateBranchIndex.push_back(tmpBranchIndex);
                 }
             }
             for(int i=0; i<branches[branchIndex].childrenIndex.size(); ++i){
                 int tmpBranchIndex = branches[branchIndex].childrenIndex[i];
+                allBranchIndex.push_back(tmpBranchIndex);
+                if(branches[tmpBranchIndex].rLevel>2)
+                    continue;
                 candidateBranchIndex.push_back(tmpBranchIndex);
             }
 
@@ -936,16 +1360,16 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
                     qDebug()<<i<<" "<<j<<" : "<<tmpAngle;
                     if(tmpAngle>maxAngle){
                         maxAngle = tmpAngle;
-                        maxVectorIndex.first = i;
-                        maxVectorIndex.second = j;
+                        maxVectorIndex.first = candidateBranchIndex[i];
+                        maxVectorIndex.second = candidateBranchIndex[j];
                     }
                 }
             }
 
             if(maxAngle>angleTh){
-                for(int i=0; i<candidateBranchIndex.size(); ++i){
-                    int tmpBranchIndex = candidateBranchIndex[i];
-                    if(i==maxVectorIndex.first || i==maxVectorIndex.second){
+                for(int i=0; i<allBranchIndex.size(); ++i){
+                    int tmpBranchIndex = allBranchIndex[i];
+                    if(tmpBranchIndex==maxVectorIndex.first || tmpBranchIndex==maxVectorIndex.second){
                         this->setChildenBranchDeleteType(tmpBranchIndex);
                         branches[tmpBranchIndex].setBranchType(ToDeleteType);
                         branches[tmpBranchIndex].rLevel = -1;
@@ -953,16 +1377,22 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
                     }else{
                         for(int j=0; j<branches[tmpBranchIndex].childrenIndex.size(); ++j){
                             int cIndex = branches[tmpBranchIndex].childrenIndex[j];
-                            branchQ.push(cIndex);
+                            if(branchSet.find(cIndex) == branchSet.end()){
+                                branchSet.insert(cIndex);
+                                branchQ.push(cIndex);
+                            }
                         }
                     }
                 }
             }else{
-                for(int i=0; i<candidateBranchIndex.size(); ++i){
-                    int tmpBranchIndex = candidateBranchIndex[i];
+                for(int i=0; i<allBranchIndex.size(); ++i){
+                    int tmpBranchIndex = allBranchIndex[i];
                     for(int j=0; j<branches[tmpBranchIndex].childrenIndex.size(); ++j){
                         int cIndex = branches[tmpBranchIndex].childrenIndex[j];
-                        branchQ.push(cIndex);
+                        if(branchSet.find(cIndex) == branchSet.end()){
+                            branchSet.insert(cIndex);
+                            branchQ.push(cIndex);
+                        }
                     }
                 }
             }
@@ -972,7 +1402,10 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
             for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
                 int cIndex = branches[branchIndex].childrenIndex[j];
                 if(branches[cIndex].rLevel != -1){
-                    branchQ.push(cIndex);
+                    if(branchSet.find(cIndex) == branchSet.end()){
+                        branchSet.insert(cIndex);
+                        branchQ.push(cIndex);
+                    }
                 }
             }
         }
@@ -983,33 +1416,221 @@ bool BranchTree::pruningCross(double angleTh, double lengthTh){
 }
 
 bool BranchTree::pruningInflectionPoints(unsigned char *inimg1d, long long *sz, double d, double cosAngleThres){
-    vector<int> level0Index;
-    this->getLevelIndex(level0Index,0);
-    queue<int> branchQ;
-    for(int i=0; i<level0Index.size(); ++i){
-        int branchIndex = level0Index[i];
-        if(branches[branchIndex].rLevel != -1){
-            branchQ.push(branchIndex);
-        }
+
+    if(this->branches.size()>BigBranchNumber){
+        qDebug()<<"the branch number is too big, do nothing!";
+        return false;
     }
-    while (!branchQ.empty()) {
-        int branchIndex = branchQ.front();
-        branches[branchIndex].findBranchInflectionPoint(d,cosAngleThres);
-        branchQ.pop();
-        if(!branches[branchIndex].checkBranchInflectionPoint(inimg1d,sz)){
-            this->setChildenBranchDeleteType(branchIndex);
-            branches[branchIndex].rLevel = 0;
-            this->setParentBranchRLevel(branchIndex);
-        }else{
-            for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
-                int cIndex = branches[branchIndex].childrenIndex[j];
-                if(branches[cIndex].rLevel != -1){
+
+    for(int i=0; i<branches.size(); ++i){
+        if(branches[i].rLevel != 0)
+            continue;
+        branches[i].findBranchInflectionPoint(d,cosAngleThres);
+        if(!branches[i].checkBranchInflectionPoint(inimg1d,sz)){
+            branches[i].rLevel = 0;
+            this->setParentBranchRLevel(i);
+        }
+
+    }
+
+//    vector<int> level0Index;
+//    this->getLevelIndex(level0Index,0);
+//    queue<int> branchQ;
+//    for(int i=0; i<level0Index.size(); ++i){
+//        int branchIndex = level0Index[i];
+//        if(branches[branchIndex].rLevel != -1){
+//            branchQ.push(branchIndex);
+//        }
+//    }
+//    while (!branchQ.empty()) {
+//        int branchIndex = branchQ.front();
+//        branches[branchIndex].findBranchInflectionPoint(d,cosAngleThres);
+//        branchQ.pop();
+//        if(!branches[branchIndex].checkBranchInflectionPoint(inimg1d,sz)){
+//            this->setChildenBranchDeleteType(branchIndex);
+//            branches[branchIndex].rLevel = 0;
+//            this->setParentBranchRLevel(branchIndex);
+//        }else{
+//            for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
+//                int cIndex = branches[branchIndex].childrenIndex[j];
+//                if(branches[cIndex].rLevel != -1){
+//                    branchQ.push(cIndex);
+//                }
+//            }
+//        }
+//    }
+    return true;
+}
+
+bool BranchTree::pruningSuspectedBranch(unsigned char *inimg1d, long long *sz,double angleTh, double lengthTh){
+    qDebug()<<"in pruningSuspectedBranch";
+    int d = 20;
+    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
+
+    for(int i=0; i<branches.size(); ++i){
+        int parentIndex = branches[i].parentIndex;
+        if(parentIndex == -1)
+            continue;
+        if(branches[i].rLevel == 0)
+            qDebug()<<"parent length:"<<branches[parentIndex].length;
+        if(branches[i].rLevel != 0 || branches[parentIndex].length<lengthTh)
+            continue;
+        XYZ v_curLocal,v_curGlobal,v_p;
+        vector<V3DLONG> pointsIndex;
+        pointsIndex.clear();
+        branches[i].get_pointsIndex_of_branch(pointsIndex);
+        v_curLocal = getBranchLocalVector(pointsIndex,d);
+        v_curGlobal = getBranchGlobalVector(pointsIndex);
+
+        pointsIndex.clear();
+        branches[i].get_r_pointsIndex_of_branch(pointsIndex);
+        v_p = XYZ(0,0,0) - getBranchLocalVector(pointsIndex,d);
+
+        double tmpAngle1 = (acos(dot(normalize(v_curLocal),normalize(v_p)))/PI)*180;
+        double tmpAngle2 = (acos(dot(normalize(v_curGlobal),normalize(v_p)))/PI)*180;
+        qDebug()<<"tmpAngle1: "<<tmpAngle1<<" tmpAngle2: "<<tmpAngle2;
+        if(tmpAngle1>angleTh || tmpAngle2>angleTh){
+
+            pointsIndex.clear();
+            branches[i].get_pointsIndex_of_branch(pointsIndex);
+
+            int startIndex = pointsIndex.size() - 1;
+            double sLength = 0;
+            for(int j=1; j<pointsIndex.size(); ++j){
+                sLength += zx_dist(nt.listNeuron[pointsIndex[j]],nt.listNeuron[pointsIndex[j-1]]);
+                if(sLength>lengthTh){
+                    startIndex = j;
+                    break;
+                }
+            }
+
+            MyMarker root = MyMarker(nt.listNeuron[pointsIndex[startIndex]].x,
+                    nt.listNeuron[pointsIndex[startIndex]].y,
+                    nt.listNeuron[pointsIndex[startIndex]].z);
+            vector<MyMarker*> outLine;
+            double l = lengthTh + 10;
+            qDebug()<<"l: "<<l;
+            fastmarching_tree_constraint(root,inimg1d,outLine,sz[0],sz[1],sz[2],3,0,false,l);
+            qDebug()<<"end fastmartching_tree";
+
+            int sIndex = 0, eIndex = outLine.size()-1;
+            sLength = 0;
+            for(int j=pointsIndex.size()-2; j>=0; --j){
+                sLength += zx_dist(nt.listNeuron[pointsIndex[j]],nt.listNeuron[pointsIndex[j+1]]);
+                if(sLength>lengthTh){
+                    sIndex = j;
+                    break;
+                }
+            }
+            sLength = 0;
+            for(int j=1; j<outLine.size(); ++j){
+                sLength += zx_dist(*(outLine[j]),*(outLine[j-1]));
+                if(sLength>lengthTh){
+                    eIndex = j;
+                    break;
+                }
+            }
+            XYZ p1 = XYZ(nt.listNeuron[pointsIndex[sIndex]].x - root.x,
+                         nt.listNeuron[pointsIndex[sIndex]].y - root.y,
+                         nt.listNeuron[pointsIndex[sIndex]].z - root.z);
+            XYZ p2 = XYZ(outLine[eIndex]->x - root.x,
+                    outLine[eIndex]->y - root.y,
+                    outLine[eIndex]->z - root.z);
+            qDebug()<<"outLine size: "<<outLine.size();
+            double tmpCosAngle = dot(normalize(p1),normalize(p2));
+
+            qDebug()<<"tmpCosAngle: "<<tmpCosAngle;
+
+//            NeuronTree outswcBefore = swc_convert(outLine);
+//            QString savePathBefore = QString("F:\\manual\\") + QString::number(branches[i].endPointIndex) + "fastmartching_before.swc";
+//            writeSWC_file(savePathBefore,outswcBefore);
+
+            if(tmpCosAngle<0.5){
+                vector<MyMarker*> maskMarkers;
+                maskMarkers.insert(maskMarkers.begin(),outLine.begin(),outLine.begin()+outLine.size()/2);
+                unsigned char* maskFlag = 0;
+                for(int j=0; j<maskMarkers.size(); ++j){
+                    maskMarkers[j]->radius = 8;
+                }
+                swc2mask(maskFlag,maskMarkers,sz[0],sz[1],sz[2]);
+                qDebug()<<"mask end";
+                for(long j=0; j<tolSZ; j++){
+                    if(maskFlag[j] == (unsigned char)255){
+                        maskFlag[j] = 0;
+                    }else{
+                        maskFlag[j] = inimg1d[j];
+                    }
+                }
+                qDebug()<<"end maskFlag";
+                outLine.clear();
+                qDebug()<<"root xyz: "<<root.x<<" "<<root.y<<" "<<root.z;
+                fastmarching_tree_constraint(root,maskFlag,outLine,sz[0],sz[1],sz[2],3,0,false,l);
+                qDebug()<<"end fastmartching_tree 2";
+                if(maskFlag){
+                    delete[] maskFlag;
+                    maskFlag = 0;
+                }
+//                NeuronTree outswc = swc_convert(outLine);
+//                QString savePath = QString("F:\\manual\\") + QString::number(branches[i].endPointIndex) + "fastmartching.swc";
+//                writeSWC_file(savePath,outswc);
+            }
+
+            if(outLine.size()<1)
+                continue;
+
+            NeuronTree* origin = new NeuronTree();
+            for(int j=pointsIndex.size()-1; j>=0; --j){
+                NeuronSWC s = nt.listNeuron[pointsIndex[j]];
+                if(j==pointsIndex.size()-1)
+                    s.parent = -1;
+                origin->listNeuron.push_back(s);
+            }
+            queue<int> branchQ;
+            for(int j=0; j<branches[parentIndex].childrenIndex.size(); ++j){
+                int cIndex = branches[parentIndex].childrenIndex[j];
+                if(cIndex != i)
+                    branchQ.push(cIndex);
+            }
+            int count = 0;
+            while (!branchQ.empty() && count<5) {
+                count++;
+                int tmpBranchIndex = branchQ.front();
+                branchQ.pop();
+                pointsIndex.clear();
+                branches[tmpBranchIndex].get_pointsIndex_of_branch(pointsIndex);
+                for(int j=1; j<pointsIndex.size(); ++j){
+                    NeuronSWC s = nt.listNeuron[pointsIndex[j]];
+                    origin->listNeuron.push_back(s);
+                }
+                for(int j=0; j<branches[tmpBranchIndex].childrenIndex.size(); ++j){
+                    int cIndex = branches[tmpBranchIndex].childrenIndex[j];
                     branchQ.push(cIndex);
                 }
             }
+
+
+            XYZ pt;
+            double targetD = 0;
+            count = 0;
+            for(int j=0; j<outLine.size()/2; ++j){
+                pt = XYZ(outLine[j]->x,outLine[j]->y,outLine[j]->z);
+                targetD += dist_pt_to_swc(pt,origin);
+                count++;
+            }
+            if(count>0){
+                targetD /= count;
+            }
+            qDebug()<<"targetD: "<<targetD;
+            if(targetD>2){
+                branches[i].setBranchType(ToDeleteType);
+            }
+            if(origin){
+                delete origin;
+            }
+
         }
+
     }
-    return true;
 }
 
 bool BranchTree::saveNeuronTree(QString path){
@@ -1070,7 +1691,21 @@ void BranchTree::calRlevel0Branches(unsigned char *pdata, long long *sz, ofstrea
         if(branches[i].rLevel == 0 && branches[i].parentIndex != -1){
             int prtIndex = branches[i].parentIndex;
             float res = branches[i].getBranchPcaValue(pdata,sz,10);
-            csvFile<<branches[prtIndex].length<<','<<res<<endl;
+            csvFile<<branches[prtIndex].length<<','<<res<<','<<branches[i].length<<endl;
+        }
+    }
+}
+
+void BranchTree::calBifurcationLocalAngle(ofstream &csvFile){
+    for(int i=0; i<branches.size(); ++i){
+        branches[i].findBranchInflectionPoint(10,0);
+    }
+    for(int i=0; i<branches.size(); ++i){
+        if(branches[i].rLevel != 0){
+            branches[i].calAngle();
+            csvFile<<branches[i].localAngle3<<','
+                  <<(180 - branches[i].localAngle1)<<','
+                 <<(180 - branches[i].localAngle2)<<','<<endl;
         }
     }
 }

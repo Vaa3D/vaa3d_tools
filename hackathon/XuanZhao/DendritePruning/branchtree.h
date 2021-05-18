@@ -22,6 +22,8 @@
 #define AdjacentSomaType 13
 #define BreakType 14
 
+#define BigBranchNumber 1000
+
 
 template <class T>
 bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
@@ -177,6 +179,10 @@ struct Branch
 
     double distToNeuronTree(NeuronTree* otherTree);
 
+    int distToNeuronTree2(NeuronTree *otherTree, double dTh);
+
+    int distToNeuronTree3(BranchTree otherbt, NeuronTree *otherTree, double dTh, int &pmbi);
+
 };
 
 class BranchTree
@@ -195,11 +201,13 @@ public:
     bool initialize(NeuronTree t);
 
 
-    bool pruningByLength(unsigned char *pdata, long long *sz, int length);
+    bool pruningByLength(unsigned char *pdata, long long *sz, int length, double linearityTh);
     bool pruningSoma(double times);
     bool pruningAdjacentSoma(double somaRTh);
+    bool pruningAdjacentSoma2(const QString &multiMarkerPath);
     bool pruningCross(double angleTh, double lengthTh);
     bool pruningInflectionPoints(unsigned char *inimg1d, V3DLONG *sz, double d, double cosAngleThres);
+    bool pruningSuspectedBranch(unsigned char *inimg1d, V3DLONG *sz, double angleTh, double lengthTh);
 
 
     bool getLevelIndex(vector<int> &levelIndex, int level);
@@ -209,10 +217,12 @@ public:
     bool setParentBranchRLevel(int branchIndex);
 
     XYZ getBranchLocalVector(vector<V3DLONG> pointsIndex, double d);
+    XYZ getBranchGlobalVector(vector<V3DLONG> pointsIndex);
 
     void show(unsigned char* pdata, V3DLONG* sz);
 
     void calRlevel0Branches(unsigned char* pdata, V3DLONG* sz, ofstream &csvFile);
+    void calBifurcationLocalAngle(ofstream &csvFile);
 
 
     bool update();
