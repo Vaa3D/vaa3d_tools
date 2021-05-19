@@ -78,27 +78,35 @@ We provide two binary files for mBrainAligner corresponding to global registrati
 
 ## Data
 
-We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. At the same time, some necessary files are stored in `mBrainAligner_data`.
+We provide downsample data for four modalities in `mBrainAligner_data/Registration_data` and corresponding registered results：`fMOST`,`VISoR`,`MRI`,`LSFM`. you can find it in `mBrainAligner_data/result` and include step by step result files.
+At the same time, some necessary files are stored in `mBrainAligner_data`.
 
 ### Sub-Folder
 
 > mBrainAligner_data
 
-> >Registration_data: the folder where the data to be registered
+> > Registration_data: the folder where the data to be registered
 
 > > 3rdparty: the folder where the binary files and `dlls` copied to.
 
 > > data: `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
  
-> > result: result files
+> > result: result files e.g:
+
+> > > global_result
+
+> > > >1.auto_RPM:results of aligned by rpm algorithm,include brain data and its corresponding two sets of landmarks.
+
+> > > >2.auto_FFD:results of aligned by FFD algorithm,including brain data and its corresponding deformation field.
+
+> > > loacl_result:results of aligned by mBrainAligner local registration algorithm,include brain data and its corresponding landmarks.You can view them in [Vaa3d](https://github.com/Vaa3D) all above results
 
 > > Seg: Deep feature
 
 ### Run
+If you want to reproduce our results, set the corresponding data parameters in `main_mbrainaligner.bat` or use our default parameters, and just *run* it.
 
-Just run the `main_mbrainaligner.bat`.
-
-The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/result` folder.
+The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `mBrainAligner_data/result` folder.
 
 Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correpondingly. We will upload the segmentation model of different size later.
 
