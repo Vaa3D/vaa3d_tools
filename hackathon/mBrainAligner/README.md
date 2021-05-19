@@ -80,6 +80,20 @@ We provide two binary files for mBrainAligner corresponding to global registrati
 
 We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. At the same time, some necessary files are stored in `mBrainAligner_data`.
 
+### Sub-Folder
+
+> mBrainAligner_data
+
+> >Registration_data: the folder where the data to be registered
+
+> > 3rdparty: the folder where the binary files and `dlls` copied to.
+
+> > data: `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
+ 
+> > result: result files
+
+> > Seg: Deep feature
+
 ### Run
 
 Just run the `main_mbrainaligner.bat`.
