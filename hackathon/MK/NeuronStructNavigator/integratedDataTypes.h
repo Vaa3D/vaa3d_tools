@@ -1,19 +1,14 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
+// Copyright (c) 2019 Hsien-Chi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
 *
 *  [integratedDataTypes] is part of the NeuronStructNavigator library. 
-*  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
-*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
-*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
-* 
-*  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
-*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
-*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
-*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
+*  This namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
+*  All data structures in this namespace are extension of standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
+*  Any creation new datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
 *
 ********************************************************************************/
 
@@ -88,8 +83,9 @@ namespace integratedDataTypes
 
 
 	/********* Segment Unit Data Structure *********/
-	struct segUnit
+	class segUnit
 	{
+	public:
 		segUnit() : to_be_deleted(false) {};
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
@@ -125,6 +121,9 @@ namespace integratedDataTypes
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
 		QList<NeuronSWC> changeTreeHead(const int newHeadID) const;
+
+	//public:
+		//virtual void retype2highlight();
 	};
 	/***********************************************/
 
@@ -154,8 +153,9 @@ namespace integratedDataTypes
 	/************************************************************************/
 
 	/******************* Complete Profile Data Structure for NeuronTree *******************/
-	struct profiledTree
+	class profiledTree
 	{
+	public:
 		profiledTree() = default;
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		//profiledTree(const vector<segUnit>& inputSegs, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
@@ -190,7 +190,9 @@ namespace integratedDataTypes
 		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster	
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;						 // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching)
+		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching,  (X - root node, the new head that has 2 child nodes) )
+		//																																	  / \
+		//																																     o   o
 		// -------------------------------------------------------------------- //
 		
 		void getSegEndClusterNodeMap();   // -> this->segEndClusterNodeMap

@@ -1165,7 +1165,8 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 	{
 		set<int> groupedSegIDs;
 		groupedSegIDs.insert(*unGroupedSegIDs.begin());
-		try { NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin()); }
+
+		try { this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin()); }
 		catch (int problemSwitch)
 		{
 			if (problemSwitch == 1)
@@ -1210,7 +1211,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 				else
 				{
 					groupedSegIDs.insert(it->second);
-					NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second);
+					this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second);
 				}
 			}
 		}
@@ -1226,12 +1227,20 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 	for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 	{
 		if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end()) throw 1;
+		/*if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end())
+		{
+			QList<NeuronSWC> ghostSegNodes;
+			const NeuronSWC& ghostSegNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(it->second));
+			NeuronStructExplorer::wholeSingleTree_extract(inputProfiledTree.tree.listNeuron, ghostSegNodes, ghostSegNode);
+			ghostSegUnit thisGhostSegUnit(ghostSegNodes);
+			//this->problematicSegUnits.push_back()
+		}*/
 		
 		if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
 		else
 		{
 			groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
-			NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+			this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
 		}
 	}
 
@@ -1249,7 +1258,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 			else
 			{
 				groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
-				NeuronStructExplorer::rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+				this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
 			}
 		}
 	}

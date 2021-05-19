@@ -29,9 +29,11 @@
 #include <qstringlist.h>
 
 #include "integratedDataTypes.h"
+#include "neuronReconErrorTypes.h"
 
 using namespace std;
 using namespace integratedDataTypes;
+using namespace neuronReconErrorTypes;
 
 class NeuronStructUtil
 {

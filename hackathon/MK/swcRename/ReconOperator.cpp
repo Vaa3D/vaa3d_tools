@@ -151,16 +151,20 @@ void ReconOperator::removeDupedNodes()
 
 		bool apoFound = false;
 		CellAPO somaAPO;
-		QString targetAPOfileName = baseName + ".apo";
-		for (auto& file2 : fileList)
+		if (!baseName.isEmpty())
 		{
-			if (file2 == targetAPOfileName)
+			QString targetAPOfileName = baseName + ".apo";
+			for (auto& file2 : fileList)
 			{
-				somaAPO = *readAPO_file(this->rootPath + "\\" + file2).begin();
-				apoFound = true;
-				break;
+				if (file2 == targetAPOfileName)
+				{
+					somaAPO = *readAPO_file(this->rootPath + "\\" + file2).begin();
+					apoFound = true;
+					break;
+				}
 			}
 		}
+		else continue;
 		
 		if (apoFound)
 		{
@@ -399,6 +403,7 @@ void ReconOperator::removeDupedNodes()
 
 				if (type7exist)
 				{
+					if (!type7dir.exists()) type7dir.mkpath(".");
 					writeSWC_file(tooFarType7folderQ + baseName + ".swc", outputTree);
 					QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
 					QString copyAPOfullNameQ = tooFarType7folderQ + "\\" + baseName + ".apo";

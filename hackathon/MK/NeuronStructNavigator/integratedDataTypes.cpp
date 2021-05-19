@@ -1,20 +1,15 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute)
+// Copyright (c) 2019 Hsien-Chi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
 *
 *  [integratedDataTypes] is part of the NeuronStructNavigator library.
-*  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
-*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
-*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
+*  This namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
+*  All data structures in this namespace are extension of standard Vaa3D data types with additional features, aiming to make neuron structure operations and algorithms easier.
+*  Any creation of new datatypes should be put in this namespace to keep them organized and avoid the confusion of header inclusion.
 *
-*  [profiledTree] is the core data type in throughout the whole NeuronStructNavigator library. It profiles the NeuronTree and carries crucial information of it.
-*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
-*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
-*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
-
 ********************************************************************************/
 
 #include "integratedDataTypes.h"
@@ -622,6 +617,8 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 	float dist = 100000;
 	int outputNodeID = 0;
 	vector<int> nodeIDs;
+
+	// --------- Search in Target Node Tile --------- //
 	if (this->nodeTileMap.find(targetNodeTileKey) != this->nodeTileMap.end())
 	{
 		//cout << "soma node tile: " << targetNodeTileKey << endl;
@@ -634,7 +631,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 			{
 				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(nodeCoordKey);
 				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(nodeCoordKey);
-				if (range.second - range.first == 1 && range2.second - range2.first == 1)
+				if (range.second - range.first == 1 && range2.second - range2.first == 1) // Only 1 segEnd at this place and no body node from other segments overlapping 
 				{
 					float currNodeDist = sqrtf((node.x - inputAPO.x) * (node.x - inputAPO.x) + (node.y - inputAPO.y) * (node.y - inputAPO.y) + (node.z - inputAPO.z) * (node.z - inputAPO.z));
 					if (currNodeDist < dist)
@@ -646,7 +643,9 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 			}
 		}
 	}
+	// ----- END of [Search in Target Node Tile] ---- //
 	
+	// ------- Search in Adjacent Node Tiles ------- //
 	if (outputNodeID != 0 && dist <= threshold) return outputNodeID;
 	else
 	{
@@ -682,7 +681,7 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 							{
 								pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(nodeCoordKey);
 								pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(nodeCoordKey);
-								if (range.second - range.first == 1 && range2.second - range2.first == 1)
+								if (range.second - range.first == 1 && range2.second - range2.first == 1) // Only 1 segEnd at this place and no body node from other segments overlapping 
 								{
 									float currNodeDist = sqrtf((node.x - inputAPO.x) * (node.x - inputAPO.x) + (node.y - inputAPO.y) * (node.y - inputAPO.y) + (node.z - inputAPO.z) * (node.z - inputAPO.z));
 									if (currNodeDist < dist)
@@ -697,10 +696,14 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 				}
 			}
 		}
+		// -- END of [Search in Adjacent Node Tiles] --- //
 
-		if (outputNodeID != 0 && dist <= threshold) return outputNodeID;
+		if (outputNodeID != 0 && dist <= threshold) return outputNodeID; // Nearest node found, returning its node ID.
 		else
 		{
+			// Cannot find any node that meets the requirement in the target node tile and adjacent node tiles. 
+			//  ==> Use a randomly picked singular segEnd.
+
 			//cout << "No nearest node found." << endl;
 			for (auto& segEndCoord : this->segEndCoordKey2segMap)
 			{
@@ -775,7 +778,7 @@ void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
 
 void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs)
 {
-	// Taking the leading segment as upstream, any segments that are attached to it need to be connected with their heads. This is the idea of "combing through".
+	// Taking the leading segment as the upstream, any segments that are attached to it need to be connected with their heads. This is the idea of "combing through".
 	// The process goes on recursively until all segments are checked and arranged.
 	// -- Note, running this method only once doesn't guarantee that the all connected segments are arranged in the right orientation down the stream. 
 	//    This is the reason why [this->assembleSegs2singleTree] calls this method with [this->combSegs] iteratively until all segments have been linked and become 1 single structure (segment).
