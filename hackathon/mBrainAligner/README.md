@@ -85,22 +85,22 @@ At the same time, some necessary files are stored in `mBrainAligner_data`.
 
 > mBrainAligner_data
 
-> > Registration_data: the folder where the data to be registered
-
 > > 3rdparty: the folder where the binary files and `dlls` copied to.
 
 > > data: `mBrainAligner` necessary files,including `CCFv3, markers, config.txt, etc`.
+
+> > Registration_data: the folder where the data to be registered.
  
-> > result: result files e.g:
+> > result: result files and You can view them in [Vaa3d](https://github.com/Vaa3D) all following results e.g:
 
 > > > global_result
 
-> > > >1.auto_RPM:results of aligned by rpm algorithm,include brain data and its corresponding two sets of landmarks.
+> > > >1.auto_RPM:  Results of aligned by rpm algorithm,include brain data and its corresponding two sets of landmarks.
 
-> > > >2.auto_FFD:results of aligned by FFD algorithm,including brain data and its corresponding deformation field.
+> > > >2.auto_FFD:  Results of aligned by FFD algorithm,including brain data and its corresponding deformation field.
 
-> > > loacl_result:results of aligned by mBrainAligner local registration algorithm,include brain data and its corresponding landmarks.You can view them in [Vaa3d](https://github.com/Vaa3D) all above results
-
+> > > loacl_result: Results of aligned by mBrainAligner local registration algorithm,include brain data and its corresponding landmarks.
+                   
 > > Seg: Deep feature
 
 ### Run
