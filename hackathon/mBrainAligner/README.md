@@ -117,7 +117,7 @@ At the same time, some necessary files are stored in `mBrainAligner_data`.
     
 The fMOST to CCF registration will complete in about 0.5 hours (If you choose the default parameters), and all the results can be found in the `mBrainAligner_data/result` folder.
 
-Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correpondingly. We will upload the segmentation model of different size later.
+Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correspondingly. We will upload the segmentation model of different size later.
 
 
 # License
