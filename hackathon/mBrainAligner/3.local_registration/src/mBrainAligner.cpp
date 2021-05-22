@@ -45,9 +45,9 @@ bool q_mutualinformation2(float *&I1, float *&I2, long long npixels, float &nmi)
 		if (hist12[i] > 10e-10)	HAB += -hist12[i] * log(hist12[i]);
 
 	//mutual information
-	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),Ô½´óÔ½Æ¥Åä
-	double mi = HA + HB - HAB;//MI(Mutual Information)»¥ĞÅÏ¢Ô½´ó£¬ËµÃ÷Ïà»¥°üº¬µÄĞÅÏ¢¶à£¬¼´Ô½Æ¥Åä
-	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)£¬Ô½´óÔ½Æ¥Åä
+	nmi = (HA + HB) / HAB;//NMI(Normalization Mutual Information),è¶Šå¤§è¶ŠåŒ¹é…
+	double mi = HA + HB - HAB;//MI(Mutual Information)äº’ä¿¡æ¯è¶Šå¤§ï¼Œè¯´æ˜ç›¸äº’åŒ…å«çš„ä¿¡æ¯å¤šï¼Œå³è¶ŠåŒ¹é…
+	double ecc = 2 * mi / (HA + HB);//ECC(Entropy Corrleation Coefficient)ï¼Œè¶Šå¤§è¶ŠåŒ¹é…
 	nmi = ecc;
 
 	if (hist1) 	{ delete[]hist1;	hist1 = 0; }
@@ -759,13 +759,13 @@ bool Dic_brain(unsigned char * p_img_test, QString &dic_brain_file, QString &bas
 		return -1;
 	}
 
-	//È¡µ½ËùÓĞµÄÎÄ¼şºÍÎÄ¼şÃû£¬µ«ÊÇÈ¥µô.ºÍ..µÄÎÄ¼ş¼Ğ£¨ÕâÊÇQTÄ¬ÈÏÓĞµÄ£©
+	//å–åˆ°æ‰€æœ‰çš„æ–‡ä»¶å’Œæ–‡ä»¶åï¼Œä½†æ˜¯å»æ‰.å’Œ..çš„æ–‡ä»¶å¤¹ï¼ˆè¿™æ˜¯QTé»˜è®¤æœ‰çš„ï¼‰
 	dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
-	//ÎÄ¼ş¼ĞÓÅÏÈ
+	//æ–‡ä»¶å¤¹ä¼˜å…ˆ
 	dir.setSorting(QDir::DirsFirst);
 
-	//×ª»¯³ÉÒ»¸ölist
+	//è½¬åŒ–æˆä¸€ä¸ªlist
 	QFileInfoList list_norm = dir.entryInfoList();
 	if (list_norm.size()< 1) {
 		return -1;
@@ -1515,15 +1515,15 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 					szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img,
 					p_img_warp);
 				char filename[2000];
-				QString save_file = input_Parameter.save_path + "registered_image.v3draw";
+				QString save_file = input_Parameter.save_path + "local_registered_image.v3draw";
 				sprintf(filename, "%s", qPrintable(save_file));
 				saveImage(filename, (unsigned char *)p_img_warp, sz_img_tar, 1);
 				if (p_img_warp) 		{ delete[]p_img_warp;			p_img_warp = 0; }
 
 				//save as marker files
-				sprintf(filename, "%sregistered_tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
-				sprintf(filename, "%sregistered_sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
-				if (input_Parameter.resample != 1)
+				sprintf(filename, "%slocal_registered_tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
+				sprintf(filename, "%slocal_registered_sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
+			/*	if (input_Parameter.resample != 1)
 				{
 					QList<ImageMarker> ql_marker_tar_x4, ql_marker_sub_x4;
 					ql_marker_tar_x4 = ql_marker_tar; ql_marker_sub_x4 = ql_marker_sub;
@@ -1532,9 +1532,9 @@ bool mBrainAligner(Parameter input_Parameter, vector<point3D64F>vec_corners, vec
 						ql_marker_tar_x4[i].x *= input_Parameter.resample;	ql_marker_tar_x4[i].y *= input_Parameter.resample;	ql_marker_tar_x4[i].z *= input_Parameter.resample;
 						ql_marker_sub_x4[i].x *= input_Parameter.resample;	ql_marker_sub_x4[i].y *= input_Parameter.resample;	ql_marker_sub_x4[i].z *= input_Parameter.resample;
 					}
-					sprintf(filename, "%sregistered_tar_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar_x4);
-					sprintf(filename, "%sregistered_sub_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
-				}
+					sprintf(filename, "%slocal_registered_tar_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar_x4);
+					sprintf(filename, "%slocal_registered_sub_x4.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub_x4);
+				}*/
 				
 			}
 		}
