@@ -7,11 +7,28 @@ using namespace integratedDataTypes;
 
 namespace neuronReconErrorTypes
 {
-	struct ghostSegUnit : public segUnit
+	class errorStructure
 	{
-		ghostSegUnit(const QList<NeuronSWC>& inputNodeList) : segUnit(inputNodeList) { this->head = -1; }
+		// This is an interface class [segUnit]-based error objects defined in neuronReconErrorTypes.h. 
+	public:
+		virtual ~errorStructure() {}
 
-		//virtual void retype2highlight();
+		virtual QList<NeuronSWC>& getNodes() = 0;
+
+		virtual void highlightErrorNodes() = 0;
+	};
+
+	class ghostSegUnit : public errorStructure
+	{
+	public:
+		ghostSegUnit() = delete;
+		ghostSegUnit(const QList<NeuronSWC>& inputNodes) : theSeg(inputNodes) {}
+		ghostSegUnit& operator=(const ghostSegUnit&) = delete;
+		
+		segUnit theSeg;
+		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
+
+		virtual void highlightErrorNodes();
 	};
 }
 

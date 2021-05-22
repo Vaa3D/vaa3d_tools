@@ -1,6 +1,6 @@
 #include "neuronReconErrorTypes.h"
 
-/*void neuronReconErrorTypes::ghostSegUnit::retype2highlight()
+void neuronReconErrorTypes::ghostSegUnit::highlightErrorNodes()
 {
-	for (auto& node : this->nodes) node.type = 0;
-}*/
+	for (auto& node : this->theSeg.nodes) node.type = 0;
+}

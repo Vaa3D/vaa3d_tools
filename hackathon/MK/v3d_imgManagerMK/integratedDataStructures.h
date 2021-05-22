@@ -1,19 +1,19 @@
 #ifndef INTEGRATEDDATASTRUCTURES_H
 #define INTEGRATEDDATASTRUCTURES_H
 
-#include <iostream>
-#include <vector>
-#include <set>
-#include <map>
+#include "basic_surf_objs.h"
+#include "v3d_basicdatatype.h"
+
+#include "qstring.h"
 
 #include <boost/container/flat_set.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/shared_array.hpp>
 
-#include "qstring.h"
-
-#include "basic_surf_objs.h"
-#include "v3d_basicdatatype.h"
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
 
 using namespace std;
 

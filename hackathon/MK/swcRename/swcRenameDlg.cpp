@@ -22,7 +22,7 @@ SWC_renameDlg::SWC_renameDlg(QWidget* parent, V3DPluginCallback2* callback) : ui
 	this->fileManager.fileNameAddition.clear();
 
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
-	QString windowTitleQ = "Neuron File Manager v" + QString::fromStdString(versionString);
+	QString windowTitleQ = "Neuron Reconstruction Manager v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);
 
 	this->show();
@@ -49,8 +49,6 @@ void SWC_renameDlg::browseFolderClicked()
 		uiPtr->lineEdit_12->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 	else if (objName == "pushButton_10")
 		uiPtr->lineEdit_13->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
-	else if (objName == "pushButton_2")
-		uiPtr->lineEdit_3->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
 }
 
 void SWC_renameDlg::preProcessParam(bool toggle)
@@ -126,23 +124,6 @@ void SWC_renameDlg::changeName()
 		this->fileNameList = seuFileFolder.entryList();
 
 		this->fileManager.nameChange(this->fileNameList, FileNameChangerIndexer::SEU_index);
-	}
-	else if (objName == "buttonBox_3")
-	{
-		this->rootPath = uiPtr->lineEdit_3->text();
-		this->rootPath.replace("/", "\\");
-		this->fileManager.rootPath = this->rootPath;
-		this->fileManager.fileNameAddition = uiPtr->lineEdit_8->text();
-
-		QDir swcFolder(this->rootPath);
-		swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		this->fileNameList.clear();
-		this->fileNameList = swcFolder.entryList();
-
-		this->oldNewMap.clear();
-		if (uiPtr->radioButton_5->isChecked()) this->fileManager.generalApoANO = true;
-		else this->fileManager.generalApoANO = false;
-		this->fileManager.nameChange_fromAssemble(this->fileNameList);
 	}
 }
 

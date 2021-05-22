@@ -1135,47 +1135,42 @@ void NeuronStructExplorer::wholeSingleTree_extract(const QList<NeuronSWC>& input
 	if (startingNode.parent == -1) NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
 	else
 	{
-		int parentID = startingNode.parent;
-		int somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
-
+		int parentID = startingNode.parent, currentNodeID = startingNode.n;
 		while (1)
 		{
-			parentID = inputList.at(int(node2locMap.at(parentID))).parent;
-			if (parentID != -1) somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
+			if (node2locMap.find(parentID) != node2locMap.end()) // In the case of ghost segment, no head node will be found. 
+			{
+				currentNodeID = parentID;
+				parentID = inputList.at(int(node2locMap.at(currentNodeID))).parent;
+				if (parentID == -1) break;
+			}
 			else break;
 		}
 
-		NeuronSWC rootNode = inputList.at(int(node2locMap.at(somaNodeID)));
+		NeuronSWC rootNode = inputList.at(int(node2locMap.at(currentNodeID)));
 		NeuronStructExplorer::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
 	}
 }
 
-boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConnectedTrees(const NeuronTree& inputTree)
+boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConnectedTrees(const NeuronTree& inputTree, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>& errorStructList)
 {
 	profiledTree inputProfiledTree(inputTree);
-	if (inputProfiledTree.node2segMap.empty()) inputProfiledTree.nodeSegMapGen();
-	if (inputProfiledTree.nodeCoordKey2nodeIDMap.empty()) inputProfiledTree.nodeCoordKeyNodeIDmapGen();
-	if (inputProfiledTree.segEndCoordKey2segMap.empty()) inputProfiledTree.segEndCoordKeySegMapGen();
+	inputProfiledTree.nodeSegMapGen();
+	inputProfiledTree.nodeCoordKeyNodeIDmapGen();
+	inputProfiledTree.segEndCoordKeySegMapGen();
+
 	boost::container::flat_map<int, profiledTree> outputTreeSizeProfiledTreeMap;
+
 	set<int> unGroupedSegIDs;
+	unGroupedSegIDs.clear();
 	for (auto& seg : inputProfiledTree.segs) unGroupedSegIDs.insert(seg.first);
-	//cout << "Total number of segments: " << unGroupedSegIDs.size() << endl;
 
 	while (!unGroupedSegIDs.empty())
 	{
 		set<int> groupedSegIDs;
 		groupedSegIDs.insert(*unGroupedSegIDs.begin());
-
-		try { this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin()); }
-		catch (int problemSwitch)
-		{
-			if (problemSwitch == 1)
-			{
-				cout << "Ghost segment found in the input tree. Grouping process has been interupted." << endl;
-				outputTreeSizeProfiledTreeMap.clear();
-				return outputTreeSizeProfiledTreeMap;
-			}
-		}
+		
+		this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, *unGroupedSegIDs.begin(), errorStructList);
 
 		//cout << "Grouped segment IDs: ";
 		NeuronTree outputTree;
@@ -1194,7 +1189,7 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 	return outputTreeSizeProfiledTreeMap;
 }
 
-void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID)
+void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>& errorStructList)
 {
 	int currGroupedSegNum = groupedSegIDs.size();
 
@@ -1211,7 +1206,7 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 				else
 				{
 					groupedSegIDs.insert(it->second);
-					this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second);
+					this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, it->second, errorStructList);
 				}
 			}
 		}
@@ -1226,21 +1221,25 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 	pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(headCoordKey);
 	for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 	{
-		if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end()) throw 1;
-		/*if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end())
+		// This is the only place an error could happen: a segment without a head, i.e., a ghost segment.
+		// Currently, a ghost segment will be wrapped in a [neuronReconErrorTypes::errorStructure], put in [errorStructList], and then continue on the next. 
+		if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end())
 		{
-			QList<NeuronSWC> ghostSegNodes;
-			const NeuronSWC& ghostSegNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(it->second));
-			NeuronStructExplorer::wholeSingleTree_extract(inputProfiledTree.tree.listNeuron, ghostSegNodes, ghostSegNode);
-			ghostSegUnit thisGhostSegUnit(ghostSegNodes);
-			//this->problematicSegUnits.push_back()
-		}*/
+			QList<NeuronSWC> ghostNodes;
+			const NeuronSWC& ghostNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(it->second));
+			//cout << "ghost node ID:" << ghostNode.n << endl;
+			NeuronStructExplorer::wholeSingleTree_extract(inputProfiledTree.tree.listNeuron, ghostNodes, ghostNode);
+			shared_ptr<neuronReconErrorTypes::errorStructure> ghostSegPtr = make_shared<neuronReconErrorTypes::ghostSegUnit>(neuronReconErrorTypes::ghostSegUnit(ghostNodes));
+			//cout << " -- ghost node list size: " << ghostSegPtr.get()->getNodes().size() << endl << endl;
+			errorStructList.push_back(ghostSegPtr);
+			continue;
+		}
 		
 		if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
 		else
 		{
 			groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
-			this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+			this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second), errorStructList);
 		}
 	}
 
@@ -1252,13 +1251,25 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 		pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = inputProfiledTree.nodeCoordKey2nodeIDMap.equal_range(tailCoordKey);
 		for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 		{
-			if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end()) throw 1;
+			// This is the only place an error could happen: a segment without a head, i.e., a ghost segment.
+			// Currently, a ghost segment will be wrapped in a [neuronReconErrorTypes::errorStructure], put in [errorStructList], and then continue on the next.
+			if (inputProfiledTree.node2segMap.find(it->second) == inputProfiledTree.node2segMap.end())
+			{
+				QList<NeuronSWC> ghostNodes;
+				const NeuronSWC& ghostNode = inputProfiledTree.tree.listNeuron.at(inputProfiledTree.node2LocMap.at(it->second));
+				//cout << "ghost node ID:" << ghostNode.n << endl;
+				NeuronStructExplorer::wholeSingleTree_extract(inputProfiledTree.tree.listNeuron, ghostNodes, ghostNode);
+				shared_ptr<neuronReconErrorTypes::errorStructure> ghostSegPtr = make_shared<neuronReconErrorTypes::ghostSegUnit>(neuronReconErrorTypes::ghostSegUnit(ghostNodes));
+				//cout << "ghost node list size: " << ghostSegPtr.get()->getNodes().size() << endl << endl;
+				errorStructList.push_back(ghostSegPtr);
+				continue;
+			}
 			
 			if (inputProfiledTree.node2segMap.at(it->second) == leadingSegID || groupedSegIDs.find(inputProfiledTree.node2segMap.at(it->second)) != groupedSegIDs.end()) continue;
 			else
 			{
 				groupedSegIDs.insert(inputProfiledTree.node2segMap.at(it->second));
-				this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second));
+				this->rc_findConnectedSegs(inputProfiledTree, groupedSegIDs, inputProfiledTree.node2segMap.at(it->second), errorStructList);
 			}
 		}
 	}

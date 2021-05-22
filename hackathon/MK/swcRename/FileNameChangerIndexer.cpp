@@ -108,10 +108,10 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 				vector<float> somaCoords;
 				if (!this->getCoordsFromSWC(inputTree.listNeuron, somaCoords))
 				{
-					if (!unProcessedDir.exists()) unProcessedDir.mkpath(".");
+					/*if (!unProcessedDir.exists()) unProcessedDir.mkpath(".");
 					QString newUnprocessdFullName = unProcessedSavingPathQ + "\\" + fileNameQ;
 					QFile::copy(oldFullNameQ, newUnprocessdFullName);
-					continue;
+					continue;*/
 				}
 				
 				int dupCount = 0;

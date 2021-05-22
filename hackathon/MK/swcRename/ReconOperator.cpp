@@ -243,27 +243,8 @@ void ReconOperator::removeDupedNodes()
 				// ------------- END of [Remove type1 nodes] ------------ //
 
 				clock_t start = clock();
-				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);
-				
-				// -- Found ghost segment, move to 'notAssembled' folder and skip to the next cell -- //
-				if (connectedTrees.empty())
-				{
-					cout << " -- There's an error in this cell structure. Skip to the next cell." << endl << endl;
-
-					if (!errorDir.exists()) errorDir.mkpath(".");
-					QString inputFileFullNameQ = this->rootPath + "\\" + file;
-					QString renamedFullNameQ = errorFolderQ + file;
-					QFile::rename(inputFileFullNameQ, renamedFullNameQ);
-					QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
-					QString renamedAPOfullNameQ = errorFolderQ + baseName + ".apo";
-					QFile::rename(inputAPOfullNameQ, renamedAPOfullNameQ);
-					QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
-					QString renamedANOfullNameQ = errorFolderQ + baseName;
-					QFile::rename(inputANOfullNameQ, renamedANOfullNameQ);
-
-					continue;
-				}
-				// ---------------------------------------------------------------------------------- //
+				vector<shared_ptr<neuronReconErrorTypes::errorStructure>> ghostList;
+				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree, ghostList);
 
 				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
@@ -322,7 +303,7 @@ void ReconOperator::removeDupedNodes()
 					for (auto& tree : connectedTrees) tree.second = TreeTrimmer::spikeRemoval(tree.second, this->branchNodeMin);
 				// ------------------------------ //
 
-				// ------- Reassign Soma and Connect ------- //
+				// ------- Reassign Soma And Connect Subtrees To IT------- //
 				NeuronSWC somaNode;
 				if (minNodeID > 1) somaNode.n = minNodeID - 1;
 				else somaNode.n = maxNodeID + 1;
@@ -337,7 +318,7 @@ void ReconOperator::removeDupedNodes()
 					profiledTree& currTree = connectedTrees[treeID.first];
 					currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
 				}
-				// ----------------------------------------- //
+				// ------------------------------------------------------ //
 
 				/***************** LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES *****************/
 				if (this->autoConnect)
@@ -400,6 +381,26 @@ void ReconOperator::removeDupedNodes()
 					}
 				}
 				outputTree.listNeuron.push_front(somaNode);
+
+				/*if (!ghostList.empty())
+				{
+					for (auto& ghostSeg : ghostList)
+					{
+						ghostSeg.get()->highlightErrorNodes();
+						outputTree.listNeuron.append(ghostSeg.get()->getNodes());
+					}
+
+					if (!errorDir.exists()) errorDir.mkpath(".");
+					writeSWC_file(errorFolderQ + file, outputTree);
+					QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
+					QString copyAPOfullNameQ = errorFolderQ + "\\" + baseName + ".apo";
+					QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
+					QString copyANOfullNameQ = errorFolderQ + "\\" + baseName;
+					QFile::copy(inputAPOfullNameQ, copyAPOfullNameQ);
+					QFile::copy(inputANOfullNameQ, copyANOfullNameQ);
+
+					continue;
+				}*/
 
 				if (type7exist)
 				{

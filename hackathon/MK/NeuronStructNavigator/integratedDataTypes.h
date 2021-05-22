@@ -18,7 +18,6 @@
 #include "integratedDataStructures.h"
 
 #include "v_neuronswc.h"
-#include "basic_surf_objs.h"
 
 #include <deque>
 #include <string>
@@ -82,7 +81,7 @@ namespace integratedDataTypes
 	};
 
 
-	/********* Segment Unit Data Structure *********/
+	/************* Segment Unit Data Structure *************/
 	class segUnit
 	{
 	public:
@@ -121,11 +120,8 @@ namespace integratedDataTypes
 	private:
 		void rc_nodeRegister2V_NeuronSWC(V_NeuronSWC& sbjV_NeuronSWC, int parentID, int branchRootID) const;
 		QList<NeuronSWC> changeTreeHead(const int newHeadID) const;
-
-	//public:
-		//virtual void retype2highlight();
 	};
-	/***********************************************/
+	/*******************************************************/
 
 	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
@@ -169,7 +165,8 @@ namespace integratedDataTypes
 		map<int, vector<size_t>> node2childLocMap;
 		map<string, vector<int>> nodeTileMap; // tile label -> node IDs
 		
-		/* ================= Segment-related Data Members and Functions ================= */
+
+		/* ====================== Segment-related Data Members and Functions ====================== */
 		map<int, segUnit> segs;											  // key = seg ID
 		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
 		map<string, vector<int>> segTailMap;							  // tile label -> seg ID
@@ -195,6 +192,7 @@ namespace integratedDataTypes
 		//																																     o   o
 		// -------------------------------------------------------------------- //
 		
+		// ----------------- Advanced Node - Segment Profiling Methods ----------------- //
 		void getSegEndClusterNodeMap();   // -> this->segEndClusterNodeMap
 		void getSegEndClusterCentoirds(); // -> this->segEndClusterCentroidMap
 
@@ -203,6 +201,7 @@ namespace integratedDataTypes
 		void segEndCoordKeySegMapGen();   // -> this->segEndCoordKey2segMap
 		void nodeCoordKeyNodeIDmapGen();  // -> this->nodeCoordKey2nodeIDMap
 		void overlappedCoordMapGen();     // -> this->overlappedCoordMap
+		// ----------------------------------------------------------------------------- //
 		
 		// ----------------- Segment Assembling Methods ----------------- // 
 		// Pick up the nearst node to the given soma coordinate. The node has to be a singular node that doesn't overlap any other nodes.
@@ -228,7 +227,7 @@ namespace integratedDataTypes
 		
 		// This method is called when it needs to be converted to a segment that self-branches from the node to which other segment's end is attached.
 		pair<int, segUnit> splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID);
-		/* ============ END of [Segment-related Data Members and Functions] ============ */
+		/* ================= END of [Segment-related Data Members and Functions] ================= */
 
 	public:
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
