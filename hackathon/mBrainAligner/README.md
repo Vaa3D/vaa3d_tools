@@ -95,11 +95,6 @@ example(global_registration):
 You can find the executable file from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/global_registration". 
 
 # Demo
-
-We provide two binary files for mBrainAligner corresponding to global registration and local registration respectively.And provide `main_mbrainaligner.bat` with default parameters. Of course, you can also modify it as needed.
-
-## Data
-
 We provide downsample raw data for four modalities, corresponding registered results：`fMOST`,`VISoR`,`MRI`,`LSFM`,and related files needed in registration.
 
 ### Sub-Folder
