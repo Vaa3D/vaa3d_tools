@@ -131,7 +131,7 @@ We provide downsample raw data for four modalities, corresponding registered res
     
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
-    add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib/"  to the last line of '/etc/ld.so.conf' and save. 
+    add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib"  to the last line of '/etc/ld.so.conf' and save. 
     sudo ldconfig
    After that,you can register our sample data, run
       
