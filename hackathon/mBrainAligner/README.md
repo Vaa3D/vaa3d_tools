@@ -25,7 +25,7 @@ mBrainAligner contains three decoupled modules: (1) image preprocessing and glob
 `mBrainAligner` can works on standard PC, the required RAM capacity depends on the size of the image to be processed. For optimal performance, we recommend a computer with the following specs: 
 
 RAM: 32+ GB
-CPU: 10+ cores, 2.30+ GHz/core
+CPU: 8+ cores, 2.40+ GHz/core
 
 The runtimes below are generated using a computer with the recommended specs (64 GB RAM, 10 cores@2.30 GHz) .
 
