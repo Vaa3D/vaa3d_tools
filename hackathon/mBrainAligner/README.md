@@ -78,46 +78,67 @@ We provide two binary files for mBrainAligner corresponding to global registrati
 
 ## Data
 
-We provide downsample data for four modalities in `mBrainAligner_data/Registration_data` and corresponding registered results：`fMOST`,`VISoR`,`MRI`,`LSFM`. you can find it in `mBrainAligner_data/result` and include step by step result files.
-At the same time, some necessary files are stored in `mBrainAligner_data`.
+We provide downsample raw data for four modalities, corresponding registered results：`fMOST`,`VISoR`,`MRI`,`LSFM`,and related files needed in registration.
 
 ### Sub-Folder
 
 >**mBrainAligner_data**
 >
-> > **3rdparty**: the folder where the binary files and `dlls` copied to.
+> > **3rdparty_linux**: executable file and `lib` file.
 > > 
-> > **data**: `mBrainAligner` necessary files,including `CCFv3 (template), markers(local registration initial landmarks), config.txt(parameters), etc`.
+> > **3rdparty_windows**: executable file and `dlls`files.
 > > 
-> > **Seg**: fmost brain segmentation_result.
+> > **data**: `mBrainAligner` necessary files,including `CCFv3 (template), density_landmarks(local registration initial landmarks) etc`.
 > > 
-> > **Registration_data**: sample data to be registered. 
+>**Registration_sample_data**
+> >
+> > **fMOST_segmentation**: fmost brain segmentation_result.
 > > 
-> > **result**:  registered data result files and You can view them in [Vaa3d](https://github.com/Vaa3D).
+> > **raw_sample_data**: raw sample data. 
 > > 
-> > > global_result
+> > **Parameter**: optimal parameters for registering sample data.
+> > 
+> > **result**:  If you use the default result save path in the script file, you will get the registration result here,and view them in [Vaa3d](https://github.com/Vaa3D).
+> > 
+> > **registered_sample_data**: registration results of fMOST,LSFM,MRI and VISoR modal sample data (we provided).
+> > 
+> > > LSFM
 > > > 
+> > > MRI
+> > > 
+> > > VISoR
+> > > 
+> > > fMOST
+> > > 
+> > > > global_result
+> > > >
 > > > >1.auto_RPM:  results of aligned by rpm algorithm,include registered brain data and its corresponding two sets of landmarks.
 > > > >
 > > > >2.auto_FFD:  results of aligned by FFD algorithm,including registered brain data and its corresponding deformation field.
 > > > >
-> > > loacl_result: results of aligned by mBrainAligner local registration algorithm,include registered brain data and its corresponding landmarks.
-                   
-
+> > > >loacl_result: results of aligned by mBrainAligner local registration algorithm,include registered brain data and its corresponding landmarks.
 
 ## Run
 ### Windows
    If you want to reproduce our sample data registration results, you can run
    
-        main_mbrainaligner.bat
-   
-   If you need to register your own data, you need to modify the registration data path and corresponding parameters in the `main_mbrainaligner.bat` file. You can also optionally modify the local registration parameters in `...config.txt` to make your data obtain better local registration results. (All parameters have corresponding introduction in the file)
-### Linux    
-   .......
-    
-The fMOST to CCF registration will complete in about 0.5 hours (If you choose the default parameters), and all the results can be found in the `mBrainAligner_data/result` folder.
+    run_script_windows.bat
 
-Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correspondingly. We will upload the segmentation model of different size later.
+### Linux    
+   **Environment configuration**
+   You need to add the file 'lib' path(mBrainAligner_data/3rdparty_linux/lib/) to the linker directory, the steps are as follows:
+    
+    tar -zxvf lib.tar.gz
+    sudo gedit /etc/ld.so.conf
+    add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib/"  to the last line of '/etc/ld.so.conf' and save. 
+    sudo ldconfig
+   After that,you can register our sample data, run
+      
+    sh run_script_linux.sh 
+Single brain registration will complete in about 0.5 hours (If you choose the default parameters), and All modal data registration results will be saved in 'Registration_sample_data\result\'.
+If you need to register your own data, you need to modify the registration data path and corresponding parameters in the `run_script_windows.bat` and `run_script_linux.sh`   file. You can also optionally modify the local registration parameters in `...config.txt` to make your data obtain better local registration results. (All parameters have corresponding introduction in the file)
+
+**Note**: To faciliate internet transmission, a small downsampled brain image is provided in this demo (But we provide registration results 'Registration_sample_data\registered_sample_data\' based on the raw brain data). For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use the raw data to register the fMOST mouse brain, you need to update the "Registration_sample_data/fMOST_segmentation/". We will upload the segmentation model later.
 
 
 # License
