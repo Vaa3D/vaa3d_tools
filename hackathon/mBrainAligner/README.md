@@ -73,7 +73,7 @@ Any C++11 compiler should work. If your use Visual Studio 2013, please follow th
   - Choose building in "Release" mode in MS Visual Studio 2013.
   - Choose building in "x64" (for 64bit building) mode  in Property Pages or just select from the building platform located in the toolbar. If “x64” mode does not exist, create one by choosing 'New' and then copying the previous configuration settings.
   - Now hit build button to start building process.
-#### Process for building mBrainAligner using qMake
+#### Process for building mBrainAligner using qmake
 Before compiling, you need to modify the **".pro"** file according to the path of the installed Dependencies(Vaa3D,QT etc). 
 
 Launch the "Visual Studio x64 Win64 Command Prompt" from Start->Microsoft Visual Studio 2013->Visual Studio Tools->Visual Studio x64 Win64 Command Prompt
