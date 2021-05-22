@@ -35,7 +35,8 @@ The runtimes below are generated using a computer with the recommended specs (64
 
 The package has been tested on the following systems:
 
-- Windows:  Win10
+- Windows
+- Unix
 
 ###  Dependencies
 
@@ -63,7 +64,8 @@ After Vaa3D is successfully built, put the `mBrainAligner` package in the `PATH\
 `1.preprocessing/StripreMove/stripremove.m` need to be run using MATLAB, make sure MATLAB(>=2016b) is installed .
 
 ## C++ Code
-
+### for Windows
+#### Process for building mBrainAligner using MS Visual Studio.
 Any C++11 compiler should work. If your use Visual Studio 2013, please follow the instructions below to compile the code.
 
 - Use Microsoft Visual Studio 2013 to open **".vcxproj"**.
@@ -71,6 +73,24 @@ Any C++11 compiler should work. If your use Visual Studio 2013, please follow th
   - Choose building in "Release" mode in MS Visual Studio 2013.
   - Choose building in "x64" (for 64bit building) mode  in Property Pages or just select from the building platform located in the toolbar. If “x64” mode does not exist, create one by choosing 'New' and then copying the previous configuration settings.
   - Now hit build button to start building process.
+#### Process for building Vaa3D using qMake
+Before compiling, you need to modify the '....pro' file according to the path of the installed Dependencies(Vaa3D,QT etc). 
+
+Launch the "Visual Studio x64 Win64 Command Prompt" from Start->Microsoft Visual Studio 2013->Visual Studio Tools->Visual Studio x64 Win64 Command Prompt
+example(global_registration):
+
+    cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/
+    qmake global_registration.pro
+    vcvars64.bat
+    nmake release
+You can find the executable from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/global_registration.exe". 
+
+### for Unix
+Before compiling, you also need to modify the '....pro' file according to the path of the installed Dependencies(Vaa3D,QT etc). 
+     cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/
+     qmake global_registration.pro
+     Make
+You can find the executable from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/global_registration". 
 
 # Demo
 
@@ -124,7 +144,7 @@ We provide downsample raw data for four modalities, corresponding registered res
    
     run_script_windows.bat
 
-### Linux    
+### Unix    
    **Environment configuration**
    
    You need to add the file 'lib' path(mBrainAligner_data/3rdparty_linux/lib/) to the linker directory, the steps are as follows:
