@@ -138,7 +138,7 @@ We provide downsample raw data for four modalities, corresponding registered res
     sh run_script_linux.sh 
 Single brain registration will complete in about 0.5 hours (If you choose the default parameters), and all modal sample data registration results will be saved in 'Registration_sample_data\result\'.
 
-**Register your own data**: you need to modify the registration data path and corresponding parameters in the `run_script_windows.bat` and `run_script_linux.sh` file. You can also optionally modify the local registration parameters in `...config.txt` to make your data obtain better local registration results. (All parameters have corresponding introduction in the file)
+**Register your own data**: You need to modify the registration data path and corresponding parameters in the `run_script_windows.bat` and `run_script_linux.sh` file. You can also optionally modify the local registration parameters in `...config.txt` to make your data obtain better local registration results. (All parameters have corresponding introduction in the file)
 
 **Note**: To faciliate internet transmission, a small downsampled brain image is provided in this demo (But we provide registration results 'Registration_sample_data\registered_sample_data\' based on the raw brain data). For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use the raw data to register the fMOST mouse brain, you need to update the "Registration_sample_data/fMOST_segmentation/". We will upload the segmentation model later.
 
