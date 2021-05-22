@@ -87,6 +87,7 @@ You can find the executable from the location "(YOUR PATH)/vaa3d_tools/hackathon
 
 ### for Unix
 Before compiling, you also need to modify the **".pro"** file according to the path of the installed Dependencies(Vaa3D,QT etc). 
+example(global_registration):
 
      cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/global_registration/
      qmake global_registration.pro
