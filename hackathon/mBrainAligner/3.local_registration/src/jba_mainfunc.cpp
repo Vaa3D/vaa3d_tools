@@ -2995,7 +2995,7 @@ bool saveVol3DSimple2RawFloat(Vol3DSimple<unsigned char> *img, string basefilena
 		return false;
     }
 
-	V3DLONG sz[4];
+	long long sz[4];
 	sz[0] = img->sz0(); sz[1] = img->sz1(); sz[2] = img->sz2(); sz[3] = 1;
 
 	unsigned char * outimg = img->getData1dHandle();
@@ -3021,7 +3021,7 @@ bool saveVol3DSimple2RawFloat(Vol3DSimple<MYFLOAT_JBA> *img, string basefilename
 		return false;
     }
 
-	V3DLONG sz[4];
+	long long sz[4];
 	sz[0] = img->sz0(); sz[1] = img->sz1(); sz[2] = img->sz2(); sz[3] = 1;
 
 	MYFLOAT_JBA * outimg = img->getData1dHandle();
@@ -3048,7 +3048,7 @@ bool saveVol3DSimple2RawFloat(Vol3DSimple<DisplaceFieldF3D> *p, string basefilen
 		return false;
     }
 
-	V3DLONG sz[4];
+	long long sz[4];
 	sz[0] = p->sz0(); sz[1] = p->sz1(); sz[2] = p->sz2(); sz[3] = 1;
 
     MYFLOAT_JBA *outimg = new MYFLOAT_JBA [p->getTotalElementNumber()];
@@ -3118,7 +3118,7 @@ bool saveVol3DSimple2RawFloat(Vol3DSimple<WarpParameterAffine3D> *p, string base
 		return false;
     }
 
-	V3DLONG sz[4];
+	long long sz[4];
 	sz[0] = p->sz0(); sz[1] = p->sz1(); sz[2] = p->sz2(); sz[3] = 1;
 
     MYFLOAT_JBA *outimg = new MYFLOAT_JBA [p->getTotalElementNumber()];
@@ -3292,7 +3292,7 @@ bool saveVol3DSimple2RawUint8(Vol3DSimple<MYFLOAT_JBA> *img, string basefilename
 		return false;
     }
 
-	V3DLONG sz[4];
+	long long sz[4];
 	sz[0] = img->sz0(); sz[1] = img->sz1(); sz[2] = img->sz2(); sz[3] = 1;
 
 	MYFLOAT_JBA * outimg = img->getData1dHandle();

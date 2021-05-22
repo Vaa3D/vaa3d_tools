@@ -145,6 +145,10 @@
     <ClCompile Include="..\..\..\released_plugins\v3d_plugins\jba\jba_match_landmarks.cpp" />
     <ClCompile Include="..\..\..\released_plugins\v3d_plugins\jba\remove_nonaffine_points.cpp" />
     <ClCompile Include="..\..\..\v3d_main\basic_c_fun\basic_surf_objs.cpp" />
+    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\mg_image_lib.cpp" />
+    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\mg_utilities.cpp" />
+    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\stackutil.cpp" />
+    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\v3d_message.cpp" />
     <ClCompile Include="src\calHogFeature.cpp" />
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\getopt.c" />
@@ -152,26 +156,26 @@
     <ClCompile Include="src\landmarker_deal.cpp" />
     <ClCompile Include="src\load_data.cpp" />
     <ClCompile Include="src\main_local_registration.cpp" />
-    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\mg_image_lib.cpp" />
-    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\mg_utilities.cpp" />
     <ClCompile Include="src\mBrainAligner.cpp" />
     <ClCompile Include="src\preprocessing.cpp" />
     <ClCompile Include="src\q_bspline.cpp" />
-    <ClCompile Include="src\q_EigenVectors3D.cpp" />
     <ClCompile Include="src\q_derivatives3D.cpp" />
+    <ClCompile Include="src\q_dfblcokinterp.cpp" />
+    <ClCompile Include="src\q_EigenVectors3D.cpp" />
     <ClCompile Include="src\q_imgaussian3D.cpp" />
-    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\stackutil.cpp" />
-    <ClCompile Include="..\..\..\v3d_main\basic_c_fun\v3d_message.cpp" />
     <ClCompile Include="src\q_imgwarp_tps_quicksmallmemory.cpp" />
     <ClCompile Include="src\q_imresize.cpp" />
     <ClCompile Include="src\q_interpolate.cpp" />
     <ClCompile Include="src\q_morphology.cpp" />
+    <ClCompile Include="src\remove_nonaffine_points.cpp" />
     <ClCompile Include="src\T_bsplines_registration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\v3d_main\basic_c_fun\mg_image_lib.h" />
     <ClInclude Include="..\..\..\v3d_main\basic_c_fun\mg_utilities.h" />
     <ClInclude Include="..\..\..\v3d_main\jba\c++\jba_match_landmarks.h" />
+    <ClInclude Include="..\..\..\v3d_main\basic_c_fun\stackutil.h" />
+    <ClInclude Include="..\..\..\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="src\calHogFeature.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\getopt.h" />
@@ -180,11 +184,10 @@
     <ClInclude Include="src\mBrainAligner.h" />
     <ClInclude Include="src\preprocessing.h" />
     <ClInclude Include="src\q_bspline.h" />
-    <ClInclude Include="src\q_EigenVectors3D.h" />
     <ClInclude Include="src\q_derivatives3D.h" />
+    <ClInclude Include="src\q_dfblcokinterp.h" />
+    <ClInclude Include="src\q_EigenVectors3D.h" />
     <ClInclude Include="src\q_imgaussian3D.h" />
-    <ClInclude Include="..\..\..\v3d_main\basic_c_fun\stackutil.h" />
-    <ClInclude Include="..\..\..\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="src\q_interpolate.h" />
     <ClInclude Include="src\q_morphology.h" />
     <ClInclude Include="src\T_bsplines_registration.h" />

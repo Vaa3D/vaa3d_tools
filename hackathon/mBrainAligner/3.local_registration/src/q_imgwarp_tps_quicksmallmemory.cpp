@@ -5,12 +5,12 @@
 
 #include "q_interpolate.h"
 #include "q_bspline.h"
-
+#include "q_dfblcokinterp.h"
 
 
 
 template <class T> 
-bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szin, V3DLONG * &szout, int resample, unsigned char tag)
+bool downsample3dvol(T *&outdata, T *indata, long long *szin, long long * &szout, int resample, unsigned char tag)
 {
 	double *dfactor;
 	dfactor = new double[3];
@@ -131,7 +131,7 @@ bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szin, V3DLONG * &szout, in
 //warp image block based on given DF
 //use 3d or 4d pointer instead of 1d, since generating 3d or 4d pointer from 1d is time consuming
 template <class T>
-bool q_imgblockwarp(T ****&p_img_sub_4d,const V3DLONG *sz_img_sub,DisplaceFieldF3D ***&pppDFBlock,
+bool q_imgblockwarp(T ****&p_img_sub_4d,const long long *sz_img_sub,DisplaceFieldF3D ***&pppDFBlock,
 		const V3DLONG szBlock_x,const V3DLONG szBlock_y,const V3DLONG szBlock_z,const int i_interpmethod_img,
 		const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
 		T ****&p_img_warp_4d)
@@ -220,7 +220,7 @@ bool q_imgblockwarp(T ****&p_img_sub_4d,const V3DLONG *sz_img_sub,DisplaceFieldF
 //	i_interp_method_df:  0-trilinear, 1-bspline
 //	i_interp_method_img: 0-trilinear, 1-nearest neighbor
 template <class T>
-bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
+bool imgwarp_smallmemory(const T *p_img_sub,const long long *sz_img_sub,
 		const QList<ImageMarker> &ql_marker_tar,const QList<ImageMarker> &ql_marker_sub,
 		V3DLONG szBlock_x, V3DLONG szBlock_y, V3DLONG szBlock_z, int i_interpmethod_df,int i_interpmethod_img,
 		T *&p_img_warp)

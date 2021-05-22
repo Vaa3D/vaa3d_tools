@@ -76,10 +76,6 @@ bool Convert_image_datatype(float * & p_img32f_tar,  float * & p_img32f_sub_bk, 
 				p_img32f_sub_4d[0][z][y][x] = (grand_sub[dex] - f_minint_sub) / (f_maxint_sub - f_minint_sub);
 			}
 
-	saveImage("laplalcian_tar.v3draw", (unsigned char *)p_img32f_tar, sz_img, 4);
-	saveImage("laplalcian_sub.v3draw", (unsigned char *)p_img32f_sub_bk, sz_img, 4);
-
-
 	if (grand_tar) 			{ delete[]grand_tar;		grand_tar = 0; }
 	if (grand_sub) 			{ delete[]grand_sub;		grand_sub = 0; }
 
@@ -116,7 +112,6 @@ bool Convert_image255(float *&p_img32f_tar255, float * &p_img32f_sub255,unsigned
 
 		p_img32f_sub255[i] = p_img_sub[i] / d_maxintensity_sub*255.0;
 		p_img32f_tar255[i] = p_img_tar[i] / d_maxintensity_tar*255.0;
-	/*	p_img32_sub_label[i] = p_img_sub_label[i];*/
 
 	}
 

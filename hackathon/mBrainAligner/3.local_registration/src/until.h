@@ -58,7 +58,7 @@ class Parameter
 public:
 	int  Select_modal, iterations_number, star_lamda_outline, kernel_radius, search_radius, fre_save, fre_global_constraint,
 		fre_region_constraint, star_iter, lam_end_inner, lam_end_out, resample, star_lamda_inner;
-	QString save_path;
+	QString save_path,landmark_path;
 	Parameter() {
 		Select_modal = 0;
 		iterations_number = 0;
@@ -74,10 +74,11 @@ public:
 		resample = 1;
 		star_lamda_inner = 0;
 		save_path = "";
+		landmark_path = "";
 	}
 	Parameter(int Select_modal0, int iterations_number0, int star_lamda_outline0, int kernel_radius0, int search_radius0, int fre_save0,
 		int fre_region_constraint0, int fre_global_constraint0, int star_iter0, int lam_end_inner0, int lam_end_out0,
-		int resample0, int star_lamda_inner0,  QString save_path0)
+		int resample0, int star_lamda_inner0,  QString save_path0, QString landmark_path0)
 	{
 		Select_modal = Select_modal0;
 		iterations_number = iterations_number0;
@@ -93,6 +94,7 @@ public:
 		resample = resample0;
 		star_lamda_inner = star_lamda_inner0;
 		save_path = save_path0;
+		landmark_path = landmark_path0;
 	}
 };
 

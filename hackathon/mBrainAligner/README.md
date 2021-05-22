@@ -74,19 +74,50 @@ Any C++11 compiler should work. If your use Visual Studio 2013, please follow th
 
 # Demo
 
-We provide two binary files for mBrainAligner corresponding to global registration and local registration respectively.And provide `main_mbrainaligner.bat` with default parameters.Of course, you can also modify it as needed.
+We provide two binary files for mBrainAligner corresponding to global registration and local registration respectively.And provide `main_mbrainaligner.bat` with default parameters. Of course, you can also modify it as needed.
 
 ## Data
 
-We provide a small downsample fMOST mouse brain `18458.v3draw` for testing. At the same time, some necessary files are stored in `mBrainAligner_data`.
+We provide downsample data for four modalities in `mBrainAligner_data/Registration_data` and corresponding registered results：`fMOST`,`VISoR`,`MRI`,`LSFM`. you can find it in `mBrainAligner_data/result` and include step by step result files.
+At the same time, some necessary files are stored in `mBrainAligner_data`.
 
-### Run
+### Sub-Folder
 
-Just run the `main_mbrainaligner.bat`.
+>**mBrainAligner_data**
+>
+> > **3rdparty**: the folder where the binary files and `dlls` copied to.
+> > 
+> > **data**: `mBrainAligner` necessary files,including `CCFv3 (template), markers(local registration initial landmarks), config.txt(parameters), etc`.
+> > 
+> > **Seg**: fmost brain segmentation_result.
+> > 
+> > **Registration_data**: sample data to be registered. 
+> > 
+> > **result**:  registered data result files and You can view them in [Vaa3d](https://github.com/Vaa3D).
+> > 
+> > > global_result
+> > > 
+> > > >1.auto_RPM:  results of aligned by rpm algorithm,include registered brain data and its corresponding two sets of landmarks.
+> > > >
+> > > >2.auto_FFD:  results of aligned by FFD algorithm,including registered brain data and its corresponding deformation field.
+> > > >
+> > > loacl_result: results of aligned by mBrainAligner local registration algorithm,include registered brain data and its corresponding landmarks.
+                   
 
-The fMOST to CCF registration will complete in about 0.5 hours, and all the results can be found in the `/result` folder.
 
-Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correpondingly. We will upload the segmentation model of different size later.
+## Run
+### Windows
+   If you want to reproduce our sample data registration results, you can run
+   
+        main_mbrainaligner.bat
+   
+   If you need to register your own data, you need to modify the registration data path and corresponding parameters in the `main_mbrainaligner.bat` file. You can also optionally modify the local registration parameters in `...config.txt` to make your data obtain better local registration results. (All parameters have corresponding introduction in the file)
+### Linux    
+   .......
+    
+The fMOST to CCF registration will complete in about 0.5 hours (If you choose the default parameters), and all the results can be found in the `mBrainAligner_data/result` folder.
+
+Note: To faciliate internet transmission, a small downsampled brain image (with fewer landmarks) is provided in this demo. For better registration accuracy, we encourage user to download raw data from Allen official website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use data of different size, you need to update the "/Seg" file correspondingly. We will upload the segmentation model of different size later.
 
 
 # License

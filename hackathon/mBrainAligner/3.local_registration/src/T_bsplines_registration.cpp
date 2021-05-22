@@ -413,13 +413,13 @@ bool T_bsplinebasis2grid_3D(const long sz_grid[3], const long Spacing, const vec
 		return false;
 	}
 	
-	vector<vector< vector<double > >>S_WNx(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>S_WNy(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>S_WNz(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>S_W2(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>ux(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>uy(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
-	vector<vector< vector<double > >>uz(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >S_WNx(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >S_WNy(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >S_WNz(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >S_W2(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >ux(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >uy(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
+	vector<vector< vector<double > > >uz(sz_grid[1], vector<vector<double> >(sz_grid[0], vector<double>(sz_grid[2], 0)));
 
 	for (long i = 0; i < vec_tar.size(); i++)
 	{
@@ -543,7 +543,7 @@ bool T_bsplines_wrapmarker(const long Spacing, const vector<point3D64F> &vec_tar
 					TZ += W(1, indz) * vec4D_grid[y][x][z][2]; indz++;
 				}
 		tp.x = TX; tp.y = TY; tp.z = TZ;
-		//更内部和外部点;
+		//\B8\FC\C4诓\BF\BA\CD\CD獠縗B5\E3;
 		if (i>= number_outline_landmark)
 		    vec_warp[i] = tp;
 

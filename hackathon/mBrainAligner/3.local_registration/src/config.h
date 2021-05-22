@@ -1,4 +1,5 @@
-#pragma once  
+#ifndef __config_h__
+#define __config_h__  
 
 #include <string>  
 #include <map>  
@@ -187,8 +188,9 @@ void Config::Add(const std::string& in_key, const T& value)
 	// Add a key with given value  
 	std::string v = T_as_string(value);
 	std::string key = in_key;
-	trim(key);
-	trim(v);
+	Trim(key);
+	Trim(v);
 	m_Contents[key] = v;
 	return;
 }
+#endif

@@ -172,7 +172,7 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 {
 	
 
-	QString qs_filename_landmark_tar = data_file + "/landmarker_tar.marker";
+	QString qs_filename_landmark_tar = input_Parameter.landmark_path;
 	if (fine_filename != NULL)
 	{
 		printf("2-1. Load finetune landmarks. \n");
@@ -307,18 +307,19 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 
 
 			}
-			char filename[2000];
-			sprintf(filename, "%s/tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
-			sprintf(filename, "%s/sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
-			sprintf(filename, "%s/average.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);
+			//char filename[2000];
+			//sprintf(filename, "%s/tar.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_tar);
+			//sprintf(filename, "%s/sub.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_sub);
+			//sprintf(filename, "%s/average.marker", qPrintable(input_Parameter.save_path));	writeMarker_file(filename, ql_marker_aver);
 
 			// load density map 
 			printf("2-3 load ten subject density map \n");
-			if (!load_density_map(qs_filename_img_sub_seg, density_map_sub))
-			{
-				printf("ERROE:load_density_map()!!!! \n");
-				return true;
-			}
+load_density_map(qs_filename_img_sub_seg, density_map_sub);
+	//		if (!load_density_map(qs_filename_img_sub_seg, density_map_sub))
+	////		{
+	//			printf("ERROE:load_density_map()!!!! \n");
+	//			return true;
+	//		}
 		
 		}
 		else
@@ -562,6 +563,7 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 	at_lam =100;
 	auto_warp_marker(at_lam, fine_sub_corner_raw, fine_sub_corner, warp_corner);
 	fine_sub_corner = warp_corner;
-	if (fmost_label_edge) 			{ delete[]fmost_label_edge;		fmost_label_edge = 0; }
+	if (fmost_label_edge) 			{ delete[]fmost_label_edge;	 	fmost_label_edge = 0; }
 }
 	
+

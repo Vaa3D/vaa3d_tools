@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include "calHogFeature.h"
+#include <math.h>
 
 using namespace std;
 

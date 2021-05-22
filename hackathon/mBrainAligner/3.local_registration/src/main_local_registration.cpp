@@ -7,7 +7,7 @@
 #include"load_data.h"
 #include"until.h"
 #include"mBrainAligner.h"
-#include "Config.h" 
+#include "config.h" 
 
 
 void printHelp();
@@ -25,6 +25,7 @@ void printHelp()
 													 average_sub.marker,average_tar.marker ,edge.v3draw.\n");
 	printf("\t [-f <finetune data>]          If you interrupt during iteration registration, you can continue running based on the previous results.\n");
 	printf("\t [-S <save result file>]          This file path can save all result .\n");
+	printf("\t [-l <landmarks file path>]          example: high_landmarks.txt ,middle_landmarks.txt,low_landmarks.txt" );
 
 	printf("\n===================================================================================================\n\n");
 	return;
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
 	
 	QString qs_filename_img_sub, qs_filename_img_sub_seg;
 	QString fine_filename;
-	QString  data_file, resample, save_path;
+	QString  data_file, resample, save_path, landmark_path;
 	QString parameter_path;
 	
 	if (argc <= 1)
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
 	}
 
 	int c;
-	static char optstring[] = "p:s:m:g:f:S:";
+	static char optstring[] = "p:s:m:g:f:l:o:";
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstring)) != -1) // can be replaced by getopt_long() in the future
 	{
@@ -100,7 +101,16 @@ int main(int argc, char *argv[])
 			fine_filename = optarg;
 			break;
 
-		case 'S':
+		case 'l':
+			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
+			{
+				fprintf(stderr, "Found illegal or NULL parameter for the option -s.\n");
+				return 1;
+			}
+			landmark_path = optarg;
+			break;
+
+		case 'o':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
 			{
 				fprintf(stderr, "Found illegal or NULL parameter for the option -s.\n");
@@ -124,23 +134,30 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (parameter_path.isNull())
+	{
+		printf("Registration method does not include local registration!!!\n");
+		return true;
+	}
+
 	QByteArray parameter_path_ba = parameter_path.toLatin1();
 	Config configSettings(parameter_path_ba.data());
 	Parameter input_Parameter;
 	input_Parameter.Select_modal = configSettings.Read("Select_modal", input_Parameter.Select_modal);
-	input_Parameter.iterations_number = configSettings.Read("iterations_number", input_Parameter.iterations_number);
-	input_Parameter.star_lamda_outline = configSettings.Read("star_lamda_outline", input_Parameter.star_lamda_outline);
+	input_Parameter.iterations_number = configSettings.Read("max_iteration_number", input_Parameter.iterations_number);
+	input_Parameter.star_lamda_outline = configSettings.Read("smoothness_constraint_outer_initial", input_Parameter.star_lamda_outline);
+	input_Parameter.star_lamda_inner = configSettings.Read("smoothness_constraint_inner_initial", input_Parameter.star_lamda_inner);
+	input_Parameter.lam_end_out = configSettings.Read("smoothness_constraint_outer_end", input_Parameter.lam_end_out);
+	input_Parameter.lam_end_inner = configSettings.Read("smoothness_constraint_inner_end", input_Parameter.lam_end_inner);
 	input_Parameter.kernel_radius = configSettings.Read("kernel_radius", input_Parameter.kernel_radius);
 	input_Parameter.search_radius = configSettings.Read("search_radius", input_Parameter.search_radius);
-	input_Parameter.fre_save = configSettings.Read("fre_save", input_Parameter.fre_save);
-	input_Parameter.fre_region_constraint = configSettings.Read("fre_region_constraint", input_Parameter.fre_region_constraint);
-	input_Parameter.fre_global_constraint = configSettings.Read("fre_global_constraint", input_Parameter.fre_global_constraint);
-	input_Parameter.star_iter = configSettings.Read("star_iter", input_Parameter.star_iter);
-	input_Parameter.lam_end_out = configSettings.Read("lam_end_out", input_Parameter.lam_end_out);
-	input_Parameter.lam_end_inner = configSettings.Read("lam_end_inner", input_Parameter.lam_end_inner);
-	input_Parameter.resample = configSettings.Read("resample", input_Parameter.resample);
-	input_Parameter.star_lamda_inner = configSettings.Read("star_lamda_inner", input_Parameter.star_lamda_inner);
+	input_Parameter.fre_save = configSettings.Read("interval_save", input_Parameter.fre_save);
+	input_Parameter.fre_region_constraint = configSettings.Read("interval_region_constraint", input_Parameter.fre_region_constraint);
+	input_Parameter.fre_global_constraint = configSettings.Read("interval_global_constraint", input_Parameter.fre_global_constraint);
+	input_Parameter.star_iter = 0;// configSettings.Read("star_iter", input_Parameter.star_iter);
+	input_Parameter.resample = configSettings.Read("multiscale", input_Parameter.resample);
 	input_Parameter.save_path = save_path;
+	input_Parameter.landmark_path = landmark_path;
 	
 	//-----------------------------------------------------------------------------------------
 	// loda image data 
@@ -175,19 +192,20 @@ int main(int argc, char *argv[])
 
 	float *fmost_label_edge = 0;
 	float  ****fmost_label_edge_4d = 0;
-
-	if(!LoadLandmarksData(vec_corners, fine_sub_corner, aver_corner, region_label, data_file, fine_filename,sz_img, input_Parameter, p_img_label_4d,
-		qs_filename_img_sub_seg, density_map_sub, fmost_label_edge,fmost_label_edge_4d))
-	{
-		printf("ERROR: LoadLandmarksData().\n");
-		return false;
-	}
+LoadLandmarksData(vec_corners, fine_sub_corner, aver_corner, region_label, data_file, fine_filename,sz_img, input_Parameter, p_img_label_4d,
+		qs_filename_img_sub_seg, density_map_sub, fmost_label_edge,fmost_label_edge_4d);
+//	if(!LoadLandmarksData(vec_corners, fine_sub_corner, aver_corner, region_label, data_file, fine_filename,sz_img, input_Parameter, p_img_label_4d,
+//		qs_filename_img_sub_seg, density_map_sub, fmost_label_edge,fmost_label_edge_4d))
+//	{
+//		printf("ERROR: LoadLandmarksData().\n");
+//		return false;
+//	}
 	if (fmost_label_edge) 		{ delete[]fmost_label_edge;		fmost_label_edge = 0; }
 	if (fmost_label_edge_4d)		{ delete4dpointer(fmost_label_edge_4d, sz_img[0], sz_img[1], sz_img[2], sz_img[3]); }
 
 
 
-	printf("============================================================================================ \n");	
+	printf("=========================================================================================== \n");	
 	if (input_Parameter.Select_modal==0)
 	    printf(" Registration modal: fMost mouse to CCF \n");
 	else if(input_Parameter.Select_modal == 1)
@@ -225,3 +243,5 @@ int main(int argc, char *argv[])
 	printf("Program exit success.\n");
 	return true;
 }
+
+

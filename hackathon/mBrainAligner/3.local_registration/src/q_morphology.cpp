@@ -105,7 +105,7 @@ bool q_create_kernel_3D(const int rows, const int cols, const int deps,
 
 	if (shape == 0)		//rect
 	{
-		kernel.kernel.assign(rows, vector<vector<int>>(cols, vector<int>(deps,1)));
+		kernel.kernel.assign(rows, vector<vector<int> >(cols, vector<int>(deps,1)));
 	}
 	else if (shape == 1)	//disk
 	{
@@ -116,7 +116,7 @@ bool q_create_kernel_3D(const int rows, const int cols, const int deps,
 		int radius = radius_x < radius_y ? radius_x : radius_y;
 		radius = radius < radius_z ? radius : radius_z;
 		//fill the kernel
-		kernel.kernel.assign(rows, vector<vector<int>>(cols, vector<int>(deps, 0)));
+		kernel.kernel.assign(rows, vector<vector<int> >(cols, vector<int>(deps, 0)));
 		for (int x = 0; x < cols; x++)
 			for (int y = 0; y < rows; y++)
 				for (int z = 0; z < deps; z++)
