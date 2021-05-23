@@ -130,9 +130,9 @@ We provide downsample raw data for four modalities, corresponding registered res
 > > > > global_result
 > > > >
 > > > > >1.auto_RPM:  results of aligned by rpm algorithm,include registered brain data and its corresponding two sets of landmarks.
-> > > >
+> > > > >
 > > > > >2.auto_FFD:  results of aligned by FFD algorithm,including registered brain data and its corresponding deformation field.
-> > > >
+> > > > >
 > > > >loacl_result: results of aligned by mBrainAligner local registration algorithm,include registered brain data and its corresponding landmarks.
 
 ## Run
