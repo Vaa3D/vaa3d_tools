@@ -3,7 +3,7 @@
 :: -m moving_image
 :: -c recentered_image_pad_scr_image (if you select "rpm")
 :: -d moving_image_threshold (if less than the given threshold,then the pixel value = 0. The default is 30)
-:: -p <registration_methods>，a:affine, r:rpm，s:ssd, example:a+s,r+s (It is recommended that you only need to select one option in "affine" and "rpm")
+:: -p <registration_methods>，a:affine, r:rpm，f:ffd, example:a+f,r+f (It is recommended that you only need to select one option in "affine" and "rpm")
 :: -o the result save path
 
 ::<<local_registration.exe>> parameter
@@ -18,29 +18,29 @@
 
 :: registration fMOST sample data
 mBrainAligner_data\3rdparty_windows\global_registration.exe -f mBrainAligner_data/data/average_template_25_u8_xpad.v3draw -c mBrainAligner_data/data/recentered_image_pad_scr.v3draw ^
-^ -m Registration_sample_data/fMOST_18458_raw.v3draw  -p r+f+n -o Registration_sample_data/result/fMOST/ -d 1
+^ -m Registration_sample_data/raw_sample_data/fMOST_18458_raw.v3draw  -p r+f+n -o Registration_sample_data/result/fMOST/ -d 1
 mBrainAligner_data\3rdparty_windows\local_registration.exe -p Registration_sample_data/Parameter/fMOST_config.txt -s Registration_sample_data/result/fMOST/global.v3draw ^
-^ -m Registration_sample_data/fMOST_segmentation/ -l mBrainAligner_data/data/density_landmarks/middle_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/fMOST/
+^ -m Registration_sample_data/fMOST_segmentation/ -l mBrainAligner_data/data/density_landmarks/low_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/fMOST/
 
 
 :: registration LSFM sample data
 mBrainAligner_data\3rdparty_windows\global_registration.exe -f mBrainAligner_data/data/average_template_25_u8_xpad.v3draw -c mBrainAligner_data/data/recentered_image_pad_scr.v3draw ^
-^ -m Registration_sample_data/LSFM_raw.v3draw  -p r+f+n -o Registration_sample_data/result/LSFM/ -d 70
+^ -m Registration_sample_data/raw_sample_data/LSFM_raw.v3draw  -p r+f+n -o Registration_sample_data/result/LSFM/ -d 70
 mBrainAligner_data\3rdparty_windows\local_registration.exe -p Registration_sample_data/Parameter/LSFM_config.txt -s Registration_sample_data/result/LSFM/global.v3draw ^
-^ -l mBrainAligner_data/data/density_landmarks/middle_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/LSFM/
+^ -l mBrainAligner_data/data/density_landmarks/low_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/LSFM/
 
 
 :: registration MRI sample data
 mBrainAligner_data\3rdparty_windows\global_registration.exe -f mBrainAligner_data/data/average_template_25_u8_xpad.v3draw -c mBrainAligner_data/data/recentered_image_pad_scr.v3draw ^
-^ -m Registration_sample_data/MRI_raw.v3draw  -p r+f+n -o Registration_sample_data/result/MRI/ -d 20
+^ -m Registration_sample_data/raw_sample_data/MRI_raw.v3draw  -p r+f+n -o Registration_sample_data/result/MRI/ -d 20
 mBrainAligner_data\3rdparty_windows\local_registration.exe -p Registration_sample_data/Parameter/MRI_config.txt -s Registration_sample_data/result/MRI/global.v3draw ^
-^ -l mBrainAligner_data/data/density_landmarks/middle_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/MRI/
+^ -l mBrainAligner_data/data/density_landmarks/low_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/MRI/
 
 
 :: registration VISoR sample data
 mBrainAligner_data\3rdparty_windows\global_registration.exe -f mBrainAligner_data/data/average_template_25_u8_xpad.v3draw -c mBrainAligner_data/data/recentered_image_pad_scr.v3draw ^
-^ -m Registration_sample_data/VISoR_raw.v3draw  -p r+f+n -o Registration_sample_data/result/VISoR/ -d 20
+^ -m Registration_sample_data/raw_sample_data/VISoR_raw.v3draw  -p r+f+n -o Registration_sample_data/result/VISoR/ -d 20
 mBrainAligner_data\3rdparty_windows\local_registration.exe -p Registration_sample_data/Parameter/VISoR_config.txt -s Registration_sample_data/result/VISoR/global.v3draw ^
-^ -l mBrainAligner_data/data/density_landmarks/middle_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/VISoR/
+^ -l mBrainAligner_data/data/density_landmarks/low_landmarks.marker  -g mBrainAligner_data/data/ -o Registration_sample_data/result/VISoR/
 
 pause
