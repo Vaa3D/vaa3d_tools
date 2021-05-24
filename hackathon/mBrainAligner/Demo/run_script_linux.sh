@@ -4,7 +4,7 @@
 # -m moving_image
 # -c recentered_image_pad_scr_image (if you select "rpm")
 # -d moving_image_threshold (if less than the given threshold,then the pixel value = 0. The default is 30)
-# -p <registration_methods>，a:affine, r:rpm，s:ssd, example:a+s,r+s (It is recommended that you only need to select one option in "affine" and "rpm")
+# -p <registration_methods>，a:affine, r:rpm，f:ffd, example:a+f,r+f (It is recommended that you only need to select one option in "affine" and "rpm")
 # -o the result save path
 
 #<<local_registration >> parameter
