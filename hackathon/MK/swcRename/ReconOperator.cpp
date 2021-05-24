@@ -243,8 +243,8 @@ void ReconOperator::removeDupedNodes()
 				// ------------- END of [Remove type1 nodes] ------------ //
 
 				clock_t start = clock();
-				vector<shared_ptr<neuronReconErrorTypes::errorStructure>> ghostList;
-				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree, ghostList);
+				vector<shared_ptr<neuronReconErrorTypes::errorStructure>> errorList;
+				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree, &errorList);
 
 				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
@@ -382,9 +382,9 @@ void ReconOperator::removeDupedNodes()
 				}
 				outputTree.listNeuron.push_front(somaNode);
 
-				/*if (!ghostList.empty())
+				/*if (!errorList.empty())
 				{
-					for (auto& ghostSeg : ghostList)
+					for (auto& ghostSeg : errorList)
 					{
 						ghostSeg.get()->highlightErrorNodes();
 						outputTree.listNeuron.append(ghostSeg.get()->getNodes());

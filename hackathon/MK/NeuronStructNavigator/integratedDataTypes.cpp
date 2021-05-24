@@ -17,6 +17,7 @@
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #include "NeuronStructNavigatingTester.h"
+#include "neuronReconErrorTypes.h"
 
 #include <iostream>
 
@@ -606,9 +607,7 @@ void integratedDataTypes::profiledTree::nodeTileResize(float nodeTileLength)
 
 int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inputAPO, int threshold)
 {
-	this->segEndCoordKey2segMap.clear();
 	this->segEndCoordKeySegMapGen();
-	this->nodeCoordKey2segMap.clear();
 	this->nodeCoordKeySegMapGen();
 
 	string targetNodeTileKey = NeuronStructExplorer::getNodeTileKey(inputAPO);
@@ -703,9 +702,12 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 			//  ==> Use a randomly picked singular segEnd.
 
 			//cout << "No nearest node found." << endl;
+			set<string> handledErrorSegEnd;
 			for (auto& segEndCoord : this->segEndCoordKey2segMap)
 			{
-				cout << segEndCoord.first << " " << segEndCoord.second << endl;
+				if (handledErrorSegEnd.find(segEndCoord.first) != handledErrorSegEnd.end()) continue;
+
+				//cout << segEndCoord.first << " " << segEndCoord.second << endl;
 				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = this->segEndCoordKey2segMap.equal_range(segEndCoord.first);
 				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range2 = this->nodeCoordKey2segMap.equal_range(segEndCoord.first);
 				if (range.second - range.first == 1 && range2.second - range2.first == 1) // Only 1 segEnd at this place and no body node from other segments overlapping 
@@ -724,6 +726,33 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 						}
 					}
 				}
+
+				// -- This is the place where an error can happen with SELF-LOOPING segment -- //
+				else if (range.second - range.first == 2 && range.first->second == (++range.first)->second)      // self-looping segment: head and tail overlap each other
+				{
+					cout << "self looping segment1" << endl;
+					handledErrorSegEnd.insert(segEndCoord.first);
+					continue;
+				}
+				else if (range2.second - range2.second == 1 && range2.first->second == (++range2.first)->second) // self-looping segment: head/tail overlaps 1 of the body nodes
+				{
+					cout << "self looping segment2" << endl;
+					continue;
+				}
+				// --------------------------------------------------------------------------- //
+
+				// ------- For Debugging Only ------- //
+				/*else
+				{
+					cout << range.second - range.first << " -> ";
+					for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it) cout << it->first << "-" << it->second << " ";
+					cout << endl << endl;
+
+					cout << range2.second - range2.first << " -> ";
+					for (boost::container::flat_multimap<string, int>::iterator it = range2.first; it != range2.second; ++it) cout << it->first << "-" << it->second << " ";
+					cout << endl << endl;
+				}*/
+				// ---------------------------------- //
 			}
 		}
 	}

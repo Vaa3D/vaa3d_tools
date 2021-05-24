@@ -127,11 +127,11 @@ public:
 
 	// Group geometrically connected segments into different [profiledTree]s. 
 	// Output: key = tree size -> value = profiledTree
-	boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>& errorStructList);
+	boost::container::flat_map<int, profiledTree> groupGeoConnectedTrees(const NeuronTree& inputTree, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>* errorStructPtrs = nullptr);
 private:
 	// Recursively look for geometrically connected segments, i.e., segments that have end-to-end or end-to-body overlapping nodes, then group them into different [profiledTree]s.
 	// This method is set to be private and called by [this->groupGeoConnectedTrees].
-	void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>& errorStructList);
+	void rc_findConnectedSegs(const profiledTree& inputProfiledTree, set<int>& groupedSegIDs, int leadingSegID, vector<shared_ptr<neuronReconErrorTypes::errorStructure>>* errorStructPtrs);
 	/****************************************************************************/
 
 
