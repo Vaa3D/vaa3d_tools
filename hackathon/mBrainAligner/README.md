@@ -21,6 +21,8 @@ In general, there are two ways to use mBrainAligner:
 1. follow the below instructions and run mBrainAligner on local machines.
 2. visit http://159.75.201.35/ and run mBrainAligner online.
 
+Please feel free to contact us by email (17718151568@126.com) any time for any question you have.
+
 # System requirements
 
 ## Hardware requirements
