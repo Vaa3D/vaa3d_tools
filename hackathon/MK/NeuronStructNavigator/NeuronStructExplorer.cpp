@@ -1291,6 +1291,51 @@ void NeuronStructExplorer::rc_findConnectedSegs(const profiledTree& inputProfile
 
 
 
+/* =================== Structural Error Checking Functions ==================== */
+vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::structErrorCheck(profiledTree& inputProfiledTree)
+{
+	inputProfiledTree.segEndCoordKeySegMapGen();
+	inputProfiledTree.nodeCoordKeySegMapGen();
+	
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> outputErrorList;
+
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> selfLoopingList = this->selfLoopingCheck(inputProfiledTree);
+	outputErrorList.insert(outputErrorList.end(), selfLoopingList.begin(), selfLoopingList.end());
+
+	return outputErrorList;
+}
+
+vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::selfLoopingCheck(profiledTree& inputProfiledTree)
+{
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> outputSelfLoopingList;
+
+	set<int> registeredSegIDs;
+	for (auto& nodeCoord : inputProfiledTree.nodeCoordKey2segMap)
+	{
+		//pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range1 = inputProfiledTree.segEndCoordKey2segMap.equal_range(segEndCoord.first);
+		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(nodeCoord.first);
+		if (range.second - range.first > 1)
+		{
+			map<int, int> segIDcountMap;
+			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it) ++segIDcountMap.insert({ it->second, 0 }).first->second;
+			for (auto& segIDcount : segIDcountMap)
+			{
+				if (segIDcount.second > 1 && registeredSegIDs.find(segIDcount.first) == registeredSegIDs.end())
+				{
+					shared_ptr<neuronReconErrorTypes::errorStructure> errorSegPtr = make_shared<neuronReconErrorTypes::selfLoopingSegUnit>(neuronReconErrorTypes::selfLoopingSegUnit(inputProfiledTree.segs.at(segIDcount.first)));
+					outputSelfLoopingList.push_back(errorSegPtr);
+					registeredSegIDs.insert(segIDcount.first);
+				}
+			}
+		}
+	}
+
+	return outputSelfLoopingList;
+}
+/* ================ END of [Structural Error Checking Function] =============== */
+
+
+
 /* ================================= Morphological Features ================================= */
 NeuronSWC NeuronStructExplorer::findRootNode(const NeuronTree& inputTree)
 {

@@ -20,7 +20,7 @@ namespace neuronReconErrorTypes
 		virtual QList<NeuronSWC>& getNodes() = 0;
 
 		virtual void highlightErrorNodes() = 0;
-		virtual void selfCorrect() = 0;
+		virtual QList<NeuronSWC> selfCorrect() = 0;
 	};
 
 	class ghostSegUnit : public errorStructure
@@ -36,13 +36,14 @@ namespace neuronReconErrorTypes
 		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
 
 		virtual void highlightErrorNodes();
-		virtual void selfCorrect();
+		virtual QList<NeuronSWC> selfCorrect();
 	};
 
 	class selfLoopingSegUnit : public errorStructure
 	{
 	public:
 		selfLoopingSegUnit() = delete;
+		selfLoopingSegUnit(const segUnit& inputSegUnit) : theSeg(inputSegUnit) {}
 		selfLoopingSegUnit(const QList<NeuronSWC>& inputNodes) : theSeg(inputNodes) {}
 		selfLoopingSegUnit& operator=(const selfLoopingSegUnit&) = delete;
 
@@ -52,7 +53,7 @@ namespace neuronReconErrorTypes
 		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
 
 		virtual void highlightErrorNodes();
-		virtual void selfCorrect();
+		virtual QList<NeuronSWC> selfCorrect();
 	};
 }
 

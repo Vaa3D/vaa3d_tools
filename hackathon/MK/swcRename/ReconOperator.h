@@ -36,6 +36,9 @@ public:
 	void removeDupedNodes();
 
 	void markerApo2swc();
+
+private:
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> errorList;
 };
 
 #endif

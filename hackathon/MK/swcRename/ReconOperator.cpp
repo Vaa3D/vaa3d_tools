@@ -236,17 +236,46 @@ void ReconOperator::removeDupedNodes()
 					sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
 					for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
 				}
+				profiledTreeReInit(inputProfiledTree);
 #ifdef TYPE1_REMOVE
 				QString noType1NameQ = noType1FolderQ + "\\" + baseName + "_noType1.swc";
 				writeSWC_file(noType1NameQ, inputProfiledTree.tree);
 #endif
 				// ------------- END of [Remove type1 nodes] ------------ //
 
+				/******************* ERROR STRUCTURE CHECK *******************/
 				clock_t start = clock();
-				vector<shared_ptr<neuronReconErrorTypes::errorStructure>> errorList;
-				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree, &errorList);
+				
+				this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
+				cout << "error segment count: " << errorList.size() << endl;
+
+				vector<ptrdiff_t> selfLoopingDelLocs;
+				vector<QList<NeuronSWC>> correctedSegNodes;
+				for (auto& error : errorList) 
+				{
+					selfLoopingSegUnit* selfLoopingSegUnitPtr = dynamic_cast<neuronReconErrorTypes::selfLoopingSegUnit*>(error.get());
+					cout << selfLoopingSegUnitPtr->theSeg.segID << ": ";
+					for (auto& node : selfLoopingSegUnitPtr->theSeg.nodes) cout << node.n << " ";
+					cout << endl;
+
+					for (auto& node : error.get()->getNodes()) selfLoopingDelLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+					correctedSegNodes.push_back(error.get()->selfCorrect());
+				}
+				cout << endl;
+
+				sort(selfLoopingDelLocs.rbegin(), selfLoopingDelLocs.rend());
+				for (auto& loc : selfLoopingDelLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
+				for (auto& nodes : correctedSegNodes) inputProfiledTree.tree.listNeuron.append(nodes);
+				profiledTreeReInit(inputProfiledTree);
+				
+				clock_t end = clock();
+				float duration = float(end - start) / CLOCKS_PER_SEC;
+				cout << "--> Finished checking for structural error. " << duration << " seconds elapsed." << endl;
+				/*************************************************************/
 
 				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
+				start = clock();
+				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);				
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
 				map<int, int> tree2HeadNodeMap;
 				int minNodeID, maxNodeID;
@@ -293,8 +322,8 @@ void ReconOperator::removeDupedNodes()
 						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
 					}
 				}
-				clock_t end = clock();
-				float duration = float(end - start) / CLOCKS_PER_SEC;
+				end = clock();
+				duration = float(end - start) / CLOCKS_PER_SEC;
 				cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
 				/****************************** END of [START ASSEMBLING EACH SUBTREE] *******************************/
 

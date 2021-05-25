@@ -158,6 +158,12 @@ public:
 	/*****************************************************************************************/
 
 
+	/******************* Structural Error Checking Functions *******************/
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> structErrorCheck(profiledTree& inputProfiledTree);
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> selfLoopingCheck(profiledTree& inputProfieldTree);
+	/***************************************************************************/
+
+
 	/*************************** Debug Functions ***************************/
 	bool __segEndClusteringExam(const profiledTree& inputProfiledTree, string segEndTestFullPath) const;
 
