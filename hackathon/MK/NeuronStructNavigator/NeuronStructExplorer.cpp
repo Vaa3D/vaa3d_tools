@@ -1312,12 +1312,15 @@ vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::
 	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> outputSelfLoopingList;
 
 	set<int> registeredSegIDs;
-	for (auto& nodeCoord : inputProfiledTree.nodeCoordKey2segMap)
+	for (auto& nodeCoord : inputProfiledTree.segEndCoordKey2segMap)
 	{
-		//pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range1 = inputProfiledTree.segEndCoordKey2segMap.equal_range(segEndCoord.first);
+		//pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.segEndCoordKey2segMap.equal_range(segEndCoord.first);
 		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(nodeCoord.first);
-		if (range.second - range.first > 1)
-		{
+		if (range.second - range.first > 1 && inputProfiledTree.segEndCoordKey2segMap.find(nodeCoord.first) != inputProfiledTree.segEndCoordKey2segMap.end()) 
+		{	
+			// Multiple end nodes from THE SAME or DIFFERENT segments sitting at the same coordinate. 
+			// Currently this method is only focused on self-looping segment type a), so one of these nodes HAS TO BE a segment end node.
+			
 			map<int, int> segIDcountMap;
 			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it) ++segIDcountMap.insert({ it->second, 0 }).first->second;
 			for (auto& segIDcount : segIDcountMap)

@@ -370,8 +370,9 @@ void ReconOperator::errorCheckRepair(profiledTree& inputProfiledTree)
 	clock_t start = clock();
 
 	this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
-	cout << "error segment count: " << errorList.size() << endl;
+	cout << "Error segment count: " << errorList.size() << endl;
 
+	cout << "-- Self-looping segments --" << endl;
 	vector<ptrdiff_t> selfLoopingDelLocs;
 	vector<QList<NeuronSWC>> correctedSegNodes;
 	for (auto& error : errorList)
