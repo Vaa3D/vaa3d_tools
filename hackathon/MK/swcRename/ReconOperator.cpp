@@ -111,7 +111,7 @@ void ReconOperator::denAxonCombine(bool dupRemove)
 	v3d_msg(QString("Dendrite and axon conbination done."));
 }
 
-void ReconOperator::removeDupedNodes()
+void ReconOperator::assembleSegs2tree()
 {
 	QDir inputFolder(this->rootPath);
 	inputFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
@@ -137,11 +137,6 @@ void ReconOperator::removeDupedNodes()
 	if (!subTree_assembleDir.exists()) subTree_assembleDir.mkpath(".");
 #endif
 
-#ifdef TYPE1_REMOVE
-	QString noType1FolderQ = this->rootPath + "\\type1removed\\";
-	QDir noType1Dir(noType1FolderQ);
-	if (!noType1Dir.exists()) noType1Dir.mkpath(".");
-#endif
 
 	for (auto& file : fileList)
 	{
@@ -173,14 +168,15 @@ void ReconOperator::removeDupedNodes()
 			NeuronTree inputTree = readSWC_file(inputSWCFullName);
 			NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
 
-#ifdef DUPSEG_REMOVE
-			QString supSegsRemovedTreeNameQ = this->rootPath + "\\" + baseName + "_dupSegRemoved.swc";
-			writeSWC_file(supSegsRemovedTreeNameQ, noDupSegTree);
-#endif
+			if (DUPSEG_REMOVE)
+			{
+				QString supSegsRemovedTreeNameQ = this->rootPath + "\\" + baseName + "_dupSegRemoved.swc";
+				writeSWC_file(supSegsRemovedTreeNameQ, noDupSegTree);
+			}
 
 			profiledTree inputProfiledTree(noDupSegTree);
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
-			if (NeuronStructUtil::multipleSegsCheck(inputTree))
+			if (NeuronStructUtil::multipleSegsCheck(inputProfiledTree.tree))
 			{
 #ifdef SUBTREE_DEBUG
 				QString treesFolderQ = subTreeFolderQ + baseName + "\\";
@@ -191,148 +187,46 @@ void ReconOperator::removeDupedNodes()
 				QDir treesAssembleFolderDir(treesAssemblerFolderQ);
 				if (!treesAssembleFolderDir.exists()) treesAssembleFolderDir.mkpath(".");
 #endif
+		
+				/***************** Remove additional type-1 nodes *****************/
+				this->removeAdditionalType1Nodes(inputProfiledTree);
+				/******************************************************************/
 
-				NeuronStructExplorer myNeuronStructExplorer;
-				
-				// ----------------- Remove type1 nodes ----------------- //
-				// This block exists because of the segment decomposition - [NeuronTree__2__V_NeuronSWC_list] in neuron_format_converter.cpp.
-				// The decomposition algorithm seems to create a more complicated situation at soma location where many segments come to connect to the same, and that a lot more (more than the number of connected segments) repeated nodes at soma are created. 
-				// [NeuronStructUtil::removeRedunNodes] not only cleans up redundant nodes but also transform soma into a normal branching node, making it misrecongnized in line 212: [profiledTree::findNearestSegEndNodeID].
-				// As a result, the whole neuron tree becomes green after the 2nd run and so on.
-				vector<ptrdiff_t> somaRemoveLocs;
-				for (auto& node : inputProfiledTree.tree.listNeuron)
-				{
-					if (node.type == 1)
-					{
-						if (node.parent == -1)
-						{	
-							// soma node (type 1, root node) 
-							somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-							if (inputProfiledTree.node2childLocMap.find(node.n)!=inputProfiledTree.node2childLocMap.end())
-								for (auto& childLoc : inputProfiledTree.node2childLocMap.at(node.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = -1;
-						}
-						else				  
-						{
-							// type 1, but not a root.
-							if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1) 
-								// The child node type = 1.
-								somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-							else
-							{
-								// The child node type is not 1, taking out type 1 nodes stops here. Changing that child node to root.
-								for (auto& childNodeLoc : inputProfiledTree.node2childLocMap.at(node.n))
-								{
-									inputProfiledTree.tree.listNeuron[childNodeLoc].parent = -1;
-									//node.parent = -1;
-									//node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
-								}
-								somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-							}
-						}
-					}
-				}
-				if (somaRemoveLocs.size() > 0)
-				{
-					sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
-					for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
-				}
-				profiledTreeReInit(inputProfiledTree);
-#ifdef TYPE1_REMOVE
-				QString noType1NameQ = noType1FolderQ + "\\" + baseName + "_noType1.swc";
-				writeSWC_file(noType1NameQ, inputProfiledTree.tree);
-#endif
-				// ------------- END of [Remove type1 nodes] ------------ //
 
 				/******************* ERROR STRUCTURE CHECK *******************/
-				clock_t start = clock();
-				
-				this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
-				cout << "error segment count: " << errorList.size() << endl;
-
-				vector<ptrdiff_t> selfLoopingDelLocs;
-				vector<QList<NeuronSWC>> correctedSegNodes;
-				for (auto& error : errorList) 
-				{
-					selfLoopingSegUnit* selfLoopingSegUnitPtr = dynamic_cast<neuronReconErrorTypes::selfLoopingSegUnit*>(error.get());
-					cout << selfLoopingSegUnitPtr->theSeg.segID << ": ";
-					for (auto& node : selfLoopingSegUnitPtr->theSeg.nodes) cout << node.n << " ";
-					cout << endl;
-
-					for (auto& node : error.get()->getNodes()) selfLoopingDelLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-					correctedSegNodes.push_back(error.get()->selfCorrect());
-				}
-				cout << endl;
-
-				sort(selfLoopingDelLocs.rbegin(), selfLoopingDelLocs.rend());
-				for (auto& loc : selfLoopingDelLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
-				for (auto& nodes : correctedSegNodes) inputProfiledTree.tree.listNeuron.append(nodes);
-				profiledTreeReInit(inputProfiledTree);
-				
-				clock_t end = clock();
-				float duration = float(end - start) / CLOCKS_PER_SEC;
-				cout << "--> Finished checking for structural error. " << duration << " seconds elapsed." << endl;
+				this->errorCheckRepair(inputProfiledTree);
 				/*************************************************************/
 
-				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
-				start = clock();
+
+				/***************** Group Connected Segmets *****************/
+				clock_t start = clock();
 				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);				
-				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl << endl;
+				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl;
+				clock_t end = clock();
+				float duration = float(end - start) / CLOCKS_PER_SEC;
+				cout << "--> Goupring connected segments done. " << duration << " seconds elapsed." << endl << endl;
+				/***********************************************************/
+				
+
+				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
 				map<int, int> tree2HeadNodeMap;
-				int minNodeID, maxNodeID;
-				bool somaNodeAssigned = false;
-				for (auto& connectedTree : connectedTrees)
-				{
-#ifdef SUBTREE_DEBUG
-					writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
-#endif
-					
-					if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
-
-					cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
-					minNodeID = 10000000;
-					maxNodeID = 0;
-					if (connectedTree.second.node2LocMap.begin()->first < minNodeID) minNodeID = connectedTree.second.node2LocMap.begin()->first;
-					if (connectedTree.second.node2LocMap.rbegin()->first > maxNodeID) maxNodeID = connectedTree.second.node2LocMap.rbegin()->first;
-
-					int nearestNodeID = connectedTree.second.findNearestSegEndNodeID(somaAPO);
-					cout << "ID of the nearest node to soma coordinates: " << nearestNodeID << " -> ";
-					const NeuronSWC& nearestNode = connectedTree.second.tree.listNeuron.at(connectedTree.second.node2LocMap.at(nearestNodeID));
-					float dist = sqrtf((nearestNode.x - somaAPO.x) * (nearestNode.x - somaAPO.x) + (nearestNode.y - somaAPO.y) * (nearestNode.y - somaAPO.y) + (nearestNode.z - somaAPO.z) * (nearestNode.z - somaAPO.z));
-					if (dist <= 35)
-					{
-						cout << "IN SOMA RANGE" << endl;
-						//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
-						connectedTree.second.assembleSegs2singleTree(nearestNodeID);
-						//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
-						tree2HeadNodeMap.insert({ connectedTree.first, nearestNodeID });
-						connectedTree.second.tree.listNeuron[connectedTree.second.node2LocMap.at(nearestNodeID)].type = 1;
-						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
-					}
-					else
-					{
-						cout << "TREE " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << " NOT IN SOMA RANGE" << endl;
-						if (connectedTree.second.segs.size() > 1)
-						{
-							cout << "  More than 1 segments are identified. Still needs to assemble segments." << endl;
-							connectedTree.second.assembleSegs2singleTree(nearestNodeID);
-						}
-
-						cout << "    Change node type to 7." << endl;
-						for (auto& node : connectedTree.second.tree.listNeuron) node.type = 7;
-						cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
-					}
-				}
-				end = clock();
-				duration = float(end - start) / CLOCKS_PER_SEC;
-				cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
+				this->assembleGroupedSegs(connectedTrees, tree2HeadNodeMap, somaAPO);
 				/****************************** END of [START ASSEMBLING EACH SUBTREE] *******************************/
 
-				// ------- Remove Splikes ------- //
+
+				// ******* Remove Splikes ******* //
 				if (this->removeSpike)
 					for (auto& tree : connectedTrees) tree.second = TreeTrimmer::spikeRemoval(tree.second, this->branchNodeMin);
-				// ------------------------------ //
+				// ****************************** //
 
-				// ------- Reassign Soma And Connect Subtrees To IT------- //
+				/********* Reassign Soma And Connect Subtrees To It *********/
+				int minNodeID = 10000000, maxNodeID = 0;
+				for (auto& connectedTree : connectedTrees)
+				{
+					if (connectedTree.second.node2LocMap.begin()->first < minNodeID) minNodeID = connectedTree.second.node2LocMap.begin()->first;
+					if (connectedTree.second.node2LocMap.rbegin()->first > maxNodeID) maxNodeID = connectedTree.second.node2LocMap.rbegin()->first;
+				}
+
 				NeuronSWC somaNode;
 				if (minNodeID > 1) somaNode.n = minNodeID - 1;
 				else somaNode.n = maxNodeID + 1;
@@ -347,56 +241,10 @@ void ReconOperator::removeDupedNodes()
 					profiledTree& currTree = connectedTrees[treeID.first];
 					currTree.tree.listNeuron[currTree.node2LocMap.at(treeID.second)].parent = somaNode.n;
 				}
-				// ------------------------------------------------------ //
+				/************************************************************/
 
 				/***************** LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES *****************/
-				if (this->autoConnect)
-				{
-					bool autoConnect;
-					map<int, map<float, pair<int, int>>> nearTreeMap;
-					do
-					{
-						autoConnect = false;
-						for (boost::container::flat_map<int, profiledTree>::iterator type7it = connectedTrees.begin(); type7it != connectedTrees.end(); ++type7it)
-						{
-#ifdef SUBTREE_DEBUG
-							writeSWC_file(treesAssemblerFolderQ + QString::number(int(type7it - connectedTrees.begin()) + 1) + ".swc", type7it->second.tree);
-#endif
-							if (type7it->second.tree.listNeuron.at(0).type == 7)
-							{
-								for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
-								{
-									if (treeIt->second.tree.listNeuron.at(0).type == 7) continue;
-									map<float, pair<int, int>> distMap = NeuronStructExplorer::nearestSegEnd2targetTree(type7it->second.segs.begin()->second, treeIt->second, this->connectThreshold);
-									if (!distMap.empty()) nearTreeMap.insert({ int(treeIt - connectedTrees.begin()) + 1, distMap });
-								}
-
-								if (nearTreeMap.empty()) continue;
-
-								autoConnect = true;
-								float minDist = 1000000;
-								int targetTreeNum = 0;
-								for (auto& nearTree : nearTreeMap)
-								{
-									if (nearTree.second.begin()->first <= minDist)
-									{
-										minDist = nearTree.second.begin()->first;
-										targetTreeNum = nearTree.first;
-									}
-								}
-								cout << "  Target Tree Num: " << targetTreeNum << endl << endl;
-
-								type7it->second.assembleSegs2singleTree(nearTreeMap.at(targetTreeNum).begin()->second.first);
-								profiledTree& targetProfiledTree = (connectedTrees.begin() + targetTreeNum - 1)->second;
-								int targetType = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.second)).type;
-								for (auto& node : type7it->second.tree.listNeuron) node.type = targetType;
-								type7it->second.tree.listNeuron[type7it->second.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.first)].parent = nearTreeMap.at(targetTreeNum).begin()->second.second;
-							}
-
-							nearTreeMap.clear();
-						}
-					} while (autoConnect == true);
-				}
+				if (this->autoConnect) this->connectType7trees2otherTree(connectedTrees);
 				/************* END of [LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES] ************/
 
 				NeuronTree outputTree;
@@ -448,15 +296,201 @@ void ReconOperator::removeDupedNodes()
 					//QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
 					//QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
 				}
-			}	
+			}
+			else
+			{
+				if (NeuronStructUtil::findSomaNodeID(inputProfiledTree.tree) == -1)
+				{
+					QString outputMsgQ = file + " is assembled, but contains multiple soma-type nodes. Please correct it.";
+					v3d_msg(outputMsgQ);
+					continue;
+				}
+				else writeSWC_file(outputFolderQ + baseName + ".swc", inputProfiledTree.tree);
+			}
 		}
 		else
 		{
-			QString outputMsgQ = "The apo file of " + file + " not found. Process has been canceled and skip to the next cell.";
+			QString outputMsgQ = "The apo file of " + file + " not found. The process has been canceled and skip to the next cell.";
 			v3d_msg(outputMsgQ);
 			continue;
 		}
 	}
+}
+
+void ReconOperator::removeAdditionalType1Nodes(profiledTree& inputProfiledTree)
+{
+	// This method exists because of the segment decomposition - [NeuronTree__2__V_NeuronSWC_list] in neuron_format_converter.cpp.
+	// The decomposition algorithm seems to create a more complicated situation at soma location where many segments come to connect to the same, and that a lot more (more than the number of connected segments) repeated nodes at soma are created. 
+	// [NeuronStructUtil::removeRedunNodes] not only cleans up redundant nodes but also transform soma into a normal branching node, making it misrecongnized in line 212: [profiledTree::findNearestSegEndNodeID].
+	// As a result, the whole neuron tree becomes green after the 2nd run and so on.
+	
+	vector<ptrdiff_t> somaRemoveLocs;
+	for (auto& node : inputProfiledTree.tree.listNeuron)
+	{
+		if (node.type == 1)
+		{
+			if (node.parent == -1)
+			{
+				// soma node (type 1, root node) 
+				somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+				if (inputProfiledTree.node2childLocMap.find(node.n) != inputProfiledTree.node2childLocMap.end())
+					for (auto& childLoc : inputProfiledTree.node2childLocMap.at(node.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = -1;
+			}
+			else
+			{
+				// type 1, but not a root.
+				if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1)
+					// The child node type = 1.
+					somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+				else
+				{
+					// The child node type is not 1, taking out type 1 nodes stops here. Changing that child node to root.
+					for (auto& childNodeLoc : inputProfiledTree.node2childLocMap.at(node.n))
+					{
+						inputProfiledTree.tree.listNeuron[childNodeLoc].parent = -1;
+						//node.parent = -1;
+						//node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+					}
+					somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+				}
+			}
+		}
+	}
+	if (somaRemoveLocs.size() > 0)
+	{
+		sort(somaRemoveLocs.rbegin(), somaRemoveLocs.rend());
+		for (vector<ptrdiff_t>::iterator locIt = somaRemoveLocs.begin(); locIt != somaRemoveLocs.end(); ++locIt) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + *locIt);
+	}
+
+	profiledTreeReInit(inputProfiledTree);
+}
+
+void ReconOperator::errorCheckRepair(profiledTree& inputProfiledTree)
+{
+	clock_t start = clock();
+
+	this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
+	cout << "error segment count: " << errorList.size() << endl;
+
+	vector<ptrdiff_t> selfLoopingDelLocs;
+	vector<QList<NeuronSWC>> correctedSegNodes;
+	for (auto& error : errorList)
+	{
+		selfLoopingSegUnit* selfLoopingSegUnitPtr = dynamic_cast<neuronReconErrorTypes::selfLoopingSegUnit*>(error.get());
+		cout << selfLoopingSegUnitPtr->theSeg.segID << ": ";
+		for (auto& node : selfLoopingSegUnitPtr->theSeg.nodes) cout << node.n << " ";
+		cout << endl;
+
+		for (auto& node : error.get()->getNodes()) selfLoopingDelLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+		correctedSegNodes.push_back(error.get()->selfCorrect());
+	}
+	cout << endl;
+
+	sort(selfLoopingDelLocs.rbegin(), selfLoopingDelLocs.rend());
+	for (auto& loc : selfLoopingDelLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
+	for (auto& nodes : correctedSegNodes) inputProfiledTree.tree.listNeuron.append(nodes);
+	profiledTreeReInit(inputProfiledTree);
+
+	clock_t end = clock();
+	float duration = float(end - start) / CLOCKS_PER_SEC;
+	cout << "--> Finished checking for structural error. " << duration << " seconds elapsed." << endl << endl;
+}
+
+void ReconOperator::assembleGroupedSegs(boost::container::flat_map<int, profiledTree>& connectedTrees, map<int, int>& tree2HeadNodeMap, const CellAPO& somaAPO)
+{
+	clock_t start = clock();
+
+	for (auto& connectedTree : connectedTrees)
+	{
+#ifdef SUBTREE_DEBUG
+		writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
+#endif
+
+		if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
+
+		cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
+		int nearestNodeID = connectedTree.second.findNearestSegEndNodeID(somaAPO);
+		cout << "ID of the nearest node to soma coordinates: " << nearestNodeID << " -> ";
+		const NeuronSWC& nearestNode = connectedTree.second.tree.listNeuron.at(connectedTree.second.node2LocMap.at(nearestNodeID));
+		float dist = sqrtf((nearestNode.x - somaAPO.x) * (nearestNode.x - somaAPO.x) + (nearestNode.y - somaAPO.y) * (nearestNode.y - somaAPO.y) + (nearestNode.z - somaAPO.z) * (nearestNode.z - somaAPO.z));
+		if (dist <= 35)
+		{
+			cout << "IN SOMA RANGE" << endl;
+			//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
+			connectedTree.second.assembleSegs2singleTree(nearestNodeID);
+			//for (auto& node : connectedTree.second.segs.begin()->second.nodes) cout << node.n << " " << node.parent << endl;
+			tree2HeadNodeMap.insert({ connectedTree.first, nearestNodeID });
+			connectedTree.second.tree.listNeuron[connectedTree.second.node2LocMap.at(nearestNodeID)].type = 1;
+			cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
+		}
+		else
+		{
+			cout << "TREE " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << " NOT IN SOMA RANGE" << endl;
+			if (connectedTree.second.segs.size() > 1)
+			{
+				cout << "  More than 1 segments are identified. Still needs to assemble segments." << endl;
+				connectedTree.second.assembleSegs2singleTree(nearestNodeID);
+			}
+
+			cout << "    Change node type to 7." << endl;
+			for (auto& node : connectedTree.second.tree.listNeuron) node.type = 7;
+			cout << "-----> Finish with tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << endl << endl;
+		}
+	}
+
+	clock_t end = clock();
+	float duration = float(end - start) / CLOCKS_PER_SEC;
+	cout << "--> All trees processed. " << duration << " seconds elapsed." << endl;
+}
+
+void ReconOperator::connectType7trees2otherTree(boost::container::flat_map<int, profiledTree>& connectedTrees)
+{
+	bool autoConnect;
+	map<int, map<float, pair<int, int>>> nearTreeMap;
+	do
+	{
+		autoConnect = false;
+		for (boost::container::flat_map<int, profiledTree>::iterator type7it = connectedTrees.begin(); type7it != connectedTrees.end(); ++type7it)
+		{
+#ifdef SUBTREE_DEBUG
+			writeSWC_file(treesAssemblerFolderQ + QString::number(int(type7it - connectedTrees.begin()) + 1) + ".swc", type7it->second.tree);
+#endif
+			if (type7it->second.tree.listNeuron.at(0).type == 7)
+			{
+				for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
+				{
+					if (treeIt->second.tree.listNeuron.at(0).type == 7) continue;
+
+					// Why only the 1st segment?? Need to review later.
+					map<float, pair<int, int>> distMap = NeuronStructExplorer::nearestSegEnd2targetTree(type7it->second.segs.begin()->second, treeIt->second, this->connectThreshold);
+					if (!distMap.empty()) nearTreeMap.insert({ int(treeIt - connectedTrees.begin()) + 1, distMap });
+				}
+
+				if (nearTreeMap.empty()) continue;
+
+				autoConnect = true;
+				float minDist = 1000000;
+				int targetTreeNum = 0;
+				for (auto& nearTree : nearTreeMap)
+				{
+					if (nearTree.second.begin()->first <= minDist)
+					{
+						minDist = nearTree.second.begin()->first;
+						targetTreeNum = nearTree.first;
+					}
+				}
+				cout << "  Target Tree Num: " << targetTreeNum << endl << endl;
+
+				type7it->second.assembleSegs2singleTree(nearTreeMap.at(targetTreeNum).begin()->second.first);
+				profiledTree& targetProfiledTree = (connectedTrees.begin() + targetTreeNum - 1)->second;
+				int targetType = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.second)).type;
+				for (auto& node : type7it->second.tree.listNeuron) node.type = targetType;
+				type7it->second.tree.listNeuron[type7it->second.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.first)].parent = nearTreeMap.at(targetTreeNum).begin()->second.second;
+			}
+
+			nearTreeMap.clear();
+		}
+	} while (autoConnect == true);
 }
 
 void ReconOperator::markerApo2swc()

@@ -1,21 +1,11 @@
 #include "neuronReconErrorTypes.h"
 
-void neuronReconErrorTypes::ghostSegUnit::highlightErrorNodes()
-{
-	for (auto& node : this->theSeg.nodes) node.type = 0;
-}
-
 QList<NeuronSWC> neuronReconErrorTypes::ghostSegUnit::selfCorrect()
 {
 	QList<NeuronSWC> outputNodes;
 	cout << "not implemented yet" << endl;
 
 	return outputNodes;
-}
-
-void neuronReconErrorTypes::selfLoopingSegUnit::highlightErrorNodes()
-{
-	for (auto& node : this->theSeg.nodes) node.type = 5;
 }
 
 QList<NeuronSWC> neuronReconErrorTypes::selfLoopingSegUnit::selfCorrect()
@@ -35,4 +25,28 @@ QList<NeuronSWC> neuronReconErrorTypes::selfLoopingSegUnit::selfCorrect()
 	for (auto& delLoc : delLocs) outputNodes.erase(outputNodes.begin() + delLoc);
 
 	return outputNodes;
+}
+
+neuronReconErrorTypes::conjoinedSegs::conjoinedSegs(const boost::container::flat_set<segUnit>& inputSegUnits)
+{
+	int maxSegID = 0;
+	for (auto& seg : inputSegUnits) if (seg.segID > maxSegID) maxSegID = seg.segID;
+	for (auto& seg : inputSegUnits)
+	{
+		if (seg.segID == 0) this->segMap.insert({ ++maxSegID, seg });
+		else this->segMap.insert({ seg.segID, seg });
+	}
+}
+
+QList<NeuronSWC>& neuronReconErrorTypes::conjoinedSegs::getNodes()
+{
+	this->totalNodes.clear();
+	for (auto& seg : this->segMap) this->totalNodes.append(seg.second.nodes);
+
+	return this->totalNodes;
+}
+
+QList<NeuronSWC> neuronReconErrorTypes::conjoinedSegs::selfCorrect()
+{
+
 }

@@ -195,7 +195,7 @@ void SWC_renameDlg::reconOp()
 			}
 		}
 
-		this->myOperator.removeDupedNodes();
+		this->myOperator.assembleSegs2tree();
 	}
 }
 

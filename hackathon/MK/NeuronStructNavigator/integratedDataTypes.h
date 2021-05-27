@@ -85,7 +85,7 @@ namespace integratedDataTypes
 	class segUnit
 	{
 	public:
-		segUnit() : to_be_deleted(false) {};
+		segUnit() : to_be_deleted(false) {}
 		segUnit(const QList<NeuronSWC>& inputSeg);
 		segUnit(const V_NeuronSWC& inputV_NeuronSWC);
 
@@ -123,6 +123,7 @@ namespace integratedDataTypes
 	};
 	/*******************************************************/
 
+
 	/********* Segment-segment Orientation Profiling Data Structure *********/
 	struct segPairProfile
 	{
@@ -148,6 +149,7 @@ namespace integratedDataTypes
 	};
 	/************************************************************************/
 
+
 	/******************* Complete Profile Data Structure for NeuronTree *******************/
 	class profiledTree
 	{
@@ -156,6 +158,7 @@ namespace integratedDataTypes
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		//profiledTree(const vector<segUnit>& inputSegs, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
+		
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);
@@ -165,7 +168,6 @@ namespace integratedDataTypes
 		map<int, vector<size_t>> node2childLocMap;
 		map<string, vector<int>> nodeTileMap; // tile label -> node IDs
 		
-
 		/* ====================== Segment-related Data Members and Functions ====================== */
 		map<int, segUnit> segs;											  // key = seg ID
 		map<string, vector<int>> segHeadMap;							  // tile label -> seg ID
@@ -187,9 +189,9 @@ namespace integratedDataTypes
 		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster	
 		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;						 // segEnd cluster -> all possible seg pair combinations in the cluster
 
-		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching,  (X - root node, the new head that has 2 child nodes) )
-		//																																	  / \
-		//																																     o   o
+		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching,  ( X - root node, the new head that has 2 child nodes) )
+		//																																	   / \
+		//																																      o   o
 		// -------------------------------------------------------------------- //
 		
 		// ----------------- Advanced Node - Segment Profiling Methods ----------------- //
@@ -243,6 +245,7 @@ namespace integratedDataTypes
 	inline void segEndClusterCentroid(const set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
 	inline void segEndClusterCentroid(const boost::container::flat_set<vector<float>>& allCoords, vector<float>& segEndClusterCentroid);
 	/**************************************************************************************/
+
 
 	/***************** segEnd Cluster Tree *****************/
 	struct segEndClusterUnit

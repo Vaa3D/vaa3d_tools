@@ -1302,6 +1302,8 @@ vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::
 	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> selfLoopingList = this->selfLoopingCheck(inputProfiledTree);
 	outputErrorList.insert(outputErrorList.end(), selfLoopingList.begin(), selfLoopingList.end());
 
+
+
 	return outputErrorList;
 }
 
@@ -1331,6 +1333,13 @@ vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::
 	}
 
 	return outputSelfLoopingList;
+}
+
+vector<shared_ptr<neuronReconErrorTypes::errorStructure>> conjoinedSegCheck(profiledTree& inputProfiledTree)
+{
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> outputConjoinedSegList;
+
+	return outputConjoinedSegList;
 }
 /* ================ END of [Structural Error Checking Function] =============== */
 

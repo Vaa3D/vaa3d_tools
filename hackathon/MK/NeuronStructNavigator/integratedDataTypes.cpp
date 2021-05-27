@@ -112,7 +112,7 @@ integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 	this->to_be_deleted = inputV_NeuronSWC.to_be_deleted;
 }
 
-integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false)
+integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_deleted(false), segID(0)
 {
 	this->nodes = inputSeg;
 	NeuronStructExplorer::node2loc_node2childLocMap(this->nodes, this->seg_nodeLocMap, this->seg_childLocMap);

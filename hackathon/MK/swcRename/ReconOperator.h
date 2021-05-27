@@ -2,8 +2,6 @@
 #define RECONOPERATOR_H
 
 //#define SUBTREE_DEBUG
-//#define DUPSEG_REMOVE
-//#define TYPE1_REMOVE
 
 #include <iostream>
 
@@ -14,6 +12,8 @@
 
 #include "NeuronStructUtilities.h"
 #include "NeuronStructExplorer.h"
+
+const bool DUPSEG_REMOVE = false;
 
 class ReconOperator
 {
@@ -33,12 +33,19 @@ public:
 	void denAxonSeparate(const QStringList& fileList);
 	void denAxonCombine(bool dupRemove);
 
-	void removeDupedNodes();
+	void assembleSegs2tree();
 
 	void markerApo2swc();
 
 private:
+	NeuronStructExplorer myNeuronStructExplorer;
+
 	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> errorList;
+
+	void removeAdditionalType1Nodes(profiledTree& inputProfiledTree);
+	void errorCheckRepair(profiledTree& inputProfiledTree);
+	void assembleGroupedSegs(boost::container::flat_map<int, profiledTree>& connectedTrees, map<int, int>& tree2HeadNodeMap, const CellAPO& somaAPO);
+	void connectType7trees2otherTree(boost::container::flat_map<int, profiledTree>& connectedTrees); // Not complete yet?
 };
 
 #endif

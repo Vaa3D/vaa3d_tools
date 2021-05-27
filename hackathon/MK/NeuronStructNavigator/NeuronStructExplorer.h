@@ -161,6 +161,7 @@ public:
 	/******************* Structural Error Checking Functions *******************/
 	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> structErrorCheck(profiledTree& inputProfiledTree);
 	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> selfLoopingCheck(profiledTree& inputProfieldTree);
+	vector<shared_ptr<neuronReconErrorTypes::errorStructure>> conjoinedSegCheck(profiledTree& inputProfiledTree);
 	/***************************************************************************/
 
 

@@ -7,7 +7,7 @@ using namespace integratedDataTypes;
 
 namespace neuronReconErrorTypes
 {
-	enum errorID { ghost, selfLooping };
+	enum errorID { ghost, selfLooping, conjoinedSeg };
 
 	class errorStructure
 	{
@@ -35,7 +35,7 @@ namespace neuronReconErrorTypes
 		segUnit theSeg;
 		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
 
-		virtual void highlightErrorNodes();
+		virtual void highlightErrorNodes() { for (auto& node : this->theSeg.nodes) node.type = 0; }
 		virtual QList<NeuronSWC> selfCorrect();
 	};
 
@@ -52,7 +52,30 @@ namespace neuronReconErrorTypes
 		segUnit theSeg;
 		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
 
-		virtual void highlightErrorNodes();
+		virtual void highlightErrorNodes() { for (auto& node : this->theSeg.nodes) node.type = 5; }
+		virtual QList<NeuronSWC> selfCorrect();
+	};
+
+	class conjoinedSegs : public errorStructure
+	{
+	public:
+		conjoinedSegs() = default;
+		conjoinedSegs(const boost::container::flat_set<segUnit>& inputSegUnits);
+		conjoinedSegs(const QList<NeuronSWC>& inputNodes) {}
+		conjoinedSegs& operator=(const conjoinedSegs&) = delete;
+
+		virtual errorID getErrorID() { return conjoinedSeg; }
+
+		map<int, segUnit> segMap;
+		QList<NeuronSWC> totalNodes;
+		virtual QList<NeuronSWC>& getNodes();
+
+		virtual void highlightErrorNodes()
+		{
+			for (auto& seg : this->segMap)
+				for (auto& node : seg.second.nodes) node.type = 6;
+		}
+
 		virtual QList<NeuronSWC> selfCorrect();
 	};
 }

@@ -297,12 +297,14 @@ map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& in
 
 int NeuronStructUtil::findSomaNodeID(const NeuronTree& inputTree)
 {
+	set<int> somaNodeIDs;
 	for (auto& node : inputTree.listNeuron)
 	{
-		if (node.type == 1 && node.parent == -1) return node.n;
+		if (node.type == 1 && node.parent == -1) somaNodeIDs.insert(node.n);
 	}
 
-	return -1;
+	if (somaNodeIDs.size() == 1) return *somaNodeIDs.begin();
+	else return -1;
 }
 
 void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
