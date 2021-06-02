@@ -23,7 +23,7 @@ QStringList UnsortedPlugin::menulist() const
 
 QStringList UnsortedPlugin::funclist() const
 {
-	return QStringList()
+    return QStringList()
             <<tr("ReconstructionComplexity")
            <<tr("RecontructionIntensity_terafly")
           <<tr("Crop_terafly_block")
@@ -31,12 +31,12 @@ QStringList UnsortedPlugin::funclist() const
         <<tr("getTipBlock")
        <<tr("getTipComponent")
       <<tr("renderingSWC")
-            <<tr("SomaRefinement")
-           <<tr("somaBlockCrop")
-          <<tr("MIP_Zslices")
-         <<tr("swc_combine")
-        <<tr("mask_img_from_swc")
-         <<tr("help");
+     <<tr("SomaRefinement")
+    <<tr("somaBlockCrop")
+    <<tr("MIP_Zslices")
+    <<tr("swc_combine")
+    <<tr("mask_img_from_swc")
+    <<tr("help");
 }
 void UnsortedPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
