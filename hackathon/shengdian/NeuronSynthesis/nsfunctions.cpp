@@ -70,7 +70,7 @@ NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre)
     //save
     for (V3DLONG i=0;i<siz;i++)
     {
-        if(nkept[i])
+        if(nkept[i]!=0)
         {
             NeuronSWC s = nt.listNeuron[i];
             nt_out.listNeuron.append(s);
@@ -85,9 +85,8 @@ NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre)
 //            nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
 //        }
     }
-    //reindex
-//     NeuronTree nt_out_reindex=reindexNT(nt_out);
-//    return nt_out_reindex;
+
+    cout<<"pruning finished"<<endl;
     return nt_out;
 }
 NeuronTree to_topology_tree(NeuronTree nt)
@@ -340,4 +339,135 @@ bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC)
         writeSWC_file(outfile+"_axon.swc",nt_axon);
     }
     return true;
+}
+NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size)
+{
+    /*method: moving avearage
+     * 1. get all the branches
+     * 2. smooth every nodes in each branch
+     * 3.
+    */
+    NeuronTree nt_smoothed,nt_out;
+    nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
+    if(!nt.listNeuron.size())
+        return nt_out;
+    V3DLONG siz=nt.listNeuron.size();
+    /*1. get the index of nt:
+                                        * swc_n -> index */
+    QHash <int, int>  hashNeuron;hashNeuron.clear();
+    V3DLONG somaid=1;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
+            somaid=i;
+    }
+    // 2. get node type: index -> node_type
+    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1*/
+    std::vector<int> ntype(siz,0);
+    ntype[somaid]=2;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        if(s.pn&&hashNeuron.contains(s.pn))
+        {
+            V3DLONG spn_id=hashNeuron.value(s.pn);
+            ntype[spn_id]+=1;
+        }
+    }
+    //get child id: n -> child_n; only for internodes
+    QHash <V3DLONG, V3DLONG>  hashChild;hashChild.clear();
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        if(ntype[i]==1)
+        {
+            V3DLONG this_node_n=nt.listNeuron[i].n;
+            for(V3DLONG j=0;j<siz;j++)
+            {
+                if(i==j)
+                    continue;
+                if(this_node_n==nt.listNeuron[j].pn)
+                {hashChild.insert(i,j); break;}
+            }
+        }
+    }
+    //3. start from one key points and end at one key points
+    int half_win_size=(smooth_win_size-1)/2;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        // make no changes to tip, branch and soma nodes
+        if(ntype[i]==0||ntype[i]>=2)
+        {
+            nt_smoothed.listNeuron.append(s);
+            nt_smoothed.hashNeuron.insert(s.n,nt_smoothed.listNeuron.size()-1);
+            continue;
+        }
+        int this_smooth_win_size=1;
+        //for children of this node
+        V3DLONG child_index=hashChild.value(i);
+        for(int c=0;c<half_win_size;c++)
+        {
+            NeuronSWC schild=nt.listNeuron[child_index];
+            s.x+=schild.x;
+            s.y+=schild.y;
+            s.z+=schild.z;
+            this_smooth_win_size++;
+            if(ntype[child_index]==0||ntype[child_index]>=2)
+                break;
+            child_index=hashChild.value(child_index);
+        }
+        //for parents of this node
+         V3DLONG parent_index=hashNeuron.value(s.pn);
+        for(int p=0;p<half_win_size;p++)
+        {
+            NeuronSWC sparent=nt.listNeuron[parent_index];
+            s.x+=sparent.x;
+            s.y+=sparent.y;
+            s.z+=sparent.z;
+            this_smooth_win_size++;
+            if(ntype[parent_index]==0||ntype[parent_index]>=2)
+                break;
+            parent_index=hashNeuron.value(sparent.pn);
+        }
+        // avearage
+        s.x/=this_smooth_win_size;
+        s.y/=this_smooth_win_size;
+        s.z/=this_smooth_win_size;
+        nt_smoothed.listNeuron.append(s);
+        nt_smoothed.hashNeuron.insert(s.n,nt_smoothed.listNeuron.size()-1);
+    }
+    //remove very near nodes
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt_smoothed.listNeuron[i];
+        if(ntype[i]==0||ntype[i]>=2)
+            continue;
+
+        NeuronSWC spn=nt_smoothed.listNeuron[hashNeuron.value(s.pn)];
+        double to_parent_dist=0;
+        to_parent_dist=sqrt((spn.x-s.x)*(spn.x-s.x)+
+                                                (spn.y-s.y)*(spn.y-s.y)+
+                                                (spn.z-s.z)*(spn.z-s.z));
+        if(to_parent_dist<1)
+        {
+            //remove this node
+            //get child id
+            V3DLONG child_index=hashChild.value(i);
+            nt_smoothed.listNeuron[child_index].pn=s.pn;
+            nt_smoothed.listNeuron[i].pn=0;
+            continue;
+        }
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(nt_smoothed.listNeuron[i].pn==0)
+            continue;
+        NeuronSWC s = nt_smoothed.listNeuron[i];
+        nt_out.listNeuron.append(s);
+        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+    }
+    cout<<"Remove duplicated node size: "<<(siz-nt_out.listNeuron.size())<<endl;
+    qDebug()<<"Finished smoothing process";
+    return nt_out;
 }
