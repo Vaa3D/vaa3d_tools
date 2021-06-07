@@ -1,6 +1,6 @@
-#include "NeuronStructNavigatingTester.h"
-
 #include "FragTraceTester.h"
+
+#include "NeuronStructNavigatingTester.h"
 
 using namespace std;
 using NSlibTester = NeuronStructNavigator::Tester;

@@ -539,7 +539,7 @@ bool NeuronStructUtil::multipleSegsCheck(const NeuronTree& inputTree)
 	else return false;
 }
 
-NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
+NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree, vector<std::shared_ptr<neuronReconErrorTypes::errorStructure>>* errorSegsPtr)
 {
 	// This method removes any shadowing segment without altering the structure. 
 	// There are 3 types of segments to be removed in this method:
@@ -564,71 +564,134 @@ NeuronTree NeuronStructUtil::removeDupSegs(const NeuronTree& inputTree)
 
 	// ***************** Remove composite or embedded shadow segments ***************** //
 	// Composite shadow segment is a segment that aligns through multiple segments without bridging situation.
-	// Embbeded shadow segment a segment that is shorter and hides within another segment
+	// Embbeded shadow segment is a segment that is shorter and hides within another segment
 
 	NeuronTree simpleShadowcleanedTree;
 	for (auto& outputSeg : filteredSegs) simpleShadowcleanedTree.listNeuron.append(outputSeg.nodes);
 	profiledTree profiledSimpleShadowCln(simpleShadowcleanedTree);
 	profiledSimpleShadowCln.nodeCoordKeySegMapGen(); // This step could be time consuming.
-	set<int> compositeDupSegIDs;
-	vector<boost::container::flat_set<int>> coordKey2segIDs;
+	profiledSimpleShadowCln.segEndCoordKeySegMapGen();
+	
+	filteredSegs.clear();
+	QList<NeuronSWC> correctedSegNodes;
+	set<int> compositeSegIDs;
+	set<int> embeddedSegIDs, compositeDupSegIDs;
+	boost::container::flat_map<int, vector<boost::container::flat_set<int>>> segIDsInNodeOrderMap;
 	for (auto& seg : profiledSimpleShadowCln.segs)
 	{
-		boost::container::flat_set<int> segIDsPreNode;
+		//cout << "segment " << seg.first << ":" << endl;
+		vector<boost::container::flat_set<int>> segIDsInNodeOrder;
 		for (auto& node : seg.second.nodes)
 		{
 			string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
 			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = profiledSimpleShadowCln.nodeCoordKey2segMap.equal_range(nodeCoordKey);
-			// a. Essential segment found - singular node that results in non-overlapping edges.
-			if (range.second - range.first == 1) goto TO_THE_NEXT_SEG; 
-			
-			// Record all segments that are involved with the current segment in the order of the current segment's node in [coordKey2segIDs]: vector<[segIDsCurrNode]>.
-			// Note, the current segment ID is not included.
+
+			// ******* 1. Essential segment found - singular node that results in non-overlapping edges. ******* //
+			if (range.second - range.first == 1) goto ESSENTIAL_SEG_FOUND;
+			// ************************************************************************************************* //
+
+			// ******* Record all segments that are involved with the current segment in the order of the current segment's nodes in [segIDsInNodeOrder]: vector<[segIDsCurrNode]>. ******* //
+			//         Note, the current segment ID is not included.
 			boost::container::flat_set<int> segIDsCurrNode;
 			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
-				if (it->second != seg.first) segIDsCurrNode.insert(it->second);
-			coordKey2segIDs.push_back(segIDsCurrNode);
-		}
-
-		// b. Check for 2(b) embedded shadow segment.
-		for (auto& segID : coordKey2segIDs.at(0))
-		{
-			for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
-				if (setIt->find(segID) == setIt->end()) goto NOT_EMBEDDED_SEG;
-			compositeDupSegIDs.insert(seg.first); // Found other segment fully overlapping throughout the current segment, i.e., the current segment is an 2), embedded shadow segment.
-			goto TO_THE_NEXT_SEG;
-		}
-
-		// c. If two adjacent nodes have some segment IDs that cannot be found in the other node, then this segment is a bridge segment and cannot be removed.
-	NOT_EMBEDDED_SEG:
-		for (vector<boost::container::flat_set<int>>::iterator setIt = coordKey2segIDs.begin() + 1; setIt != coordKey2segIDs.end(); ++setIt)
-		{
-			if (*setIt == *(setIt - 1)) continue;
-			for (auto& preNodeSegID : *(setIt - 1))
 			{
-				if (setIt->find(preNodeSegID) == setIt->end())
+				//cout << it->second << " ";
+				if (it->second != seg.first) segIDsCurrNode.insert(it->second); // Only seg ID other than itself will be included.
+			}
+			//cout << endl;
+			segIDsInNodeOrder.push_back(segIDsCurrNode);
+			// **************************************************************************************************************************************************************************** //
+		}
+		segIDsInNodeOrderMap.insert(pair<int, vector<boost::container::flat_set<int>>>(seg.first, segIDsInNodeOrder));
+		//cout << endl;
+
+		// ******* 2(b). Check for embedded shadow segment. ******* //
+		for (auto& segID : segIDsInNodeOrder.at(0))
+		{
+			for (vector<boost::container::flat_set<int>>::iterator setIt = segIDsInNodeOrder.begin() + 1; setIt != segIDsInNodeOrder.end(); ++setIt)
+			{
+				if (setIt->find(segID) == setIt->end()) // Found different involved segments, i.e., this segment is a composite segment and needs to be further examined.
 				{
-					for (auto& currNodeSegID : *setIt)
-						if ((setIt - 1)->find(currNodeSegID) == (setIt - 1)->end()) goto TO_THE_NEXT_SEG; // Bridging situation found.
+					compositeSegIDs.insert(seg.first);
+					goto COMPOSITE_SEG_FOUND;
 				}
 			}
-		}
-		compositeDupSegIDs.insert(seg.first); // This means the current segment is a 2(a) composite shadow segment.
+			embeddedSegIDs.insert(seg.first); // Found other segment fully overlapping throughout the current segment, i.e., the current segment is an 2(b), embedded shadow segment.
 
-	TO_THE_NEXT_SEG:
-		coordKey2segIDs.clear();
+		COMPOSITE_SEG_FOUND:
+			continue;
+		}
+		// ******************************************************** //
+
+	ESSENTIAL_SEG_FOUND:
 		continue;
 	}
 
-	vector<ptrdiff_t> compositeDelLocs;
+	// *************************************** Examine Composite Segments *************************************** //
+	for (auto& segID : compositeSegIDs)
+	{
+		bool hairpin = false;
+		for (vector<boost::container::flat_set<int>>::iterator setIt = segIDsInNodeOrderMap.at(segID).begin(); setIt != segIDsInNodeOrderMap.at(segID).end(); ++setIt)
+		{
+			// ******* Check if it's a Hairpin Segment ******* //
+			if (setIt->empty())
+			{
+				// Hairpin segment found
+				neuronReconErrorTypes::hairpinSegUnit hairpinSeg(profiledSimpleShadowCln.segs.at(segID));
+				if (errorSegsPtr != nullptr)
+				{
+					std::shared_ptr<neuronReconErrorTypes::errorStructure> errorStructPtr = std::make_shared<neuronReconErrorTypes::hairpinSegUnit>(hairpinSeg);
+					errorSegsPtr->push_back(errorStructPtr);
+				}
+				correctedSegNodes.append(hairpinSeg.selfCorrect());
+				compositeDupSegIDs.insert(segID);
+				hairpin = true;
+				break;
+			}
+			// *********************************************** //
+		}
+		if (hairpin) continue;
+
+		const NeuronSWC& headNode = profiledSimpleShadowCln.tree.listNeuron.at(profiledSimpleShadowCln.node2LocMap.at(profiledSimpleShadowCln.segs.at(segID).head));
+		string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> headRange = profiledSimpleShadowCln.segEndCoordKey2segMap.equal_range(headCoordKey);
+		
+		const NeuronSWC& tailNode = profiledSimpleShadowCln.tree.listNeuron.at(profiledSimpleShadowCln.node2LocMap.at(*profiledSimpleShadowCln.segs.at(segID).tails.begin()));
+		string tailCoordKey = to_string(tailNode.x) + "_" + to_string(tailNode.y) + "_" + to_string(tailNode.z);
+		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> tailRange = profiledSimpleShadowCln.segEndCoordKey2segMap.equal_range(tailCoordKey);
+
+		if (headRange.second - headRange.first == 1 && tailRange.second - tailRange.first == 1)
+		{
+			set<int> involvedSegIDs;
+			for (auto& segSet : segIDsInNodeOrderMap.at(segID))
+			{
+				if (!segSet.empty())
+				{
+					for (auto& id : segSet)
+						if (id != segID) involvedSegIDs.insert(id);
+				}
+			}
+
+			if (involvedSegIDs.size() == 2) compositeDupSegIDs.insert(segID);
+		}
+	}
+	// *********************************** END of [Examine Composite Segments] ********************************** //
+
+	vector<ptrdiff_t> delLocs;
+	for (set<int>::iterator segIDIt = embeddedSegIDs.begin(); segIDIt != embeddedSegIDs.end(); ++segIDIt)
+	{
+		for (auto& node : profiledSimpleShadowCln.segs.at(*segIDIt).nodes)
+			delLocs.push_back(profiledSimpleShadowCln.node2LocMap.at(node.n));
+	}
+
 	for (set<int>::iterator segIDIt = compositeDupSegIDs.begin(); segIDIt != compositeDupSegIDs.end(); ++segIDIt)
 	{
 		for (auto& node : profiledSimpleShadowCln.segs.at(*segIDIt).nodes)
-			compositeDelLocs.push_back(profiledSimpleShadowCln.node2LocMap.at(node.n));
+			delLocs.push_back(profiledSimpleShadowCln.node2LocMap.at(node.n));
 	}
-	std::sort(compositeDelLocs.rbegin(), compositeDelLocs.rend());
-	for (auto& loc : compositeDelLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
-	// ******************************************************************************** //
+	std::sort(delLocs.rbegin(), delLocs.rend());
+	for (auto& loc : delLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
+	if (!correctedSegNodes.isEmpty()) profiledSimpleShadowCln.tree.listNeuron.append(correctedSegNodes);
 
 	return profiledSimpleShadowCln.tree;
 }

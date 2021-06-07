@@ -1,10 +1,10 @@
 #ifndef FRAGTRACETESTER_H
 #define FRAGTRACETESTER_H
 
-#include <memory>
-
 #include "FragTraceControlPanel.h"
 #include "FragTraceManager.h"
+
+#include <memory>
 
 class FragTraceTester
 {

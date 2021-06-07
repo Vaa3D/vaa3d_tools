@@ -1,3 +1,6 @@
+#include "swcRenameDlg.h"
+#include "NeuronReconTester.h"
+
 #include <sstream>
 #include <fstream>
 #include <cstdio>
@@ -5,8 +8,6 @@
 #include <qtextstream.h>
 #include <qstring.h>
 #include <qdir.h>
-
-#include "swcRenameDlg.h"
 
 using namespace std;
 

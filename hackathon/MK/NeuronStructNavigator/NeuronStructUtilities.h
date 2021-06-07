@@ -114,7 +114,7 @@ public:
 	// The overlapping situation could be 1. Identical, or "twin" segments
 	//									  2. Shadow segments: a) composite shadow segments that align through multiple segments
 	//														  b) embedded shadow segments that are shorter but still align with other segments
-	static NeuronTree removeDupSegs(const NeuronTree& inputTree);
+	static NeuronTree removeDupSegs(const NeuronTree& inputTree, vector<std::shared_ptr<neuronReconErrorTypes::errorStructure>>* errorSegsPtr = nullptr);
 
 	// Remove duplicated nodes that are linked -> child node and parent node share the same coordinate.
 	// Note: Not to be confused with [NeuronStructUtil::removeDupHeads], which is dedicated to linking geometrically connected segments altogether.

@@ -1,6 +1,7 @@
-#include "TreeTrimmer.h"
-
+#include "NeuronReconTester.h"
 #include "ReconOperator.h"
+
+#include "TreeTrimmer.h"
 
 void ReconOperator::downSampleReconFile(const QStringList& fileList, float xFactor, float yFactor, float zFactor)
 {
@@ -113,6 +114,13 @@ void ReconOperator::denAxonCombine(bool dupRemove)
 
 void ReconOperator::assembleSegs2tree()
 {
+#ifdef __ACTIVATE_TESTER__
+	NeuronReconTester::instance(this);
+	NeuronReconTester::getInstance()->rootPathQ = this->rootPath;
+	if (GROUPED_TREES) NeuronReconTester::getInstance()->makeConnectedFolder();
+	if (GROUPED_ASSEMBLED_TREES) NeuronReconTester::getInstance()->makeConnectedAssembledFolder();
+#endif
+
 	QDir inputFolder(this->rootPath);
 	inputFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	QStringList fileList = inputFolder.entryList();
@@ -126,17 +134,6 @@ void ReconOperator::assembleSegs2tree()
 
 	QString tooFarType7folderQ = this->rootPath + "\\subtreeNotConnected\\";
 	QDir type7dir(tooFarType7folderQ);
-
-#ifdef SUBTREE_DEBUG
-	QString subTreeFolderQ = this->rootPath + "\\subTrees\\";
-	QDir subTreeDir(subTreeFolderQ);
-	if (!subTreeDir.exists()) subTreeDir.mkpath(".");
-
-	QString subTreeAssembleFolderQ = this->rootPath + "\\subTrees_assemmbled\\";
-	QDir subTree_assembleDir(subTreeAssembleFolderQ);
-	if (!subTree_assembleDir.exists()) subTree_assembleDir.mkpath(".");
-#endif
-
 
 	for (auto& file : fileList)
 	{
@@ -166,30 +163,25 @@ void ReconOperator::assembleSegs2tree()
 			cout << "Input soma coordinate: " << somaAPO.x << " " << somaAPO.y << " " << somaAPO.z << endl;
 			QString inputSWCFullName = this->rootPath + "\\" + file;
 			NeuronTree inputTree = readSWC_file(inputSWCFullName);
+
+
+			/***************** Remove duplicated segments *****************/
 			NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+			if (NeuronReconTester::getInstance() != nullptr && DUPSEG_REMOVE) NeuronReconTester::getInstance()->saveIntermediateResult(noDupSegTree, "noDupSegs", baseName);
+			/**************************************************************/
 
-			if (DUPSEG_REMOVE)
-			{
-				QString supSegsRemovedTreeNameQ = this->rootPath + "\\" + baseName + "_dupSegRemoved.swc";
-				writeSWC_file(supSegsRemovedTreeNameQ, noDupSegTree);
-			}
 
+			/***************** Remove redundant nodes *****************/
 			profiledTree inputProfiledTree(noDupSegTree);
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
-			if (NeuronStructUtil::multipleSegsCheck(inputProfiledTree.tree))
-			{
-#ifdef SUBTREE_DEBUG
-				QString treesFolderQ = subTreeFolderQ + baseName + "\\";
-				QDir treesFolderDir(treesFolderQ);
-				if (!treesFolderDir.exists()) treesFolderDir.mkpath(".");
+			/**********************************************************/
 
-				QString treesAssemblerFolderQ = subTreeAssembleFolderQ + baseName + "\\";
-				QDir treesAssembleFolderDir(treesAssemblerFolderQ);
-				if (!treesAssembleFolderDir.exists()) treesAssembleFolderDir.mkpath(".");
-#endif
-		
+
+			if (NeuronStructUtil::multipleSegsCheck(inputProfiledTree.tree))
+			{		
 				/***************** Remove additional type-1 nodes *****************/
 				this->removeAdditionalType1Nodes(inputProfiledTree);
+				if (NeuronReconTester::getInstance() != nullptr && TYPE1_REMOVE) NeuronReconTester::getInstance()->saveIntermediateResult(inputProfiledTree.tree, "type1Removed", baseName);
 				/******************************************************************/
 
 
@@ -200,7 +192,10 @@ void ReconOperator::assembleSegs2tree()
 
 				/***************** Group Connected Segmets *****************/
 				clock_t start = clock();
-				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);				
+				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);	
+				if (NeuronReconTester::getInstance() != nullptr && GROUPED_TREES) 
+					NeuronReconTester::getInstance()->saveIntermediateResult(connectedTrees, NeuronReconTester::getInstance()->connectedTreePathQ, baseName);
+				
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl;
 				clock_t end = clock();
 				float duration = float(end - start) / CLOCKS_PER_SEC;
@@ -211,6 +206,8 @@ void ReconOperator::assembleSegs2tree()
 				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
 				map<int, int> tree2HeadNodeMap;
 				this->assembleGroupedSegs(connectedTrees, tree2HeadNodeMap, somaAPO);
+				if (NeuronReconTester::getInstance() != nullptr && GROUPED_ASSEMBLED_TREES)
+					NeuronReconTester::getInstance()->saveIntermediateResult(connectedTrees, NeuronReconTester::getInstance()->connectedAssembledTreePathQ, baseName);
 				/****************************** END of [START ASSEMBLING EACH SUBTREE] *******************************/
 
 
@@ -243,9 +240,11 @@ void ReconOperator::assembleSegs2tree()
 				}
 				/************************************************************/
 
+
 				/***************** LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES *****************/
 				if (this->autoConnect) this->connectType7trees2otherTree(connectedTrees);
 				/************* END of [LOOK FOR OTHER POSSIBLE CONNECTING PLACE OTHER THAN SOMA FOR TYPE 7 TREES] ************/
+
 
 				NeuronTree outputTree;
 				bool type7exist = false;
@@ -371,6 +370,7 @@ void ReconOperator::errorCheckRepair(profiledTree& inputProfiledTree)
 
 	this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
 	cout << "Error segment count: " << errorList.size() << endl;
+	if (errorList.empty()) return;
 
 	cout << "-- Self-looping segments --" << endl;
 	vector<ptrdiff_t> selfLoopingDelLocs;
@@ -403,10 +403,6 @@ void ReconOperator::assembleGroupedSegs(boost::container::flat_map<int, profiled
 
 	for (auto& connectedTree : connectedTrees)
 	{
-#ifdef SUBTREE_DEBUG
-		writeSWC_file(treesFolderQ + QString::number(int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1) + ".swc", connectedTree.second.tree);
-#endif
-
 		if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
 
 		cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;
@@ -453,9 +449,6 @@ void ReconOperator::connectType7trees2otherTree(boost::container::flat_map<int, 
 		autoConnect = false;
 		for (boost::container::flat_map<int, profiledTree>::iterator type7it = connectedTrees.begin(); type7it != connectedTrees.end(); ++type7it)
 		{
-#ifdef SUBTREE_DEBUG
-			writeSWC_file(treesAssemblerFolderQ + QString::number(int(type7it - connectedTrees.begin()) + 1) + ".swc", type7it->second.tree);
-#endif
 			if (type7it->second.tree.listNeuron.at(0).type == 7)
 			{
 				for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)

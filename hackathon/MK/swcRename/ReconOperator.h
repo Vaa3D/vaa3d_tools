@@ -1,7 +1,7 @@
 #ifndef RECONOPERATOR_H
 #define RECONOPERATOR_H
 
-//#define SUBTREE_DEBUG
+#define __ACTIVATE_TESTER__
 
 #include <iostream>
 
@@ -14,6 +14,9 @@
 #include "NeuronStructExplorer.h"
 
 const bool DUPSEG_REMOVE = false;
+const bool TYPE1_REMOVE = false;
+const bool GROUPED_TREES = false;
+const bool GROUPED_ASSEMBLED_TREES = true;
 
 class ReconOperator
 {

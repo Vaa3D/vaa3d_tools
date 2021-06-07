@@ -7,7 +7,7 @@ using namespace integratedDataTypes;
 
 namespace neuronReconErrorTypes
 {
-	enum errorID { ghost, selfLooping, conjoinedSeg };
+	enum errorID { ghost, selfLooping, hairpin, compositeShadow, conjoinedSeg };
 
 	class errorStructure
 	{
@@ -43,10 +43,11 @@ namespace neuronReconErrorTypes
 	{
 	public:
 		selfLoopingSegUnit() = delete;
-		selfLoopingSegUnit(const segUnit& inputSegUnit) : theSeg(inputSegUnit) {}
-		selfLoopingSegUnit(const QList<NeuronSWC>& inputNodes) : theSeg(inputNodes) {}
+		selfLoopingSegUnit(const segUnit& inputSegUnit) : theSeg(inputSegUnit), headLoop(false) {}
+		selfLoopingSegUnit(const QList<NeuronSWC>& inputNodes) : theSeg(inputNodes), headLoop(false) {}
 		selfLoopingSegUnit& operator=(const selfLoopingSegUnit&) = delete;
 
+		bool headLoop;
 		virtual errorID getErrorID() { return selfLooping; }
 
 		segUnit theSeg;
@@ -54,6 +55,56 @@ namespace neuronReconErrorTypes
 
 		virtual void highlightErrorNodes() { for (auto& node : this->theSeg.nodes) node.type = 5; }
 		virtual QList<NeuronSWC> selfCorrect();
+	};
+
+	class hairpinSegUnit : public errorStructure
+	{
+	public:
+		hairpinSegUnit() = delete;
+		hairpinSegUnit(const segUnit& inputSegUnit) : theSeg(inputSegUnit) {}
+		hairpinSegUnit(const QList<NeuronSWC>& inputNodes) : theSeg(inputNodes) {}
+		hairpinSegUnit& operator=(const selfLoopingSegUnit&) = delete;
+
+		virtual errorID getErrorID() { return hairpin; }
+
+		segUnit theSeg;
+		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
+
+		virtual void highlightErrorNodes() { for (auto& node : this->theSeg.nodes) node.type = 8; }
+		virtual QList<NeuronSWC> selfCorrect();
+	};
+
+	class compositeShadowSegs : public errorStructure
+	{
+	public:
+		compositeShadowSegs() = delete;
+		compositeShadowSegs(const boost::container::flat_set<segUnit>& inputSegUnits);
+		compositeShadowSegs(const QList<NeuronSWC>& inputNodes) : effectiveHeadCoordPtr(nullptr) {}
+		compositeShadowSegs& operator=(const compositeShadowSegs&) = delete;
+		~compositeShadowSegs();
+
+		virtual errorID getErrorID() { return compositeShadow; }
+
+		map<int, segUnit> segMap;
+		QList<NeuronSWC> totalNodes;
+		coordUnit* effectiveHeadCoordPtr;
+		vector<coordUnit*> segCoordListPtrs;
+		virtual QList<NeuronSWC>& getNodes();
+
+		virtual void highlightErrorNodes()
+		{
+			for (auto& seg : this->segMap)
+				for (auto& node : seg.second.nodes) node.type = 9;
+		}
+
+		virtual QList<NeuronSWC> selfCorrect();
+
+		coordUnit* getLastCoordPtr();
+		int getCoordListLength();
+		void rc_coordCharin_cleanUp();
+
+	private:
+		void getEffectiveCoordList();
 	};
 
 	class conjoinedSegs : public errorStructure

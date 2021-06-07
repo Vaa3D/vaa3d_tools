@@ -80,6 +80,26 @@ namespace integratedDataTypes
 		map<int, deque<NeuronSWC>> downstreams;
 	};
 
+	struct coordUnit
+	{
+		coordUnit() = default;
+		coordUnit(const NeuronSWC& inputNode) : x(inputNode.x), y(inputNode.y), z(inputNode.z), nodeID(inputNode.n), parentCoordPtr(nullptr) { this->childCoordPtrs.clear(); }
+		coordUnit(const coordUnit&) = delete;
+		coordUnit& operator=(const coordUnit&) = delete;
+		~coordUnit();
+
+		const bool operator==(const coordUnit& comparedCoordUnit) const;
+		const bool operator==(const NeuronSWC& comparedNode) const;
+		const bool operator!=(const coordUnit& comparedCoordUnit) const { return this->operator==(comparedCoordUnit) ? false : true; }
+		const bool operator!=(const NeuronSWC& comparedNode) const { return this->operator==(comparedNode) ? false : true; }
+
+		float x, y, z;
+		int nodeID;
+
+		coordUnit* parentCoordPtr;
+		boost::container::flat_set<coordUnit*> childCoordPtrs;
+	};
+
 
 	/************* Segment Unit Data Structure *************/
 	class segUnit

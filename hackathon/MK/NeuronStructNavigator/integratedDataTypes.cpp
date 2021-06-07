@@ -59,6 +59,30 @@ integratedDataTypes::overlappedCoord::overlappedCoord(string coordKey) : coordKe
 	this->involvedSegsOriMap.insert({ integratedDataTypes::body, segNodeIDpairSet });
 }
 
+const bool integratedDataTypes::coordUnit::operator==(const integratedDataTypes::coordUnit& comparedCoordUnit) const
+{
+	if (this->x == comparedCoordUnit.x && this->y == comparedCoordUnit.y && this->z == comparedCoordUnit.z) return true;
+	else return false;
+}
+
+const bool integratedDataTypes::coordUnit::operator==(const NeuronSWC& comparedNode) const
+{
+	if (this->x == comparedNode.x && this->y == comparedNode.y && this->z == comparedNode.z) return true;
+	else return false;
+}
+
+integratedDataTypes::coordUnit::~coordUnit()
+{
+	for (auto& coordUnitPtr : this->childCoordPtrs)
+		if (coordUnitPtr != nullptr) coordUnitPtr->parentCoordPtr = nullptr;
+	
+	if (this->parentCoordPtr != nullptr)
+	{
+		boost::container::flat_set<coordUnit*>::iterator it = this->parentCoordPtr->childCoordPtrs.find(this);
+		if (it != this->parentCoordPtr->childCoordPtrs.end()) this->parentCoordPtr->childCoordPtrs.erase(it);
+	}
+}
+
 integratedDataTypes::segUnit::segUnit(const V_NeuronSWC& inputV_NeuronSWC)
 {
 	if ((inputV_NeuronSWC.row.end() - 1)->parent == -1)
@@ -139,7 +163,7 @@ integratedDataTypes::segUnit::segUnit(const QList<NeuronSWC>& inputSeg) : to_be_
 
 const bool integratedDataTypes::segUnit::operator==(const segUnit& comparedSeg) const
 {
-	// Given 2 segUnits with the same NeuronSWC composition, it is nearly impossible for them being actually different.
+	// Given 2 segUnits with the same NeuronSWC composition, it is almost impossible for them being actually different.
 	// Therefore, current implementation is based on node-wise comparing without considering its morphology.
 
 	if (this->nodes.size() != comparedSeg.nodes.size()) return false;

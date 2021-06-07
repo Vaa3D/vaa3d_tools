@@ -1314,24 +1314,28 @@ vector<shared_ptr<neuronReconErrorTypes::errorStructure>> NeuronStructExplorer::
 	set<int> registeredSegIDs;
 	for (auto& nodeCoord : inputProfiledTree.segEndCoordKey2segMap)
 	{
+		// Multiple end nodes from THE SAME or DIFFERENT segments sitting at the same coordinate. 
+		// Currently this method is only focused on self-looping segment type a), so one of these nodes HAS TO BE a segment end node.
+
 		//pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.segEndCoordKey2segMap.equal_range(segEndCoord.first);
 		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = inputProfiledTree.nodeCoordKey2segMap.equal_range(nodeCoord.first);
-		if (range.second - range.first > 1 && inputProfiledTree.segEndCoordKey2segMap.find(nodeCoord.first) != inputProfiledTree.segEndCoordKey2segMap.end()) 
-		{	
-			// Multiple end nodes from THE SAME or DIFFERENT segments sitting at the same coordinate. 
-			// Currently this method is only focused on self-looping segment type a), so one of these nodes HAS TO BE a segment end node.
-			
-			map<int, int> segIDcountMap;
-			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it) ++segIDcountMap.insert({ it->second, 0 }).first->second;
-			for (auto& segIDcount : segIDcountMap)
-			{
-				if (segIDcount.second > 1 && registeredSegIDs.find(segIDcount.first) == registeredSegIDs.end())
-				{
-					shared_ptr<neuronReconErrorTypes::errorStructure> errorSegPtr = make_shared<neuronReconErrorTypes::selfLoopingSegUnit>(neuronReconErrorTypes::selfLoopingSegUnit(inputProfiledTree.segs.at(segIDcount.first)));
-					outputSelfLoopingList.push_back(errorSegPtr);
-					registeredSegIDs.insert(segIDcount.first);
-				}
-			}
+		int curSegIDcount = 0;
+		for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+			if (it->second == nodeCoord.second) ++curSegIDcount;
+		
+		if (curSegIDcount > 1 && registeredSegIDs.find(nodeCoord.second) == registeredSegIDs.end())
+		{
+			neuronReconErrorTypes::selfLoopingSegUnit selfLoopingSeg(inputProfiledTree.segs.at(nodeCoord.second));
+
+			int headNodeID = inputProfiledTree.segs.at(nodeCoord.second).head;
+			const NeuronSWC& headNode = inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(headNodeID)];
+			string headNodeCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
+			if (!nodeCoord.first.compare(headNodeCoordKey)) selfLoopingSeg.headLoop = true;
+			else selfLoopingSeg.headLoop = false;
+
+			shared_ptr<neuronReconErrorTypes::errorStructure> errorSegPtr = make_shared<neuronReconErrorTypes::selfLoopingSegUnit>(selfLoopingSeg);
+			outputSelfLoopingList.push_back(errorSegPtr);
+			registeredSegIDs.insert(nodeCoord.second);
 		}
 	}
 

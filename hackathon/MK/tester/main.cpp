@@ -30,18 +30,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "groupTree";
+	//string funcName = "removeDupSeg";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -560,6 +560,16 @@ int main(int argc, char* argv[])
 				cout << endl;
 			}
 		}
+	}
+	else if (!funcName.compare("removeDupSeg"))
+	{
+		/*QString inputFileName = "C:\\Users\\hkuo9\\Desktop\\dangling2\\test1.swc";
+		NeuronTree inputTree = readSWC_file(inputFileName);
+		NeuronTree dupRemovedTree = NeuronStructUtil::removeDupSegs(inputTree);
+		QString outputFileName = "C:\\Users\\hkuo9\\Desktop\\dangling2\\test1_1.swc";
+		writeSWC_file(outputFileName, dupRemovedTree);*/
+		NeuronTree dupRemovedTree = NeuronStructUtil::removeDupSegs(readSWC_file(QString::fromStdString(paras.at(0))));
+		writeSWC_file(QString::fromStdString(paras.at(1)), dupRemovedTree);
 	}
 	else if (!funcName.compare("getBrNumFromSWCs"))
 	{
