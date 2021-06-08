@@ -289,6 +289,20 @@ bool judgeTypes(const NeuronTree &nt, string& allTypesInfo){
     return connect && allType;
 }
 
+NeuronSWC getSoma(const NeuronTree &nt){
+    NeuronSWC soma;
+    soma.x = -1;
+    soma.y = -1;
+    soma.z = -1;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); ++i){
+        if(nt.listNeuron[i].type == 1 && nt.listNeuron[i].parent == -1){
+            soma = nt.listNeuron[i];
+            break;
+        }
+    }
+    return soma;
+}
+
 int getThreeBifurcationCount(const vector<NeuronSWC> &outputErroneousPoints){
     int count = 0;
     for(int i=0; i<outputErroneousPoints.size(); ++i){
@@ -302,6 +316,30 @@ int getThreeBifurcationCount(const vector<NeuronSWC> &outputErroneousPoints){
             count++;
         }
     }
+    return count;
+}
+
+int getThreeBifurcationCount(const vector<NeuronSWC> &outputErroneousPoints, NeuronSWC soma){
+    int count = 0;
+    if(soma.x == -1 && soma.y == -1 && soma.z == -1){
+        return getThreeBifurcationCount(outputErroneousPoints);
+    }else{
+        for(int i=0; i<outputErroneousPoints.size(); ++i){
+            if(outputErroneousPoints[i].type == 20
+                    && (abs(outputErroneousPoints[i].x - soma.x) > 1 ||
+                    abs(outputErroneousPoints[i].y - soma.y) > 1  ||
+                    abs(outputErroneousPoints[i].z - soma.z) > 1 )){
+                NeuronSWC tmp = outputErroneousPoints[i];
+                ImageMarker m = ImageMarker(tmp.x,tmp.y,tmp.z);
+                m.color.r = colortable[3][0];
+                m.color.g = colortable[3][1];
+                m.color.b = colortable[3][2];
+                errorMarkerList.push_back(m);
+                count++;
+            }
+        }
+    }
+
     return count;
 }
 
@@ -324,6 +362,24 @@ int getLoopCount(const vector<NeuronSWC> &outputErroneousPoints){
 bool getNeuronFeature(const NeuronTree &nt, neuronQCFeature &nqcf, float sLengthThres, float nodeLengthThres, bool loopThreeBifurcation){
     errorMarkerList.clear();
 
+    //loop, threeBifurcation
+    NeuronTree ntCopy;
+    ntCopy.deepCopy(nt);
+    V_NeuronSWC_list inputSegList = removeSameSegment(ntCopy);//NeuronTree__2__V_NeuronSWC_list(ntCopy);
+    int loopCount = 0, threeBifurcationCount = 0;
+    qDebug()<<"-----------------start detect loop---------------";
+    vector<NeuronSWC> outputErroneousPoints = loopDetection2(inputSegList);
+    qDebug()<<"-----------------end detect loop---------------";
+    NeuronSWC soma = getSoma(nt);
+    qDebug()<<"soma xyz: "<<soma.x<<" "<<soma.y<<" "<<soma.z;
+    loopCount = getLoopCount(outputErroneousPoints);
+    threeBifurcationCount = getThreeBifurcationCount(outputErroneousPoints,soma);
+
+    nqcf.bFeature.push_back(loopCount == 0);
+    nqcf.featureInfo.push_back("number of key points of loop: " + to_string(loopCount));
+    nqcf.bFeature.push_back(threeBifurcationCount == 0);
+    nqcf.featureInfo.push_back(to_string(threeBifurcationCount));
+
     //isSort
     QString sortInfo;
     bool isSort = judgeSort(nt,sortInfo);
@@ -331,7 +387,7 @@ bool getNeuronFeature(const NeuronTree &nt, neuronQCFeature &nqcf, float sLength
         nqcf.bFeature.push_back(isSort);
         nqcf.featureInfo.push_back(sortInfo.toStdString());
         string fInfo = "The swc is not sorted";
-        for(int i=1; i<featureSize; ++i){
+        for(int i=3; i<featureSize; ++i){
             nqcf.bFeature.push_back(isSort);
             nqcf.featureInfo.push_back(fInfo);
         }
@@ -347,7 +403,7 @@ bool getNeuronFeature(const NeuronTree &nt, neuronQCFeature &nqcf, float sLength
         nqcf.bFeature.push_back(somaType);
         nqcf.featureInfo.push_back(somaTypeInfo.toStdString());
         string fInfo = "The somaType is false";
-        for(int i=2; i<featureSize; ++i){
+        for(int i=4; i<featureSize; ++i){
             nqcf.bFeature.push_back(isSort);
             nqcf.featureInfo.push_back(fInfo);
         }
@@ -370,25 +426,26 @@ bool getNeuronFeature(const NeuronTree &nt, neuronQCFeature &nqcf, float sLength
     bool allTypes = judgeTypes(nt,allTypesInfo);
     nqcf.bFeature.push_back(allTypes);
     nqcf.featureInfo.push_back(allTypesInfo);
-    //loop, threeBifurcation
-    if(loopThreeBifurcation){
-        int loopCount = 0, threeBifurcationCount = 0;
-        for(int i=0; i<trees.size(); ++i){
-            V_NeuronSWC_list inputSegList = NeuronTree__2__V_NeuronSWC_list(trees[i]);
-            vector<NeuronSWC> outputErroneousPoints = loopDetection(inputSegList);
-            loopCount += getLoopCount(outputErroneousPoints);
-            threeBifurcationCount += getThreeBifurcationCount(outputErroneousPoints);
-        }
-        nqcf.bFeature.push_back(loopCount == 0);
-        nqcf.featureInfo.push_back(to_string(loopCount));
-        nqcf.bFeature.push_back((threeBifurcationCount - 1) <= 0);
-        nqcf.featureInfo.push_back(to_string(threeBifurcationCount - 1));
-    }else{
-        nqcf.bFeature.push_back(true);
-        nqcf.featureInfo.push_back("the feature is unchecked");
-        nqcf.bFeature.push_back(true);
-        nqcf.featureInfo.push_back("the feature is unchecked");
-    }
+
+
+//    if(loopThreeBifurcation){
+//        int loopCount = 0, threeBifurcationCount = 0;
+//        for(int i=0; i<trees.size(); ++i){
+//            V_NeuronSWC_list inputSegList = NeuronTree__2__V_NeuronSWC_list(trees[i]);
+//            vector<NeuronSWC> outputErroneousPoints = loopDetection(inputSegList);
+//            loopCount += getLoopCount(outputErroneousPoints);
+//            threeBifurcationCount += getThreeBifurcationCount(outputErroneousPoints);
+//        }
+//        nqcf.bFeature.push_back(loopCount == 0);
+//        nqcf.featureInfo.push_back(to_string(loopCount));
+//        nqcf.bFeature.push_back((threeBifurcationCount - 1) <= 0);
+//        nqcf.featureInfo.push_back(to_string(threeBifurcationCount - 1));
+//    }else{
+//        nqcf.bFeature.push_back(true);
+//        nqcf.featureInfo.push_back("the feature is unchecked");
+//        nqcf.bFeature.push_back(true);
+//        nqcf.featureInfo.push_back("the feature is unchecked");
+//    }
 
     //short Branches
     int sBranchesCount = getShortBranchesCount(nt,sLengthThres);
@@ -477,6 +534,154 @@ bool getNeuronFeatureForBatch(QString swcDir, float sLengthThres, float nodeLeng
     }
     writeNeuronFeature(nqcfv,neuronId,csvFile);
     return true;
+}
+
+void stringToXYZ(string xyz, float& x, float& y, float& z){
+    QString xyzstr = QString::fromStdString(xyz);
+    QStringList xyzstrs = xyzstr.split("_");
+    x = xyzstrs[0].toFloat();
+    y = xyzstrs[1].toFloat();
+    z = xyzstrs[2].toFloat();
+}
+
+vector<NeuronSWC> loopDetection2(V_NeuronSWC_list inputSegList){
+
+    vector<NeuronSWC> outputErroneousPoints;
+    outputErroneousPoints.clear();
+
+    map<string, set<size_t> > wholeGrid2segIDmap;
+    map<string, bool> isEndPointMap;
+
+    for(int i=0; i<inputSegList.seg.size(); ++i){
+        V_NeuronSWC seg = inputSegList.seg[i];
+        for(int j=0; j<seg.row.size(); ++j){
+            float xLabel = seg.row[j].x;
+            float yLabel = seg.row[j].y;
+            float zLabel = seg.row[j].z;
+            QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+            string gridKey = gridKeyQ.toStdString();
+            wholeGrid2segIDmap[gridKey].insert(size_t(i));
+            if(j == 0 || j == seg.row.size() - 1){
+                isEndPointMap[gridKey] = true;
+            }
+        }
+    }
+    for(map<string, set<size_t> >::iterator it = wholeGrid2segIDmap.begin(); it != wholeGrid2segIDmap.end(); ++it){
+        if(it->second.size() > 5){
+            qDebug()<<it->first.c_str()<<" "<<it->second.size();
+        }
+
+    }
+    qDebug()<<"whole end";
+
+    vector<string> points;
+    vector<set<int> > linksIndex;
+    map<string,int> pointsIndexMap;
+
+    for(int i=0; i<inputSegList.seg.size(); ++i){
+        V_NeuronSWC seg = inputSegList.seg[i];
+        for(int j=0; j<seg.row.size(); ++j){
+            float xLabel = seg.row[j].x;
+            float yLabel = seg.row[j].y;
+            float zLabel = seg.row[j].z;
+            QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+            string gridKey = gridKeyQ.toStdString();
+            if(j==0 || j==seg.row.size()-1){
+                if(pointsIndexMap.find(gridKey) == pointsIndexMap.end()){
+                    points.push_back(gridKey);
+                    linksIndex.push_back(set<int>());
+                    pointsIndexMap[gridKey] = points.size() - 1;
+                }
+            }else{
+                if(wholeGrid2segIDmap[gridKey].size()>1 &&
+                        isEndPointMap.find(gridKey) != isEndPointMap.end() &&
+                        pointsIndexMap.find(gridKey) == pointsIndexMap.end()){
+                    points.push_back(gridKey);
+                    linksIndex.push_back(set<int>());
+                    pointsIndexMap[gridKey] = points.size() - 1;
+                }
+            }
+        }
+    }
+    qDebug()<<"points size: "<<points.size();
+
+    for(int i=0; i<inputSegList.seg.size(); ++i){
+        V_NeuronSWC seg = inputSegList.seg[i];
+        vector<int> segIndexs;
+        set<int> segIndexsSet;
+        segIndexs.clear();
+        segIndexsSet.clear();
+        for(int j=0; j<seg.row.size(); ++j){
+            float xLabel = seg.row[j].x;
+            float yLabel = seg.row[j].y;
+            float zLabel = seg.row[j].z;
+            QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+            string gridKey = gridKeyQ.toStdString();
+            if(pointsIndexMap.find(gridKey) != pointsIndexMap.end()){
+                int index = pointsIndexMap[gridKey];
+                if(segIndexsSet.find(index) == segIndexsSet.end()){
+                    segIndexs.push_back(index);
+                    segIndexsSet.insert(pointsIndexMap[gridKey]);
+                }
+            }
+        }
+//        qDebug()<<"i : "<<i<<"seg size: "<<seg.row.size()<<" segIndexsSize: "<<segIndexs.size();
+        for(int j=0; j<segIndexs.size()-1; ++j){
+            if(segIndexs[j] == 1 || segIndexs[j+1] == 1){
+                qDebug()<<segIndexs[j]<<" "<<segIndexs[j+1];
+            }
+            linksIndex[segIndexs[j]].insert(segIndexs[j+1]);
+            linksIndex[segIndexs[j+1]].insert(segIndexs[j]);
+        }
+    }
+
+    qDebug()<<"link map end";
+
+    for(int i=0; i<points.size(); ++i){
+        if(linksIndex[i].size() > 3){
+            qDebug()<<i<<" link size: "<<linksIndex[i].size();
+            NeuronSWC s;
+            stringToXYZ(points[i],s.x,s.y,s.z);
+            s.type = 20;
+            outputErroneousPoints.push_back(s);
+        }
+    }
+
+    qDebug()<<"outputError size:"<<outputErroneousPoints.size();
+
+    bool isDeleteEnd = false;
+    while(!isDeleteEnd){
+        isDeleteEnd = true;
+        for(int i=0; i<points.size(); ++i){
+            if(linksIndex[i].size() == 1){
+                int linkIndex = *(linksIndex[i].begin());
+                linksIndex[i].clear();
+//                linksIndex[linkIndex].erase(std::find(linksIndex[linkIndex].begin(),linksIndex[linkIndex].end(),i));
+                linksIndex[linkIndex].erase(i);
+                isDeleteEnd = false;
+            }
+        }
+    }
+
+    qDebug()<<"loop end";
+
+    for(int i=0; i<points.size(); ++i){
+        if(linksIndex[i].size()>=2){
+            qDebug()<<i<<" link index size: "<<linksIndex[i].size();
+//            for(int j=0; j<linksIndex[i].size(); ++j){
+//                qDebug()<<linksIndex[i][j];
+//            }
+            NeuronSWC s;
+            stringToXYZ(points[i],s.x,s.y,s.z);
+            s.type = 15;
+            outputErroneousPoints.push_back(s);
+        }
+    }
+    qDebug()<<"outputError loop size:"<<outputErroneousPoints.size();
+
+
+    return outputErroneousPoints;
+
 }
 
 
@@ -1140,6 +1345,65 @@ set<size_t> segEndRegionCheck(V_NeuronSWC_list& inputSegList, size_t inputSegID)
     //cout << endl;
 
     return otherConnectedSegs;
+}
+
+V_NeuronSWC_list removeSameSegment(NeuronTree &nt){
+    V_NeuronSWC_list inputSegList = NeuronTree__2__V_NeuronSWC_list(nt);
+    int segSize = inputSegList.seg.size();
+    qDebug()<<"before segSize: "<<segSize;
+
+    for(int i=0; i<segSize; ++i){
+        V_NeuronSWC& seg = inputSegList.seg[i];
+        if(!seg.to_be_deleted){
+            for(int j=i+1; j<segSize; ++j){
+                V_NeuronSWC& segOther = inputSegList.seg[j];
+                if(i!=j && seg.row.size() == segOther.row.size()){
+                    bool isDelete = true;
+                    for(int k=0; k<seg.row.size(); ++k){
+                        if(seg.row[k].x != segOther.row[k].x ||
+                                seg.row[k].y != segOther.row[k].y ||
+                                seg.row[k].z != segOther.row[k].z){
+                            isDelete = false;
+                            break;
+                        }
+                    }
+                    if(isDelete){
+                        segOther.to_be_deleted = true;
+                    }
+                }
+            }
+        }
+    }
+//    for(int i=0; i<segSize; ++i){
+//        V_NeuronSWC& seg = inputSegList.seg[i];
+//        if(!seg.to_be_deleted){
+//            int x = seg.row[0].x;
+//            int y = seg.row[0].y;
+//            int z = seg.row[0].z;
+//            if(seg.row.size() == 1)
+//                seg.to_be_deleted = true;
+//            bool isRemove = true;
+//            for(int j=1; j<seg.row.size(); ++j){
+//                if((seg.row[j].x - x)>1 ||
+//                        (seg.row[j].y - y)>1 ||
+//                        (seg.row[j].z - z)>1){
+//                    isRemove = false;
+//                    break;
+//                }
+//            }
+//            seg.to_be_deleted = isRemove;
+//        }
+//    }
+    V_NeuronSWC_list result;
+    for(int i=0; i<inputSegList.seg.size(); ++i){
+        V_NeuronSWC seg = inputSegList.seg[i];
+        if(!seg.to_be_deleted){
+            result.seg.push_back(seg);
+        }
+    }
+    qDebug()<<"after segSize: "<<result.seg.size();
+    return result;
+
 }
 
 

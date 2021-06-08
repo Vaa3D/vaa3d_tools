@@ -18,12 +18,12 @@
 using namespace std;
 
 static string featureName[] = {
+    "loop",
+    "threeBifurcation",
     "isSort",
     "somaType",
     "gap",
     "allTypes",
-    "loop",
-    "threeBifurcation",
     "shortBranch",
     "nodeLength"
 };
@@ -77,8 +77,12 @@ vector<NeuronTree> splitNeuronTree(const NeuronTree& nt);
 //judge soma type
 bool judgeSomaType(const NeuronTree& nt, QString& somaTypeInfo);
 
+NeuronSWC getSoma(const NeuronTree& nt);
+
 //get three bifurcation count
 int getThreeBifurcationCount(const vector<NeuronSWC>& outputErroneousPoints);
+
+int getThreeBifurcationCount(const vector<NeuronSWC> &outputErroneousPoints, NeuronSWC soma);
 
 //get loop count
 int getLoopCount(const vector<NeuronSWC>& outputErroneousPoints);
@@ -92,11 +96,17 @@ int getShortBranchesCount(const NeuronTree& nt, float lengthThres);
 //get node path min max
 bool getMinMaxNodePath(const NeuronTree& nt, float& minPath, float& maxPath, float lengthThres);
 
+void stringToXYZ(string xyz, float &x, float &y, float &z);
+
+vector<NeuronSWC> loopDetection2(V_NeuronSWC_list inputSegList);
+
 vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList);
 void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk);
 vector<V_NeuronSWC_list> showConnectedSegs(const V_NeuronSWC_list& inputSegList);
 void rc_findConnectedSegs(V_NeuronSWC_list& inputSegList, set<size_t>& singleTreeSegs, size_t inputSegID, multimap<string, size_t>& segEnd2segIDmap);
 set<size_t> segEndRegionCheck(V_NeuronSWC_list& inputSegList, size_t inputSegID);
+
+V_NeuronSWC_list removeSameSegment(NeuronTree& nt);
 
 
 #endif // NEURONQC_FUNC_H
