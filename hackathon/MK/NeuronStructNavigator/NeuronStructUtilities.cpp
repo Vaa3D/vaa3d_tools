@@ -554,21 +554,33 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 	//         5. Bridging shadow segment (double conjoined segment)
 	//     - No singular node existing:
 	//         4(a). Composite shadow segment
-	//         4(b). Same head/tail composite shadow segment
+	//         4(b). Conjoined segment precursor
 	//         6. Hairpin segment
 	//
 	// The numbering above follows work note 6/8, 2021, MK.
 	//
-	// This method has been greatly tested and is unlikely to be the cause of errors in the call chain.
+	// This method has been greatly tested and is unlikely to be the cause of errors in the call chain. 
+	//
+	// There are multiple for-loops to run through in this method and could be further optimized. 
+	// However, give the nature that modifying 1 segment often leads to changes to its associated segments,  
+	// it is better to keep the current multiple-pass implementation now in order to ensure the correctness. 
+	//                                                                                                       MK, June, 2021
 
-
+	clock_t start = clock();
 	// ****************** Remove identical segments (1. Twin segments) ******************* //
 	profiledTree inputProfiledTree(inputTree);
 	vector<segUnit> filteredSegs;
+	int twinCount = 0;
 	for (auto& seg : inputProfiledTree.segs)
 	{
 		for (vector<segUnit>::iterator it = filteredSegs.begin(); it != filteredSegs.end(); ++it)
-			if (*it == seg.second) goto SAME_SEG_FOUND;
+		{
+			if (*it == seg.second)
+			{
+				++twinCount;
+				goto SAME_SEG_FOUND;
+			}
+		}
 		filteredSegs.push_back(seg.second);
 
 	SAME_SEG_FOUND:
@@ -597,15 +609,15 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 			string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
 			pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = profiledSimpleShadowCln.nodeCoordKey2segMap.equal_range(nodeCoordKey);
 
-			// ------- Record all segments that are involved with the current segment in the order of the current segment's nodes in [segIDsInNodeOrder]: vector<[segIDsCurrNode]>. ------- //
-			//         Note, the current segment ID is not included.
+			// -- Record all segments that are involved with the current segment in the order of the current segment's nodes in [segIDsInNodeOrder]: vector<[segIDsCurrNode]>. -- //
+			// -- Note, the current segment ID is NOT included.
 			boost::container::flat_set<int> segIDsCurrNode;
 			for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
 			{
 				if (it->second != seg.first) segIDsCurrNode.insert(it->second); // Only seg ID other than itself will be included.
 			}
 			segIDsInNodeOrder.push_back(segIDsCurrNode);
-			// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
+			// ------------------------------------------------------------------------------------------------------------------------------------------------------------------ //
 
 			// ******* 1. Essential segment CANDIDATE found - singular node that results in non-overlapping edges. ******* //
 			if (range.second - range.first == 1) singularNode = true; // Check for singular node.
@@ -643,7 +655,7 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 		// **************************************************** //
 	}
 
-	// ********* Check for 3. conjoined and 5. double conjoined segment ********* //
+	// ******* Check segments with singular nodes for 3. conjoined, 5. double conjoined, and 4(b). conjoined precursor situation ******* //
 	for (auto& conjoinedCandidateID : conjoinedSegCandidateIDs)
 	{
 		set<segUnit> involvedSegs;
@@ -651,7 +663,7 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 		{
 			if (segIDsInNodeOrderMap.at(conjoinedCandidateID).at(1).find(segID) != segIDsInNodeOrderMap.at(conjoinedCandidateID).at(1).end())
 			{
-				// Check if its associated segment has already been corrected.
+				// Check if its associated segment has already been handled.
 				if (embeddedSegIDs.find(segID) != embeddedSegIDs.end() || conjoinedSegIDs.find(segID) != conjoinedSegIDs.end()) continue;
 				else
 				{
@@ -665,7 +677,7 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 		{
 			if ((segIDsInNodeOrderMap.at(conjoinedCandidateID).end() - 2)->find(segID) != (segIDsInNodeOrderMap.at(conjoinedCandidateID).end() - 2)->end())
 			{
-				// Check if its associated segment has already been corrected.
+				// Check if its associated segment has already been handled.
 				if (embeddedSegIDs.find(segID) != embeddedSegIDs.end() || conjoinedSegIDs.find(segID) != conjoinedSegIDs.end()) continue;
 				else
 				{
@@ -687,18 +699,18 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 			conjoinedSegIDs.insert(conjoinedCandidateID);
 		}
 	}
-	// ************************************************************************** //
+	// ********************************************************************************************************************************* //
 	// ********************************** END of [Handle Segments With Singular Nodes] *********************************** //
 
 
-	// ******************************************* Examine Composite Segments ******************************************** //
-	
+	// *********************************** Handle Segments Without Sungular Nodes **************************************** //
+	int hairpinCount = 0;
 	for (auto& segID : compositeSegCandidateIDs)
 	{
+		// ******* Check if it's a 6. Hairpin Segment ******* //
 		bool hairpin = false;
 		for (vector<boost::container::flat_set<int>>::iterator setIt = segIDsInNodeOrderMap.at(segID).begin(); setIt != segIDsInNodeOrderMap.at(segID).end(); ++setIt)
 		{
-			// ******* Check if it's a Hairpin Segment ******* //
 			if (setIt->empty())
 			{
 				// Hairpin segment found
@@ -711,12 +723,14 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 				correctedSegNodes.append(hairpinSeg.selfCorrect());
 				compositeDupSegIDs.insert(segID);
 				hairpin = true;
+				++hairpinCount;
 				break;
 			}
-			// *********************************************** //
 		}
 		if (hairpin) continue;
+		// ************************************************** //
 		
+		// ******* Check segments without singular nodes for 3. conjoined, 5. double conjoined, and 4(b). conjoined precursor situation ******* //
 		set<segUnit> involvedSegs;
 		for (auto& headNodeSegID : *segIDsInNodeOrderMap.at(segID).begin())
 		{
@@ -759,7 +773,9 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 			
 			continue;
 		}
+		// ************************************************************************************************************************************ //
 
+		// ******* Check for 4(a). strict composite segment ******* //
 		const NeuronSWC& headNode = profiledSimpleShadowCln.tree.listNeuron.at(profiledSimpleShadowCln.node2LocMap.at(profiledSimpleShadowCln.segs.at(segID).head));
 		string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
 		pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> headRange = profiledSimpleShadowCln.segEndCoordKey2segMap.equal_range(headCoordKey);
@@ -782,12 +798,16 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 
 			if (involvedSegIDs.size() == 2) compositeDupSegIDs.insert(segID);
 		}
+		// ******************************************************** //
 	}
-	// *************************************** END of [Examine Composite Segments] *************************************** //
+	// ******************************* END of [Handle Segments Without Sungular Nodes] *********************************** //
 
-	cout << "Embedded segments: " << embeddedSegIDs.size() << endl;
-	cout << "Conjoined segments: " << conjoinedSegIDs.size() << endl;
-	cout << "Composite shadow segments: " << compositeDupSegIDs.size() << endl;
+	cout << endl << "-- Segment Filtering Done --" << endl;
+	cout << "	Twin segment: " << twinCount << endl;
+	cout << "	Embedded segments: " << embeddedSegIDs.size() << endl;
+	cout << "	Conjoined segments: " << conjoinedSegIDs.size() << endl;
+	cout << "	Composite shadow segments: " << compositeDupSegIDs.size() << endl;
+	cout << "	Hairpin segments: " << hairpinCount << endl;
 
 	vector<ptrdiff_t> delLocs;
 	for (boost::container::flat_set<int>::iterator segIDIt = embeddedSegIDs.begin(); segIDIt != embeddedSegIDs.end(); ++segIDIt)
@@ -811,6 +831,10 @@ NeuronTree NeuronStructUtil::removeDupStructures(const NeuronTree& inputTree, ve
 	std::sort(delLocs.rbegin(), delLocs.rend());
 	for (auto& loc : delLocs) profiledSimpleShadowCln.tree.listNeuron.erase(profiledSimpleShadowCln.tree.listNeuron.begin() + loc);
 	if (!correctedSegNodes.isEmpty()) profiledSimpleShadowCln.tree.listNeuron.append(correctedSegNodes);
+
+	clock_t end = clock();
+	float duration = float(end - start) / CLOCKS_PER_SEC;
+	cout << "-- Elapsed Time: " << duration << " seconds" << endl;
 
 	return profiledSimpleShadowCln.tree;
 }

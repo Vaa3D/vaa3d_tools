@@ -5,7 +5,7 @@
 
 #define Main_Version_Num 1
 #define Sub_Version_Num 9
-#define Patch_Num 3
+#define Patch_Num 4
 
 using NSlibTester = NeuronStructNavigator::Tester;
 

@@ -23,7 +23,7 @@ QList<NeuronSWC> neuronReconErrorTypes::selfLoopingSegUnit::selfCorrect()
 	if (this->headLoop)
 	{
 		delLocs.push_back(this->theSeg.seg_nodeLocMap.at(this->theSeg.head));
-		for (auto& childLoc : this->theSeg.seg_childLocMap.at(this->theSeg.head)) this->theSeg.nodes[childLoc].parent = -1;
+		for (auto& childLoc : this->theSeg.seg_childLocMap.at(this->theSeg.head)) outputNodes[childLoc].parent = -1;
 	}
 	else
 		for (auto& tailID : this->theSeg.tails) delLocs.push_back(this->theSeg.seg_nodeLocMap.at(tailID));

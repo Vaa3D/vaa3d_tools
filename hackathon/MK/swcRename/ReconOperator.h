@@ -48,7 +48,7 @@ private:
 	void removeAdditionalType1Nodes(profiledTree& inputProfiledTree);
 	void errorCheckRepair(profiledTree& inputProfiledTree);
 	void assembleGroupedSegs(boost::container::flat_map<int, profiledTree>& connectedTrees, map<int, int>& tree2HeadNodeMap, const CellAPO& somaAPO);
-	void connectType7trees2otherTree(boost::container::flat_map<int, profiledTree>& connectedTrees); // Not complete yet?
+	void connectType7trees2otherTree(boost::container::flat_map<int, profiledTree>& connectedTrees);
 };
 
 #endif

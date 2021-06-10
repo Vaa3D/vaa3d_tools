@@ -367,12 +367,11 @@ void ReconOperator::removeAdditionalType1Nodes(profiledTree& inputProfiledTree)
 void ReconOperator::errorCheckRepair(profiledTree& inputProfiledTree)
 {
 	clock_t start = clock();
-
+	
 	this->errorList = myNeuronStructExplorer.structErrorCheck(inputProfiledTree);
-	cout << "Error segment count: " << errorList.size() << endl;
+	cout << endl << "-- Error segment count (self-looping): " << errorList.size() << endl;
 	if (errorList.empty()) return;
 
-	cout << "-- Self-looping segments --" << endl;
 	vector<ptrdiff_t> selfLoopingDelLocs;
 	vector<QList<NeuronSWC>> correctedSegNodes;
 	for (auto& error : errorList)
@@ -380,18 +379,17 @@ void ReconOperator::errorCheckRepair(profiledTree& inputProfiledTree)
 		selfLoopingSegUnit* selfLoopingSegUnitPtr = dynamic_cast<neuronReconErrorTypes::selfLoopingSegUnit*>(error.get());
 		cout << selfLoopingSegUnitPtr->theSeg.segID << ": ";
 		for (auto& node : selfLoopingSegUnitPtr->theSeg.nodes) cout << node.n << " ";
-		cout << endl;
+		cout << endl << endl;
 
 		for (auto& node : error.get()->getNodes()) selfLoopingDelLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 		correctedSegNodes.push_back(error.get()->selfCorrect());
 	}
-	cout << endl;
 
 	sort(selfLoopingDelLocs.rbegin(), selfLoopingDelLocs.rend());
 	for (auto& loc : selfLoopingDelLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
 	for (auto& nodes : correctedSegNodes) inputProfiledTree.tree.listNeuron.append(nodes);
 	profiledTreeReInit(inputProfiledTree);
-
+	
 	clock_t end = clock();
 	float duration = float(end - start) / CLOCKS_PER_SEC;
 	cout << "--> Finished checking for structural error. " << duration << " seconds elapsed." << endl << endl;
@@ -473,12 +471,21 @@ void ReconOperator::connectType7trees2otherTree(boost::container::flat_map<int, 
 						targetTreeNum = nearTree.first;
 					}
 				}
-				cout << "  Target Tree Num: " << targetTreeNum << endl << endl;
+				cout << endl << "  Subject Tree No.: " << int(type7it - connectedTrees.begin()) + 1 << endl;
+				cout << "  Target Tree No.: " << targetTreeNum << endl;
 
-				type7it->second.assembleSegs2singleTree(nearTreeMap.at(targetTreeNum).begin()->second.first);
+				type7it->second.assembleSegs2singleTree(nearTreeMap.at(targetTreeNum).begin()->second.first); // This step changes the head node to the node closest to the target tree.
 				profiledTree& targetProfiledTree = (connectedTrees.begin() + targetTreeNum - 1)->second;
-				int targetType = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.second)).type;
-				for (auto& node : type7it->second.tree.listNeuron) node.type = targetType;
+				if (int(type7it - connectedTrees.begin()) + 1 == connectedTrees.size()) 
+				{
+					// If it's the largest tree, it's most like the main axon branch. There's no need to change type.
+					for (auto& node : type7it->second.tree.listNeuron) node.type = 2;
+				}
+				else
+				{
+					int targetType = targetProfiledTree.tree.listNeuron.at(targetProfiledTree.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.second)).type;
+					for (auto& node : type7it->second.tree.listNeuron) node.type = targetType;
+				}
 				type7it->second.tree.listNeuron[type7it->second.node2LocMap.at(nearTreeMap.at(targetTreeNum).begin()->second.first)].parent = nearTreeMap.at(targetTreeNum).begin()->second.second;
 			}
 
