@@ -55,133 +55,65 @@ QList<NeuronSWC> neuronReconErrorTypes::hairpinSegUnit::selfCorrect()
 	return outputNodes;
 }
 
-neuronReconErrorTypes::compositeShadowSegs::compositeShadowSegs(const boost::container::flat_set<segUnit>& inputSegUnits) : effectiveHeadCoordPtr(nullptr)
-{
-	int maxSegID = 0;
-	for (auto& seg : inputSegUnits) if (seg.segID > maxSegID) maxSegID = seg.segID;
-	for (auto& seg : inputSegUnits)
-	{
-		if (seg.segID == 0) this->segMap.insert({ ++maxSegID, seg });
-		else this->segMap.insert({ seg.segID, seg });
-	}
-
-	for (auto& seg : inputSegUnits)
-	{
-		const NeuronSWC& headNode = seg.nodes.at(seg.seg_nodeLocMap.at(seg.head));
-		coordUnit* segHeadCoordPtr = new coordUnit(headNode);
-		coordUnit* currCoordPtr = segHeadCoordPtr;
-		int currNodeID = headNode.n;
-		while (seg.seg_childLocMap.find(currNodeID) != seg.seg_childLocMap.end())
-		{
-			const NeuronSWC& childNode = seg.nodes.at(*seg.seg_childLocMap.at(currNodeID).begin());
-			if (*currCoordPtr == childNode)
-			{
-				currNodeID = childNode.n;
-				continue;
-			}
-
-			coordUnit* childCoordPtr = new coordUnit(seg.nodes.at(*seg.seg_childLocMap.at(currNodeID).begin()));
-			currCoordPtr->childCoordPtrs.insert(childCoordPtr);
-			childCoordPtr->parentCoordPtr = currCoordPtr;
-			currCoordPtr = childCoordPtr;
-			currNodeID = childCoordPtr->nodeID;
-		}
-		this->segCoordListPtrs.push_back(segHeadCoordPtr);
-	}
-
-
-}
-
-neuronReconErrorTypes::compositeShadowSegs::~compositeShadowSegs()
-{
-	//if ()
-}
-
-coordUnit* neuronReconErrorTypes::compositeShadowSegs::getLastCoordPtr()
-{
-	if (this->effectiveHeadCoordPtr == nullptr) return nullptr;
-
-	coordUnit* currCoordUnitPtr = this->effectiveHeadCoordPtr;
-	while (!currCoordUnitPtr->childCoordPtrs.empty()) currCoordUnitPtr = *currCoordUnitPtr->childCoordPtrs.begin();
-	
-	return currCoordUnitPtr;
-}
-
-int neuronReconErrorTypes::compositeShadowSegs::getCoordListLength()
-{
-	if (this->effectiveHeadCoordPtr == nullptr) return 0;
-	
-	coordUnit* currCoordUnitPtr = this->effectiveHeadCoordPtr;
-	int count = 1;
-	while (!currCoordUnitPtr->childCoordPtrs.empty())
-	{
-		currCoordUnitPtr = *currCoordUnitPtr->childCoordPtrs.begin();
-		++count;
-	}
-
-	return count;
-}
-
-QList<NeuronSWC>& neuronReconErrorTypes::compositeShadowSegs::getNodes()
-{
-	this->totalNodes.clear();
-	for (auto& seg : this->segMap) this->totalNodes.append(seg.second.nodes);
-
-	return this->totalNodes;
-}
-
-QList<NeuronSWC> neuronReconErrorTypes::compositeShadowSegs::selfCorrect()
-{
-	QList<NeuronSWC> outputNodes;
-
-	return outputNodes;
-}
-
-void neuronReconErrorTypes::compositeShadowSegs::getEffectiveCoordList()
-{
-	if (this->segCoordListPtrs.empty()) return;
-
-	coordUnit* effectiveHead = *this->segCoordListPtrs.begin();
-	for (vector<coordUnit*>::const_iterator it = this->segCoordListPtrs.begin() + 1; it != this->segCoordListPtrs.end(); ++it)
-	{
-		bool headIn = false, tailIn = false;
-		coordUnit* nextCoordPtr = effectiveHead;
-		
-		do
-		{
-			if (*it == nextCoordPtr)
-			{
-				headIn = true;
-				break;
-			}
-		} while (!headIn);
-
-
-	}
-}
-
-neuronReconErrorTypes::conjoinedSegs::conjoinedSegs(const boost::container::flat_set<segUnit>& inputSegUnits)
-{
-	int maxSegID = 0;
-	for (auto& seg : inputSegUnits) if (seg.segID > maxSegID) maxSegID = seg.segID;
-	for (auto& seg : inputSegUnits)
-	{
-		if (seg.segID == 0) this->segMap.insert({ ++maxSegID, seg });
-		else this->segMap.insert({ seg.segID, seg });
-	}
-}
-
-QList<NeuronSWC>& neuronReconErrorTypes::conjoinedSegs::getNodes()
-{
-	this->totalNodes.clear();
-	for (auto& seg : this->segMap) this->totalNodes.append(seg.second.nodes);
-
-	return this->totalNodes;
-}
-
 QList<NeuronSWC> neuronReconErrorTypes::conjoinedSegs::selfCorrect()
 {
-	QList<NeuronSWC> outputNodes;
+	QList<NeuronSWC> outputNodes = this->theSeg.nodes;
+
+	vector<int> conjoinedHeadNodeIDs, conjoinedTailNodeIDs;
+	NeuronSWC currPaNode = this->theSeg.nodes.at(this->theSeg.seg_nodeLocMap.at(this->theSeg.head));
+	while (1)
+	{
+		for (auto& involvedSeg : this->involvedSegUnits)
+		{
+			for (auto& node : involvedSeg.nodes)
+			{
+				if (currPaNode.x == node.x && currPaNode.y == node.y && currPaNode.z == node.z)
+				{
+					conjoinedHeadNodeIDs.push_back(currPaNode.n);
+					currPaNode = this->theSeg.nodes.at(*this->theSeg.seg_childLocMap.at(currPaNode.n).begin());
+					goto TO_THE_NEXT_ROUND_HEAD;
+				}
+			}
+		}
+		break;
+
+	TO_THE_NEXT_ROUND_HEAD:
+		continue;
+	}
+
+	NeuronSWC currChildNode = this->theSeg.nodes.at(this->theSeg.seg_nodeLocMap.at(*this->theSeg.tails.begin()));
+	while (1)
+	{
+		for (auto& involvedSeg : this->involvedSegUnits)
+		{
+			for (auto& node : involvedSeg.nodes)
+			{
+				if (currChildNode.x == node.x && currChildNode.y == node.y && currChildNode.z == node.z)
+				{
+					conjoinedTailNodeIDs.push_back(currChildNode.n);
+					currChildNode = this->theSeg.nodes.at(this->theSeg.seg_nodeLocMap.at(currChildNode.parent));
+					goto TO_THE_NEXT_ROUND_TAIL;
+				}
+			}
+		}
+		break;
+
+	TO_THE_NEXT_ROUND_TAIL:
+		continue;
+	}
+
+	vector<ptrdiff_t> delLocs;
+	if (!conjoinedHeadNodeIDs.empty())
+	{
+		outputNodes[this->theSeg.seg_nodeLocMap.at(*(conjoinedHeadNodeIDs.end() - 1))].parent = -1;
+		for (vector<int>::iterator it = conjoinedHeadNodeIDs.begin(); it != conjoinedHeadNodeIDs.end() - 1; ++it) delLocs.push_back(this->theSeg.seg_nodeLocMap.at(*it));
+	}
+	
+	if (!conjoinedTailNodeIDs.empty())
+		for (vector<int>::iterator it = conjoinedTailNodeIDs.begin(); it != conjoinedTailNodeIDs.end() - 1; ++it) delLocs.push_back(this->theSeg.seg_nodeLocMap.at(*it));
+	
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (auto& loc : delLocs) outputNodes.erase(outputNodes.begin() + loc);
 
 	return outputNodes;
 }

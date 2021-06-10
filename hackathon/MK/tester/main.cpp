@@ -31,17 +31,17 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
+	//string funcName(funcNameC);
 	
 	vector<string> paras;
-	for (int i = 2; i < argc; ++i)
+	/*for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "removeDupSeg";
+	string funcName = "segmentCorrect";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -413,12 +413,30 @@ int main(int argc, char* argv[])
 		int nearestNodeID = inputProfiledTree.findNearestSegEndNodeID(*apoList.begin());
 		cout << nearestNodeID << endl;
 	}
+	else if (!funcName.compare("assembleTree"))
+	{
+		QString inputFileNameQ = "C:\\Users\\hkuo9\\Desktop\\preProcessingTest\\multiOverlappingForking_3007499\\182709_6812-X3137-Y8659_finalized.ano.eswc";
+		NeuronTree inputTree = readSWC_file(inputFileNameQ);
+		profiledTree inputProfiledTree(inputTree);
+		/*vector<ptrdiff_t> delLocs;
+		for (auto& seg : inputProfiledTree.segs)
+			for (auto& node : seg.second.nodes) delLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+		sort(delLocs.rbegin(), delLocs.rend());
+		for (auto& loc : delLocs) inputProfiledTree.tree.listNeuron.erase(inputProfiledTree.tree.listNeuron.begin() + loc);
+		QString saveNameQ = "C:\\Users\\hkuo9\\Desktop\\test2\\connectedTrees\\segFiltered.swc";
+		writeSWC_file(saveNameQ, inputProfiledTree.tree);*/
+		
+		inputProfiledTree.assembleSegs2singleTree(3078922);
+		//inputProfiledTree.nodeSegMapGen();
+		//cout << inputProfiledTree.node2segMap.at(3007499);
+		//inputProfiledTree.assembleSegs2singleTree(89);
+	}
 	else if (!funcName.compare("groupTree"))
 	{
 		//NeuronTree inputTree = readSWC_file(QString::fromStdString(paras.at(0)));
 		QString inputTreeFullNameQ = "C:\\Users\\hkuo9\\Desktop\\test1\\17109_4772-X9038-Y27257.ano.eswc";
 		NeuronTree inputTree = readSWC_file(inputTreeFullNameQ);
-		NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+		NeuronTree noDupSegTree = NeuronStructUtil::removeDupStructures(inputTree);
 		profiledTree inputProfiledTree(noDupSegTree);
 		cout << "original seg num: " << inputProfiledTree.segs.size() << endl;
 		NeuronStructUtil::removeRedunNodes(inputProfiledTree);
@@ -551,7 +569,7 @@ int main(int argc, char* argv[])
 			if (NeuronStructUtil::multipleSegsCheck(inputTree))
 			{
 				clock_t start = clock();
-				NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+				NeuronTree noDupSegTree = NeuronStructUtil::removeDupStructures(inputTree);
 				clock_t end = clock();
 				cout << "time elapsed: " << float(end - start) / CLOCKS_PER_SEC << endl;
 				writeSWC_file(outputFullNameQ, noDupSegTree);
@@ -561,15 +579,19 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	else if (!funcName.compare("removeDupSeg"))
+	else if (!funcName.compare("segmentCorrect"))
 	{
 		/*QString inputFileName = "C:\\Users\\hkuo9\\Desktop\\dangling2\\test1.swc";
 		NeuronTree inputTree = readSWC_file(inputFileName);
 		NeuronTree dupRemovedTree = NeuronStructUtil::removeDupSegs(inputTree);
 		QString outputFileName = "C:\\Users\\hkuo9\\Desktop\\dangling2\\test1_1.swc";
 		writeSWC_file(outputFileName, dupRemovedTree);*/
-		NeuronTree dupRemovedTree = NeuronStructUtil::removeDupSegs(readSWC_file(QString::fromStdString(paras.at(0))));
-		writeSWC_file(QString::fromStdString(paras.at(1)), dupRemovedTree);
+		//NeuronTree dupRemovedTree = NeuronStructUtil::segmentCorrection(readSWC_file(QString::fromStdString(paras.at(0))));
+		QString inputFileName = "C:\\Users\\hkuo9\\Desktop\\test1\\prob.swc";
+		QString outputFileName = "C:\\Users\\hkuo9\\Desktop\\test1\\dupRemoved.swc";
+		NeuronTree dupRemovedTree = NeuronStructUtil::removeDupStructures(readSWC_file(inputFileName));
+		//writeSWC_file(QString::fromStdString(paras.at(1)), dupRemovedTree);
+		writeSWC_file(outputFileName, dupRemovedTree);
 	}
 	else if (!funcName.compare("getBrNumFromSWCs"))
 	{

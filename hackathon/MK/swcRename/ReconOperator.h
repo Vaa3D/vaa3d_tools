@@ -13,9 +13,9 @@
 #include "NeuronStructUtilities.h"
 #include "NeuronStructExplorer.h"
 
-const bool DUPSEG_REMOVE = false;
-const bool TYPE1_REMOVE = false;
-const bool GROUPED_TREES = false;
+const bool DUPSEG_REMOVE = true;
+const bool TYPE1_REMOVE = true;
+const bool GROUPED_TREES = true;
 const bool GROUPED_ASSEMBLED_TREES = true;
 
 class ReconOperator

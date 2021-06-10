@@ -806,7 +806,7 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 		}
 		NeuronStructUtil::removeDupHeads(this->tree);
 		profiledTreeReInit(*this);
-		cout << " --> segment number: " << this->segs.size() << endl;
+		cout << " --> segment number: " << this->segs.size() << endl << endl;
 		
 		if (this->segs.size() == currSegSize) return;
 	}
@@ -815,10 +815,11 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 //int end2bodyCount = 0;
 void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
 {
-	if (this->node2segMap.empty()) this->nodeSegMapGen();
-	if (this->nodeCoordKey2segMap.empty()) this->nodeCoordKeySegMapGen();
-	if (this->segEndCoordKey2segMap.empty()) this->segEndCoordKeySegMapGen();
-	if (this->nodeCoordKey2nodeIDMap.empty()) this->nodeCoordKeyNodeIDmapGen();
+	this->nodeSegMapGen();
+	this->nodeCoordKeySegMapGen();
+	this->segEndCoordKeySegMapGen();
+	this->nodeCoordKeyNodeIDmapGen();
+	
 	int leadingSegID = this->node2segMap.at(rootNodeID);
 	set<int> checkedSegIDs = { this->node2segMap.at(rootNodeID) };
 	this->rc_reverseSegs(leadingSegID, rootNodeID, checkedSegIDs);
@@ -877,7 +878,8 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 	pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = this->nodeCoordKey2nodeIDMap.equal_range(headCoordKey);
 	for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 	{
-		if (this->node2segMap.at(it->second) == leadingSegID || checkedSegIDs.find(this->node2segMap.at(it->second)) != checkedSegIDs.end()) continue;
+		// This place could throw boost::container::throw_exception, need some handling in the future.
+		if (this->node2segMap.at(it->second) == leadingSegID || checkedSegIDs.find(this->node2segMap.at(it->second)) != checkedSegIDs.end()) continue; 
 		else
 		{
 			cout << "---------" << endl;
@@ -895,6 +897,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 		pair <boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = this->nodeCoordKey2nodeIDMap.equal_range(tailCoordKey);
 		for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
 		{
+			// This place could throw boost::container::throw_exception, need some handling in the future.
 			if (this->node2segMap.at(it->second) == leadingSegID || checkedSegIDs.find(this->node2segMap.at(it->second)) != checkedSegIDs.end()) continue;
 			else
 			{
@@ -1021,7 +1024,7 @@ void integratedDataTypes::profiledTree::nodeCoordKeyNodeIDmapGen(const QList<Neu
 
 void integratedDataTypes::profiledTree::overlappedCoordMapGen()
 {
-	// Figuring how segments are spatially involved with a given coordinate is mostly for the purpose of linking segments.
+	// Figuring out how segments are spatially involved with a given coordinate. This is mostly for the purpose of linking segments.
 	// Therefore, the search is done by examining each segment's head and tail nodes.
 
 	if (this->segs.empty()) integratedDataTypes::profiledTreeReInit(*this);
@@ -1040,6 +1043,7 @@ void integratedDataTypes::profiledTree::overlappedCoordMapGen()
 			else
 			{
 				integratedDataTypes::overlappedCoord currCoord(headNode.x, headNode.y, headNode.z);
+				currCoord.nodeID = headNode.n;
 				for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
 				{
 					const segUnit& seg = this->segs.at(it->second);
@@ -1094,6 +1098,7 @@ void integratedDataTypes::profiledTree::overlappedCoordMapGen()
 				else
 				{
 					integratedDataTypes::overlappedCoord currCoord(tailNode.x, tailNode.y, tailNode.z);
+					currCoord.nodeID = tailNode.n;
 					for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
 					{
 						const segUnit& seg = this->segs.at(it->second);

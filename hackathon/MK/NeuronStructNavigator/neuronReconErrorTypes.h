@@ -7,7 +7,7 @@ using namespace integratedDataTypes;
 
 namespace neuronReconErrorTypes
 {
-	enum errorID { ghost, selfLooping, hairpin, compositeShadow, conjoinedSeg };
+	enum errorID { ghost, selfLooping, hairpin, conjoined };
 
 	class errorStructure
 	{
@@ -74,58 +74,21 @@ namespace neuronReconErrorTypes
 		virtual QList<NeuronSWC> selfCorrect();
 	};
 
-	class compositeShadowSegs : public errorStructure
-	{
-	public:
-		compositeShadowSegs() = delete;
-		compositeShadowSegs(const boost::container::flat_set<segUnit>& inputSegUnits);
-		compositeShadowSegs(const QList<NeuronSWC>& inputNodes) : effectiveHeadCoordPtr(nullptr) {}
-		compositeShadowSegs& operator=(const compositeShadowSegs&) = delete;
-		~compositeShadowSegs();
-
-		virtual errorID getErrorID() { return compositeShadow; }
-
-		map<int, segUnit> segMap;
-		QList<NeuronSWC> totalNodes;
-		coordUnit* effectiveHeadCoordPtr;
-		vector<coordUnit*> segCoordListPtrs;
-		virtual QList<NeuronSWC>& getNodes();
-
-		virtual void highlightErrorNodes()
-		{
-			for (auto& seg : this->segMap)
-				for (auto& node : seg.second.nodes) node.type = 9;
-		}
-
-		virtual QList<NeuronSWC> selfCorrect();
-
-		coordUnit* getLastCoordPtr();
-		int getCoordListLength();
-		void rc_coordCharin_cleanUp();
-
-	private:
-		void getEffectiveCoordList();
-	};
-
 	class conjoinedSegs : public errorStructure
 	{
 	public:
-		conjoinedSegs() = default;
-		conjoinedSegs(const boost::container::flat_set<segUnit>& inputSegUnits);
+		conjoinedSegs() = delete;
+		conjoinedSegs(const segUnit& errorSegUnit, const set<segUnit>& involvedSegUnits) : theSeg(errorSegUnit), involvedSegUnits(involvedSegUnits) {}
 		conjoinedSegs(const QList<NeuronSWC>& inputNodes) {}
 		conjoinedSegs& operator=(const conjoinedSegs&) = delete;
 
-		virtual errorID getErrorID() { return conjoinedSeg; }
+		virtual errorID getErrorID() { return conjoined; }
 
-		map<int, segUnit> segMap;
-		QList<NeuronSWC> totalNodes;
-		virtual QList<NeuronSWC>& getNodes();
+		segUnit theSeg;
+		set<segUnit> involvedSegUnits;
+		virtual QList<NeuronSWC>& getNodes() { return this->theSeg.nodes; }
 
-		virtual void highlightErrorNodes()
-		{
-			for (auto& seg : this->segMap)
-				for (auto& node : seg.second.nodes) node.type = 6;
-		}
+		virtual void highlightErrorNodes() { for (auto& node : this->theSeg.nodes) node.type = 6; }
 
 		virtual QList<NeuronSWC> selfCorrect();
 	};

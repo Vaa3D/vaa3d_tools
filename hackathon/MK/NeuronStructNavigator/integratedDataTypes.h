@@ -63,6 +63,8 @@ namespace integratedDataTypes
 		overlappedCoord() = default;
 		overlappedCoord(float x, float y, float z);
 		overlappedCoord(string coordKey);
+		
+		int nodeID;
 		float x, y, z;
 		string coordKey;
 
@@ -207,11 +209,7 @@ namespace integratedDataTypes
 
 		boost::container::flat_map<int, boost::container::flat_set<vector<float>>> segEndClusterNodeMap; // segEnd cluster ID -> all seg end nodes' coordinates in the cluster
 		boost::container::flat_map<int, vector<float>> segEndClusterCentroidMap;                         // segEnd cluster ID -> the coordiate of the centroid of all nodes in the cluster	
-		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;						 // segEnd cluster -> all possible seg pair combinations in the cluster
-
-		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching,  ( X - root node, the new head that has 2 child nodes) )
-		//																																	   / \
-		//																																      o   o
+		boost::container::flat_map<int, vector<segPairProfile>> cluster2segPairMap;						 // segEnd cluster -> all possible seg pair combinations in the cluster	
 		// -------------------------------------------------------------------- //
 		
 		// ----------------- Advanced Node - Segment Profiling Methods ----------------- //
@@ -249,6 +247,11 @@ namespace integratedDataTypes
 		
 		// This method is called when it needs to be converted to a segment that self-branches from the node to which other segment's end is attached.
 		pair<int, segUnit> splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID);
+
+		map<int, segUnit> seg2MiddleBranchingMap; // original segment ID -> rearranged segment with head node in the middle (self branching,  ( X - root node, the new head that has 2 child nodes) )
+		//																																	   / \
+		//																																      o   o
+		//										     This data member is only used in tree assembling function, and doesn't serve profiling purposes. Therefore, it's set to be inaccessible by public for now.
 		/* ================= END of [Segment-related Data Members and Functions] ================= */
 
 	public:

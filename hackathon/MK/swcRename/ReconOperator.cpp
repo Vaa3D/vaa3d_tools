@@ -166,7 +166,7 @@ void ReconOperator::assembleSegs2tree()
 
 
 			/***************** Remove duplicated segments *****************/
-			NeuronTree noDupSegTree = NeuronStructUtil::removeDupSegs(inputTree);
+			NeuronTree noDupSegTree = NeuronStructUtil::removeDupStructures(inputTree);
 			if (NeuronReconTester::getInstance() != nullptr && DUPSEG_REMOVE) NeuronReconTester::getInstance()->saveIntermediateResult(noDupSegTree, "noDupSegs", baseName);
 			/**************************************************************/
 

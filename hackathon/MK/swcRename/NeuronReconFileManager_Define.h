@@ -3,6 +3,6 @@
 
 #define MAINVERSION_NUM 2
 #define SUBVERSION_NUM 1
-#define PATCHVERSION_NUM 0
+#define PATCHVERSION_NUM 1
 
 #endif
