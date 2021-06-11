@@ -11,7 +11,7 @@ QList<NeuronSWC> neuronReconErrorTypes::ghostSegUnit::selfCorrect()
 QList<NeuronSWC> neuronReconErrorTypes::selfLoopingSegUnit::selfCorrect()
 {
 	// There are 3 possible self-looping conditions:
-	// -- a) End node overlapping other segment node
+	//    a) End node overlapping other segment node
 	//    b) Extended segment end overlapping segment body (the last several nodes overlapping other segment nodes)
 	//    c) Body nodes overlapping other segment nodes
 	//
@@ -36,6 +36,8 @@ QList<NeuronSWC> neuronReconErrorTypes::selfLoopingSegUnit::selfCorrect()
 
 QList<NeuronSWC> neuronReconErrorTypes::hairpinSegUnit::selfCorrect()
 {
+	// Simply cut in half to rectify the segment.
+
 	QList<NeuronSWC> outputNodes;
 	int actualSize;
 	if (this->theSeg.nodes.size() % 2 == 0) actualSize = this->theSeg.nodes.size() / 2;
@@ -57,6 +59,9 @@ QList<NeuronSWC> neuronReconErrorTypes::hairpinSegUnit::selfCorrect()
 
 QList<NeuronSWC> neuronReconErrorTypes::conjoinedSegs::selfCorrect()
 {
+	// The correction of conjoined segment is simply taking out the conjoining part.
+	// Note, this is only limited to head or tail conjoining. Body conjoinig often indicates 2 different segments sharing the same path and should be left as it is.
+
 	QList<NeuronSWC> outputNodes = this->theSeg.nodes;
 
 	vector<int> conjoinedHeadNodeIDs, conjoinedTailNodeIDs;

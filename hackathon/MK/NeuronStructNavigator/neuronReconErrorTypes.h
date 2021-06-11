@@ -1,3 +1,16 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2021 Hsien-Chi Kuo (Allen Institute)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  This namespace [neuronReconErrorTypes] is for segment(s) structural error handling purposes.
+*  It consists of the base interface class [neuronReconErrorTypes::errorStructure] and a number of derived classes representing different types of structural errors.
+*  The polymorphic design here is intended to allow higher level program to highlight erroneous part of the neuron structure in a general way.
+*
+********************************************************************************/
+
 #ifndef NEURONRECONERRORTYPES_H
 #define NEURONRECONERRORTYPES_H
 

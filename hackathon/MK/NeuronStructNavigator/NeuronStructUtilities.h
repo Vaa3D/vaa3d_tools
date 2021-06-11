@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2018 Hsienchi Kuo (Allen Institute)
+// Copyright (c) 2018 Hsien-Chi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -8,13 +8,10 @@
 *  Most of NeuronStructUtil class methods intend to operate on the whole neuron struct level. 
 *  As 'utility' it is called, the functionalities provided in this class include:
 *    a. [Basic neuron struct operations]                   -- cropping SWC, scaling SWC, swc registration, etc.
-*    b. [Tree - subtree operations]                        -- extracting upstream or downstream of a given tree.
-*    c. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
+*    b. [Higher level neuron struct operations]            -- cleaning up SWC, cleaning up segments, rectifying structural errors due to segment orientations, etc.
+*    c. [SWC - ImgAnalyzer::connectedComponent operations] -- methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
 *  
-*  Most of NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
-*  A typical function call would need at least three input arguments:
-*
-*		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
+*  All [NeuronStructUtil] class methods are implemented as static functions. This class may simply change to be a namespace in the future.
 *
 ********************************************************************************/
 
@@ -38,11 +35,6 @@ using namespace neuronReconErrorTypes;
 class NeuronStructUtil
 {
 public: 
-	/***************** Constructors and Basic Data/Function Members *****************/
-	// Not needed at the moment. Will implement later if necessary.
-	/********************************************************************************/
-
-
 	/*************************** Segment Operations ***************************/
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 

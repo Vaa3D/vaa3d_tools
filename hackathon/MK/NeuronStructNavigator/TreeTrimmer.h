@@ -1,3 +1,19 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsien-Chi Kuo (Allen Institute)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  TreeTrimmer class mainly refines and smoothens tree structures. Many of its methods are extended from NeuronGeoGrapher class.
+*
+*  This class is composited with NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  The composition is achieved by using a shred_ptr pointing to the "base" NeuronStructExplorer's memory address.
+*  This design is due to the possibility of NeuronStructExplorer serving multiple other classes at the same time.
+*  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
+*
+********************************************************************************/
+
 #ifndef TREETRIMMER_H
 #define TREETRIMMER_H
 

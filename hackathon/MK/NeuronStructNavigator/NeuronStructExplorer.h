@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2018 Hsienchi Kuo (Allen Institute)
+// Copyright (c) 2018 Hsien-Chi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
@@ -9,11 +9,14 @@
 *  
 *    a. [profiledTree] data struct management
 *    b. Essential segment profiling methods, i.e., NeuronStructExplorer::findSegs, NeuronStructExplorer::segTileMap, and NeuronStructExplorer::getSegHeadTailClusters, etc.
-*    c. Inter/intra neuron struct analysis.
+*    c. Structural profiling methods, e.g., finding out connected segments - NeuronStructExplorer::rc_findConnectedSegs, grouping and extracting trees, etc.
+*    d. Morphology profiling methods, mostly geometrical features, etc.
+*    e. Inter/intra neuron struct analysis.
 *    
-*  This is the base class of other derived class including TreeGrower, etc.  
-*  Since segment profiling methods are critical and often are the foundation of higher level algorithms which is mainly included in derived classes,
-*  implementing these methods in the base class grants the derived class direct access to them and makes the development cleaner and more convenient.
+*  This class lays the foundation of many functionalities in other classes like [TreeGrower] and [TreeTrimmer] in the library. But this class is NOT their base class.
+*  The relation between [NeuronStructExplorer] and other "higher level" classes is closer to the idea of C++ class combination.
+*  Those classes don't inherite from [NeuronStructExplorer], but they can choose to "ride" on this class.
+*  They can even all ride on the same [NeuronStructExplorer] instance with a shared_ptr, making [NeuronStructExplorer] serve the managing/controlling role in auto-tracing where multiple trees are undergoing different operations at the same time.
 *
 ********************************************************************************/
 
