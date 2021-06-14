@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsien-Chi Kuo (Allen Institute, Hanchuan Peng's team)
 // All rights reserved.
 //------------------------------------------------------------------------------
 

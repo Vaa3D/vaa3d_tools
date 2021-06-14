@@ -1,20 +1,20 @@
 //------------------------------------------------------------------------------
-// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// Copyright (c) 2019 Hsien-Chi Kuo (Allen Institute)
 // All rights reserved.
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
 *
 *  TreeGrower class intends to handle the functionalities needed to form a NeuronTree from segmented image signals (ImgAnalyzer::connectedComponent).
-*  For TreeGrower, NeuronGeoGrapher is an essential class for which many TreeGrower's methods are further development extended from methods in NeuronGeoGrapher class.
 *
 *  Major functionalities include:
 *
-*    a. Basic tree operations, i.e., tree trimming, refining
-*    b. Segment forming / elongating and other operations
-*    c. Dendritic tree and axonal tree forming
+*    a. Segment forming / elongating and other operations
+*    b. Dendritic tree and axonal tree forming
 *
-*  This class is inherited from NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  This class is composited with NeuronStructExplorer class, as it needs NeuronStructExplorer's capability to manage and process neuron tree and neuron segments.
+*  The composition is achieved by using a shred_ptr pointing to the "base" NeuronStructExplorer's memory address.
+*  This design is due to the possibility of NeuronStructExplorer serving multiple other classes at the same time.
 *  TreeGrower is the main interface in NeuronStructNavigator library for "gorwing" trees out of [NeuronSWC]-based signals.
 *
 ********************************************************************************/

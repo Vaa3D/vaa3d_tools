@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}*/
 
-	string funcName = "segmentCorrect";
+	string funcName = "binaryCreate";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -50,7 +50,38 @@ int main(int argc, char* argv[])
 	NeuronStructExplorer myExplorer;
 	TreeTrimmer myTrimmer;
 
-	if (!funcName.compare("nodeCoordKey2SegMapTime"))
+	if (!funcName.compare("binaryCreate"))
+	{
+		string inputFilePath = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\AAA.brg";
+		string outputFilePath = "C:\\Users\\hkuo9\\Desktop\\test.brg";
+		ifstream inFile(inputFilePath);
+		ofstream outputFile(outputFilePath, ios::out | ios::binary);
+		char outChar;
+		while (inFile >> outChar)
+		{
+			//cout << line << endl;
+			outputFile.write(&outChar, sizeof(outChar));
+		}
+		outputFile.close();
+
+		ifstream inFile2(outputFilePath);
+		char testChar;
+		while (inFile2 >> testChar) cout << testChar;
+
+		brainRegion testRegion;
+		clock_t start = clock();
+		testRegion.readBrainRegion_file(inputFilePath);
+		clock_t end = clock();
+		float duration = float(end - start) / CLOCKS_PER_SEC;
+		cout << "time elapsed: " << duration << " seconds" << endl;
+
+		string outputTest = "C:\\Users\\hkuo9\\Desktop\\test2.brg";
+		ofstream outputFile2(outputTest, ios::out | ios::binary);
+		outputFile2.write((char*)&testRegion, sizeof(testRegion));
+
+
+	}
+	else if (!funcName.compare("nodeCoordKey2SegMapTime"))
 	{
 		QDir inputFolderQ(QString::fromStdString(paras.at(0)));
 		//QDir inputFolderQ("C:\\Users\\hkuo9\\Desktop\\test1");
