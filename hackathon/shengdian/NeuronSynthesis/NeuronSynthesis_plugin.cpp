@@ -254,11 +254,12 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
          * input: swc or eswc file
          * input para list:
                     * 1. pruning
-                    * 2. three-bifruction processing
-                    * 3. smooth_win_size
-                    * 4. to_topo_tree
-                    * 5. reorder index
-                    * 6. save to eswc
+                    * 2. pruning_times
+                    * 3. three-bifruction processing
+                    * 4. smooth_win_size
+                    * 5. to_topo_tree
+                    * 6. reorder index
+                    * 7. save to eswc
          * output: processed swc file
         */
         string inswc_file;
@@ -266,11 +267,12 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         else {  printHelp(); return false;}
         //read para list
         int pruning_thre =(inparas.size()>=1)?atoi(inparas[0]):30;
-        int threebp_flag=(inparas.size()>=2)?atoi(inparas[1]):1;
-        int smooth_win_size=(inparas.size()>=3)?atoi(inparas[2]):11;
-        int to_topo_tree=(inparas.size()>=4)?atoi(inparas[3]):0;
-        int reorder=(inparas.size()>=5)?atoi(inparas[4]):1;
-        int saveESWC=(inparas.size()>=6)?atoi(inparas[5]):0;
+        int pruning_times=(inparas.size()>=2)?atoi(inparas[1]):1;
+        int threebp_flag=(inparas.size()>=3)?atoi(inparas[2]):1;
+        int smooth_win_size=(inparas.size()>=4)?atoi(inparas[3]):11;
+        int to_topo_tree=(inparas.size()>=5)?atoi(inparas[4]):0;
+        int reorder=(inparas.size()>=6)?atoi(inparas[5]):1;
+        int saveESWC=(inparas.size()>=7)?atoi(inparas[6]):0;
 
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -287,7 +289,19 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //pruning
             nt_3bp_p.listNeuron.clear();nt_3bp_p.hashNeuron.clear();
-            nt_3bp_p=tip_branch_pruning(nt_3bp,pruning_thre);
+
+            NeuronTree nt_pruning_iter_in;nt_pruning_iter_in.deepCopy(nt_3bp);
+            for(int i=0;i<pruning_times;i++)
+            {
+                 nt_3bp_p=tip_branch_pruning(nt_pruning_iter_in,pruning_thre);
+                 cout<<(i+1)<<"st : from "<<nt_pruning_iter_in.listNeuron.size()
+                    <<" to "<<nt_3bp_p.listNeuron.size()<<endl;
+                 if(i==pruning_times-1)
+                     break;
+                 nt_pruning_iter_in.listNeuron.clear();nt_pruning_iter_in.hashNeuron.clear();
+                 nt_pruning_iter_in.deepCopy(nt_3bp_p);
+                 nt_3bp_p.listNeuron.clear();nt_3bp_p.hashNeuron.clear();
+            }
         }
 
         //smooth
