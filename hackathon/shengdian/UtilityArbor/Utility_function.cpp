@@ -64,7 +64,7 @@ NeuronTree pruning_subtree(NeuronTree nt, int pruning_thre)
     NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
     V3DLONG siz=nt.listNeuron.size();
     vector<double> n_subtree_len(siz,0.0);
-    n_subtree_len=get_node_subtree_len(nt);
+    n_subtree_len=get_node_subtree_len_v1(nt);
     for(V3DLONG i=0;i<nt.listNeuron.size();i++)
     {
         NeuronSWC s = nt.listNeuron[i];
@@ -280,23 +280,23 @@ void get_node_subtree_len_iter(NeuronTree nt,vector< vector<long> > child_index_
                                                                                   ));
     }
 }
-void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double thre){
-
+vector<double> get_node_subtree_len_v1(NeuronTree nt,int normalized_size)
+{
     cout<<"---------------in getNodeLength-----------------"<<endl;
+    double axonRatio=1.0; double otherR=1.0;
 
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
     QHash<int,int>& hN = nt.hashNeuron;
     int pointNum = listNeuron.size();
 
-    SwcTree t;
-    t.initialize(nt);
+    SwcTree t;    t.initialize(nt);
     vector<double> nodeLenth = vector<double>(pointNum,0);
     vector<int> nodeLevel = vector<int>(pointNum,0);
 
     for(int i=0; i<t.branchs.size(); i++){
         vector<int> indexs = vector<int>();
         t.branchs.at(i).get_points_of_branch(indexs,nt);
-        cout<<"i: "<<i<<" level: "<<t.branchs.at(i).level<<endl;
+//        cout<<"i: "<<i<<" level: "<<t.branchs.at(i).level<<endl;
         for(int j=1; j<indexs.size(); j++){
             nodeLevel.at(indexs.at(j)) = t.branchs.at(i).level;
         }
@@ -324,7 +324,7 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
     double ratio = 1;
 
     while (maxLevel>=0) {
-        cout<<"level: "<<maxLevel<<endl;
+//        cout<<"level: "<<maxLevel<<endl;
         if(maxLevel<0)
             break;
         for(int i=0; i<pointNum; i++){
@@ -332,12 +332,12 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
                 tips.push_back(i);
             }
         }
-        cout<<"tips size:"<<tips.size()<<endl;
+//        cout<<"tips size:"<<tips.size()<<endl;
         for(int i=0; i<tips.size(); i++){
             int temp = tips.at(i);
             if(child.at(temp).size()>1){
                 if(listNeuron.at(temp).type == 2){
-                    ratio = dendritR;
+                    ratio = axonRatio;
                 }else if(listNeuron.at(temp).type == 3){
                     ratio = otherR;
                 }else {
@@ -354,7 +354,7 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
 
             while (child.at(prtIndex).size() == 1 && listNeuron.at(prtIndex).parent != -1) {
                 if(listNeuron.at(prtIndex).type == 2){
-                    ratio = dendritR;
+                    ratio = axonRatio;
                 }else if(listNeuron.at(prtIndex).type == 3){
                     ratio = otherR;
                 }else {
@@ -365,7 +365,7 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
                 prtIndex = hN.value(listNeuron.at(temp).parent);
             }
         }
-        cout<<"level end one-----------"<<endl;
+//        cout<<"level end one-----------"<<endl;
         tips.clear();
         maxLevel--;
     }
@@ -380,29 +380,12 @@ void getNodeLength(NeuronTree& nt,int maxR,double dendritR, double otherR,double
 //        nodeLenth.at(roots.at(0)) += (dis(listNeuron.at(roots.at(0)),listNeuron.at(cIndex)) + nodeLenth.at(cIndex)*2/child.at(roots.at(0)).size());
     }
     nodeLenth.at(roots.at(0)) = max + 1;
-
     cout<<"--------------length cal end---------------"<<endl;
     double maxLength = nodeLenth.at(roots.at(0));
-    double numofusefulnode=0;
-    double numofuselessnode=0;
-    for(int i=0; i<pointNum; i++){
-        nodeLenth.at(i) = (nodeLenth.at(i)/maxLength)*maxR;
-        NeuronSWC tmp;
-        tmp.x = listNeuron.at(i).x;
-        tmp.y = listNeuron.at(i).y;
-        tmp.z = listNeuron.at(i).z;
-        tmp.n = listNeuron.at(i).n;
-        tmp.parent = listNeuron.at(i).parent;
-        tmp.type = listNeuron.at(i).type;
-        if(nodeLenth.at(i) >= (thre)){
-            numofusefulnode+=1;
-        }else
-        {
-            numofuselessnode+=1;
-        }
-        tmp.radius = nodeLenth.at(i);
-        listNeuron.replace(i,tmp);
-    }
+    if(normalized_size>0)
+        for(int i=0; i<pointNum; i++)
+            nodeLenth.at(i) = (nodeLenth.at(i)/maxLength)*normalized_size;
+    return nodeLenth;
 }
 bool Branch::get_r_points_of_branch(vector<int> &r_points, NeuronTree &nt)
 {
@@ -454,7 +437,7 @@ bool SwcTree::initialize(NeuronTree t)
         int tmp=queue.front();
         queue.erase(queue.begin());
         vector<V3DLONG>& child = children.at(tmp);
-        cout<<"child size: "<<child.size()<<endl;
+//        cout<<"child size: "<<child.size()<<endl;
         for(int i=0;i<child.size();++i)
         {
             Branch branch;
@@ -479,7 +462,7 @@ bool SwcTree::initialize(NeuronTree t)
     cout<<"branch size: "<<branchs.size()<<endl;
     for(int i=0;i<branchs.size();++i)
     {
-        cout<<i<<endl;
+//        cout<<i<<endl;
         if(branchs[i].head_point.parent<0)
         {
             branchs[i].parent=0;

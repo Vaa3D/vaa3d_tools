@@ -38,10 +38,10 @@ vector<int> getNodeTips(NeuronTree nt);
 vector<int> getNodeOrder(NeuronTree nt);
 NeuronTree getSubtree(NeuronTree nt,V3DLONG nodeid);
 NeuronTree reindexNT(NeuronTree nt);
-NeuronTree pruning_subtree(NeuronTree nt, int pruning_thre);
+NeuronTree pruning_subtree(NeuronTree nt, int pruning_thre=100);
 double get_nt_len(NeuronTree nt);
 vector<double> get_node_subtree_len(NeuronTree nt,int normalized_size=0);
+vector<double> get_node_subtree_len_v1(NeuronTree nt,int normalized_size=0);
 void get_node_subtree_tips_iter(NeuronTree nt,vector< vector<long> > child_index_list,vector<int> & n_subtree_tips,V3DLONG iter_id);
 void get_node_subtree_len_iter(NeuronTree nt,vector< vector<long> > child_index_list,vector<double> & n_subtree_len,V3DLONG iter_id);
-void getNodeLength(NeuronTree &nt, int maxR, double dendritR, double otherR, double thre);
 #endif // UTILITY_FUNCTION_H

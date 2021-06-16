@@ -187,7 +187,7 @@ bool UtilityArbor::dofunc(const QString & func_name, const V3DPluginArgList & in
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
         long nid=(inparas.size()>=1)?atoi(inparas[0]):0;
-        long normalized_max_size=(inparas.size()>=2)?atoi(inparas[1]):20;
+        long normalized_max_size=(inparas.size()>=2)?atoi(inparas[1]):0;
         int to_file=(inparas.size()>=3)?atoi(inparas[2]):1;
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_subtree_with_length.swc");
         //read swc
@@ -195,7 +195,7 @@ bool UtilityArbor::dofunc(const QString & func_name, const V3DPluginArgList & in
         if(!nid) //process to all
         {
             vector<double> n_subtree_len(nt.listNeuron.size(),0.0);
-            n_subtree_len=get_node_subtree_len(nt,normalized_max_size);
+            n_subtree_len=get_node_subtree_len_v1(nt,normalized_max_size);
             NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
             for(V3DLONG i=0;i<nt.listNeuron.size();i++)
             {
@@ -231,7 +231,7 @@ bool UtilityArbor::dofunc(const QString & func_name, const V3DPluginArgList & in
         string inswc_file;
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
-        int pruning_thre=(inparas.size()>=1)?atoi(inparas[0]):20;
+        int pruning_thre=(inparas.size()>=1)?atoi(inparas[0]):100;
         int to_file=(inparas.size()>=2)?atoi(inparas[1]):1;
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_spruning.swc");
         //read swc
@@ -257,4 +257,5 @@ void printHelp()
     qDebug()<<"3. vaa3d -x <libname> -f GetNodeSubtree -i <input_swc> -p <node_index> <to_file> -o <out_file_path>";
     qDebug()<<"4. vaa3d -x <libname> -f GetSubtreeLength -i <input_swc> -p <node_index> <normalized_size> <to_file> -o <out_file_path>";
     qDebug()<<"5. vaa3d -x <libname> -f GetNodeTips -i <input_swc> -p <to_file> -o <out_file_path>";
+    qDebug()<<"6. vaa3d -x <libname> -f Pruning_SubTree -i <input_swc> -p <pruning_length_thre> <to_file> -o <out_file_path>";
 }
