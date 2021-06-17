@@ -253,8 +253,7 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 		}
 	}
 
-	for (vector<connectedComponent>::iterator it = this->regionBodies.begin(); it != this->regionBodies.end(); ++it)
-		it->getXYZprojections();
+	for (vector<connectedComponent>::iterator it = this->regionBodies.begin(); it != this->regionBodies.end(); ++it) it->getXYZprojections();
 }
 
 void integratedDataStructures::registeredImg::createBlankImg(const int imgDims[])
