@@ -114,6 +114,18 @@ void integratedDataStructures::connectedComponent::getConnCompSurface()
 	}
 }
 
+void integratedDataStructures::connectedComponent::getConnCompSurfaceYZ()
+{
+	for (auto& zSlice : this->surfaceCoordSets)
+		for (auto& coord : zSlice.second) this->surfaceCoordSetsYZ[coord.at(0)].insert(coord);
+}
+
+void integratedDataStructures::connectedComponent::getConnCompSurfaceXZ()
+{
+	for (auto& zSlice : this->surfaceCoordSets)
+		for (auto& coord : zSlice.second) this->surfaceCoordSetsXZ[coord.at(1)].insert(coord);
+}
+
 void integratedDataStructures::connectedComponent::getXYZprojections()
 {
 	for (boost::container::flat_map<int, boost::container::flat_set<vector<int>>>::iterator it = this->surfaceCoordSets.begin(); it != this->surfaceCoordSets.end(); ++it)
@@ -137,6 +149,136 @@ void integratedDataStructures::connectedComponent::getXYZprojections()
 			this->xyProjection.insert(projectZ);
 		}
 	}
+}
+
+bool integratedDataStructures::connectedComponent::isEmbedded(const vector<int>& inputCoord)
+{
+	this->getConnCompSurfaceYZ();
+	this->getConnCompSurfaceXZ();
+
+	vector<int> refCoord(3);
+	if (inputCoord.at(0) < this->xMin) refCoord[0] = inputCoord.at(0) + 1;
+	else refCoord[0] = inputCoord.at(0);
+	if (inputCoord.at(1) < this->yMin) refCoord[1] = inputCoord.at(1) + 1;
+	else refCoord[1] = inputCoord.at(1);
+	if (inputCoord.at(2) < this->zMin) refCoord[2] = inputCoord.at(2) + 1;
+	else refCoord[2] = inputCoord.at(2);
+
+	bool xMaxIn = false;
+	for (int i = 0; i <= this->xMax - refCoord.at(0); ++i)
+	{
+		vector<int> coord = { refCoord.at(0) + i, refCoord.at(1), refCoord.at(2) };
+		if (this->surfaceCoordSetsYZ.find(refCoord.at(0) + i) != this->surfaceCoordSetsYZ.end())
+		{
+			if (this->surfaceCoordSetsYZ.at(refCoord.at(0) + i).find(coord) != this->surfaceCoordSetsYZ.at(refCoord.at(0) + i).end())
+			{
+				xMaxIn = true;
+				break;
+			}
+		}
+	}
+	if (!xMaxIn)
+	{
+		cout << "Not within xMax boundary." << endl;
+		return false;
+	}
+
+	bool xMinIn = false;
+	for (int i = 0; i <= refCoord.at(0) - this->xMin; ++i)
+	{
+		vector<int> coord = { refCoord.at(0) - i, refCoord.at(1), refCoord.at(2) };
+		if (this->surfaceCoordSetsYZ.find(refCoord.at(0) - i) != this->surfaceCoordSetsYZ.end())
+		{
+			if (this->surfaceCoordSetsYZ.at(refCoord.at(0) - i).find(coord) != this->surfaceCoordSetsYZ.at(refCoord.at(0) - i).end())
+			{
+				xMinIn = true;
+				break;
+			}
+		}
+	}
+	if (!xMinIn)
+	{
+		cout << "Not within xMin boundary." << endl;
+		return false;
+	}
+
+	bool yMaxIn = false;
+	for (int j = 0; j <= this->yMax - refCoord.at(1); ++j)
+	{
+		vector<int> coord = { refCoord.at(0), refCoord.at(1) + j, refCoord.at(2) };
+		if (this->surfaceCoordSetsXZ.find(refCoord.at(1) + j) != this->surfaceCoordSetsXZ.end())
+		{
+			if (this->surfaceCoordSetsXZ.at(refCoord.at(1) + j).find(coord) != this->surfaceCoordSetsXZ.at(refCoord.at(1) + j).end())
+			{
+				yMaxIn = true;
+				break;
+			}
+		}
+	}
+	if (!yMaxIn)
+	{
+		cout << "Not within yMax boundary." << endl;
+		return false;
+	}
+
+	bool yMinIn = false;
+	for (int j = 0; j <= refCoord.at(1) - this->yMin; ++j)
+	{
+		vector<int> coord = { refCoord.at(0), refCoord.at(1) - j, refCoord.at(2) };
+		if (this->surfaceCoordSetsXZ.find(refCoord.at(1) - j) != this->surfaceCoordSetsXZ.end())
+		{
+			if (this->surfaceCoordSetsXZ.at(refCoord.at(1) - j).find(coord) != this->surfaceCoordSetsXZ.at(refCoord.at(1) - j).end())
+			{
+				yMinIn = true;
+				break;
+			}
+		}
+	}
+	if (!yMinIn)
+	{
+		cout << "Not within yMin boundary." << endl;
+		return false;
+	}
+
+	bool zMaxIn = false;
+	for (int k = 0; k <= this->zMax - refCoord.at(2); ++k)
+	{
+		vector<int> coord = { refCoord.at(0), refCoord.at(1), refCoord.at(2) + k };
+		if (this->surfaceCoordSets.find(refCoord.at(2) + k) != this->surfaceCoordSets.end())
+		{
+			if (this->surfaceCoordSets.at(refCoord.at(2) + k).find(coord) != this->surfaceCoordSets.at(refCoord.at(2) + k).end())
+			{
+				zMaxIn = true;
+				break;
+			}
+		}
+	}
+	if (!zMaxIn)
+	{
+		cout << "Not within zMax boundary." << endl;
+		return false;
+	}
+
+	bool zMinIn = false;
+	for (int k = 0; k <= refCoord.at(2) - this->zMin; ++k)
+	{
+		vector<int> coord = { refCoord.at(0), refCoord.at(1), refCoord.at(2) - k };
+		if (this->surfaceCoordSets.find(refCoord.at(2) - k) != this->surfaceCoordSets.end())
+		{
+			if (this->surfaceCoordSets.at(refCoord.at(2) - k).find(coord) != this->surfaceCoordSets.at(refCoord.at(2) - k).end())
+			{
+				zMinIn = true;
+				break;
+			}
+		}
+	}
+	if (!zMinIn)
+	{
+		cout << "Not within zMin boundary." << endl;
+		return false;
+	}
+
+	return true;
 }
 
 void integratedDataStructures::brainRegion::writeBrainRegion_file(string saveFileName)

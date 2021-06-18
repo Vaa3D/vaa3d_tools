@@ -8,7 +8,7 @@
 
 #include "v3d_interface.h"
 
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 using namespace integratedDataStructures;
 

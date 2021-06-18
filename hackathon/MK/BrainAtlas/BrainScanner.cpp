@@ -8,9 +8,29 @@ set<string> BrainScanner::involvedRegionScan(const vector<float>& coord, const b
 	for (boost::container::flat_map<string, brainRegion>::const_iterator it = regionMap.begin(); it != regionMap.end(); ++it)
 		if (this->candidateFilter(coord, it->second)) candidateIts.push_back(it);
 
-	cout << candidateIts.size() << " candidate brain regions included:" << endl;
+	cout << candidateIts.size() << " candidate brain regions included: ";
 	for (auto& iter : candidateIts) cout << iter->first << " ";
 	cout << endl;
+
+	vector<int> roundedCoord = { int(coord.at(0)), int(coord.at(1)), int(coord.at(2)) };
+	for (auto& candidateIt : candidateIts)
+	{
+		cout << candidateIt->first << " -- " << endl;
+		int bodyCount = 1;
+		brainRegion region = candidateIt->second;
+		for (auto& body : region.regionBodies)
+		{
+			cout << "body " << bodyCount << ": ";
+			if (body.isEmbedded(roundedCoord))
+			{
+				cout << "In!" << endl;
+				outputRegionNames.insert(candidateIt->first);
+				break;
+			}
+			++bodyCount;
+		}
+		cout << endl;
+	}
 
 	return outputRegionNames;
 }

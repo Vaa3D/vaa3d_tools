@@ -191,4 +191,12 @@ void BrainAtlasControlPanel::scanInvolvedRegions(vector<float> coord)
 	cout << "Scanning brain regions for (" << coord.at(0) << ", " << coord.at(1) << ", " << coord.at(2) << ")" << endl;
 
 	set<string> regions2show = myScanner.involvedRegionScan(coord, this->regionMap);
+	cout << "Determined regions: ";
+	for (auto& region : regions2show)
+	{
+		cout << region << " ";
+		int row = this->region2UIindexMap.at(region);
+		if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Unchecked) currentUIptr->tableWidget->item(row, 0)->setCheckState(Qt::Checked);
+	}
+	cout << endl;
 }

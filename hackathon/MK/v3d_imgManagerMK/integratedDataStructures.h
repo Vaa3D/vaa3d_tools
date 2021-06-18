@@ -52,6 +52,8 @@ namespace integratedDataStructures
 		map<int, set<vector<int>>> coordSets;  // The key is the number of slice. If there is only 1 slice, there will be only one pair<int, set<vector<int>>> in the map.
 											   // This data member will be revised to be boost's associate container for efficiency purposes.
 		boost::container::flat_map<int, boost::container::flat_set<vector<int>>> surfaceCoordSets;
+		boost::container::flat_map<int, boost::container::flat_set<vector<int>>> surfaceCoordSetsYZ;
+		boost::container::flat_map<int, boost::container::flat_set<vector<int>>> surfaceCoordSetsXZ;
 		boost::container::flat_set<vector<int>> xyProjection;
 		boost::container::flat_set<vector<int>> yzProjection;
 		boost::container::flat_set<vector<int>> xzProjection;
@@ -60,7 +62,10 @@ namespace integratedDataStructures
 		float ChebyshevCenter[3];
 
 		void getConnCompSurface();
+		void getConnCompSurfaceYZ();
+		void getConnCompSurfaceXZ();
 		void getXYZprojections();
+		bool isEmbedded(const vector<int>& inputCoord);
 	};
 
 	inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
