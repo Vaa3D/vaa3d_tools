@@ -21,6 +21,7 @@ QStringList NeuronSynthesis::funclist() const
 	return QStringList()
         <<tr("Tip_branch_pruning")
        <<tr("Three_bifurcation_processing")
+         <<tr("Three_bifurcation_pruning")
         << tr("Smooth_branch")
       <<tr("Split_neuron_types")
        <<tr("To_topology_tree")
@@ -69,8 +70,8 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         else {  printHelp(); return false;}
         //read para list
         int pruning_thre =(inparas.size()>=1)?atoi(inparas[0]):20;
-        int threebp_flag=(inparas.size()>=2)?atoi(inparas[1]):1;
-        int pruning_times=(inparas.size()>=3)?atoi(inparas[2]):1;
+        int pruning_times=(inparas.size()>=2)?atoi(inparas[1]):1;
+         int threebp_flag=(inparas.size()>=3)?atoi(inparas[2]):0;
         int reorder=(inparas.size()>=4)?atoi(inparas[3]):1;
         int saveESWC=(inparas.size()>=5)?atoi(inparas[4]):0;
 
@@ -85,7 +86,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_processing(nt);
+            nt_3bp=three_bifurcation_remove(nt);
         }
         //pruning and reorder-Index of swc
         NeuronTree nt_pruning_iter_in;nt_pruning_iter_in.deepCopy(nt_3bp);
@@ -109,9 +110,9 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
 	}
-    else if (func_name == tr("Three_bifurcation_processing"))
+    else if (func_name == tr("Three_bifurcation_pruning"))
     {
-        /* designed by shengdian, 2021-06-02
+        /* designed by shengdian, 2021-06-16
          * ---
          * processing of three-bifurcation branches
          * --Usage--
@@ -122,14 +123,52 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
         //read para list
-        int saveESWC=(inparas.size()>=1)?atoi(inparas[0]):0;
+        int just_label=(inparas.size()>=1)?atoi(inparas[0]):0;
+        int saveESWC=(inparas.size()>=2)?atoi(inparas[1]):0;
+        string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_3br.swc");
+        if(saveESWC)
+            out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_3br.eswc");
+        //read swc
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        NeuronTree nt_out;
+        if(just_label)
+            nt_out=three_bifurcation_remove(nt,true);
+        else
+            nt_out=three_bifurcation_remove(nt);
+        //save to file
+        if(saveESWC)
+            writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
+        else
+            writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
+    }
+    else if (func_name == tr("Three_bifurcation_processing"))
+    {
+        /* designed by shengdian, 2021-06-02
+         * ---
+         * processing of three-bifurcation branches
+         * --Usage--
+         * para:
+         * (delete smallest bifurcation arbor)
+                *1. pruning flag
+         * input: swc or eswc file
+         * output: processed swc file
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else {  printHelp(); return false;}
+        //read para list
+        int pruning_flag=(inparas.size()>=1)?atoi(inparas[0]):0;
+        int saveESWC=(inparas.size()>=2)?atoi(inparas[1]):0;
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_3bp.swc");
         if(saveESWC)
             out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_3bp.eswc");
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-        NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
-        nt_out=three_bifurcation_processing(nt);
+        NeuronTree nt_out;
+        if(pruning_flag)
+            nt_out=three_bifurcation_remove(nt);
+        else
+            nt_out=three_bifurcation_processing(nt);
         //save to file
         if(saveESWC)
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
@@ -182,8 +221,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
          * output: processed swc file
         */
         string inswc_file;
-        if(infiles.size()>=1) {inswc_file = infiles[0];}
-        else {  printHelp(); return false;}
+        if(infiles.size()>=1) {inswc_file = infiles[0];} else { printHelp(); return false;}
         //read para list
         int saveESWC=(inparas.size()>=1)?atoi(inparas[0]):0;
         QString outpath=(outfiles.size()>=1)?outfiles[0]:"";
@@ -207,8 +245,8 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
         //read para list
-        int pruning_thre =(inparas.size()>=1)?atoi(inparas[0]):20;
-        int threebp_flag=(inparas.size()>=2)?atoi(inparas[1]):1;
+        int pruning_thre =(inparas.size()>=1)?atoi(inparas[0]):0;
+        int threebp_flag=(inparas.size()>=2)?atoi(inparas[1]):0;
         int reorder=(inparas.size()>=3)?atoi(inparas[2]):1;
         int saveESWC=(inparas.size()>=4)?atoi(inparas[3]):0;
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_topo.swc");
@@ -222,7 +260,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_processing(nt);
+            nt_3bp=three_bifurcation_remove(nt);
         }
         NeuronTree nt_3bp_p;nt_3bp_p.deepCopy(nt_3bp);
         if(pruning_thre>0)
@@ -276,13 +314,12 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
 
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-
         NeuronTree nt_3bp;nt_3bp.deepCopy(nt);
         if(threebp_flag)
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_processing(nt);
+            nt_3bp=three_bifurcation_remove(nt);
         }
         NeuronTree nt_3bp_p;nt_3bp_p.deepCopy(nt_3bp);
         if(pruning_thre>0)
@@ -339,25 +376,12 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
     }
     else if (func_name == tr("To_branches"))
     {
-        /* designed by shengdian, 2021-06-01
+        /* designed by shengdian, 2021-06-18
          * ---
-         * get specified features of a neuron tree
-              * global features:
-                    * name
-                        *type2,type3,type4
-                            * #branches,#tips,Max_branch_order,topoLength,pathLength
-              * branch features:
-                    * branch_id, parent_branch_id
-                    * branch_topo_length,branch_path_length
-                    * branch_topo_len_ratio, branch_path_len_ratio
-                    * xoy_angle,yoz_angle
-                    * tip_ratio, balance_ratio
-                    * spoint(x,y,z),...,epoint(x,y,z)
          * --Usage--
          * input: swc or eswc file
          * output: <filename>.brs
         */
-
     }
 	else if (func_name == tr("help"))
 	{
@@ -374,11 +398,13 @@ void printHelp()
      *---
      * 1. remove small tip-branches
      * 2. swc to topological-tree
-     * 3. get branches and its features for training
-     * 4.
+     * 3. Three bifurcation pruning or label
+     * 4. branch-level smooth
      * ---
     */
     qDebug()<<"               -----Usage_basic: function for neuron synthesis project----              ";
     qDebug()<<"1. vaa3d -x <libname> -f Tip_branch_pruning -i <input_swc> -p <pruning_threshold> <save eswc> -o <out_file_path>";
     qDebug()<<"2. vaa3d -x <libname> -f To_topology_tree -i <input_swc> -p <save eswc> -o <out_file_path>";
+    qDebug()<<"3. vaa3d -x <libname> -f Three_bifurcation_pruning -i <input_swc> -p <just label> <save eswc> -o <out_file_path>";
+    qDebug()<<"4. vaa3d -x <libname> -f Smooth_branch -i <input_swc> -p <smooth_win_size> <save eswc> -o <out_file_path>";
 }

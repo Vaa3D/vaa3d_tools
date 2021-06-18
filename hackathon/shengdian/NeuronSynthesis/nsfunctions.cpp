@@ -174,6 +174,89 @@ NeuronTree reindexNT(NeuronTree nt)
     }
    return nt_out_reindex;
 }
+NeuronTree three_bifurcation_remove(NeuronTree nt,bool not_remove_just_label)
+{
+    /*1, get node type
+     * 2, get three-bifurcation nodes
+     * 3, for each three-bifurcation nodes
+                *get its child nodes
+                * remove the smallest arbors
+    */
+    NeuronTree nt_out;    V3DLONG siz=nt.listNeuron.size();
+    if(!siz)
+        return nt_out;
+    //get node type
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+     vector<int> nkept(siz,1);
+    //get soma index
+    V3DLONG somaid=1;
+    vector< vector<V3DLONG> > child_index_list(siz,vector<V3DLONG>());
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        if(s.pn<0&&s.type==1)
+            somaid=i;
+        else
+        {
+            V3DLONG p_index=nt.hashNeuron.value(s.pn);
+            child_index_list[p_index].push_back(i);
+        }
+    }
+    //get three bifurcation nodes
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        if(ntype[i]>2&&i!=somaid)
+        {
+            cout<<"bifruction node id: "<<s.n<<endl;
+            cout<<"child size: "<<child_index_list.at(i).size()<<endl;
+            //get all three subtree
+            double min_child_len=0; int remove_child_index=0;
+            for(int c=0;c<child_index_list[i].size();c++)
+            {
+                V3DLONG this_child_index=child_index_list[i][c];
+                NeuronSWC this_sc=nt.listNeuron[this_child_index];
+                cout<<"child index "<<c<<":"<<this_sc.n<<endl;
+                NeuronTree this_child_subtree=getSubtree(nt,this_sc.n);
+                double this_child_len=get_nt_len(this_child_subtree);
+                if(c==0)
+                    min_child_len=this_child_len;
+                if(min_child_len>this_child_len)
+                {
+                    min_child_len=this_child_len;
+                    remove_child_index=c;
+                    cout<<"update removing subtree index "<<remove_child_index<<endl;
+                }
+            }
+
+            V3DLONG remove_child_nt_index=child_index_list[i][remove_child_index];
+            cout<<"min len="<<min_child_len<<",id="<<remove_child_nt_index<<endl;
+            NeuronTree remove_tree=getSubtree(nt,nt.listNeuron[remove_child_nt_index].n);
+            nkept[remove_child_nt_index]=0;
+            for(int r=0;r<remove_tree.listNeuron.size();r++)
+            {
+                V3DLONG rc_nt_index=remove_tree.listNeuron[r].n;
+                V3DLONG rc_index=nt.hashNeuron.value(rc_nt_index);
+                nkept[rc_index]=0;
+            }
+        }
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        if(!nkept[i]){
+            if(not_remove_just_label)
+                s.type=5;
+            else
+                continue;
+        }
+        nt_out.listNeuron.append(s);
+        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+    }
+    if(!not_remove_just_label)
+        nt_out=reindexNT(nt_out);
+    return nt_out;
+}
 NeuronTree three_bifurcation_processing(NeuronTree nt)
 {
     //s1. detect three bifurcation points

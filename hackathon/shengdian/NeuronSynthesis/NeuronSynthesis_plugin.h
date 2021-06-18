@@ -9,6 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "nsfunctions.h"
+#include "Utility_function.h"
 #include "basic_surf_objs.h"
 using namespace std;
 class NeuronSynthesis : public QObject, public V3DPluginInterface2_1
