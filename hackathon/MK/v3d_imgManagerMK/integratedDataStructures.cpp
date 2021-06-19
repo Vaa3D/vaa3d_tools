@@ -85,9 +85,9 @@ void integratedDataStructures::connectedComponent::getConnCompSurface()
 	for (set<vector<int>>::iterator it = this->coordSets.rbegin()->second.begin(); it != this->coordSets.rbegin()->second.end(); ++it)
 	{
 		vector<int> newVec = { it->at(0), it->at(1), it->at(2) };
-		topSliceSet.insert(newVec);
+		bottomSliceSet.insert(newVec);
 	}
-	this->surfaceCoordSets.insert(pair<int, boost::container::flat_set<vector<int>>>(this->coordSets.rbegin()->first, topSliceSet));
+	this->surfaceCoordSets.insert(pair<int, boost::container::flat_set<vector<int>>>(this->coordSets.rbegin()->first, bottomSliceSet));
 
 	if (this->coordSets.size() > 2)
 	{
@@ -153,6 +153,11 @@ void integratedDataStructures::connectedComponent::getXYZprojections()
 
 bool integratedDataStructures::connectedComponent::isEmbedded(const vector<int>& inputCoord)
 {
+	// This method examines whether the input coordinate is embedded inside the connected component. 
+	// From the input coordinate, it must hit the surface in all 6 directions (x+, x-, y+, y-, z+, z-) to be demmed embedded.
+	// Note: this method still has limitation, as it doesn't discern hollow component situation.
+	// However, cases like hollow are very rare and haven't been observed so far. For the performing speed concern, this method is adopted.
+
 	this->getConnCompSurfaceYZ();
 	this->getConnCompSurfaceXZ();
 
@@ -297,7 +302,7 @@ void integratedDataStructures::brainRegion::writeBrainRegion_file(string saveFil
 		cout << "Not supported file extension. Do nothing and return." << endl;
 		return;
 	}
-	outputFile << "# " << this->name << endl;
+	outputFile << "# " << this->name << " " << this->CCFintensity << endl;
 	
 	for (vector<connectedComponent>::iterator it = this->regionBodies.begin(); it != this->regionBodies.end(); ++it)
 	{
@@ -323,6 +328,8 @@ void integratedDataStructures::brainRegion::writeBrainRegion_file(string saveFil
 		}
 		outputFile << "---" << endl;
 	}
+
+	if (outputFile.is_open()) outputFile.close();
 }
 
 void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFileName)
@@ -378,7 +385,11 @@ void integratedDataStructures::brainRegion::readBrainRegion_file(string inputFil
 					this->regionBodies.push_back(newComponent);
 					continue;
 				}
-				continue;
+				else if (!(splittedLine.begin() + 1)->compare(this->name))
+				{
+					this->CCFintensity = stoi(*(splittedLine.begin() + 2));
+					continue;
+				}
 			}
 
 			boost::container::flat_set<vector<int>> currSliceNodeSet;

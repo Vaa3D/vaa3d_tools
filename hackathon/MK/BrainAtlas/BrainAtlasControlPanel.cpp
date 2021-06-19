@@ -66,6 +66,8 @@ BrainAtlasControlPanel::BrainAtlasControlPanel(QWidget* parent, V3DPluginCallbac
 
 	this->connect(currentUIptr->tableWidget, SIGNAL(cellChanged(int, int)), this, SLOT(regionSelected(int, int)));
 
+	this->refresh = false;
+
 	this->show();
 }
 
@@ -139,12 +141,21 @@ void BrainAtlasControlPanel::regionSelected(int row, int col)
 	string regionName = currentUIptr->tableWidget->item(row, 1)->text().toStdString();
 	if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Checked)
 	{
-		if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
+		if (this->loadedRegions.find(regionName) != this->loadedRegions.end()) // The region has been loaded.
 		{
-			if (!this->surfaceStatus.at(regionName))
+			if (this->surfaceStatus.find(regionName) != this->surfaceStatus.end()) // Not refreshed.
 			{
-				this->thisCallback->displaySWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
-				this->surfaceStatus[regionName] = true;
+				if (!this->surfaceStatus.at(regionName))
+				{
+					this->thisCallback->displaySWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
+					this->surfaceStatus[regionName] = true;
+				}
+			}
+			else																   // Has been refreshed.
+			{
+				int index = this->thisCallback->addRegion_brainAtlas(this->cur3DViewer, this->regionTreeMap.at(regionName));
+				this->region2ObjManagerIndexMap.insert({ regionName, index });
+				this->surfaceStatus.insert({ regionName, true });
 			}
 		}
 		else
@@ -152,15 +163,13 @@ void BrainAtlasControlPanel::regionSelected(int row, int col)
 			// The swc of the selected region hasn't been loaded yet.
 
 			this->loadedRegions.insert(regionName);
-			clock_t start = clock();
+
 			NeuronTree selectedRegionTree = this->convertRegion2tree(regionName);
 			selectedRegionTree.name = QString::fromStdString(regionName);
 			selectedRegionTree.file = "Brg file";
 			selectedRegionTree.comment = "brain region";
 			selectedRegionTree.color = XYZW(0, 0, 0, 0);
-			clock_t end = clock();
-			float duration = float(end - start) / CLOCKS_PER_SEC;
-			cout << "region conversion time: " << duration << " seconds" << endl;
+			this->regionTreeMap.insert(pair<string, NeuronTree>(regionName, selectedRegionTree));
 			
 			int index = this->thisCallback->addRegion_brainAtlas(this->cur3DViewer, selectedRegionTree);
 			this->region2ObjManagerIndexMap.insert({ regionName, index });
@@ -169,12 +178,20 @@ void BrainAtlasControlPanel::regionSelected(int row, int col)
 	}
 	else if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Unchecked)
 	{
-		if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
+		if (this->refresh)
 		{
-			if (this->surfaceStatus.at(regionName))
+			this->surfaceStatus.erase(this->surfaceStatus.find(regionName));
+			this->region2ObjManagerIndexMap.erase(this->region2ObjManagerIndexMap.find(regionName));
+		}
+		else
+		{
+			if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
 			{
-				this->thisCallback->hideSWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
-				this->surfaceStatus[regionName] = false;
+				if (this->surfaceStatus.at(regionName))
+				{
+					this->thisCallback->hideSWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
+					this->surfaceStatus[regionName] = false;
+				}
 			}
 		}
 	}
@@ -199,4 +216,18 @@ void BrainAtlasControlPanel::scanInvolvedRegions(vector<float> coord)
 		if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Unchecked) currentUIptr->tableWidget->item(row, 0)->setCheckState(Qt::Checked);
 	}
 	cout << endl;
+}
+
+void BrainAtlasControlPanel::cleanUpRegionRecords()
+{
+	set<string> regionNames;
+	for (auto& region : this->surfaceStatus) regionNames.insert(region.first);
+
+	for (auto& region : regionNames)
+	{
+		int row = this->region2UIindexMap.at(region);
+		if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Checked) currentUIptr->tableWidget->item(row, 0)->setCheckState(Qt::Unchecked);
+	}
+
+	this->refresh = false;
 }

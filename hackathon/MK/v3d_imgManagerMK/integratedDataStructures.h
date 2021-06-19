@@ -79,6 +79,7 @@ namespace integratedDataStructures
 	struct brainRegion
 	{
 		string name;
+		int CCFintensity;
 		vector<connectedComponent> regionBodies;
 
 		void writeBrainRegion_file(string saveFileName);

@@ -31,17 +31,17 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
+	string funcName(funcNameC);
 	
 	vector<string> paras;
-	/*for (int i = 2; i < argc; ++i)
+	for (int i = 2; i < argc; ++i)
 	{
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}*/
+	}
 
-	string funcName = "binaryCreate";
+	//string funcName = "brgFileTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -1061,6 +1061,8 @@ int main(int argc, char* argv[])
 		}
 		writeSWC_file(saveNameQ, terminalTree);
 	}
+
+	// ============================================================= Brain Atlas ============================================================= //
 	else if (!funcName.compare("generateBrainRegionNew"))
 	{
 		ifstream inputFile("D:\\Work\\CCF_brainAtlas\\idValue2regionName.txt");
@@ -1575,28 +1577,57 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("brgFileTest"))
 	{
-		QString inputFile = "C:\\Users\\King Mars\\Desktop\\CCF\\brain_regionSurfaces\\GPe.swc";
+		QString inputFile = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\connCompDebug\\CP.swc";
 		NeuronTree nt = readSWC_file(inputFile);
 		vector<connectedComponent> regionCompList = NeuronStructUtil::swc2signal3DBlobs(nt);
-		brainRegion GPe;
-		GPe.name = "GPe";
-		GPe.regionBodies = regionCompList;
+
+		NeuronTree outputTree;
+		for (auto& comp : regionCompList)
+		{
+			for (auto& slice : comp.coordSets)
+			{
+				for (auto& coord : slice.second)
+				{
+					NeuronSWC newNode;
+					newNode.x = coord.at(0);
+					newNode.y = coord.at(1);
+					newNode.z = coord.at(2);
+					newNode.parent = -1;
+					newNode.type = 7;
+					outputTree.listNeuron.append(newNode);
+				}
+			}
+		}
 		
-		string outputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\GPe.brg";
-		GPe.writeBrainRegion_file(outputFileName);
+		QString outputFileNameQ = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\connCompDebug\\CP_connComp.swc";
+		writeSWC_file(outputFileNameQ, outputTree);
+
+		brainRegion CP;
+		CP.regionBodies = regionCompList;
+		CP.name = "CP";
+		CP.writeBrainRegion_file("D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\connCompDebug\\CP_connComp2brg_1.brg");
 	}
 	else if (!funcName.compare("brgFileReadTest"))
 	{
-		string inputFileName = "C:\\Users\\King Mars\\Desktop\\CCF\\GPe.brg";
-		brainRegion GPe;
-		GPe.readBrainRegion_file(inputFileName);
-		cout << GPe.name << endl;
-		cout << GPe.regionBodies.size() << " " << GPe.regionBodies.at(0).surfaceCoordSets.size() << " " << GPe.regionBodies.at(1).surfaceCoordSets.size() << endl;
+		QDir brgFolder("D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs");
+		brgFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameList = brgFolder.entryList();
+
+		string rootPath = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\";
+		for (auto& fileName : fileNameList)
+		{
+			string inputFullPath = rootPath + fileName.toStdString();
+			brainRegion brg;
+			brg.readBrainRegion_file(inputFullPath);
+			cout << brg.name << ":" << endl;
+			cout << " " << brg.regionBodies.size() << " region bodies" << endl;
+			cout << " CCF intensity: " << brg.CCFintensity << endl << endl;
+		}
 	}
 	else if (!funcName.compare("brgs"))
 	{
-		string inputFolder = "C:\\Users\\hsienchik\\Desktop\\CCF\\brain_regionSurfaces";
-		string saveFolder = "C:\\Users\\hsienchik\\Desktop\\CCF\\brgs\\";
+		string inputFolder = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regionSurfaces";
+		string saveFolder = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\";
 		for (filesystem::directory_iterator it(inputFolder); it != filesystem::directory_iterator(); ++it)
 		{
 			string fileFullName = it->path().string();
@@ -1604,12 +1635,27 @@ int main(int argc, char* argv[])
 			vector<string> nameSplit;
 			boost::split(nameSplit, fileName, boost::is_any_of("."));
 			string regionName = nameSplit.at(0);
+			vector<string> nameSplit2;
+			boost::split(nameSplit2, regionName, boost::is_any_of("-"));
+
 			QString inputSWCName = QString::fromStdString(fileFullName);
-			string saveFullName = saveFolder + regionName + ".brg";
+			string saveFullName;
+			if (nameSplit2.size() == 2) saveFullName = saveFolder + nameSplit2.at(0) + ".brg";
+			else if (nameSplit2.size() == 3) saveFullName = saveFolder + nameSplit2.at(0) + "-" + nameSplit2.at(1) + ".brg";
+			cout << saveFullName << endl;
 
 			NeuronTree inputTree = readSWC_file(inputSWCName);
 			brainRegion thisRegion;
-			thisRegion.name = regionName;
+			if (nameSplit2.size() == 2)
+			{
+				thisRegion.name = nameSplit2.at(0);
+				thisRegion.CCFintensity = stoi(nameSplit2.at(1));
+			}
+			else if (nameSplit2.size() == 3)
+			{
+				thisRegion.name = nameSplit2.at(0) + "-" + nameSplit2.at(1);
+				thisRegion.CCFintensity = stoi(nameSplit2.at(2));
+			}
 			thisRegion.regionBodies = NeuronStructUtil::swc2signal3DBlobs(inputTree);
 			thisRegion.writeBrainRegion_file(saveFullName);
 		}
@@ -1644,7 +1690,40 @@ int main(int argc, char* argv[])
 		QString saveFileName = "C:\\Users\\hsienchik\\Desktop\\CCF\\AHN-88.000000_surf.swc";
 		writeSWC_file(saveFileName, surfTree);
 	}
-	// ---------------------------------------------------------------------------------------------------------------------------------------- //
+	else if (!funcName.compare("renameSWCsurface"))
+	{
+		QDir swcFolder("D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regions");
+		swcFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		QStringList fileNameList = swcFolder.entryList();
+
+		QString saveFolder = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regionSurfaces\\";
+		for (auto& fileName : fileNameList)
+		{
+			QStringList nameSplit = fileName.split("-");
+			QString newFullName;
+			if (nameSplit.size() == 2)
+			{
+				QString regionName = nameSplit.at(0);
+				QString CCFintensity = nameSplit.at(1).split(".").at(0);
+				QString newFileName = regionName + "-" + CCFintensity + ".swc";
+				newFullName = saveFolder + newFileName;
+				qDebug() << newFullName;
+			}
+			else if (nameSplit.size() == 3)
+			{
+				QString regionName = nameSplit.at(0) + "-" + nameSplit.at(1);
+				QString CCFintensity = nameSplit.at(2).split(".").at(0);
+				QString newFileName = regionName + "-" + CCFintensity + ".swc";
+				newFullName = saveFolder + newFileName;
+				qDebug() << newFullName;
+			}
+
+			QString oldFullName = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brain_regions\\" + fileName;
+			QFile::copy(oldFullName, newFullName);
+		}
+	}
+	// ======================================================================================================================================= //
+
 	else if (!funcName.compare("swc2mask"))
 	{
 		//QString inputSWCNameQ = QString::fromStdString(paras.at(2));

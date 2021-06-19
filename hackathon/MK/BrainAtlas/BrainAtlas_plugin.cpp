@@ -79,9 +79,13 @@ bool BrainAtlas_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 			this->ctrlPanelPtr->scanInvolvedRegions(coord);
 		}
 	}
-	else if (func_name == tr("help"))
+	else if (func_name == tr("refresh"))
 	{
-		v3d_msg("To be implemented.");
+		if (this->ctrlPanelPtr != nullptr)
+		{
+			this->ctrlPanelPtr->refresh = true;
+			this->ctrlPanelPtr->cleanUpRegionRecords();
+		}
 	}
 	else return false;
 

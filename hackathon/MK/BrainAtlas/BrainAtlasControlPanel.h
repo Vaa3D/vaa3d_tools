@@ -8,7 +8,7 @@
 
 #include "v3d_interface.h"
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 using namespace integratedDataStructures;
 
@@ -37,6 +37,9 @@ public:
 
 	void hideRegionFromMouseClick(string regionName);
 	void scanInvolvedRegions(vector<float> coord);
+	
+	bool refresh;
+	void cleanUpRegionRecords();
 
 public slots:
 	void regionSelected(int row, int col);
