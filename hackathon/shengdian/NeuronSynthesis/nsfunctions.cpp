@@ -1,4 +1,370 @@
 #include"nsfunctions.h"
+void BranchUnit::get_features(){
+    //length, path length
+    //angle
+    this->length=dis(this->listNode.at(0),this->listNode.at(this->listNode.size()-1));
+    if(this->listNode.size()==2)
+        this->pathLength=this->length;
+    else
+    {
+        for(V3DLONG i=0;i<this->listNode.size()-2;i++)
+        {
+            NeuronSWC snode=this->listNode.at(i);
+            NeuronSWC enode=this->listNode.at(i+1);
+            this->pathLength+=dis(snode,enode);
+        }
+    }
+}
+bool BranchTree::init_branch_sequence()
+{
+    if(!this->listBranch.size())
+        return false;
+    //get tip-branch
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0); btype=this->getBranchType();
+    for(V3DLONG i=0;i<this->listBranch.size();i++)
+    {
+        BranchUnit bu = this->listBranch[i];
+        if(btype[i]==0)
+        {
+            //start from tip-branch
+            BranchSequence brs;
+            brs.seqLength+=bu.length;
+            brs.seqPathLength+=bu.pathLength;
+            brs.listbr.append(i);
+            if(bu.parent_id>0)
+            {
+                V3DLONG bupid=this->hashBranch.value(bu.parent_id);
+                BranchUnit bup=this->listBranch[bupid];
+                while(true)
+                {
+                    brs.seqLength+=bup.length;
+                    brs.seqPathLength+=bup.pathLength;
+                    brs.listbr.append(bupid);
+                    if(bup.parent_id<0)
+                        break;
+                    bupid=this->hashBranch.value(bup.parent_id);
+                    bup=this->listBranch[bupid];
+                }
+            }
+            brs.seqType=this->listBranch[i].type;
+            brs.seqSize=brs.listbr.size();
+            //debug
+//            {
+//                cout<<"seq size:"<<brs.listbr.size();
+//                cout<<";seq length:"<<brs.seqLength;
+//                cout<<";seq path length:"<<brs.seqPathLength;
+//                cout<<";type:"<<brs.seqType<<endl;
+//            }
+            this->branchseq.append(brs);
+        }
+    }
+    cout<<"seq size: "<<this->branchseq.size()<<endl;
+    return true;
+}
+bool BranchTree::init(NeuronTree in_nt){
+    nt.deepCopy(in_nt);
+    //neuron tree to branches
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz)
+        return false;
+    //get node type
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+    vector<int> norder(siz,0);  norder=getNodeOrder(nt);
+    V3DLONG soma_index=1;
+    for (V3DLONG i=0;i<siz;i++){
+        if(nt.listNeuron[i].pn<0&&nt.listNeuron[i].type==1)
+        {
+            soma_index=i;break;
+        }
+    }
+    QList<V3DLONG> br_parent_list;br_parent_list.clear();
+    QList<V3DLONG> br_tail_list;br_tail_list.clear();
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        //from tip / branch node to branch / soma node.
+        NeuronSWC s = nt.listNeuron[i];
+        if(s.pn<0)
+            continue;
+        if(ntype[i]==0||ntype[i]==2)
+        {
+            QList<NeuronSWC> bu_nodes; bu_nodes.append(s);
+            BranchUnit bru;
+            bru.level=norder[i];
+            bru.id=this->listBranch.size()+1;
+            V3DLONG sp_id=nt.hashNeuron.value(s.pn);
+            int ptype=ntype[sp_id];
+            while(ptype==1)
+            {
+                NeuronSWC sp=nt.listNeuron[sp_id];
+                bu_nodes.append(sp);
+                sp_id=nt.hashNeuron.value(sp.pn);
+                if(soma_index==sp_id)
+                {
+                    NeuronSWC sp=nt.listNeuron[sp_id];
+                    bu_nodes.append(sp);
+                    bru.parent_id=-1;
+                    break;
+                }
+                ptype=ntype[sp_id];
+            }
+            bru.type=bu_nodes.at(0).type;
+            //sort and load into Branch struct
+            for(V3DLONG b=bu_nodes.size()-1;b>=0;b--)
+            {
+                NeuronSWC bu_node=bu_nodes[b];
+                bu_node.n=bu_nodes.size()-b;
+                bu_node.pn=(b==bu_nodes.size()-1)?(-1):(bu_node.n-1);
+                bru.listNode.append(bu_node);
+                bru.hashNode.insert(bu_node.n,bru.listNode.size()-1);
+            }
+            //record the parent id of this branch
+            br_tail_list.append(i);
+            br_parent_list.append(sp_id);
+            bru.get_features();
+            this->listBranch.append(bru);
+            this->hashBranch.insert(bru.id,this->listBranch.size()-1);
+        }
+    }
+    //get branch parent id
+    for(V3DLONG i=0;i<this->listBranch.size();i++)
+    {
+        if(this->listBranch[i].parent_id<0)
+            continue;
+        //parent-node -> index ->
+        for(V3DLONG t=0;t<br_tail_list.size();t++)
+            if(br_tail_list.at(t)==br_parent_list.at(i))
+                this->listBranch[i].parent_id=this->listBranch.at(t).id;
+    }
+    //debug
+//    for(V3DLONG i=0;i<this->listBranch.size();i++)
+//    {
+//        if(i<10)
+//        {
+//            cout<<"id:"<<this->listBranch[i].id;
+//            cout<<";parent_id:"<<this->listBranch[i].parent_id;
+//            cout<<";level:"<<this->listBranch[i].level;
+//            cout<<";type:"<<this->listBranch[i].type;
+//            cout<<";len:"<<this->listBranch[i].length;
+//            cout<<";pathlen:"<<this->listBranch[i].pathLength<<endl;
+//        }
+//    }
+    cout<<"branch size: "<<this->listBranch.size()<<endl;
+    return true;
+}
+vector<int> BranchTree::getBranchType()
+{
+    /*1. get tip, branch and soma nodes;
+    */
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0);
+    if(!siz)
+        return btype;
+    /*soma-branch=interbranch: ntype=2; tip-branch: ntype=0*/
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        BranchUnit bu = this->listBranch[i];
+        if(bu.parent_id&&this->hashBranch.contains(bu.parent_id))
+        {
+            int spn_id=this->hashBranch.value(bu.parent_id);
+            btype[spn_id]+=1;
+        }
+    }
+    return btype;
+}
+BranchTree readBranchTree_file(const QString& filename)
+{
+    BranchTree bt;
+    QFile brfile(filename);
+    if (! brfile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return bt;
+    else
+    {
+        int linestate=-1;BranchUnit bu;
+        while (! brfile.atEnd())
+        {
+            char _buf[1000], *buf;
+            brfile.readLine(_buf, sizeof(_buf));
+            for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+            if (buf[0]=='#')
+            {
+                 if (buf[1]=='B'&&buf[2]=='R'&&buf[3]=='S'&&buf[4]=='T'&&buf[5]=='A'
+                         &&buf[6]=='R'&&buf[7]=='T')
+                 {
+                     //start a new branch ,state=0
+                     linestate+=1;
+                 }
+                 else if(buf[1]=='#'&&buf[2]=='F'&&buf[3]=='e'&&buf[4]=='a'&&buf[5]=='t'
+                         &&buf[6]=='u'&&buf[7]=='r'&&buf[8]=='e'&&buf[9]=='s')
+                 {
+                     //start to get branch features,state=1
+                     linestate+=1;
+                 }
+                 else if(buf[1]=='#'&&buf[2]=='N'&&buf[3]=='o'&&buf[4]=='d'&&buf[5]=='e'&&buf[6]=='s')
+                 {
+                     //start to get branch nodes,state=2
+                     linestate+=1;
+                 }
+                 else if(buf[1]=='B'&&buf[2]=='R'&&buf[3]=='E'&&buf[4]=='N'&&buf[5]=='D')
+                 {
+                     //end this branch
+                     linestate=-1;
+                     bt.listBranch.append(bu);
+                     continue;
+                 }
+                 else
+                     continue;
+            }
+            if(linestate==0)
+            {
+                bu.listNode.clear();bu.hashNode.clear();
+            }
+            else if(linestate==1)
+            {
+                QStringList qsl = QString(buf).trimmed().split(",");
+                if (qsl.size()<6)   continue;
+                bu.id=qsl[0].toLong();
+                bu.parent_id=qsl[1].toLong();
+                bu.type=qsl[2].toInt();
+                bu.level=qsl[3].toInt();
+                bu.length=qsl[4].toDouble();
+                bu.pathLength=qsl[5].toDouble();
+            }
+            else if(linestate==2)
+            {
+                NeuronSWC S;
+                QStringList qsl = QString(buf).trimmed().split(",");
+                if (qsl.size()<7)   continue;
+                S.n = qsl[0].toInt();
+                S.type = qsl[1].toInt();
+                S.x = qsl[2].toFloat();
+                S.y = qsl[3].toFloat();
+                S.z = qsl[4].toFloat();
+                S.r = qsl[5].toFloat();
+                S.pn = qsl[6].toInt();
+                bu.listNode.append(S);
+                bu.hashNode.insert(S.n,bu.listNode.size()-1);
+//                bt.nt.listNeuron.append(S);
+//                bt.nt.hashNeuron.insert(S.n,bt.nt.listNeuron.size()-1);
+            }
+            else
+                continue;
+        }
+    }
+    bt.init_branch_sequence();
+    return bt;
+}
+NeuronTree branchTree_to_neurontree(const BranchTree& bt)
+{
+    cout<<"reback the connection"<<endl;
+}
+bool writeBranchTree_file(const QString& filename, const BranchTree& bt)
+{
+    /*File Format:
+                 * #BRSTART
+                 * ##Features
+                 * ###id,parent_id,type,level,length,pathLength
+                 * ##Nodes
+                 * ###n,type,x,y,z,radius,parent
+                 * #BREND
+    */
+    if (filename.isEmpty()||bt.listBranch.size()==0)
+        return false;
+    QFile tofile(filename);
+    if(tofile.exists())
+        cout<<"File overwrite to "<<filename.toStdString()<<endl;
+    QString confTitle="#This file is used for recording all the branches in a neuron tree (by shengdian).\n";
+    QString brstart="#BRSTART\n"; QString brend="#BREND\n";
+    QString brfeatures="##Features\n"; QString brnodes="##Nodes\n";
+    QString brfHead="#Fhead: id,parent_id,type,level,length,pathLength\n";
+    QString brnHead="#Nhead:n,type,x,y,z,radius,parent\n";
+    if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        //title
+        tofile.write(confTitle.toAscii());
+        tofile.write(brfHead.toAscii());
+        tofile.write(brnHead.toAscii());
+        //inside for each branch
+        for(V3DLONG i=0;i<bt.listBranch.size();i++)
+        {
+            BranchUnit bu = bt.listBranch[i];
+            tofile.write(brstart.toAscii());
+            tofile.write(brfeatures.toAscii());
+            QString brf=QString::number(bu.id);
+            brf+=(","+QString::number(bu.parent_id));
+            brf+=(","+QString::number(bu.type));
+            brf+=(","+QString::number(bu.level));
+            brf+=(","+QString::number(bu.length));
+            brf+=(","+QString::number(bu.pathLength)+"\n");
+            tofile.write(brf.toAscii());
+
+            tofile.write(brnodes.toAscii());
+            for(int j=0;j<bu.listNode.size();j++)
+            {
+                NeuronSWC s=bu.listNode[j];
+                QString brn=(QString::number(s.n));
+                brn+=(","+QString::number(s.type));
+                brn+=(","+QString::number(s.x));
+                brn+=(","+QString::number(s.y));
+                brn+=(","+QString::number(s.z));
+                brn+=(","+QString::number(s.r));
+                brn+=(","+QString::number(s.parent)+"\n");
+                tofile.write(brn.toAscii());
+            }
+            tofile.write(brend.toAscii());
+        }
+        tofile.close();
+        return true;
+    }
+    return false;
+}
+bool writeBranchSequence_file(const QString& filename, const BranchTree& bt)
+{
+    /*File Format:
+     *  (from soma to tip branch)
+                 * #BRSSTART
+                 * ##(soma-branch) id,parent_id,type,level,length,pathLength
+                 * ...
+                 * ##(tip-branch) id,parent_id,type,level,length,pathLength
+                 * #BRSEND
+    */
+    if (filename.isEmpty()||bt.listBranch.size()==0)
+        return false;
+    QFile tofile(filename);
+    if(tofile.exists())
+        cout<<"File overwrite to "<<filename.toStdString()<<endl;
+    QString confTitle="#This file is used for recording all the branch sequences in a neuron tree (by shengdian).\n";
+    QString brsstart="#BRSSTART\n"; QString brsend="#BRSEND\n";
+    QString brfHead="#Fhead: id,parent_id,type,level,length,pathLength\n";
+    if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        //title
+        tofile.write(confTitle.toAscii());
+        tofile.write(brfHead.toAscii());
+        //inside for each branch
+        for(V3DLONG i=0;i<bt.branchseq.size();i++)
+        {
+            tofile.write(brsstart.toAscii());
+            BranchSequence brs=bt.branchseq.at(i);
+            for(int j=brs.listbr.size()-1;j>0;j--)
+            {
+                V3DLONG bid=brs.listbr.at(j);
+                BranchUnit bu = bt.listBranch[bid];
+                QString brf=QString::number(bu.id);
+                brf+=(","+QString::number(bu.parent_id));
+                brf+=(","+QString::number(bu.type));
+                brf+=(","+QString::number(bu.level));
+                brf+=(","+QString::number(bu.length));
+                brf+=(","+QString::number(bu.pathLength)+"\n");
+                tofile.write(brf.toAscii());
+            }
+            tofile.write(brsend.toAscii());
+        }
+        tofile.close();
+        return true;
+    }
+    return false;
+}
 NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre)
 {
     /*1. get tip, branch and soma nodes;

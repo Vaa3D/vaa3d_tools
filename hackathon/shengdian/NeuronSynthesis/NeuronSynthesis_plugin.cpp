@@ -25,7 +25,8 @@ QStringList NeuronSynthesis::funclist() const
         << tr("Smooth_branch")
       <<tr("Split_neuron_types")
        <<tr("To_topology_tree")
-      <<tr("To_branches")
+      <<tr("SWC_to_branches")
+     <<tr("Branch_to_NeuronTree")
      <<tr("Processing_main")
 		<<tr("help");
 }
@@ -374,14 +375,78 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
     }
-    else if (func_name == tr("To_branches"))
+    else if (func_name == tr("SWC_to_branches"))
+    {
+        /* designed by shengdian, 2021-06-18
+         * ---
+         * convert neuron tree to branches
+         * 1. save branches (<filename>.br)
+                 * #BRSTART
+                 * ##Features
+                 * ###id,parent_id,type,level,length,pathLength
+                 * ##Nodes
+                 * ###n,type,x,y,z,radius,parent
+                 * #BREND
+         * 2.save branch sequences (<filename>.brs)
+            *  (from soma to tip branch)
+                 * #BRSSTART
+                 * ##(soma-branch) id,parent_id,type,level,length,pathLength
+                 * ...
+                 * ##(tip-branch) id,parent_id,type,level,length,pathLength
+                 * #BRSEND
+         * --Usage--
+         * para: 1. <save_br> 2. <save_brs>
+         * input: swc or eswc file
+         * output: 1. <filename>.br; 2. <filename>.brs
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else { printHelp(); return false;}
+        //read para list
+        int save_br=(inparas.size()>=1)?atoi(inparas[0]):1;
+        int save_brs=(inparas.size()>=2)?atoi(inparas[1]):1;
+        //read swc
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        //convert to branch-tree
+        BranchTree bt;bt.init(nt);
+        bt.init_branch_sequence();
+        //save to file
+        string out_br_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".br");
+        string out_brs_filename=(outfiles.size()>=2)?outfiles[1]:(inswc_file + ".brs");
+        if(save_br)
+        {
+            //write branch tree to file
+            writeBranchTree_file(QString::fromStdString(out_br_filename),bt);
+        }
+        if(save_brs)
+        {
+            //write branch sequence to file
+            writeBranchSequence_file(QString::fromStdString(out_brs_filename),bt);
+        }
+    }
+    else if (func_name == tr("Branch_to_NeuronTree"))
     {
         /* designed by shengdian, 2021-06-18
          * ---
          * --Usage--
-         * input: swc or eswc file
-         * output: <filename>.brs
+         * input: <filename>.br
+         * output: <filename>.swc
         */
+        string in_br_file;
+        if(infiles.size()>=1)
+            in_br_file = infiles[0];
+        else
+        {
+            cout<<"in file size is not legal. size="<<infiles.size()<<endl;
+            printHelp();
+            return false;
+        }
+        BranchTree bt=readBranchTree_file(QString::fromStdString(in_br_file));
+        //read swc
+        NeuronTree nt; nt=branchTree_to_neurontree(bt);
+        //save to file
+        string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(in_br_file + ".swc");
+        writeSWC_file(QString::fromStdString(out_swc_file),nt);
     }
 	else if (func_name == tr("help"))
 	{
