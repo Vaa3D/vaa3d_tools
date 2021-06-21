@@ -10,6 +10,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <math.h>
 
 #include "../jba/newmat11/newmatap.h"
 #include "../jba/newmat11/newmatio.h"
@@ -23,7 +24,9 @@
 #define BreakType 14
 
 #define BigBranchNumber 1000
+#define splitAngleCount 18
 
+static float facs[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000,20922789888000,355687428096000};
 
 template <class T>
 bool computeCubePcaEigVec(T* data1d, V3DLONG* sz,
@@ -200,11 +203,16 @@ public:
 
     bool initialize(NeuronTree t);
 
+    bool pruningByLength(int length);
 
     bool pruningByLength(unsigned char *pdata, long long *sz, int length, double linearityTh);
     bool pruningSoma(double times);
     bool pruningAdjacentSoma(double somaRTh);
     bool pruningAdjacentSoma2(const QString &multiMarkerPath);
+    bool pruningAdjacentSoma3(const QString &multiMarkerIndexPath, int lamda);
+
+    bool pruningAdjacentSoma4(float lengthMax, int lamda);
+
     bool pruningCross(double angleTh, double lengthTh);
     bool pruningInflectionPoints(unsigned char *inimg1d, V3DLONG *sz, double d, double cosAngleThres);
     bool pruningSuspectedBranch(unsigned char *inimg1d, V3DLONG *sz, double angleTh, double lengthTh);
@@ -219,11 +227,15 @@ public:
     XYZ getBranchLocalVector(vector<V3DLONG> pointsIndex, double d);
     XYZ getBranchGlobalVector(vector<V3DLONG> pointsIndex);
 
+    float getTwoBranchAngle(vector<V3DLONG> pointsIndex1, vector<V3DLONG> pointsIndex2, double d);
+
     void show(unsigned char* pdata, V3DLONG* sz);
 
     void calRlevel0Branches(unsigned char* pdata, V3DLONG* sz, ofstream &csvFile);
     void calBifurcationLocalAngle(ofstream &csvFile);
 
+    bool getSomaNList(const QString &multiMarkerIndexPath, vector<int>& somaNList);
+    float getProbability(float angle, int lamda);
 
     bool update();
     bool saveNeuronTree(QString path);

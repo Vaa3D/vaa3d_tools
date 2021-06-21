@@ -48,6 +48,7 @@ bool compareSwc(NeuronTree swcAuto, NeuronTree swcManual, NeuronTree swcPruned, 
     NeuronTree& nt = btAuto.nt;
     V3DLONG rootIndex = btAuto.somaIndex;
     double rootR = nt.listNeuron[rootIndex].radius;
+    if(rootR < 10) rootR = 10;
     while (!branchQ.empty()) {
         int branchIndex = branchQ.front();
         branchQ.pop();

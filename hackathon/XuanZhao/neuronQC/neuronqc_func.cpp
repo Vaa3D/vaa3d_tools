@@ -186,6 +186,8 @@ bool getMinMaxNodePath(const NeuronTree &nt, float &minPath, float &maxPath, flo
 bool judgeTypes(const NeuronTree &nt, string& allTypesInfo){
     set<int> allTypesSet;
     bool connect = true, allType = true;
+    int dendriteAxonCount = 0, distalAxonCount = 0, proximalAxonCount = 0;
+    vector<V3DLONG> dendriteAxonIndex, distalAxonIndex, proximalAxonIndex;
     for(V3DLONG i=0; i<nt.listNeuron.size(); ++i){
         int type = nt.listNeuron[i].type;
         V3DLONG prt = nt.listNeuron[i].parent;
@@ -213,6 +215,14 @@ bool judgeTypes(const NeuronTree &nt, string& allTypesInfo){
                     m.color.b = colortable[1][2];
                     errorMarkerList.push_back(m);
                     connect = false;
+                }
+                if(prtType == 3){
+                    dendriteAxonCount++;
+                    dendriteAxonIndex.push_back(i);
+                }
+                if(prtType == 1){
+                    distalAxonCount++;
+                    distalAxonIndex.push_back(i);
                 }
             }
             break;
@@ -243,6 +253,10 @@ bool judgeTypes(const NeuronTree &nt, string& allTypesInfo){
                     m.color.b = colortable[1][2];
                     errorMarkerList.push_back(m);
                     connect = false;
+                }
+                if(prtType == 1){
+                    proximalAxonCount++;
+                    proximalAxonIndex.push_back(i);
                 }
             }
             break;
@@ -284,6 +298,47 @@ bool judgeTypes(const NeuronTree &nt, string& allTypesInfo){
     }
     if(!connect){
         allTypesInfo += "type connect false is existed";
+    }
+
+    if(dendriteAxonCount>1){
+        allTypesInfo += (" " + to_string(dendriteAxonCount) + " 3-2 connect");
+        for(int i=0; i<dendriteAxonIndex.size(); ++i){
+            NeuronSWC tmp = nt.listNeuron[dendriteAxonIndex[i]];
+            ImageMarker m = ImageMarker(tmp.x,tmp.y,tmp.z);
+            m.color.r = colortable[1][0];
+            m.color.g = colortable[1][1];
+            m.color.b = colortable[1][2];
+            errorMarkerList.push_back(m);
+        }
+        connect = false;
+    }
+
+    if(distalAxonCount>1){
+        allTypesInfo += (" " + to_string(distalAxonCount) + " 1-2 connect");
+        for(int i=0; i<distalAxonIndex.size(); ++i){
+            NeuronSWC tmp = nt.listNeuron[distalAxonIndex[i]];
+            ImageMarker m = ImageMarker(tmp.x,tmp.y,tmp.z);
+            m.color.r = colortable[1][0];
+            m.color.g = colortable[1][1];
+            m.color.b = colortable[1][2];
+            errorMarkerList.push_back(m);
+        }
+        connect = false;
+    }
+
+    if(proximalAxonCount>1){
+        allTypesInfo += (" " + to_string(proximalAxonCount) + " 1-4 connect");
+        if(proximalAxonCount>2){
+            for(int i=0; i<proximalAxonIndex.size(); ++i){
+                NeuronSWC tmp = nt.listNeuron[proximalAxonIndex[i]];
+                ImageMarker m = ImageMarker(tmp.x,tmp.y,tmp.z);
+                m.color.r = colortable[1][0];
+                m.color.g = colortable[1][1];
+                m.color.b = colortable[1][2];
+                errorMarkerList.push_back(m);
+            }
+            connect = false;
+        }
     }
 
     return connect && allType;
@@ -490,9 +545,9 @@ bool writeErrorApoList(QString errorMarkersFile){
     QList<CellAPO> apoList;
     for(int i=0; i<errorMarkerList.size(); ++i){
         CellAPO tmp;
-        tmp.x = errorMarkerList[i].x;
-        tmp.y = errorMarkerList[i].y;
-        tmp.z = errorMarkerList[i].z;
+        tmp.x = errorMarkerList[i].x + 1;
+        tmp.y = errorMarkerList[i].y + 1;
+        tmp.z = errorMarkerList[i].z + 1;
         tmp.color.r = errorMarkerList[i].color.r;
         tmp.color.g = errorMarkerList[i].color.g;
         tmp.color.b = errorMarkerList[i].color.b;

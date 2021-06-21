@@ -874,6 +874,13 @@ XYZ BranchTree::getBranchGlobalVector(vector<long long> pointsIndex){
     return p2-p1;
 }
 
+float BranchTree::getTwoBranchAngle(vector<long long> pointsIndex1, vector<long long> pointsIndex2, double d){
+    XYZ v1 = getBranchLocalVector(pointsIndex1,d);
+    XYZ v2 = getBranchLocalVector(pointsIndex2,d);
+    double cosAngle = dot(normalize(v1),normalize(v2));
+    return (acos(cosAngle)/PI)*180;
+}
+
 bool BranchTree::setChildenBranchType(int branchIndex, int type){
     queue<int> branchDQ;
     for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
@@ -923,6 +930,17 @@ bool BranchTree::getLevelIndex(vector<int> &levelIndex, int level){
     return true;
 }
 
+bool BranchTree::pruningByLength(int length){
+    for(int i=0; i<branches.size(); ++i){
+        if(branches[i].rLevel == 0 && branches[i].length<length){
+            branches[i].rLevel = -1;
+            this->setParentBranchRLevel(i);
+            branches[i].setBranchType(ToDeleteType);
+        }
+    }
+    return true;
+}
+
 bool BranchTree::pruningByLength(unsigned char* pdata, V3DLONG* sz, int length, double linearityTh){
     bool isCompleted = false;
     while(!isCompleted){
@@ -944,6 +962,17 @@ bool BranchTree::pruningByLength(unsigned char* pdata, V3DLONG* sz, int length, 
             float pc12 = branches[i].getBranchPcaValue(pdata,sz,10);
             int prtIndex = branches[i].parentIndex;
             if(pc12<linearityTh || (prtIndex != -1 && branches[prtIndex].length<length)){
+                if(pc12>=linearityTh && branches[prtIndex].rLevel == 1){
+                    vector<V3DLONG> pointsIndexPrt;
+                    vector<V3DLONG> pointsIndex;
+                    int d = 5;
+                    branches[prtIndex].get_r_pointsIndex_of_branch(pointsIndexPrt);
+                    branches[i].get_pointsIndex_of_branch(pointsIndex);
+                    float angle = 180 - getTwoBranchAngle(pointsIndex,pointsIndexPrt,d);
+                    if(angle<45){
+                        continue;
+                    }
+                }
                 branches[i].rLevel = -1;
                 this->setParentBranchRLevel(i);
                 branches[i].setBranchType(ToDeleteType);
@@ -1222,6 +1251,338 @@ bool BranchTree::pruningAdjacentSoma2(const QString &multiMarkerPath){
     }
 
     return true;
+}
+
+bool BranchTree::getSomaNList(const QString &multiMarkerIndexPath, vector<int>& somaNList){
+    ifstream multiMarkerIndexFile(multiMarkerIndexPath.toStdString().c_str(),ios::in);
+    string n;
+    somaNList.clear();
+    while (getline(multiMarkerIndexFile,n)) {
+        somaNList.push_back(stoi(n));
+    }
+    multiMarkerIndexFile.close();
+    return true;
+}
+
+float BranchTree::getProbability(float angle, int lamda){
+    QTime e_start;
+    e_start.start();
+    int k = angle/splitAngleCount;
+    int fac = facs[k];
+//    for(int i=1; i<=k; ++k){
+//        fac *= k;
+//    }
+//    qDebug()<<"fac time: "<<e_start.elapsed();
+    float result = (pow(lamda,k)/(float)fac)*exp(-lamda);
+//    qDebug()<<"all time: "<<e_start.elapsed();
+    return result;
+}
+
+bool BranchTree::pruningAdjacentSoma3(const QString &multiMarkerIndexPath, int lamda){
+    qDebug()<<"------pruningAdjacentSoma3------";
+
+    vector<int> somaNList;
+    getSomaNList(multiMarkerIndexPath,somaNList);
+
+
+    vector<int> level0Index;
+    this->getLevelIndex(level0Index,0);
+    queue<int> branchQ;
+    for(int i=0; i<level0Index.size(); ++i){
+        int branchIndex = level0Index[i];
+        if(branches[branchIndex].rLevel != -1){
+            branchQ.push(branchIndex);
+        }
+    }
+
+    double somaR = nt.listNeuron[somaIndex].r;
+
+    vector<vector<int> > branchesIndexVector;
+
+    while (!branchQ.empty()) {
+        int branchIndex = branchQ.front();
+        branchQ.pop();
+        if(branches[branchIndex].rLevel == -1){
+            continue;
+        }
+        vector<V3DLONG> pointsIndex;
+        branches[branchIndex].get_pointsIndex_of_branch(pointsIndex);
+        bool meetOtherSoma = false;
+        for(int i=0; i<pointsIndex.size(); ++i){
+            V3DLONG curIndex = pointsIndex[i];
+            bool isNearSoma = false;
+            for(int j=0; j<somaNList.size(); j++){
+                if(nt.listNeuron[curIndex].parent != -1 && somaNList[j] == nt.listNeuron[curIndex].n){
+                    isNearSoma = true;
+                    break;
+                }
+            }
+            if(isNearSoma){
+                nt.listNeuron[curIndex].type = BreakType;
+                branches[branchIndex].setBranchType(ToDeleteType,true);
+                nt.listNeuron[curIndex].type = AdjacentSomaType;
+                meetOtherSoma = true;
+                vector<int> branchesIndex;
+                branchesIndex.push_back(branchIndex);
+                while (branches[branchIndex].parentIndex != -1) {
+                    branchIndex = branches[branchIndex].parentIndex;
+                    branchesIndex.push_back(branchIndex);
+                }
+                reverse(branchesIndex.begin(),branchesIndex.end());
+                branchesIndexVector.push_back(branchesIndex);
+                break;
+            }
+        }
+
+        if(meetOtherSoma){
+//            this->setChildenBranchDeleteType(branchIndex);
+        }else{
+            for(int j=0; j<branches[branchIndex].childrenIndex.size(); ++j){
+                int cIndex = branches[branchIndex].childrenIndex[j];
+                if(branches[cIndex].rLevel != -1){
+                    branchQ.push(cIndex);
+                }
+            }
+        }
+    }
+
+    qDebug()<<"other soma size: "<<branchesIndexVector.size();
+
+    int d = 5;
+
+    for(int i=0; i<branchesIndexVector.size(); ++i){
+        int size = branchesIndexVector[i].size();
+//        qDebug()<<"i: "<<i;
+//        vector<bool> flag = vector<bool>(size,false);
+        vector<float> probabilitiesThisSoma;
+        vector<float> probabilitiesOtherSoma;
+
+        float lengthAll = 0;
+        for(int j=0; j<size; ++j){
+            int branchIndex = branchesIndexVector[i][j];
+            lengthAll += branches[branchIndex].length;
+        }
+        float lengthCur = 0;
+
+        for(int j=0; j<size-1; ++j){
+            int branchIndex = branchesIndexVector[i][j];
+            int childrenSize = branches[branchIndex].childrenIndex.size();
+
+            lengthCur += branches[branchIndex].length;
+
+            int nextBranchIndex = branchesIndexVector[i][j+1];
+
+            vector<V3DLONG> pointsIndexCur;
+            vector<V3DLONG> pointsIndexNext;
+            vector<V3DLONG> pointsIndexOther;
+            branches[branchIndex].get_r_pointsIndex_of_branch(pointsIndexCur); //negative direction
+            branches[nextBranchIndex].get_pointsIndex_of_branch(pointsIndexNext); //negative direction
+
+            float curAngle, nextAngle;
+            float curProbability = 1, nextProbability = 1;
+
+            for(int k=0; k<childrenSize; ++k){
+                int cIndex = branches[branchIndex].childrenIndex[k];
+                if(cIndex != nextBranchIndex){
+                    pointsIndexOther.clear();
+                    branches[cIndex].get_pointsIndex_of_branch(pointsIndexOther);
+                    curAngle = 180 - getTwoBranchAngle(pointsIndexCur,pointsIndexOther,d);
+                    nextAngle = 180 - getTwoBranchAngle(pointsIndexNext,pointsIndexOther,d);
+                    curProbability *= getProbability(curAngle,lamda);
+                    nextProbability *= getProbability(nextAngle,lamda);
+                }
+            }
+            probabilitiesThisSoma.push_back(curProbability*(1 - lengthCur/lengthAll));
+            probabilitiesOtherSoma.push_back(nextProbability*(lengthCur/lengthAll));
+
+        }
+
+        for(int j=0; j<size-1; ++j){
+            vector<V3DLONG> pointsIndexCur;
+            vector<V3DLONG> pointsIndexPre;
+            vector<V3DLONG> pointsIndexOther;
+            if((probabilitiesThisSoma[j]*probabilitiesThisSoma[j+1]
+                    < probabilitiesOtherSoma[j]*probabilitiesOtherSoma[j+1])
+                     || j == size-2){
+                int branchIndex = branchesIndexVector[i][j];
+                branches[branchIndex].rLevel = 0;
+                this->setChildenBranchDeleteType(branchIndex);
+                this->setParentBranchRLevel(branchIndex);
+                if(j!=0 && probabilitiesThisSoma[j]<probabilitiesOtherSoma[j]){
+                    branches[branchIndex].setBranchType(ToDeleteType);
+                    int branchPreIndex = branchesIndexVector[i][j-1];
+
+                    pointsIndexCur.clear();
+                    pointsIndexPre.clear();
+                    branches[branchIndex].get_pointsIndex_of_branch(pointsIndexCur); //negative direction
+                    branches[branchPreIndex].get_r_pointsIndex_of_branch(pointsIndexPre); //negative direction
+
+                    for(int k=0; k<branches[branchPreIndex].childrenIndex.size(); ++k){
+                        int cIndex = branches[branchPreIndex].childrenIndex[k];
+                        if(cIndex == branchIndex)
+                            continue;
+                        pointsIndexOther.clear();
+                        branches[cIndex].get_pointsIndex_of_branch(pointsIndexOther);
+                        float curAngle = 180 - getTwoBranchAngle(pointsIndexCur,pointsIndexOther,d);
+                        float preAngle = 180 - getTwoBranchAngle(pointsIndexPre,pointsIndexOther,d);
+                        if(curAngle<preAngle){
+                            this->setChildenBranchDeleteType(cIndex);
+                            branches[cIndex].setBranchType(ToDeleteType);
+                        }
+                    }   
+                }
+                break;
+            }
+        }
+//        for(int j=0; j<size-1; ++j){
+//            qDebug()<<"flag j: "<<flag[j];
+//            int branchIndex = branchesIndexVector[i][j];
+//            branches[branchIndex].setBranchType(4);
+//        }
+    }
+
+    return true;
+}
+
+bool BranchTree::pruningAdjacentSoma4(float lengthMax, int lamda){
+
+    qDebug()<<"------pruningAdjacentSoma4------";
+
+    if(this->branches.size()>BigBranchNumber){
+        qDebug()<<"the branch number is too big, do nothing!";
+        return false;
+    }
+//    vector<vector<int> > branchesIndexVector;
+    map<float,vector<int> > branchesIndexMap;
+    for(int i=0; i<branches.size(); ++i){
+        if(branches[i].rLevel == 0){
+            float lengthToSoma = 0;
+            lengthToSoma += branches[i].length;
+            vector<int> branchesIndex;
+            branchesIndex.clear();
+            branchesIndex.push_back(i);
+            int prtIndex = branches[i].parentIndex;
+            while(prtIndex != -1){
+                branchesIndex.push_back(prtIndex);
+                lengthToSoma += branches[prtIndex].length;
+                prtIndex = branches[prtIndex].parentIndex;
+            }
+            if(lengthToSoma<lengthMax)
+                continue;
+            reverse(branchesIndex.begin(),branchesIndex.end());
+            branchesIndexMap[lengthToSoma] = branchesIndex;
+        }
+    }
+
+    int d = 5;
+//    qDebug()<<"lengthMax size: "<<branchesIndexMap.size();
+    map<float,vector<int> >::reverse_iterator it = branchesIndexMap.rbegin();
+    while (it != branchesIndexMap.rend()) {
+//        qDebug()<<"path length: "<<it->first;
+        vector<int> branchesIndex = it->second;
+        int leafIndex = branchesIndex.back();
+        if(nt.listNeuron[branches[leafIndex].endPointIndex].type == ToDeleteType){
+            it++;
+            continue;
+        }
+
+        int size = branchesIndex.size();
+        vector<float> probabilitiesThisSoma;
+        vector<float> probabilitiesOtherSoma;
+
+        float lengthAll = 0;
+        for(int j=0; j<size; ++j){
+            int branchIndex = branchesIndex[j];
+            lengthAll += branches[branchIndex].length;
+        }
+//        qDebug()<<"lengthAll: "<<lengthAll;
+        float lengthCur = 0;
+
+        for(int j=0; j<size-1; ++j){
+
+            int branchIndex = branchesIndex[j];
+            int childrenSize = branches[branchIndex].childrenIndex.size();
+
+//            qDebug()<<j<<" branchIndex: "<<branchIndex;
+
+            lengthCur += branches[branchIndex].length;
+
+            int nextBranchIndex = branchesIndex[j+1];
+
+            vector<V3DLONG> pointsIndexCur;
+            vector<V3DLONG> pointsIndexNext;
+            vector<V3DLONG> pointsIndexOther;
+            branches[branchIndex].get_r_pointsIndex_of_branch(pointsIndexCur); //negative direction
+            branches[nextBranchIndex].get_pointsIndex_of_branch(pointsIndexNext); //negative direction
+
+            float curAngle, nextAngle;
+            float curProbability = 1, nextProbability = 1;
+
+            for(int k=0; k<childrenSize; ++k){
+                int cIndex = branches[branchIndex].childrenIndex[k];
+                if(cIndex != nextBranchIndex){
+                    pointsIndexOther.clear();
+                    branches[cIndex].get_pointsIndex_of_branch(pointsIndexOther);
+//                    qDebug()<<"-------start to get angle-----------";
+                    curAngle = 180 - getTwoBranchAngle(pointsIndexCur,pointsIndexOther,d);
+                    nextAngle = 180 - getTwoBranchAngle(pointsIndexNext,pointsIndexOther,d);
+//                    qDebug()<<"-------end to get angle-----------";
+                    curProbability *= getProbability(curAngle,lamda);
+                    nextProbability *= getProbability(nextAngle,lamda);
+//                    qDebug()<<"-------end to get probability-----------";
+                }
+            }
+            probabilitiesThisSoma.push_back(curProbability*(1 - lengthCur/lengthAll));
+            probabilitiesOtherSoma.push_back(nextProbability*(lengthCur/lengthAll));
+
+        }
+
+        for(int j=0; j<size-1; ++j){
+            vector<V3DLONG> pointsIndexCur;
+            vector<V3DLONG> pointsIndexPre;
+            vector<V3DLONG> pointsIndexOther;
+            if((probabilitiesThisSoma[j]*probabilitiesThisSoma[j+1]
+                    < probabilitiesOtherSoma[j]*probabilitiesOtherSoma[j+1])){
+//                qDebug()<<j<<" -------start to delete-----";
+                int branchIndex = branchesIndex[j];
+                branches[branchIndex].rLevel = 0;
+                this->setChildenBranchDeleteType(branchIndex);
+                this->setParentBranchRLevel(branchIndex);
+//                qDebug()<<"---------start to check other child---------";
+                if(j!=0 && probabilitiesThisSoma[j]<probabilitiesOtherSoma[j]){
+                    branches[branchIndex].setBranchType(ToDeleteType);
+                    int branchPreIndex = branchesIndex[j-1];
+
+                    pointsIndexCur.clear();
+                    pointsIndexPre.clear();
+                    branches[branchIndex].get_pointsIndex_of_branch(pointsIndexCur); //negative direction
+                    branches[branchPreIndex].get_r_pointsIndex_of_branch(pointsIndexPre); //negative direction
+
+                    for(int k=0; k<branches[branchPreIndex].childrenIndex.size(); ++k){
+                        int cIndex = branches[branchPreIndex].childrenIndex[k];
+                        if(cIndex == branchIndex)
+                            continue;
+                        pointsIndexOther.clear();
+                        branches[cIndex].get_pointsIndex_of_branch(pointsIndexOther);
+                        float curAngle = 180 - getTwoBranchAngle(pointsIndexCur,pointsIndexOther,d);
+                        float preAngle = 180 - getTwoBranchAngle(pointsIndexPre,pointsIndexOther,d);
+                        if(curAngle<preAngle){
+                            this->setChildenBranchDeleteType(cIndex);
+                            branches[cIndex].setBranchType(ToDeleteType);
+                        }
+                    }
+                }
+//                qDebug()<<"---------end to check other child---------";
+
+
+                break;
+            }
+        }
+//        qDebug()<<"-----------end turn-----------";
+
+        it++;
+    }
+
 }
 
 bool BranchTree::pruningCross(double angleTh, double lengthTh){
@@ -1691,7 +2052,14 @@ void BranchTree::calRlevel0Branches(unsigned char *pdata, long long *sz, ofstrea
         if(branches[i].rLevel == 0 && branches[i].parentIndex != -1){
             int prtIndex = branches[i].parentIndex;
             float res = branches[i].getBranchPcaValue(pdata,sz,10);
-            csvFile<<branches[prtIndex].length<<','<<res<<','<<branches[i].length<<endl;
+            float lengthToSoma = 0;
+            lengthToSoma += branches[i].length;
+            int tmpIndex = prtIndex;
+            while (tmpIndex != -1) {
+                lengthToSoma += branches[tmpIndex].length;
+                tmpIndex = branches[tmpIndex].parentIndex;
+            }
+            csvFile<<branches[prtIndex].length<<','<<res<<','<<branches[i].length<<','<<lengthToSoma<<endl;
         }
     }
 }

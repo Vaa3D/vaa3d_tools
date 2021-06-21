@@ -61,22 +61,27 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
         QString swcPath = infiles[0];
         QString imgPath = infiles[1];
-        QString markerPath = infiles[2];
+        QString markerIndexPath = infiles[2];
 
 
         double lengthTh = inparas.size()>=1 ? atof(inparas[0]) : 11;
         double linearityTh = inparas.size()>=2 ? atof(inparas[1]) : 1.4;
         double angleTh = inparas.size()>=3 ? atof(inparas[2]) : 160;
-        double times = inparas.size()>=4 ? atof(inparas[3]) : 5;
-        bool noisyPruning = inparas.size()>=5 ? atoi(inparas[4]) : true;
-        bool multiSomaPruning = inparas.size()>=6 ? atoi(inparas[5]) : true;
-        bool structurePruning = inparas.size()>=7 ? atoi(inparas[6]) : true;
-        bool inflectionPruning = inparas.size()>=8 ? atoi(inparas[7]) : false;
+        int lamda = inparas.size()>=4 ? atoi(inparas[3]) : 2;
+        float lengthMax = inparas.size()>=5 ? atof(inparas[4]) : 850;
+        double times = inparas.size()>=6 ? atof(inparas[5]) : 5;
+        bool noisyPruning = inparas.size()>=7 ? atoi(inparas[6]) : true;
+        bool multiSomaPruning = inparas.size()>=8 ? atoi(inparas[7]) : true;
+        bool structurePruning = inparas.size()>=9 ? atoi(inparas[8]) : true;
+        bool inflectionPruning = inparas.size()>=10 ? atoi(inparas[9]) : false;
 
         unsigned char* pdata = 0;
         int dataType = 1;
         V3DLONG sz[4] = {0,0,0,0};
-        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+        if(noisyPruning || inflectionPruning){
+            simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+        }
+
 
         NeuronTree t = readSWC_file(swcPath);
         for(int i=0; i<t.listNeuron.size(); ++i){
@@ -96,13 +101,18 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         if(multiSomaPruning){
-            bt.pruningAdjacentSoma2(markerPath);
+            bt.pruningAdjacentSoma3(markerIndexPath,lamda);
+            bt.update();
+            bt.pruningAdjacentSoma4(lengthMax,lamda);
+
             bt.savePrunedNeuronTree(swcPath + "_outf3.swc");
             bt.update();
         }
 
         if(structurePruning){
             bt.pruningCross(angleTh,lengthTh);
+            bt.update();
+            bt.pruningByLength(lengthTh);
             bt.savePrunedNeuronTree(swcPath + "_outf4.swc");
             bt.update();
         }
