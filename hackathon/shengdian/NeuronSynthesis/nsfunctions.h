@@ -7,6 +7,10 @@
 using namespace std;
 struct BranchUnit
 {
+    /*tail node: tip or branch nodes
+     * head node: branch or soma nodes
+            *  parent_id=-1
+    */
     V3DLONG id; V3DLONG parent_id;
     int type,level;
     double length,pathLength;

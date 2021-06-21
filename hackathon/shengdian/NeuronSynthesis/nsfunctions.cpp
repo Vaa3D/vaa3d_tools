@@ -94,20 +94,36 @@ bool BranchTree::init(NeuronTree in_nt){
             bru.id=this->listBranch.size()+1;
             V3DLONG sp_id=nt.hashNeuron.value(s.pn);
             int ptype=ntype[sp_id];
-            while(ptype==1)
+            if(ptype==2)
             {
+                //this branch doesn't have internode.
                 NeuronSWC sp=nt.listNeuron[sp_id];
                 bu_nodes.append(sp);
-                sp_id=nt.hashNeuron.value(sp.pn);
-                if(soma_index==sp_id)
+            }
+            else
+            {
+                while(true)
                 {
                     NeuronSWC sp=nt.listNeuron[sp_id];
                     bu_nodes.append(sp);
-                    bru.parent_id=-1;
-                    break;
+                    sp_id=nt.hashNeuron.value(sp.pn);
+                    if(soma_index==sp_id)
+                    {
+                        NeuronSWC sp=nt.listNeuron[sp_id];
+                        bu_nodes.append(sp);
+                        bru.parent_id=-1;
+                        break;
+                    }
+                    if(ntype[sp_id]==2)
+                    {
+                        NeuronSWC sp=nt.listNeuron[sp_id];
+                        bu_nodes.append(sp);
+                        break;
+                    }
+                    ptype=ntype[sp_id];
                 }
-                ptype=ntype[sp_id];
             }
+
             bru.type=bu_nodes.at(0).type;
             //sort and load into Branch struct
             for(V3DLONG b=bu_nodes.size()-1;b>=0;b--)
@@ -346,7 +362,7 @@ bool writeBranchSequence_file(const QString& filename, const BranchTree& bt)
         {
             tofile.write(brsstart.toAscii());
             BranchSequence brs=bt.branchseq.at(i);
-            for(int j=brs.listbr.size()-1;j>0;j--)
+            for(int j=brs.listbr.size()-1;j>=0;j--)
             {
                 V3DLONG bid=brs.listbr.at(j);
                 BranchUnit bu = bt.listBranch[bid];

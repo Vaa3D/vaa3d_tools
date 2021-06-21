@@ -453,7 +453,6 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         printHelp();
 	}
 	else return false;
-
 	return true;
 }
 
@@ -472,4 +471,6 @@ void printHelp()
     qDebug()<<"2. vaa3d -x <libname> -f To_topology_tree -i <input_swc> -p <save eswc> -o <out_file_path>";
     qDebug()<<"3. vaa3d -x <libname> -f Three_bifurcation_pruning -i <input_swc> -p <just label> <save eswc> -o <out_file_path>";
     qDebug()<<"4. vaa3d -x <libname> -f Smooth_branch -i <input_swc> -p <smooth_win_size> <save eswc> -o <out_file_path>";
+    qDebug()<<"5. vaa3d -x <libname> -f SWC_to_branches -i <input_swc> -p <save_br> <save_brs> -o <out_br_file_path> <out_brs_file_path>";
+    qDebug()<<"6. vaa3d -x <libname> -f Branch_to_NeuronTree -i <input_br_file> -o <out_file_path>";
 }

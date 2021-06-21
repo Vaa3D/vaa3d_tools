@@ -178,20 +178,6 @@ NeuronTree getSubtree(NeuronTree nt,V3DLONG nodeid)
     }
    return nt_out;
 }
-//NeuronTree reindexNT(NeuronTree nt)
-//{
-//    NeuronTree nt_out_reindex;nt_out_reindex.listNeuron.clear();nt_out_reindex.hashNeuron.clear();
-//    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
-//    {
-//        NeuronSWC s = nt.listNeuron[i];
-//        s.pn=(s.pn<0)?s.pn:(nt.hashNeuron.value(s.pn)+1);
-////        s.n=nt.hashNeuron.value(s.n)+1;
-//        s.n=i+1;
-//        nt_out_reindex.listNeuron.append(s);
-//        nt_out_reindex.hashNeuron.insert(s.n,nt_out_reindex.listNeuron.size()-1);
-//    }
-//   return nt_out_reindex;
-//}
 double get_nt_len(NeuronTree nt)
 {
     double out_len=0.0;
