@@ -1,4 +1,5 @@
 #include "BrainAtlasControlPanel.h"
+#include "BrainAtlas_define.h"
 
 #include <fstream>
 #include <sstream>
@@ -68,6 +69,10 @@ BrainAtlasControlPanel::BrainAtlasControlPanel(QWidget* parent, V3DPluginCallbac
 
 	this->refresh = false;
 
+	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
+	QString windowTitleQ = "Brain Atlas v" + QString::fromStdString(versionString);
+	this->setWindowTitle(windowTitleQ);
+
 	this->show();
 }
 
@@ -114,7 +119,9 @@ void BrainAtlasControlPanel::regionTypeMapGen(QProgressDialog* iniProgressBarPtr
 NeuronTree BrainAtlasControlPanel::convertRegion2tree(string regionName)
 {
 	NeuronTree outputTree;
-	int nodeType = int(this->regionMap.find(regionName) - this->regionMap.begin()) % 20 + 1;
+	int nodeType = this->regionMap.at(regionName).CCFintensity % 16;
+	if (nodeType >= 0 && nodeType < 5) nodeType += 16;
+	if (!regionName.compare("VISp1")) nodeType += 1;
 	for (auto& body : this->regionMap.at(regionName).regionBodies)
 	{
 		for (auto& slice : body.surfaceCoordSets)
