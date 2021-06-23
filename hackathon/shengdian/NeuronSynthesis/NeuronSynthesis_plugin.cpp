@@ -18,17 +18,18 @@ QStringList NeuronSynthesis::menulist() const
 
 QStringList NeuronSynthesis::funclist() const
 {
-	return QStringList()
-        <<tr("Tip_branch_pruning")
-       <<tr("Three_bifurcation_processing")
-         <<tr("Three_bifurcation_pruning")
-        << tr("Smooth_branch")
-      <<tr("Split_neuron_types")
-       <<tr("To_topology_tree")
-      <<tr("SWC_to_branches")
+    return QStringList()
+            <<tr("Tip_branch_pruning")
+           <<tr("Three_bifurcation_processing")
+          <<tr("Redundancy_bifurcation_pruning")
+         << tr("Smooth_branch")
+         <<tr("Split_neuron_types")
+        <<tr("To_topology_tree")
+       <<tr("SWC_to_branches")
+      <<tr("SWC_to_enhanced_branches")
      <<tr("Branch_to_NeuronTree")
-     <<tr("Processing_main")
-		<<tr("help");
+    <<tr("Processing_main")
+    <<tr("help");
 }
 
 void NeuronSynthesis::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -87,7 +88,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_remove(nt);
+            nt_3bp=redundancy_bifurcation_pruning(nt);
         }
         //pruning and reorder-Index of swc
         NeuronTree nt_pruning_iter_in;nt_pruning_iter_in.deepCopy(nt_3bp);
@@ -111,11 +112,11 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
 	}
-    else if (func_name == tr("Three_bifurcation_pruning"))
+    else if (func_name == tr("Redundancy_bifurcation_pruning"))
     {
-        /* designed by shengdian, 2021-06-16
+        /* designed by shengdian, updated at 2021-06-23
          * ---
-         * processing of three-bifurcation branches
+         * processing of bifurcation branches with more than two child-nodes
          * --Usage--
          * input: swc or eswc file
          * output: processed swc file
@@ -133,9 +134,9 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         NeuronTree nt_out;
         if(just_label)
-            nt_out=three_bifurcation_remove(nt,true);
+            nt_out=redundancy_bifurcation_pruning(nt,true);
         else
-            nt_out=three_bifurcation_remove(nt);
+            nt_out=redundancy_bifurcation_pruning(nt);
         //save to file
         if(saveESWC)
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
@@ -167,9 +168,9 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         NeuronTree nt_out;
         if(pruning_flag)
-            nt_out=three_bifurcation_remove(nt);
+            nt_out=redundancy_bifurcation_pruning(nt);
         else
-            nt_out=three_bifurcation_processing(nt);
+            nt_out=three_bifurcation_processing(nt); //this can't process bifurcation with more than three nodes
         //save to file
         if(saveESWC)
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
@@ -261,7 +262,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_remove(nt);
+            nt_3bp=redundancy_bifurcation_pruning(nt);
         }
         NeuronTree nt_3bp_p;nt_3bp_p.deepCopy(nt_3bp);
         if(pruning_thre>0)
@@ -320,7 +321,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //processing of three-bifruction
             nt_3bp.listNeuron.clear();nt_3bp.hashNeuron.clear();
-            nt_3bp=three_bifurcation_remove(nt);
+            nt_3bp=redundancy_bifurcation_pruning(nt);
         }
         NeuronTree nt_3bp_p;nt_3bp_p.deepCopy(nt_3bp);
         if(pruning_thre>0)
@@ -408,7 +409,8 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         //convert to branch-tree
-        BranchTree bt;bt.init(nt);
+        BranchTree bt;
+        bt.initialized=bt.init(nt);
         bt.init_branch_sequence();
         //save to file
         string out_br_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".br");
@@ -422,6 +424,40 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         {
             //write branch sequence to file
             writeBranchSequence_file(QString::fromStdString(out_brs_filename),bt);
+        }
+    }
+    else if (func_name == tr("SWC_to_enhanced_branches"))
+    {
+        /* designed by shengdian, 2021-06-23
+         * ---
+         * convert neuron tree to branches with enhanced features
+         * save branches (<filename>.ebr)
+                 * #BRSTART
+                 * ##Features
+                 * ###id,parent_id,type,level,length,pathLength
+                 * ###(enhanced_features of left and rigth child-branch)lclength,lcpathLength,rclength,rcpathLength
+                 * ###(enhanced_features of left and right subtree)lslength,lspathLength,rslength,rspathLength
+                 * ###(enhanced_features of left and rigth subtree tips)lstips,rstips
+                 * ##Nodes
+                 * ###n,type,x,y,z,radius,parent
+                 * #BREND
+         * --Usage--
+         * input: swc or eswc file
+         * output: <filename>.ebr
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else { printHelp(); return false;}
+        //read para list
+        //read swc
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        //convert to branch-tree
+        BranchTree bt;        bt.initialized=bt.init(nt);
+        if(bt.get_enhacedFeatures())
+        {
+            //save to file
+            string out_br_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".ebr");
+            writeBranchTree_file(QString::fromStdString(out_br_filename),bt,true);
         }
     }
     else if (func_name == tr("Branch_to_NeuronTree"))
@@ -469,7 +505,7 @@ void printHelp()
     qDebug()<<"               -----Usage_basic: function for neuron synthesis project----              ";
     qDebug()<<"1. vaa3d -x <libname> -f Tip_branch_pruning -i <input_swc> -p <pruning_threshold> <save eswc> -o <out_file_path>";
     qDebug()<<"2. vaa3d -x <libname> -f To_topology_tree -i <input_swc> -p <save eswc> -o <out_file_path>";
-    qDebug()<<"3. vaa3d -x <libname> -f Three_bifurcation_pruning -i <input_swc> -p <just label> <save eswc> -o <out_file_path>";
+    qDebug()<<"3. vaa3d -x <libname> -f Redundancy_bifurcation_pruning -i <input_swc> -p <just label> <save eswc> -o <out_file_path>";
     qDebug()<<"4. vaa3d -x <libname> -f Smooth_branch -i <input_swc> -p <smooth_win_size> <save eswc> -o <out_file_path>";
     qDebug()<<"5. vaa3d -x <libname> -f SWC_to_branches -i <input_swc> -p <save_br> <save_brs> -o <out_br_file_path> <out_brs_file_path>";
     qDebug()<<"6. vaa3d -x <libname> -f Branch_to_NeuronTree -i <input_br_file> -o <out_file_path>";
