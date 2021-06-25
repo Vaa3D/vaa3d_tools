@@ -1,5 +1,7 @@
 #include "BrainScanner.h"
 
+#include <fstream>
+
 set<string> BrainScanner::involvedRegionScan(const vector<float>& coord, const boost::container::flat_map<string, brainRegion>& regionMap)
 {
 	set<string> outputRegionNames;
@@ -89,4 +91,75 @@ bool BrainScanner::candidateFilter(const vector<float>& coord, const brainRegion
 		return false;
 	}
 	return true;
+}
+
+void BrainScanner::scanSomas(const boost::container::flat_map<string, brainRegion>& regionMap)
+{
+	QDir inputDirQ(this->somaScanRootPathQ);
+	inputDirQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+	QStringList fileList = inputDirQ.entryList();
+	
+	string outputFileName = this->somaScanRootPathQ.toStdString() + "\\somaRegion.csv";
+	ofstream outputFile(outputFileName);
+	outputFile << "Neuron Name" << "," << "Region(s)" << endl;
+	for (auto& file : fileList)
+	{
+		if (file.endsWith(".swc"))
+		{
+			QString swcFullNameQ = this->somaScanRootPathQ + "\\" + file;
+			NeuronTree inputTree = readSWC_file(swcFullNameQ);
+
+			NeuronSWC somaNode = NeuronStructUtil::findSomaNode(inputTree);
+			if (somaNode.type != 1 || somaNode.parent != -1)
+			{
+				for (auto& node : inputTree.listNeuron)
+				{
+					if (node.parent == -1)
+					{
+						somaNode = node;
+						break;
+					}
+				}
+
+				if (somaNode.parent != -1) continue;
+			}
+
+			outputFile << file.left(file.length() - 4).toStdString() << ",";
+			vector<float> somaCoord = { somaNode.x, somaNode.y, somaNode.z };
+			set<string> locatedRegions = this->involvedRegionScan(somaCoord, regionMap);
+
+			cout << file.toStdString() << ": ";
+			for (auto& region : locatedRegions)
+			{
+				cout << region << " ";
+				outputFile << region << " ";
+			}
+			cout << endl;
+			outputFile << endl;
+		}
+		else if (file.endsWith(".apo"))
+		{
+			string brainID = file.left(file.length() - 4).toStdString();
+			QList<CellAPO> inputAPOlist = readAPO_file(this->somaScanRootPathQ + "\\" + file);
+			
+			string outFileName = this->somaScanRootPathQ.toStdString() + "\\" + brainID + "somaRegionMap.csv";
+			ofstream outFile(outFileName);
+			outFile << "Z" << "," << "X" << "," << "Y" << "," << "Marker Name" << "," << "Region(s)" << endl;
+			for (auto& apo : inputAPOlist)
+			{
+				outFile << int(apo.z) << "," << int(apo.x) << "," << int(apo.y) << "," << apo.name.toStdString() << ",";
+				vector<float> somaCoord = { apo.x, apo.y, apo.z };
+				set<string> locatedRegions = this->involvedRegionScan(somaCoord, regionMap);
+				for (auto& region : locatedRegions) outFile << region << " ";
+				outFile << endl;
+			}
+
+			if (outFile.is_open()) outFile.close();
+		}
+	}
+
+	if (outputFile.is_open()) outputFile.close();
+
+	QString outputMsgQ = "Scanned soma regions saved to " + QString::fromStdString(outputFileName);
+	v3d_msg(outputMsgQ);
 }

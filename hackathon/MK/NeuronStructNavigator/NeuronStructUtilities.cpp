@@ -296,12 +296,24 @@ int NeuronStructUtil::findSomaNodeID(const NeuronTree& inputTree)
 {
 	set<int> somaNodeIDs;
 	for (auto& node : inputTree.listNeuron)
-	{
 		if (node.type == 1 && node.parent == -1) somaNodeIDs.insert(node.n);
-	}
 
 	if (somaNodeIDs.size() == 1) return *somaNodeIDs.begin();
 	else return -1;
+}
+
+NeuronSWC NeuronStructUtil::findSomaNode(const NeuronTree& inputTree)
+{
+	vector<NeuronSWC> somaNodes;
+	for (auto& node : inputTree.listNeuron)
+		if (node.type == 1 && node.parent == -1) somaNodes.push_back(node);
+
+	if (somaNodes.size() == 1) return somaNodes.at(0);
+	else
+	{
+		NeuronSWC blankSomaNode;
+		return blankSomaNode;
+	}
 }
 
 void NeuronStructUtil::somaCleanUp(NeuronTree& inputTree)
@@ -1596,11 +1608,11 @@ NeuronTree NeuronStructUtil::convertHUSTswc(QString inputFileNameQ)
 			newNode.n = stoi(lineSplit.at(0));
 			newNode.type = stoi(lineSplit.at(1));
 			newNode.x = stof(lineSplit.at(4));
-			newNode.y = stof(lineSplit.at(3));
-			newNode.z = 11400 - stof(lineSplit.at(2));
+			newNode.y = stof(lineSplit.at(2)) - 500;
+			newNode.z = 11400 - stof(lineSplit.at(3));
 			newNode.parent = stoi(lineSplit.at(6));
 			newNode.radius = stof(lineSplit.at(5));
-			if (newNode.n == 0 || newNode.type == 0 || newNode.parent == 0)
+			if (newNode.parent == 0)
 			{
 				lineSplit.clear();
 				continue;

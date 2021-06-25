@@ -43,6 +43,8 @@ public:
 
 public slots:
 	void regionSelected(int row, int col);
+	void browseFolder();
+	void scanSomaOKclicked();
 
 private:
 	V3DPluginCallback2* thisCallback;

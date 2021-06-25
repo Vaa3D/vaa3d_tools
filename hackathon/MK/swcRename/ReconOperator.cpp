@@ -518,6 +518,7 @@ void ReconOperator::markerApo2swc()
 			for (auto& apo : inputApoList)
 			{
 				NeuronSWC newNode;
+				newNode.n = apo.name.toInt();
 				newNode.x = apo.x;
 				newNode.y = apo.y;
 				newNode.z = apo.z;

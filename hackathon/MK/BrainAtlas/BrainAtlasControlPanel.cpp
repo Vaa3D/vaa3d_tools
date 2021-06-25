@@ -238,3 +238,18 @@ void BrainAtlasControlPanel::cleanUpRegionRecords()
 
 	this->refresh = false;
 }
+
+void BrainAtlasControlPanel::browseFolder()
+{
+	QObject* signalSender = sender();
+	QString objName = signalSender->objectName();
+
+	if (objName == "pushButton_2")
+		currentUIptr->lineEdit->setText(QFileDialog::getExistingDirectory(this, tr("Choose folder"), "", QFileDialog::DontUseNativeDialog));
+}
+
+void BrainAtlasControlPanel::scanSomaOKclicked()
+{
+	this->myScanner.somaScanRootPathQ = currentUIptr->lineEdit->text();
+	this->myScanner.scanSomas(this->regionMap);
+}
