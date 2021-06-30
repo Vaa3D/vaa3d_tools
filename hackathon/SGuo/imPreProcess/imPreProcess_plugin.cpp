@@ -9,7 +9,6 @@
 #include "v3d_message.h"
 #include "imPreProcess_plugin.h"
 
-
 using namespace std;
 Q_EXPORT_PLUGIN2(imPreProcess, TestPlugin);
 
@@ -137,31 +136,40 @@ bool subtract_minimum_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
 
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    unsigned char* outimg = 0;
-    subtract_min(data1d, mysz, outimg);
+    void* outimg = 0; //new unsigned char[tolSZ];
+    switch (pixeltype) {
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            subtract_min(data1d, mysz, (unsigned char* &)outimg);
+        }
+        break;
+
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            subtract_min(data1d, mysz, (short int* &)outimg);
+        }
+        break;
+
+    default: ;
+    }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char*) outimg, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     QString title = QObject::tr("Subtract Minimum Plugin");
     callback.setImage(newwin, new4DImage);
@@ -182,28 +190,55 @@ bool subtract_minimum_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
          return false;
     }
 
-    QString input_image=infiles.at(0);
-    QString output_image=outfiles.at(0);
+    char * input_image = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * output_image = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
+    {
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
 
     V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    unsigned char* dst = 0;
-    int datatype = 1;
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    switch (datatype)
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
+
+    void* dst = 0;
+    switch (pixeltype)
     {
-    case 1:
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            subtract_min(data1d, mysz, (unsigned char* &)dst);
+        }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            subtract_min(data1d, mysz, (short int* &)dst);
+        }
+        break;
+
+    default: ;
     }
 
-    simple_loadimage_wrapper(callback, input_image.toStdString().c_str(), src, mysz, datatype);
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
-    subtract_min(src, mysz, dst);
+    callback.saveImage(&outimg, output_image);
 
-    simple_saveimage_wrapper(callback, output_image.toStdString().c_str(), dst, mysz, datatype);
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
     return 1;
 }
@@ -226,22 +261,14 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
-
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
+    V3DLONG mysz[4];
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
     //add input dialog
     BilateralFilterDialog dialog(callback, parent);
@@ -272,15 +299,31 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     cout<<"colorSigma = "<<colorSigma<<endl;
     cout<<"ch = "<<c<<endl;
 
-    V3DLONG mysz[4];
-    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    // gaussian_filter
+    void* outimg = 0; //new unsigned char[tolSZ];
+    switch (pixeltype) {
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            bilateralfilter(data1d, (unsigned char *&)outimg, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+        }
+        break;
 
-    unsigned char* outimg = 0;
-    bilateralfilter(data1d, outimg, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma);
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            bilateralfilter(data1d, (short int *&)outimg, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+        }
+        break;
+
+    default: ;
+    }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     QString title = QObject::tr("Bilateral Filter Plugin");
     callback.setImage(newwin, new4DImage);
@@ -302,12 +345,12 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
          return false;
     }
 
-    QString input_image=infiles.at(0);
-    QString output_image=outfiles.at(0);
+    char * input_image = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * output_image = ((vector<char*> *)(output.at(0).p))->at(0);
 
     double spaceSigmaXY, spaceSigmaZ, colorSigma;
 
-    int k_sz[3] = {(inparas.size() >= 1) ? atoi(inparas[0]) : 5, (inparas.size() >= 1) ? atoi(inparas[0]) : 5, (inparas.size() >= 2) ? atoi(inparas[1]) : 3};
+    int k_sz[3] = {(inparas.size() >= 1) ? atoi(inparas[0]) : 3, (inparas.size() >= 1) ? atoi(inparas[0]) : 3, (inparas.size() >= 2) ? atoi(inparas[1]) : 1};
 
     spaceSigmaXY = k_sz[0]/3.0;
     spaceSigmaZ = k_sz[2]/3.0;
@@ -318,25 +361,55 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
     if (k_sz[1]>7) k_sz[1]=5;
     if (k_sz[2]>5) k_sz[2]=3;
 
-    V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    unsigned char* dst = 0;
-    int datatype = 1;
-
-    simple_loadimage_wrapper(callback, input_image.toStdString().c_str(), src, mysz, datatype);
-
-    switch (datatype)
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
     {
-    case 1:
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    V3DLONG mysz[4] = {0,0,0,0};
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
+
+    void* dst = 0;
+    switch (pixeltype)
+    {
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = 0;
+                data1d = p4DImage->getRawData();
+                bilateralfilter(data1d, (unsigned char* &)dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+
+            }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+        case V3D_UINT16:
+            {
+                short int * data1d_16 = 0;
+                data1d_16 = (short int *)p4DImage->getRawData();
+                bilateralfilter(data1d_16, (short int* &)dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+            }
+        break;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
     }
 
-    bilateralfilter(src, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma);
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
-    simple_saveimage_wrapper(callback, output_image.toStdString().c_str(), dst, mysz, datatype);
+    callback.saveImage(&outimg, output_image);
+
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
     return 1;
 }
@@ -358,8 +431,6 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = 0;
-    data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
@@ -367,26 +438,34 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
-
+    // gaussian_filter
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
-    V3DLONG tolSZ = M*N*P*sc;
-    unsigned char* outimg = new unsigned char[tolSZ];
-    for(V3DLONG i=0; i<tolSZ; i++) outimg[i] = data1d[i];
 
-    fft_filter(outimg, mysz);
+    void* outimg = 0; //new unsigned char[tolSZ];
+    switch (pixeltype) {
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            fft_filter(data1d, mysz, (unsigned char* &) outimg, 1);
+        }
+        break;
+
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            fft_filter(data1d, mysz, (short int* &) outimg, 2);
+        }
+        break;
+
+    default: ;
+    }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char*) outimg, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     QString title = QObject::tr("FFT Plugin");
     callback.setImage(newwin, new4DImage);
@@ -409,27 +488,57 @@ bool fft_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
         return false;
     }
 
-    QString input_image=infiles.at(0);
-    QString output_image=outfiles.at(0);
+    char * input_image = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * output_image = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
+    {
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
 
     V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    int datatype = 1;
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    simple_loadimage_wrapper(callback, input_image.toStdString().c_str(), src, mysz, datatype);
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
 
-    switch (datatype)
+    void* dst = 0;
+    switch (pixeltype)
     {
-    case 1:
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = 0;
+                data1d = p4DImage->getRawData();
+                fft_filter(data1d, mysz, (unsigned char* &)dst, pixeltype);
+            }
+            break;
+
+        case V3D_UINT16:
+            {
+                short int * data1d_16 = 0;
+                data1d_16 = (short int *)p4DImage->getRawData();
+                fft_filter(data1d_16, mysz, (short int* &)dst, pixeltype);
+            }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
     }
 
-    fft_filter(src, mysz);
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
-    simple_saveimage_wrapper(callback, output_image.toStdString().c_str(), src, mysz, datatype);
+    callback.saveImage(&outimg, output_image);
+
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
     return 1;
 }
@@ -451,7 +560,6 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
@@ -459,17 +567,7 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
-
     //add input dialog
-
     MorphologyDialog dialog(callback, parent);
     if (!dialog.image)
         return 0;
@@ -496,28 +594,62 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    unsigned char* outimg = 0;
-    switch(Opt)
-    {
-        case 0:
-            cout<<"do Tophat"<<endl;
-            grey_tophat(data1d, mysz, Wx, Wy, c, outimg);
-            break;
-        case 1:
-            cout<<"do Erosion"<<endl;
-            grey_erosion(data1d, mysz, Wx, Wy, c, outimg);
-            break;
-        case 2:
-            cout<<"do Dilation"<<endl;
-            grey_dilation(data1d, mysz, Wx, Wy, c, outimg);
-            break;
-        default:
-            break;
+    void* outimg = 0; //new unsigned char[tolSZ];
+    switch (pixeltype) {
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            switch(Opt)
+            {
+                case 0:
+                    cout<<"do Tophat"<<endl;
+                    grey_tophat(data1d, mysz, Wx, Wy, c, (unsigned char* &)outimg);
+                    break;
+                case 1:
+                    cout<<"do Erosion"<<endl;
+                    grey_erosion(data1d, mysz, Wx, Wy, c, (unsigned char* &)outimg);
+                    break;
+                case 2:
+                    cout<<"do Dilation"<<endl;
+                    grey_dilation(data1d, mysz, Wx, Wy, c, (unsigned char* &)outimg);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            switch(Opt)
+            {
+                case 0:
+                    cout<<"do Tophat"<<endl;
+                    grey_tophat(data1d, mysz, Wx, Wy, c, (short int* &)outimg);
+                    break;
+                case 1:
+                    cout<<"do Erosion"<<endl;
+                    grey_erosion(data1d, mysz, Wx, Wy, c, (short int* &)outimg);
+                    break;
+                case 2:
+                    cout<<"do Dilation"<<endl;
+                    grey_dilation(data1d, mysz, Wx, Wy, c, (short int* &)outimg);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+
+    default: ;
     }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char*)outimg, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     QString title = QObject::tr("Grey Morphology Plugin");
     callback.setImage(newwin, new4DImage);
@@ -540,41 +672,84 @@ bool grey_morphology_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
     if(inparas.size() >= 1) Wxy = atoi(inparas.at(0));
     if(inparas.size() >= 2) Opt = atoi(inparas.at(1));
 
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
+    {
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
     V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    unsigned char* dst = 0;
-    int datatype = 1;
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    simple_loadimage_wrapper(callback, input_image, src, mysz, datatype);
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
 
-    switch (datatype)
-    {
-    case 1:
+    void* dst = 0; //new unsigned char[tolSZ];
+    switch (pixeltype) {
+        case V3D_UINT8:
+        {
+            unsigned char* data1d = 0;
+            data1d = p4DImage->getRawData();
+            switch(Opt)
+            {
+                case 0:
+                    cout<<"do Tophat"<<endl;
+                    grey_tophat(data1d, mysz, Wxy, Wxy, 1, (unsigned char* &)dst);
+                    break;
+                case 1:
+                    cout<<"do Erosion"<<endl;
+                    grey_erosion(data1d, mysz, Wxy, Wxy, 1, (unsigned char* &)dst);
+                    break;
+                case 2:
+                    cout<<"do Dilation"<<endl;
+                    grey_dilation(data1d, mysz, Wxy, Wxy, 1, (unsigned char* &)dst);
+                    break;
+                default:
+                    break;
+            }
+        }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+    case V3D_UINT16:
+        {
+            short int* data1d = 0;
+            data1d = (short int *) p4DImage->getRawData();
+            switch(Opt)
+            {
+                case 0:
+                    cout<<"do Tophat"<<endl;
+                    grey_tophat(data1d, mysz, Wxy, Wxy, 1, (short int* &)dst);
+                    break;
+                case 1:
+                    cout<<"do Erosion"<<endl;
+                    grey_erosion(data1d, mysz, Wxy, Wxy, 1, (short int* &)dst);
+                    break;
+                case 2:
+                    cout<<"do Dilation"<<endl;
+                    grey_dilation(data1d, mysz, Wxy, Wxy, 1, (short int* &)dst);
+                    break;
+                default:
+                    break;
+            }
+        }
+        break;
+
+    default: ;
     }
 
-    switch(Opt)
-    {
-        case 0:
-            cout<<"do Tophat"<<endl;
-            grey_tophat(src, mysz, Wxy, Wxy, 1, dst);
-            break;
-        case 1:
-            cout<<"do Erosion"<<endl;
-            grey_erosion(src, mysz, Wxy, Wxy, 1, dst);
-            break;
-        case 2:
-            cout<<"do Dilation"<<endl;
-            grey_dilation(src, mysz, Wxy, Wxy, 1, dst);
-            break;
-        default:
-            break;
-    }
 
-    simple_saveimage_wrapper(callback, output_image, dst, mysz, datatype);
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
+
+    callback.saveImage(&outimg, output_image);
+
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
     return 1;
 }
@@ -596,7 +771,7 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
+
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
@@ -604,15 +779,9 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
+
     //add input dialog
+
     SigmaCorrectionDialog dialog(callback, parent);
     if (!dialog.image)
         return 0;
@@ -638,11 +807,31 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
 
-    unsigned char* outimg = 0;
-    sigma_correction(data1d, mysz, cutoff, gain, outimg);
+    void* outimg = 0;
+    switch (pixeltype)
+    {
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = p4DImage->getRawData();
+                sigma_correction(data1d, mysz, cutoff, gain, (unsigned char* &)outimg, 1);
+            }
+            break;
+
+        case V3D_UINT16:
+            {
+                short int * data1d_16 = (short int *)p4DImage->getRawData();
+                sigma_correction(data1d_16, mysz, cutoff, gain, (short int* &) outimg, 2);
+            }
+        break;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
+    }
+
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     QString title = QObject::tr("Sigma Correction Plugin");
     callback.setImage(newwin, new4DImage);
@@ -666,25 +855,53 @@ bool sigma_correction_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     cout<<"cutoff = "<<cutoff<<endl;
 
-    V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    unsigned char* dst = 0;
-
-    int datatype = 1;
-    simple_loadimage_wrapper(callback, input_image, src, mysz, datatype);
-
-    switch (datatype)
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
     {
-    case 1:
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    V3DLONG mysz[4] = {0,0,0,0};
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
+
+    void* dst = 0;
+    switch (pixeltype)
+    {
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = p4DImage->getRawData();
+                sigma_correction(data1d, mysz, cutoff, gain, (unsigned char* &)dst, 1);
+            }
+            break;
+
+        case V3D_UINT16:
+            {
+                dst = (void *)(new short int [N*M*P*sc]);
+                short int * data1d_16 = (short int *)p4DImage->getRawData();
+                sigma_correction(data1d_16, mysz, cutoff, gain, (short int* &) dst, 2);
+            }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
     }
 
-    sigma_correction(src, mysz, cutoff, gain, dst);
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
-    simple_saveimage_wrapper(callback, output_image, dst, mysz, datatype);
+    callback.saveImage(&outimg, output_image);
+
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
     return 1;
 }
@@ -706,22 +923,12 @@ bool enhancement_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-
-    switch (pixeltype)
-    {
-    case V3D_UINT8:
-        break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
-    }
 
     //add input dialog
     PreProcessDialog dialog(callback, parent);
@@ -765,39 +972,90 @@ bool enhancement_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
     V3DLONG tolSZ = M*N*P*sc;
 
-    unsigned char* temp = 0;
-    unsigned char* dst = 0;
+    switch (pixeltype)
+    {
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = p4DImage->getRawData();
+                unsigned char* dst = 0;
+                unsigned char* temp = 0;
+                temp = new unsigned char[tolSZ];
+                cout<<"do sigma correction "<<endl;
+                sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
+                cout<<"finish sigma correction "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
 
-    temp = new unsigned char[tolSZ];
+                dst = 0;
+                subtract_min(temp, mysz, dst);
 
-    cout<<"do sigma correction "<<endl;
-    sigma_correction(data1d, mysz, cutoff, gain, dst);
-    cout<<"finish sigma correction "<<endl;
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    subtract_min(temp, mysz, dst);
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"do bilateral filter "<<endl;
+                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+                cout<<"finish bilateral filter "<<endl;
 
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    cout<<"do bilateral filter "<<endl;
-    bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma);
-    cout<<"finish bilateral filter "<<endl;
+                cout<<"do fft "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                fft_filter(temp, mysz, dst, 1);
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"finish fft "<<endl;
+                intensity_rescale(temp, mysz, dst, 1);
 
-    cout<<"do fft "<<endl;
-    fft_filter(dst, mysz);
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    cout<<"finish fft "<<endl;
-    intensity_rescale(temp, mysz, dst);
+                // display
+                Image4DSimple * new4DImage = new Image4DSimple();
+                new4DImage->setData(dst, N, M, P, 1, pixeltype);
+                v3dhandle newwin = callback.newImageWindow();
+                QString title = QObject::tr("Enhancement Plugin");
+                callback.setImage(newwin, new4DImage);
+                callback.setImageName(newwin, title);
+                callback.updateImageWindow(newwin);
+            }
+        break;
+        case V3D_UINT16:
+            {
+                short int* data1d = (short int *)p4DImage->getRawData();
+                short int*  dst = 0;
+                short int* temp = new short int[tolSZ];
+                cout<<"do sigma correction "<<endl;
+                sigma_correction(data1d, mysz, cutoff, gain, dst, 2);
+                cout<<"finish sigma correction "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
 
-    // display
-    Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(dst, N, M, P, 1, V3D_UINT8);
-    v3dhandle newwin = callback.newImageWindow();
-    QString title = QObject::tr("Enhancement Plugin");
-    callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin, title);
-    callback.updateImageWindow(newwin);
+                dst = 0;
+                subtract_min(temp, mysz, dst);
+
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"do bilateral filter "<<endl;
+                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+                cout<<"finish bilateral filter "<<endl;
+
+                cout<<"do fft "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                fft_filter(temp, mysz, dst, 2);
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"finish fft "<<endl;
+                intensity_rescale(temp, mysz, dst, 2);
+
+                // display
+                Image4DSimple * new4DImage = new Image4DSimple();
+                new4DImage->setData((unsigned char*)dst, N, M, P, 1, pixeltype);
+                v3dhandle newwin = callback.newImageWindow();
+                QString title = QObject::tr("Enhancement Plugin");
+                callback.setImage(newwin, new4DImage);
+                callback.setImageName(newwin, title);
+                callback.updateImageWindow(newwin);
+            }
+        break;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
+    }
 
     return 1;
 }
@@ -845,47 +1103,103 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
     cout<<"sigma correction gain = "<<gain<<endl;
     cout<<"sigma correction cutoff = "<<cutoff<<endl;
 
-    V3DLONG mysz[4] = {0,0,0,0};
-    unsigned char* src = 0;
-    unsigned char* temp = 0;
-    unsigned char* dst = 0;
-    int datatype = 1;
-
-    simple_loadimage_wrapper(callback, input_image, src, mysz, datatype);
-
-    switch (datatype)
+    Image4DSimple *p4DImage = callback.loadImage(input_image);
+    if(!p4DImage || !p4DImage->valid())
     {
-    case 1:
+         v3d_msg("Fail to load the input image.");
+         if (p4DImage) {delete p4DImage; p4DImage=0;}
+         return false;
+    }
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    V3DLONG mysz[4] = {0,0,0,0};
+    mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
+
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    cout<<"pixeltype = "<<pixeltype<<endl;
+
+    switch (pixeltype)
+    {
+        case V3D_UINT8:
+            {
+                unsigned char* data1d = p4DImage->getRawData();
+                unsigned char*  dst = 0;
+                unsigned char* temp = new unsigned char[tolSZ];
+                cout<<"do sigma correction "<<endl;
+                sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
+                cout<<"finish sigma correction "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+
+                dst = 0;
+                subtract_min(temp, mysz, dst);
+
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"do bilateral filter "<<endl;
+                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+                cout<<"finish bilateral filter "<<endl;
+
+                cout<<"do fft "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                fft_filter(temp, mysz, dst, 1);
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"finish fft "<<endl;
+                intensity_rescale(temp, mysz, dst, 1);
+
+                Image4DSimple outimg;
+                outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
+
+                callback.saveImage(&outimg, output_image);
+            }
         break;
-    default:
-        v3d_msg("Invalid data type. Do nothing.");
-        return 0;
+
+        case V3D_UINT16:
+            {
+                short int* data1d = (short int *)p4DImage->getRawData();
+                short int* dst = 0;
+                short int* temp = new short int[tolSZ];
+                cout<<"do sigma correction "<<endl;
+                sigma_correction(data1d, mysz, cutoff, gain, dst, 2);
+                cout<<"finish sigma correction "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+
+                dst = 0;
+                subtract_min(temp, mysz, dst);
+
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"do bilateral filter "<<endl;
+                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+                cout<<"finish bilateral filter "<<endl;
+
+                cout<<"do fft "<<endl;
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                fft_filter(temp, mysz, dst, 2);
+                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                dst = 0;
+                cout<<"finish fft "<<endl;
+                intensity_rescale(temp, mysz, dst, 2);
+
+                Image4DSimple outimg;
+                outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
+
+                callback.saveImage(&outimg, output_image);
+            }
+        break;
+
+        default:
+            v3d_msg("Invalid data type. Do nothing.");
+            return 0;
     }
 
-    V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
-    temp = new unsigned char[tolSZ];
-
-    cout<<"do sigma correction "<<endl;
-    sigma_correction(src, mysz, cutoff, gain, dst);
-    cout<<"finish sigma correction "<<endl;
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    subtract_min(temp, mysz, dst);
-
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    cout<<"do bilateral filter "<<endl;
-    bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma);
-    cout<<"finish bilateral filter "<<endl;
-
-    cout<<"do fft "<<endl;
-    fft_filter(dst, mysz);
-    for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-    dst = 0;
-    cout<<"finish fft "<<endl;
-    intensity_rescale(temp, mysz, dst);
-    simple_saveimage_wrapper(callback, output_image, dst, mysz, datatype);
-
+    if(p4DImage) {delete []p4DImage; p4DImage=0;}
     return 1;
 }
 
@@ -896,7 +1210,6 @@ long quality_test_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
 //    long result = pytf.Excute(argvs);
 
-    v3d_msg("To be implemented");
     return 1;
 }
 
@@ -946,8 +1259,6 @@ long quality_test_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outp
 //        myFile << input_image << "," << label << "\n";
 //    }
 //    myFile.close();
-
-    v3d_msg("To be implemented");
     return 1;
 }
 
@@ -1035,6 +1346,5 @@ long test_enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 //        simple_saveimage_wrapper(callback, output_image, dst, mysz, datatype);
 //    }
 
-    v3d_msg("To be implemented");
     return 1;
 }

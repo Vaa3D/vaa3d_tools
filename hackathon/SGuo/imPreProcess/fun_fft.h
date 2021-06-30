@@ -27,6 +27,7 @@ enum FFT_direction
     FFT_BACKWARD
 };
 
+bool isPower(int n);
 bool FFT_inplace(complex_type* &data, V3DLONG *sz, const FFT_direction fft_direction);
 
 bool FFT_1d(complex_type* &data, V3DLONG size, const FFT_direction fft_direction);

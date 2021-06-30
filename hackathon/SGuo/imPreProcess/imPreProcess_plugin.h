@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <QCheckBox>
 #include "v3d_interface.h"
+#include "stackutil.h"
 #include "helpFunc.h"
 #include "fun_fft.h"
 #include "morphology.h"
@@ -173,7 +174,7 @@ class BilateralFilterDialog : public QDialog
             wx_editor = new QLineEdit(QString("").setNum(3));
             wy_editor = new QLineEdit(QString("").setNum(3));
             wz_editor = new QLineEdit(QString("").setNum(1));
-            sigma_editor = new QLineEdit(QString("").setNum(15));
+            sigma_editor = new QLineEdit(QString("").setNum(35));
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
 
@@ -361,10 +362,10 @@ class PreProcessDialog : public QDialog
 
             wxy_bf_editor = new QLineEdit(QString("").setNum(3));
             wz_bf_editor = new QLineEdit(QString("").setNum(1));
-            sigma_editor = new QLineEdit(QString("").setNum(15));
+            sigma_editor = new QLineEdit(QString("").setNum(35));
 
             th_checkbox = new QCheckBox("do tophat");
-            th_checkbox->setCheckState(Qt::Checked);
+            th_checkbox->setCheckState(Qt::Unchecked);
             wx_th_editor = new QLineEdit(QString("").setNum(11));
             wy_th_editor = new QLineEdit(QString("").setNum(11));
 

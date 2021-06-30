@@ -16,8 +16,7 @@ HEADERS	+= imPreProcess_plugin.h \
     helpFunc.h \
     morphology.h
 SOURCES	+= imPreProcess_plugin.cpp \
-    bilateral_filter.cpp \
-    fft.cpp \
+    fun_fft.cpp \
     helpFunc.cpp \
     morphology.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -25,5 +24,3 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 TARGET	= $$qtLibraryTarget(imPreProcess)
 DESTDIR	= $$VAA3DPATH/bin/plugins/imPreProcess/
 
-#DISTFILES += \
-#    features.py
