@@ -15,6 +15,28 @@ void BranchUnit::get_features(){
         }
     }
 }
+void BranchTree::get_globalFeatures(){
+    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return;}
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0);
+    btype=this->getBranchType();
+
+    this->total_length=this->total_path_length=0.0;
+    this->tip_branches=this->soma_branches=this->max_branch_level=0;
+    this->total_branches=siz;
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        BranchUnit bu = this->listBranch.at(i);
+        this->total_length+=bu.length;
+        this->total_path_length+=bu.pathLength;
+        if(btype[i]==0)
+            this->tip_branches+=1;
+        if(bu.parent_id<0)
+            this->soma_branches+=1;
+        this->max_branch_level=(bu.level>this->max_branch_level)?bu.level:this->max_branch_level;
+    }
+}
 bool BranchTree::get_enhacedFeatures()
 {
      /*1. get branch type
@@ -290,6 +312,25 @@ vector<int> BranchTree::getBranchType()
     }
     return btype;
 }
+bool BranchTree::normalize_branchTree(){
+    /*1. get neuron tree length / path_length
+     * 2. branch_len /= neuron_len
+    */
+    V3DLONG siz=this->listBranch.size();
+    if(!siz||!this->initialized)
+        return false;
+    if(this->total_length==0||this->total_path_length==0)
+        return false;
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        this->listBranch[i].normalize_len(this->total_length);
+        this->listBranch[i].normalize_pathlen(this->total_path_length);
+//        if(this->total_branches)
+//            this->listBranch[i].normalize_tip(this->total_branches);
+    }
+    return true;
+}
 BranchTree readBranchTree_file(const QString& filename)
 {
     BranchTree bt;
@@ -456,7 +497,7 @@ bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enh
     }
     return false;
 }
-bool writeBranchSequence_file(const QString& filename, const BranchTree& bt)
+bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced)
 {
     /*File Format:
      *  (from soma to tip branch)
@@ -474,6 +515,10 @@ bool writeBranchSequence_file(const QString& filename, const BranchTree& bt)
     QString confTitle="#This file is used for recording all the branch sequences in a neuron tree (by shengdian).\n";
     QString brsstart="#BRSSTART\n"; QString brsend="#BRSEND\n";
     QString brfHead="#Fhead: id,parent_id,type,level,length,pathLength\n";
+    if(enhanced)
+        brfHead="#Fhead: id,parent_id,type,level,length,pathLength"
+                ",lclength,lcpathLength,lslength,lspathLength,lstips"
+                ",rclength,rcpathLength,rslength,rspathLength,rstips\n";
     if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         //title
@@ -493,7 +538,21 @@ bool writeBranchSequence_file(const QString& filename, const BranchTree& bt)
                 brf+=(","+QString::number(bu.type));
                 brf+=(","+QString::number(bu.level));
                 brf+=(","+QString::number(bu.length));
-                brf+=(","+QString::number(bu.pathLength)+"\n");
+                if(enhanced){
+                    brf+=(","+QString::number(bu.pathLength));
+                    brf+=(","+QString::number(bu.lclength));
+                    brf+=(","+QString::number(bu.lcpathLength));
+                    brf+=(","+QString::number(bu.lslength));
+                    brf+=(","+QString::number(bu.lspathLength));
+                    brf+=(","+QString::number(bu.lstips));
+                    brf+=(","+QString::number(bu.rclength));
+                    brf+=(","+QString::number(bu.rcpathLength));
+                    brf+=(","+QString::number(bu.rslength));
+                    brf+=(","+QString::number(bu.rspathLength));
+                    brf+=(","+QString::number(bu.rstips)+"\n");
+                }
+                else
+                    brf+=(","+QString::number(bu.pathLength)+"\n");
                 tofile.write(brf.toAscii());
             }
             tofile.write(brsend.toAscii());
@@ -774,58 +833,62 @@ NeuronTree three_bifurcation_processing(NeuronTree nt)
 {
     //s1. detect three bifurcation points
     //s2. move one of the branch to the parent of bifurcation node
-    NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
-    if(!nt.listNeuron.size())
-        return nt_out;
+    NeuronTree nt_out;
     V3DLONG siz=nt.listNeuron.size();
-
-    /*1. get the index of nt:
-                                        * swc_n -> index */
-    QHash <int, int>  hashNeuron;hashNeuron.clear();
+    if(!siz)
+        return nt_out;
     V3DLONG somaid=1;
-    for (V3DLONG i=0;i<siz;i++)
-    {
-        hashNeuron.insert(nt.listNeuron[i].n,i);
-        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
-            somaid=i;
-    }
-    // 2. get node type: index -> node_type
-    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1*/
-    std::vector<int> ntype(siz,0);
-    ntype[somaid]=2;
-    for (V3DLONG i=0;i<siz;i++)
-    {
-        NeuronSWC s = nt.listNeuron[i];
-        if(s.pn&&hashNeuron.contains(s.pn))
-        {
-            V3DLONG spn_id=hashNeuron.value(s.pn);
-            ntype[spn_id]+=1;
-        }
-    }
-    for (V3DLONG i=0;i<siz;i++)
-    {
-        NeuronSWC s = nt.listNeuron[i];
-        if(ntype[i]<=2&&s.pn>0&&hashNeuron.contains(s.pn))
-        {
-            V3DLONG spn_id=hashNeuron.value(s.pn);
-            if(ntype[spn_id]>2&&spn_id!=somaid)
-            {
-                cout<<"bifruction node id: "<<s.pn<<endl;
-                V3DLONG spn_id_iter=spn_id;
-                NeuronSWC sp = nt.listNeuron[spn_id_iter];
-                while(ntype[spn_id_iter]!=1)
-                {
-                    spn_id_iter=hashNeuron.value(sp.pn);
-                    s.pn=sp.pn;
-                    if(spn_id_iter==somaid)
-                        break;
-                    sp = nt.listNeuron[spn_id_iter];
-                }
-                ntype[spn_id]-=1;
+    bool another_process=true;
+    NeuronTree in_nt;in_nt.deepCopy(nt);
+    while(another_process){
+        another_process=false;
+        //update somaid
+        for (V3DLONG i=0;i<siz;i++){
+            if(in_nt.listNeuron[i].type==1&&in_nt.listNeuron[i].pn<0){
+                somaid=i; break;
             }
         }
-        nt_out.listNeuron.append(s);
-        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+        std::vector<int> ntype(siz,0);       ntype[somaid]=2;
+        for (V3DLONG i=0;i<siz;i++)
+        {
+            NeuronSWC s = in_nt.listNeuron[i];
+            if(s.pn)
+                ntype[in_nt.hashNeuron.value(s.pn)]+=1;
+        }
+        for (V3DLONG i=0;i<siz;i++)
+        {
+            NeuronSWC s = in_nt.listNeuron[i];
+            if(ntype[i]<=2&&s.pn>0)
+            {
+                V3DLONG spn_id=in_nt.hashNeuron.value(s.pn);
+                if(ntype[spn_id]>2&&spn_id!=somaid)
+                {
+                    if(ntype[spn_id]>3)
+                        another_process=true;
+                    cout<<"bifruction node id: "<<s.pn<<endl;
+                    V3DLONG spn_id_iter=spn_id;
+                    NeuronSWC sp = in_nt.listNeuron[spn_id_iter];
+                    while(ntype[spn_id_iter]!=1)
+                    {
+                        spn_id_iter=in_nt.hashNeuron.value(sp.pn);
+                        s.pn=sp.pn;
+                        if(spn_id_iter==somaid)
+                            break;
+                        sp = in_nt.listNeuron[spn_id_iter];
+                    }
+                    ntype[spn_id]-=1;
+                }
+            }
+            nt_out.listNeuron.append(s);
+            nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+        }
+        if(another_process)
+        {
+            in_nt.listNeuron.clear();in_nt.hashNeuron.clear();
+            in_nt.deepCopy(nt_out);
+            nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
+            cout<<"Another iteration"<<endl;
+        }
     }
     //check the performance
     return nt_out;
