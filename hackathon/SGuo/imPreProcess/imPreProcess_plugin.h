@@ -360,14 +360,17 @@ class PreProcessDialog : public QDialog
             pRoiList=cb.getROI(cb.currentImageWindow());
             int chn_num = image->getCDim();
 
+            bf_checkbox = new QCheckBox("do bilateral");
+            bf_checkbox->setCheckState(Qt::Unchecked);
             wxy_bf_editor = new QLineEdit(QString("").setNum(3));
             wz_bf_editor = new QLineEdit(QString("").setNum(1));
             sigma_editor = new QLineEdit(QString("").setNum(35));
 
-            th_checkbox = new QCheckBox("do tophat");
-            th_checkbox->setCheckState(Qt::Unchecked);
             wx_th_editor = new QLineEdit(QString("").setNum(11));
             wy_th_editor = new QLineEdit(QString("").setNum(11));
+
+            fft_checkbox = new QCheckBox("do fft");
+            fft_checkbox -> setCheckState(Qt::Unchecked);
 
             cutoff_editor = new QLineEdit(QString("").setNum(25));
             gain_editor = new QLineEdit(QString("").setNum(5));
@@ -375,35 +378,30 @@ class PreProcessDialog : public QDialog
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
 
+            gridLayout->addWidget(bf_checkbox, 0,0,1,2);
+            gridLayout->addWidget(fft_checkbox, 0,2,1,2);
 
-            gridLayout->addWidget(new QLabel("Parameters of bilateral filter:"),0,0);
-            gridLayout->addWidget(new QLabel("Window size (# voxels) along xy"),1,0);
-            gridLayout->addWidget(wxy_bf_editor, 1,1,1,5);
-            gridLayout->addWidget(new QLabel("Window size (# voxels) along z"),2,0);
-            gridLayout->addWidget(wz_bf_editor, 2,1,1,5);
-            gridLayout->addWidget(new QLabel("Color sigma value"),3,0);
-            gridLayout->addWidget(sigma_editor, 3,1,1,5);
+            gridLayout->addWidget(new QLabel("Parameters of bilateral filter:"),1,0,1,3);
+            gridLayout->addWidget(new QLabel("Window size (# voxels) along xy"),2,0,1,3);
+            gridLayout->addWidget(wxy_bf_editor, 2,3,1,3);
+            gridLayout->addWidget(new QLabel("Window size (# voxels) along z"),3,0,1,3);
+            gridLayout->addWidget(wz_bf_editor, 3,3,1,3);
+            gridLayout->addWidget(new QLabel("Color sigma value"),4,0,1,3);
+            gridLayout->addWidget(sigma_editor, 4,3,1,3);
 
-            gridLayout->addWidget(new QLabel("Parameters of tophat operator:"),4,0);
-            gridLayout->addWidget(th_checkbox, 5,0,1,5);
-            gridLayout->addWidget(new QLabel("Window size (# voxels) along x"),6,0);
-            gridLayout->addWidget(wx_th_editor, 6,1,1,5);
-            gridLayout->addWidget(new QLabel("Window size (# voxels) along y"),7,0);
-            gridLayout->addWidget(wy_th_editor, 7,1,1,5);
+            gridLayout->addWidget(new QLabel("Parameters of sigma correction:"),5,0,1,3);
+            gridLayout->addWidget(new QLabel("Intensity cutoff (in percentile)"),6,0,1,3);
+            gridLayout->addWidget(cutoff_editor, 6,3,1,3);
+            gridLayout->addWidget(new QLabel("Intensity gain"),7,0,1,3);
+            gridLayout->addWidget(gain_editor, 7,3,1,3);
 
-            gridLayout->addWidget(new QLabel("Parameters of sigma correction:"),8,0);
-            gridLayout->addWidget(new QLabel("Intensity cutoff (in percentile)"),9,0);
-            gridLayout->addWidget(cutoff_editor, 9,1,1,5);
-            gridLayout->addWidget(new QLabel("Intensity gain"),10,0);
-            gridLayout->addWidget(gain_editor, 10,1,1,5);
-
-            gridLayout->addWidget(new QLabel("Channel"),11,0);
-            gridLayout->addWidget(channel_spinbox, 11,1,1,5);
+            gridLayout->addWidget(new QLabel("Channel"),8,0,1,3);
+            gridLayout->addWidget(channel_spinbox, 8,3,1,3);
 
             ok     = new QPushButton("OK");
             cancel = new QPushButton("Cancel");
-            gridLayout->addWidget(cancel, 12,0);
-            gridLayout->addWidget(ok,     12,1,1,5);;
+            gridLayout->addWidget(cancel, 9,1,1,2);
+            gridLayout->addWidget(ok,     9,3,1,2);
 
             setLayout(gridLayout);
             setWindowTitle(QString("Pre-Processing"));
@@ -419,24 +417,24 @@ class PreProcessDialog : public QDialog
         public slots:
         void update()
         {
+            b_do_bilateral = bf_checkbox->checkState();
             Wxy_bf = atof(wxy_bf_editor->text().toStdString().c_str());
             Wz_bf = atof(wz_bf_editor->text().toStdString().c_str());
             colorSigma = atof(sigma_editor->text().toStdString().c_str());
-
-            b_do_th = th_checkbox->checkState();
-            Wx_th = atof(wx_th_editor->text().toStdString().c_str());
-            Wy_th = atof(wy_th_editor->text().toStdString().c_str());
 
             cutoff = atof(cutoff_editor->text().toStdString().c_str());
             gain = atof(gain_editor->text().toStdString().c_str());
 
             ch = channel_spinbox->text().toInt();
+
+            b_do_fft = fft_checkbox->checkState();
+
         }
 
     public:
-        int Wxy_bf, Wz_bf, Wx_th, Wy_th, ch;
+        int Wxy_bf, Wz_bf, ch;
         double colorSigma, cutoff, gain;
-        bool b_do_th;
+        bool b_do_th, b_do_fft, b_do_bilateral;
         Image4DSimple* image;
         ROIList pRoiList;
         QGridLayout *gridLayout;
@@ -445,7 +443,8 @@ class PreProcessDialog : public QDialog
         QLineEdit * wxy_bf_editor;
         QLineEdit * wz_bf_editor;
         QLineEdit * sigma_editor;
-        QCheckBox * th_checkbox;
+        QCheckBox * bf_checkbox;
+        QCheckBox * fft_checkbox;
         QLineEdit * wx_th_editor;
         QLineEdit * wy_th_editor;
         QLineEdit * cutoff_editor;

@@ -29,7 +29,6 @@ void grey_tophat(T* data1d,
 
     V3DLONG offsetc = (c-1)*pagesz;
     //declare temporary pointer
-    outimg = new T [pagesz];
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         for(V3DLONG iy = 0; iy < M; iy++)
@@ -77,7 +76,6 @@ void grey_erosion(T* data1d, V3DLONG *in_sz,
 
     V3DLONG offsetc = (c-1)*pagesz;
     //declare temporary pointer
-    outimg = new T [pagesz];
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         for(V3DLONG iy = 0; iy < M; iy++)
@@ -125,7 +123,6 @@ void grey_dilation(T* data1d, V3DLONG *in_sz,
 
     V3DLONG offsetc = (c-1)*pagesz;
     //declare temporary pointer
-    outimg = new T [pagesz];
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         for(V3DLONG iy = 0; iy < M; iy++)

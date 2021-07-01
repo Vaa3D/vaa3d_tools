@@ -28,9 +28,10 @@ void getColorMask(vector<double> &colorMask, double colorSigma, int dt){
     }
 }
 
-void getGaussianMask(float* &mask, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ){
+void getGaussianMask(float* &mask, int* kernelSZ, double spaceSigmaXY, double spaceSigmaZ)
+{
     V3DLONG tolSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
-    mask = new float[tolSZ];
+
     V3DLONG kernelSZ01 = kernelSZ[0]*kernelSZ[1];
     int centerX = (kernelSZ[0] - 1) / 2;
     int centerY = (kernelSZ[1] - 1) / 2;

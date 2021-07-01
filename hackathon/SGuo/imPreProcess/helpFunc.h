@@ -16,9 +16,19 @@ template <class T>
 bool sigma_correction(T* src, V3DLONG * mysz, double cutoff, double gain, T*  &dst, int dt)
 {
     V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
-    dst = new T[tolSZ];
 
-    int * src1 = new int[tolSZ];
+    int * src1 = 0;
+    try
+    {
+        src1 =new int[tolSZ];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in sigma correction.");
+        if (src1) {delete []src1; src1=0;}
+        return false;
+    }
+
     for (V3DLONG i=0; i<tolSZ; i++) src1[i] = src[i];
 
     cutoff = cal_percentile(src1, tolSZ, cutoff);
@@ -52,6 +62,11 @@ bool sigma_correction(T* src, V3DLONG * mysz, double cutoff, double gain, T*  &d
         if(temp>val_max) temp=val_max;
         dst[i] = temp;
     }
+
+    if(src1){
+        delete[] src1;
+        src1 = 0;
+    }
     return 1;
 }
 
@@ -59,7 +74,6 @@ template <class T>
 bool intensity_rescale(T* src, V3DLONG * mysz, T* &dst, int dt)
 {
     V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
-    dst = new T[tolSZ];
 
     double minfl = INFINITY, maxfl=0.0;
     for (V3DLONG i=0; i<tolSZ; i++)
@@ -92,10 +106,6 @@ bool intensity_rescale(T* src, V3DLONG * mysz, T* &dst, int dt)
 template <class T>
 bool intensity_projection(T* src, V3DLONG * mysz, T* & dst, int flag)
 {
-    V3DLONG stacksz =mysz[0]*mysz[1];
-
-    dst = new T [stacksz];
-
     for(V3DLONG iy = 0; iy < mysz[1]; iy++)
     {
         V3DLONG offsetj = iy*mysz[0];
@@ -129,9 +139,18 @@ template <class T>
 bool subtract_min(T* src, V3DLONG * mysz, T* & dst)
 {
     T* mip = 0;
-    intensity_projection(src, mysz, mip, 2);
+    try
+    {
+        mip =new T[mysz[0]*mysz[1]];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in subtract min.");
+        if (mip) {delete []mip; mip=0;}
+        return false;
+    }
 
-    dst = new T [mysz[0]*mysz[1]*mysz[1]];
+    intensity_projection(src, mysz, mip, 2);
 
     for(V3DLONG iz = 0; iz < mysz[2]; iz++){
         V3DLONG offsetz = iz*mysz[0]*mysz[1];
@@ -142,6 +161,12 @@ bool subtract_min(T* src, V3DLONG * mysz, T* & dst)
             }
         }
     }
+
+    if(mip)
+    {
+        delete[] mip;
+        mip = 0;
+    }
     return 1;
 }
 
@@ -149,17 +174,25 @@ template <class T>
 bool fft_filter(T* src, V3DLONG * mysz, T* & out, int dt)
 {
     V3DLONG tolSize = mysz[0]*mysz[1]*mysz[2];
-    complex_type* dst = 0;
-    dst = new complex_type[tolSize];
-    out = new T[tolSize];
-
     if(!(isPower(mysz[0])|isPower(mysz[1])|isPower(mysz[2])))
     {
         for (V3DLONG i=0; i<tolSize; ++i)
         {
             out[i] = src[i];
         }
-        printf("image size is not power of 2, do nothing");
+        printf("image size is not power of 2, do nothing.\n");
+        return false;
+    }
+
+    complex_type* dst = 0;
+    try
+    {
+        dst = new complex_type[tolSize];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in fft.");
+        if (dst) {delete []dst; dst=0;}
         return false;
     }
 
@@ -218,8 +251,10 @@ bool fft_filter(T* src, V3DLONG * mysz, T* & out, int dt)
         out[i]=(T)temp;
     }
 
-    delete[] dst;
-    dst = 0;
+    if(dst){
+        delete[] dst;
+        dst = 0;
+    }
     return 1;
 }
 

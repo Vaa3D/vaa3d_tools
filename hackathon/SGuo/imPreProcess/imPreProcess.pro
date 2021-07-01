@@ -17,8 +17,7 @@ HEADERS	+= imPreProcess_plugin.h \
     morphology.h
 SOURCES	+= imPreProcess_plugin.cpp \
     fun_fft.cpp \
-    helpFunc.cpp \
-    morphology.cpp
+    helpFunc.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(imPreProcess)

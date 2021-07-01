@@ -11,9 +11,6 @@
 template <class T>
 void im_roll(T * src, T * &dst, V3DLONG* sz, int* d_roll)
 {
-    V3DLONG tolSZ = sz[0]*sz[1]*sz[2];
-    dst = new T[tolSZ];
-
     int centerX = d_roll[0];
     int centerY = d_roll[1];
     int centerZ = d_roll[2];
@@ -57,12 +54,57 @@ void bilateralfilter(T* src, T* &dst, V3DLONG* sz, int* kernelSZ, double spaceSi
 
     vector<double> colorMask = vector<double>();
     getColorMask(colorMask, colorSigma, dt);
+
+    V3DLONG tolkSZ = kernelSZ[0]*kernelSZ[1]*kernelSZ[2];
+
     float* spaceMask = 0;
+    try
+    {
+        spaceMask =new float[tolkSZ];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in bilateral filter.");
+        if (spaceMask) {delete []spaceMask; spaceMask=0;}
+        return;
+    }
     getGaussianMask(spaceMask, kernelSZ, spaceSigmaXY, spaceSigmaZ);
-    dst = new T[tolSZ];
-    double* dst1 = new double[tolSZ];
-    T* srcNew;
-    double* wgt_sum = new double[tolSZ];
+    T* srcNew=0;
+    float* dst1 = 0;
+    float* wgt_sum = 0;
+
+    try
+    {
+        srcNew =new T[tolSZ];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in bilateral filter.");
+        if (srcNew) {delete []srcNew; srcNew=0;}
+        return;
+    }
+
+    try
+    {
+        dst1 =new float[tolSZ];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in bilateral filter.");
+        if (dst1) {delete []dst1; dst1=0;}
+        return;
+    }
+
+    try
+    {
+        wgt_sum =new float[tolSZ];
+    }
+        catch (...)
+    {
+        v3d_msg("Fail to allocate memory in bilateral filter.");
+        if (wgt_sum) {delete []wgt_sum; wgt_sum=0;}
+        return;
+    }
 
     for (V3DLONG i=0; i<tolSZ; i++)
     {
@@ -93,12 +135,23 @@ void bilateralfilter(T* src, T* &dst, V3DLONG* sz, int* kernelSZ, double spaceSi
     {
         if(dst1[i]<0) dst1[i]=0;
         dst[i] = int(dst1[i]/wgt_sum[i]);
-
     }
 
+    if(spaceMask){
+        delete[] spaceMask;
+        spaceMask = 0;
+    }
     if(srcNew){
         delete[] srcNew;
         srcNew = 0;
+    }
+    if(dst1){
+        delete[] dst1;
+        dst1 = 0;
+    }
+    if(wgt_sum){
+        delete[] wgt_sum;
+        wgt_sum = 0;
     }
 }
 #endif // BILATERAL_FILTER_H

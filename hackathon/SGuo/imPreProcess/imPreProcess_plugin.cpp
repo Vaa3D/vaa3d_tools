@@ -145,6 +145,7 @@ bool subtract_minimum_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     void* outimg = 0; //new unsigned char[tolSZ];
     switch (pixeltype) {
@@ -152,6 +153,17 @@ bool subtract_minimum_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                outimg =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in subtract min.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
+
             subtract_min(data1d, mysz, (unsigned char* &)outimg);
         }
         break;
@@ -160,6 +172,16 @@ bool subtract_minimum_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                outimg =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in subtract min.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             subtract_min(data1d, mysz, (short int* &)outimg);
         }
         break;
@@ -170,11 +192,17 @@ bool subtract_minimum_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char*) outimg, N, M, P, 1, pixeltype);
-    v3dhandle newwin = callback.newImageWindow();
+    v3dhandle newwin;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+        newwin = callback.currentImageWindow();
+    else
+        newwin = callback.newImageWindow();
     QString title = QObject::tr("Subtract Minimum Plugin");
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, title);
     callback.updateImageWindow(newwin);
+
+    outimg = 0;
     return 1;
 }
 
@@ -207,6 +235,7 @@ bool subtract_minimum_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     V3DLONG mysz[4] = {0,0,0,0};
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     cout<<"pixeltype = "<<pixeltype<<endl;
@@ -218,6 +247,16 @@ bool subtract_minimum_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                dst =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in subtract min.");
+                if (dst) {delete []dst; dst=0;}
+                return false;
+            }
             subtract_min(data1d, mysz, (unsigned char* &)dst);
         }
         break;
@@ -226,6 +265,16 @@ bool subtract_minimum_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                dst =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in subtract min.");
+                if (dst) {delete []dst; dst=0;}
+                return false;
+            }
             subtract_min(data1d, mysz, (short int* &)dst);
         }
         break;
@@ -240,6 +289,7 @@ bool subtract_minimum_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
+    dst = 0;
     return 1;
 }
 
@@ -269,6 +319,7 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     //add input dialog
     BilateralFilterDialog dialog(callback, parent);
@@ -306,6 +357,16 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                outimg =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in bilateral.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             bilateralfilter(data1d, (unsigned char *&)outimg, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
         }
         break;
@@ -314,6 +375,16 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                outimg =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in bilateral.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             bilateralfilter(data1d, (short int *&)outimg, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
         }
         break;
@@ -324,11 +395,19 @@ bool bilateral_filter_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
-    v3dhandle newwin = callback.newImageWindow();
+
+    v3dhandle newwin;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+        newwin = callback.currentImageWindow();
+    else
+        newwin = callback.newImageWindow();
+
     QString title = QObject::tr("Bilateral Filter Plugin");
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, title);
     callback.updateImageWindow(newwin);
+
+    outimg = 0;
     return 1;
 }
 
@@ -375,6 +454,7 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     V3DLONG mysz[4] = {0,0,0,0};
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     cout<<"pixeltype = "<<pixeltype<<endl;
@@ -386,6 +466,16 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
             {
                 unsigned char* data1d = 0;
                 data1d = p4DImage->getRawData();
+                try
+                {
+                    dst =new unsigned char[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in bilateral.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 bilateralfilter(data1d, (unsigned char* &)dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
 
             }
@@ -395,6 +485,16 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
             {
                 short int * data1d_16 = 0;
                 data1d_16 = (short int *)p4DImage->getRawData();
+                try
+                {
+                    dst =new short int[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in bilateral.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 bilateralfilter(data1d_16, (short int* &)dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
             }
         break;
@@ -409,8 +509,12 @@ bool bilateral_filter_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     callback.saveImage(&outimg, output_image);
 
-    if(p4DImage) {delete []p4DImage; p4DImage=0;}
-
+    if(p4DImage)
+    {
+        delete []p4DImage;
+        p4DImage=0;
+    }
+    dst = 0;
     return 1;
 }
 
@@ -441,6 +545,7 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // gaussian_filter
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     void* outimg = 0; //new unsigned char[tolSZ];
     switch (pixeltype) {
@@ -448,6 +553,16 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                outimg =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in fft.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             fft_filter(data1d, mysz, (unsigned char* &) outimg, 1);
         }
         break;
@@ -456,6 +571,16 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                outimg =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in fft.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             fft_filter(data1d, mysz, (short int* &) outimg, 2);
         }
         break;
@@ -466,12 +591,17 @@ bool fft_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char*) outimg, N, M, P, 1, pixeltype);
-    v3dhandle newwin = callback.newImageWindow();
+    v3dhandle newwin;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+        newwin = callback.currentImageWindow();
+    else
+        newwin = callback.newImageWindow();
     QString title = QObject::tr("FFT Plugin");
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, title);
     callback.updateImageWindow(newwin);
 
+    outimg = 0;
     return 1;
 }
 
@@ -505,6 +635,7 @@ bool fft_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
     V3DLONG mysz[4] = {0,0,0,0};
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     cout<<"pixeltype = "<<pixeltype<<endl;
@@ -516,6 +647,16 @@ bool fft_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
             {
                 unsigned char* data1d = 0;
                 data1d = p4DImage->getRawData();
+                try
+                {
+                    dst =new unsigned char[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in fft.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 fft_filter(data1d, mysz, (unsigned char* &)dst, pixeltype);
             }
             break;
@@ -524,6 +665,16 @@ bool fft_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
             {
                 short int * data1d_16 = 0;
                 data1d_16 = (short int *)p4DImage->getRawData();
+                try
+                {
+                    dst =new short int[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in fft.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 fft_filter(data1d_16, mysz, (short int* &)dst, pixeltype);
             }
         break;
@@ -538,8 +689,13 @@ bool fft_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
     callback.saveImage(&outimg, output_image);
 
-    if(p4DImage) {delete []p4DImage; p4DImage=0;}
+    if(p4DImage)
+    {
+        delete []p4DImage;
+        p4DImage=0;
+    }
 
+    dst = 0;
     return 1;
 }
 
@@ -593,6 +749,7 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     void* outimg = 0; //new unsigned char[tolSZ];
     switch (pixeltype) {
@@ -600,6 +757,16 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                outimg =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in morphology operation.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             switch(Opt)
             {
                 case 0:
@@ -624,6 +791,16 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                outimg =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in morphology operation.");
+                if (outimg) {delete []outimg; outimg=0;}
+                return false;
+            }
             switch(Opt)
             {
                 case 0:
@@ -650,12 +827,18 @@ bool grey_morphology_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char*)outimg, N, M, P, 1, pixeltype);
-    v3dhandle newwin = callback.newImageWindow();
+    v3dhandle newwin;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+        newwin = callback.currentImageWindow();
+    else
+        newwin = callback.newImageWindow();
+
     QString title = QObject::tr("Grey Morphology Plugin");
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, title);
     callback.updateImageWindow(newwin);
 
+    outimg = 0;
     return 1;
 }
 
@@ -686,6 +869,7 @@ bool grey_morphology_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
 
     V3DLONG mysz[4] = {0,0,0,0};
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     cout<<"pixeltype = "<<pixeltype<<endl;
@@ -696,6 +880,16 @@ bool grey_morphology_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
         {
             unsigned char* data1d = 0;
             data1d = p4DImage->getRawData();
+            try
+            {
+                dst =new unsigned char[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in morphology operation.");
+                if (dst) {delete []dst; dst=0;}
+                return false;
+            }
             switch(Opt)
             {
                 case 0:
@@ -720,6 +914,16 @@ bool grey_morphology_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
         {
             short int* data1d = 0;
             data1d = (short int *) p4DImage->getRawData();
+            try
+            {
+                dst =new short int[tolSZ];
+            }
+                catch (...)
+            {
+                v3d_msg("Fail to allocate memory in morphology operation.");
+                if (dst) {delete []dst; dst=0;}
+                return false;
+            }
             switch(Opt)
             {
                 case 0:
@@ -751,6 +955,7 @@ bool grey_morphology_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
 
     if(p4DImage) {delete []p4DImage; p4DImage=0;}
 
+    dst = 0;
     return 1;
 }
 
@@ -806,6 +1011,7 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // gaussian_filter
     V3DLONG mysz[4];
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     void* outimg = 0;
     switch (pixeltype)
@@ -813,6 +1019,16 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         case V3D_UINT8:
             {
                 unsigned char* data1d = p4DImage->getRawData();
+                try
+                {
+                    outimg =new unsigned char[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in sigma correction.");
+                    if (outimg) {delete []outimg; outimg=0;}
+                    return false;
+                }
                 sigma_correction(data1d, mysz, cutoff, gain, (unsigned char* &)outimg, 1);
             }
             break;
@@ -820,6 +1036,16 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         case V3D_UINT16:
             {
                 short int * data1d_16 = (short int *)p4DImage->getRawData();
+                try
+                {
+                    outimg =new short int[tolSZ];
+                }
+                    catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in sigma correction.");
+                    if (outimg) {delete []outimg; outimg=0;}
+                    return false;
+                }
                 sigma_correction(data1d_16, mysz, cutoff, gain, (short int* &) outimg, 2);
             }
         break;
@@ -832,12 +1058,18 @@ bool sigma_correction_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
-    v3dhandle newwin = callback.newImageWindow();
+
+    v3dhandle newwin;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+        newwin = callback.currentImageWindow();
+    else
+        newwin = callback.newImageWindow();
+
     QString title = QObject::tr("Sigma Correction Plugin");
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, title);
     callback.updateImageWindow(newwin);
-
+    outimg = 0;
     return 1;
 }
 
@@ -869,6 +1101,7 @@ bool sigma_correction_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     V3DLONG mysz[4] = {0,0,0,0};
     mysz[0] = N; mysz[1] = M; mysz[2] = P; mysz[3] = sc;
+    V3DLONG tolSZ = M*N*P*sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     cout<<"pixeltype = "<<pixeltype<<endl;
@@ -879,6 +1112,16 @@ bool sigma_correction_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         case V3D_UINT8:
             {
                 unsigned char* data1d = p4DImage->getRawData();
+                try
+                {
+                    dst = new unsigned char [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in sigma correction.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 sigma_correction(data1d, mysz, cutoff, gain, (unsigned char* &)dst, 1);
             }
             break;
@@ -886,6 +1129,16 @@ bool sigma_correction_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         case V3D_UINT16:
             {
                 dst = (void *)(new short int [N*M*P*sc]);
+                try
+                {
+                    dst = new short int [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in sigma correction.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 short int * data1d_16 = (short int *)p4DImage->getRawData();
                 sigma_correction(data1d_16, mysz, cutoff, gain, (short int* &) dst, 2);
             }
@@ -902,7 +1155,7 @@ bool sigma_correction_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
     callback.saveImage(&outimg, output_image);
 
     if(p4DImage) {delete []p4DImage; p4DImage=0;}
-
+    dst = 0;
     return 1;
 }
 
@@ -945,22 +1198,21 @@ bool enhancement_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         return 0;
     ROIList pRoiList = dialog.pRoiList;
 
-    int c = dialog.ch, Wx_mp=dialog.Wx_th, Wy_mp=dialog.Wy_th;
+    int c = dialog.ch;
     int Wxy_bf=dialog.Wxy_bf, Wz_bf=dialog.Wz_bf;
     double colorSigma = dialog.colorSigma;
     double cutoff = dialog.cutoff, gain=dialog.gain;
-    bool do_th = dialog.b_do_th;
+    bool do_fft = dialog.b_do_fft, do_bf = dialog.b_do_bilateral;
     double spaceSigmaXY=Wxy_bf/3.0, spaceSigmaZ=Wz_bf/3.0;
+
+    cout<<"do fft = "<<do_fft<<endl;
+    cout<<"do bilateral = "<<do_bf<<endl;
 
     cout<<"wxy bf = "<<Wxy_bf<<endl;
     cout<<"wz bf = "<<Wz_bf<<endl;
     cout<<"sigmaxy bf = "<<spaceSigmaXY<<endl;
     cout<<"sigmaz bf = "<<spaceSigmaZ<<endl;
     cout<<"sigma color bf = "<<colorSigma<<endl;
-
-    cout<<"do tophat = "<<do_th<<endl;
-    cout<<"wx tophat = "<<Wx_mp<<endl;
-    cout<<"wy tophat = "<<Wy_mp<<endl;
 
     cout<<"sigma correction gain = "<<gain<<endl;
     cout<<"sigma correction cutoff = "<<cutoff<<endl;
@@ -978,77 +1230,122 @@ bool enhancement_domenu(V3DPluginCallback2 &callback, QWidget *parent)
             {
                 unsigned char* data1d = p4DImage->getRawData();
                 unsigned char* dst = 0;
-                unsigned char* temp = 0;
-                temp = new unsigned char[tolSZ];
+                try
+                {
+                    dst = new unsigned char [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in image enhancement.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
                 cout<<"do sigma correction "<<endl;
                 sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
                 cout<<"finish sigma correction "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
 
-                dst = 0;
-                subtract_min(temp, mysz, dst);
+                cout<<"do subtract min "<<endl;
+                subtract_min(data1d, mysz, dst);
+                cout<<"finish subtract min "<<endl;
 
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"do bilateral filter "<<endl;
-                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
-                cout<<"finish bilateral filter "<<endl;
+                if(do_bf)
+                {
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"do bilateral filter "<<endl;
+                    bilateralfilter(data1d, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+                    cout<<"finish bilateral filter "<<endl;
+                }
 
-                cout<<"do fft "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                fft_filter(temp, mysz, dst, 1);
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"finish fft "<<endl;
-                intensity_rescale(temp, mysz, dst, 1);
+                if(do_fft)
+                {
+                    cout<<"do fft "<<endl;
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    fft_filter(data1d, mysz, dst, 1);
+                    cout<<"finish fft "<<endl;
+                }
+
+                for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+
+                cout<<"do intensity rescale "<<endl;
+                intensity_rescale(data1d, mysz, dst, 1);
+                cout<<"finish intensity rescale "<<endl;
 
                 // display
                 Image4DSimple * new4DImage = new Image4DSimple();
                 new4DImage->setData(dst, N, M, P, 1, pixeltype);
-                v3dhandle newwin = callback.newImageWindow();
+                v3dhandle newwin;
+                if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+                    newwin = callback.currentImageWindow();
+                else
+                    newwin = callback.newImageWindow();
                 QString title = QObject::tr("Enhancement Plugin");
                 callback.setImage(newwin, new4DImage);
                 callback.setImageName(newwin, title);
                 callback.updateImageWindow(newwin);
+                dst = 0;
+                data1d = 0;
             }
         break;
         case V3D_UINT16:
             {
                 short int* data1d = (short int *)p4DImage->getRawData();
                 short int*  dst = 0;
-                short int* temp = new short int[tolSZ];
+                try
+                {
+                    dst = new short int [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in image enhancement.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
+
                 cout<<"do sigma correction "<<endl;
                 sigma_correction(data1d, mysz, cutoff, gain, dst, 2);
                 cout<<"finish sigma correction "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
 
-                dst = 0;
-                subtract_min(temp, mysz, dst);
+                cout<<"do subtract min"<<endl;
+                subtract_min(data1d, mysz, dst);
+                cout<<"finish subtract min"<<endl;
 
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"do bilateral filter "<<endl;
-                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
-                cout<<"finish bilateral filter "<<endl;
+                if(do_bf)
+                {
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"do bilateral filter "<<endl;
+                    bilateralfilter(data1d, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+                    cout<<"finish bilateral filter "<<endl;
+                }
 
-                cout<<"do fft "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                fft_filter(temp, mysz, dst, 2);
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"finish fft "<<endl;
-                intensity_rescale(temp, mysz, dst, 2);
+                if(do_fft)
+                {
+                    cout<<"do fft "<<endl;
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    fft_filter(data1d, mysz, dst, 1);
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"finish fft "<<endl;
+                }
+
+                cout<<"do intensity rescale"<<endl;
+                intensity_rescale(data1d, mysz, dst, 2);
+                cout<<"finish intensity rescale"<<endl;
 
                 // display
                 Image4DSimple * new4DImage = new Image4DSimple();
                 new4DImage->setData((unsigned char*)dst, N, M, P, 1, pixeltype);
-                v3dhandle newwin = callback.newImageWindow();
+                v3dhandle newwin;
+                if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+                    newwin = callback.currentImageWindow();
+                else
+                    newwin = callback.newImageWindow();
                 QString title = QObject::tr("Enhancement Plugin");
                 callback.setImage(newwin, new4DImage);
                 callback.setImageName(newwin, title);
                 callback.updateImageWindow(newwin);
+                dst = 0;
+                data1d = 0;
             }
         break;
 
@@ -1056,7 +1353,6 @@ bool enhancement_domenu(V3DPluginCallback2 &callback, QWidget *parent)
             v3d_msg("Invalid data type. Do nothing.");
             return 0;
     }
-
     return 1;
 }
 
@@ -1068,10 +1364,9 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
     char * input_image = ((vector<char*> *)(input.at(0).p))->at(0);
     char * output_image = ((vector<char*> *)(output.at(0).p))->at(0);
 
-    int Wxy_mp=11;
     double gain=5, cutoff=25;
     double spaceSigmaXY, spaceSigmaZ, colorSigma=35;
-    int do_th=1;
+    int do_bf=1, do_fft=1;
 
     int k_sz[3] = {3, 3, 1};
 
@@ -1087,8 +1382,8 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
     if(inparas.size() >= 4) gain = atoi(inparas.at(3));
     if(inparas.size() >= 5) cutoff = atoi(inparas.at(4));
 
-    if(inparas.size() >= 6) do_th = atoi(inparas.at(5));
-    if(inparas.size() >= 7) Wxy_mp = atoi(inparas.at(6));
+    if(inparas.size() >= 6) do_bf = atoi(inparas.at(5));
+    if(inparas.size() >= 7) do_fft = atoi(inparas.at(6));
 
     spaceSigmaXY = k_sz[0]/3.0;
     spaceSigmaZ = k_sz[2]/3.0;
@@ -1098,8 +1393,8 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
     cout<<"sigmaxy bf = "<<spaceSigmaXY<<endl;
     cout<<"sigmaz bf = "<<spaceSigmaZ<<endl;
     cout<<"sigma color bf = "<<colorSigma<<endl;
-    cout<<"do tophat = "<<do_th<<endl;
-    cout<<"wxy tophat = "<<Wxy_mp<<endl;
+    cout<<"do fft = "<<do_fft<<endl;
+    cout<<"do bilateral = "<<do_bf<<endl;
     cout<<"sigma correction gain = "<<gain<<endl;
     cout<<"sigma correction cutoff = "<<cutoff<<endl;
 
@@ -1128,34 +1423,52 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
             {
                 unsigned char* data1d = p4DImage->getRawData();
                 unsigned char*  dst = 0;
-                unsigned char* temp = new unsigned char[tolSZ];
+                try
+                {
+                    dst = new unsigned char [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in image enhancement.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
+
                 cout<<"do sigma correction "<<endl;
                 sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
                 cout<<"finish sigma correction "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
 
-                dst = 0;
-                subtract_min(temp, mysz, dst);
+                cout<<"do subtract min"<<endl;
+                subtract_min(data1d, mysz, dst);
+                cout<<"finish subtract min"<<endl;
 
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"do bilateral filter "<<endl;
-                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
-                cout<<"finish bilateral filter "<<endl;
+                if(do_bf)
+                {
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"do bilateral filter "<<endl;
+                    bilateralfilter(data1d, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+                    cout<<"finish bilateral filter "<<endl;
+                }
 
-                cout<<"do fft "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                fft_filter(temp, mysz, dst, 1);
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"finish fft "<<endl;
-                intensity_rescale(temp, mysz, dst, 1);
+                if(do_fft)
+                {
+                    cout<<"do fft "<<endl;
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    fft_filter(data1d, mysz, dst, 1);
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"finish fft "<<endl;
+                }
+                cout<<"do intensity rescale"<<endl;
+                intensity_rescale(data1d, mysz, dst, 1);
+                cout<<"finish intensity rescale"<<endl;
 
                 Image4DSimple outimg;
                 outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
                 callback.saveImage(&outimg, output_image);
+                dst = 0;
+                data1d = 0;
             }
         break;
 
@@ -1163,34 +1476,53 @@ bool enhancement_dofunc(const V3DPluginArgList & input, V3DPluginArgList & outpu
             {
                 short int* data1d = (short int *)p4DImage->getRawData();
                 short int* dst = 0;
-                short int* temp = new short int[tolSZ];
+                try
+                {
+                    dst = new short int [tolSZ];
+                }
+                catch (...)
+                {
+                    v3d_msg("Fail to allocate memory in image enhancement.");
+                    if (dst) {delete []dst; dst=0;}
+                    return false;
+                }
+
                 cout<<"do sigma correction "<<endl;
                 sigma_correction(data1d, mysz, cutoff, gain, dst, 2);
                 cout<<"finish sigma correction "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
+                for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
 
-                dst = 0;
-                subtract_min(temp, mysz, dst);
+                cout<<"do subtract min"<<endl;
+                subtract_min(data1d, mysz, dst);
+                cout<<"finish subtract min"<<endl;
 
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"do bilateral filter "<<endl;
-                bilateralfilter(temp, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
-                cout<<"finish bilateral filter "<<endl;
+                if(do_bf)
+                {
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"do bilateral filter "<<endl;
+                    bilateralfilter(data1d, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 2);
+                    cout<<"finish bilateral filter "<<endl;
+                }
 
-                cout<<"do fft "<<endl;
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                fft_filter(temp, mysz, dst, 2);
-                for(V3DLONG i=0; i<tolSZ; i++) temp[i]=dst[i];
-                dst = 0;
-                cout<<"finish fft "<<endl;
-                intensity_rescale(temp, mysz, dst, 2);
+                if(do_fft)
+                {
+                    cout<<"do fft "<<endl;
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    fft_filter(data1d, mysz, dst, 1);
+                    for(V3DLONG i=0; i<tolSZ; i++) data1d[i]=dst[i];
+                    cout<<"finish fft "<<endl;
+                }
+
+                cout<<"do intensity rescale"<<endl;
+                intensity_rescale(data1d, mysz, dst, 2);
+                cout<<"finish intensity rescale"<<endl;
 
                 Image4DSimple outimg;
                 outimg.setData((unsigned char *)dst, N, M, P, sc, pixeltype);
 
                 callback.saveImage(&outimg, output_image);
+                dst = 0;
+                data1d = 0;
             }
         break;
 
