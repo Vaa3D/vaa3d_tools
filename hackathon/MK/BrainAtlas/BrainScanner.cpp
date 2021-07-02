@@ -34,6 +34,22 @@ set<string> BrainScanner::involvedRegionScan(const vector<float>& coord, const b
 		cout << endl;
 	}
 
+	if (this->somaScan)
+	{
+		set<string> grayMatterSubsRegions;
+		for (set<string>::iterator it = outputRegionNames.begin(); it != outputRegionNames.end(); ++it)
+		{
+			//cout << it->at(0) << endl;
+			if (!isupper(it->at(0)))
+			{
+				cout << "Located in white matter, start searching neighboring gray matter regions.." << endl;
+				set<string> grayMatterRegions = this->sphericalSearch(coord, regionMap);
+				grayMatterSubsRegions.insert(grayMatterRegions.begin(), grayMatterRegions.end());
+			}
+		}
+		outputRegionNames.insert(grayMatterSubsRegions.begin(), grayMatterSubsRegions.end());
+	}
+
 	return outputRegionNames;
 }
 
@@ -95,6 +111,8 @@ bool BrainScanner::candidateFilter(const vector<float>& coord, const brainRegion
 
 void BrainScanner::scanSomas(const boost::container::flat_map<string, brainRegion>& regionMap)
 {
+	this->somaScan = true;
+
 	QDir inputDirQ(this->somaScanRootPathQ);
 	inputDirQ.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	QStringList fileList = inputDirQ.entryList();
@@ -162,4 +180,61 @@ void BrainScanner::scanSomas(const boost::container::flat_map<string, brainRegio
 
 	QString outputMsgQ = "Scanned soma regions saved to " + QString::fromStdString(outputFileName);
 	v3d_msg(outputMsgQ);
+	
+	this->somaScan = false;
+}
+
+set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boost::container::flat_map<string, brainRegion>& regionMap)
+{
+	set<string> grayMatterRegions;
+	int increment = 1;
+	map<float, set<string>> distRegionMap;
+	bool grayMatterFound = false;
+	while (1)
+	{
+		set<vector<float>> candidateCoords = { { coord.at(0) - increment, coord.at(1), coord.at(2) }, { coord.at(0) + increment, coord.at(1), coord.at(2) },
+											   { coord.at(0), coord.at(1) - increment, coord.at(2) }, { coord.at(0), coord.at(1) + increment, coord.at(2) }, 
+											   { coord.at(0), coord.at(1), coord.at(2) - increment }, { coord.at(0), coord.at(1), coord.at(2) + increment } };
+	
+		for (set<vector<float>>::iterator coordIt = candidateCoords.begin(); coordIt != candidateCoords.end(); ++coordIt)
+		{
+			cout << coordIt->at(0) << " " << coordIt->at(1) << " " << coordIt->at(2) << endl;
+			vector<boost::container::flat_map<string, brainRegion>::const_iterator> candidateIts;
+			for (boost::container::flat_map<string, brainRegion>::const_iterator it = regionMap.begin(); it != regionMap.end(); ++it)
+				if (this->candidateFilter(*coordIt, it->second)) candidateIts.push_back(it);
+
+			cout << candidateIts.size() << " candidate brain regions included: ";
+			for (auto& iter : candidateIts) cout << iter->first << " ";
+			cout << endl;
+
+			vector<int> roundedCoord = { int(coordIt->at(0)), int(coordIt->at(1)), int(coordIt->at(2)) };
+			for (auto& candidateIt : candidateIts)
+			{
+				cout << candidateIt->first << " -- " << endl;
+				int bodyCount = 1;
+				brainRegion region = candidateIt->second;
+				for (auto& body : region.regionBodies)
+				{
+					cout << "body " << bodyCount << ": ";
+					if (body.isEmbedded(roundedCoord))
+					{
+						if (isupper(region.name[0]))
+						{
+							cout << "Neighboring gray matter region found!" << endl;
+
+							grayMatterRegions.insert(candidateIt->first);
+							break;
+						}
+					}
+					++bodyCount;
+				}
+				cout << endl;
+			}
+		}
+
+		if (!grayMatterRegions.empty()) break;
+		else ++increment;
+	}
+
+	return grayMatterRegions;
 }

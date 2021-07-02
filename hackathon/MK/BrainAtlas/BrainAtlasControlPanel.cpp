@@ -67,8 +67,6 @@ BrainAtlasControlPanel::BrainAtlasControlPanel(QWidget* parent, V3DPluginCallbac
 
 	this->connect(currentUIptr->tableWidget, SIGNAL(cellChanged(int, int)), this, SLOT(regionSelected(int, int)));
 
-	this->refresh = false;
-
 	string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM);
 	QString windowTitleQ = "Brain Atlas v" + QString::fromStdString(versionString);
 	this->setWindowTitle(windowTitleQ);
@@ -158,12 +156,6 @@ void BrainAtlasControlPanel::regionSelected(int row, int col)
 					this->surfaceStatus[regionName] = true;
 				}
 			}
-			else																   // Has been refreshed.
-			{
-				int index = this->thisCallback->addRegion_brainAtlas(this->cur3DViewer, this->regionTreeMap.at(regionName));
-				this->region2ObjManagerIndexMap.insert({ regionName, index });
-				this->surfaceStatus.insert({ regionName, true });
-			}
 		}
 		else
 		{
@@ -185,20 +177,12 @@ void BrainAtlasControlPanel::regionSelected(int row, int col)
 	}
 	else if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Unchecked)
 	{
-		if (this->refresh)
+		if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
 		{
-			this->surfaceStatus.erase(this->surfaceStatus.find(regionName));
-			this->region2ObjManagerIndexMap.erase(this->region2ObjManagerIndexMap.find(regionName));
-		}
-		else
-		{
-			if (this->loadedRegions.find(regionName) != this->loadedRegions.end())
+			if (this->surfaceStatus.at(regionName))
 			{
-				if (this->surfaceStatus.at(regionName))
-				{
-					this->thisCallback->hideSWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
-					this->surfaceStatus[regionName] = false;
-				}
+				this->thisCallback->hideSWC(this->cur3DViewer, this->region2ObjManagerIndexMap.at(regionName));
+				this->surfaceStatus[regionName] = false;
 			}
 		}
 	}
@@ -229,14 +213,15 @@ void BrainAtlasControlPanel::cleanUpRegionRecords()
 {
 	set<string> regionNames;
 	for (auto& region : this->surfaceStatus) regionNames.insert(region.first);
+	this->surfaceStatus.clear();
+	this->loadedRegions.clear();
+	this->region2ObjManagerIndexMap.clear();
 
 	for (auto& region : regionNames)
 	{
 		int row = this->region2UIindexMap.at(region);
 		if (currentUIptr->tableWidget->item(row, 0)->checkState() == Qt::Checked) currentUIptr->tableWidget->item(row, 0)->setCheckState(Qt::Unchecked);
 	}
-
-	this->refresh = false;
 }
 
 void BrainAtlasControlPanel::browseFolder()

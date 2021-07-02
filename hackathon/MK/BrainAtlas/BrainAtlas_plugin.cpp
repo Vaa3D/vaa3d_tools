@@ -81,11 +81,7 @@ bool BrainAtlas_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 	}
 	else if (func_name == tr("refresh"))
 	{
-		if (this->ctrlPanelPtr != nullptr)
-		{
-			this->ctrlPanelPtr->refresh = true;
-			this->ctrlPanelPtr->cleanUpRegionRecords();
-		}
+		if (this->ctrlPanelPtr != nullptr) this->ctrlPanelPtr->cleanUpRegionRecords();
 	}
 	else return false;
 
