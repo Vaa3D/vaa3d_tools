@@ -236,5 +236,6 @@ void BrainAtlasControlPanel::browseFolder()
 void BrainAtlasControlPanel::scanSomaOKclicked()
 {
 	this->myScanner.somaScanRootPathQ = currentUIptr->lineEdit->text();
+	this->myScanner.voxRange = currentUIptr->spinBox->value();
 	this->myScanner.scanSomas(this->regionMap);
 }

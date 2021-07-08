@@ -6,48 +6,75 @@ set<string> BrainScanner::involvedRegionScan(const vector<float>& coord, const b
 {
 	set<string> outputRegionNames;
 
-	vector<boost::container::flat_map<string, brainRegion>::const_iterator> candidateIts;
-	for (boost::container::flat_map<string, brainRegion>::const_iterator it = regionMap.begin(); it != regionMap.end(); ++it)
-		if (this->candidateFilter(coord, it->second)) candidateIts.push_back(it);
-
-	cout << candidateIts.size() << " candidate brain regions included: ";
-	for (auto& iter : candidateIts) cout << iter->first << " ";
-	cout << endl;
-
-	vector<int> roundedCoord = { int(coord.at(0)), int(coord.at(1)), int(coord.at(2)) };
-	for (auto& candidateIt : candidateIts)
+	if (this->voxRange == 0)
 	{
-		cout << candidateIt->first << " -- " << endl;
-		int bodyCount = 1;
-		brainRegion region = candidateIt->second;
-		for (auto& body : region.regionBodies)
-		{
-			cout << "body " << bodyCount << ": ";
-			if (body.isEmbedded(roundedCoord))
-			{
-				cout << "In!" << endl;
-				outputRegionNames.insert(candidateIt->first);
-				break;
-			}
-			++bodyCount;
-		}
+		vector<boost::container::flat_map<string, brainRegion>::const_iterator> candidateIts;
+		for (boost::container::flat_map<string, brainRegion>::const_iterator it = regionMap.begin(); it != regionMap.end(); ++it)
+			if (this->candidateFilter(coord, it->second)) candidateIts.push_back(it);
+
+		cout << candidateIts.size() << " candidate brain regions included: ";
+		for (auto& iter : candidateIts) cout << iter->first << " ";
 		cout << endl;
-	}
 
-	if (this->somaScan)
-	{
-		set<string> grayMatterSubsRegions;
-		for (set<string>::iterator it = outputRegionNames.begin(); it != outputRegionNames.end(); ++it)
+		vector<int> roundedCoord = { int(coord.at(0)), int(coord.at(1)), int(coord.at(2)) };
+		for (auto& candidateIt : candidateIts)
 		{
-			//cout << it->at(0) << endl;
-			if (!isupper(it->at(0)))
+			cout << candidateIt->first << " -- " << endl;
+			int bodyCount = 1;
+			brainRegion region = candidateIt->second;
+			for (auto& body : region.regionBodies)
 			{
-				cout << "Located in white matter, start searching neighboring gray matter regions.." << endl;
-				set<string> grayMatterRegions = this->sphericalSearch(coord, regionMap);
-				grayMatterSubsRegions.insert(grayMatterRegions.begin(), grayMatterRegions.end());
+				cout << "body " << bodyCount << ": ";
+				if (body.isEmbedded(roundedCoord))
+				{
+					cout << "In!" << endl;
+					outputRegionNames.insert(candidateIt->first);
+					break;
+				}
+				++bodyCount;
 			}
+			cout << endl;
 		}
-		outputRegionNames.insert(grayMatterSubsRegions.begin(), grayMatterSubsRegions.end());
+
+		if (this->somaScan)
+		{
+			set<string> grayMatterSubsRegions;
+			for (set<string>::iterator it = outputRegionNames.begin(); it != outputRegionNames.end(); ++it)
+			{
+				//cout << it->at(0) << endl;
+				if (!isupper(it->at(0)))
+				{
+					cout << "Located in white matter, start searching neighboring gray matter regions.." << endl;
+					this->voxRange = 5;
+					set<string> grayMatterRegions = this->sphericalSearch(coord, regionMap, true);
+					this->voxRange = 0;
+					grayMatterSubsRegions.insert(grayMatterRegions.begin(), grayMatterRegions.end());
+				}
+			}
+			outputRegionNames.insert(grayMatterSubsRegions.begin(), grayMatterSubsRegions.end());
+		}
+	}
+	else
+	{
+		outputRegionNames = this->sphericalSearch(coord, regionMap);
+		if (this->somaScan)
+		{
+			int specifiedVoxRange = this->voxRange;
+			set<string> grayMatterSubsRegions;
+			for (set<string>::iterator it = outputRegionNames.begin(); it != outputRegionNames.end(); ++it)
+			{
+				//cout << it->at(0) << endl;
+				if (!isupper(it->at(0)))
+				{
+					cout << "Located in white matter, start searching neighboring gray matter regions.." << endl;
+					this->voxRange = 5;
+					set<string> grayMatterRegions = this->sphericalSearch(coord, regionMap, true);
+					this->voxRange = specifiedVoxRange;
+					grayMatterSubsRegions.insert(grayMatterRegions.begin(), grayMatterRegions.end());
+				}
+			}
+			outputRegionNames.insert(grayMatterSubsRegions.begin(), grayMatterSubsRegions.end());
+		}
 	}
 
 	return outputRegionNames;
@@ -175,6 +202,7 @@ void BrainScanner::scanSomas(const boost::container::flat_map<string, brainRegio
 			if (outFile.is_open()) outFile.close();
 		}
 	}
+	//this->printOutWhiteMatterSearchDistMap();
 
 	if (outputFile.is_open()) outputFile.close();
 
@@ -184,13 +212,12 @@ void BrainScanner::scanSomas(const boost::container::flat_map<string, brainRegio
 	this->somaScan = false;
 }
 
-set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boost::container::flat_map<string, brainRegion>& regionMap)
+set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boost::container::flat_map<string, brainRegion>& regionMap, bool whiteMatter)
 {
 	set<string> grayMatterRegions;
 	int increment = 1;
 	map<float, set<string>> distRegionMap;
-	bool grayMatterFound = false;
-	while (1)
+	while (increment <= this->voxRange)
 	{
 		set<vector<float>> candidateCoords = { { coord.at(0) - increment, coord.at(1), coord.at(2) }, { coord.at(0) + increment, coord.at(1), coord.at(2) },
 											   { coord.at(0), coord.at(1) - increment, coord.at(2) }, { coord.at(0), coord.at(1) + increment, coord.at(2) }, 
@@ -199,6 +226,7 @@ set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boos
 		for (set<vector<float>>::iterator coordIt = candidateCoords.begin(); coordIt != candidateCoords.end(); ++coordIt)
 		{
 			cout << coordIt->at(0) << " " << coordIt->at(1) << " " << coordIt->at(2) << endl;
+			// Narrow down the regions to those that pass BrainScanner::candidateFilter
 			vector<boost::container::flat_map<string, brainRegion>::const_iterator> candidateIts;
 			for (boost::container::flat_map<string, brainRegion>::const_iterator it = regionMap.begin(); it != regionMap.end(); ++it)
 				if (this->candidateFilter(*coordIt, it->second)) candidateIts.push_back(it);
@@ -215,16 +243,13 @@ set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boos
 				brainRegion region = candidateIt->second;
 				for (auto& body : region.regionBodies)
 				{
+					if (whiteMatter && !isupper(candidateIt->first[0])) continue;
+
 					cout << "body " << bodyCount << ": ";
 					if (body.isEmbedded(roundedCoord))
 					{
-						if (isupper(region.name[0]))
-						{
-							cout << "Neighboring gray matter region found!" << endl;
-
-							grayMatterRegions.insert(candidateIt->first);
-							break;
-						}
+						grayMatterRegions.insert(candidateIt->first);
+						break;
 					}
 					++bodyCount;
 				}
@@ -232,8 +257,13 @@ set<string> BrainScanner::sphericalSearch(const vector<float>& coord, const boos
 			}
 		}
 
-		if (!grayMatterRegions.empty()) break;
-		else ++increment;
+		if (whiteMatter && !grayMatterRegions.empty())
+		{
+			for (auto& region : grayMatterRegions) this->whiteMatterSearchDistMap.insert({ region, increment });
+			break;
+		}
+
+		++increment;
 	}
 
 	return grayMatterRegions;
