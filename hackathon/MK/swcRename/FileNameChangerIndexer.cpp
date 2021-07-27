@@ -432,13 +432,27 @@ void FileNameChangerIndexer::SEUnameChange(const map<string, set<string>>& seuNa
 		string line;
 		if (mappingTableIn.is_open())
 		{
+			QDir seuFileFolder(this->rootPath);
+			seuFileFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+			QStringList fileNameList = seuFileFolder.entryList();
+
 			while (getline(mappingTableIn, line))
 			{
 				QString lineQ = QString::fromStdString(line);
 				QStringList lineSplitQ = lineQ.split(",");
 				cout << lineSplitQ.at(0).toStdString() << " " << lineSplitQ.at(1).toStdString() << endl;
 
-				QString inputFileFullNameQ = this->rootPath + "\\" + lineSplitQ.at(0) + ".swc";
+				QString SEUname = lineSplitQ.at(0).split(".").at(0);
+				QString inputFileFullNameQ;
+				for (auto& fileName : fileNameList)
+				{
+					if (fileName.contains(SEUname))
+					{
+						inputFileFullNameQ = this->rootPath + "\\" + fileName;
+						break;
+					}
+				}
+				//QString inputFileFullNameQ = this->rootPath + "\\" + lineSplitQ.at(0) + ".swc";
 				QString outputFileFullNameQ = newSavingPathQ + "\\" + lineSplitQ.at(1);
 
 				if (this->fileNameAddition.isEmpty()) outputFileFullNameQ += ".swc";
