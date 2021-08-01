@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "NeuronSynthesis_plugin.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(NeuronSynthesis, NeuronSynthesis);
  
@@ -180,6 +181,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
     else if (func_name == tr("Smooth_branch"))
     {
         /* designed by shengdian, 2021-06-02
+         * update at 2021-07-20, resample after smooth
          * ---
          * processing of three-bifurcation branches
          * --Usage--
@@ -190,19 +192,20 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
         //read para list
-        int smooth_win_size=(inparas.size()>=1)?atoi(inparas[0]):11;
-        int saveESWC=(inparas.size()>=2)?atoi(inparas[1]):0;
-        int reorder=(inparas.size()>=3)?atoi(inparas[2]):1;
+        int smooth_win_size=(inparas.size()>=1)?atoi(inparas[0]):9;
+        int resample_step=(inparas.size()>=2)?atoi(inparas[1]):4;
+        int saveESWC=(inparas.size()>=3)?atoi(inparas[2]):0;
+        int reorder=(inparas.size()>=4)?atoi(inparas[3]):1;
 
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_smoothed.swc");
         if(saveESWC)
             out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_smoothed.eswc");
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-        NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
-        nt_out=smooth_branch_movingAvearage(nt,smooth_win_size);
+        NeuronTree nt_smoothed;        nt_smoothed=smooth_branch_movingAvearage(nt,smooth_win_size);
         if(reorder)
-            nt_out=reindexNT(nt_out);
+            nt_smoothed=reindexNT(nt_smoothed);
+        NeuronTree nt_out;        nt_out=resample(nt_smoothed,resample_step);
         //save to file
         if(saveESWC)
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);

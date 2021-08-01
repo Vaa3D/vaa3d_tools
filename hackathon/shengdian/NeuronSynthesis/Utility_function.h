@@ -32,7 +32,22 @@ struct SwcTree{
     bool get_level_index(vector<int> &level_index,int level);
     int get_max_level();
 };
-
+/*for resample swc*/
+#define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
+struct Point
+{
+    double x,y,z,r;
+    V3DLONG type;
+    Point* p;
+    V3DLONG childNum;
+    V3DLONG level,seg_id;
+    QList<float> fea_val;
+};
+typedef vector<Point*> Segment;
+typedef vector<Point*> Tree;
+void resample_path(Segment * seg, double step);
+NeuronTree resample(NeuronTree input, double step);
+//
 vector<int> getNodeType(NeuronTree nt);
 vector<int> getNodeTips(NeuronTree nt);
 vector<int> getNodeOrder(NeuronTree nt);

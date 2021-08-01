@@ -23,6 +23,7 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
         cout<<"can't load terafly img"<<endl;
         return;
     }
+    int block_size=16;
     for(V3DLONG i=0;i<siz;i++)
     {
         //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
@@ -33,7 +34,7 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
             {
                 //get a block
                 long start_x,start_y,start_z,end_x,end_y,end_z;
-                int block_size=16;
+
                 start_x = s.x - block_size; if(start_x<0) start_x = 0;
                 end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
                 start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -45,8 +46,7 @@ void getBoutonInTerafly(V3DPluginCallback2 &callback, string imgPath, NeuronTree
                 in_sz[0] = end_x - start_x;
                 in_sz[1] = end_y - start_y;
                 in_sz[2] = end_z - start_z;
-                V3DLONG *sz;
-                sz=in_sz;
+                V3DLONG *sz;                sz=in_sz;
                 long sz0 = sz[0];
                 long sz01 = sz[0] * sz[1];
                 unsigned char * inimg1d = 0;
@@ -326,7 +326,61 @@ QList <CellAPO> getBouton(NeuronTree nt, int in_thre,int allnode)
     cout<<"Detected Bouton: "<<boutonCount<<endl;
     return apolist;
 }
+QList <CellAPO> getBouton_1D_filter(NeuronTree nt){
+    int MIN_PROCESSED_SEG_LEN=7; int AXON_BACKBONE_RADIUS=3;
+    QList <CellAPO> apolist;apolist.clear();
+    //4 feature extraction
 
+    V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt);
+
+    for(int i=0;i<nt_nslist.seg.size();i++)
+    {
+        V_NeuronSWC curseg=nt_nslist.seg.at(i);
+
+        //4.1 peak detection of radius profile
+        vector<double> seg_radius,seg_radius_feas;
+        seg_radius.clear(); seg_radius_feas.clear();
+        seg_radius=get_sorted_fea_of_seg(curseg,true);
+//            std::vector<int> outflag_radius=peaks_in_seg(seg_radius);
+        seg_radius_feas=mean_and_std_seg_fea(seg_radius);
+        double radius_mean=seg_radius_feas[0];
+        double radius_std=seg_radius_feas[1];
+        double radius_delta=1;
+        if(curseg.row.size()>MIN_PROCESSED_SEG_LEN)
+            radius_delta=1.3;
+        if(radius_mean>AXON_BACKBONE_RADIUS)
+            radius_delta=2;
+        double bouton_radius_thre=radius_mean*radius_delta;
+        //4.2 peak detection of intensity profile
+        vector<double> seg_levels,seg_levels_feas;
+        seg_levels.clear(); seg_levels_feas.clear();
+        seg_levels=get_sorted_fea_of_seg(curseg,false);
+        std::vector<int> outflag_level=peaks_in_seg(seg_levels);
+        seg_levels_feas=mean_and_std_seg_fea(seg_levels);
+        double level_mean=seg_levels_feas[0];
+        double level_std=seg_levels_feas[1];
+        double bouton_intensity_thre=(curseg.row.size()>MIN_PROCESSED_SEG_LEN)
+                ?(level_mean+0.7*level_std+30):level_mean;
+
+        //4.3 processed
+        for(int io=0;io<curseg.row.size();io++){
+            if(outflag_level[io]>0&&
+                    curseg.row[io].r>bouton_radius_thre
+                    &&curseg.row[io].level>bouton_intensity_thre){
+                CellAPO apo;
+                apo.n=apolist.size()+1;
+                apo.x=curseg.row[io].x; apo.y=curseg.row[io].y; apo.z=curseg.row[io].z;
+                apo.intensity=curseg.row[io].r;
+                apo.volsize=curseg.row[io].level; //intensity value
+                apo.color.r=200; apo.color.g=200; apo.color.b=0;
+                apo.comment="bouton_site";
+                apolist.push_back(apo);
+            }
+        }
+    }
+    cout<<"Bouton size: "<<apolist.size()<<endl;
+    return apolist;
+}
 /*
  *renderingType=0, get intensity from level
  *renderingType=1, get intensity from type
@@ -589,11 +643,15 @@ NeuronTree getBouton_toSWC(NeuronTree nt, int in_thre, int allnode,float dis_thr
     cout<<"Detected Bouton: "<<bouton_final.listNeuron.size()<<endl;
     return bouton_final;
 }
-void getBoutonBlock_inImg(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_zz[],QList <CellAPO> apolist,string outpath,int block_size)
+void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size)
 {
     /*crop 3d image-block
      * get mip img
     */
+    //read image file
+    unsigned char * inimg1d = 0;V3DLONG in_zz[4];int datatype;
+    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_zz, datatype)) return;
+
     if(!apolist.size()) {return;}
     QString save_path = QString::fromStdString(outpath);
     QDir path(save_path);
@@ -646,6 +704,7 @@ void getBoutonBlock_inImg(V3DPluginCallback2 &callback, unsigned char *& inimg1d
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
     }
+    if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
 void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size)
 {
@@ -1018,37 +1077,25 @@ QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size)
 //        return id_threshold_out;
     return id_threshold;
 }
-void getNodeRadius(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt)
+void getNTRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt, double bkg_thresh)
 {
-    cout<<"Get node radius"<<endl;
+    //printf("markerRadius_hanchuan   XY 2D\n");
+    cout<<"Get neuron tree radius from XY plane"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
     V3DLONG siz = nt.listNeuron.size();
     for (V3DLONG i=0;i<siz;i++)
-    {
         listNeuron[i].radius=0;
-    }
 
     long sz01 = in_sz[0] * in_sz[1];
     long sz0 = in_sz[0];
     double max_r = in_sz[0]/2;
     if (max_r > in_sz[1]/2) max_r = in_sz[1]/2;
-    if (max_r > (in_sz[2])/2) max_r = (in_sz[2])/2;
-
-    //get the background threshold
-    double imgave,imgstd;
-    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
-    mean_and_std(inimg1d,total_size,imgave,imgstd);
-//    double td= (imgstd<10) ? 10:imgstd;
-    double bkg_thresh= imgave+imgstd;
-    cout<<"bkg thresh="<<bkg_thresh<<endl;
 
     for(V3DLONG it=0;it<siz;it++)
     {
         NeuronSWC s = listNeuron[it];
         int thisx,thisy,thisz;
-        thisx=s.x;
-        thisy=s.y;
-        thisz=s.z;
+        thisx=s.x;        thisy=s.y;        thisz=s.z;
         if(s.radius==0)
         {
             double total_num, background_num;
@@ -1057,7 +1104,7 @@ void getNodeRadius(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt)
             {
                 total_num = background_num = 0;
                 double dz, dy, dx;
-                double zlower = -ir, zupper = +ir;
+                double zlower = 0, zupper = 0;
                 for (dz= zlower; dz <= zupper; ++dz)
                     for (dy= -ir; dy <= +ir; ++dy)
                         for (dx= -ir; dx <= +ir; ++dx)
@@ -1080,11 +1127,95 @@ void getNodeRadius(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt)
                         }
             }
 end2:
+//            cout<<ir<<endl;
             listNeuron[it].radius= ir;
         }
     }
-    //release pointer
-//     if(inimg1d) {delete []inimg1d; inimg1d=0;}
+
+}
+double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh)
+{
+//    cout<<"Get node radius from XY plane, bkg_threshold="<<bkg_thresh<<endl;
+
+    long sz01 = in_sz[0] * in_sz[1];
+    long sz0 = in_sz[0];
+    double max_r = in_sz[0]/2;
+    if (max_r > in_sz[1]/2) max_r = in_sz[1]/2;
+
+    int thisx,thisy,thisz;
+    thisx=s.x;        thisy=s.y;        thisz=s.z;
+    double total_num, background_num;
+    double ir;
+    for (ir=1; ir<=max_r; ir++)
+    {
+        total_num = background_num = 0;
+        double dz, dy, dx;
+        double zlower = 0, zupper = 0;
+        for (dz= zlower; dz <= zupper; ++dz)
+            for (dy= -ir; dy <= +ir; ++dy)
+                for (dx= -ir; dx <= +ir; ++dx)
+                {
+                    total_num++;
+                    double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    if (r>ir-1 && r<=ir)
+                    {
+                        V3DLONG i = thisx+dx;   if (i<0 || i>=in_sz[0]) goto end2;
+                        V3DLONG j = thisy+dy;   if (j<0 || j>=in_sz[1]) goto end2;
+                        V3DLONG k = thisz+dz;   if (k<0 || k>=in_sz[2]) goto end2;
+
+                        if (inimg1d[k * sz01 + j * sz0 + i] <= bkg_thresh)
+                        {
+                            background_num++;
+                            if ((background_num/total_num) > 0.01) goto end2;
+                        }
+                    }
+                }
+    }
+end2:
+    return ir;
+}
+double getNodeRadius(unsigned char *&inimg1d, long in_sz[], NeuronSWC s,double bkg_thresh)
+{
+//    cout<<"Get node radius"<<endl;
+
+    long sz01 = in_sz[0] * in_sz[1];
+    long sz0 = in_sz[0];
+    double max_r = in_sz[0]/2;
+    if (max_r > in_sz[1]/2) max_r = in_sz[1]/2;
+    if (max_r > (in_sz[2])/2) max_r = (in_sz[2])/2;
+
+    long thisx,thisy,thisz;
+    thisx=s.x;    thisy=s.y;    thisz=s.z;
+    double total_num, background_num;
+    double ir;
+    for (ir=1; ir<=max_r; ir++)
+    {
+        total_num = background_num = 0;
+        double dz, dy, dx;
+        double zlower = -ir, zupper = +ir;
+        for (dz= zlower; dz <= zupper; ++dz)
+            for (dy= -ir; dy <= +ir; ++dy)
+                for (dx= -ir; dx <= +ir; ++dx)
+                {
+                    total_num++;
+                    double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    if (r>ir-1 && r<=ir)
+                    {
+                        V3DLONG i = thisx+dx;   if (i<0 || i>=in_sz[0]) goto end2;
+                        V3DLONG j = thisy+dy;   if (j<0 || j>=in_sz[1]) goto end2;
+                        V3DLONG k = thisz+dz;   if (k<0 || k>=in_sz[2]) goto end2;
+
+                        if (inimg1d[k * sz01 + j * sz0 + i] <= bkg_thresh)
+                        {
+                            background_num++;
+
+                            if ((background_num/total_num) > 0.01) goto end2;
+                        }
+                    }
+                }
+    }
+end2:
+    return ir;
 }
 NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels)
 {
@@ -1202,13 +1333,14 @@ void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, Ne
     for (V3DLONG i=0;i<siz;i++)
          listNeuron[i].level=1;
     V3DLONG *in_zz = 0;    if(!callback.getDimTeraFly(imgPath,in_zz)){cout<<"can't load terafly img"<<endl;return;}
+
     for(V3DLONG i=0;i<siz;i++)
     {
         //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
         NeuronSWC s = listNeuron[i];
         //get a block
         long start_x,start_y,start_z,end_x,end_y,end_z;
-        int block_size=8;
+        long block_size=64;
         start_x = s.x - block_size; if(start_x<0) start_x = 0;
         end_x = s.x + block_size; if(end_x > in_zz[0]) end_x = in_zz[0];
         start_y =s.y - block_size;if(start_y<0) start_y = 0;
@@ -1229,15 +1361,19 @@ void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, Ne
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
         inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         if(inimg1d==NULL){ cout<<"Crop fail"<<endl;continue; }
-
-        V3DLONG thisx,thisy,thisz;
-        thisx=s.x-start_x;
-        thisy=s.y-start_y;
-        thisz=s.z-start_z;
-        listNeuron[i].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
-        //refine the node to local maximal(surrounding area)
         double imgave,imgstd;
         mean_and_std(inimg1d,pagesz,imgave,imgstd);
+        double td= (imgstd<10) ? 10:imgstd;
+        double bkg_thresh= imgave+td+30;
+//        cout<<"bkg thresh="<<bkg_thresh<<endl;
+        V3DLONG thisx,thisy,thisz;
+        thisx=s.x-start_x;        thisy=s.y-start_y;        thisz=s.z-start_z;
+        listNeuron[i].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+        //get node radius
+        NeuronSWC sr=s;        sr.x=thisx; sr.y=thisy;sr.z=thisz;
+        listNeuron[i].r=getNodeRadius_XY(inimg1d,in_sz,sr,bkg_thresh);
+        //refine the node to local maximal(surrounding area)
+
         if(useNeighborArea!=0)
         {
             NeuronSWC out=nodeRefine(inimg1d,thisx,thisy,thisz,in_sz,useNeighborArea);
@@ -1247,14 +1383,15 @@ void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, Ne
                 listNeuron[i].x=start_x+out.x;
                 listNeuron[i].y=start_y+out.y;
                 listNeuron[i].z=start_z+out.z;
-            }
+                listNeuron[i].r=getNodeRadius_XY(inimg1d,in_sz,out,bkg_thresh);
+            }           
         }
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
     //release pointer
     if(in_zz) {delete []in_zz; in_zz=0;}
 }
-void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronTree& nt,int useNeighborArea)
+void getSWCIntensityInImg(V3DPluginCallback2 &callback,string inimg_file, NeuronTree& nt,int useNeighborArea,int is2dRadius)
 {
     cout<<"Get intensity of each node in a neuron tree"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
@@ -1267,13 +1404,20 @@ void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1
         hashNeuron.insert(listNeuron[i].n,i);
     }
 
-    cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
+    //read image file
+    unsigned char * inimg1d = 0;V3DLONG in_sz[4];int datatype;
+    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return;
+    //get the background threshold
     V3DLONG sz01 = in_sz[0] * in_sz[1];
     V3DLONG sz0 = in_sz[0];
     double imgave,imgstd;
-    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
+    V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
     mean_and_std(inimg1d,total_size,imgave,imgstd);
-    cout<<"mean: "<<imgave<<", and std: "<<imgstd<<endl;
+    double td= (imgstd<10) ? 10:imgstd;
+    double bkg_thresh= imgave+td+30;
+    cout<<"bkg thresh="<<bkg_thresh<<endl;
+    cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
+
     for(V3DLONG i=0;i<siz;i++)
     {
         //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
@@ -1286,25 +1430,31 @@ void getSWCIntensityInImg(V3DPluginCallback2 &callback, unsigned char * & inimg1
             if (dstpos>=total_size)
                     continue;
             listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
+            //get node radius
+            listNeuron[i].r=(is2dRadius>0)?getNodeRadius_XY(inimg1d,in_sz,s,bkg_thresh):
+                                           getNodeRadius(inimg1d,in_sz,s,bkg_thresh);
             if(useNeighborArea!=0)
             {
                 NeuronSWC out=nodeRefine(inimg1d,listNeuron[i].x,listNeuron[i].y,listNeuron[i].z,in_sz,useNeighborArea);
-                if(listNeuron[i].level+imgave+imgstd<out.level)
+                if(listNeuron[i].level+imgstd<out.level)
                 {
                     listNeuron[i].level=out.level;
                     listNeuron[i].x=out.x;
                     listNeuron[i].y=out.y;
                     listNeuron[i].z=out.z;
+                    listNeuron[i].r=(is2dRadius>0)?getNodeRadius_XY(inimg1d,in_sz,out,bkg_thresh):
+                                                   getNodeRadius(inimg1d,in_sz,out,bkg_thresh);
                 }
             }
         }
     }
+    if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
-std::vector<double> get_sorted_level_of_seg(V_NeuronSWC inseg)
+///radiusfea=true, for radius feature; else for level feature
+std::vector<double> get_sorted_fea_of_seg(V_NeuronSWC inseg,bool radiusfea)
 {
-    /*start from tip to root
-    */
-    vector<double> seg_levels; seg_levels.clear();
+    /*start from tip to root*/
+    vector<double> seg_fea_list; seg_fea_list.clear();
     QHash<V3DLONG,V3DLONG> nlist;nlist.clear();
     QHash<V3DLONG,V3DLONG> pnlist;pnlist.clear();
     for(V3DLONG r=0;r<inseg.row.size();r++)
@@ -1323,13 +1473,16 @@ std::vector<double> get_sorted_level_of_seg(V_NeuronSWC inseg)
 //    cout<<"level list: "<<endl;
     while(nlist.contains(long(inseg.row.at(cur_id).n)))
     {
-        seg_levels.push_back((inseg.row.at(cur_id).level));
+        if(radiusfea)
+            seg_fea_list.push_back((inseg.row.at(cur_id).r));
+        else
+            seg_fea_list.push_back((inseg.row.at(cur_id).level));
         if(nlist.contains(long(inseg.row.at(cur_id).parent)))
             cur_id=nlist.value(long(inseg.row.at(cur_id).parent));
         else
             break;
     }
-    return seg_levels;
+    return seg_fea_list;
 }
 std::vector<int> smoothedZScore(std::vector<float> input,float threshold,float influence,int lag)
 {
@@ -1391,7 +1544,26 @@ std::vector<int> smoothedZScore(std::vector<float> input,float threshold,float i
     cout<<endl;
     return signals_flag;
 }
-std::vector<int> peaks_in_seg(std::vector<double> input,float delta)
+std::vector<double> mean_and_std_seg_fea(std::vector<double> input)
+{
+    vector<double> out(2, 0.0);
+    double fea_mean=0.0;
+    for(V3DLONG i=0;i<input.size();i++)
+        fea_mean+=input[i];
+    fea_mean/=input.size();
+    out[0]=fea_mean;
+
+    //standard
+    long var_fea=0;
+    for (V3DLONG i=0;i<input.size();i++)
+        var_fea=var_fea+(input[i]-fea_mean)*(input[i]-fea_mean);
+    var_fea/=input.size();
+    double std_fea=sqrt(var_fea);
+    out[1]=std_fea;
+
+    return out;
+}
+std::vector<int> peaks_in_seg(std::vector<double> input, int MAX_IN_VALUE,float delta)
 {
     /*The first argument is the vector to examine,
      * and the second is the peak threshold:
@@ -1419,11 +1591,92 @@ std::vector<int> peaks_in_seg(std::vector<double> input,float delta)
             {signals_flag_lowpeaks[minpos]=1;max_intensity=this_intensity;lookformax=true;}
         }
     }
+    //added at 2021-07-27, filter the peaks.
+//    return peaks_filter(input,signals_flag_highpeaks,signals_flag_lowpeaks,MAX_IN_VALUE);
 //    cout<<"flag";
 //    for(V3DLONG i=0;i<input.size();i++)
 //        cout<<","<<signals_flag_highpeaks[i];
 //    cout<<endl;
     return signals_flag_highpeaks;
+}
+std::vector<int> peaks_filter(std::vector<double> input,std::vector<int> init_peaks,std::vector<int> init_valleys, int MAX_IN_VALUE)
+{
+    int MIN_SEG_LEN=5;  float a_value=2.698;
+//    int MAX_IN_VALUE=60;
+    if(input.size()<MIN_SEG_LEN)
+        return init_peaks;
+    int MAX_SEG_LEN=200;
+
+    std::vector<int> out_peaks(input.size(), 0.0);
+    /*mean of input<100
+     * threshold = std*1.5  */
+    long input_mean=0;
+    for(V3DLONG i=0;i<input.size();i++)
+        input_mean+=input[i];
+    input_mean/=input.size();
+    if(input.size()>MAX_SEG_LEN&&input_mean>MAX_IN_VALUE)
+        return out_peaks;
+    if(input_mean>MAX_IN_VALUE)
+        a_value*=2;
+//        return out_peaks;
+    //standard
+    long varIntensity=0;
+    for (V3DLONG i=0;i<input.size();i++)
+        varIntensity=varIntensity+(input[i]-input_mean)*(input[i]-input_mean);
+    varIntensity/=input.size();
+    int stdIntensity=sqrt(varIntensity);
+
+    int min_intensity=input[0];
+    //filter the start point
+    if(init_peaks[0]>0){
+        //find the first valley
+        for(V3DLONG i=0;i<input.size();i++){
+            if(init_valleys[i]>0){
+                out_peaks[0]=(input[0]-input[i]>a_value*stdIntensity)?1:0;
+                min_intensity=input[i];
+                break;
+            }
+        }
+    }
+    //filter the inter point
+     for (V3DLONG i=1;i<input.size()-1;i++)
+     {
+         min_intensity=(input[i]<min_intensity)?input[i]:min_intensity;
+         if(init_peaks[i]>0)
+         {
+             //get the near valley and measure the distance
+             //get left valley
+             int left_valley=min_intensity;
+             for(V3DLONG j=i-1;j>=0;j--){
+                 if(init_valleys[j]>0){
+                     left_valley=init_valleys[j]; break;}
+             }
+            //get right valley
+             min_intensity=input[i+1];  int right_valley=min_intensity;
+             for(V3DLONG j=i+1;j<input.size();j++){
+                  min_intensity=(input[j]<min_intensity)?input[j]:min_intensity;
+                  if(init_valleys[j]>0){
+                      right_valley=init_valleys[j];
+                      min_intensity=right_valley;
+                      break;
+                  }
+             }
+             //measure the peak to valley distance
+             out_peaks[i]=(input[i]-left_valley>a_value*stdIntensity
+                           ||input[i]-right_valley>a_value*stdIntensity)?1:0;
+         }
+     }
+     //filter the end point
+     if(init_peaks[input.size()-1]>0){
+         //find the last valley
+         for(V3DLONG i=input.size()-1;i>0;i--){
+             if(init_valleys[i]>0){
+                 out_peaks[input.size()-1]=(input[input.size()-1]-input[i]>a_value*stdIntensity)?1:0;
+                 break;
+             }
+         }
+     }
+    return out_peaks;
 }
 NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size)
 {
