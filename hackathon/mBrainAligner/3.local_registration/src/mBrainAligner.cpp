@@ -639,8 +639,8 @@ bool Compute_source_fMOST(float * & p_kernel_map, float *p_kernel, int & kernel_
 
 	//normalized mutual information [0,1], bigger is better
 	float nmi_G, nmi_map;
-	q_mutualinformation3(p_kernel, p_patch, kernel_radius, nmi_G);
-	q_mutualinformation3(p_kernel_map, p_patch_map, kernel_radius, nmi_map);
+	q_mutualinformation3(p_kernel, p_patch, npixels_kernel, nmi_G);
+	q_mutualinformation3(p_kernel_map, p_patch_map, npixels_kernel, nmi_map);
 
 
 	vec2d_pfeatmaps[ind_landmark][index_fetmap] = mse_map*ncc_map*nmi_map*nmi_G* mse_H*ncc_H;
