@@ -19,7 +19,7 @@ mBrainAligner contains three decoupled modules: (1) image preprocessing and glob
 
 In general, there are two ways to use mBrainAligner:
 1. follow the below instructions and run mBrainAligner on local machines.
-2. visit http://159.75.201.35/ and run mBrainAligner online. (registration results of sample data can also be downloaded here)
+2. visit http://159.75.201.35/ and run mBrainAligner online. (registration results and sample data can also be downloaded there)
 
 Please feel free to contact us by email (17718151568@126.com) any time for any question you have.
 
