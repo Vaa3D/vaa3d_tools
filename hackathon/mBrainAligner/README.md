@@ -163,7 +163,8 @@ We provide corresponding executable files and scripts when using mBraiAligner on
 Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). If you only want to register a certain mouse brain, you can delete the content of other mouse brain registrations in the script. For example, if you only want to register the fMOST mouse brain, you can delete lines 1 to 11 of the script.
 
 ### Registration result   
-For all modals, sample data registration results will be saved in 'Registration_sample_data\result\'.
+For all modals, sample data registration results will be saved in './demo/Registration_sample_data/result/'.
+For example, fMOST mouse brain, enter the './demo/Registration_sample_data/result/fMOST/' path and you can get the following files:
 
 
 
