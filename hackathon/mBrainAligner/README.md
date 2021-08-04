@@ -165,8 +165,16 @@ Single brain registration will finish in about 0.5 hours (If the default paramet
 ### Registration result   
 For all modals, sample data registration results will be saved in './demo/Registration_sample_data/result/'.
 For example, fMOST mouse brain, enter the './demo/Registration_sample_data/result/fMOST/' path and you can get the following files:
-
-
+1. fMOST_18458_raw_RPM.v3draw
+   fMOST_18458_raw_RPM_tar.marker
+   fMOST_18458_raw_RPM_sub.marker
+2. fMOST_18458_raw_FFD.v3draw
+   fMOST_18458_raw_FFD_grid.swc
+3. fMOST_18458_raw_NORM.v3draw
+4. ori_local_registered_image.v3draw
+   ori_local_registered_tar.marker
+   ori_local_registered_sub.marker
+   
 
 
 
