@@ -16,5 +16,5 @@ SOURCES	+= image_quality_gui.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(image_quality)
+TARGET	= $$qtLibraryTarget(imagequality)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/image_analysis/image_quality/
