@@ -126,7 +126,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 
 bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	cout<<"Welcome to histogram"<<endl;
+    cout<<"Welcome to image quality"<<endl;
 	if(output.size() != 1) return true;
 	
 	vector<char*>* inlist = (vector<char*>*) (input.at(0).p);
@@ -142,7 +142,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	int datatype;
     if (!simple_loadimage_wrapper(callback, infile, inimg1d, sz, datatype))
 	{
-		cerr<<"faile to load image"<<endl;
+        cerr<<"failed to load image"<<endl;
 		return false;
 	}
 

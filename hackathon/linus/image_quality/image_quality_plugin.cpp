@@ -26,7 +26,7 @@ QStringList ImageQualityPlugin::funclist() const
 		<<tr("help");
 }
 
-void HistogramPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void ImageQualityPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
         if (menu_name == tr("Image Quality"))
 	{
@@ -39,7 +39,7 @@ void HistogramPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
 }
 
-bool HistogramPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool ImageQualityPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     if (func_name == tr("image_quality"))
 	{
