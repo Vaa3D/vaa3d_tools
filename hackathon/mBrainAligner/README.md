@@ -27,11 +27,13 @@ Please feel free to contact us by email (17718151568@126.com) any time for any q
 
 ## Hardware requirements
 
-`mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For optimal performance, we recommend a computer with the following specifications: 
+`mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications: 
 
 RAM: 32 GB or larger;
 
 CPU: 2.3GHz dual-10-core Intel Xeon or better.
+
+(Note: Due to limited network and storage, only small downsampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn).)
 
 
 ## Software Requirements
@@ -40,7 +42,7 @@ CPU: 2.3GHz dual-10-core Intel Xeon or better.
 
 The package has been tested on the following systems:
 
-- Windows
+- Windows 10 64bit
 - Linux (e.g. Ubuntu)
 
 ###  Dependencies
