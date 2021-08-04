@@ -160,26 +160,31 @@ We provide corresponding executable files and scripts when using mBraiAligner on
    
     sh run_script_linux.sh 
   
-Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). If you only want to register a certain mouse brain, you can delete the content of other mouse brain registrations in the script. For example, if you only want to register the fMOST mouse brain, you can delete lines 1 to 11 of the script.
+Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). If you only want to register a certain mouse brain, you can delete the content of other mouse brain registrations in the script. For example, if you only want to register the fMOST mouse brain, you can delete lines 26 to 44 of the script 'run_script_windows.bat'.
 
 ### Registration result   
-For all modals, sample data registration results will be saved in './demo/Registration_sample_data/result/'.
+For all modals, sample data registration results will be saved in './demo/Registration_sample_data/result/'.  
 For example, fMOST mouse brain, enter the './demo/Registration_sample_data/result/fMOST/' path and you can get the following files:
-1. fMOST_18458_raw_RPM.v3draw
-   fMOST_18458_raw_RPM_tar.marker
-   fMOST_18458_raw_RPM_sub.marker
-2. fMOST_18458_raw_FFD.v3draw
-   fMOST_18458_raw_FFD_grid.swc
-3. fMOST_18458_raw_NORM.v3draw
-4. ori_local_registered_image.v3draw
-   ori_local_registered_tar.marker
-   ori_local_registered_sub.marker
+* global registration result
+>  1. fMOST_18458_raw_RPM.v3draw  
+      fMOST_18458_raw_RPM_tar.marker  
+      fMOST_18458_raw_RPM_sub.marker  
+>  2. fMOST_18458_raw_FFD.v3draw  
+      fMOST_18458_raw_FFD_grid.swc  
+>  3. fMOST_18458_raw_NORM.v3draw
+* local registration result
+>  ori_local_registered_image.v3draw  
+   ori_local_registered_tar.marker  
+   ori_local_registered_sub.marker  
    
-
-
+All files can be opened using [Vaa3d](https://github.com/Vaa3D), '\**.v3draw' is the registered image in each stage, and '\**.marker' can generate the deformation field of registered image (it can be used to register the neurons and soma on the mouse brain in the later stage).
 
 ## Register your own data
-You need to modify the registration data path and corresponding parameters in `run_script_windows.bat` and `run_script_linux.sh`. You can also optionally modify the local registration parameters in `...config.txt` for better local registration results (Descrptions of the parameters are given in the corresponding files).
+You need to modify the registration data path and corresponding parameters in `run_script_windows_yod.bat` and `run_script_linux_yod.sh`.   
+The *** position in the file is an item that must be modified, for example in the ".bat" script:
+> -m ***.v3draw -> the name of your own data, and you need to ensure that your data is in the v3draw format.
+
+Other parameter items are not necessary to modify items. But you can still modify it, such as the save path '-o Registration_sample_data/result/yod/', you can modify it to the path where you want the registration result to be saved. In addition, you can also optionally modify the local registration parameters in `Registration_sample_data/Parameter/yod_config.txt` according to your data set for better local registration results (Descrptions of the parameters are given in the corresponding files).
 
 
 **Note**: Due to limited network and storage, small downsampled brain images are provided here (but the registration results 'Registration_sample_data\registered_sample_data\' are based on the raw brain data).
