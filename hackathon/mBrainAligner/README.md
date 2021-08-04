@@ -101,7 +101,7 @@ example(global_registration):
 You can find the executable file from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration". 
 
 # Demo
-We have provided downsampled raw data for four modalities (`fMOST`,`VISoR`,`MRI`,`LSFM`), corresponding registered results, and related files needed during registration.
+**We have provided compiled executable files that you can use directly without complicated environment configuration**. Here we also have provided downsampled raw sample data for four modalities (`fMOST`,`VISoR`,`MRI`,`LSFM`), corresponding registered results, and related files needed during registration. In addition, you can also use the corresponding script file to register your own data.
 
 ## Structure of the Demo folder
 
@@ -141,13 +141,13 @@ We have provided downsampled raw data for four modalities (`fMOST`,`VISoR`,`MRI`
 > > > >
 > > > >loacl_result: results of aligned by mBrainAligner local registration algorithm,include registered brain data and its corresponding landmarks.
 
-## Run
+## Register sample data
+We provide corresponding executable files and scripts when using mBraiAligner on windows and linux platforms.
 ### Windows
-   Directly run
-   
-    run_script_windows.bat
+   You can directly enter the `./demo` folder, double-click `run_script_windows.bat`, after about two hours, you will get the registration results of the four modal mouse brains. Because for the sample data, we have provided the optimal parameter settings and the path of the required files, etc., so you don't need to make any changes to the script file to get the registration result.
 
 ### Linux    
+   In Linux, you first need to complete a simple configuration environment. In addition, after the registration is completed, four modal mouse brain registration results can also be obtained.The detailed steps are as follows:
    **Environment configuration**
    
    The path for the lib files (mBrainAligner_data/3rdparty_linux/lib/)  needs to be added to the linker directory, the steps are as follows:
@@ -157,13 +157,20 @@ We have provided downsampled raw data for four modalities (`fMOST`,`VISoR`,`MRI`
     add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib"  to the last line of '/etc/ld.so.conf' and save. 
     sudo ldconfig
    After that, run
-      
+   
     sh run_script_linux.sh 
-    
-    
-Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). For all modals, sample data registration results will be saved in 'Registration_sample_data\result\'.
+  
+Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). 
 
-**Register your own data**: You need to modify the registration data path and corresponding parameters in `run_script_windows.bat` and `run_script_linux.sh`. You can also optionally modify the local registration parameters in `...config.txt` for better local registration results (Descrptions of the parameters are given in the corresponding files).
+### Registration result   
+For all modals, sample data registration results will be saved in 'Registration_sample_data\result\'.
+
+
+
+
+
+## Register your own data
+You need to modify the registration data path and corresponding parameters in `run_script_windows.bat` and `run_script_linux.sh`. You can also optionally modify the local registration parameters in `...config.txt` for better local registration results (Descrptions of the parameters are given in the corresponding files).
 
 
 **Note**: Due to limited network and storage, small downsampled brain images are provided here (but the registration results 'Registration_sample_data\registered_sample_data\' are based on the raw brain data).
