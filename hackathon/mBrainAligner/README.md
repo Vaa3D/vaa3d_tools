@@ -103,7 +103,7 @@ You can find the executable file from the location "(YOUR PATH)/vaa3d_tools/hack
 # Demo
 We have provided downsampled raw data for four modalities (`fMOST`,`VISoR`,`MRI`,`LSFM`), corresponding registered results, and related files needed during registration.
 
-### Structure of the Demo folder
+## Structure of the Demo folder
 
 >**mBrainAligner_data**
 >
