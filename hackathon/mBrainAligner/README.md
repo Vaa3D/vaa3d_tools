@@ -89,7 +89,7 @@ example(global_registration):
     qmake global_registration.pro
     vcvars64.bat
     nmake release
-You can find the executable file from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration.exe". 
+You can find the executable file from the location `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration.exe`. 
 
 ### for Linux
 Before compiling, you also need to modify the **".pro"** file according to the path of the installed dependencies (Vaa3D,QT etc). 
@@ -98,7 +98,7 @@ example(global_registration):
      cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/
      qmake global_registration.pro
      Make
-You can find the executable file from the location "(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration". 
+You can find the executable file from the location `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration`. 
 
 # Demo
 **We have provided compiled executable files that you can use directly without complicated environment configuration**. Here we also have provided downsampled raw sample data for four modalities (`fMOST`,`VISoR`,`MRI`,`LSFM`), corresponding registered results, and related files needed during registration. In addition, you can also use the corresponding script file to register your own data.
@@ -149,7 +149,7 @@ We provide corresponding executable files and scripts when using mBraiAligner on
 ### Linux    
    In Linux, you first need to complete a simple configuration environment. In addition, after the registration is completed, four modal mouse brain registration results can also be obtained.The detailed steps are as follows:
    
-   The path for the lib files (mBrainAligner_data/3rdparty_linux/lib/)  needs to be added to the linker directory, the steps are as follows:
+   The path for the lib files (`mBrainAligner_data/3rdparty_linux/lib/`)  needs to be added to the linker directory, the steps are as follows:
     
     Ctrl+Alt+t to open terminal 
     tar -zxvf lib.tar.gz
@@ -160,11 +160,11 @@ We provide corresponding executable files and scripts when using mBraiAligner on
    
     sh run_script_linux.sh 
   
-Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). If you only want to register a certain mouse brain, you can delete the content of other mouse brain registrations in the script. For example, if you only want to register the fMOST mouse brain, you can delete lines 26 to 44 of the script 'run_script_windows.bat'.
+Single brain registration will finish in about 0.5 hours (If the default parameters are chosen). If you only want to register a certain mouse brain, you can delete the content of other mouse brain registrations in the script. For example, if you only want to register the fMOST mouse brain, you can delete lines 26 to 44 of the script `run_script_windows.bat`.
 
 ### Registration result   
-For all modals, sample data registration results will be saved in './demo/Registration_sample_data/result/'.  
-For example, fMOST mouse brain, enter the './demo/Registration_sample_data/result/fMOST/' path and you can get the following files:
+For all modals, sample data registration results will be saved in `./demo/Registration_sample_data/result/`.  
+For example, fMOST mouse brain, enter the `./demo/Registration_sample_data/result/fMOST/` path and you can get the following files:
 * global registration result
 >  1. fMOST_18458_raw_RPM.v3draw  
       fMOST_18458_raw_RPM_tar.marker  
@@ -177,17 +177,17 @@ For example, fMOST mouse brain, enter the './demo/Registration_sample_data/resul
    ori_local_registered_tar.marker  
    ori_local_registered_sub.marker  
    
-All files can be opened using [Vaa3d](https://github.com/Vaa3D), '\**.v3draw' is the registered image in each stage, and '\**.marker' can generate the deformation field of registered image (it can be used to register the neurons and soma on the mouse brain in the later stage).
+All files can be opened using [Vaa3d](https://github.com/Vaa3D), `**.v3draw` is the registered image in each stage, and `**.marker` can generate the deformation field of registered image (it can be used to register the neurons and soma on the mouse brain in the later stage).
 
 ## Register your own data
 You need to modify the registration data path and corresponding parameters in `run_script_windows_yod.bat` and `run_script_linux_yod.sh`.   
 The *** position in the file is an item that must be modified, for example in the ".bat" script:
 > -m ***.v3draw -> the name of your own data, and you need to ensure that your data is in the v3draw format.
 
-Other parameter items are not necessary to modify items. But you can still modify it, such as the save path '-o Registration_sample_data/result/yod/', you can modify it to the path where you want the registration result to be saved. In addition, you can also optionally modify the local registration parameters in `Registration_sample_data/Parameter/yod_config.txt` according to your data set for better local registration results (Descrptions of the parameters are given in the corresponding files).
+Other parameter items are not necessary to modify items. But you can still modify it, such as the save path `-o Registration_sample_data/result/yod/`, you can modify it to the path where you want the registration result to be saved. In addition, you can also optionally modify the local registration parameters in `Registration_sample_data/Parameter/yod_config.txt` according to your data set for better local registration results (Descrptions of the parameters are given in the corresponding files).
 
 
-**Note**: Due to limited network and storage, small downsampled brain images are provided here (but the registration results 'Registration_sample_data\registered_sample_data\' are based on the raw brain data).
+**Note**: Due to limited network and storage, small downsampled brain images are provided here (but the registration results `Registration_sample_data\registered_sample_data\` are based on the raw brain data).
 For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn). If you use the raw data to register the fMOST mouse brain, you need to update the "Registration_sample_data/fMOST_segmentation/" at well. The segmentation model will be uploaded soon.
 
 
