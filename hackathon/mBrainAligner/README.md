@@ -181,7 +181,7 @@ All files can be opened using [Vaa3d](https://github.com/Vaa3D), `**.v3draw` is 
 
 ## Register your own data
 You need to modify the registration data path and corresponding parameters in `run_script_windows_yod.bat` and `run_script_linux_yod.sh`.   
-The *** position in the file is an item that must be modified, for example in the ".bat" script:
+The *** position in the file is an item that must be modified, for example in the `run_script_windows_yod.bat` script:
 > -m ***.v3draw -> the name of your own data, and you need to ensure that your data is in the v3draw format.
 
 Other parameter items are not necessary to modify items. But you can still modify it, such as the save path `-o Registration_sample_data/result/yod/`, you can modify it to the path where you want the registration result to be saved. In addition, you can also optionally modify the local registration parameters in `Registration_sample_data/Parameter/yod_config.txt` according to your data set for better local registration results (Descrptions of the parameters are given in the corresponding files).
