@@ -11,17 +11,17 @@
 
 # Overview
 
-Recent whole brain mapping projects are collecting large-scale 3D images using powerful and informative modalities, such as STPT, fMOST, VISoR, LSFM or MRI. Registration of these multi-dimensional whole-brain images onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. However, cross-modality image registration is challenging due to intrinsic variations of brain anatomy and artifacts resulted from different sample preparation methods and imaging modalities. 
+Recent whole brain mapping projects are collecting large-scale 3D images using powerful and informative modalities, such as STPT, fMOST, VISoR, LSFM or MRI. Registration of these multi-dimensional whole-brain images onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. However, cross-modality image registration is challenging due to intrinsic variations of brain anatomy and artifacts resulted from different sample preparation methods and imaging modalities.
 
-mBrianAligner provides a comprehesive, robust and accurate cross-modality image registration pipeline to support the current large-scale whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities, mBrainAligner also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using mBrainAligner, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. mBrainAligner is not limited to the use of intra- and cross-modality mouse brain registration, its utilities can also be extended to partially imaged data and multi-timepoint registration or other species. 
+mBrianAligner provides a comprehesive, robust and accurate cross-modality image registration pipeline to support the current large-scale whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities, mBrainAligner also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using mBrainAligner, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. mBrainAligner is not limited to the use of intra- and cross-modality mouse brain registration, its utilities can also be extended to partially imaged data and multi-timepoint registration or other species.
 
 mBrainAligner contains three decoupled modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
 
-In general, there are two ways to use mBrainAligner:
-1. follow the below instructions and run mBrainAligner on local machines.
-2. visit http://159.75.201.35/ and run mBrainAligner online. (registration results and sample data can also be downloaded there)
-
+There are two ways to use mBrainAligner:
+1.	follow the below instructions to build and run mBrainAligner on local machines.
+2.	visit http://159.75.201.35/ and run mBrainAligner online. (registration results and sample data can also be downloaded there)
 Please feel free to contact us by email (17718151568@126.com) any time for any question you have.
+
 
 # System requirements
 
@@ -33,34 +33,44 @@ RAM: 32 GB or larger;
 
 CPU: 2.3GHz dual-10-core Intel Xeon or better.
 
-(Note: Due to limited network and storage, only small downsampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website (https://scalablebrainatlas.incf.org/mouse/ABA_v3#about) or contact us by email (qulei@ahu.edu.cn).)
+(Note: Due to limited network and storage, only small downsampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relief the GPU requirement)
 
 
-## Software Requirements
-
-### OS Requirements
+## OS Requirements
 
 The package has been tested on the following systems:
 
 - Windows 10 64bit
 - Linux (e.g. Ubuntu)
 
-###  Dependencies
 
-```
-Vaa3D
-OpenCV 3.1.0
-```
+# Install mBrainAligner
 
-# Installation Guide
+## Use provided compiled executable files
 
-## Setting up environments
+If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `dist` folder and put it anywhere you like.
 
-Put the `mBrainAligner` package in the `PATH\vaa3d_tools\hackathon\` directory. 
+>**dist**
+> > **mBrainAligner_win64**: contains the global and local registration executable files and `dlls` for Windows.
+> > 
+> > **mBrainAligner_linux**: contains the global and local registration executable files and 'libs' for Linux.
+> > 
+> > **othertools_win64**: contains the neuron or soma warping tool, 2.5D corner detector executable file and necessary libraries. Note that the stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`.
+> > 
 
-Configure the project in Release and x64 mode.
+## Build mBrainAligner from source
 
-## Pre-requisites
+If you want to build mBrainAligner from source, please follow the instructions here: https://****************************
+
+
+# Run mBrainAligner
+
+We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `dist`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
+
+An overview of the pipeline is shown below. For a deeper understanding of each module please read the *********Paper!*********
+
+![overview_pipeline](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/result_example.png)
+
 ### Vaa3D 
 
 Please follow this link to build Vaa3D on Windows with qmake using VS2013 and Qt4.8.6:
