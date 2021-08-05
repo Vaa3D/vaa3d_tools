@@ -112,9 +112,9 @@ Then run
 For a step-by-step user guide, please read: [Image registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/Image_reg_pipeline_win.md)
 
 
-## - Run mBrainAligner on you own data
+## - Run mBrainAligner on your own data
 
-If you want to practice `mBrainAligner` on you own data, please read: `“link: register your own data”`
+If you want to practice `mBrainAligner` on your own data, please read: [Register your own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/Register_your_own_data.md)
 
 We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.
 
