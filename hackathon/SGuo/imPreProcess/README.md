@@ -24,11 +24,12 @@ In this repo, we provide the following sources.
 
 ## <a name="Installation"></a>Installation
 
- -Please follow the build instructions here to build released plugins along with the Vaa3d main program:
+ 1. Please follow the build instructions here to build released plugins along with the Vaa3d main program:
          https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
 
- -Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki 
+ 2. Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki 
   
+
 ## <a name="Command"></a>Run via Command-Line Interface
   The plugin takes one 3d image and performs the enhancement according to the parameters specified by the user. It can be applied via either the GUI of the Vaa3D platform under the menu of 'plug-in/imPreProcess/image enhancement', or via the command line interface as following:
   
@@ -59,7 +60,7 @@ In this repo, we provide the following sources.
 
   * Note: The parameter_list should be specified in order as listed above. A typical example to run the command in Window OS with the parameter specification is as following:
 
-     vaa3d_msvc.exe /x imPreProcess.dll /f im_enhancement /i 17109_4142.778_1929.072_2794.948.v3draw /o 17109_4142.778_1929.072_2794.948_pre.v3draw /p 3 3 1 35 3 25 1 1
+     vaa3d_msvc.exe /x imPreProcess.dll /f im_enhancement /i 17109_4142.778_1929.072_2794.948.v3draw /o 17109_4142.778_1929.072_2794.948_pre.v3draw /p 3 1 35 3 25 1 1
 
  
 ## <a name="FAQ"></a>FAQ
