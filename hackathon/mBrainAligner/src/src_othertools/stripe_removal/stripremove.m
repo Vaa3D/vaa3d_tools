@@ -57,7 +57,7 @@ for i=1:length(curdir)
             I_output=stripremove_stack(I,H);
          
             %save image
-            filename_output=[foldername_output,'/',curdir(i).name(1:end-7),'_remove_improve.v3draw'];
+            filename_output=[foldername_output,'/',curdir(i).name(1:end-7),'_stripremove.v3draw'];
             save_v3d_raw_img_file(uint8(I_output),filename_output);
         end
     end
@@ -66,21 +66,19 @@ end
 function I_output=stripremove_stack(I,H)
 I=double(I);
 imgsize=size(I);
-%滤波
+
 I_output=I;
 %h1=figure;h2=figure;
 for z=1:imgsize(3)
     fprintf('%d/%d\n',imgsize(3),z);
     I_slice=double(I(:,:,z));
-    %------乘性噪声，先+1然后取log-------------
     [rows,cols] = size(I_slice);
     I_slice = double(I_slice) + ones(rows,cols);
-    I_slice = log(I_slice);%取log,使得伪乘性噪声变成加性噪声
-    %-----------用带状滤波器H去除--------------
+    I_slice = log(I_slice);
+ 
     Fc=fftshift(fft2(I_slice));
     G=H.*Fc;
     g=real(ifft2(ifftshift(G)));
-    %--------反log运算—1---------------
     g = exp(double(g))-1;
     %-------------
     I_output(:,:,z)=uint8(g);
