@@ -6,7 +6,7 @@
 
 - [Overview](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Overview)
 - [System requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#System-requirements)
-- - [hardware requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Hardware-requirements)
+- - [hardware requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##_-_Hardware-requirements)
 - - [OS requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-OS-requirements)
 - [Installation mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Install-mBrainAligner)
 - - [install precompiled executable files](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-provided-compiled-executable-files)
