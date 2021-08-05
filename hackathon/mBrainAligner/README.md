@@ -124,7 +124,7 @@ We encourage you to read the `Step-by-step tutorial` and `Scripts` first.
 
 Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read `“link: Warp reconstructed neurons or somas to CCF”` for detail. 
 
-## `(OPTIONAL)` Use 3D UNet to gengerate segmentation features
+## - `(OPTIONAL)` Use 3D UNet to gengerate segmentation features
 
 One merit of `mBrainAligner` is that different features can be effectively integrated and utilized to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as one of the discriminative feature.
 
