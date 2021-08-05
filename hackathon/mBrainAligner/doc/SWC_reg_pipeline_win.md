@@ -8,7 +8,7 @@ Registration of neuron reconstructions is important for comparative studies acro
 
 #### Step 1: collect the deformation field files. (See Appendix for detailed meaning of folders and files)
 
-###### 1.1    Copy an empty set of folders from “GitHub directory” to \<your working directory> and name it by the brain ID. The structure of this folder set is shown below:
+###### 1.1    Copy an empty set of folders from `mBrainAligner/examples/swc_registration/` to \<your working directory> and name it by the brain ID. The structure of this folder set is shown below:
 
 ![swc_reg_example_2](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/images_swc_reg/image-20210805123458726.png)
 
