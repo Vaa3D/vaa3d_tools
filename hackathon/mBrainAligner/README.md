@@ -24,14 +24,14 @@
 
 Recent whole brain mapping projects are collecting large-scale 3D images using powerful and informative modalities, such as STPT, fMOST, VISoR, LSFM or MRI. Registration of these multi-dimensional whole-brain images onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. However, cross-modality image registration is challenging due to intrinsic variations of brain anatomy and artifacts resulted from different sample preparation methods and imaging modalities.
 
-`mBrianAligner` provides a comprehesive, robust and accurate cross-modality image registration pipeline to support the current large-scale whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities,`mBrainAligner` also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using `mBrainAligner`, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. `mBrainAligner` is not limited to the use of intra- and cross-modality mouse brain registration, its utilities can also be extended to partially imaged data and multi-timepoint registration or other species.
+`mBrianAligner` provides a cross-modality image registration pipeline to support whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities,`mBrainAligner` also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using `mBrainAligner`, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. `mBrainAligner` is not limited to the use of intra- and cross-modality mouse brain registration, it may also be extended to partially imaged data and multi-timepoint registration or other species.
 
 `mBrainAligner` contains three modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
 
 There are two ways to use `mBrainAligner`:
 1.	follow the below instructions to build and run `mBrainAligner` on local machines.
-2.	visit http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
-Please feel free to contact us by email 17718151568@126.com any time for any question you have.
+2.	visit a web portal http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
+Questions can be sent to 17718151568@126.com .
 
 
 # System requirements
