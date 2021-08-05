@@ -135,7 +135,7 @@ One merit of `mBrainAligner` is that different features can be effectively integ
 
 Considering that DNNs have shown tremendous superiority against traditional methods in segmentation applications, we choose to generate the segmentation probability feature using a semantic segmentation network. As a proof of principle, we adopted a slightly modified 3D U-Net to generate the segmentation probability (0~1) of each voxel to six main brain regions (HY, HPF, CTX, CBX, BS, CP) and background. Indeed, 3D U-Net can be readily substituted with other more sophisticated semantic segmentation networks to further improve the registration performance.
 
-The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to generate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/3D_UNet.md) for detailed data preparation, training and inference of this network.
+The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to generate segmentation features](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/3D_U-Net.md) for detailed data preparation, training and inference of this network.
 
 
 # License
