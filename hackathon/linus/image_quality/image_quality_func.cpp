@@ -76,6 +76,41 @@ template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double 
 
 }
 
+template <class T> bool getMax(const T * pdata1d, V3DLONG datalen, int &maxint)
+{
+    // init maxint
+    maxint = int(0);
+
+    for (V3DLONG i=0;i<datalen;i++)
+    {
+        if(pdata1d[i]>maxint)
+        {
+            maxint = pdata1d[i];
+        }
+    }
+
+    return true;
+
+}
+
+template <class T> bool getMin(const T * pdata1d, V3DLONG datalen, int &minint)
+{
+    // init maxint
+    minint = int(255);
+
+    for (V3DLONG i=0;i<datalen;i++)
+    {
+        if(pdata1d[i]<minint)
+        {
+            minint = pdata1d[i];
+        }
+    }
+
+    return true;
+
+}
+
+
 
 int compute(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -88,6 +123,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 
 	Image4DSimple *p4DImage = callback.getImage(curwin);
+    QString  imgname = callback.getImageName(curwin);
 
     //TODO add datatype judgment in case someone wanted to compute in 16bit
 	double max_value = 256;
@@ -160,12 +196,15 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     char *strout = outfileba.data();
     FILE *fp;
     fp = fopen(strout, "w");
-    for (int i=0;i<hist_vec.size();i++)
-    {
-        for (int j=0;j<hist_vec[i].size();j++)
-            fprintf(fp, "%d,", hist_vec[i][j]);
-        fprintf(fp,"\n");
-    }
+    QString header = "Image_name,test\n";
+    fprintf(fp, "%s", header.toStdString().c_str());
+    fprintf(fp, "%s,%d\n", imgname.toStdString().c_str(),10);
+//    for (int i=0;i<hist_vec.size();i++)
+//    {
+//        for (int j=0;j<hist_vec[i].size();j++)
+//            fprintf(fp, "%d,", hist_vec[i][j]);
+//        fprintf(fp,"\n");
+//    }
     fclose(fp);
 
 	return 1;
@@ -250,25 +289,54 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	double max_value = 256;
 	V3DLONG histscale = 256;
 	QVector<QVector<int> > hist_vec;
+    QVector<float> FocusScore_vec;
+    QVector<int> MinIntensity_vec;
+    QVector<int> MaxIntensity_vec;
+    QVector<float> MeanIntensity_vec;
+    QVector<float> MedianIntensity_vec;
+    QVector<float> MADIntensity_vec;
+    QVector<float> StdIntensity_vec;
+    QVector<float> PercentMinimal_vec;
+    QVector<float> PercentMaximal_vec;
+    QVector<float> ThreshOtsu_vec;
+    QVector<float> SNRmean_vec;
+    QVector<float> CNRmean_vec;
+    QVector<float> SNRotsu_vec;
+    QVector<float> CNRotsu_vec;
 
 	int nChannel = sz[3];
 
 	for (int c=0;c<nChannel;c++)
 	{
-		QVector<int> tmp;
+        int  maxint;
+        getMax(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], maxint);
+        MaxIntensity_vec.append(maxint);
+        //cout << maxint << "\n";
+        int  minint;
+        getMin(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint);
+        MinIntensity_vec.append(minint);
+        //cout << minint << "\n";
+        QVector<int> tmp;
 		getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
 		hist_vec.append(tmp);
+
 	}
 
 	//output histogram to csv file
 	FILE *fp;
 	fp = fopen(outfile, "w");
-	for (int i=0;i<hist_vec.size();i++)
-	{
-		for (int j=0;j<hist_vec[i].size();j++)
-			fprintf(fp, "%d,", hist_vec[i][j]);
-		fprintf(fp,"\n");
-	}
+    QString header = "Image_name,Channel,FocusScore,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu\n";
+    fprintf(fp, "%s", header.toStdString().c_str());
+    for (int i=0;i<hist_vec.size();i++)
+    {
+        fprintf(fp, "%s,%d\n", infile,i+1,10);
+    }
+//	for (int i=0;i<hist_vec.size();i++)
+//	{
+//		for (int j=0;j<hist_vec[i].size();j++)
+//			fprintf(fp, "%d,", hist_vec[i][j]);
+//		fprintf(fp,"\n");
+//	}
 	fclose(fp);
 
     //if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
