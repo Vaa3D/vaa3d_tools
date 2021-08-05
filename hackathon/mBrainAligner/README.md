@@ -12,10 +12,10 @@
 - - [install precompiled executable files](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-provided-compiled-executable-files)
 - - [build mBrainAligner from source](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Build-mBrainAligner-from-source)
 - [Run mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Run-mBrainAligner)
-- - [Run mBrainAligner on sample data in batch](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner -on-sample-data-in-batch)
-- - [Step-by-step tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Step-by-step-tutorial)
-- - [Run mBrainAligner on you own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-you-own-data)
-- - [Warp reconstructed neurons or somas to CCF](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Warp-reconstructed-neurons-or-somas-to-CCF)
+- - [run mBrainAligner on sample data in batch](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-sample-data-in-batch)
+- - [step-by-step tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Step-by-step-tutorial)
+- - [run mBrainAligner on you own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-you-own-data)
+- - [warp reconstructed neurons or somas to CCF](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Warp-reconstructed-neurons-or-somas-to-CCF)
 - [License](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#License)
 
 # Overview
