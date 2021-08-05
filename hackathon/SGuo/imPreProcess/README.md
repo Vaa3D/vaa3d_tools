@@ -2,7 +2,7 @@
 
 imPreProcess is a Vaa3D plugin including a pipeline of image enhancement for single-neuron images. The aims is to enhance the neurite signal as well as to suppress the background, with the ultimate goal of high signal-background contrast and better within- and between image homogeneity. 
 
-Please cite the following manuscript for CMO analysis:
+Please cite the following manuscript to use this plugin:
 
 >  Guo et al. Image enhancement to leverage the 3D morphological reconstruction of single-cell neurons. Bioinformatics.
 
@@ -35,16 +35,13 @@ In this repo, we provide the following sources.
   
    * Window-based: 
         vaa3d_msvc.exe /x path_of_plugin_dll /f im_enhancement /i imput_image /o output_image /p parameter_list 
-
    * Linux/Mac-based: 
         vaa3d -x path_of_plugin_so -f im_enhancement -i imput_image -o output_image -p parameter_list
 
 ## <a name="Parameter"></a>Command-line parameters
       
    * input_image: 3d image to be enhanced (supported formats: .tif, .raw, .v3draw)
-
    * output_image: where to save the enhanced image (supported formats: .tif, .raw, .v3draw)
-
    * parameter_list: value of differet parameters, separated by space. Details are given as following
 
  
@@ -67,7 +64,6 @@ In this repo, we provide the following sources.
 
     If you have questions, please check the documentations on the Vaa3D website: 
         http://vaa3d.org, and the wiki pages: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/.
-
 
     You could find answers of FAQs and submmit your questions using the following help forum:
         https://www.nitrc.org/forum/forum.php?forum_id=1553.
