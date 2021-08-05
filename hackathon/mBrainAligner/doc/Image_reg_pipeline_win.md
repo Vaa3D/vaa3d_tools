@@ -1,7 +1,7 @@
 
 # mBrainAligner registration pipeline—windows version 
 
-![image000](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/docs/step_by_step_tutorial/image000.jpg)
+![image000](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image000.jpg)
 
 Registration of whole-brain images of different modalities onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. Here we introduce a step-by-step tutorial of using mBrainAligner to register the fMOST image to Allen Common Coordinate Framework atlas (CCFv3). 
 
@@ -44,7 +44,7 @@ The globally aligned image will be save in the `results` directory.
 If we use parameter `-p r+f+n`, the intensity normalization will be performed following the global registration. 
 
   <center>
-  <img src= ./fig/image002.png width=50%>
+  <img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image002.png width=50%>
 
   </center>
 
@@ -56,19 +56,19 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
 2. Drag the target image (e.g. `examples/target/CCF_25_u8_xpad.v3draw`) and subject image (e.g. `examples/subject/fMOST_18458_raw.v3draw` into Vaa3D window. Once images are loaded, you will see the following window. 
   <center>
-  <img src= ./fig/image003.png width=50% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image003.png width=50% >
 
   </center>
 
 3.  Click `See in 3D` buton to display the image in 3D mode. Right-click the mouse and select the "2-right-clicks to define a maker" button to generate matching marker-pairs in two images. The number of marker is preferably more than 10, and then save the two sets of points as marker files.
   <center>
-  <img src= ./fig/image004.png width=50% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image004.png width=50% >
 
   </center>
 
 4.	Click menu <Plug-In/image_registation/alignment_affine_TPS_warp/warp image based on given matched point pairs >, a dialog will pop up. 
   <center>
-  <img src= ./fig/image005.png width=25% ><img src= ./fig/image006.png width=25% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image005.png width=25% ><img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image006.png width=25% >
 
   </center>
 
@@ -83,7 +83,7 @@ local_registration.exe -p ../example/config/fMOST_config.txt -s ../example/resul
 The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the “Select_modal” in the “fMOST_config.txt” needs to be set to 1. 
 The globally aligned image will be save in the `results` directory.
    <center>
-  <img src= ./fig/image007.png width=50% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image007.png width=50% >
 
   Fig3 fMost brain segmentation image
   </center>
