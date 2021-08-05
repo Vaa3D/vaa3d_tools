@@ -23,12 +23,12 @@ The periodic stripe noise present in the raw fMOST images is mainly caused by fl
 Open Matlab and navigate to the ‘/src/src_othertools/stripe_removal/’ directory, and modify script:
 ```
 foldername_input='../../../examples/subject/';
-foldername_output='../../../examples/subject_stripe_removal/';
+foldername_output='../../../examples/subject_stripe_removal_result/';
 angle=175
 cutoff=10
 radius=10
 ```
-Run `stripremove.m`. This script will find all `.raw` or `v3draw` files in the specified directory `../../../examples/subject/` and perform stripe removal and output the results images to directory `../../../examples/subject_stripe_removal/`. 
+Run `stripremove.m`. This script will find all `.raw` or `v3draw` files in the specified directory `../../../examples/subject/` and perform stripe removal and output the results images to directory `../../../subject_stripe_removal_result/`. 
 
 We can determine the "angle (orientation), cutoff (cutoff frequency), radius (bandwidth)" parameters of notch filter by examining the frequency spectrum of one 2D coronal slice of subject image. 
 
@@ -41,7 +41,7 @@ We can determine the "angle (orientation), cutoff (cutoff frequency), radius (ba
   ```
   cd <your mBrainAligner_win64 directory>
   
-  global_registration.exe -f ../example/target/CCF_25_u8_xpad.v3draw -c ../example/target/CCF_mask.v3draw -m ../example/subject_stripe_removal/fMOST_18458_stripremove.v3draw  -p r+f -o ../example/result/fMOST/ -d 1
+  global_registration.exe -f ../example/target/CCF_25_u8_xpad.v3draw -c ../example/target/CCF_mask.v3draw -m ../example/subject_stripe_removal_result/fMOST_18458_stripremove.v3draw  -p r+f -o ../example/result/fMOST/ -d 1
 
   ```
 
