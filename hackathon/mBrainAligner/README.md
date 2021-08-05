@@ -122,7 +122,7 @@ We encourage you to read the `Step-by-step tutorial` and `Scripts` first.
 
 ## - Warp reconstructed neurons or somas to CCF
 
-Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_registration_pipeline--windows_version.md) for detail. 
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail. 
 
 ## - `(OPTIONAL)` Use 3D UNet to gengerate segmentation features
 
