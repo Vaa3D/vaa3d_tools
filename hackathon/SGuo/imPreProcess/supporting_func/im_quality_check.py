@@ -110,7 +110,7 @@ pers = np.arange(0, 101, 5)
 features = pd.DataFrame(columns=fea_keys)
 features_pre = pd.DataFrame(columns=fea_keys)
 
-root = "./test_images/"
+root = "./test_data/"
 files = find_matching_files(root, '*.v3draw')
 for f in files:        
     f2 = f.replace('.v3draw', '_pre.raw')
