@@ -10,7 +10,7 @@ README
     -Folder 'supporting_func': python code to benchmark image quality from the perspectives of 
                                            signal-background contrast, dynamic range of  background/signal, 
                                            for both within- and between-images.
-    -Folder 'test_images': example image blocks from fMost image dataset of mouse brains. 
+    -Folder 'test_data': example image blocks from fMost image dataset of mouse brains. 
 
 
 * How to build Vaa3D plugins:
