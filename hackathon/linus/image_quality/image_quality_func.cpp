@@ -8,10 +8,13 @@
 #include "image_quality_func.h"
 #include <vector>
 #include <iostream>
-#include "image_quality_gui.h"
 //#include "stackutil.h"
 
 using namespace std;
+
+// func converting
+template <class Tpre, class Tpost>
+void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt);
 
 const QString title = QObject::tr("Image Quality");
 
@@ -94,8 +97,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 	//TODO add datatype judgment
 	double max_value = 256;
 	V3DLONG histscale = 256;
-	QVector<QVector<int> > hist_vec;
-	QStringList labelsLT;
+    QVector<QVector<int> > hist_vec;
 
 	int nChannel = p4DImage->getCDim();
 	V3DLONG sz[3];
@@ -108,15 +110,8 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 		unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
 		QVector<int> tmp;
 		getHistogram(inimg1d, sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
-		hist_vec.append(tmp);
-		labelsLT.append(QString("channel %1").arg(c+1));
+        hist_vec.append(tmp);
 	}
-	QString labelRB = QString("%1").arg(max_value);
-
-
-	histogramDialog * dlg = new histogramDialog(hist_vec, labelsLT, labelRB, parent, QSize(500,150), QColor(50,50,50));
-	dlg->setWindowTitle(QObject::tr("Histogram"));
-	dlg->show();
 
 	return 1;
 }
@@ -137,10 +132,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	}
 	char * infile = inlist->at(0);
 	cout<<"input file: "<<infile<<endl;
-	unsigned char * inimg1d = NULL;
+    unsigned char * subject1d = NULL;
     V3DLONG sz[4];
 	int datatype;
-    if (!simple_loadimage_wrapper(callback, infile, inimg1d, sz, datatype))
+    if (!simple_loadimage_wrapper(callback, infile, subject1d, sz, datatype))
 	{
         cerr<<"failed to load image"<<endl;
 		return false;
@@ -155,14 +150,48 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	}
 	char* outfile = outlist->at(0);
 	cout<<"output file: "<<outfile<<endl;
-	
+
+    // Code from datatype_convert plugin
+    V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
+    unsigned char * inimg1d = NULL;
+
+    try
+    {
+        inimg1d = new unsigned char [sz_sub];
+    }
+    catch(...)
+    {
+        printf("Error allocating memory. \n");
+        return -1;
+    }
+
+    // Data type conversion
 	if (datatype!=1)
 	{
-		v3d_msg("Now we only support 8 bit image.\n");
-		return -1;
-	}
+        v3d_msg("Converting to 8 bit image to standardize results.\n");
 
-	//TODO add datatype judgment
+//        if(sub_dt == 1)
+//        {
+//            converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+//        }
+        if(datatype == 2)
+        {
+            converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+        }
+        else if(datatype == 4)
+        {
+            converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+        }
+
+	}
+    else
+    {
+        inimg1d = subject1d;
+    }
+
+    if (subject1d) {delete []subject1d; subject1d=NULL;}
+
+    //TODO add datatype judgment in case someone wanted to compute in 16bit
 	double max_value = 256;
 	V3DLONG histscale = 256;
 	QVector<QVector<int> > hist_vec;
@@ -189,6 +218,73 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 
 	if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
 	return true;
+
+}
+
+
+
+// func converting taken from datatype_cnvrt plugin
+template <class Tpre, class Tpost>
+void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
+{
+     if (!pre1d ||!pPost || imsz<=0 )
+     {
+          v3d_msg("Invalid parameters to converting().", 0);
+          return;
+     }
+
+    Tpre *pPre = (Tpre *)pre1d;
+
+    if(v3d_dt == V3D_UINT8)
+    {
+        Tpre max_v=0, min_v = 255;
+
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            if(max_v<pPre[i]) max_v = pPre[i];
+            if(min_v>pPre[i]) min_v = pPre[i];
+        }
+        max_v -= min_v;
+
+        if(max_v>0)
+        {
+            for(V3DLONG i=0; i<imsz; i++)
+                pPost[i] = (Tpost) 255*(double)(pPre[i] - min_v)/max_v;
+        }
+        else
+        {
+            for(V3DLONG i=0; i<imsz; i++)
+                pPost[i] = (Tpost) pPre[i];
+        }
+    }
+    else if(v3d_dt == V3D_UINT16)
+    {
+        Tpre max_v=0, min_v = 65535;
+
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            if(max_v<pPre[i]) max_v = pPre[i];
+            if(min_v>pPre[i]) min_v = pPre[i];
+        }
+        max_v -= min_v;
+
+        if(max_v>0)
+        {
+            for(V3DLONG i=0; i<imsz; i++)
+                pPost[i] = (Tpost) 65535*(double)(pPre[i] - min_v)/max_v;
+        }
+        else
+        {
+            for(V3DLONG i=0; i<imsz; i++)
+                pPost[i] = (Tpost) pPre[i];
+        }
+
+    }
+    else if(v3d_dt == V3D_FLOAT32)
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+            pPost[i] = (Tpost) pPre[i];
+    }
 
 }
 

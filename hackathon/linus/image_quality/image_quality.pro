@@ -8,11 +8,9 @@ INCLUDEPATH     += $$VAA3DPATH/common_lib/include
 
 HEADERS	+= image_quality_plugin.h
 HEADERS	+= image_quality_func.h
-HEADERS	+= image_quality_gui.h
 
 SOURCES	= image_quality_plugin.cpp
 SOURCES	+= image_quality_func.cpp
-SOURCES	+= image_quality_gui.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
