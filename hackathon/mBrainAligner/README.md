@@ -119,7 +119,7 @@ For a step-by-step user guide, please read: [Image registration pipeline tutoria
 
 ## - Run mBrainAligner on your own data
 
-If you want to practice `mBrainAligner` on your own data, please read: [Register your own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/register_your_own_data.md)
+If you want to practice `mBrainAligner` on your own data, please read: [Register your own data](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/register%20your%20own%20data.md)
 
 We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.
 
