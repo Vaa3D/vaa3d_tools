@@ -43,7 +43,9 @@ example(global_registration):
     qmake global_registration.pro
     vcvars64.bat
     nmake release
-You can find the executable file from the location `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration.exe`. 
+You can find the executable:
+
+`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration.exe`. 
 
 ### for Linux
 Before compiling, you also need to modify the **".pro"** file according to the path of the installed dependencies (Vaa3D,QT etc). 
@@ -52,4 +54,6 @@ example(global_registration):
      cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/
      qmake global_registration.pro
      Make
-You can find the executable file from the location `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration`. 
+You can find the executable file: 
+
+`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/2.global_registration/global_registration`. 
