@@ -46,7 +46,7 @@ The images for segmentation need to be placed at `./data/test`. The following sc
   python predict_unet.py
 ```
 
-The results will be stored at `./data/predict/[filename]`. For each input image, several result files are generated, including `seg.v3draw`, `0.v3draw`, `1.v3draw`, ..., `8.v3draw`, which contain the segmentation propobility of each voxel to different brain regions.
+The results will be stored at `./data/predict/[filename]`. For each input image, several result files are generated, including `seg.v3draw`, `1.v3draw`, ..., `8.v3draw`, which contain the segmentation propobility of each voxel to different brain regions.
 
 Optionally, the resulting `v3draw` files can be visualized using [Vaa3D](https://vaa3d.org).
 
