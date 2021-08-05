@@ -124,9 +124,13 @@ We encourage you to read the `Step-by-step tutorial` and `Scripts` first.
 
 Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read `“link: Warp reconstructed neurons or somas to CCF”` for detail. 
 
-## - Use 3D UNet to gengerate segmentation features
+## `(OPTIONAL)` Use 3D UNet to gengerate segmentation features
 
-to continue here....
+One merit of `mBrainAligner` is that different features can be effectively integrated and utilized to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as one of the discriminative feature.
+
+Considering that DNNs have shown tremendous superiority against traditional methods in segmentation applications, we choose to generate the segmentation probability feature using a semantic segmentation network. As a proof of principle, we adopted a slightly modified 3D U-Net to generate the segmentation probability (0~1) of each voxel to six main brain regions (HY, HPF, CTX, CBX, BS, CP) and background. Indeed, 3D U-Net can be readily substituted with other more sophisticated semantic segmentation networks to further improve the registration performance.
+
+The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read `“link: Use 3D UNet to gengerate segmentation features”` for detailed data preparation, trainning and inference of this network.
 
 
 # License
