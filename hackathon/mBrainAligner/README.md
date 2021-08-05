@@ -78,7 +78,7 @@ If you want to build mBrainAligner from source, please follow the instructions h
 
 We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `dist`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
 
-An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper <https://www.researchsquare.com/article/rs-321118/v1>.
+An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper: <https://www.researchsquare.com/article/rs-321118/v1>.
 
 ![overview_pipeline](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/mBrianAligner_workflow.jpg)
 
