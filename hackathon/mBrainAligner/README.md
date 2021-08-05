@@ -71,7 +71,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 
 ## - Build mBrainAligner from source
 
-If you want to build `mBrainAligner` from source, please follow the instructions here: [How to build mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/How_to_build_mBrainAligner.md)
+If you want to build `mBrainAligner` from source, please follow the instructions here: [How to build mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/How_to_build_mBrainAligner.md)
 
 Note that mBrainAligner has been only tested on Windows 10 and Linux.
 
@@ -114,12 +114,12 @@ Then run
 
 ## - Step-by-step tutorial
 
-For a step-by-step user guide, please read: [Image registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/Image_reg_pipeline_win.md)
+For a step-by-step user guide, please read: [Image registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/Image_reg_pipeline_win.md)
 
 
 ## - Run mBrainAligner on your own data
 
-If you want to practice `mBrainAligner` on your own data, please read: [Register your own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/register_your_own_data.md)
+If you want to practice `mBrainAligner` on your own data, please read: [Register your own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/register_your_own_data.md)
 
 We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.
 
@@ -127,7 +127,7 @@ We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat
 
 ## - Warp reconstructed neurons or somas to CCF
 
-Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail.
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/SWC_reg_pipeline_win.md) for detail.
 
 ## - Use 3D UNet to generate segmentation features
 
@@ -135,7 +135,7 @@ One merit of `mBrainAligner` is that different features can be effectively integ
 
 Considering that DNNs have shown tremendous superiority against traditional methods in segmentation applications, we choose to generate the segmentation probability feature using a semantic segmentation network. As a proof of principle, we adopted a slightly modified 3D U-Net to generate the segmentation probability (0~1) of each voxel to six main brain regions (HY, HPF, CTX, CBX, BS, CP) and background. Indeed, 3D U-Net can be readily substituted with other more sophisticated semantic segmentation networks to further improve the registration performance.
 
-The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to generate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/3D_UNet.md) for detailed data preparation, training and inference of this network.
+The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to generate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/3D_UNet.md) for detailed data preparation, training and inference of this network.
 
 
 # License
