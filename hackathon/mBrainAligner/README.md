@@ -103,9 +103,12 @@ In Linux, you need to first complete a simple environment configuration and unzi
     sudo gedit /etc/ld.so.conf
     add the "(your file path)/dist/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save. 
     sudo ldconfig
+    sudo chmod 777 -R  global_registration 
+    sudo chmod 777 -R  local_registration
+    cd "(your file path)/example/"
     
 Then run
-   
+    
     sh run_script_linux.sh 
 
 
