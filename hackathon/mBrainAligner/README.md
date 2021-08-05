@@ -25,7 +25,7 @@ Please feel free to contact us by email (17718151568@126.com) any time for any q
 
 # System requirements
 
-## Hardware requirements
+## - Hardware requirements
 
 `mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications: 
 
@@ -36,7 +36,7 @@ CPU: 2.3GHz dual-10-core Intel Xeon or better.
 (Note: Due to limited network and storage, only small downsampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relief the GPU requirement)
 
 
-## OS Requirements
+## - OS Requirements
 
 The package has been tested on the following systems:
 
@@ -46,7 +46,7 @@ The package has been tested on the following systems:
 
 # Install mBrainAligner
 
-## Use provided compiled executable files
+## - Use provided compiled executable files
 
 If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `dist` folder and put it anywhere you like.
 
@@ -58,7 +58,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 > > **othertools_win64**: contains the neuron or soma warping tool, 2.5D corner detector executable file and necessary libraries. Note that the stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`.
 > > 
 
-## Build mBrainAligner from source
+## - Build mBrainAligner from source
 
 If you want to build mBrainAligner from source, please follow the instructions here: https://****************************
 
@@ -71,7 +71,7 @@ An overview of the pipeline is shown below. For a deeper understanding of each m
 
 ![overview_pipeline](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/mBrianAligner_workflow.jpg)
 
-## Run mBrainAligner on sample data in batch
+## - Run mBrainAligner on sample data in batch
 
 We provide scripts to globally and locally register all sample data of four modalities in batch. First, you need to create a local copy of executable files, scripts and sample data. Make sure they are in original folder structure. 
 
@@ -96,19 +96,19 @@ Then run
     sh run_script_linux.sh 
 
 
-## Step-by-step tutorial
+## - Step-by-step tutorial
 
 For a step-by-step user guide, please read: `“step-by-step registration tutorial”`
 
 
-## Run mBrainAligner on you own data
+## - Run mBrainAligner on you own data
 
 If you want to practice mBrainAligner on you own data, please read: `“register your own data”`
 
 We encourage you to read the `Step-by-step tutorial` and 'Scripts' first.
 
 
-## Warp reconstructed neurons or somas to CCF
+## - Warp reconstructed neurons or somas to CCF
 
 to continue here....
 
