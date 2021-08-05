@@ -28,7 +28,7 @@ Recent whole brain mapping projects are collecting large-scale 3D images using p
 
 `mBrainAligner` contains three modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
 
-There are two ways to use ·mBrainAligner`:
+There are two ways to use `mBrainAligner`:
 1.	follow the below instructions to build and run `mBrainAligner` on local machines.
 2.	visit http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
 Please feel free to contact us by email 17718151568@126.com any time for any question you have.
