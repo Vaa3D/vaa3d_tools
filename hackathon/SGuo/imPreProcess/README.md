@@ -1,4 +1,4 @@
-# imPreProcess Single-Neuron Image Enhancement (imPreProcess)
+# imPreProcess (Single-Neuron Image Enhancement) 
 
 imPreProcess is a Vaa3D plugin including a pipeline of image enhancement for single-neuron images. The aims is to enhance the neurite signal as well as to suppress the background, with the ultimate goal of high signal-background contrast and better within- and between image homogeneity. 
 
@@ -26,23 +26,29 @@ In this repo, we provide the following sources.
 
  -Please follow the build instructions here to build released plugins along with the Vaa3d main program:
          https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
+
  -Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki 
   
 ## <a name="Command"></a>Run via Command-Line Interface
   The plugin takes one 3d image and performs the enhancement according to the parameters specified by the user. 
+
   It can be applied via either the GUI of the Vaa3D platform under the menu of 'plug-in/imPreProcess/image enhancement', or via the command line interface as following:
   
    Window-based: 
         vaa3d_msvc.exe /x path_of_plugin_dll /f im_enhancement /i imput_image /o output_image /p parameter_list 
+
    Linux/Mac-based: 
         vaa3d -x path_of_plugin_so -f im_enhancement -i imput_image -o output_image -p parameter_list
 
    input_image: 3d image to be enhanced (supported formats: .tif, .raw, .v3draw)
+
    output_image: where to save the enhanced image (supported formats: .tif, .raw, .v3draw)
-   parameter_list: value of differet parameters, separated by space
+
+   parameter_list: value of differet parameters, separated by space （see details in the next section)
 
 
 ## <a name="Parameter"></a>Command-line parameters
+
 
 | Flag          | Usage                                                        | Default  |
 | :------------ | ------------------------------------------------------------ | -------- |
@@ -54,10 +60,17 @@ In this repo, we provide the following sources.
 | --b_do_bf  | whether or not conduct bilateral filter during the enhancement, 1 yes, 0 no | 1 |
 | --b_do_fft  | whether or not conduct high-pass filter during the enhancement, 1 yes, 0 no | 1 |
 
+  Note: The parameters should be specified in order as listed above. A typical example to run the command in Window OS with the parameter specification is as following:
 
+             vaa3d_msvc.exe /x imPreProcess.dll /f im_enhancement /i 17109_4142.778_1929.072_2794.948.v3draw /o 17109_4142.778_1929.072_2794.948_pre.v3draw /p 3 3 1 35 3 25 1 1
+
+ 
 ## <a name="FAQ"></a>FAQ
 
-    If you have questions, please check the documentations on the Vaa3D website: http://vaa3d.org, and the wiki pages: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/.
+    If you have questions, please check the documentations on the Vaa3D website: 
+        http://vaa3d.org, and the wiki pages: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/.
+
+
     You could find answers of FAQs and submmit your questions using the following help forum:
         https://www.nitrc.org/forum/forum.php?forum_id=1553.
 
@@ -67,8 +80,8 @@ In this repo, we provide the following sources.
     Vaa3D and various Vaa3D tools (including plugins etc) used a slightly modified revised MIT license unless specifically stated for some rare cases, see detail here:
         https://github.com/Vaa3D/Vaa3D_Wiki/wiki/LicenseAndAgreement.wiki .
 
-Maintainer: [Shuxia Guo](shuxia_guo@seu.edu.cn)
+Maintainer:  Shuxia Guo (shuxia_guo@seu.edu.cn)
 
 [BrainTell](https://braintell.org)
 
-Copyright (c) 2021-present, Shuxia Guo (shuxia_guo@seu.edu.cn)
+Copyright (c) 2021-present, Shuxia Guo (shuxia_guo@seu.edu.cn), Hanchuan Peng (h@braintell.org)
