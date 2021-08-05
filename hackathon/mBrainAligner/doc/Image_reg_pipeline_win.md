@@ -20,12 +20,15 @@ The raw whole mouse brain image stack of fMOST modality generally has the volume
 
 The periodic stripe noise present in the raw fMOST images is mainly caused by fluorescent bleaching during the knife cutting and imaging process. It will deteriorate the image registration performance. We designed a log-space frequency notch filter to realize the high-quality stripe artifacts removal. This module was implement in Matlab, and the source code can be found in `src\src_othertools\stripe_removal\`. 
 
-Open Matlab and navigate to the ‘/src/src_othertools/stripe_removal/’ directory, and run the following command:
+Open Matlab and navigate to the ‘/src/src_othertools/stripe_removal/’ directory, and modify script:
 ```
-stripremove('../../../examples/subject/ ', '../../../examples/subject_stripe_removal/', 175, 10, 10)
+foldername_input='../../../examples/subject/';
+foldername_output='../../../examples/subject_stripe_removal/';
+angle=175
+cutoff=10
+radius=10
 ```
-
-This command will find all `.raw` or `v3draw` files in the specified directory `../../../examples/subject/` and perform stripe removal and output the results images to directory `../../../examples/subject_stripe_removal/`. 
+Run `stripremove.m`. This script will find all `.raw` or `v3draw` files in the specified directory `../../../examples/subject/` and perform stripe removal and output the results images to directory `../../../examples/subject_stripe_removal/`. 
 
 We can determine the "angle (orientation), cutoff (cutoff frequency), radius (bandwidth)" parameters of notch filter by examining the frequency spectrum of one 2D coronal slice of subject image. 
 
@@ -47,7 +50,7 @@ The globally aligned image will be save in the `results` directory.
 If we use parameter `-p r+f+n`, the intensity normalization will be performed following the global registration. 
 
   <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image002.png width=50%>
+  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image002.png width=70%>
 
   </center>
 
@@ -59,13 +62,13 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
 2. Drag the target image (e.g. `examples/target/CCF_25_u8_xpad.v3draw`) and subject image (e.g. `examples/subject/fMOST_18458_raw.v3draw` into Vaa3D window. Once images are loaded, you will see the following window. 
   <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image003.png width=50%>
+  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image003.png width=70%>
 
   </center>
 
 3.  Click `See in 3D` buton to display the image in 3D mode. Right-click the mouse and select the "2-right-clicks to define a maker" button to generate matching marker-pairs in two images. The number of marker is preferably more than 10, and then save the two sets of points as marker files.
   <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image004.png width=80% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image004.png width=70% >
 
   </center>
 
