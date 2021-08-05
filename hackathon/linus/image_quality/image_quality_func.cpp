@@ -88,13 +88,8 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 
 	Image4DSimple *p4DImage = callback.getImage(curwin);
-	if (p4DImage->getDatatype()!=V3D_UINT8)
-	{
-		v3d_msg("Now we only support 8 bit image.\n");
-		return -1;
-	}
 
-	//TODO add datatype judgment
+    //TODO add datatype judgment in case someone wanted to compute in 16bit
 	double max_value = 256;
 	V3DLONG histscale = 256;
     QVector<QVector<int> > hist_vec;
@@ -107,7 +102,49 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 
 	for (int c=0;c<nChannel;c++)
 	{
-		unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+        unsigned char * subject1d = p4DImage->getRawDataAtChannel(c);
+
+        // Code from datatype_convert plugin
+        V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
+        unsigned char * inimg1d = NULL;
+
+        try
+        {
+            inimg1d = new unsigned char [sz_sub];
+        }
+        catch(...)
+        {
+            printf("Error allocating memory. \n");
+            return -1;
+        }
+
+        // Data type conversion
+        if (p4DImage->getDatatype()!=V3D_UINT8)
+        {
+            v3d_msg("Converting to 8 bit image to standardize results.\n");
+
+    //        if(sub_dt == 1)
+    //        {
+    //            converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+    //        }
+            if(p4DImage->getDatatype()==V3D_UINT16)
+            {
+                converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+            }
+            else if(p4DImage->getDatatype()==V3D_FLOAT32)
+            {
+                converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+            }
+
+        }
+        else
+        {
+            inimg1d = subject1d;
+        }
+
+        if (subject1d) {delete []subject1d; subject1d=NULL;}
+
+
 		QVector<int> tmp;
 		getHistogram(inimg1d, sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
         hist_vec.append(tmp);
