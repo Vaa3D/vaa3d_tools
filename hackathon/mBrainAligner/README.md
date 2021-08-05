@@ -109,7 +109,7 @@ Then run
 
 ## - Step-by-step tutorial
 
-For a step-by-step user guide, please read: `“link: step-by-step registration tutorial”`
+For a step-by-step user guide, please read: [Image registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/Image_reg_pipeline_win.md)
 
 
 ## - Run mBrainAligner on you own data
