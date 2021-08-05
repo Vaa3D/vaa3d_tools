@@ -18,7 +18,7 @@
 - [Others](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Others)
 - - [warp reconstructed neurons or somas to CCF](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Warp-reconstructed-neurons-or-somas-to-CCF)
 - - [use 3D UNet to gengerate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-3D_UNet_to_gengerate_segmentation_features)
-- [License](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#License)
+- [License](#license)
 
 # Overview
 
