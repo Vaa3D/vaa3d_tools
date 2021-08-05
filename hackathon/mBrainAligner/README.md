@@ -6,7 +6,7 @@
 
 - [Overview](#Overview)
 - [System requirements](#System-requirements)
-- - [hardware requirements](##Hardware-requirements)
+- - [hardware requirements](##-Hardware-requirements)
 - - [OS requirements](##-os-requirements)
 - [Installation mBrainAligner](#Install-mBrainAligner)
 - - [install precompiled executable files](##-Use-provided-compiled-executable-files)
@@ -36,7 +36,7 @@ Please feel free to contact us by email 17718151568@126.com any time for any que
 
 # System requirements
 
-## Hardware requirements
+## - Hardware requirements
 
 `mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications: 
 
