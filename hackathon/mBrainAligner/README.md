@@ -94,12 +94,13 @@ Enter the `examples` folder, double-click `run_script_windows.bat`.
 
 ### Linux
 
-In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `dist/mBrainAligner_linux/lib/` needs to be added to the linker directory: 
+In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `dist/linux_bin/lib/` needs to be added to the linker directory: 
     
     Ctrl+Alt+t to open terminal 
+    cd "(your file path)/dist/linux_bin/lib"
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
-    add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib"  to the last line of '/etc/ld.so.conf' and save. 
+    add the "(your file path)/dist/linux_bin/lib"  to the last line of '/etc/ld.so.conf' and save. 
     sudo ldconfig
     
 Then run
