@@ -1,9 +1,7 @@
 
 # mBrainAligner registration pipeline—windows version 
-<center>
-<img src= ./fig/image000.jpg width=50%>
 
-</center>
+![image000](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/docs/step_by_step_tutorial/image000.jpg)
 
 Registration of whole-brain images of different modalities onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. Here we introduce a step-by-step tutorial of using mBrainAligner to register the fMOST image to Allen Common Coordinate Framework atlas (CCFv3). 
 
