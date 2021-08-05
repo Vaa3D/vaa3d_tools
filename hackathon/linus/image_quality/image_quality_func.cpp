@@ -150,6 +150,24 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         hist_vec.append(tmp);
 	}
 
+    //output histogram to csv file
+    bool ok;
+    QString outfile;
+    outfile = QInputDialog::getText(0,"Output file","Write full path and filename of the output csv file",QLineEdit::Normal,"./hist.csv",&ok);
+    if (!ok)
+        outfile = "./hist.csv";
+    QByteArray outfileba = outfile.toLocal8Bit();
+    char *strout = outfileba.data();
+    FILE *fp;
+    fp = fopen(strout, "w");
+    for (int i=0;i<hist_vec.size();i++)
+    {
+        for (int j=0;j<hist_vec[i].size();j++)
+            fprintf(fp, "%d,", hist_vec[i][j]);
+        fprintf(fp,"\n");
+    }
+    fclose(fp);
+
 	return 1;
 }
 
@@ -205,7 +223,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     // Data type conversion
 	if (datatype!=1)
 	{
-        v3d_msg("Converting to 8 bit image to standardize results.\n");
+        cout << "Converting to 8 bit image to standardize results.\n";
 
 //        if(sub_dt == 1)
 //        {
@@ -253,7 +271,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	}
 	fclose(fp);
 
-	if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
+    //if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
 	return true;
 
 }
