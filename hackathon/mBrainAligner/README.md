@@ -30,7 +30,7 @@ Recent whole brain mapping projects are collecting large-scale 3D images using p
 
 There are two ways to use `mBrainAligner`:
 1. follow the below instructions to build and run `mBrainAligner` on local machines.
-2. visit a web portal http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
+2. visit a web portal http://159.75.201.35/ and run `mBrainAligner online` (registration results and sample data can also be downloaded there).
 Questions can be sent to 17718151568@126.com .
 
 
