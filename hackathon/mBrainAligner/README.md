@@ -71,7 +71,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 
 ## - Build mBrainAligner from source
 
-If you want to build `mBrainAligner` from source, please follow the instructions here: https://****************************
+If you want to build `mBrainAligner` from source, please follow the instructions here: [How to build mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/How_to_build_mBrainAligner.md)
 
 
 # Run mBrainAligner
