@@ -53,7 +53,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 >**dist**
 > > **mBrainAligner_win64**: contains the global and local registration executable files and `dlls` for Windows.
 > > 
-> > **mBrainAligner_linux**: contains the global and local registration executable files and 'libs' for Linux.
+> > **mBrainAligner_linux**: contains the global and local registration executable files and `libs` for Linux.
 > > 
 > > **othertools_win64**: contains the neuron or soma warping tool, 2.5D corner detector executable file and necessary libraries. Note that the stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`.
 > > 
@@ -67,13 +67,51 @@ If you want to build mBrainAligner from source, please follow the instructions h
 
 We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `dist`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
 
-An overview of the pipeline is shown below. For a deeper understanding of each module please read the *********Paper!*********
+An overview of the pipeline is shown below. For a deeper understanding of each module please read the *********Paper link to add...*********
 
-![overview_pipeline](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/result_example.png)
+![overview_pipeline](https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/mBrianAligner_workflow.jpg)
 
-### Vaa3D 
+## Run mBrainAligner on sample data in batch
 
-Please follow this link to build Vaa3D on Windows with qmake using VS2013 and Qt4.8.6:
+We provide scripts to globally and locally register all sample data of four modalities in batch. First, you need to create a local copy of executable files, scripts and sample data. Make sure they are in original folder structure. 
+
+Then, follow the below instructions to run script on Windows and Linux respectively. The global and local registration of one brain will finish in about 0.5 hours (If the default parameters are chosen). All results will be save to `results` folder. It will take about two hours to complete the registration of four mouse brain of different modalities.
+
+### Windows
+
+Enter the `examples` folder, double-click `run_script_windows.bat`. 
+
+### Linux
+
+In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `dist/mBrainAligner_linux/lib/` needs to be added to the linker directory: 
+    
+    Ctrl+Alt+t to open terminal 
+    tar -zxvf lib.tar.gz
+    sudo gedit /etc/ld.so.conf
+    add the "(your file path)/mBrainAligner_data/3rdparty_linux/lib"  to the last line of '/etc/ld.so.conf' and save. 
+    sudo ldconfig
+    
+Then run
+   
+    sh run_script_linux.sh 
+
+
+## Step-by-step tutorial
+
+For a step-by-step user guide, please read: `“step-by-step registration tutorial”`
+
+
+## Run mBrainAligner on you own data
+
+If you want to practice mBrainAligner on you own data, please read: `“register your own data”`
+
+We encourage you to read the `Step-by-step tutorial` and 'Scripts' first.
+
+
+## Warp reconstructed neurons or somas to CCF
+
+to continue here....
+
 
 ```
 https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-with-qmake-using-VS2013-and-Qt4.8.6
