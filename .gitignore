@@ -16,6 +16,7 @@
 **/*.pdb
 **/*.obj
 **/*.Debug
+**/*.zip
 **/ipch
 
 
