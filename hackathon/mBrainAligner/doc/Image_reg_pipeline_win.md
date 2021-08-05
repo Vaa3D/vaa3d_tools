@@ -41,7 +41,7 @@ We can determine the "angle (orientation), cutoff (cutoff frequency), radius (ba
   ```
   cd <your mBrainAligner_win64 directory>
   
-  global_registration.exe -f ../example/target/CCF_25_u8_xpad.v3draw -c ../example/target/CCF_mask.v3draw -m ../example/subject_stripe_removal_result/fMOST_18458_stripremove.v3draw  -p r+f -o ../example/result/fMOST/ -d 1
+  global_registration.exe -f ../example/target/CCF_25_u8_xpad.v3draw -c ../example/target/CCF_mask.v3draw -m ../example/subject_stripe_removal_result/fMOST_18458_raw_stripremove.v3draw  -p r+f -o ../example/result/fMOST/ -d 1
 
   ```
 
