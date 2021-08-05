@@ -29,8 +29,8 @@ Recent whole brain mapping projects are collecting large-scale 3D images using p
 `mBrainAligner` contains three modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
 
 There are two ways to use `mBrainAligner`:
-1.	follow the below instructions to build and run `mBrainAligner` on local machines.
-2.	visit a web portal http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
+1. follow the below instructions to build and run `mBrainAligner` on local machines.
+2. visit a web portal http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
 Questions can be sent to 17718151568@126.com .
 
 
@@ -38,13 +38,13 @@ Questions can be sent to 17718151568@126.com .
 
 ## - Hardware requirements
 
-`mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications: 
+`mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications:
 
 RAM: 32 GB or larger;
 
 CPU: 2.3GHz dual-10-core Intel Xeon or better.
 
-(Note: Due to limited network and storage, only small downsampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relief the GPU requirement)
+(Note: Due to limited network and storage, only small down-sampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relieve the GPU requirement)
 
 
 ## - OS Requirements
@@ -63,11 +63,11 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 
 >**binary**
 > > **mBrainAligner_win64**: contains the global and local registration executable files and `dlls` for Windows.
-> > 
+> >
 > > **mBrainAligner_linux**: contains the global and local registration executable files and `libs` for Linux.
-> > 
+> >
 > > **othertools_win64**: contains the neuron or soma warping tool, 2.5D corner detector executable file and necessary libraries. Note that the stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`.
-> > 
+> >
 
 ## - Build mBrainAligner from source
 
@@ -77,7 +77,7 @@ Note that mBrainAligner has been only tested on Windows 10 and Linux.
 
 # Run mBrainAligner
 
-We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
+We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small down-sampled brains are provided here.
 
 An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper: <https://www.researchsquare.com/article/rs-321118/v1>.
 
@@ -85,31 +85,31 @@ An overview of the pipeline is shown below. For a deeper understanding of each m
 
 ## - Run mBrainAligner on sample data in batch
 
-We provide scripts to globally and locally register all sample data of four modalities in batch. First, you need to create a local copy of executable files, scripts and sample data. Make sure they are in original folder structure. 
+We provide scripts to globally and locally register all sample data of four modalities in batch. First, you need to create a local copy of executable files, scripts and sample data. Make sure they are in original folder structure.
 
 Then, follow the below instructions to run script on Windows and Linux respectively. The global and local registration of one brain will finish in about 0.5 hours (If the default parameters are chosen). All results will be save to `results` folder. It will take about two hours to complete the registration of four mouse brain of different modalities.
 
 ### Windows
 
-Enter the `examples` folder, double-click `run_script_windows.bat`. 
+Enter the `examples` folder, double-click `run_script_windows.bat`.
 
 ### Linux
 
-In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `binary/linux_bin/lib/` needs to be added to the linker directory: 
-    
-    Ctrl+Alt+t to open terminal 
+In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `binary/linux_bin/lib/` needs to be added to the linker directory:
+   
+    Ctrl+Alt+t to open terminal
     cd "(your file path)/binary/linux_bin/"
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
-    add the "(your file path)/binary/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save. 
+    add the "(your file path)/binary/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save.
     sudo ldconfig
-    sudo chmod 777 -R  global_registration 
+    sudo chmod 777 -R  global_registration
     sudo chmod 777 -R  local_registration
     cd "(your file path)/example/"
-    
+   
 Then run
-    
-    sh run_script_linux.sh 
+   
+    sh run_script_linux.sh
 
 
 ## - Step-by-step tutorial
@@ -127,15 +127,15 @@ We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat
 
 ## - Warp reconstructed neurons or somas to CCF
 
-Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail. 
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail.
 
-## - Use 3D UNet to gengerate segmentation features
+## - Use 3D UNet to generate segmentation features
 
-One merit of `mBrainAligner` is that different features can be effectively integrated and utilized to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as one of the discriminative feature.
+One merit of `mBrainAligner` is that different features can be effectively integrated and utilized to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as a feature.
 
 Considering that DNNs have shown tremendous superiority against traditional methods in segmentation applications, we choose to generate the segmentation probability feature using a semantic segmentation network. As a proof of principle, we adopted a slightly modified 3D U-Net to generate the segmentation probability (0~1) of each voxel to six main brain regions (HY, HPF, CTX, CBX, BS, CP) and background. Indeed, 3D U-Net can be readily substituted with other more sophisticated semantic segmentation networks to further improve the registration performance.
 
-The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to gengerate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/3D_UNet.md) for detailed data preparation, trainning and inference of this network.
+The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Please read [Use 3D UNet to generate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/3D_UNet.md) for detailed data preparation, training and inference of this network.
 
 
 # License
