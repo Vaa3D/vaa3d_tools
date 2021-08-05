@@ -7,7 +7,10 @@
 #include "v3d_message.h"
 #include "image_quality_func.h"
 #include <vector>
+#include <algorithm>
 #include <iostream>
+#include <stdio.h>
+#include <numeric>
 //#include "stackutil.h"
 
 using namespace std;
@@ -60,14 +63,25 @@ int split(const char *paras, char ** &args)
 #include <math.h>
 #define INF 1.0e300
 
-template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
+template <class T> bool getVec(const T * pdata1d, V3DLONG datalen, vector<int> &Vec)
+{
+    int i;
+    // create vector of intensities
+    for (i = 0; i < datalen; i++) {
+        Vec.push_back(pdata1d[i]);
+    }
+    return true;
+}
+
+//template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
+bool getHistogram(vector<int> pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
 {
 	// init hist
 	hist = QVector<int>(histscale, 0);
 
 	for (V3DLONG i=0;i<datalen;i++)
 	{
-		V3DLONG ind = pdata1d[i]/max_value * histscale;
+        V3DLONG ind = pdata1d.at(i)/max_value * histscale;
 		//V3DLONG ind = pdata1d[i];
 		hist[ind] ++;
 	}
@@ -76,10 +90,27 @@ template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double 
 
 }
 
-template <class T> bool getMax(const T * pdata1d, V3DLONG datalen, int &maxint)
+//template <class T> bool getStats(const T * pdata1d, V3DLONG datalen, int &minint, int &maxint, float &meanint, float &medianint)
+bool getStats(vector<int> pdata1d, V3DLONG datalen, int &minint, int &maxint, double &meanint, double &medianint, double &madint, double &stdevint)
 {
-    // init maxint
+    // init
     maxint = int(0);
+    minint = int(255);
+    meanint = float(0);
+    medianint = float(0);
+    stdevint = float(0);
+
+    // for median
+    vector<int> intvec;
+    int i;
+    // Sort the numbers using pointers
+    for (i = 0; i < datalen; i++) {
+        intvec.push_back(pdata1d[i]);
+    }
+    sort(intvec.begin(),intvec.end());
+    // print the numbers
+//    for (i = 0; i < datalen; i++)
+//        printf("%d ", intvec.at(i));
 
     for (V3DLONG i=0;i<datalen;i++)
     {
@@ -87,28 +118,47 @@ template <class T> bool getMax(const T * pdata1d, V3DLONG datalen, int &maxint)
         {
             maxint = pdata1d[i];
         }
-    }
-
-    return true;
-
-}
-
-template <class T> bool getMin(const T * pdata1d, V3DLONG datalen, int &minint)
-{
-    // init maxint
-    minint = int(255);
-
-    for (V3DLONG i=0;i<datalen;i++)
-    {
         if(pdata1d[i]<minint)
         {
             minint = pdata1d[i];
         }
+        meanint += pdata1d[i];
+    }
+    meanint /= datalen;
+
+    double sqsum = inner_product(pdata1d.begin(),pdata1d.end(),pdata1d.begin(),0);
+    stdevint = sqrt(sqsum/datalen - meanint*meanint);
+
+    if (datalen % 2 != 0)
+    {
+        medianint = intvec.at(datalen / 2);
+    }
+    else
+    {
+        medianint = (double)(intvec.at((datalen - 1) / 2) + intvec.at(datalen / 2)) / 2.0;
+    }
+
+    vector<float> mdevvec;
+    float dev;
+    for (i = 0; i < datalen; i++) {
+        dev= intvec.at(i)-medianint;
+        if(dev < 0)dev *= -1;
+        mdevvec.push_back(dev);
+    }
+    sort(mdevvec.begin(),mdevvec.end());
+    if (datalen % 2 != 0)
+    {
+        madint = mdevvec.at(datalen / 2);
+    }
+    else
+    {
+        madint = (double)(mdevvec.at((datalen - 1) / 2) + mdevvec.at(datalen / 2)) / 2.0;
     }
 
     return true;
 
 }
+
 
 
 
@@ -129,6 +179,20 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 	double max_value = 256;
 	V3DLONG histscale = 256;
     QVector<QVector<int> > hist_vec;
+    QVector<double> FocusScore_vec;
+    QVector<int> MinIntensity_vec;
+    QVector<int> MaxIntensity_vec;
+    QVector<double> MeanIntensity_vec;
+    QVector<double> MedianIntensity_vec;
+    QVector<double> MADIntensity_vec;
+    QVector<double> StdIntensity_vec;
+    QVector<double> PercentMinimal_vec;
+    QVector<double> PercentMaximal_vec;
+    QVector<double> ThreshOtsu_vec;
+    QVector<double> SNRmean_vec;
+    QVector<double> CNRmean_vec;
+    QVector<double> SNRotsu_vec;
+    QVector<double> CNRotsu_vec;
 
 	int nChannel = p4DImage->getCDim();
 	V3DLONG sz[3];
@@ -181,9 +245,97 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         if (subject1d) {delete []subject1d; subject1d=NULL;}
 
 
-		QVector<int> tmp;
-		getHistogram(inimg1d, sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
-        hist_vec.append(tmp);
+        int  maxint,minint;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax;
+        vector<int> intvec;
+        getVec(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], intvec);
+        if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
+        //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
+        getStats(intvec, intvec.size(), minint, maxint, meanint, medianint, madint, stdevint);
+        MaxIntensity_vec.append(maxint);
+        cout << maxint << "\t" << minint << "\t" << meanint << "\n";
+        QVector<int> tmphist;
+        //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+        getHistogram(intvec, intvec.size(), max_value, histscale, tmphist);
+        pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
+        pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
+        hist_vec.append(tmphist);
+
+        // Get Otsu threshold
+        double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
+        var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+        for(int i=0; i<tmphist.size(); i++)
+        {
+            sum += i*double(tmphist.at(i));
+        }
+        for(int t=0; t<tmphist.size(); t++)
+        {
+            q1 += double(tmphist.at(t));
+            if(q1>0)
+            {
+                q2 = sz[0]*sz[1]*sz[2]-q1;
+                sumB += t*double(tmphist.at(t));
+                u1 = sumB/q1;
+                u2 = (sum-sumB)/q2;
+                sigma2 = q1*q2*(u1-u2)*(u1-u2);
+                if(sigma2 > var_max)
+                {
+                    ThreshOtsu = t;
+                    var_max =sigma2;
+                }
+            }
+        }
+        cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+
+        // Get SNR and CNR using mean intensity and Otsu as threshold for background
+        double SNRmean,CNRmean,SNRotsu,CNRotsu;
+
+        vector<int> otsunoise,otsusignal;
+        double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
+        vector<int> meannoise,meansignal;
+        double avmeannoise,avmeansignal,stdevmean;
+        for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+        {
+            if(intvec.at(i)<ThreshOtsu)
+            {
+                otsunoise.push_back(intvec.at(i));
+                meanotsunoise += intvec.at(i);
+            }
+            else
+            {
+                otsusignal.push_back(intvec.at(i));
+                meanotsusignal += intvec.at(i);
+            }
+
+            if(intvec.at(i)<meanint)
+            {
+                meannoise.push_back(intvec.at(i));
+                avmeannoise += intvec.at(i);
+            }
+            else
+            {
+                meansignal.push_back(intvec.at(i));
+                avmeansignal += intvec.at(i);
+            }
+        }
+        meanotsunoise = meanotsunoise/otsunoise.size();
+        meanotsusignal = meanotsusignal/otsusignal.size();
+        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
+        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
+
+        avmeannoise = avmeannoise/meannoise.size();
+        avmeansignal = avmeansignal/meansignal.size();
+        sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
+        stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
+
+        SNRmean = avmeansignal/stdevmean;
+        CNRmean = (maxint-meanint)/stdevmean;
+        SNRotsu = meanotsusignal/stdevotsu;
+        CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+
+        //cout << tmphist.at(0) << "\n";
+        cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
+        cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
 	}
 
     //output histogram to csv file
@@ -216,7 +368,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to image quality"<<endl;
-	if(output.size() != 1) return true;
+    //if(output.size() != 1) return true;
 	
 	vector<char*>* inlist = (vector<char*>*) (input.at(0).p);
 	if (inlist->size() != 1)
@@ -235,15 +387,24 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 		return false;
 	}
 
-	//Read the output file
-	vector<char*>* outlist = (vector<char*>*) (output.at(0).p);
-	if (outlist->size()!=1)
-	{
-		cerr<<"You must specify 1 output file!"<<endl;
-		return false;
-	}
-	char* outfile = outlist->at(0);
-	cout<<"output file: "<<outfile<<endl;
+    //Read the output file
+    char* outfile;
+    if(output.size()==1)
+    {
+        vector<char*>* outlist = (vector<char*>*) (output.at(0).p);
+        if (outlist->size()>1)
+        {
+            cerr<<"You must specify 1 output file!"<<endl;
+            return false;
+        }
+        outfile = outlist->at(0);
+    }
+    else
+    {
+        outfile = "hist.csv";
+    }
+    QString outfileapp = QString(infile) + "." + QString(outfile);
+    cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
 
     // Code from datatype_convert plugin
     V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
@@ -260,27 +421,19 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     }
 
     // Data type conversion
-	if (datatype!=1)
-	{
-        cout << "Converting to 8 bit image to standardize results.\n";
+    cout << "\nConverting to 8 bit image to standardize results.\n";
 
-//        if(sub_dt == 1)
-//        {
-//            converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
-//        }
-        if(datatype == 2)
-        {
-            converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
-        }
-        else if(datatype == 4)
-        {
-            converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
-        }
-
-	}
-    else
+    if(datatype == 1)
     {
-        inimg1d = subject1d;
+        converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+    }
+    if(datatype == 2)
+    {
+        converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+    }
+    else if(datatype == 4)
+    {
+        converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
     }
 
     if (subject1d) {delete []subject1d; subject1d=NULL;}
@@ -289,42 +442,222 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	double max_value = 256;
 	V3DLONG histscale = 256;
 	QVector<QVector<int> > hist_vec;
-    QVector<float> FocusScore_vec;
+    QVector<double> FocusScore_vec;
     QVector<int> MinIntensity_vec;
     QVector<int> MaxIntensity_vec;
-    QVector<float> MeanIntensity_vec;
-    QVector<float> MedianIntensity_vec;
-    QVector<float> MADIntensity_vec;
-    QVector<float> StdIntensity_vec;
-    QVector<float> PercentMinimal_vec;
-    QVector<float> PercentMaximal_vec;
-    QVector<float> ThreshOtsu_vec;
-    QVector<float> SNRmean_vec;
-    QVector<float> CNRmean_vec;
-    QVector<float> SNRotsu_vec;
-    QVector<float> CNRotsu_vec;
+    QVector<double> MeanIntensity_vec;
+    QVector<double> MedianIntensity_vec;
+    QVector<double> MADIntensity_vec;
+    QVector<double> StdIntensity_vec;
+    QVector<double> PercentMinimal_vec;
+    QVector<double> PercentMaximal_vec;
+    QVector<double> ThreshOtsu_vec;
+    QVector<double> SNRmean_vec;
+    QVector<double> CNRmean_vec;
+    QVector<double> SNRotsu_vec;
+    QVector<double> CNRotsu_vec;
 
 	int nChannel = sz[3];
 
-	for (int c=0;c<nChannel;c++)
-	{
-        int  maxint;
-        getMax(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], maxint);
-        MaxIntensity_vec.append(maxint);
-        //cout << maxint << "\n";
-        int  minint;
-        getMin(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint);
-        MinIntensity_vec.append(minint);
-        //cout << minint << "\n";
-        QVector<int> tmp;
-		getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
-		hist_vec.append(tmp);
+    vector<int> intvec;
+    getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
+    if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
-	}
+    if(nChannel == 1)
+    {
+        int  maxint,minint;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax;
+
+        //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
+        getStats(intvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
+        MaxIntensity_vec.append(maxint);
+        QVector<int> tmphist;
+        //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+        getHistogram(intvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+        pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
+        pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
+        hist_vec.append(tmphist);
+
+        // Get Otsu threshold
+        double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
+        var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+        for(int i=0; i<tmphist.size(); i++)
+        {
+            sum = sum + i*double(tmphist.at(i));
+        }
+        for(int t=0; t<tmphist.size(); t++)
+        {
+            q1 = q1 + double(tmphist.at(t));
+            //cout << q1 << " ";
+            if(q1>0)
+            {
+                q2 = sz[0]*sz[1]*sz[2]-q1;
+                //cout << q2 << " ";
+                sumB = sumB + double(t)*double(tmphist.at(t));
+                u1 = sumB/q1;
+                cout << u1 << " ";
+                u2 = (sum-sumB)/q2;
+                sigma2 = q1*q2*(u1-u2)*(u1-u2);
+                if(sigma2 > var_max)
+                {
+                    ThreshOtsu = t;
+                    var_max =sigma2;
+                }
+            }
+        }
+        cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+
+        // Get SNR and CNR using mean intensity and Otsu as threshold for background
+        double SNRmean,CNRmean,SNRotsu,CNRotsu;
+
+        vector<int> otsunoise,otsusignal;
+        double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
+        vector<int> meannoise,meansignal;
+        double avmeannoise,avmeansignal,stdevmean;
+        for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+        {
+            if(intvec.at(i)<ThreshOtsu)
+            {
+                otsunoise.push_back(intvec.at(i));
+                meanotsunoise += intvec.at(i);
+            }
+            else
+            {
+                otsusignal.push_back(intvec.at(i));
+                meanotsusignal += intvec.at(i);
+            }
+
+            if(intvec.at(i)<meanint)
+            {
+                meannoise.push_back(intvec.at(i));
+                avmeannoise += intvec.at(i);
+            }
+            else
+            {
+                meansignal.push_back(intvec.at(i));
+                avmeansignal += intvec.at(i);
+            }
+        }
+        meanotsunoise = meanotsunoise/otsunoise.size();
+        meanotsusignal = meanotsusignal/otsusignal.size();
+        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
+        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
+
+        avmeannoise = avmeannoise/meannoise.size();
+        avmeansignal = avmeansignal/meansignal.size();
+        sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
+        stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
+
+        SNRmean = avmeansignal/stdevmean;
+        CNRmean = (maxint-meanint)/stdevmean;
+        SNRotsu = meanotsusignal/stdevotsu;
+        CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+
+        //cout << tmphist.at(0) << "\n";
+        cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
+        cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
+
+    }
+    else
+    {
+        for (int c=0;c<nChannel;c++)
+        {
+            int  maxint,minint;
+            double meanint,medianint,madint,stdevint,pcmin,pcmax;
+
+            //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
+            vector<int> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
+            getStats(subvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
+            MaxIntensity_vec.append(maxint);
+            QVector<int> tmphist;
+            //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+            getHistogram(subvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+            pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
+            pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
+            hist_vec.append(tmphist);
+
+            // Get Otsu threshold
+            double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
+            var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+            for(int i=0; i<tmphist.size(); i++)
+            {
+                sum += i*tmphist.at(i);
+            }
+            for(int t=0; t<tmphist.size(); t++)
+            {
+                q1 += tmphist.at(t);
+                if(q1>0)
+                {
+                    q2 = sz[0]*sz[1]*sz[2]-q1;
+                    sumB += t*tmphist.at(t);
+                    u1 = sumB/q1;
+                    u2 = (sum-sumB)/q2;
+                    sigma2 = q1*q2*(u1-u2)*(u1-u2);
+                    if(sigma2 > var_max)
+                    {
+                        ThreshOtsu = t;
+                        var_max =sigma2;
+                    }
+                }
+            }
+            cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+
+            // Get SNR and CNR using mean intensity and Otsu as threshold for background
+            double SNRmean,CNRmean,SNRotsu,CNRotsu;
+
+            vector<int> otsunoise,otsusignal;
+            double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
+            vector<int> meannoise,meansignal;
+            double avmeannoise,avmeansignal,stdevmean;
+            for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+            {
+                if(subvec.at(i)<ThreshOtsu)
+                {
+                    otsunoise.push_back(subvec.at(i));
+                    meanotsunoise += subvec.at(i);
+                }
+                else
+                {
+                    otsusignal.push_back(subvec.at(i));
+                    meanotsusignal += subvec.at(i);
+                }
+
+                if(subvec.at(i)<meanint)
+                {
+                    meannoise.push_back(subvec.at(i));
+                    avmeannoise += subvec.at(i);
+                }
+                else
+                {
+                    meansignal.push_back(subvec.at(i));
+                    avmeansignal += subvec.at(i);
+                }
+            }
+            meanotsunoise = meanotsunoise/otsunoise.size();
+            meanotsusignal = meanotsusignal/otsusignal.size();
+            sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
+            stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
+
+            avmeannoise = avmeannoise/meannoise.size();
+            avmeansignal = avmeansignal/meansignal.size();
+            sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
+            stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
+
+            SNRmean = avmeansignal/stdevmean;
+            CNRmean = (maxint-meanint)/stdevmean;
+            SNRotsu = meanotsusignal/stdevotsu;
+            CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+
+            //cout << tmphist.at(0) << "\n";
+            cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
+            cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
+
+        }
+    }
 
 	//output histogram to csv file
 	FILE *fp;
-	fp = fopen(outfile, "w");
+    fp = fopen(outfileapp.toStdString().c_str(), "w");
     QString header = "Image_name,Channel,FocusScore,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu\n";
     fprintf(fp, "%s", header.toStdString().c_str());
     for (int i=0;i<hist_vec.size();i++)
@@ -410,5 +743,9 @@ void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
     }
 
 }
+
+
+
+
 
 #undef INF

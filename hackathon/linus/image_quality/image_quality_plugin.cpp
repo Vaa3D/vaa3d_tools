@@ -50,7 +50,7 @@ bool ImageQualityPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
         cout<<"\nThis is a plugin to get image quality features. 2021-08-04 by Linus Manubens Gil"<<endl;
         cout<<"\nUsage: v3d -x image_quality -f image_quality -i <image_name> -o <outputfile_name>"<<endl;
 		cout<<"\t -i <image_name> :       name of the image to be computed"<<endl;
-		cout<<"\t -o <outputfile_name> :  output file name (.csv)"<<endl;
+        cout<<"\t -o <outputfile_name> :  output file name (.csv), will be appended to the nampe of the input file"<<endl;
         cout<<"\nDemo v3d -x image_quality -f image_quality -i test.tif -o hist.csv\n"<<endl;
 	}
 }
