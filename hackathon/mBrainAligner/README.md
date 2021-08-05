@@ -24,13 +24,13 @@
 
 Recent whole brain mapping projects are collecting large-scale 3D images using powerful and informative modalities, such as STPT, fMOST, VISoR, LSFM or MRI. Registration of these multi-dimensional whole-brain images onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. However, cross-modality image registration is challenging due to intrinsic variations of brain anatomy and artifacts resulted from different sample preparation methods and imaging modalities.
 
-mBrianAligner provides a comprehesive, robust and accurate cross-modality image registration pipeline to support the current large-scale whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities, mBrainAligner also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using mBrainAligner, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. mBrainAligner is not limited to the use of intra- and cross-modality mouse brain registration, its utilities can also be extended to partially imaged data and multi-timepoint registration or other species.
+`mBrianAligner` provides a comprehesive, robust and accurate cross-modality image registration pipeline to support the current large-scale whole brain mapping projects. In addition to aligning 3D mouse brain images of different modalities,`mBrainAligner` also enables mapping digitally reconstructed compartments (e.g., dendritic, axonal, and soma distributions) to a common target space to faciliate the visualization, comparison and analysis. Using `mBrainAligner`, we have also generated an fMOST-space mouse brain atlas and showcased the utility of our method for analyzing single cell types. `mBrainAligner` is not limited to the use of intra- and cross-modality mouse brain registration, its utilities can also be extended to partially imaged data and multi-timepoint registration or other species.
 
-mBrainAligner contains three decoupled modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
+`mBrainAligner` contains three decoupled modules: (1) image preprocessing and global registration, (2) Coherent Landmark Mapping (CLM) based automatic registration, and (3) optional semi-automatic refinement. To accommodate different registration accuracy or throughput requirements, the above modules can be concatenated or executed separately. In addition, some useful tools including 2.5D corner detector, stripe artifacts removal, and image or metadata warping tools are also provided in this package for the user's convenience.
 
-There are two ways to use mBrainAligner:
-1.	follow the below instructions to build and run mBrainAligner on local machines.
-2.	visit http://159.75.201.35/ and run mBrainAligner online. (registration results and sample data can also be downloaded there)
+There are two ways to use ·mBrainAligner`:
+1.	follow the below instructions to build and run `mBrainAligner` on local machines.
+2.	visit http://159.75.201.35/ and run `mBrainAligner online`. (registration results and sample data can also be downloaded there)
 Please feel free to contact us by email (17718151568@126.com) any time for any question you have.
 
 
@@ -71,7 +71,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 
 ## - Build mBrainAligner from source
 
-If you want to build mBrainAligner from source, please follow the instructions here: https://****************************
+If you want to build `mBrainAligner` from source, please follow the instructions here: https://****************************
 
 
 # Run mBrainAligner
@@ -114,7 +114,7 @@ For a step-by-step user guide, please read: `“link: step-by-step registration 
 
 ## - Run mBrainAligner on you own data
 
-If you want to practice mBrainAligner on you own data, please read: `“link: register your own data”`
+If you want to practice `mBrainAligner` on you own data, please read: `“link: register your own data”`
 
 We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.
 
@@ -134,4 +134,4 @@ The source code of our modified 3D U-Net can be found in `src/src_3DUnet/`. Plea
 
 
 # License
-mBrainAligner uses a slightly modified revised MIT license unless specifically stated for some rare cases. See detail here: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
+`mBrainAligner` uses a slightly modified revised MIT license unless specifically stated for some rare cases. See detail here: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/License_mBrainAligner
