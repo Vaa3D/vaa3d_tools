@@ -59,9 +59,9 @@ The package has been tested on the following systems:
 
 ## - Use provided compiled executable files
 
-If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `dist` folder and put it anywhere you like.
+If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `binary` folder and put it anywhere you like.
 
->**dist**
+>**binary**
 > > **mBrainAligner_win64**: contains the global and local registration executable files and `dlls` for Windows.
 > > 
 > > **mBrainAligner_linux**: contains the global and local registration executable files and `libs` for Linux.
@@ -77,7 +77,7 @@ Note that mBrainAligner has been only tested on Windows 10 and Linux.
 
 # Run mBrainAligner
 
-We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `dist`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
+We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small downsampled brains are provided here. 
 
 An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper: <https://www.researchsquare.com/article/rs-321118/v1>.
 
@@ -95,13 +95,13 @@ Enter the `examples` folder, double-click `run_script_windows.bat`.
 
 ### Linux
 
-In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `dist/linux_bin/lib/` needs to be added to the linker directory: 
+In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `binary/linux_bin/lib/` needs to be added to the linker directory: 
     
     Ctrl+Alt+t to open terminal 
-    cd "(your file path)/dist/linux_bin/"
+    cd "(your file path)/binary/linux_bin/"
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
-    add the "(your file path)/dist/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save. 
+    add the "(your file path)/binary/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save. 
     sudo ldconfig
     sudo chmod 777 -R  global_registration 
     sudo chmod 777 -R  local_registration
@@ -127,7 +127,7 @@ We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat
 
 ## - Warp reconstructed neurons or somas to CCF
 
-Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail. 
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/docs/SWC_reg_pipeline_win.md) for detail. 
 
 ## - Use 3D UNet to gengerate segmentation features
 
