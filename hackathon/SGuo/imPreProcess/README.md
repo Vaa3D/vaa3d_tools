@@ -30,26 +30,23 @@ In this repo, we provide the following sources.
  -Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki 
   
 ## <a name="Command"></a>Run via Command-Line Interface
-  The plugin takes one 3d image and performs the enhancement according to the parameters specified by the user. 
-
-  It can be applied via either the GUI of the Vaa3D platform under the menu of 'plug-in/imPreProcess/image enhancement', or via the command line interface as following:
+  The plugin takes one 3d image and performs the enhancement according to the parameters specified by the user. It can be applied via either the GUI of the Vaa3D platform under the menu of 'plug-in/imPreProcess/image enhancement', or via the command line interface as following:
   
-   Window-based: 
+   * Window-based: 
         vaa3d_msvc.exe /x path_of_plugin_dll /f im_enhancement /i imput_image /o output_image /p parameter_list 
 
-   Linux/Mac-based: 
+   * Linux/Mac-based: 
         vaa3d -x path_of_plugin_so -f im_enhancement -i imput_image -o output_image -p parameter_list
 
-   input_image: 3d image to be enhanced (supported formats: .tif, .raw, .v3draw)
-
-   output_image: where to save the enhanced image (supported formats: .tif, .raw, .v3draw)
-
-   parameter_list: value of differet parameters, separated by space （see details in the next section)
-
-
 ## <a name="Parameter"></a>Command-line parameters
+      
+   * input_image: 3d image to be enhanced (supported formats: .tif, .raw, .v3draw)
 
+   * output_image: where to save the enhanced image (supported formats: .tif, .raw, .v3draw)
 
+   * parameter_list: value of differet parameters, separated by space. Details are given as following
+
+ 
 | Flag          | Usage                                                        | Default  |
 | :------------ | ------------------------------------------------------------ | -------- |
 | --wxy_bilateral    | window size of bilateral filter along the x- and y-axis | 3 |
@@ -60,9 +57,9 @@ In this repo, we provide the following sources.
 | --b_do_bf  | whether or not conduct bilateral filter during the enhancement, 1 yes, 0 no | 1 |
 | --b_do_fft  | whether or not conduct high-pass filter during the enhancement, 1 yes, 0 no | 1 |
 
-  Note: The parameters should be specified in order as listed above. A typical example to run the command in Window OS with the parameter specification is as following:
+  * Note: The parameter_list should be specified in order as listed above. A typical example to run the command in Window OS with the parameter specification is as following:
 
-             vaa3d_msvc.exe /x imPreProcess.dll /f im_enhancement /i 17109_4142.778_1929.072_2794.948.v3draw /o 17109_4142.778_1929.072_2794.948_pre.v3draw /p 3 3 1 35 3 25 1 1
+     vaa3d_msvc.exe /x imPreProcess.dll /f im_enhancement /i 17109_4142.778_1929.072_2794.948.v3draw /o 17109_4142.778_1929.072_2794.948_pre.v3draw /p 3 3 1 35 3 25 1 1
 
  
 ## <a name="FAQ"></a>FAQ
