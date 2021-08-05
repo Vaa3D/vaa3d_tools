@@ -33,23 +33,23 @@ Launch the "Visual Studio x64 Win64 Command Prompt" from Start->Microsoft Visual
 
 Example (global_registration):
 
-    cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/src_mBrainAligner/2.global_registration/
+    cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration/
     qmake global_registration.pro
     vcvars64.bat
     nmake release
     
 You can find the executable:
 
-`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/src_mBrainAligner/2.global_registration/global_registration.exe`. 
+`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration/global_registration.exe`. 
 
 ## Linux
 Before compiling, you also need to modify the **".pro"** file according to the path of the installed dependencies (Vaa3D,QT etc). 
 
 Example (global_registration):
 
-     cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/src_mBrainAligner/2.global_registration/
+     cd (YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration/
      qmake global_registration.pro
      Make
 You can find the executable file: 
 
-`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/src_mBrainAligner/2.global_registration/global_registration`. 
+`(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration`. 
