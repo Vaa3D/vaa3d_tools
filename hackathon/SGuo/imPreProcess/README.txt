@@ -8,14 +8,11 @@ README
     -Folder 'supporting_func': python code to benchmark image quality from the perspectives of 
                                            signal-background contrast, dynamic range of  background/signal, 
                                            for both within- and between-images.
-    -Folder 'test_images': example image blocks from fMost image dataset of mouse brains. 
+    -Folder 'test_data': example image blocks from fMost image dataset of mouse brains. 
 
 
 * How to build Vaa3D plugins:
-    Please follow the build instructions here to build released plugins along with the Vaa3d main program:
-         https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
-    If you would like to build plugins in the hackathon folder or plugins for bigneuron project, please follow
-    this wiki page:
+    To build the plugin, please follow this wiki page:
          https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki
 
 
