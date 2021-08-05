@@ -116,7 +116,7 @@ For a step-by-step user guide, please read: `“link: step-by-step registration 
 
 If you want to practice mBrainAligner on you own data, please read: `“link: register your own data”`
 
-We encourage you to read the `Step-by-step tutorial` and `Scripts` first.
+We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.
 
 # Others
 
