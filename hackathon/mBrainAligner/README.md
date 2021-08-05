@@ -6,8 +6,17 @@
 
 - [Overview](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Overview)
 - [System requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#System-requirements)
-- [Installation guide](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Installation-guide)
-- [Demo](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Demo)
+- - [hardware requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Hardware-requirements)
+- - [OS requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-OS-requirements)
+- [Installation mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Install-mBrainAligner)
+- - [install precompiled executable files](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-provided-compiled-executable-files)
+- - [build mBrainAligner from source](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Build-mBrainAligner-from-source)
+- [Run mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Run-mBrainAligner)
+- - [Run mBrainAligner on sample data in batch](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner -on-sample-data-in-batch)
+- - [Step-by-step tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Step-by-step-tutorial)
+- - [Run mBrainAligner on you own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-you-own-data)
+- - [Warp reconstructed neurons or somas to CCF](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Warp-reconstructed-neurons-or-somas-to-CCF)
+- [License](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#License)
 
 # Overview
 
