@@ -54,7 +54,7 @@ SimpleITK==1.2.3
 six==1.11.0
 sklearn==0.0
 tables==3.4.0
-tensorflow-gpu==1.4.0
+tensorflow-gpu==2.4.2
 tensorflow-tensorboard==0.4.0rc2
 terminado==0.6
 testpath==0.3.1
