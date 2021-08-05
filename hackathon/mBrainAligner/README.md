@@ -15,7 +15,9 @@
 - - [run mBrainAligner on sample data in batch](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-sample-data-in-batch)
 - - [step-by-step tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Step-by-step-tutorial)
 - - [run mBrainAligner on you own data](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Run-mBrainAligner-on-you-own-data)
+- [Others](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Others)
 - - [warp reconstructed neurons or somas to CCF](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Warp-reconstructed-neurons-or-somas-to-CCF)
+- - [use 3D UNet to gengerate segmentation features](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-3D_UNet_to_gengerate_segmentation_features)
 - [License](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#License)
 
 # Overview
@@ -107,17 +109,22 @@ Then run
 
 ## - Step-by-step tutorial
 
-For a step-by-step user guide, please read: `“step-by-step registration tutorial”`
+For a step-by-step user guide, please read: `“link: step-by-step registration tutorial”`
 
 
 ## - Run mBrainAligner on you own data
 
-If you want to practice mBrainAligner on you own data, please read: `“register your own data”`
+If you want to practice mBrainAligner on you own data, please read: `“link: register your own data”`
 
-We encourage you to read the `Step-by-step tutorial` and 'Scripts' first.
+We encourage you to read the `Step-by-step tutorial` and `Scripts` first.
 
+# Others
 
 ## - Warp reconstructed neurons or somas to CCF
+
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `dist\othertools_win64\swc_registration\` can be used for this purpose, please read `“link: Warp reconstructed neurons or somas to CCF”` for detail. 
+
+## - Use 3D UNet to gengerate segmentation features
 
 to continue here....
 
