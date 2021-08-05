@@ -6,7 +6,7 @@
 
 - [Overview](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Overview)
 - [System requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#System-requirements)
-- - [hardware requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-_Hardware-requirements)
+- - [hardware requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##Hardware-requirements)
 - - [OS requirements](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-OS-requirements)
 - [Installation mBrainAligner](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner#Install-mBrainAligner)
 - - [install precompiled executable files](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner##-Use-provided-compiled-executable-files)
@@ -36,7 +36,7 @@ Please feel free to contact us by email 17718151568@126.com any time for any que
 
 # System requirements
 
-## - Hardware requirements
+## Hardware requirements
 
 `mBrainAligner` works on desktop computers. The memory requirement depends on the size of the image to be processed. For 25um mouse brain registration, we recommend a computer with the following specifications: 
 
