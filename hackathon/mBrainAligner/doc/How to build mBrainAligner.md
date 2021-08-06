@@ -42,6 +42,8 @@ You can find the executable:
 
 `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration/global_registration.exe`. 
 
+The local registration module can be compiled in the same way.
+
 ## Linux
 Before compiling, you also need to modify the **".pro"** file according to the path of the installed dependencies (Vaa3D,QT etc). 
 
@@ -53,3 +55,5 @@ Example (global_registration):
 You can find the executable file: 
 
 `(YOUR PATH)/vaa3d_tools/hackathon/mBrainAligner/src/global_registration`. 
+
+The local registration module can be compiled in the same way.
