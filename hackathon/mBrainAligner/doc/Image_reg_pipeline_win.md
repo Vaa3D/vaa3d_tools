@@ -43,7 +43,7 @@ We can determine the "angle (orientation), cutoff (cutoff frequency), radius (ba
   ```
   cd <your mBrainAligner_win64 directory>
   
-  global_registration.exe -f ../example/target/CCF_25_u8_xpad.v3draw -c ../example/target/CCF_mask.v3draw -m ../example/subject_stripe_removal_result/fMOST_18458_raw_stripremove.v3draw  -p r+f -o ../example/result/fMOST/ -d 1
+  global_registration.exe -f ../../example/target/CCF_25_u8_xpad.v3draw -c ../../example/target/CCF_mask.v3draw -m ../../example/subject_stripe_removal_result/fMOST_18458_raw_stripremove.v3draw  -p r+f -o ../../example/result/fMOST/ -d 1
 
   ```
 
@@ -87,7 +87,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
 open terminal in windows, and run the following commands：
 ```
-local_registration.exe -p ../example/config/fMOST_config.txt -s ../example/result/fMOST/global.v3draw -m ../example/subject/fMOST_segmentation/ -l ../example/target/target_landmarks/low_landmarks.marker  -g ../example/target/ -o ../example/result/fMOST/
+local_registration.exe -p ../../example/config/fMOST_config.txt -s ../../example/result/fMOST/global.v3draw -m ../../example/subject/fMOST_segmentation/ -l ../../example/target/target_landmarks/low_landmarks.marker  -g ../../example/target/ -o ../../example/result/fMOST/
 ```
 The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the `Select_modal` in the `fMOST_config.txt` needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 The globally aligned image will be save in the `results` directory.
