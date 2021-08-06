@@ -359,9 +359,9 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     //output histogram to csv file
     bool ok;
     QString outfile;
-    outfile = QInputDialog::getText(0,"Output file","Write full path and filename of the output csv file",QLineEdit::Normal,"./hist.csv",&ok);
+    outfile = QInputDialog::getText(0,"Output file","Write full path and filename of the output csv file",QLineEdit::Normal,"./ImageQuality.csv",&ok);
     if (!ok)
-        outfile = "./hist.csv";
+        outfile = "./ImageQuality.csv";
     QByteArray outfileba = outfile.toLocal8Bit();
     char *strout = outfileba.data();
     FILE *fp;
@@ -422,7 +422,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     }
     else
     {
-        outfile = "hist.csv";
+        outfile = "ImageQuality.csv";
     }
     QString outfileapp = QString(infile) + "." + QString(outfile);
     cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
