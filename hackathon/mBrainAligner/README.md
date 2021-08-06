@@ -67,7 +67,6 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 > > **linux_bin**: contains the global and local registration executable files and `libs` for Linux.
 > >
 > > The stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`. 
-> > 
 > > The precompiled semi-automatic registration program for windows can be found in `src/semi_automatic_registration/semi_automatic_registration.7z`.
 
 ## - Build mBrainAligner from source
