@@ -8,17 +8,19 @@
 
 Registration of whole-brain images of different modalities onto a standard atlas is essential for characterizing neuron types and constructing brain wiring diagrams. Here we introduce a step-by-step tutorial of using mBrainAligner to register the fMOST image to Allen Common Coordinate Framework atlas (CCFv3). 
 
-Since the brain area in CCFv3 average template is close to image boundaries in the anterior-posterior direction, to eliminate the computational ambiguity, we padded the CCFv3 average template (25µm) by 20 pixels in both ends of anterior-posterior axes and use the padded image as the target. The padded CCFv3 average template can be found in `examples/target/CCF_25_u8_xpad.v3draw` (see Appendix for detailed meaning of files in ` examples/target/` folder). 
+Since the brain area in CCFv3 average template is close to image boundaries in the anterior-posterior direction, to eliminate the computational ambiguity, we padded the CCFv3 average template (25µm) by 20 pixels in both ends of anterior-posterior axes and use the padded image as the target. **Note that** only 50um CCFv3 and sample images are provided here to faciliate the network transfer and storage. The downsampled and padded CCFv3 average template can be found in `examples/target/CCF_25_u8_xpad.v3draw` (see Appendix for detailed meaning of files in ` examples/target/` folder). 
 
 We assume all example and executable files are in the original folder structure as shown in the github. 
 
+
 **Step 1: Image downsampling**
 
-The raw whole mouse brain image stack of fMOST modality generally has the volume size of 40k x 30k x 10k voxels. First, we need to downsample the raw image anisotropically (XYZ multipliers = 64x64x16) to roughly match the size of the target image (CCFv3 25um). 
+The raw whole mouse brain image stack of fMOST modality generally has the volume size of 40k x 30k x 10k voxels. First, we need to downsample the raw image anisotropically to roughly match the size of the target image (we recommend using CCFv3 25um to achieve a good balance between registration accuracy and computation time). 
+
 
 **Step 2: Stripe artifact removal** 
 
-The periodic stripe noise present in the raw fMOST images is mainly caused by fluorescent bleaching during the knife cutting and imaging process. It will deteriorate the image registration performance. We designed a log-space frequency notch filter to realize the high-quality stripe artifacts removal. This module was implement in Matlab, and the source code can be found in `src\src_othertools\stripe_removal\`. 
+The periodic stripe noise present in the raw fMOST images is mainly caused by fluorescent bleaching during the knife cutting and imaging process. It will deteriorate the image registration performance. This kind of periodic stripe noise can be effectively removed using our `stripe_removal` tool. This tool was implement in Matlab, and the source code can be found in `src\src_othertools\stripe_removal\`. 
 
 Open Matlab and navigate to the ‘/src/src_othertools/stripe_removal/’ directory, and modify script:
 ```
@@ -32,10 +34,10 @@ Run `stripremove.m`. This script will find all `.raw` or `v3draw` files in the s
 
 We can determine the "angle (orientation), cutoff (cutoff frequency), radius (bandwidth)" parameters of notch filter by examining the frequency spectrum of one 2D coronal slice of subject image. 
 
+**Note that** stripe_removal step may not be necessay if there is no tissue sectioning involved in the imaging process. 
 
 
 **Step 3: Global affine registration and intensity normalization**
-
 
 - open terminal in windows, and run the following commands：
   ```
@@ -45,9 +47,10 @@ We can determine the "angle (orientation), cutoff (cutoff frequency), radius (ba
 
   ```
 
-
 The globally aligned image will be save in the `results` directory. 
 If we use parameter `-p r+f+n`, the intensity normalization will be performed following the global registration. 
+
+The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 
   <center>
   <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image002.png width=70%>
@@ -86,7 +89,7 @@ open terminal in windows, and run the following commands：
 ```
 local_registration.exe -p ../example/config/fMOST_config.txt -s ../example/result/fMOST/global.v3draw -m ../example/subject/fMOST_segmentation/ -l ../example/target/target_landmarks/low_landmarks.marker  -g ../example/target/ -o ../example/result/fMOST/
 ```
-The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the “Select_modal” in the “fMOST_config.txt” needs to be set to 1. 
+The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the “Select_modal” in the “fMOST_config.txt” needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 The globally aligned image will be save in the `results` directory.
    <center>
   <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image007.png width=70% >
