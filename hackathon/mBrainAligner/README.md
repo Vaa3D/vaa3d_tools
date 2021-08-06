@@ -77,7 +77,7 @@ Note that mBrainAligner has been only tested on Windows 10 and Linux.
 
 # Run mBrainAligner
 
-We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images (~50um)) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small down-sampled brains are provided here. For better registration accuracy, 25um image resolution is recommanded and we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn.
+We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images (~50um)) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small down-sampled brains are provided here (even part of the data can only be compressed into the ".zip" format, so you need to make sure that the data has been decompressed before running any script). For better registration accuracy, 25um image resolution is recommanded and we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn.
 
 An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper: <https://www.researchsquare.com/article/rs-321118/v1>.
 
@@ -124,7 +124,6 @@ If you want to practice `mBrainAligner` on your own data, please read: [Register
 
 We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat` first.  
 
-**Note:** Due to Github restrictions, some data can only be compressed into ".zip" format, so you need to make sure that the data has been decompressed before running any script.
 
 # Others
 
