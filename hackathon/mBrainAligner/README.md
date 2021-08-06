@@ -128,11 +128,11 @@ We encourage you to read the `Step-by-step tutorial` and `run_script_windows.bat
 
 ## - Warp reconstructed neurons or somas to CCF
 
-Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `binary\othertools_win64\swc_registration\` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/SWC_reg_pipeline_win.md) for detail.
+Once the brain images were registered to CCF, the neurons (.swc format) or somas (.marker format) can also be map to CCF space for visualization, comparison and analysis. Swc_registration tools `src/src_othertools/swc_registration/` can be used for this purpose, please read [SWC registration pipeline tutorial](https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/mBrainAligner/doc/SWC_reg_pipeline_win.md) for detail.
 
 ## - Use 3D UNet to generate segmentation features
 
-With `mBrainAligner` , one can integrate different features to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as a feature.
+With `mBrainAligner`, one can integrate different features to enhance the robustness and accuracy of registration. Since brain delineation/segmentation is one major application of atlas-based registration, the registration task can also benefit from segmentation by incorporating the semantic information as a feature.
 
 DNNs have shown tremendous superiority against traditional methods in segmentation applications. We choose to generate the segmentation probability feature using a semantic segmentation network. We slightly modify a 3D U-Net to generate the segmentation probability (0~1) of each voxel to six main brain regions (HY, HPF, CTX, CBX, BS, CP) and background. Also note, 3D U-Net may be replaced by other segmentation methods to further improve the registration performance, mBrainAligner can be improved for specific applications using such an approach.
 
