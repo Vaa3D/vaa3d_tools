@@ -246,13 +246,12 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         int  maxint,minint;
-        double meanint,medianint,madint,stdevint,pcmin,pcmax;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
         vector<int> intvec;
         getVec(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], intvec);
         if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
         //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
         getStats(intvec, intvec.size(), minint, maxint, meanint, medianint, madint, stdevint);
-        MaxIntensity_vec.append(maxint);
         cout << maxint << "\t" << minint << "\t" << meanint << "\n";
         QVector<int> tmphist;
         //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
@@ -260,6 +259,19 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
         pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
         hist_vec.append(tmphist);
+
+        MaxIntensity_vec.append(maxint);
+        MinIntensity_vec.append(minint);
+        MeanIntensity_vec.append(meanint);
+        MedianIntensity_vec.append(medianint);
+        MADIntensity_vec.append(madint);
+        StdIntensity_vec.append(stdevint);
+        PercentMinimal_vec.append(pcmin);
+        PercentMaximal_vec.append(pcmax);
+
+        // Get Focus Score
+        focusscore = stdevint*stdevint/meanint;
+        FocusScore_vec.append(focusscore);
 
         // Get Otsu threshold
         double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
@@ -286,6 +298,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
             }
         }
         cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+        ThreshOtsu_vec.append(ThreshOtsu);
 
         // Get SNR and CNR using mean intensity and Otsu as threshold for background
         double SNRmean,CNRmean,SNRotsu,CNRotsu;
@@ -333,10 +346,15 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         SNRotsu = meanotsusignal/stdevotsu;
         CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
+        SNRmean_vec.append(SNRmean);
+        CNRmean_vec.append(CNRmean);
+        SNRotsu_vec.append(SNRotsu);
+        CNRotsu_vec.append(CNRotsu);
+
         //cout << tmphist.at(0) << "\n";
-        cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
-        cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
-	}
+        cout << "minint\tmaxint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\t\tCNRmean\t\tSNRotsu\t\tCNRotsu\t\tFocusScore\n";
+        cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
+    }
 
     //output histogram to csv file
     bool ok;
@@ -348,9 +366,12 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     char *strout = outfileba.data();
     FILE *fp;
     fp = fopen(strout, "w");
-    QString header = "Image_name,test\n";
+    QString header = "Image_name,Channel,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu,FocusScore\n";
     fprintf(fp, "%s", header.toStdString().c_str());
-    fprintf(fp, "%s,%d\n", imgname.toStdString().c_str(),10);
+    for (int i=0;i<hist_vec.size();i++)
+    {
+        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", imgname.toStdString().c_str(),i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
+    }
 //    for (int i=0;i<hist_vec.size();i++)
 //    {
 //        for (int j=0;j<hist_vec[i].size();j++)
@@ -466,17 +487,28 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     if(nChannel == 1)
     {
         int  maxint,minint;
-        double meanint,medianint,madint,stdevint,pcmin,pcmax;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
 
         //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
         getStats(intvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
-        MaxIntensity_vec.append(maxint);
         QVector<int> tmphist;
         //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
         getHistogram(intvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
         pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
         pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
         hist_vec.append(tmphist);
+        MaxIntensity_vec.append(maxint);
+        MinIntensity_vec.append(minint);
+        MeanIntensity_vec.append(meanint);
+        MedianIntensity_vec.append(medianint);
+        MADIntensity_vec.append(madint);
+        StdIntensity_vec.append(stdevint);
+        PercentMinimal_vec.append(pcmin);
+        PercentMaximal_vec.append(pcmax);
+
+        // Get Focus Score
+        focusscore = stdevint*stdevint/meanint;
+        FocusScore_vec.append(focusscore);
 
         // Get Otsu threshold
         double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
@@ -495,7 +527,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 //cout << q2 << " ";
                 sumB = sumB + double(t)*double(tmphist.at(t));
                 u1 = sumB/q1;
-                cout << u1 << " ";
+                //cout << u1 << " ";
                 u2 = (sum-sumB)/q2;
                 sigma2 = q1*q2*(u1-u2)*(u1-u2);
                 if(sigma2 > var_max)
@@ -506,6 +538,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             }
         }
         cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+        ThreshOtsu_vec.append(ThreshOtsu);
 
         // Get SNR and CNR using mean intensity and Otsu as threshold for background
         double SNRmean,CNRmean,SNRotsu,CNRotsu;
@@ -553,9 +586,14 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         SNRotsu = meanotsusignal/stdevotsu;
         CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
+        SNRmean_vec.append(SNRmean);
+        CNRmean_vec.append(CNRmean);
+        SNRotsu_vec.append(SNRotsu);
+        CNRotsu_vec.append(CNRotsu);
+
         //cout << tmphist.at(0) << "\n";
-        cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
-        cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
+        cout << "minint\tmaxint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\t\tCNRmean\t\tSNRotsu\t\tCNRotsu\t\tFocusScore\n";
+        cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
 
     }
     else
@@ -563,18 +601,29 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         for (int c=0;c<nChannel;c++)
         {
             int  maxint,minint;
-            double meanint,medianint,madint,stdevint,pcmin,pcmax;
+            double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
 
             //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
             vector<int> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
             getStats(subvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
-            MaxIntensity_vec.append(maxint);
             QVector<int> tmphist;
             //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
             getHistogram(subvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
             pcmin = tmphist.at(minint)*100/(sz[0]*sz[1]*sz[2]);
             pcmax = tmphist.at(maxint)*100/(sz[0]*sz[1]*sz[2]);
             hist_vec.append(tmphist);
+            MaxIntensity_vec.append(maxint);
+            MinIntensity_vec.append(minint);
+            MeanIntensity_vec.append(meanint);
+            MedianIntensity_vec.append(medianint);
+            MADIntensity_vec.append(madint);
+            StdIntensity_vec.append(stdevint);
+            PercentMinimal_vec.append(pcmin);
+            PercentMaximal_vec.append(pcmax);
+
+            // Get Focus Score
+            focusscore = stdevint*stdevint/meanint;
+            FocusScore_vec.append(focusscore);
 
             // Get Otsu threshold
             double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
@@ -601,6 +650,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 }
             }
             cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+            ThreshOtsu_vec.append(ThreshOtsu);
 
             // Get SNR and CNR using mean intensity and Otsu as threshold for background
             double SNRmean,CNRmean,SNRotsu,CNRotsu;
@@ -648,9 +698,14 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             SNRotsu = meanotsusignal/stdevotsu;
             CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
+            SNRmean_vec.append(SNRmean);
+            CNRmean_vec.append(CNRmean);
+            SNRotsu_vec.append(SNRotsu);
+            CNRotsu_vec.append(CNRotsu);
+
             //cout << tmphist.at(0) << "\n";
-            cout << "maxint\tminint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\tCNRmean\tSNRotsu\tCNRotsu\n";
-            cout << maxint << "\t" << minint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\n";
+            cout << "minint\tmaxint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\t\tCNRmean\t\tSNRotsu\t\tCNRotsu\t\tFocusScore\n";
+            cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
 
         }
     }
@@ -658,11 +713,11 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	//output histogram to csv file
 	FILE *fp;
     fp = fopen(outfileapp.toStdString().c_str(), "w");
-    QString header = "Image_name,Channel,FocusScore,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu\n";
+    QString header = "Image_name,Channel,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu,FocusScore\n";
     fprintf(fp, "%s", header.toStdString().c_str());
     for (int i=0;i<hist_vec.size();i++)
     {
-        fprintf(fp, "%s,%d\n", infile,i+1,10);
+        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", infile,i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
     }
 //	for (int i=0;i<hist_vec.size();i++)
 //	{
