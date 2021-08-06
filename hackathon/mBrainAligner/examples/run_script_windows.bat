@@ -1,20 +1,22 @@
 ::<<global_registration.exe>> config
-:: -f fixed_image
-:: -m moving_image
-:: -c recentered_image_pad_scr_image (if you select "rpm")
-:: -d moving_image_threshold (if less than the given threshold,then the pixel value = 0. The default is 30)
-:: -p <registration_methods>，a:affine, r:rpm，f:ffd, example:a+f,r+f (It is recommended that you only need to select one option in "affine" and "rpm")
-:: -o the result save path
+:: -f <input_fixed_image> .raw/.tif/.lsm file containing 3D template/target stack to which a subject image will be warped/mapped.        
+::                                     The .raw file is in V3D's RAW format.
+:: -m <input_moving_image> .raw/.tif/.lsm file containing 3D template/target stack to which a subject image will be warped/mapped.        
+::                                     The .raw file is in V3D's RAW format.
+:: -c <fixed_image_mask> The foreground mask of fixed image(When you select rpm(-p r) in the global registration, this option must be used).
+:: -d <moving_image_threshold> This option can remove image artifacts(if less than the given threshold,then the pixel value = 0, the default is 30).
+:: -p <global_registration_methods>，a:affine, r:rpm，f:ffd, example:a+f,r+f (It is recommended that you only need to select one option in "affine" and "rpm")
+:: -o <Results_save_path> Global registration result will saved here.
 
 ::<<local_registration.exe>> config
-:: -p <Algorithm config file>, If the user uses the registration sample data, the interface needs to provide the user with four modes of registration (fMOST,LSFM,VISoR,MRI), 
+:: -p <algorithm config file>, If the user uses the registration sample data, the interface needs to provide the user with four modes of registration (fMOST,LSFM,VISoR,MRI), 
 ::                                and the corresponding config file is (the file name is fixed) :fMOST_config.txt,LSFM_config.txt,VISoR_config.txt,MRI_config.txt
-::                                If the user is registering with private data, we need to generate "...txt" file (see fmost_config.txt file).
-:: -s <global_result_image>  The file name is fixed. If the result save path is "result/fMOST/", 
-::                           then "-s" is "result/fMOST/global.v3draw".
-:: -m <fmost_segmentation_result> 
+::                                If the user is registering with your own data, we need to generate "**.txt" file (see fMOST_config.txt file).
+:: -s <input_moving_image> .raw/.tif/.lsm file containing 3D template/target stack to which a subject image will be warped/mapped. The .raw file is in V3D's RAW format.       
+::                          The input in the example is the result of global registration, so this option is set to "result/fMOST/global.v3draw".
+:: -m <fMOST_segmentation_data> If the "Select_modal" is set to 0 in the fMOST_config.txt,, this option must be used. 
 :: -l <landmarks_file_path> example: "high_landmarks.txt" "middle_landmarks.txt" "low_landmarks.txt" 
-:: -o the result save path
+:: -o <Results_save_path> Local registration result will saved here.
 
 :: registration fMOST sample data
 ..\binary\win64_bin\global_registration.exe -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
