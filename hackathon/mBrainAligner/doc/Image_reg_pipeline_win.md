@@ -81,7 +81,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
   </center>
 
-5.	In this dialog, choose marker file (the marker saved in the fourth step), and the image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the output file name. Then click `OK`. **TIP** The non-rigid registration can also be realized by choosing `warp mode` as `TPS`, however, it is not necessary in our pipeline since the local registraion module can do it much better.
+5.	In this dialog, choose marker file (the marker saved in the fourth step), and the image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the output file name. Then click `OK`. **(TIP)** The non-rigid registration can also be realized by choosing `warp mode` as `TPS`, however, it is not necessary in our pipeline since the local registraion module can do it much better.
 
 **Step 4: Local registration**
 
@@ -89,7 +89,7 @@ open terminal in windows, and run the following commands：
 ```
 local_registration.exe -p ../example/config/fMOST_config.txt -s ../example/result/fMOST/global.v3draw -m ../example/subject/fMOST_segmentation/ -l ../example/target/target_landmarks/low_landmarks.marker  -g ../example/target/ -o ../example/result/fMOST/
 ```
-The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the “Select_modal” in the “fMOST_config.txt” needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
+The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the `Select_modal` in the `fMOST_config.txt` needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 The globally aligned image will be save in the `results` directory.
    <center>
   <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image007.png width=70% >
@@ -109,14 +109,14 @@ The globally aligned image will be save in the `results` directory.
 
 3.	CCF_roi.v3draw
 
-    Mask of interest brain regions. Run “src/src_othertools/process/annotation_recolor.ipynb” to get the “CCF_roi.v3draw” image which only contains six mouse brain region (HY, HPF, CTX, CBX, BS and CP). You can still set the brain region of interest according to your needs. 
+    Mask of interest brain regions. Run `src/src_othertools/process/annotation_recolor.ipynb` to generate the `CCF_roi.v3draw` image which contains the mask of  six mouse brain region (HY, HPF, CTX, CBX, BS and CP). You can still set the brain region of interest according to your needs. 
     The specific operations are: 
-    - Select the number of the region you are interested in from “Mouse.csv”, for example, CTX is 688. 
-    -  Modify the “areas_ids” of "In [18]" in annotation_recolor.ipynb, and put the number of the brain region you need in “areas_ids”.
+    - Select the number of the region you are interested in from `Mouse.csv`, for example, CTX is 688. 
+    - Modify the `areas_ids` of "In [18]" in `annotation_recolor.ipynb`, and input the number of the brain region you need in `areas_ids`.
 
-4.	“fMOST_space_prior_sub.marker” and “fMOST_space_prior_tar.marker”
+4.	fMOST_space_prior_sub.marker and fMOST_space_prior_tar.marker
 
-    This file is optional in registration; it can only be used when registering fMOST mouse brain. It contains modality-specific shape priors that can improve the performance of local registration. The method to obtain these two markers files is by registering the fMOST average templete image to the CCFv3 average template image, and then obtaining an accurate registration result by semi-automatic registration, and generating this two markers files at the same time. Registration the template brain to the CCFv3 can be obtained according to the next section “Step-by-step instructions to run mBrainAligner algorithm”.
+    These files are optional in registration, it can only be used when registering fMOST mouse brain. It contains modality-specific shape priors that can improve the performance of local registration. One can obtain these markers files by first registering the fMOST average templete to the CCFv3 average template using automatic local reigistration module, and then finetuning the registration result using semi-automatic registration. The semi-automatic registration module will generates these markers files as output.
 
 5.	target_landmarks
 
