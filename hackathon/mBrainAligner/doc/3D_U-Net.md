@@ -1,5 +1,5 @@
 
-3D U-Net (https://arxiv.org/abs/1606.06650) is adopted to buid a segmentation network and generate segmentations for several critical brain regions, which can be used in later steps of local registration.
+3D U-Net (https://arxiv.org/abs/1606.06650) is adopted to buid a segmentation network and generate segmentation probability maps for several critical brain regions, which can be used in later steps of local registration.
 
 # Dependencies
 To run the training and inference scripts, several dependencies are required to be installed.
