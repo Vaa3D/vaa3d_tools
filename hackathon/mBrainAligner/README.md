@@ -34,7 +34,7 @@ There are two ways to use `mBrainAligner`:
 Questions can be sent to 17718151568@126.com . 
 China South (Guangzhou): http://159.75.201.35/
 USA West Coast: http://170.106.83.3/
-Note: These cloud servers are provided for tentative testing purpose only while we are moving to a more permanent solution. Different ISPs might have different access permissions to some of these websites, and different web browsers might also elicit warning messages when naked IP addresses (i.e. without a domain name) are visited. You may choose to change the ISPs (such as switching between Verion, AT&T, Xfinity, etc), change your 5G/4G setting (sometimes with the same ISP they have different restriction for 5G and 4G), or ignore the warning messages. Feel to reach out to the above email address if you also want to deploy the web service code on your own local server for faster access.
+Note: These cloud servers are provided for tentative testing purpose only while we are moving to a more permanent solution. Different ISPs might have different access permissions to some of these websites, and different web browsers might also show warning messages when naked IP addresses (i.e. without a domain name) are visited. You may choose to change the ISPs (such as switching among Verion, AT&T, Xfinity, etc), change your 5G/4G setting (sometimes with the same ISP they have different restriction for 5G and 4G), or ignore the warning messages. Feel to reach out to the above email address if you also want to deploy the web service code on your own local server for faster access.
 
 
 # System requirements
