@@ -18,6 +18,9 @@ using namespace std;
 // func converting
 template <class Tpre, class Tpost>
 void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt);
+template <class T> bool rc(T* data1d, V3DLONG *sz, V3DLONG c, double apercent);
+template <class T> bool scaleintensity(T *img, V3DLONG sz[4], V3DLONG channo, double lower_th, double higher_th, double target_min, double target_max);
+
 
 const QString title = QObject::tr("Image Quality");
 
@@ -195,28 +198,29 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     QVector<double> CNRotsu_vec;
 
 	int nChannel = p4DImage->getCDim();
-	V3DLONG sz[3];
+    V3DLONG sz[4];
 	sz[0] = p4DImage->getXDim();
 	sz[1] = p4DImage->getYDim();
 	sz[2] = p4DImage->getZDim();
+    sz[3] = p4DImage->getCDim();
 
-	for (int c=0;c<nChannel;c++)
+    for (V3DLONG c=0;c<nChannel;c++)
 	{
-        unsigned char * subject1d = p4DImage->getRawDataAtChannel(c);
+        unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
 
         // Code from datatype_convert plugin
-        V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
-        unsigned char * inimg1d = NULL;
+//        V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
+//        unsigned char * inimg1d = NULL;
 
-        try
-        {
-            inimg1d = new unsigned char [sz_sub];
-        }
-        catch(...)
-        {
-            printf("Error allocating memory. \n");
-            return -1;
-        }
+//        try
+//        {
+//            inimg1d = new unsigned char [sz_sub];
+//        }
+//        catch(...)
+//        {
+//            printf("Error allocating memory. \n");
+//            return -1;
+//        }
 
         // Data type conversion
         if (p4DImage->getDatatype()!=V3D_UINT8)
@@ -229,22 +233,24 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     //        }
             if(p4DImage->getDatatype()==V3D_UINT16)
             {
-                converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+                //converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+                rc((unsigned short int *)inimg1d, sz, c, 0.01);
             }
             else if(p4DImage->getDatatype()==V3D_FLOAT32)
             {
-                converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+                rc((float *)inimg1d, sz, c, 0.01);
+                //converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
             }
 
         }
-        else
-        {
-            inimg1d = subject1d;
-        }
+//        else
+//        {
+//            inimg1d = subject1d;
+//        }
+//        if (subject1d) {delete []subject1d; subject1d=NULL;}
 
-        if (subject1d) {delete []subject1d; subject1d=NULL;}
 
-
+        cout << "\nComputing statistics\n";
         int  maxint,minint;
         double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
         vector<int> intvec;
@@ -399,11 +405,13 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	}
 	char * infile = inlist->at(0);
 	cout<<"input file: "<<infile<<endl;
-    unsigned char * subject1d = NULL;
+    unsigned char * inimg1d = NULL;
+    //unsigned char * subject1d = NULL;
     V3DLONG sz[4];
 	int datatype;
-    if (!simple_loadimage_wrapper(callback, infile, subject1d, sz, datatype))
-	{
+    //if (!simple_loadimage_wrapper(callback, infile, subject1d, sz, datatype))
+    if (!simple_loadimage_wrapper(callback, infile, inimg1d, sz, datatype))
+        {
         cerr<<"failed to load image"<<endl;
 		return false;
 	}
@@ -427,39 +435,55 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     QString outfileapp = QString(infile) + "." + QString(outfile);
     cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
 
-    // Code from datatype_convert plugin
-    V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
-    unsigned char * inimg1d = NULL;
+//    // Code from datatype_convert plugin
+//    V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
+//    unsigned char * inimg1d = NULL;
 
-    try
-    {
-        inimg1d = new unsigned char [sz_sub];
-    }
-    catch(...)
-    {
-        printf("Error allocating memory. \n");
-        return -1;
-    }
+//    try
+//    {
+//        inimg1d = new unsigned char [sz_sub];
+//    }
+//    catch(...)
+//    {
+//        printf("Error allocating memory. \n");
+//        return -1;
+//    }
 
     // Data type conversion
-    cout << "\nConverting to 8 bit image to standardize results.\n";
 
-    if(datatype == 1)
+    int nChannel = sz[3];
+
+    for (V3DLONG c=0;c<nChannel;c++)
     {
-        converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
-    }
-    if(datatype == 2)
-    {
-        converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
-    }
-    else if(datatype == 4)
-    {
-        converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+        if(datatype == 2)
+        {
+            cout << "\nConverting to 8 bit image to standardize results.\n";
+            rc((unsigned short int *)inimg1d, sz, c, 0.01);
+        }
+        else if(datatype == 4)
+        {
+            cout << "\nConverting to 8 bit image to standardize results.\n";
+            rc((float *)inimg1d, sz, c, 0.01);
+        }
     }
 
-    if (subject1d) {delete []subject1d; subject1d=NULL;}
+//    if(datatype == 1)
+//    {
+//        converting<unsigned char, unsigned char>((unsigned char *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+//    }
+//    if(datatype == 2)
+//    {
+//        //converting<unsigned short, unsigned char>((unsigned short *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+//    }
+//    else if(datatype == 4)
+//    {
+//        //converting<float, unsigned char>((float *)subject1d, inimg1d, sz_sub, V3D_UINT8);
+//    }
+
+    //if (subject1d) {delete []subject1d; subject1d=NULL;}
 
     //TODO add datatype judgment in case someone wanted to compute in 16bit
+    cout << "\nComputing statistics\n";
 	double max_value = 256;
 	V3DLONG histscale = 256;
 	QVector<QVector<int> > hist_vec;
@@ -477,8 +501,6 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     QVector<double> CNRmean_vec;
     QVector<double> SNRotsu_vec;
     QVector<double> CNRotsu_vec;
-
-	int nChannel = sz[3];
 
     vector<int> intvec;
     getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
@@ -799,6 +821,152 @@ void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 
 }
 
+
+// Taken from rescale_and_convert plugin
+template <class T> bool rc(T* data1d, V3DLONG *sz, V3DLONG c, double apercent)
+//apercent is the percentage of signal that should be upper/lower saturation
+{
+    if (!data1d || !sz || c<0 || c>=sz[3])
+    {
+        printf("problem: c=[%ld] sz=[%p] szc=[%ld], data1d=[%p]\n",c, sz, sz[3], data1d);
+        return false;
+    }
+
+    V3DLONG channelsz = sz[0]*sz[1]*sz[2];
+    T * outimg = (data1d + c*channelsz);
+
+    if (apercent<0 || apercent>=0.5)
+    {
+        v3d_msg(QString("Your percentage parameter [%1] is wrong. Must be bwteen 0 and 0.5.\n").arg(apercent));
+        return false;
+    }
+
+    V3DLONG i;
+    double minval, maxval;
+    minval = maxval = double(outimg[0]);
+    for (i=1; i<channelsz; i++)
+    {
+        if (minval > outimg[i]) minval = outimg[i];
+        else if (maxval < outimg[i]) maxval = outimg[i];
+    }
+
+    if (sizeof(T) == 4) //V3D_FLOAT32, or any other 32bit data; for float data , first rescale it to [0, 4095]
+    {
+        if (!scaleintensity(data1d, sz, c, minval, maxval, double(0), double(4095)))
+            return false;
+        else
+        {
+            minval = 0;
+            maxval = 4095;
+        }
+    }
+
+    {
+        V3DLONG maxvv = ceil(maxval+1); //this should be safe now as the potential FLOAT32 data has been rescaled
+
+        qDebug() << "ch =" << c << " maxvv=" << maxvv;
+
+        double *hist = 0;
+        try
+        {
+            hist = new double [maxvv];
+        }
+        catch (...)
+        {
+            qDebug() << "fail to allocate"; return false;
+            v3d_msg("Fail to allocate memory.\n");
+            return false;
+        }
+
+        for (i=0;i<maxvv;i++)
+        {
+            hist[i] = 0;
+        }
+
+        //find the histogram
+        for (i=0;i<channelsz;i++)
+            hist[V3DLONG(outimg[i])] += 1;
+
+        qDebug() << "Histogram computed.";
+
+        //compute the CDF
+        for (i=1;i<maxvv;i++)
+        {
+            hist[i] += hist[i-1];
+        }
+
+        for (i=0;i<maxvv;i++)
+        {
+            hist[i] /= hist[maxvv-1];
+        }
+
+        //now search for the intensity thresholds
+        double lowerth, upperth; lowerth = upperth = 0;
+        for (i=0;i<maxvv-1;i++) //not the most efficient method, but the code should be readable
+        {
+            if (hist[i]<apercent && hist[i+1]>apercent)
+                lowerth = i;
+            if (hist[i]<1-apercent && hist[i+1]>1-apercent)
+                upperth = i;
+        }
+
+        v3d_msg(QString("channel=%1 lower th=%2 upper th=%3").arg(c).arg(lowerth).arg(upperth), 0);
+
+        //real rescale of intensity
+        scaleintensity(data1d, sz, c, lowerth, upperth, double(0), double(255));
+
+        //free space
+        if (hist) {delete []hist; hist=0;}
+    }
+
+    return true;
+}
+
+template <class T> bool scaleintensity(T *img, V3DLONG sz[4], V3DLONG channo, double lower_th, double higher_th, double target_min, double target_max)
+//map the value linear from [lower_th, higher_th] to [target_min, target_max]
+{
+    if (!img || !sz || sz[0]<=0 || sz[1]<=0 || sz[2]<=0 || sz[3]<=0 || channo>=sz[3]) //channo < 0 is reserved to mean all channels
+    {
+        v3d_msg("Invalid parameters in scaleintensity();\n");
+        return false;
+    }
+
+    double t;
+    if (lower_th>higher_th) {t=lower_th; lower_th=higher_th; higher_th=t;}
+    if (target_min>target_max) {t=target_min; target_min=target_max; target_max=t;}
+
+    double rate = (higher_th==lower_th) ? 1 : (target_max-target_min)/(higher_th-lower_th); //if the two th vals equal, then later-on t-lower_th will be 0 anyway
+
+    V3DLONG i,j,k,c;
+
+    V3DLONG channelPageSize = sz[0]*sz[1]*sz[2];
+    switch ( sizeof(T) )
+    {
+        case 1:
+        case 2:
+        case 4:
+            for (c=0;c<sz[3];c++)
+            {
+                if (channo>=0 && c!=channo)
+                    continue;
+                T *data = img + c*channelPageSize;
+                for (i=0;i<channelPageSize;i++)
+                {
+                    t = data[i];
+                    if (t>higher_th) t=higher_th;
+                    else if (t<lower_th) t=lower_th;
+                    data[i] = (T)((t - lower_th)*rate + target_min);
+                }
+            }
+            break;
+
+        default:
+            v3d_msg("invalid datatype in scaleintensity();\n", 0);
+            return false;
+    }
+
+    return true;
+}
 
 
 
