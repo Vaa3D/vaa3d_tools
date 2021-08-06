@@ -17,7 +17,7 @@
    - [run mBrainAligner on you own data](#--run-mbrainaligner-on-your-own-data)
 - [Others](#Others)
    - [warp reconstructed neurons or somas to CCF](#--Warp-reconstructed-neurons-or-somas-to-CCF)
-   - [use 3D UNet to gengerate segmentation features](#--use-3d-unet-to-generate-segmentation-features)
+   - [use 3D UNet to generate segmentation features](#--use-3d-unet-to-generate-segmentation-features)
 - [License](#license)
 
 # Overview
