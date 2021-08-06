@@ -104,47 +104,50 @@ bool getStats(vector<int> pdata1d, V3DLONG datalen, int &minint, int &maxint, do
     stdevint = float(0);
 
     // for median
-    vector<int> intvec;
-    int i;
-    // Sort the numbers using pointers
-    for (i = 0; i < datalen; i++) {
-        intvec.push_back(pdata1d[i]);
-    }
-    sort(intvec.begin(),intvec.end());
+//    vector<int> intvec;
+//    int i;
+//    // Sort the numbers using pointers
+//    for (i = 0; i < datalen; i++) {
+//        intvec.push_back(pdata1d[i]);
+//    }
     // print the numbers
 //    for (i = 0; i < datalen; i++)
 //        printf("%d ", intvec.at(i));
 
     for (V3DLONG i=0;i<datalen;i++)
     {
-        if(pdata1d[i]>maxint)
+        if(pdata1d.at(i)>maxint)
         {
-            maxint = pdata1d[i];
+            maxint = pdata1d.at(i);
         }
-        if(pdata1d[i]<minint)
+        if(pdata1d.at(i)<minint)
         {
-            minint = pdata1d[i];
+            minint = pdata1d.at(i);
         }
-        meanint += pdata1d[i];
+        meanint += pdata1d.at(i);
     }
     meanint /= datalen;
 
+    cout << "Starting Stdev calculation\n";
     double sqsum = inner_product(pdata1d.begin(),pdata1d.end(),pdata1d.begin(),0);
     stdevint = sqrt(sqsum/datalen - meanint*meanint);
 
+    cout << "Starting Median calculation\n";
+    sort(pdata1d.begin(),pdata1d.end());
     if (datalen % 2 != 0)
     {
-        medianint = intvec.at(datalen / 2);
+        medianint = pdata1d.at(datalen / 2);
     }
     else
     {
-        medianint = (double)(intvec.at((datalen - 1) / 2) + intvec.at(datalen / 2)) / 2.0;
+        medianint = (double)(pdata1d.at((datalen - 1) / 2) + pdata1d.at(datalen / 2)) / 2.0;
     }
 
+    cout << "Starting MAD calculation\n";
     vector<float> mdevvec;
     float dev;
-    for (i = 0; i < datalen; i++) {
-        dev= intvec.at(i)-medianint;
+    for (int i = 0; i < datalen; i++) {
+        dev= pdata1d.at(i)-medianint;
         if(dev < 0)dev *= -1;
         mdevvec.push_back(dev);
     }
@@ -157,6 +160,7 @@ bool getStats(vector<int> pdata1d, V3DLONG datalen, int &minint, int &maxint, do
     {
         madint = (double)(mdevvec.at((datalen - 1) / 2) + mdevvec.at(datalen / 2)) / 2.0;
     }
+    mdevvec.clear();
 
     return true;
 
@@ -309,9 +313,9 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         // Get SNR and CNR using mean intensity and Otsu as threshold for background
         double SNRmean,CNRmean,SNRotsu,CNRotsu;
 
-        vector<int> otsunoise,otsusignal;
+        vector<int> otsunoise;//,otsusignal;
         double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
-        vector<int> meannoise,meansignal;
+        vector<int> meannoise;//,meansignal;
         double avmeannoise,avmeansignal,stdevmean;
         for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
         {
@@ -322,7 +326,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
             }
             else
             {
-                otsusignal.push_back(intvec.at(i));
+                //otsusignal.push_back(intvec.at(i));
                 meanotsusignal += intvec.at(i);
             }
 
@@ -333,17 +337,17 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
             }
             else
             {
-                meansignal.push_back(intvec.at(i));
+                //meansignal.push_back(intvec.at(i));
                 avmeansignal += intvec.at(i);
             }
         }
         meanotsunoise = meanotsunoise/otsunoise.size();
-        meanotsusignal = meanotsusignal/otsusignal.size();
+        meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
         sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
         stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
 
         avmeannoise = avmeannoise/meannoise.size();
-        avmeansignal = avmeansignal/meansignal.size();
+        avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
         sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
         stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
 
@@ -565,9 +569,9 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         // Get SNR and CNR using mean intensity and Otsu as threshold for background
         double SNRmean,CNRmean,SNRotsu,CNRotsu;
 
-        vector<int> otsunoise,otsusignal;
+        vector<int> otsunoise;//,otsusignal;
         double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
-        vector<int> meannoise,meansignal;
+        vector<int> meannoise;//,meansignal;
         double avmeannoise,avmeansignal,stdevmean;
         for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
         {
@@ -578,7 +582,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             }
             else
             {
-                otsusignal.push_back(intvec.at(i));
+                //otsusignal.push_back(intvec.at(i));
                 meanotsusignal += intvec.at(i);
             }
 
@@ -589,17 +593,17 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             }
             else
             {
-                meansignal.push_back(intvec.at(i));
+                //meansignal.push_back(intvec.at(i));
                 avmeansignal += intvec.at(i);
             }
         }
         meanotsunoise = meanotsunoise/otsunoise.size();
-        meanotsusignal = meanotsusignal/otsusignal.size();
+        meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
         sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
         stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
 
         avmeannoise = avmeannoise/meannoise.size();
-        avmeansignal = avmeansignal/meansignal.size();
+        avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
         sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
         stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
 
@@ -677,41 +681,41 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             // Get SNR and CNR using mean intensity and Otsu as threshold for background
             double SNRmean,CNRmean,SNRotsu,CNRotsu;
 
-            vector<int> otsunoise,otsusignal;
+            vector<int> otsunoise;//,otsusignal;
             double meanotsunoise,meanotsusignal,stdevotsu,sqsum;
-            vector<int> meannoise,meansignal;
+            vector<int> meannoise;//,meansignal;
             double avmeannoise,avmeansignal,stdevmean;
             for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
             {
-                if(subvec.at(i)<ThreshOtsu)
+                if(intvec.at(i)<ThreshOtsu)
                 {
-                    otsunoise.push_back(subvec.at(i));
-                    meanotsunoise += subvec.at(i);
+                    otsunoise.push_back(intvec.at(i));
+                    meanotsunoise += intvec.at(i);
                 }
                 else
                 {
-                    otsusignal.push_back(subvec.at(i));
-                    meanotsusignal += subvec.at(i);
+                    //otsusignal.push_back(intvec.at(i));
+                    meanotsusignal += intvec.at(i);
                 }
 
-                if(subvec.at(i)<meanint)
+                if(intvec.at(i)<meanint)
                 {
-                    meannoise.push_back(subvec.at(i));
-                    avmeannoise += subvec.at(i);
+                    meannoise.push_back(intvec.at(i));
+                    avmeannoise += intvec.at(i);
                 }
                 else
                 {
-                    meansignal.push_back(subvec.at(i));
-                    avmeansignal += subvec.at(i);
+                    //meansignal.push_back(intvec.at(i));
+                    avmeansignal += intvec.at(i);
                 }
             }
             meanotsunoise = meanotsunoise/otsunoise.size();
-            meanotsusignal = meanotsusignal/otsusignal.size();
+            meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
             sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
             stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
 
             avmeannoise = avmeannoise/meannoise.size();
-            avmeansignal = avmeansignal/meansignal.size();
+            avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
             sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
             stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);
 
