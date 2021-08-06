@@ -9,7 +9,7 @@
 - - [hardware requirements](##-Hardware-requirements)
 - - [OS requirements](##-os-requirements)
 - [Installation mBrainAligner](#Install-mBrainAligner)
-- - [install precompiled executable files](##-Use-provided-compiled-executable-files)
+- - [install precompiled executable files](##-Install-compiled-executable-files)
 - - [build mBrainAligner from source](##-Build-mBrainAligner-from-source)
 - [Run mBrainAligner](#Run-mBrainAligner)
 - - [run mBrainAligner on sample data in batch](##-Run-mBrainAligner-on-sample-data-in-batch)
@@ -57,7 +57,7 @@ The package has been tested on the following systems:
 
 # Install mBrainAligner
 
-## - Use provided compiled executable files
+## - Install compiled executable files
 
 If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `binary` folder and put it anywhere you like.
 
