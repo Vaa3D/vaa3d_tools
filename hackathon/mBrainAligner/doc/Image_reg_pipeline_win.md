@@ -81,7 +81,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
   </center>
 
-5.	In this dialog, choose marker file (that is, the marker  saved in the fourth step), and the image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the output file name. Then click `OK`.
+5.	In this dialog, choose marker file (the marker saved in the fourth step), and the image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the output file name. Then click `OK`. **TIP** The non-rigid registration can also be realized by choosing `warp mode` as `TPS`, however, it is not necessary in our pipeline since the local registraion module can do it much better.
 
 **Step 4: Local registration**
 
