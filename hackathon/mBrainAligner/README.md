@@ -62,12 +62,12 @@ The package has been tested on the following systems:
 If you only want to test or use `mBrainAligner`, the simplest way is to use the provided executable files. In this case, no installation is required, just download the `binary` folder and put it anywhere you like.
 
 >**binary**
-> > **mBrainAligner_win64**: contains the global and local registration executable files and `dlls` for Windows.
+> > **win64_bin**: contains the global and local registration, 2.5D corner detector and neuron or soma warping related executable files and `dlls` for Windows.
 > >
-> > **mBrainAligner_linux**: contains the global and local registration executable files and `libs` for Linux.
+> > **linux_bin**: contains the global and local registration executable files and `libs` for Linux.
 > >
-> > **othertools_win64**: contains the neuron or soma warping tool, 2.5D corner detector executable file and necessary libraries. Note that the stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`.
-> >
+> > The stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`. 
+> > The precompiled semi-automatic registration program can be found in `src/semi_automatic_registration/semi_automatic_registration.7z`.
 
 ## - Build mBrainAligner from source
 
