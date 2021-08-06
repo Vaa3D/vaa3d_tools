@@ -77,7 +77,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
 4.	Click menu <Plug-In/image_registation/alignment_affine_TPS_warp/warp image based on given matched point pairs >, a dialog will pop up. 
   <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image005.png width=30% ><img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image006.png width=30% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image005.png width=30% ><img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image006.png width=50% >
 
   </center>
 
@@ -92,9 +92,8 @@ local_registration.exe -p ../example/config/fMOST_config.txt -s ../example/resul
 The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the `Select_modal` in the `fMOST_config.txt` needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 The globally aligned image will be save in the `results` directory.
    <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image007.png width=70% >
+  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image008.png width=70% >
 
-  Fig3 fMost brain segmentation image
   </center>
 
 
