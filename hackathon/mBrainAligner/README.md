@@ -44,7 +44,7 @@ RAM: 32 GB or larger;
 
 CPU: 2.3GHz dual-10-core Intel Xeon or better.
 
-(Note: Due to limited network and storage, only small down-sampled brain images are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relieve the GPU requirement)
+(Note: Due to limited network and storage, only small down-sampled brain images (~50um) are provided here. For better registration accuracy, we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn. If you want to train the 3D U-Net, Nvidia RTX 3090(24G) or better GPU is needed. We have provided the network segmentation results for fMOST to relieve the GPU requirement)
 
 
 ## - OS Requirements
