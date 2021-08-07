@@ -401,7 +401,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
     fprintf(fp, "%s", header.toStdString().c_str());
     for (int i=0;i<hist_vec.size();i++)
     {
-        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", imgname.toStdString().c_str(),i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
+        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", imgname.toStdString().c_str(),i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
     }
 //    for (int i=0;i<hist_vec.size();i++)
 //    {
@@ -795,7 +795,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     fprintf(fp, "%s", header.toStdString().c_str());
     for (int i=0;i<hist_vec.size();i++)
     {
-        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", infile,i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
+        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", infile,i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
     }
 //	for (int i=0;i<hist_vec.size();i++)
 //	{
