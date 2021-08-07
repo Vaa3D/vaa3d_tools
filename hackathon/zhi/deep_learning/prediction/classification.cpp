@@ -125,7 +125,7 @@ std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>&
 
 std::vector<float> Classifier::Predict_3D(const std::vector<cv::Mat>& imgs) {
     Blob<float>* input_layer = net_->input_blobs()[0];
-    input_layer->Reshape(1, num_channels_,imgs.size(),
+    input_layer->Reshape(num_channels_,imgs.size(),
                          input_geometry_.height, input_geometry_.width);
     /* Forward dimension change to all layers. */
     net_->Reshape();
