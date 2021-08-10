@@ -11,6 +11,9 @@
 #include "basic_surf_objs.h"
 #include "neuron_format_converter.h"
 #include "v_neuronswc.h"
+#include <QHash>
+#include "volimg_proc.h"
+#include <fstream>
 class BoutonDectectionPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT

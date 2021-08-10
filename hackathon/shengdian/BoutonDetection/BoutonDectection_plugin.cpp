@@ -6,9 +6,6 @@
 #include "v3d_message.h"
 #include <vector>
 #include "BoutonDectection_plugin.h"
-#include <QHash>
-#include "volimg_proc.h"
-#include <fstream>
 #include "boutonDetection_fun.h"
 
 using namespace std;
@@ -25,10 +22,16 @@ QStringList BoutonDectectionPlugin::funclist() const
 {
     return QStringList()
             <<tr("Intensity_profile_terafly")
+           << tr("Refinement_terafly")
+           <<tr("Refinement_Image")
           <<tr("Bouton_filter")
          <<tr("BoutonAsPeak_terafly")
          <<tr("BoutonAsPeak_Image")
         <<tr("BoutonDection_filter_toSWC")
+       << tr("TeraImage_SWC_Crop")
+       <<tr("BoutonSWC_Compress")
+      <<tr("Scale_registered_swc")
+     <<tr("UpsampleImage")
        <<tr("SWC_Analysis")
        <<tr("help");
 }
@@ -204,9 +207,11 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         if(infiles.size()>=2) {inimg_file = infiles[0];inswc_file = infiles[1];}
         else {  printHelp(); return false;}
         //read para list
-        int Min_Interpolation_Pixels=(inparas.size()>=1)?atoi(inparas[0]):3;
-        int Shift_Pixels=(inparas.size()>=2)?atoi(inparas[1]):2;
+        int Shift_Pixels=(inparas.size()>=1)?atoi(inparas[0]):2;
+        int Min_Interpolation_Pixels=(inparas.size()>=2)?atoi(inparas[1]):4;
         int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
+        long crop_size=(inparas.size()>=4)?atoi(inparas[3]):64;
+        int bkg_thre_bias=(inparas.size()>=5)?atoi(inparas[4]):20;
 
         //read input swc to neuron-tree
        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -227,11 +232,23 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
        //1. interpolation
        NeuronTree nt_interpolated;       nt_interpolated=linearInterpolation(nt_p,Min_Interpolation_Pixels);
        //2. shift or refinement
-        getSWCIntensityInTeraflyImg(callback,inimg_file,nt_interpolated,Shift_Pixels);
+        getSWCIntensityInTeraflyImg(callback,inimg_file,nt_interpolated,Shift_Pixels,crop_size,bkg_thre_bias);
         string out_intensity_swc=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_intensity.eswc");
         writeESWC_file(QString::fromStdString(out_intensity_swc),nt_interpolated);
         return true;
 	}
+    else if(func_name == tr("Refinement_terafly"))
+    {
+        /* refine to center line, based on mean-shift*/
+        refinement_dofunc(callback,input,output,true);
+        return true;
+    }
+    else if(func_name == tr("Refinement_Image"))
+    {
+        /* refine to center line, based on mean-shift*/
+        refinement_dofunc(callback,input,output,false);
+        return true;
+    }
     else if(func_name ==tr("BoutonDection_filter_toSWC"))
     {
         //this version will output the detected boutons to swc file
@@ -278,16 +295,18 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else {  printHelp(); return false;}
         //read para list
-        int min_bouton_dist=(inparas.size()>=1)?atoi(inparas[0]):3;
+        double radius_delta=(inparas.size()>=1)?atoi(inparas[0]):1.3;
+        double intensity_delta=(inparas.size()>=2)?atoi(inparas[1]):0.05;
+        double axon_trunk_radius=(inparas.size()>=3)?atoi(inparas[2]):3;
 
         //read input swc to neuron-tree
        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
        if(!nt.listNeuron.size()) return false;
        //get boutons
-        QList <CellAPO> apolist; apolist=getBouton_1D_filter(nt);
+        QList <CellAPO> apolist; apolist=getBouton_1D_filter(nt,radius_delta,intensity_delta,axon_trunk_radius);
 
-        //5.
         // out to apo
+        double min_bouton_dist=3.0;
         QList <CellAPO> apolist_out;apolist_out.clear();
         apolist_out=rmNearMarkers(apolist,min_bouton_dist);
         //bouton out to swc
@@ -299,7 +318,14 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
                 if(nt_interpolated3.listNeuron[i].x==apolist_out[b].x
                         &&nt_interpolated3.listNeuron[i].y==apolist_out[b].y
                         &&nt_interpolated3.listNeuron[i].z==apolist_out[b].z)
-                {nt_interpolated3.listNeuron[i].type=99;break;}
+                {
+                    nt_interpolated3.listNeuron[i].type=BoutonType;
+                    nt_interpolated3.listNeuron[i].r=apolist_out[b].volsize;
+                    nt_interpolated3.listNeuron[i].level=apolist_out[b].intensity;
+                    nt_interpolated3.listNeuron[i].timestamp=apolist_out[b].sdev;
+                    nt_interpolated3.listNeuron[i].tfresindex=apolist_out[b].mass;
+                    break;
+                }
             }
         }
         //crop 3D bouton block and mip image
@@ -352,10 +378,12 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         if(infiles.size()>=2) {inimg_file = infiles[0];inswc_file = infiles[1];}
         else {  printHelp(); return false;}
         //read para list
-        int Min_Interpolation_Pixels=(inparas.size()>=1)?atoi(inparas[0]):3;
+        int Min_Interpolation_Pixels=(inparas.size()>=1)?atoi(inparas[0]):4;
         int Shift_Pixels=(inparas.size()>=2)?atoi(inparas[1]):2;
         int min_bouton_dist=(inparas.size()>=3)?atoi(inparas[2]):4;
-        int allnode=(inparas.size()>=4)?atoi(inparas[3]):0;
+        int allnode=(inparas.size()>=4)?atoi(inparas[3]):1;
+        long crop_size=(inparas.size()>=5)?atoi(inparas[4]):64;
+        int bkg_thre_bias=(inparas.size()>=6)?atoi(inparas[5]):20;
 
         //read input swc to neuron-tree
        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -377,11 +405,11 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
        NeuronTree nt_interpolated;       nt_interpolated=linearInterpolation(nt_p,Min_Interpolation_Pixels);
 
        //2. shift or refinement; Intensity and radius profile
-        getSWCIntensityInTeraflyImg(callback,inimg_file,nt_interpolated,Shift_Pixels);
+        getSWCIntensityInTeraflyImg(callback,inimg_file,nt_interpolated,Shift_Pixels,crop_size,bkg_thre_bias);
         cout<<"end of getting intensity and radius profile"<<endl;
 
         //3. neuron tree to segment list
-        QList <CellAPO> apolist_init_boutons;        apolist_init_boutons=getBouton_1D_filter(nt_interpolated);
+        QList <CellAPO> apolist_init_boutons;        apolist_init_boutons=getBouton_1D_filter(nt_interpolated,1.3,0.05,3);
 
         //5. out
         QList <CellAPO> apo_boutons;apo_boutons.clear();
@@ -396,7 +424,14 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
                 if(float(nt_bouton.listNeuron[i].x)==apo_boutons[b].x
                         &&float(nt_bouton.listNeuron[i].y)==apo_boutons[b].y
                         &&float(nt_bouton.listNeuron[i].z)==apo_boutons[b].z)
-                {nt_bouton.listNeuron[i].type=99;break;}
+                {
+                    nt_bouton.listNeuron[i].type=BoutonType;
+                    nt_bouton.listNeuron[i].r=apo_boutons[b].volsize;
+                    nt_bouton.listNeuron[i].level=apo_boutons[b].intensity;
+                    nt_bouton.listNeuron[i].timestamp=apo_boutons[b].sdev;
+                    nt_bouton.listNeuron[i].tfresindex=apo_boutons[b].mass;
+                    break;
+                }
             }
         }
         //crop 3D bouton block and mip image
@@ -444,24 +479,29 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         else {  printHelp(); return false;}
 
         //read para list
-        int Min_Interpolation_Pixels=(inparas.size()>=1)?atoi(inparas[1]):2;
-        int Shift_Pixels=(inparas.size()>=2)?atoi(inparas[1]):1;
+        int bkg_bias=(inparas.size()>=1)?atoi(inparas[0]):20;
+        int Shift_Pixels=(inparas.size()>=2)?atoi(inparas[1]):2;
         int min_bouton_dist=(inparas.size()>=3)?atoi(inparas[2]):3;
         int is2dRadius=(inparas.size()>=4)?atoi(inparas[3]):1;
 
+        int Min_Interpolation_Pixels=5;
          //read input swc to neuron-tree
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
         if(!nt.listNeuron.size()) return false;
 
         //1. interpolation
-        NeuronTree nt_interpolated;nt_interpolated.listNeuron.clear();nt_interpolated.hashNeuron.clear();
-        nt_interpolated=linearInterpolation(nt,Min_Interpolation_Pixels);
+        NeuronTree nt_interpolated;        nt_interpolated=linearInterpolation(nt,Min_Interpolation_Pixels);
 
         //2. shift or refinement
-        getSWCIntensityInImg(callback,inimg_file,nt_interpolated,Shift_Pixels,is2dRadius);
+        NeuronTree nt_profile;
+        nt_profile=getSWCIntensityInImg(callback,inimg_file,nt_interpolated,Shift_Pixels,is2dRadius,bkg_bias);
 
         //3. neuron tree to segment list
-        QList <CellAPO> apolist;        apolist=getBouton_1D_filter(nt_interpolated);
+//        cout<<"inter polation size "<<nt_interpolated.listNeuron.size()<<endl;
+//        cout<<"profiled size "<<nt_profile.listNeuron.size()<<endl;
+//        string tmps=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_p.eswc");
+//        writeESWC_file(QString::fromStdString(tmps),nt_profile);
+        QList <CellAPO> apolist;        apolist=getBouton_1D_filter(nt_profile,1.3,0.05,3);
 
         //5.
         // out to apo
@@ -469,7 +509,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         apolist_out=rmNearMarkers(apolist,min_bouton_dist);
 
         //bouton out to swc
-        NeuronTree nt_interpolated3;        nt_interpolated3.copy(nt_interpolated);
+        NeuronTree nt_interpolated3;        nt_interpolated3.copy(nt_profile);
         for(V3DLONG i=0;i<nt_interpolated3.listNeuron.size();i++)
         {
             for(V3DLONG b=0;b<apolist_out.size();b++)
@@ -477,7 +517,14 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
                 if(nt_interpolated3.listNeuron[i].x==apolist_out[b].x
                         &&nt_interpolated3.listNeuron[i].y==apolist_out[b].y
                         &&nt_interpolated3.listNeuron[i].z==apolist_out[b].z)
-                {nt_interpolated3.listNeuron[i].type=99;break;}
+                {
+                    nt_interpolated3.listNeuron[i].type=BoutonType;
+                    nt_interpolated3.listNeuron[i].r=apolist_out[b].volsize;
+                    nt_interpolated3.listNeuron[i].level=apolist_out[b].intensity;
+                    nt_interpolated3.listNeuron[i].timestamp=apolist_out[b].sdev;
+                    nt_interpolated3.listNeuron[i].tfresindex=apolist_out[b].mass;
+                    break;
+                }
             }
         }
         //crop 3D bouton block
@@ -494,11 +541,36 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_intensity.eswc");
             string out_bouton_apo_file=(outfiles.size()>=2)?outfiles[1]:(inswc_file + "_bouton.apo");
             string out_bouton_swc_file=(outfiles.size()>=3)?outfiles[2]:(inswc_file + "_bouton.eswc");
-            writeESWC_file(QString::fromStdString(out_swc_file),nt_interpolated);
+            writeESWC_file(QString::fromStdString(out_swc_file),nt_profile);
             writeESWC_file(QString::fromStdString(out_bouton_swc_file),nt_interpolated3);
             writeAPO_file(QString::fromStdString(out_bouton_apo_file),apolist_out);
         }
 
+    }
+    else if (func_name == tr("BoutonSWC_Compress"))
+    {
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        int pruning_thre=(inparas.size()>=1)?atoi(inparas[0]):5;
+
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        if(!nt.listNeuron.size()) return false;
+        string out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_compressed.eswc");
+        NeuronTree compressed_nt=boutonSWC_internode_pruning(nt,pruning_thre);
+        writeESWC_file(QString::fromStdString(out_nt_filename),compressed_nt);
+    }
+    else if (func_name == tr("Scale_registered_swc"))
+    {
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        float shift_pixels=(inparas.size()>=1)?atoi(inparas[0]):20.0;
+        float scale_para=(inparas.size()>=2)?atoi(inparas[1]):25.0;
+
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        if(!nt.listNeuron.size()) return false;
+        string out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_scaled.eswc");
+        NeuronTree scaled_nt=scale_registered_swc(nt,shift_pixels,scale_para);
+        writeESWC_file(QString::fromStdString(out_nt_filename),scaled_nt);
     }
     else if (func_name == tr("SWC_Analysis"))
     {
@@ -538,6 +610,75 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
              tofile.write(outline.toAscii());
          }
          tofile.close();
+    }
+    else if (func_name == tr("UpsampleImage"))
+    {
+        string inimg_file;
+        if(infiles.size()>=1) {
+            inimg_file = infiles[0];
+            double x_rez=(inparas.size()>=1)?atoi(inparas[0]):4;
+            double y_rez=(inparas.size()>=2)?atoi(inparas[1]):4;
+            double z_rez=(inparas.size()>=3)?atoi(inparas[2]):1;
+
+            //get out_image_path and out_swc_path
+            string out_image_file=(outfiles.size()>=1)?outfiles[0]:(inimg_file+"_up.v3draw");
+
+            unsigned char * data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, (char*)inimg_file.c_str(), data1d, in_sz, datatype))
+            {
+                cerr<<"load image "<<inimg_file<<" error!"<<endl;
+                return false;
+            }
+
+            V3DLONG N = in_sz[0];
+            V3DLONG M = in_sz[1];
+            V3DLONG P = in_sz[2];
+            V3DLONG pagesz = N*M*P;
+            in_sz[3] = 1;
+
+            double dfactor[3];
+            dfactor[0] = x_rez; dfactor[1] = y_rez;  dfactor[2] = z_rez;
+
+            V3DLONG pagesz_resample = (V3DLONG)(ceil(x_rez*y_rez*z_rez*pagesz));
+
+            unsigned char * image_resampled = 0;
+            try {image_resampled = new unsigned char [pagesz_resample];}
+            catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+
+            V3DLONG out_sz[4];
+            out_sz[0] = (V3DLONG)(ceil(dfactor[0]*N));
+            out_sz[1] = (V3DLONG)(ceil(dfactor[1]*M));
+            out_sz[2] = (V3DLONG)(ceil(dfactor[2]*P));
+            out_sz[3] = 1;
+            upsampleImage(data1d,image_resampled,in_sz,out_sz,dfactor);
+            simple_saveimage_wrapper(callback, (char*)out_image_file.c_str(),(unsigned char *)image_resampled, out_sz, 1);
+            if(data1d) {delete []data1d; data1d =0;}
+            if(image_resampled) {delete []image_resampled; image_resampled =0;}
+            return true;
+        }
+        else
+            printHelp();
+        return true;
+    }
+    else if (func_name == tr("TeraImage_SWC_Crop"))
+    {
+        string inimg_file,inswc_file,inapo_file;
+        if(infiles.size()>=3) {
+            inimg_file = infiles[0];
+            inswc_file = infiles[1];
+            inapo_file = infiles[2];
+            int cropx=(inparas.size()>=1)?atoi(inparas[0]):256;
+            int cropy=(inparas.size()>=2)?atoi(inparas[1]):256;
+            int cropz=(inparas.size()>=3)?atoi(inparas[2]):256;
+            //get out_image_path and out_swc_path
+            QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(QString::fromStdString(inswc_file)).path());
+            teraImage_swc_crop(callback,inimg_file,inswc_file,inapo_file,out_path,cropx,cropy,cropz);
+        }
+        else
+            printHelp();
+        return true;
     }
     else if (func_name == tr("help"))
     {

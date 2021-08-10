@@ -490,17 +490,17 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2];
         cout<<"crop size x="<<start_x<<";y="<<start_y<<";z="<<start_z<<endl;
         V3DLONG *in_sz = new V3DLONG[4];
-        in_sz[0] = cropx;
-        in_sz[1] = cropy;
-        in_sz[2] = cropz;
+        in_sz[0] = end_x -start_x+1;
+        in_sz[1] = end_y -start_y+1;
+        in_sz[2] = end_z -start_z+1;
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = (end_x-start_x)*(end_y-start_y)*(end_z-start_z);
+        pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 
-        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x,start_y,end_y,start_z,end_z);
+        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         if(im_cropped==NULL){
             continue;
         }

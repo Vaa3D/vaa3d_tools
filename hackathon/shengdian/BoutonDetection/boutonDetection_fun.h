@@ -14,9 +14,19 @@
 #include "neuron_format_converter.h"
 #include "v_neuronswc.h"
 #include <functional>
+#include <QHash>
+#include "volimg_proc.h"
+#include <fstream>
+#include "FL_coordDefinition.h"
+#include "FL_defType.h"
+
 using namespace std;
-#define MaxIntensity 256;
-#define MinIntensity -1;
+#define MaxIntensity 256.0
+#define MinIntensity 0.0
+#define BoutonType 99
+#define MinRefineAngle 60.0
+#define PI 3.1415926
+
 struct Bouton_Color_Basic
 {
     int color_ele_r;
@@ -70,32 +80,67 @@ struct Bouton_Color_List
         }
     }
 };
-NeuronTree removeDupNodes(NeuronTree nt,V3DLONG removed_dist_thre=1);
-QList <CellAPO> rmNearMarkers(QList <CellAPO> inapo,V3DLONG removed_dist_thre=4);
-void getBoutonInTerafly(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int allnode=0,int ne_area=2);
+
+/*refinement: 1. mean-shift*/
+void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly=true);
+void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int refine_radius=8,long half_block_size=128,int bkg_bias=0);
+void refinement_Image_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int refine_radius=8,int bkg_bias=0);
+
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int half_block_size=8,uint mip_flag=0);
 void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size=8);
-void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
-void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize);
-void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size);
+
 QList <CellAPO> getBouton(NeuronTree nt,int in_thre,int allnode=0);
-QList <CellAPO> getBouton_1D_filter(NeuronTree nt);
 void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
 NeuronTree getBouton_toSWC(NeuronTree nt,int in_thre,int allnode=0,float dis_thre=2.0);
-void getSWCIntensityInImg(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int useNeighborArea=2,int is2dRadius=1);
-void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int useNeighborArea);
-NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
 
+/*Image processing*/
+bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor);
+template <class T> bool upsample3dvol(T *outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor);
+template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
+                       T *** templateVol3d, V3DLONG tsz0, V3DLONG tsz1, V3DLONG tsz2,
+                       V3DLONG tlow0, V3DLONG tup0, V3DLONG tlow1, V3DLONG tup1, V3DLONG tlow2, V3DLONG tup2);
+template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
+                                                 T * templateVol3d, V3DLONG tsz0, V3DLONG tsz1, V3DLONG tsz2,
+                                                 V3DLONG tlow0, V3DLONG tup0, V3DLONG tlow1, V3DLONG tup1, V3DLONG tlow2, V3DLONG tup2);
+void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize);
+void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size);
+void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
+
+/*swc processing*/
+NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
+NeuronTree boutonSWC_internode_pruning(NeuronTree nt,int pruning_dist=5);
+NeuronTree scale_registered_swc(NeuronTree nt,float xshift_pixels=20.0,float scale_xyz=25.0);
+QList <CellAPO> rmNearMarkers(QList <CellAPO> inapo,V3DLONG removed_dist_thre=4); //for removing near apo markers
+
+/*get intensity profile: image block and terafly*/
+//void getSWCIntensityInImg(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int useNeighborArea=2,int is2dRadius=1,int bkg_bias=20);
+void getSWCIntensityInTeraflyImg(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int useNeighborArea=3,long block_size=32,int bkg_bias=20);
+NeuronTree getSWCIntensityInImg(V3DPluginCallback2 &callback,string inimg_file, NeuronTree nt,int useNeighborArea=3,int is2dRadius=1,int bkg_bias=20);
+
+/*radius estimation*/
+double radiusEstimation(unsigned char * & inimg1d,V3DLONG in_zz[4], NeuronSWC s,double dfactor,double bkg_thresh);
 double getNodeRadius(unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronSWC s,double bkg_thresh=40);
-double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh=40);
+double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh,int z_half_win_size);
+double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh);
 void getNTRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt, double bkg_thresh=40);
 
-void printHelp();
-NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size=2);
+/*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
+NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40, int windowradius=15);
+NeuronSWC nodeRefine(unsigned char * & inimg1d, V3DLONG nodex, V3DLONG nodey , V3DLONG nodez,V3DLONG * sz,int neighbor_size=5);
+double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);
+NeuronSWC lineRefine(unsigned char * & inimg1d,V3DLONG * sz,NeuronSWC snode,NeuronSWC spnode, int sqhere_radius=5,int searching_line_radius=2);
+
+/*filter*/
+QList <CellAPO> getBouton_1D_filter(NeuronTree nt,double radius_delta=1.3,double intensity_delta=0.05,double AXON_BACKBONE_RADIUS=4);
 std::vector<double> get_sorted_fea_of_seg(V_NeuronSWC inseg,bool radiusfea=false);
 std::vector<double> mean_and_std_seg_fea(std::vector<double> input);
 std::vector<int> smoothedZScore(std::vector<float> input,float threshold=2.0,float influence=0.5,int lag=10);
-std::vector<int> peaks_in_seg(std::vector<double> input,int MAX_IN_VALUE=100,float delta=0.5);
-std::vector<int> peaks_filter(std::vector<double> input,std::vector<int> init_peaks,std::vector<int> init_valleys, int MAX_IN_VALUE=100);
+std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea=0,float delta=0.5);
+
+/*other func:*/
+vector<int> getNodeType(NeuronTree nt);
+bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc, string inapo,QString save_path, int cropx, int cropy, int cropz);
+NeuronTree reindexNT(NeuronTree nt);
 QHash<V3DLONG,int> getIntensityStd(NeuronTree nt,int thre_size=64);
+void printHelp();
 #endif // BOUTONDETECTION_FUN_H
