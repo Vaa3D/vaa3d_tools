@@ -1,28 +1,30 @@
-/* BoutonDectection_plugin.cpp
+/* BoutonDetection_plugin.cpp
  * designed by shengdian
  * 2020-7-29 : by SD-Jiang
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "BoutonDectection_plugin.h"
+#include "BoutonDetection_plugin.h"
 #include "boutonDetection_fun.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(BoutonDectection, BoutonDectectionPlugin);
+Q_EXPORT_PLUGIN2(BoutonDetection, BoutonDetectionPlugin);
  
-QStringList BoutonDectectionPlugin::menulist() const
+QStringList BoutonDetectionPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("BoutonDection_Img")
 		<<tr("about");
 }
 
-QStringList BoutonDectectionPlugin::funclist() const
+QStringList BoutonDetectionPlugin::funclist() const
 {
     return QStringList()
             <<tr("BoutonDetection_terafly")
            <<tr("BoutonDetection_image")
+          <<tr("RefinementAll_terafly")
+         <<tr("RefinementAll_image")
           << tr("Refinement_terafly")
           <<tr("Refinement_image")
          << tr("NodeRefinement_terafly")
@@ -37,7 +39,7 @@ QStringList BoutonDectectionPlugin::funclist() const
     <<tr("help");
 }
 
-void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void BoutonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("BoutonDection_Img"))
 	{
@@ -193,7 +195,7 @@ void BoutonDectectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2
 			"Developed by SD-Jiang, 2020-7-29"));
 	}
 }
-bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
@@ -219,7 +221,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         int Shift_Pixels=(inparas.size()>=1)?atoi(inparas[0]):2;
         int Min_Interpolation_Pixels=(inparas.size()>=2)?atoi(inparas[1]):4;
         int allnode=(inparas.size()>=3)?atoi(inparas[2]):1;
-        long crop_size=(inparas.size()>=4)?atoi(inparas[3]):64;
+        long crop_size=(inparas.size()>=4)?atoi(inparas[3]):128;
         int bkg_thre_bias=(inparas.size()>=5)?atoi(inparas[4]):20;
 
         //read input swc to neuron-tree
@@ -305,25 +307,35 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
             writeAPO_file(QString::fromStdString(out_bouton_apo_file),apolist_out);
         }
     }
+    else if(func_name == tr("RefinementAll_terafly"))
+    {
+        /* refine to center line, based on mean-shift*/
+        refinement_dofunc(callback,input,output,2,true);
+    }
+    else if(func_name == tr("RefinementAll_image"))
+    {
+        /* refine to center line, based on mean-shift*/
+        refinement_dofunc(callback,input,output,2,false);
+    }
     else if(func_name == tr("Refinement_terafly"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,true,true);
+        refinement_dofunc(callback,input,output,0,true);
     }
     else if(func_name == tr("Refinement_image"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,true,false);
+        refinement_dofunc(callback,input,output,0,false);
     }
     else if(func_name == tr("NodeRefinement_terafly"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,false,true);
+        refinement_dofunc(callback,input,output,1,true);
     }
     else if(func_name == tr("NodeRefinement_image"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,false,false);
+        refinement_dofunc(callback,input,output,1,false);
     }
     else if (func_name == tr("BoutonSWC_Compress"))
     {
@@ -391,6 +403,7 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
     }
     else if (func_name == tr("UpsampleImage"))
     {
+
         string inimg_file;
         if(infiles.size()>=1) {
             inimg_file = infiles[0];
@@ -456,7 +469,6 @@ bool BoutonDectectionPlugin::dofunc(const QString & func_name, const V3DPluginAr
         }
         else
             printHelp();
-        return true;
     }
     else if (func_name == tr("help"))
         printHelp();

@@ -25,6 +25,9 @@ using namespace std;
 #define BoutonType 99
 #define MinRefineAngle 60.0
 #define PI 3.1415926
+#define NeuronTreeRefine 0
+#define NodeRefine 1
+#define RefineAllinOne 2
 
 struct Bouton_Color_Basic
 {
@@ -86,9 +89,9 @@ void boutonDetection_terafly_fun(V3DPluginCallback2 &callback,string imgPath, Ne
 void boutonDetection_image_fun(V3DPluginCallback2 &callback,string inimg_file, NeuronTree& nt,int refine_radius=2,int bkg_bias=15);
 
 /*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
-void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool mean_shift=true,bool in_terafly=true);
-void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,bool mean_shift=true,int refine_radius=8,long half_block_size=128,double bkg_bias=0.7);
-void refinement_Image_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,bool mean_shift=true,int refine_radius=8,double bkg_bias=0.7);
+void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,int method_code=0,bool in_terafly=true);
+void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,long half_block_size=128,int nodeRefine_radius=2);
+void refinement_Image_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,int nodeRefine_radius=2);
 NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40, int windowradius=15);
 NeuronSWC nodeRefine(unsigned char * & inimg1d,NeuronSWC s,V3DLONG * sz,int neighbor_size=5);
 double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);

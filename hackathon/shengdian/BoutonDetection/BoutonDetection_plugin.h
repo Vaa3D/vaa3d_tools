@@ -1,10 +1,10 @@
-/* BoutonDectection_plugin.h
+/* BoutonDetection_plugin.h
  * designed by shengdian
  * 2020-7-29 : by SD-Jiang
  */
  
-#ifndef __BOUTONDECTECTION_PLUGIN_H__
-#define __BOUTONDECTECTION_PLUGIN_H__
+#ifndef __BOUTONDETECTION_PLUGIN_H__
+#define __BOUTONDETECTION_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
@@ -14,7 +14,7 @@
 #include <QHash>
 #include "volimg_proc.h"
 #include <fstream>
-class BoutonDectectionPlugin : public QObject, public V3DPluginInterface2_1
+class BoutonDetectionPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
