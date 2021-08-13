@@ -76,6 +76,23 @@ template <class T> bool getVec(const T * pdata1d, V3DLONG datalen, vector<uint8_
     return true;
 }
 
+template <class T> bool getVecSWC(const T * pdata1d, V3DLONG mysz[4], int c, QList<NeuronSWC> neuron, vector<uint8_t> &Vec)
+{
+    V3DLONG id;
+    // create vector of intensities
+    for (id = 0; id < neuron.size(); id++) {
+        V3DLONG nodex = neuron.at(id).x;
+        V3DLONG nodey = neuron.at(id).y;
+        V3DLONG nodez = neuron.at(id).z;
+        struct XYZ treep = XYZ(nodex,nodey,nodez);
+        Vec.push_back(pdata1d[V3DLONG(c*mysz[0]*mysz[1]*mysz[2] + treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
+        //cout<<"\n\n";
+        //cout<<uint(pdata1d[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)])<<" ";
+        //cout<<uint(Vec.at(Vec.size()-1))<<" ";
+    }
+    return true;
+}
+
 //template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
 bool getHistogram(vector<uint8_t> pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
 {
@@ -423,13 +440,52 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     //if(output.size() != 1) return true;
 	
 	vector<char*>* inlist = (vector<char*>*) (input.at(0).p);
-	if (inlist->size() != 1)
+    if (inlist->size() != 1 && inlist->size() != 2)
 	{
-		cerr<<"You must specify 1 input file!"<<endl;
+        cerr<<"You must specify 1 or 2 input files!"<<endl;
 		return false;
 	}
 	char * infile = inlist->at(0);
-	cout<<"input file: "<<infile<<endl;
+    cout<<"input image file: "<<infile<<endl;
+
+    QList<NeuronSWC> neuron;
+    if (inlist->size() == 2)
+    {
+        char * inswc = inlist->at(1);
+        cout<<"input SWC file: "<<inswc<<endl;
+
+        // Get Neuron
+    //    NeuronTree nt;
+        QString fileOpenName = QString(inswc);
+        //cout<<fileOpenName.toStdString().c_str()<<endl;
+
+        if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
+        {
+            neuron = readSWC_file(fileOpenName).listNeuron;
+        }
+    //    else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
+    //    {
+    //        P_ObjectFileType linker_object;
+    //        if (!loadAnoFile(fileOpenName,linker_object))
+    //        {
+    //            cout<<"Error in reading the linker file."<<endl;
+    //            return false;
+    //        }
+    //        QStringList nameList = linker_object.swc_file_list;
+    //        V3DLONG neuronNum = nameList.size();
+    //        vector<QList<NeuronSWC> > nt_list;
+    //        for (V3DLONG i=0;i<neuronNum;i++)
+    //        {
+    //            QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
+    //            nt_list.push_back(tmp);
+    //        }
+    //    }
+        else
+        {
+            cout<<"The reconstruction file type you specified is not supported."<<endl;
+            return false;
+        }
+    }
     unsigned char * inimg1d = NULL;
     //unsigned char * subject1d = NULL;
     V3DLONG sz[4];
@@ -455,10 +511,27 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     }
     else
     {
-        outfile = "ImageQuality.csv";
+        if(inlist->size()==1)
+        {
+            outfile = "ImageQuality.csv";
+        }
+        if(inlist->size()==2)
+        {
+            outfile = "ImageQualitySWC.csv";
+        }
     }
-    QString outfileapp = QString(infile) + "." + QString(outfile);
-    cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
+    QString outfileapp;
+    if(inlist->size()==1)
+    {
+        outfileapp = QString(infile) + "." + QString(outfile);
+        cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
+    }
+    if(inlist->size()==2)
+    {
+        char * inswc = inlist->at(1);
+        outfileapp = QString(inswc) + "." + QString(outfile);
+        cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
+    }
 
 //    // Code from datatype_convert plugin
 //    V3DLONG	sz_sub = sz[0]*sz[1]*sz[2]*sz[3];
@@ -473,6 +546,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 //        printf("Error allocating memory. \n");
 //        return -1;
 //    }
+
 
     // Data type conversion
 
@@ -528,9 +602,22 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     QVector<double> CNRotsu_vec;
 
     cout << "\nConverting 1D data to vector\n";
+    V3DLONG mysize=0;
     vector<uint8_t> intvec;
-    intvec.reserve(nChannel*sz[0]*sz[1]*sz[2]);
-    getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
+    if(inlist->size()==1)
+    {
+        mysize=sz[0]*sz[1]*sz[2];
+        intvec.reserve(nChannel*sz[0]*sz[1]*sz[2]);
+        getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
+    }
+    if(inlist->size()==2)
+    {
+        int c=0;
+        //cout<<neuron.size();
+        mysize=neuron.size();
+        intvec.reserve(neuron.size());
+        getVecSWC(inimg1d, sz, c, neuron, intvec);
+    }
     if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
     cout << "\nComputing statistics\n";
@@ -540,10 +627,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
 
         //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
-        getStats(intvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
+        getStats(intvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
         QVector<int> tmphist;
         //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
-        getHistogram(intvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+        getHistogram(intvec, mysize, max_value, histscale, tmphist);
         pcmin = double(tmphist.at(minint))*100/double(sz[0]*sz[1]*sz[2]);
         pcmax = double(tmphist.at(maxint))*100/double(sz[0]*sz[1]*sz[2]);
         hist_vec.append(tmphist);
@@ -599,7 +686,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         vector<uint8_t> meannoise;//,meansignal;
         double avmeannoise,avmeansignal,stdevmean;
         avmeannoise=avmeansignal=stdevmean=0;
-        for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+        for(int i=0; i<mysize; i++)
         {
             if(intvec.at(i)<ThreshOtsu)
             {
@@ -666,13 +753,21 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         {
             int  maxint,minint;
             double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
+            vector<uint8_t> subvec;
 
             //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
-            vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
-            getStats(subvec, sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint, madint, stdevint);
+            if(inlist->size()==1)
+            {
+                vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
+            }
+            if(inlist->size()==1)
+            {
+                getVecSWC(inimg1d, sz, c, neuron, subvec);
+            }
+            getStats(subvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
             QVector<int> tmphist;
             //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
-            getHistogram(subvec, sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+            getHistogram(subvec, mysize, max_value, histscale, tmphist);
             pcmin = double(tmphist.at(minint))*100/double(sz[0]*sz[1]*sz[2]);
             pcmax = double(tmphist.at(maxint))*100/double(sz[0]*sz[1]*sz[2]);
             hist_vec.append(tmphist);
@@ -725,7 +820,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             vector<uint8_t> meannoise;//,meansignal;
             double avmeannoise,avmeansignal,stdevmean;
             avmeannoise=avmeansignal=stdevmean=0;
-            for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
+            for(int i=0; i<mysize; i++)
             {
                 if(subvec.at(i)<ThreshOtsu)
                 {

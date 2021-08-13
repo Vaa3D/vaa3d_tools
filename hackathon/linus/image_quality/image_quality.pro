@@ -13,6 +13,7 @@ SOURCES	= image_quality_plugin.cpp
 SOURCES	+= image_quality_func.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(imagequality)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/image_analysis/image_quality/
