@@ -13,19 +13,29 @@ This plugin can detect axonal boutons based on axonal arbors.
 ## Documentation
 + Bouton file document
   + bouton swc file
-    + radius
+    + raw-node-radius (pixel size)
     + level (intensity)
     + type (99)
     + bouton features will be saved at SWC feature value list:
-     * 1. bouton_flag {0: not a bouton; 1: bouton; 2: tip-bouton; 3: terminaux-bouton}
+     * 1) bouton_flag {0: not a bouton; 1: bouton; 2: tip-bouton; 3: terminaux-bouton}
        * *en passant bouton: 1 and 2*
-     * 2-5. bouton_radius,bouton_branch_radius_threshold,bouton_branch_radius_mean,bouton_branch_radius_std
-     * 6-9. bouton_intensity, bouton_branch_intensity_threshold,bouton_branch_intensity_mean,bouton_branch_intensity_std
-     * 10. bouton density
+       * *tip-bouton: >=2*
+       * *internal-bouton:1*
+     * 2-4) (normarlized)bouton_radius,bouton_branch_radius_mean,bouton_branch_radius_std
+     * 5-7) bouton_intensity,bouton_branch_intensity_mean,bouton_branch_intensity_std
+     * 8-12)CCF coordinates[x,y,z],CCF-region
+     * 13)bouton density
+     * 14)branch order
+     * 15)branch length
+     * 16)distance to soma (path)
+     * 17)distance to soma (euler distance)
   + bouton apo file
     + volsize(radius)
     + intensity
-    + color {r:0,g:20,b:255}
+    + comment:"bouton sites"
+    + color 
+      + *en passant bouton*: {r:0,g:0,b:255}
+      + *terminaux bouton*:{r:0,g:255,b:0}
 + function list:(only for 8bit-3D image data)
   + For terafly datasets and image block
     + `BoutonDetection_terafly` or `BoutonDetection_image`
