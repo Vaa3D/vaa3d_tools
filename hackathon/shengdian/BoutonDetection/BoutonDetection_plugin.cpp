@@ -31,10 +31,9 @@ QStringList BoutonDetectionPlugin::funclist() const
          <<tr("NodeRefinement_image")
         <<tr("SWC_profile_terafly")
        <<tr("SWC_profile")
-        <<tr("Intensity_profile_terafly")
        <<tr("Bouton_filter")
       << tr("TeraImage_SWC_Crop")
-      <<tr("BoutonSWC_Compress")
+      <<tr("BoutonSWC_pruning")
      <<tr("Scale_registered_swc")
     <<tr("UpsampleImage")
     <<tr("SWC_Analysis")
@@ -253,22 +252,13 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         swc_profile_dofunc(callback,input,output,false);
     }
-    else if (func_name == tr("BoutonSWC_Compress"))
+    else if (func_name == tr("BoutonSWC_pruning"))
     {
-        swc_compress_dofunc(callback,input,output);
+        boutonswc_pruning_dofunc(callback,input,output);
     }
     else if (func_name == tr("Scale_registered_swc"))
     {
-        string inswc_file;
-        if(infiles.size()>=1) {inswc_file = infiles[0];}
-        float shift_pixels=(inparas.size()>=1)?atoi(inparas[0]):20.0;
-        float scale_para=(inparas.size()>=2)?atoi(inparas[1]):25.0;
-
-        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-        if(!nt.listNeuron.size()) return false;
-        string out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_scaled.eswc");
-        NeuronTree scaled_nt=scale_registered_swc(nt,shift_pixels,scale_para);
-        writeESWC_file(QString::fromStdString(out_nt_filename),scaled_nt);
+        scale_swc_dofunc(callback,input,output);
     }
     else if (func_name == tr("SWC_Analysis"))
     {
@@ -385,5 +375,5 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
 }
 void printHelp()
 {
-    cout<<"need to complete"<<endl;
+    cout<<"Please find README.md in project folder"<<endl;
 }
