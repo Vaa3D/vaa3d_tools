@@ -14,21 +14,19 @@ This plugin can detect axonal boutons based on axonal arbors.
 + Bouton file document
   + bouton swc file
     + raw-node-radius (pixel size)
-    + level (intensity)
+    + level (branch order)
     + type (99)
     + bouton features will be saved at SWC feature value list:
-     * 1) bouton_flag {0: not a bouton; 1: bouton; 2: tip-bouton; 3: terminaux-bouton}
+     * 1-3)CCF coordinates[x,y,z]
+     * 4)bouton_flag {0: not a bouton; 1: bouton; 2: tip-bouton; 3: terminaux-bouton}
        * *en passant bouton: 1 and 2*
        * *tip-bouton: >=2*
        * *internal-bouton:1*
-     * 2-4) (normarlized)bouton_radius,bouton_branch_radius_mean,bouton_branch_radius_std
-     * 5-7) bouton_intensity,bouton_branch_intensity_mean,bouton_branch_intensity_std
-     * 8-12)CCF coordinates[x,y,z],CCF-region
-     * 13)bouton density
-     * 14)branch order
-     * 15)branch length
-     * 16)distance to soma (path)
-     * 17)distance to soma (euler distance)
+     * 5-7) (normarlized)bouton_radius,branch_radius_mean,branch_radius_std
+     * 8-10) bouton_intensity,branch_intensity_mean,branch_intensity_std
+     * 11)bouton density
+     * 12)path distance to soma
+     * 13)distance to soma (euler)
   + bouton apo file
     + volsize(radius)
     + intensity
@@ -103,16 +101,23 @@ This plugin can detect axonal boutons based on axonal arbors.
         + filter
           + Intensity(bouton)> mean_branch_intensity+std_branch_intensity
           + Radius(bouton)> radius_delta* mean_branch_radius
+    + `BoutonSWC_pruning`
         + remove near boutons (distance of two boutons is less than 4)
         + bouton swc internode prunning
         + tip redundancy nodes prunning
-        + bouton type labeling {terminaux or en passant bouton}
-        + bouton type rendering
-        + save to apo and swc file
+      + step1: near bouton removing
+        + if two boutons from one branch are too close to each other, remove the one with small radius
+      + step2: internode pruning
+        + remove the regular nodes and keep the following nodes
+          + soma,tip,bouton,branch nodes
+        + node-2-node distance is more than 5 pixels.
+      + step3: redendancy tip node pruning
       + parameters
         + radius_delta(1.5)
         + intensity_delta (1)
         + axon_trunk_radius (2.5)
+    + `Bouton_feature`
+      + get feature {5~13}
   + Image related
     + `TeraImage_SWC_Crop`
       + Note: crop image block and swc-nodes inside this block
@@ -132,15 +137,7 @@ This plugin can detect axonal boutons based on axonal arbors.
         + up factor y
         + up factor z
   + SWC processing
-    + `BoutonSWC_pruning`
-      + step1: near bouton removing
-        + if two boutons from one branch are too close to each other, remove the one with small radius
-      + step2: internode pruning
-        + remove the regular nodes and keep the following nodes
-          + soma,tip,bouton,branch nodes
-        + node-2-node distance is more than 5 pixels.
-      + step3: redendancy tip node pruning
-    + `Scale_registered_swc`
+    + `CCF_profile`
       + scaleup registered swc, for mapping the registered file into CCF
         + x-20; {x,y,z}*25  
       + map onto bouton swc file

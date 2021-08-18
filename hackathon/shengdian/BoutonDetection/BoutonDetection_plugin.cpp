@@ -34,7 +34,8 @@ QStringList BoutonDetectionPlugin::funclist() const
        <<tr("Bouton_filter")
       << tr("TeraImage_SWC_Crop")
       <<tr("BoutonSWC_pruning")
-     <<tr("Scale_registered_swc")
+     <<tr("CCF_profile")
+    <<tr("Bouton_feature")
     <<tr("UpsampleImage")
     <<tr("SWC_Analysis")
     <<tr("help");
@@ -256,9 +257,13 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         boutonswc_pruning_dofunc(callback,input,output);
     }
-    else if (func_name == tr("Scale_registered_swc"))
+    else if (func_name == tr("CCF_profile"))
     {
-        scale_swc_dofunc(callback,input,output);
+        ccf_profile_dofunc(callback,input,output);
+    }
+    else if (func_name == tr("Bouton_feature"))
+    {
+        bouton_feature_dofunc(callback,input,output);
     }
     else if (func_name == tr("SWC_Analysis"))
     {

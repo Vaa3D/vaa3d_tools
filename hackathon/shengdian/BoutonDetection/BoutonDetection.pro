@@ -11,12 +11,14 @@ HEADERS	+= BoutonDetection_plugin.h \
     ../../../v3d_main/basic_c_fun/color_xyz.h \
     boutonDetection_fun.h \
     ../../../v3d_main/neuron_editing/neuron_format_converter.h \
-    ../../../v3d_main/neuron_editing/v_neuronswc.h
+    ../../../v3d_main/neuron_editing/v_neuronswc.h \
+    neuronbranchtree.h
 SOURCES	+= BoutonDetection_plugin.cpp \
     ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp \
     boutonDetection_fun.cpp \
     ../../../v3d_main/neuron_editing/neuron_format_converter.cpp \
-    ../../../v3d_main/neuron_editing/v_neuronswc.cpp
+    ../../../v3d_main/neuron_editing/v_neuronswc.cpp \
+    neuronbranchtree.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(BoutonDetection)
