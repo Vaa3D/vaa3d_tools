@@ -20,6 +20,8 @@
 #include "FL_coordDefinition.h"
 #include "FL_defType.h"
 #include "neuronbranchtree.h"
+#include "../../SGuo/imPreProcess/helpFunc.h"
+#include "../../SGuo/imPreProcess/bilateral_filter.h"
 
 using namespace std;
 
@@ -113,6 +115,7 @@ double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);
 NeuronSWC lineRefine(unsigned char * & inimg1d,V3DLONG * sz,NeuronSWC snode,NeuronSWC spnode, int sqhere_radius=5,int searching_line_radius=2);
 
 /*Image processing*/
+void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,bool biilateral_filter=false);
 bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor);
 template <class T> bool upsample3dvol(T *outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor);
 template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
@@ -127,6 +130,8 @@ void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int half_block_size=8,uint mip_flag=0);
 void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size=8);
 void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
+
+
 
 /*swc processing*/
 NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);

@@ -16,7 +16,7 @@ void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
     //read para list
     int refine_radius=(inparas.size()>=1)?atoi(inparas[0]):8;
     int nodeRefine_radius=(inparas.size()>=2)?atoi(inparas[1]):2;
-    int interpolation_pixels=(inparas.size()>=3)?atoi(inparas[2]):3;
+    int interpolation_pixels=(inparas.size()>=3)?atoi(inparas[2]):4;
     int half_crop_size=(inparas.size()>=4)?atoi(inparas[3]):128;
 
 
@@ -212,18 +212,33 @@ void refinement_Image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuron
         hashNeuron.insert(listNeuron[i].n,i);
 
     //read image file
-    unsigned char * inimg1d = 0;V3DLONG in_sz[4];int datatype;
-    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return;
+    unsigned char * inimg1d_raw = 0;V3DLONG in_sz[4];int datatype;
+    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d_raw, in_sz, datatype)) return;
 
     V3DLONG sz01 = in_sz[0] * in_sz[1];
     V3DLONG sz0 = in_sz[0];
     V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
-
+    /*image enhancement*/
+    unsigned char * inimg1d = 0;
+    try {inimg1d = new unsigned char [total_size];}
+    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+    enhanceImage(inimg1d_raw,inimg1d,in_sz,true);
+    if(inimg1d&&inimg1d_raw)
+    {
+        delete []inimg1d_raw;
+        inimg1d_raw=0;
+    }
+    else
+    {
+        cout<<"enhanced fail"<<endl;
+        inimg1d=inimg1d_raw;
+        delete []inimg1d_raw;
+        inimg1d_raw=0;
+    }
     double imgave,imgstd;
     mean_and_std(inimg1d,total_size,imgave,imgstd);
-    imgstd=MAX(imgstd,10);
-    double bkg_thresh= imgave/*+imgstd+bkg_bias*/;
-    bkg_thresh=MAX(bkg_thresh,20);
+    double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),50);
+    cout<<"bkg thresh="<<bkg_thresh<<endl;
 
     for(V3DLONG i=0;i<siz;i++)
     {
@@ -664,19 +679,34 @@ void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, Neuron
             V3DLONG sz01 = in_sz[0] * in_sz[1];
             V3DLONG sz0 = in_sz[0];
 
-            unsigned char * inimg1d = 0;
+            unsigned char * inimg1d_raw = 0;
             V3DLONG pagesz= in_sz[0] * in_sz[1]*in_sz[2]*in_sz[3];
+            try {inimg1d_raw = new unsigned char [pagesz];}
+            catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+            inimg1d_raw = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+            if(inimg1d_raw==NULL){ cout<<"Crop fail"<<endl;continue; }
+
+            /*image enhancement*/
+            unsigned char * inimg1d = 0;
             try {inimg1d = new unsigned char [pagesz];}
             catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-            inimg1d = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
-            if(inimg1d==NULL){ cout<<"Crop fail"<<endl;continue; }
+            enhanceImage(inimg1d_raw,inimg1d,in_sz);
+            if(inimg1d&&inimg1d_raw)
+            {
+                delete []inimg1d_raw;
+                inimg1d_raw=0;
+            }
+            else
+            {
+                cout<<"enhanced fail"<<endl;
+                inimg1d=inimg1d_raw;
+                delete []inimg1d_raw;
+                inimg1d_raw=0;
+            }
 
             double imgave,imgstd;
             mean_and_std(inimg1d,pagesz,imgave,imgstd);
-            imgstd=MAX(imgstd,10);
-            double bkg_thresh= imgave+imgstd+bkg_bias;
-            bkg_thresh=MAX(bkg_thresh,20);
-
+            double bkg_thresh= MIN(MAX(imgave+imgstd+bkg_bias,30),50);
             //for all the node inside this block
             for(V3DLONG j=0;j<siz;j++){
                 NeuronSWC sj = listNeuron[j];
@@ -691,7 +721,7 @@ void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, Neuron
                     //get node radius
                     NeuronSWC sr=sj;        sr.x=thisx; sr.y=thisy;sr.z=thisz;
                     listNeuron[j].r=radiusEstimation(inimg1d,in_sz,sr,upfactor,bkg_thresh);
-//                    listNeuron[j].timestamp=bkg_thresh;
+                    listNeuron[j].timestamp=bkg_thresh;
                 }
             }
             if(inimg1d) {delete []inimg1d; inimg1d=0;}
@@ -710,19 +740,34 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
         hashNeuron.insert(listNeuron[i].n,i);
 
     //read image file
-    unsigned char * inimg1d = 0;
+    unsigned char * inimg1d_raw = 0;
     V3DLONG in_sz[4];int datatype;
-    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return;
+    if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d_raw, in_sz, datatype)) return;
     //get the background threshold
     V3DLONG sz01 = in_sz[0] * in_sz[1];
     V3DLONG sz0 = in_sz[0];
     V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
 
+    /*image enhancement*/
+    unsigned char * inimg1d = 0;
+    try {inimg1d = new unsigned char [total_size];}
+    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+    enhanceImage(inimg1d_raw,inimg1d,in_sz);
+    if(inimg1d&&inimg1d_raw)
+    {
+        delete []inimg1d_raw;
+        inimg1d_raw=0;
+    }
+    else
+    {
+        cout<<"enhanced fail"<<endl;
+        inimg1d=inimg1d_raw;
+        delete []inimg1d_raw;
+        inimg1d_raw=0;
+    }
     double imgave,imgstd;
     mean_and_std(inimg1d,total_size,imgave,imgstd);
-    imgstd=MAX(imgstd,10);
-    double bkg_thresh= imgave+imgstd+bkg_bias;
-    bkg_thresh=MAX(bkg_thresh,20);
+    double bkg_thresh=MIN(MAX(imgave+imgstd+bkg_bias,30),50);
     cout<<"bkg thresh="<<bkg_thresh<<endl;
 
     for(V3DLONG i=0;i<siz;i++)
@@ -740,7 +785,6 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
         listNeuron[i].y=s.y;
         listNeuron[i].z=s.z;
         listNeuron[i].r=s.r;
-//        listNeuron[i].timestamp=s.timestamp;
     }
     if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
@@ -1460,7 +1504,6 @@ void scale_registered_swc(NeuronTree& nt,float xshift_pixels,float scale_xyz){
         nt.listNeuron[i].z*=scale_xyz;
     }
 }
-
 QList <CellAPO> nt_2_multi_centers(NeuronTree nt,float xs,float ys,float zs){
     QList <CellAPO> nt_centers; nt_centers.clear();
     V3DLONG niz=nt.listNeuron.size();
@@ -2061,7 +2104,7 @@ double radiusEstimation(unsigned char *&inimg1d, long in_zz[], NeuronSWC s, doub
     */
     NeuronSWC dynamic_s=s;
     //1. center_block cropped
-    int cropped_block_size=16; int zcropped_block_size=8;
+    int cropped_block_size=16; int zcropped_block_size=3;
     long start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = s.x - cropped_block_size; if(start_x<0) {start_x = 0;}
     end_x = s.x + cropped_block_size; if(end_x >= in_zz[0]) {end_x = in_zz[0]-1;}
@@ -2478,6 +2521,42 @@ std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea, float 
 
 }
 
+void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,bool biilateral_filter){
+
+    double gain=5, cutoff=25;
+    double spaceSigmaXY, spaceSigmaZ, colorSigma=35;
+
+    int k_sz[3] = {3, 3, 1};
+
+    spaceSigmaXY = k_sz[0]/3.0;
+    spaceSigmaZ = k_sz[2]/3.0;
+
+    V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
+
+    cout<<"do sigma correction "<<endl;
+    sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
+    cout<<"finish sigma correction "<<endl;
+
+    for(V3DLONG i=0; i<tolSZ; i++)
+        data1d[i]=dst[i];
+
+    cout<<"do subtract min"<<endl;
+    subtract_min(data1d, mysz, dst);
+    cout<<"finish subtract min"<<endl;
+
+    for(V3DLONG i=0; i<tolSZ; i++)
+        data1d[i]=dst[i];
+    if(biilateral_filter){
+        cout<<"do bilateral filter "<<endl;
+        bilateralfilter(data1d, dst, mysz, k_sz, spaceSigmaXY, spaceSigmaZ, colorSigma, 1);
+        cout<<"finish bilateral filter "<<endl;
+    }
+
+    cout<<"do intensity rescale"<<endl;
+    intensity_rescale(data1d, mysz, dst, 1);
+    cout<<"finish intensity rescale"<<endl;
+
+}
 bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor){
     return upsample3dvol(outimg1d,inimg1d,szout,szin,dfactor);
 }

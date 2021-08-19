@@ -156,3 +156,5 @@ This plugin can detect axonal boutons based on axonal arbors.
    > add radius feature to bouton detection
 5. update at 2021-08-10
    > reorganized code
+6. update at 2021-08-19
+   > image upsample and image enhancement were considered at radius estimation 
