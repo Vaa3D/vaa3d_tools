@@ -110,6 +110,7 @@ void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,long half_block_size=128,int nodeRefine_radius=2);
 void refinement_Image_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,int nodeRefine_radius=2);
 NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40, int windowradius=15);
+NeuronSWC calc_mean_shift_center_v2(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40,int windowradius=15);
 NeuronSWC nodeRefine(unsigned char * & inimg1d,NeuronSWC s,V3DLONG * sz,int neighbor_size=5);
 double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);
 NeuronSWC lineRefine(unsigned char * & inimg1d,V3DLONG * sz,NeuronSWC snode,NeuronSWC spnode, int sqhere_radius=5,int searching_line_radius=2);
@@ -131,11 +132,10 @@ void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO>
 void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size=8);
 void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
 
-
-
 /*swc processing*/
 NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
 NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool ccf_domain=false);
+NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=1.5);
 void nearBouton_pruning(NeuronTree& nt,float pruning_dist=5.0,bool ccf_domain=false);
 NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist=1.0,bool ccf_domain=false);
 void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
