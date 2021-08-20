@@ -159,3 +159,5 @@ This plugin can detect axonal boutons based on axonal arbors.
 6. update at 2021-08-19
    > 1. image upsample and image enhancement were considered at radius estimation
    > 2. image enhancement was used at refinement and a new version of mean-shift
+7. update at 2021-08-20
+   > 1. add `AxonalBouton` struct

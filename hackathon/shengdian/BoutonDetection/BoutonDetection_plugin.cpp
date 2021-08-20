@@ -23,12 +23,8 @@ QStringList BoutonDetectionPlugin::funclist() const
     return QStringList()
             <<tr("BoutonDetection_terafly")
            <<tr("BoutonDetection_image")
-          <<tr("RefinementAll_terafly")
-         <<tr("RefinementAll_image")
           << tr("Refinement_terafly")
           <<tr("Refinement_image")
-         << tr("NodeRefinement_terafly")
-         <<tr("NodeRefinement_image")
         <<tr("SWC_profile_terafly")
        <<tr("SWC_profile")
        <<tr("Bouton_filter")
@@ -215,35 +211,15 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         boutonFilter_dofunc(callback,input,output);
     }
-    else if(func_name == tr("RefinementAll_terafly"))
-    {
-        /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,2,true);
-    }
-    else if(func_name == tr("RefinementAll_image"))
-    {
-        /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,2,false);
-    }
     else if(func_name == tr("Refinement_terafly"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,0,true);
+        refinement_dofunc(callback,input,output,true);
     }
     else if(func_name == tr("Refinement_image"))
     {
         /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,0,false);
-    }
-    else if(func_name == tr("NodeRefinement_terafly"))
-    {
-        /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,1,true);
-    }
-    else if(func_name == tr("NodeRefinement_image"))
-    {
-        /* refine to center line, based on mean-shift*/
-        refinement_dofunc(callback,input,output,1,false);
+        refinement_dofunc(callback,input,output,false);
     }
     else if(func_name == tr("SWC_profile_terafly"))
     {
@@ -377,8 +353,4 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         printHelp();
 	else return false;
     return true;
-}
-void printHelp()
-{
-    cout<<"Please find README.md in project folder"<<endl;
 }
