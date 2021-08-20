@@ -164,7 +164,9 @@ bool getStats(vector<uint8_t> pdata1d, V3DLONG datalen, int &minint, int &maxint
     }
     else
     {
-        medianint = int(round((double)(pdata1d.at((datalen - 1) / 2) + pdata1d.at(datalen / 2)) / 2.0));
+        //cout << "even\n";
+        //cout << datalen << "\n";
+        medianint = int(lrint((double) pdata1d.at(datalen/2 - 1) + (double) pdata1d.at(datalen/2))/2);//int(lrint((((double) pdata1d.at(datalen - 1)) / 2 + ((double) pdata1d.at(datalen)) / 2) / 2.0));
     }
 
     cout << "Starting MAD calculation\n";
@@ -448,7 +450,13 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 	char * infile = inlist->at(0);
     cout<<"input image file: "<<infile<<endl;
 
-    QList<NeuronSWC> neuron;
+//    QList<NeuronSWC> neuron;
+    vector<QList<NeuronSWC> > nt_list;
+    if (inlist->size() == 1)
+    {
+        QList<NeuronSWC> tmp;
+        nt_list.push_back(tmp);
+    }
     if (inlist->size() == 2)
     {
         char * inswc = inlist->at(1);
@@ -461,25 +469,25 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 
         if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
         {
-            neuron = readSWC_file(fileOpenName).listNeuron;
+            QList<NeuronSWC> tmp = readSWC_file(fileOpenName).listNeuron;
+            nt_list.push_back(tmp);
         }
-    //    else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
-    //    {
-    //        P_ObjectFileType linker_object;
-    //        if (!loadAnoFile(fileOpenName,linker_object))
-    //        {
-    //            cout<<"Error in reading the linker file."<<endl;
-    //            return false;
-    //        }
-    //        QStringList nameList = linker_object.swc_file_list;
-    //        V3DLONG neuronNum = nameList.size();
-    //        vector<QList<NeuronSWC> > nt_list;
-    //        for (V3DLONG i=0;i<neuronNum;i++)
-    //        {
-    //            QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
-    //            nt_list.push_back(tmp);
-    //        }
-    //    }
+        else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
+        {
+            P_ObjectFileType linker_object;
+            if (!loadAnoFile(fileOpenName,linker_object))
+            {
+                cout<<"Error in reading the linker file."<<endl;
+                return false;
+            }
+            QStringList nameList = linker_object.swc_file_list;
+            V3DLONG neuronNum = nameList.size();
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
+                nt_list.push_back(tmp);
+            }
+        }
         else
         {
             cout<<"The reconstruction file type you specified is not supported."<<endl;
@@ -520,17 +528,38 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             outfile = "ImageQualitySWC.csv";
         }
     }
-    QString outfileapp;
+    vector<QString> outfileapp;
     if(inlist->size()==1)
     {
-        outfileapp = QString(infile) + "." + QString(outfile);
-        cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
+        outfileapp.push_back(QString(infile) + "." + QString(outfile));
+        cout<<"\noutput file: "<<outfileapp.at(0).toStdString().c_str()<<endl;
     }
     if(inlist->size()==2)
     {
         char * inswc = inlist->at(1);
-        outfileapp = QString(inswc) + "." + QString(outfile);
-        cout<<"\noutput file: "<<outfileapp.toStdString().c_str()<<endl;
+        QString fileOpenName = QString(inswc);
+        if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
+        {
+            char * inswc = inlist->at(1);
+            outfileapp.push_back(QString(inswc) + "." + QString(outfile));
+            cout<<"\noutput file: "<<outfileapp.at(0).toStdString().c_str()<<endl;
+        }
+        else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
+        {
+            P_ObjectFileType linker_object;
+            if (!loadAnoFile(fileOpenName,linker_object))
+            {
+                cout<<"Error in reading the linker file."<<endl;
+                return false;
+            }
+            QStringList nameList = linker_object.swc_file_list;
+            V3DLONG neuronNum = nameList.size();
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                outfileapp.push_back(nameList.at(i) + "." + QString(outfile));
+                cout<<"\noutput file: "<<outfileapp.at(i).toStdString().c_str()<<endl;
+            }
+        }
     }
 
 //    // Code from datatype_convert plugin
@@ -581,193 +610,65 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
 
     //if (subject1d) {delete []subject1d; subject1d=NULL;}
 
-    //TODO add datatype judgment in case someone wanted to compute in 16bit
-    cout << "\nInitializing variables\n";
-	double max_value = 256;
-	V3DLONG histscale = 256;
-	QVector<QVector<int> > hist_vec;
-    QVector<double> FocusScore_vec;
-    QVector<int> MinIntensity_vec;
-    QVector<int> MaxIntensity_vec;
-    QVector<double> MeanIntensity_vec;
-    QVector<double> MedianIntensity_vec;
-    QVector<double> MADIntensity_vec;
-    QVector<double> StdIntensity_vec;
-    QVector<double> PercentMinimal_vec;
-    QVector<double> PercentMaximal_vec;
-    QVector<double> ThreshOtsu_vec;
-    QVector<double> SNRmean_vec;
-    QVector<double> CNRmean_vec;
-    QVector<double> SNRotsu_vec;
-    QVector<double> CNRotsu_vec;
-
-    cout << "\nConverting 1D data to vector\n";
-    V3DLONG mysize=0;
-    vector<uint8_t> intvec;
-    if(inlist->size()==1)
+    V3DLONG iters;
+    if(inlist->size()==1) iters=1;
+    if(inlist->size()==2) iters=nt_list.size();
+    cout << nt_list.size() << "\n";
+    for(V3DLONG n=0; n<iters; n++)
     {
-        mysize=sz[0]*sz[1]*sz[2];
-        intvec.reserve(nChannel*sz[0]*sz[1]*sz[2]);
-        getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
-    }
-    if(inlist->size()==2)
-    {
-        int c=0;
-        //cout<<neuron.size();
-        mysize=neuron.size();
-        intvec.reserve(neuron.size());
-        getVecSWC(inimg1d, sz, c, neuron, intvec);
-    }
-    if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
+        cout << "Iteration "<<n <<"\n";
+        QList<NeuronSWC> neuron;
+        if(inlist->size()==2) neuron = nt_list.at(n);
+        //TODO add datatype judgment in case someone wanted to compute in 16bit
+        cout << "\nInitializing variables\n";
+        double max_value = 256;
+        V3DLONG histscale = 256;
+        QVector<QVector<int> > hist_vec;
+        QVector<double> FocusScore_vec;
+        QVector<int> MinIntensity_vec;
+        QVector<int> MaxIntensity_vec;
+        QVector<double> MeanIntensity_vec;
+        QVector<double> MedianIntensity_vec;
+        QVector<double> MADIntensity_vec;
+        QVector<double> StdIntensity_vec;
+        QVector<double> PercentMinimal_vec;
+        QVector<double> PercentMaximal_vec;
+        QVector<double> ThreshOtsu_vec;
+        QVector<double> SNRmean_vec;
+        QVector<double> CNRmean_vec;
+        QVector<double> SNRotsu_vec;
+        QVector<double> CNRotsu_vec;
 
-    cout << "\nComputing statistics\n";
-    if(nChannel == 1)
-    {
-        int  maxint,minint;
-        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
-
-        //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
-        getStats(intvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
-        QVector<int> tmphist;
-        //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
-        getHistogram(intvec, mysize, max_value, histscale, tmphist);
-        pcmin = double(tmphist.at(minint))*100/double(sz[0]*sz[1]*sz[2]);
-        pcmax = double(tmphist.at(maxint))*100/double(sz[0]*sz[1]*sz[2]);
-        hist_vec.append(tmphist);
-        MaxIntensity_vec.append(maxint);
-        MinIntensity_vec.append(minint);
-        MeanIntensity_vec.append(meanint);
-        MedianIntensity_vec.append(medianint);
-        MADIntensity_vec.append(madint);
-        StdIntensity_vec.append(stdevint);
-        PercentMinimal_vec.append(pcmin);
-        PercentMaximal_vec.append(pcmax);
-
-        // Get Focus Score
-        focusscore = stdevint*stdevint/meanint;
-        FocusScore_vec.append(focusscore);
-
-        // Get Otsu threshold
-        double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
-        var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
-        for(int i=0; i<tmphist.size(); i++)
+        cout << "\nConverting 1D data to vector\n";
+        V3DLONG mysize=0;
+        vector<uint8_t> intvec;
+        if(inlist->size()==1)
         {
-            sum = sum + i*double(tmphist.at(i));
+            mysize=sz[0]*sz[1]*sz[2];
+            intvec.reserve(nChannel*sz[0]*sz[1]*sz[2]);
+            getVec(inimg1d, nChannel*sz[0]*sz[1]*sz[2], intvec);
         }
-        for(int t=0; t<tmphist.size(); t++)
+        if(inlist->size()==2)
         {
-            q1 = q1 + double(tmphist.at(t));
-            //cout << q1 << " ";
-            if(q1>0)
-            {
-                q2 = sz[0]*sz[1]*sz[2]-q1;
-                //cout << q2 << " ";
-                sumB = sumB + double(t)*double(tmphist.at(t));
-                u1 = sumB/q1;
-                //cout << u1 << " ";
-                u2 = (sum-sumB)/q2;
-                sigma2 = q1*q2*(u1-u2)*(u1-u2);
-                if(sigma2 > var_max)
-                {
-                    ThreshOtsu = t;
-                    var_max =sigma2;
-                }
-            }
+            int c=0;
+            //cout<<neuron.size();
+            mysize=neuron.size();
+            intvec.reserve(neuron.size());
+            getVecSWC(inimg1d, sz, c, neuron, intvec);
         }
-        cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
-        ThreshOtsu_vec.append(ThreshOtsu);
+        if (inlist->size()==1 && inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
-        // Get SNR and CNR using mean intensity and Otsu as threshold for background
-        double SNRmean,CNRmean,SNRotsu,CNRotsu;
-
-        vector<uint8_t> otsunoise;//,otsusignal;
-        double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
-        meanotsunoise=meanotsusignal=stdevotsu=0;
-        vector<uint8_t> meannoise;//,meansignal;
-        double avmeannoise,avmeansignal,stdevmean;
-        avmeannoise=avmeansignal=stdevmean=0;
-        for(int i=0; i<mysize; i++)
-        {
-            if(intvec.at(i)<ThreshOtsu)
-            {
-                otsunoise.push_back(intvec.at(i));
-                meanotsunoise += intvec.at(i);
-            }
-            else
-            {
-                //otsusignal.push_back(intvec.at(i));
-                meanotsusignal += intvec.at(i);
-            }
-
-            if(intvec.at(i)<meanint)
-            {
-                meannoise.push_back(intvec.at(i));
-                avmeannoise += intvec.at(i);
-            }
-            else
-            {
-                //meansignal.push_back(intvec.at(i));
-                avmeansignal += intvec.at(i);
-            }
-        }
-        meanotsunoise = meanotsunoise/otsunoise.size();
-        meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
-        for (V3DLONG i=0;i<otsunoise.size();i++)
-        {
-            stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
-        }
-        stdevotsu /= otsunoise.size();
-        stdevotsu = sqrt(stdevotsu);
-//        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
-//        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
-
-        avmeannoise = avmeannoise/meannoise.size();
-        avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
-        for (V3DLONG i=0;i<meannoise.size();i++)
-        {
-            stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
-        }
-        stdevmean /= meannoise.size();
-        stdevmean = sqrt(stdevmean);
-        /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
-        stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
-
-        SNRmean = avmeansignal/stdevmean;
-        CNRmean = (maxint-meanint)/stdevmean;
-        SNRotsu = meanotsusignal/stdevotsu;
-        CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
-
-        SNRmean_vec.append(SNRmean);
-        CNRmean_vec.append(CNRmean);
-        SNRotsu_vec.append(SNRotsu);
-        CNRotsu_vec.append(CNRotsu);
-
-        //cout << tmphist.at(0) << "\n";
-        cout << "minint\tmaxint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\t\tCNRmean\t\tSNRotsu\t\tCNRotsu\t\tFocusScore\n";
-        cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
-
-    }
-    else
-    {
-        for (int c=0;c<nChannel;c++)
+        cout << "\nComputing statistics\n";
+        if(nChannel == 1)
         {
             int  maxint,minint;
             double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
-            vector<uint8_t> subvec;
 
             //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
-            if(inlist->size()==1)
-            {
-                vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
-            }
-            if(inlist->size()==1)
-            {
-                getVecSWC(inimg1d, sz, c, neuron, subvec);
-            }
-            getStats(subvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
+            getStats(intvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
             QVector<int> tmphist;
             //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
-            getHistogram(subvec, mysize, max_value, histscale, tmphist);
+            getHistogram(intvec, mysize, max_value, histscale, tmphist);
             pcmin = double(tmphist.at(minint))*100/double(sz[0]*sz[1]*sz[2]);
             pcmax = double(tmphist.at(maxint))*100/double(sz[0]*sz[1]*sz[2]);
             hist_vec.append(tmphist);
@@ -789,16 +690,19 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
             for(int i=0; i<tmphist.size(); i++)
             {
-                sum += i*tmphist.at(i);
+                sum = sum + i*double(tmphist.at(i));
             }
             for(int t=0; t<tmphist.size(); t++)
             {
-                q1 += tmphist.at(t);
+                q1 = q1 + double(tmphist.at(t));
+                //cout << q1 << " ";
                 if(q1>0)
                 {
                     q2 = sz[0]*sz[1]*sz[2]-q1;
-                    sumB += t*tmphist.at(t);
+                    //cout << q2 << " ";
+                    sumB = sumB + double(t)*double(tmphist.at(t));
                     u1 = sumB/q1;
+                    //cout << u1 << " ";
                     u2 = (sum-sumB)/q2;
                     sigma2 = q1*q2*(u1-u2)*(u1-u2);
                     if(sigma2 > var_max)
@@ -822,30 +726,30 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             avmeannoise=avmeansignal=stdevmean=0;
             for(int i=0; i<mysize; i++)
             {
-                if(subvec.at(i)<ThreshOtsu)
+                if(intvec.at(i)<ThreshOtsu)
                 {
-                    otsunoise.push_back(subvec.at(i));
-                    meanotsunoise += (double)subvec.at(i);
+                    otsunoise.push_back(intvec.at(i));
+                    meanotsunoise += intvec.at(i);
                 }
                 else
                 {
                     //otsusignal.push_back(intvec.at(i));
-                    meanotsusignal += (double)subvec.at(i);
+                    meanotsusignal += intvec.at(i);
                 }
 
-                if(subvec.at(i)<meanint)
+                if(intvec.at(i)<meanint)
                 {
-                    meannoise.push_back(subvec.at(i));
-                    avmeannoise += (double)subvec.at(i);
+                    meannoise.push_back(intvec.at(i));
+                    avmeannoise += intvec.at(i);
                 }
                 else
                 {
                     //meansignal.push_back(intvec.at(i));
-                    avmeansignal += (double)subvec.at(i);
+                    avmeansignal += intvec.at(i);
                 }
             }
-            meanotsunoise = meanotsunoise/(double)otsunoise.size();
-            meanotsusignal = meanotsusignal/((double)subvec.size() - (double)otsunoise.size());
+            meanotsunoise = meanotsunoise/otsunoise.size();
+            meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
             for (V3DLONG i=0;i<otsunoise.size();i++)
             {
                 stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
@@ -855,8 +759,8 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     //        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
     //        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
 
-            avmeannoise = avmeannoise/(double)meannoise.size();
-            avmeansignal = avmeansignal/((double)subvec.size() - (double)meannoise.size());
+            avmeannoise = avmeannoise/meannoise.size();
+            avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
             for (V3DLONG i=0;i<meannoise.size();i++)
             {
                 stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
@@ -881,28 +785,162 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
 
         }
+        else
+        {
+            for (int c=0;c<nChannel;c++)
+            {
+                int  maxint,minint;
+                double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
+                vector<uint8_t> subvec;
+
+                //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
+                if(inlist->size()==1)
+                {
+                    vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
+                }
+                if(inlist->size()==1)
+                {
+                    getVecSWC(inimg1d, sz, c, neuron, subvec);
+                }
+                getStats(subvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
+                QVector<int> tmphist;
+                //getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmphist);
+                getHistogram(subvec, mysize, max_value, histscale, tmphist);
+                pcmin = double(tmphist.at(minint))*100/double(sz[0]*sz[1]*sz[2]);
+                pcmax = double(tmphist.at(maxint))*100/double(sz[0]*sz[1]*sz[2]);
+                hist_vec.append(tmphist);
+                MaxIntensity_vec.append(maxint);
+                MinIntensity_vec.append(minint);
+                MeanIntensity_vec.append(meanint);
+                MedianIntensity_vec.append(medianint);
+                MADIntensity_vec.append(madint);
+                StdIntensity_vec.append(stdevint);
+                PercentMinimal_vec.append(pcmin);
+                PercentMaximal_vec.append(pcmax);
+
+                // Get Focus Score
+                focusscore = stdevint*stdevint/meanint;
+                FocusScore_vec.append(focusscore);
+
+                // Get Otsu threshold
+                double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
+                var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+                for(int i=0; i<tmphist.size(); i++)
+                {
+                    sum += i*tmphist.at(i);
+                }
+                for(int t=0; t<tmphist.size(); t++)
+                {
+                    q1 += tmphist.at(t);
+                    if(q1>0)
+                    {
+                        q2 = sz[0]*sz[1]*sz[2]-q1;
+                        sumB += t*tmphist.at(t);
+                        u1 = sumB/q1;
+                        u2 = (sum-sumB)/q2;
+                        sigma2 = q1*q2*(u1-u2)*(u1-u2);
+                        if(sigma2 > var_max)
+                        {
+                            ThreshOtsu = t;
+                            var_max =sigma2;
+                        }
+                    }
+                }
+                cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
+                ThreshOtsu_vec.append(ThreshOtsu);
+
+                // Get SNR and CNR using mean intensity and Otsu as threshold for background
+                double SNRmean,CNRmean,SNRotsu,CNRotsu;
+
+                vector<uint8_t> otsunoise;//,otsusignal;
+                double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
+                meanotsunoise=meanotsusignal=stdevotsu=0;
+                vector<uint8_t> meannoise;//,meansignal;
+                double avmeannoise,avmeansignal,stdevmean;
+                avmeannoise=avmeansignal=stdevmean=0;
+                for(int i=0; i<mysize; i++)
+                {
+                    if(subvec.at(i)<ThreshOtsu)
+                    {
+                        otsunoise.push_back(subvec.at(i));
+                        meanotsunoise += (double)subvec.at(i);
+                    }
+                    else
+                    {
+                        //otsusignal.push_back(intvec.at(i));
+                        meanotsusignal += (double)subvec.at(i);
+                    }
+
+                    if(subvec.at(i)<meanint)
+                    {
+                        meannoise.push_back(subvec.at(i));
+                        avmeannoise += (double)subvec.at(i);
+                    }
+                    else
+                    {
+                        //meansignal.push_back(intvec.at(i));
+                        avmeansignal += (double)subvec.at(i);
+                    }
+                }
+                meanotsunoise = meanotsunoise/(double)otsunoise.size();
+                meanotsusignal = meanotsusignal/((double)subvec.size() - (double)otsunoise.size());
+                for (V3DLONG i=0;i<otsunoise.size();i++)
+                {
+                    stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
+                }
+                stdevotsu /= otsunoise.size();
+                stdevotsu = sqrt(stdevotsu);
+        //        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
+        //        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
+
+                avmeannoise = avmeannoise/(double)meannoise.size();
+                avmeansignal = avmeansignal/((double)subvec.size() - (double)meannoise.size());
+                for (V3DLONG i=0;i<meannoise.size();i++)
+                {
+                    stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
+                }
+                stdevmean /= meannoise.size();
+                stdevmean = sqrt(stdevmean);
+                /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
+                stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
+
+                SNRmean = avmeansignal/stdevmean;
+                CNRmean = (maxint-meanint)/stdevmean;
+                SNRotsu = meanotsusignal/stdevotsu;
+                CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+
+                SNRmean_vec.append(SNRmean);
+                CNRmean_vec.append(CNRmean);
+                SNRotsu_vec.append(SNRotsu);
+                CNRotsu_vec.append(CNRotsu);
+
+                //cout << tmphist.at(0) << "\n";
+                cout << "minint\tmaxint\tmeanint\tmedint\tMADint\tStdint\tpcmin\tpcmax\tSNRmean\t\tCNRmean\t\tSNRotsu\t\tCNRotsu\t\tFocusScore\n";
+                cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
+
+            }
+        }
+
+        //output histogram to csv file
+        FILE *fp;
+        fp = fopen(outfileapp.at(n).toStdString().c_str(), "w");
+        QString header = "Image_name,Channel,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu,FocusScore\n";
+        fprintf(fp, "%s", header.toStdString().c_str());
+        for (int i=0;i<hist_vec.size();i++)
+        {
+            fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", infile,i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
+        }
+    //	for (int i=0;i<hist_vec.size();i++)
+    //	{
+    //		for (int j=0;j<hist_vec[i].size();j++)
+    //			fprintf(fp, "%d,", hist_vec[i][j]);
+    //		fprintf(fp,"\n");
+    //	}
+        fclose(fp);
+
+        //if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
     }
-
-	//output histogram to csv file
-	FILE *fp;
-    fp = fopen(outfileapp.toStdString().c_str(), "w");
-    QString header = "Image_name,Channel,MinIntensity,MaxIntensity,MeanIntensity,MedianIntensity,MADIntensity,StdIntensity,PercentMinimal,PercentMaximal,ThresholdOtsu,SNR_mean,CNR_mean,SNR_otsu,CNR_otsu,FocusScore\n";
-    fprintf(fp, "%s", header.toStdString().c_str());
-    for (int i=0;i<hist_vec.size();i++)
-    {
-        fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", infile,i+1,MinIntensity_vec.at(i),MaxIntensity_vec.at(i),MeanIntensity_vec.at(i),MedianIntensity_vec.at(i),MADIntensity_vec.at(i),StdIntensity_vec.at(i),PercentMinimal_vec.at(i),PercentMaximal_vec.at(i),ThreshOtsu_vec.at(i),SNRmean_vec.at(i),CNRmean_vec.at(i),SNRotsu_vec.at(i),CNRotsu_vec.at(i),FocusScore_vec.at(i));
-    }
-//	for (int i=0;i<hist_vec.size();i++)
-//	{
-//		for (int j=0;j<hist_vec[i].size();j++)
-//			fprintf(fp, "%d,", hist_vec[i][j]);
-//		fprintf(fp,"\n");
-//	}
-	fclose(fp);
-
-    //if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
-	return true;
-
+    return true;
 }
 
 
