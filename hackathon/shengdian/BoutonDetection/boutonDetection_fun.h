@@ -79,7 +79,7 @@ struct AxonalBouton
     AxonalBouton() {
         x=y=z=ccfx=ccfy=ccfz=0.0;
         path_dist_to_soma=euler_dist_to_soma=0.0;
-        nodetype=BoutonSWCNodeType;btype=BoutonType;
+        nodetype=2;btype=0;
         broder=1;
         intensity=br_intensity_mean=br_intensity_std=0;
         density=nodeR=br_r_mean=br_r_std=ccfR=0.0;
@@ -133,6 +133,15 @@ struct AxonalBouton
             break;
         }
     }
+    void reset(){
+        x=y=z=ccfx=ccfy=ccfz=0.0;
+        path_dist_to_soma=euler_dist_to_soma=0.0;
+        nodetype=2;btype=0;
+        broder=1;
+        intensity=br_intensity_mean=br_intensity_std=0;
+        density=nodeR=br_r_mean=br_r_std=ccfR=0.0;
+        color.color_ele_r=color.color_ele_g=0;color.color_ele_b=255;
+    }
     NeuronSWC out_to_NeuronSWC(){
         NeuronSWC s; s.fea_val.clear();
         s.x=this->x; s.y=this->y; s.z=this->z;
@@ -155,7 +164,24 @@ struct AxonalBouton
         return s;
     }
     void out_to_NeuronSWC(NeuronSWC& s){
-        s=this->out_to_NeuronSWC();
+        s.x=this->x; s.y=this->y; s.z=this->z;
+        s.type=this->nodetype;
+        s.r=this->nodeR;
+        s.level=this->broder;
+        s.fea_val.clear();
+        s.fea_val.append(this->ccfx);
+        s.fea_val.append(this->ccfy);
+        s.fea_val.append(this->ccfz);
+        s.fea_val.append(this->btype);
+        s.fea_val.append(this->ccfR);
+        s.fea_val.append(this->br_r_mean);
+        s.fea_val.append(this->br_r_std);
+        s.fea_val.append(this->intensity);
+        s.fea_val.append(this->br_intensity_mean);
+        s.fea_val.append(this->br_intensity_std);
+        s.fea_val.append(this->density);
+        s.fea_val.append(this->path_dist_to_soma);
+        s.fea_val.append(this->euler_dist_to_soma);
     }
     CellAPO out_to_APO(){
         CellAPO s;
@@ -242,6 +268,8 @@ void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgL
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);// for processing registered swc
 void scale_registered_swc(NeuronTree& nt,float xshift_pixels=20.0,float scale_xyz=25.0);
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered);
+QList<CellAPO> bouton_to_apo(NeuronTree nt);
+QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
 QList <CellAPO> nt_2_multi_centers(NeuronTree nt,float xs=256.0,float ys=256.0,float zs=256.0);
 
 /*radius estimation*/
@@ -253,6 +281,7 @@ void getNTRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt, doubl
 
 /*Image processing*/
 void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,bool biilateral_filter=false);
+void adaptiveThresholding(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz);
 bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor);
 template <class T> bool upsample3dvol(T *outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor);
 template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
@@ -261,8 +290,6 @@ template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c
 template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
                                                  T * templateVol3d, V3DLONG tsz0, V3DLONG tsz1, V3DLONG tsz2,
                                                  V3DLONG tlow0, V3DLONG tup0, V3DLONG tlow1, V3DLONG tup1, V3DLONG tlow2, V3DLONG tup2);
-void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize);
-void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size);
 void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int half_block_size=8,uint mip_flag=0);
 void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size=8);

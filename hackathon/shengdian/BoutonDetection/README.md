@@ -61,6 +61,7 @@ This plugin can detect axonal boutons based on axonal arbors.
       + Note: get Intensity,radius profile
         + preprocessing
           + use `Refinement` function to refine and interpolation
+        + image enhancement and adaptive thresholding
         + intensity
         + radius
           + crop image block from terafly datasets: block size= 128
@@ -161,3 +162,4 @@ This plugin can detect axonal boutons based on axonal arbors.
    > 2. image enhancement was used at refinement and a new version of mean-shift
 7. update at 2021-08-20
    > 1. add `AxonalBouton` struct
+   > 2. add `adaptive thresholding` before enhancement

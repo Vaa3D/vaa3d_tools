@@ -283,50 +283,79 @@ void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronT
             try {inimg1d = new unsigned char [pagesz];}
             catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
             enhanceImage(inimg1d_raw,inimg1d,in_sz);
-            if(inimg1d&&inimg1d_raw)
+            if(inimg1d==NULL)
             {
-                delete []inimg1d_raw;
-                inimg1d_raw=0;
+                cout<<"adaptive thresholding and enhancement fail"<<endl;
+                double imgave,imgstd;
+                mean_and_std(inimg1d_raw,pagesz,imgave,imgstd);
+                double bkg_thresh= MIN(MAX(imgave+imgstd+15,30),50);
+
+                //for all the node inside this block
+                for(V3DLONG j=0;j<siz;j++){
+                    NeuronSWC sj = listNeuron[j];
+                    if(scanned.at(j)==0&&
+                            (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
+                             (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
+                             (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
+                    {
+                        V3DLONG thisx,thisy,thisz;                    thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
+                        NeuronSWC sj_shifted=sj;NeuronSWC out;
+                        sj_shifted.x-=start_x; sj_shifted.y-=start_y; sj_shifted.z-=start_z;
+                        if(method_code==NeuronTreeRefine)
+                            out=calc_mean_shift_center_v2(inimg1d_raw,sj_shifted,in_sz,bkg_thresh,refine_radius);
+                        else if(method_code==NodeRefine)
+                            out=nodeRefine(inimg1d_raw,sj_shifted,in_sz,refine_radius);
+                        else if(method_code==RefineAllinOne){
+                            out=calc_mean_shift_center_v2(inimg1d_raw,sj_shifted,in_sz,bkg_thresh,refine_radius);
+                            out=nodeRefine(inimg1d_raw,out,in_sz,nodeRefine_radius);
+                        }
+                        scanned[j]=inimg1d_raw[thisz * sz01 + thisy* sz0 + thisx];
+    //                    listNeuron[j].level=scanned[j];
+                        listNeuron[j].level=bkg_thresh;
+                        listNeuron[j].x=float(start_x)+out.x;
+                        listNeuron[j].y=float(start_y)+out.y;
+                        listNeuron[j].z=float(start_z)+out.z;
+                    }
+                }
+                if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
             }
             else
             {
-                cout<<"enhanced fail"<<endl;
-                inimg1d=inimg1d_raw;
-                delete []inimg1d_raw;
-                inimg1d_raw=0;
-            }
-            double imgave,imgstd;
-            mean_and_std(inimg1d,pagesz,imgave,imgstd);
-            double bkg_thresh= MIN(MAX(imgave+imgstd+15,30),50);
+                cout<<"adaptive thresholding and enhancement finished"<<endl;
+                if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
+                double imgave,imgstd;
+                mean_and_std(inimg1d,pagesz,imgave,imgstd);
+                double bkg_thresh= MIN(MAX(imgave+imgstd+15,30),50);
 
-            //for all the node inside this block
-            for(V3DLONG j=0;j<siz;j++){
-                NeuronSWC sj = listNeuron[j];
-                if(scanned.at(j)==0&&
-                        (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
-                         (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
-                         (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
-                {
-                    V3DLONG thisx,thisy,thisz;                    thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
-                    NeuronSWC sj_shifted=sj;NeuronSWC out;
-                    sj_shifted.x-=start_x; sj_shifted.y-=start_y; sj_shifted.z-=start_z;
-                    if(method_code==NeuronTreeRefine)
-                        out=calc_mean_shift_center_v2(inimg1d,sj_shifted,in_sz,bkg_thresh,refine_radius);
-                    else if(method_code==NodeRefine)
-                        out=nodeRefine(inimg1d,sj_shifted,in_sz,refine_radius);
-                    else if(method_code==RefineAllinOne){
-                        out=calc_mean_shift_center_v2(inimg1d,sj_shifted,in_sz,bkg_thresh,refine_radius);
-                        out=nodeRefine(inimg1d,out,in_sz,nodeRefine_radius);
+                //for all the node inside this block
+                for(V3DLONG j=0;j<siz;j++){
+                    NeuronSWC sj = listNeuron[j];
+                    if(scanned.at(j)==0&&
+                            (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
+                             (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
+                             (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
+                    {
+                        V3DLONG thisx,thisy,thisz;                    thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
+                        NeuronSWC sj_shifted=sj;NeuronSWC out;
+                        sj_shifted.x-=start_x; sj_shifted.y-=start_y; sj_shifted.z-=start_z;
+                        if(method_code==NeuronTreeRefine)
+                            out=calc_mean_shift_center_v2(inimg1d,sj_shifted,in_sz,bkg_thresh,refine_radius);
+                        else if(method_code==NodeRefine)
+                            out=nodeRefine(inimg1d,sj_shifted,in_sz,refine_radius);
+                        else if(method_code==RefineAllinOne){
+                            out=calc_mean_shift_center_v2(inimg1d,sj_shifted,in_sz,bkg_thresh,refine_radius);
+                            out=nodeRefine(inimg1d,out,in_sz,nodeRefine_radius);
+                        }
+                        scanned[j]=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+    //                    listNeuron[j].level=scanned[j];
+                        listNeuron[j].level=bkg_thresh;
+                        listNeuron[j].x=float(start_x)+out.x;
+                        listNeuron[j].y=float(start_y)+out.y;
+                        listNeuron[j].z=float(start_z)+out.z;
                     }
-                    scanned[j]=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
-//                    listNeuron[j].level=scanned[j];
-                    listNeuron[j].level=bkg_thresh;
-                    listNeuron[j].x=float(start_x)+out.x;
-                    listNeuron[j].y=float(start_y)+out.y;
-                    listNeuron[j].z=float(start_z)+out.z;
                 }
+                if(inimg1d) {delete []inimg1d; inimg1d=0;}
             }
-            if(inimg1d) {delete []inimg1d; inimg1d=0;}
         }
     }
     //release pointer
@@ -353,50 +382,79 @@ void refinement_Image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuron
     try {inimg1d = new unsigned char [total_size];}
     catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
     enhanceImage(inimg1d_raw,inimg1d,in_sz,true);
-    if(inimg1d&&inimg1d_raw)
+    if(inimg1d==NULL)
     {
-        delete []inimg1d_raw;
-        inimg1d_raw=0;
+        cout<<"adaptive thresholding and enhancement fail"<<endl;
+        double imgave,imgstd;
+        mean_and_std(inimg1d_raw,total_size,imgave,imgstd);
+        double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
+        cout<<"bkg thresh="<<bkg_thresh<<endl;
+
+        for(V3DLONG i=0;i<siz;i++)
+        {
+            //for all the node
+            NeuronSWC s = listNeuron[i];
+            V3DLONG thisx,thisy,thisz;        thisx=s.x;thisy=s.y;thisz=s.z;
+            s.level=inimg1d_raw[thisz * sz01 + thisy * sz0 + thisx];
+            listNeuron[i].level=bkg_thresh;
+
+            NeuronSWC out;
+            if(method_code==NeuronTreeRefine)
+                out=calc_mean_shift_center_v2(inimg1d_raw,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
+            else if(method_code==NodeRefine)
+                out=nodeRefine(inimg1d_raw,listNeuron.at(i),in_sz,refine_radius);
+            else if(method_code>=RefineAllinOne){
+                out=calc_mean_shift_center_v2(inimg1d_raw,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
+                out=nodeRefine(inimg1d_raw,out,in_sz,nodeRefine_radius);
+            }
+            if(s.level+imgstd<out.level)
+            {
+                s.level=out.level;
+                listNeuron[i].x=out.x;
+                listNeuron[i].y=out.y;
+                listNeuron[i].z=out.z;
+                listNeuron[i].level=bkg_thresh;
+            }
+        }
+        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
     }
     else
     {
-        cout<<"enhanced fail"<<endl;
-        inimg1d=inimg1d_raw;
-        delete []inimg1d_raw;
-        inimg1d_raw=0;
-    }
-    double imgave,imgstd;
-    mean_and_std(inimg1d,total_size,imgave,imgstd);
-    double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),50);
-    cout<<"bkg thresh="<<bkg_thresh<<endl;
+        cout<<"adaptive thresholding and enhancement finished"<<endl;
+        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
+        double imgave,imgstd;
+        mean_and_std(inimg1d,total_size,imgave,imgstd);
+        double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
+        cout<<"bkg thresh="<<bkg_thresh<<endl;
 
-    for(V3DLONG i=0;i<siz;i++)
-    {
-        //for all the node
-        NeuronSWC s = listNeuron[i];
-        V3DLONG thisx,thisy,thisz;        thisx=s.x;thisy=s.y;thisz=s.z;
-        s.level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-        listNeuron[i].level=bkg_thresh;
-
-        NeuronSWC out;
-        if(method_code==NeuronTreeRefine)
-            out=calc_mean_shift_center_v2(inimg1d,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
-        else if(method_code==NodeRefine)
-            out=nodeRefine(inimg1d,listNeuron.at(i),in_sz,refine_radius);
-        else if(method_code>=RefineAllinOne){
-            out=calc_mean_shift_center_v2(inimg1d,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
-            out=nodeRefine(inimg1d,out,in_sz,nodeRefine_radius);
-        }
-        if(s.level+imgstd<out.level)
+        for(V3DLONG i=0;i<siz;i++)
         {
-            s.level=out.level;
-            listNeuron[i].x=out.x;
-            listNeuron[i].y=out.y;
-            listNeuron[i].z=out.z;
+            //for all the node
+            NeuronSWC s = listNeuron[i];
+            V3DLONG thisx,thisy,thisz;        thisx=s.x;thisy=s.y;thisz=s.z;
+            s.level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
             listNeuron[i].level=bkg_thresh;
+
+            NeuronSWC out;
+            if(method_code==NeuronTreeRefine)
+                out=calc_mean_shift_center_v2(inimg1d,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
+            else if(method_code==NodeRefine)
+                out=nodeRefine(inimg1d,listNeuron.at(i),in_sz,refine_radius);
+            else if(method_code>=RefineAllinOne){
+                out=calc_mean_shift_center_v2(inimg1d,listNeuron.at(i),in_sz,bkg_thresh,refine_radius);
+                out=nodeRefine(inimg1d,out,in_sz,nodeRefine_radius);
+            }
+            if(s.level+imgstd<out.level)
+            {
+                s.level=out.level;
+                listNeuron[i].x=out.x;
+                listNeuron[i].y=out.y;
+                listNeuron[i].z=out.z;
+                listNeuron[i].level=bkg_thresh;
+            }
         }
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
-    if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
 NeuronSWC calc_mean_shift_center_v2(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre,int windowradius)
 {
@@ -746,7 +804,7 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
 }
 void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,long block_size,int bkg_bias,double upfactor)
 {
-    cout<<"get radius and intensity profile under terafly datasets"<<endl;
+    cout<<"get radius and intensity profile from terafly datasets"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
     //load terafly img
     V3DLONG siz = listNeuron.size();
@@ -784,55 +842,73 @@ void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, Neuron
             try {inimg1d_raw = new unsigned char [pagesz];}
             catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
             inimg1d_raw = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
-            if(inimg1d_raw==NULL){ cout<<"Crop fail"<<endl;continue; }
+            if(inimg1d_raw==NULL){cout<<"Crop fail"<<endl;continue; }
 
+            double imgave_raw,imgstd_raw;
+            mean_and_std(inimg1d_raw,pagesz,imgave_raw,imgstd_raw);
             /*image enhancement*/
             unsigned char * inimg1d = 0;
             try {inimg1d = new unsigned char [pagesz];}
             catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
             enhanceImage(inimg1d_raw,inimg1d,in_sz);
-            if(inimg1d&&inimg1d_raw)
+            if(inimg1d==NULL)
             {
-                delete []inimg1d_raw;
-                inimg1d_raw=0;
+                cout<<"adaptive thresholding and enhancement fail"<<endl;
+                double imgave,imgstd;
+                mean_and_std(inimg1d_raw,pagesz,imgave,imgstd);
+                double bkg_thresh= MIN(MAX(imgave+imgstd+bkg_bias,30),60);
+                //for all the node inside this block
+                for(V3DLONG j=0;j<siz;j++){
+                    NeuronSWC sj = listNeuron[j];
+                    if(sj.level==1&&
+                            (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
+                             (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
+                             (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
+                    {
+                        V3DLONG thisx,thisy,thisz;
+                        thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
+                        listNeuron[j].level=inimg1d_raw[thisz * sz01 + thisy* sz0 + thisx];
+                        //get node radius
+                        NeuronSWC sr=sj;        sr.x=thisx; sr.y=thisy;sr.z=thisz;
+                        listNeuron[j].r=radiusEstimation(inimg1d_raw,in_sz,sr,upfactor,bkg_thresh);
+                        listNeuron[j].timestamp=bkg_thresh;
+                    }
+                }
+                if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
             }
             else
             {
-                cout<<"enhanced fail"<<endl;
-                inimg1d=inimg1d_raw;
-                delete []inimg1d_raw;
-                inimg1d_raw=0;
-            }
-
-            double imgave,imgstd;
-            mean_and_std(inimg1d,pagesz,imgave,imgstd);
-            double bkg_thresh= MIN(MAX(imgave+imgstd+bkg_bias,30),50);
-            //for all the node inside this block
-            for(V3DLONG j=0;j<siz;j++){
-                NeuronSWC sj = listNeuron[j];
-                if(sj.level==1&&
-                        (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
-                         (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
-                         (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
-                {
-                    V3DLONG thisx,thisy,thisz;
-                    thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
-                    listNeuron[j].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
-                    //get node radius
-                    NeuronSWC sr=sj;        sr.x=thisx; sr.y=thisy;sr.z=thisz;
-                    listNeuron[j].r=radiusEstimation(inimg1d,in_sz,sr,upfactor,bkg_thresh);
-                    listNeuron[j].timestamp=bkg_thresh;
+                cout<<"adaptive thresholding and enhancement"<<endl;
+                if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
+                double imgave,imgstd;
+                mean_and_std(inimg1d,pagesz,imgave,imgstd);
+                double bkg_thresh= MIN(MAX(imgave+imgstd+bkg_bias,30),60);
+                //for all the node inside this block
+                for(V3DLONG j=0;j<siz;j++){
+                    NeuronSWC sj = listNeuron[j];
+                    if(sj.level==1&&
+                            (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
+                             (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
+                             (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
+                    {
+                        V3DLONG thisx,thisy,thisz;
+                        thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
+                        listNeuron[j].level=inimg1d[thisz * sz01 + thisy* sz0 + thisx];
+                        //get node radius
+                        NeuronSWC sr=sj;        sr.x=thisx; sr.y=thisy;sr.z=thisz;
+                        listNeuron[j].r=radiusEstimation(inimg1d,in_sz,sr,upfactor,bkg_thresh);
+                        listNeuron[j].timestamp=bkg_thresh;
+                    }
                 }
+                if(inimg1d) {delete []inimg1d; inimg1d=0;}
             }
-            if(inimg1d) {delete []inimg1d; inimg1d=0;}
-            if(in_sz) {delete []in_sz; in_sz=0;}
         }
     }
     //release pointer
     if(in_zz) {delete []in_zz; in_zz=0;}
 }
 void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, NeuronTree& nt,int bkg_bias, double upfactor){
-    cout<<"get radius and intensity profile"<<endl;
+    cout<<"get radius and intensity profile from image block"<<endl;
     QList<NeuronSWC>& listNeuron =  nt.listNeuron;
     V3DLONG siz = nt.listNeuron.size();
     QHash <V3DLONG, V3DLONG>  hashNeuron;    hashNeuron.clear();
@@ -853,40 +929,60 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
     try {inimg1d = new unsigned char [total_size];}
     catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
     enhanceImage(inimg1d_raw,inimg1d,in_sz);
-    if(inimg1d&&inimg1d_raw)
+    if(inimg1d==NULL)
     {
-        delete []inimg1d_raw;
-        inimg1d_raw=0;
+        cout<<"adaptive thresholding and enhancement fail"<<endl;
+        double imgave,imgstd;
+        mean_and_std(inimg1d_raw,total_size,imgave,imgstd);
+        double bkg_thresh=MIN(MAX(imgave+imgstd+bkg_bias,30),60);
+        cout<<"bkg thresh="<<bkg_thresh<<","<<imgave<<","<<imgstd<<endl;
+
+        for(V3DLONG i=0;i<siz;i++)
+        {
+            //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+            NeuronSWC s = listNeuron.at(i);
+            V3DLONG thisx,thisy,thisz;
+            thisx=s.x;thisy=s.y;thisz=s.z;
+            s.level=inimg1d_raw[thisz * sz01 + thisy * sz0 + thisx];
+            //get node radius
+            s.r=radiusEstimation(inimg1d_raw,in_sz,s,upfactor,bkg_thresh);
+            s.timestamp=bkg_thresh;
+            listNeuron[i].level=s.level;
+            listNeuron[i].x=s.x;
+            listNeuron[i].y=s.y;
+            listNeuron[i].z=s.z;
+            listNeuron[i].r=s.r;
+        }
+        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
     }
     else
     {
-        cout<<"enhanced fail"<<endl;
-        inimg1d=inimg1d_raw;
-        delete []inimg1d_raw;
-        inimg1d_raw=0;
-    }
-    double imgave,imgstd;
-    mean_and_std(inimg1d,total_size,imgave,imgstd);
-    double bkg_thresh=MIN(MAX(imgave+imgstd+bkg_bias,30),50);
-    cout<<"bkg thresh="<<bkg_thresh<<endl;
+        cout<<"adaptive thresholding and enhancement"<<endl;
+        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
 
-    for(V3DLONG i=0;i<siz;i++)
-    {
-        //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
-        NeuronSWC s = listNeuron.at(i);
-        V3DLONG thisx,thisy,thisz;
-        thisx=s.x;thisy=s.y;thisz=s.z;
-        s.level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-        //get node radius
-        s.r=radiusEstimation(inimg1d,in_sz,s,upfactor,bkg_thresh);
-        s.timestamp=bkg_thresh;
-        listNeuron[i].level=s.level;
-        listNeuron[i].x=s.x;
-        listNeuron[i].y=s.y;
-        listNeuron[i].z=s.z;
-        listNeuron[i].r=s.r;
+        double imgave,imgstd;
+        mean_and_std(inimg1d,total_size,imgave,imgstd);
+        double bkg_thresh=MIN(MAX(imgave+imgstd+bkg_bias,30),60);
+        cout<<"bkg thresh="<<bkg_thresh<<","<<imgave<<","<<imgstd<<endl;
+
+        for(V3DLONG i=0;i<siz;i++)
+        {
+            //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+            NeuronSWC s = listNeuron.at(i);
+            V3DLONG thisx,thisy,thisz;
+            thisx=s.x;thisy=s.y;thisz=s.z;
+            s.level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
+            //get node radius
+            s.r=radiusEstimation(inimg1d,in_sz,s,upfactor,bkg_thresh);
+            s.timestamp=bkg_thresh;
+            listNeuron[i].level=s.level;
+            listNeuron[i].x=s.x;
+            listNeuron[i].y=s.y;
+            listNeuron[i].z=s.z;
+            listNeuron[i].r=s.r;
+        }
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
-    if(inimg1d) {delete []inimg1d; inimg1d=0;}
 }
 //ccf profile
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
@@ -951,9 +1047,9 @@ void boutonFilter_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList &
     if(infiles.size()>=1) {inswc_file = infiles[0];}
     else {  printHelp(); return;}
     //read para list
-    double radius_delta=(inparas.size()>=1)?atoi(inparas[0]):1.3;
+    double radius_delta=(inparas.size()>=1)?atoi(inparas[0]):1.5;
     double intensity_delta=(inparas.size()>=2)?atoi(inparas[1]):0.5;
-    double axon_trunk_radius=(inparas.size()>=3)?atoi(inparas[2]):2.5;
+    double axon_trunk_radius=(inparas.size()>=3)?atoi(inparas[2]):3;
 
     //read input swc to neuron-tree
    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -1356,6 +1452,90 @@ void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgL
 //    rendering_different_bouton(nt_bouton_tip_pruning);
     writeESWC_file(QString::fromStdString(out_nt_filename),nt_bouton_tip_pruning);
 }
+/*void nearBouton_pruning(NeuronTree& nt,float pruning_dist,bool ccf_domain){
+
+     //  for bouton-site, compute the distance to it's parent-bouton-sites.
+     // remove bouton that is a branch node, remove bouton that is too close to it's parent-bouton
+    V3DLONG siz=nt.listNeuron.size();
+    if(siz<=0){return;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        hashNeuron.insert(s.n,i);
+    }
+    QHash <V3DLONG, V3DLONG>  child_parent_bouton;child_parent_bouton.clear();
+    vector<float> dist_to_parent(siz,0.0);
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(s.parent<0||!hashNeuron.contains(s.parent)) {continue;}
+
+        AxonalBouton sb; sb.init_bouton(s);
+        float dist_to_parent_bouton=0.0;
+        if(sb.btype>=BoutonType){
+            //start from a bouton
+            V3DLONG pid=hashNeuron.value(s.parent);
+            NeuronSWC sp=nt.listNeuron.at(pid);
+            AxonalBouton spb; spb.init_bouton(sp);
+            while(true){
+                if(ccf_domain)
+                    dist_to_parent_bouton+=sqrt((sb.ccfx-spb.ccfx)*(sb.ccfx-spb.ccfx)+
+                                               (sb.ccfy-spb.ccfy)*(sb.ccfy-spb.ccfy)+
+                                                (sb.ccfz-spb.ccfz)*(sb.ccfz-spb.ccfz));
+                else
+                    dist_to_parent_bouton+=sqrt((s.x-sp.x)*(s.x-sp.x)+
+                                                (s.y-sp.y)*(s.y-sp.y)+
+                                                (s.z-sp.z)*(s.z-sp.z));
+
+                if(spb.btype==BoutonType){
+                    child_parent_bouton.insert(i,pid);
+                    break;
+                }
+                if(sp.parent>0&&hashNeuron.contains(sp.parent)){
+                    s=sp;
+                    sb.init_bouton(s);
+                    pid=hashNeuron.value(s.parent);
+                    sp=nt.listNeuron.at(pid);
+                    spb.init_bouton(sp);
+                }
+                else{//can't find parent-bouton-node
+                    dist_to_parent_bouton+=pruning_dist;
+                    child_parent_bouton.insert(i,-1);
+                    break;
+                }
+            }
+            dist_to_parent[i]=dist_to_parent_bouton;
+        }
+    }
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+    vector<bool> pruning_flag(siz,false);
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        AxonalBouton sb;sb.init_bouton(s);
+//        if(ntype.at(i)==2) {pruning_flag[i]=true;continue;}
+        if(pruning_flag.at(i)) {continue;}
+        if(sb.btype>=BoutonType&&dist_to_parent.at(i)<pruning_dist
+                &&child_parent_bouton.contains(i)){
+            //compare with it's parent bouton, remove the one with small radius
+            V3DLONG pid=child_parent_bouton.value(i);
+            NeuronSWC sp=nt.listNeuron.at(pid);
+            if(s.r<=sp.r)
+                pruning_flag[i]=true;
+            else
+                pruning_flag[pid]=true;
+        }
+    }
+    //out
+    V3DLONG removing_num=0;
+    for(V3DLONG i=0;i<siz;i++){
+        if(pruning_flag.at(i)){
+            nt.listNeuron[i].type=2;
+            nt.listNeuron[i].fea_val[3]=0;
+            nt.listNeuron[i].fea_val[10]=0.0;
+            removing_num++;
+        }
+    }
+    cout<<"Removing "<<removing_num<<" boutons."<<endl;
+}*/
 void nearBouton_pruning(NeuronTree& nt,float pruning_dist,bool ccf_domain){
     /*
      *  for bouton-site, compute the distance to it's parent-bouton-sites.
@@ -1960,7 +2140,35 @@ void bouton_dist_to_soma(NeuronTree& nt,bool ccf_domain){
         }
     }
 }
-
+QList<CellAPO> bouton_to_apo(NeuronTree nt){
+    /*this function will generate bouton.apo file and bouton.marker file*/
+    V3DLONG siz=nt.listNeuron.size();
+    QList<CellAPO> boutons; boutons.clear();
+    // to apo
+     for(V3DLONG i=0;i<siz;i++){
+         NeuronSWC s=nt.listNeuron.at(i);
+         AxonalBouton sb; sb.init_bouton(s);
+         if(sb.btype<BoutonType){continue;}
+         CellAPO bca=sb.out_to_APO();
+         bca.n=boutons.size()+1;
+         boutons.append(bca);
+     }
+     return boutons;
+}
+QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt){
+    /*this function will generate bouton.apo file and bouton.marker file*/
+    V3DLONG siz=nt.listNeuron.size();
+    QList<ImageMarker> boutons; boutons.clear();
+    // to apo
+     for(V3DLONG i=0;i<siz;i++){
+         NeuronSWC s=nt.listNeuron.at(i);
+         AxonalBouton sb; sb.init_bouton(s);
+         if(sb.btype<BoutonType){continue;}
+         ImageMarker bim=sb.out_to_ImageMarker();
+         boutons.append(bim);
+     }
+     return boutons;
+}
 QList <CellAPO> nt_2_multi_centers(NeuronTree nt,float xs,float ys,float zs){
     QList <CellAPO> nt_centers; nt_centers.clear();
     V3DLONG niz=nt.listNeuron.size();
@@ -2159,131 +2367,6 @@ void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d, V3DLON
     }
     simple_saveimage_wrapper(callback,outpath.toStdString().c_str(), (unsigned char *)image_mip, mip_sz, 1);
     if(image_mip) {delete []image_mip; image_mip = 0;}
-}
-void erosionImg(unsigned char *&inimg1d, long in_sz[], int kernelSize)
-{
-    /*Img processing: erosion
-     *kernel size: default=3
-     *revise the value of each pixels to it's local minimal
-    */
-    cout<<"Img processing: erosion"<<endl;
-    long sz01 = in_sz[0] * in_sz[1];
-    long sz0 = in_sz[0];
-    long startx,starty,startz;
-    long endx,endy,endz;
-    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
-    unsigned char * im_transfer = 0;
-    V3DLONG pagesz;
-    pagesz = sz01*sz0;
-    try {im_transfer = new unsigned char [pagesz];}
-    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-//    im_transfer=inimg1d;
-    //back up
-    for(long ix=0;ix<in_sz[0];ix++)
-    {
-        for(long iy=0;iy<in_sz[1];iy++)
-        {
-            for(long iz=0;iz<in_sz[2];iz++)
-            {
-                im_transfer[iz * sz01 + iy * sz0 + ix]=inimg1d[iz * sz01 + iy * sz0 + ix];
-            }
-        }
-    }
-    cout<<"copy img pointer"<<endl;
-    for(long ix=0;ix<in_sz[0];ix++)
-    {
-        for(long iy=0;iy<in_sz[1];iy++)
-        {
-            for(long iz=0;iz<in_sz[2];iz++)
-            {
-//                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
-                //get the local area
-                startx=(ix-kernelSize>=0)?(ix-kernelSize):0;
-                endx=(ix+kernelSize<in_sz[0])?(ix+kernelSize):in_sz[0];
-                starty=(iy-kernelSize>=0)?(iy-kernelSize):0;
-                endy=(iy+kernelSize<in_sz[1])?(iy+kernelSize):in_sz[1];
-                startz=(iz-kernelSize>=0)?(iz-kernelSize):0;
-                endz=(iz+kernelSize<in_sz[2])?(iz+kernelSize):in_sz[2];
-                long tmpIntensity=im_transfer[iz * sz01 + iy * sz0 + ix];
-                for(long kx=startx;kx<endx;kx++)
-                {
-                    for(long ky=starty;ky<endy;ky++)
-                    {
-                        for(long kz=startz;kz<endz;kz++)
-                        {
-                            long thistmpIntensity=im_transfer[kz * sz01 + ky * sz0 + kx];
-                            tmpIntensity=(thistmpIntensity<tmpIntensity)?thistmpIntensity:tmpIntensity;
-
-                        }
-                    }
-                }
-                //erosion
-                inimg1d[iz * sz01 + iy * sz0 + ix]=tmpIntensity;
-            }
-        }
-    }
-    if(im_transfer) {delete []im_transfer; im_transfer=0;}
-}
-void maskImg(V3DPluginCallback2 &callback, unsigned char *&inimg1d, QString outpath, long in_sz[], NeuronTree &nt, int maskRadius,int erosion_kernel_size)
-{
-    /*for all the pixels in the dst block*/
-    QList<NeuronSWC> listNeuron =  nt.listNeuron;
-    V3DLONG siz = listNeuron.size();
-    if(siz<1) return;
-    long sz01 = in_sz[0] * in_sz[1];
-    long sz0 = in_sz[0];
-    int startx,starty,startz;
-    int endx,endy,endz;
-    cout<<"Input img size x="<<in_sz[0]<<";y="<<in_sz[1]<<";z="<<in_sz[2]<<endl;
-    unsigned char * im_transfer = 0;
-    V3DLONG pagesz;
-    pagesz = sz01*sz0;
-    try {im_transfer = new unsigned char [pagesz];}
-    catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-    for(int ix=0;ix<in_sz[0];ix++)
-    {
-        for(int iy=0;iy<in_sz[1];iy++)
-        {
-            for(int iz=0;iz<in_sz[2];iz++)
-            {
-                im_transfer[iz * sz01 + iy * sz0 + ix]=0;
-            }
-        }
-    }
-
-    for(int is=0;is<siz;is++)
-    {
-        int ix,iy,iz;
-        NeuronSWC thiss = listNeuron[is];
-        ix=int(thiss.x);
-        iy=int(thiss.y);
-        iz=int(thiss.z);
-        startx=(ix-maskRadius>=0)?(ix-maskRadius):0;
-        endx=(ix+maskRadius<in_sz[0])?(ix+maskRadius):in_sz[0];
-        starty=(iy-maskRadius>=0)?(iy-maskRadius):0;
-        endy=(iy+maskRadius<in_sz[1])?(iy+maskRadius):in_sz[1];
-        startz=(iz-maskRadius>=0)?(iz-maskRadius):0;
-        endz=(iz+maskRadius<in_sz[2])?(iz+maskRadius):in_sz[2];
-        // for the surrounding area
-        for(long iix=startx;iix<(endx);iix++)
-        {
-            for(long iiy=starty;iiy<(endy);iiy++)
-            {
-                for(long iiz=startz;iiz<(endz);iiz++)
-                {
-                    im_transfer[iiz * sz01 + iiy * sz0 + iix]=inimg1d[iiz * sz01 + iiy * sz0 + iix];
-
-                }
-            }
-        }
-    }
-    //erosion
-//    if(erosion_kernel_size)
-//        erosionImg(im_transfer,in_sz,erosion_kernel_size);
-    //save img
-    simple_saveimage_wrapper(callback, outpath.toStdString().c_str(),(unsigned char *)im_transfer,in_sz,1);
-    //release pointer
-     if(im_transfer) {delete []im_transfer; im_transfer=0;}
 }
 bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc, string inapo,QString save_path, int cropx, int cropy, int cropz)
 {
@@ -2633,7 +2716,11 @@ void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,b
 
     V3DLONG tolSZ = mysz[0]*mysz[1]*mysz[2]*mysz[3];
 
-    cout<<"do sigma correction "<<endl;
+    cout<<"adaptive thresholding "<<endl;
+    adaptiveThresholding(data1d,dst,mysz);
+    for(V3DLONG i=0; i<tolSZ; i++)
+        data1d[i]=dst[i];
+
     sigma_correction(data1d, mysz, cutoff, gain, dst, 1);
     cout<<"finish sigma correction "<<endl;
 
@@ -2655,7 +2742,44 @@ void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,b
     cout<<"do intensity rescale"<<endl;
     intensity_rescale(data1d, mysz, dst, 1);
     cout<<"finish intensity rescale"<<endl;
+}
+void adaptiveThresholding(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz)
+{
+    V3DLONG h = 5, d = 3;
+    V3DLONG iImageWidth, iImageHeight,iImageLayer;
+    iImageWidth=mysz[0];
+    iImageHeight=mysz[1];
+    iImageLayer=mysz[2];
 
+    V3DLONG i, j,k,n,count;
+    double t, temp;
+
+    V3DLONG mCount = iImageHeight * iImageWidth;
+    for (i=0; i<iImageLayer; i++)
+    {
+        for (j=0; j<iImageHeight; j++)
+        {
+            for (k=0; k<iImageWidth; k++)
+            {
+                V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                V3DLONG curpos1 = i* mCount + j*iImageWidth;
+                V3DLONG curpos2 = j* iImageWidth + k;
+                temp = 0;
+                count = 0;
+                for(n =1 ; n <= d  ;n++)
+                {
+                    if (k>h*n) {temp += data1d[curpos1 + k-(h*n)]; count++;}
+                    if (k+(h*n)< iImageWidth) { temp += data1d[curpos1 + k+(h*n)]; count++;}
+                    if (j>h*n) {temp += data1d[i* mCount + (j-(h*n))*iImageWidth + k]; count++;}//
+                    if (j+(h*n)<iImageHeight) {temp += data1d[i* mCount + (j+(h*n))*iImageWidth + k]; count++;}//
+                    if (i>(h*n)) {temp += data1d[(i-(h*n))* mCount + curpos2]; count++;}//
+                    if (i+(h*n)< iImageLayer) {temp += data1d[(i+(h*n))* mCount + j* iImageWidth + k ]; count++;}
+                }
+                t =  data1d[curpos]-temp/(count);
+                dst[curpos]= (t > 0)? t : 0;
+            }
+        }
+    }
 }
 bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor){
     return upsample3dvol(outimg1d,inimg1d,szout,szin,dfactor);

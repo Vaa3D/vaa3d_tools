@@ -32,6 +32,7 @@ QStringList BoutonDetectionPlugin::funclist() const
       <<tr("BoutonSWC_pruning")
      <<tr("CCF_profile")
     <<tr("Bouton_feature")
+    <<tr("ToMarkers")
     <<tr("UpsampleImage")
     <<tr("SWC_Analysis")
     <<tr("help");
@@ -240,6 +241,22 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     else if (func_name == tr("Bouton_feature"))
     {
         bouton_feature_dofunc(callback,input,output);
+    }
+    else if (func_name == tr("ToMarkers"))
+    {
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        NeuronTree nt = readSWC_file(inswc_file);
+        if(!nt.listNeuron.size()) return false;
+        int imageMarker=(inparas.size()>=1)?atoi(inparas[0]):1;
+        QList<CellAPO> apoboutons=bouton_to_apo(nt);
+        QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
+        writeAPO_file(apofilename,apoboutons);
+        if(imageMarker>0){
+            QString mfilename=(outfiles.size()>=2)?outfiles[1]:(inswc_file+ ".marker");
+            QList<ImageMarker> mboutons=bouton_to_imageMarker(nt);
+            writeMarker_file(mfilename,mboutons);
+        }
     }
     else if (func_name == tr("SWC_Analysis"))
     {
