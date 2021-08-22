@@ -87,6 +87,7 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
 
     vector<long> ids;
     vector<long> parents;
+    cout << "reordering tree \n";
     // Reorder tree ids so that neuron.at(i).n=i+1
     for(V3DLONG i=0;i<neuron.size();i++)
     {
@@ -113,16 +114,25 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
     vector <double> radii;
     vector <unsigned int> treeint;
 //    vector <int> nrnint;
+
+    cout << "getting foreground \n";
     for(V3DLONG id=0; id<neuron.size(); id++)
     {
         locswc.push_back(XYZ(neuron.at(id).x,neuron.at(id).y,neuron.at(id).z));
         radii.push_back(neuron.at(id).radius);
+        qDebug() << neuron.at(id).x << neuron.at(id).y << neuron.at(id).z << "\n";
         V3DLONG nodex = neuron.at(id).x;
         V3DLONG nodey = neuron.at(id).y;
         V3DLONG nodez = neuron.at(id).z;
         struct XYZ treep = XYZ(nodex,nodey,nodez);
-        treeint.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
-        neuron[id].fea_val.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
+        if(nodex>0 && nodey>0 && nodez>0 && nodex<mysz[0] && nodey<mysz[1] && nodez<mysz[2]){
+            treeint.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
+            neuron[id].fea_val.push_back(data1d_crop[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
+        }
+        else{
+            treeint.push_back(0);
+            neuron[id].fea_val.push_back(0);
+        }
     }
     qDebug() << "Feature value set.";
     vector <V3DLONG> tipid;
@@ -274,30 +284,30 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
         double var=0.0;
         double ep=0.0;
         double sdev=0.0;
-        for(k=zb; k<=ze; k++)
-        {
-            V3DLONG offsetkl = k*M*N;
-            z2 = k-z; z2*=z2;
-            for(j=yb; j<=ye; j++)
-            {
-                V3DLONG offsetjl = j*N;
-                y2 = j-y; y2*=y2;
-                tmpd = y2/ry2 + z2/rz2;
-                if (tmpd>1.0)
-                    continue;
+//        for(k=zb; k<=ze; k++)
+//        {
+//            V3DLONG offsetkl = k*M*N;
+//            z2 = k-z; z2*=z2;
+//            for(j=yb; j<=ye; j++)
+//            {
+//                V3DLONG offsetjl = j*N;
+//                y2 = j-y; y2*=y2;
+//                tmpd = y2/ry2 + z2/rz2;
+//                if (tmpd>1.0)
+//                    continue;
 
-                for(i=xb; i<=xe; i++)
-                {
-                    x2 = i-x; x2*=x2;
-                    if (x2/rx2 + tmpd > 1.0)
-                        continue;
+//                for(i=xb; i<=xe; i++)
+//                {
+//                    x2 = i-x; x2*=x2;
+//                    if (x2/rx2 + tmpd > 1.0)
+//                        continue;
 
-                    s = double(data1d_crop[offsetkl + offsetjl + i]-mv);
-                    var += s*s;
-//                        n = n+1;
-                }
-            }
-        }
+//                    s = double(data1d_crop[offsetkl + offsetjl + i]-mv);
+//                    var += s*s;
+////                        n = n+1;
+//                }
+//            }
+//        }
         var=(var-ep*ep/n)/(n-1);
         sdev=sqrt(var);
 
@@ -405,33 +415,33 @@ LandmarkList get_missing_branches(V3DPluginCallback2 &callback, QWidget *parent,
         vector <struct XYZ> loccandidates1;
         vector <V3DLONG> loccandidatesint1;
 
-        for(double theta=theta0; theta<=thetaf; theta+=anglestep) // Check the step in function of the radius (arcsin(1/radius))
-        {
-            //qDebug() << theta;
-            for(double phi=phi0; phi<=phif; phi+=anglestep)
-            {
-                //qDebug() << phi;
-                struct XYZ shellp = XYZ(nodex+round(radius*sin(theta)*cos(phi)),nodey+round(radius*sin(theta)*sin(phi)),nodez+round(radius*cos(theta))); // radius*cos(theta)/5
-                struct XYZ shellp2 = XYZ(nodex+round(1.5*radius*sin(theta)*cos(phi)),nodey+round(1.5*radius*sin(theta)*sin(phi)),nodez+round(1.1*radius*cos(theta))); // radius*cos(theta)/5
-                if((shellp.x<0) || (shellp.x>=mysz[0]) || (shellp.y<0) || (shellp.y>=mysz[1]) || (shellp.z<0) || (shellp.z>=mysz[2])){continue;} // out of image border
-                if((shellp2.x<0) || (shellp2.x>=mysz[0]) || (shellp2.y<0) || (shellp2.y>=mysz[1]) || (shellp2.z<0) || (shellp2.z>=mysz[2])){continue;} // out of image border
-                for(int i=0; i<neuron.size(); i++)
-//                for(int i=1; i<80; i++)
-                {
-                    //qDebug() << i;
-                    float dist = dist_L2(shellp,locswc.at(i));
-                    // Checks whether a point is in a shell of radius 20*dendrite radius and if intensity >threshold
-                    if(dist < 2*radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh){
-                        loccandidates1.push_back(shellp);
-                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]));
-                    }
-                    if(dist < 3*radius && double(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)])>=bkg_thresh){
-                        loccandidates1.push_back(shellp2);
-                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)]));
-                    }
-                }
-            }
-        }
+//        for(double theta=theta0; theta<=thetaf; theta+=anglestep) // Check the step in function of the radius (arcsin(1/radius))
+//        {
+//            //qDebug() << theta;
+//            for(double phi=phi0; phi<=phif; phi+=anglestep)
+//            {
+//                //qDebug() << phi;
+//                struct XYZ shellp = XYZ(nodex+round(radius*sin(theta)*cos(phi)),nodey+round(radius*sin(theta)*sin(phi)),nodez+round(radius*cos(theta))); // radius*cos(theta)/5
+//                struct XYZ shellp2 = XYZ(nodex+round(1.5*radius*sin(theta)*cos(phi)),nodey+round(1.5*radius*sin(theta)*sin(phi)),nodez+round(1.1*radius*cos(theta))); // radius*cos(theta)/5
+//                if((shellp.x<0) || (shellp.x>=mysz[0]) || (shellp.y<0) || (shellp.y>=mysz[1]) || (shellp.z<0) || (shellp.z>=mysz[2])){continue;} // out of image border
+//                if((shellp2.x<0) || (shellp2.x>=mysz[0]) || (shellp2.y<0) || (shellp2.y>=mysz[1]) || (shellp2.z<0) || (shellp2.z>=mysz[2])){continue;} // out of image border
+//                for(int i=0; i<neuron.size(); i++)
+////                for(int i=1; i<80; i++)
+//                {
+//                    //qDebug() << i;
+//                    float dist = dist_L2(shellp,locswc.at(i));
+//                    // Checks whether a point is in a shell of radius 20*dendrite radius and if intensity >threshold
+//                    if(dist < 2*radius && double(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)])>=bkg_thresh){
+//                        loccandidates1.push_back(shellp);
+//                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp.z*mysz[0]*mysz[1]+shellp.y*mysz[0]+shellp.x)]));
+//                    }
+//                    if(dist < 3*radius && double(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)])>=bkg_thresh){
+//                        loccandidates1.push_back(shellp2);
+//                        loccandidatesint1.push_back(V3DLONG(data1d_crop[V3DLONG(shellp2.z*mysz[0]*mysz[1]+shellp2.y*mysz[0]+shellp2.x)]));
+//                    }
+//                }
+//            }
+//        }
 
         vector <struct XYZ> loccandidates;
         vector <V3DLONG> loccandidatesint;

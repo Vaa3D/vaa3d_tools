@@ -455,6 +455,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     if (inlist->size() == 1)
     {
         QList<NeuronSWC> tmp;
+        NeuronSWC S;
+        tmp.append(S);
+        tmp.append(S);
+        tmp.append(S);
         nt_list.push_back(tmp);
     }
     if (inlist->size() == 2)
@@ -618,6 +622,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
     {
         cout << "Iteration "<<n <<"\n";
         QList<NeuronSWC> neuron;
+        if(inlist->size()==1) neuron = nt_list.at(n);
         if(inlist->size()==2) neuron = nt_list.at(n);
         //TODO add datatype judgment in case someone wanted to compute in 16bit
         cout << "\nInitializing variables\n";
@@ -659,11 +664,12 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         if (inlist->size()==1 && inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
         cout << "\nComputing statistics\n";
-        if(nChannel == 1)
+        int  maxint,minint;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore,ThreshOtsu,SNRmean,CNRmean,SNRotsu,CNRotsu;
+        maxint=minint=0;
+        meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=ThreshOtsu=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
+        if(nChannel == 1 && neuron.size()>1)
         {
-            int  maxint,minint;
-            double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
-
             //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
             getStats(intvec, mysize, minint, maxint, meanint, medianint, madint, stdevint);
             QVector<int> tmphist;
@@ -686,8 +692,8 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             FocusScore_vec.append(focusscore);
 
             // Get Otsu threshold
-            double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
-            var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+            double var_max, sum, sumB, q1, q2, u1, u2, sigma2;
+            var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = 0;
             for(int i=0; i<tmphist.size(); i++)
             {
                 sum = sum + i*double(tmphist.at(i));
@@ -716,8 +722,6 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             ThreshOtsu_vec.append(ThreshOtsu);
 
             // Get SNR and CNR using mean intensity and Otsu as threshold for background
-            double SNRmean,CNRmean,SNRotsu,CNRotsu;
-
             vector<uint8_t> otsunoise;//,otsusignal;
             double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
             meanotsunoise=meanotsusignal=stdevotsu=0;
@@ -785,12 +789,14 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             cout << minint << "\t" << maxint << "\t" << meanint << "\t" << medianint << "\t" << madint << "\t" << stdevint << "\t" << pcmin << "\t" << pcmax << "\t" << SNRmean << "\t" << CNRmean << "\t" << SNRotsu << "\t" << CNRotsu << "\t" << focusscore << "\n";
 
         }
-        else
+        else if(neuron.size()>1)
         {
             for (int c=0;c<nChannel;c++)
             {
-                int  maxint,minint;
-                double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
+                //int  maxint,minint;
+                //double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
+                maxint=minint=0;
+                meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=ThreshOtsu=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
                 vector<uint8_t> subvec;
 
                 //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
@@ -823,8 +829,8 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 FocusScore_vec.append(focusscore);
 
                 // Get Otsu threshold
-                double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
-                var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
+                double var_max, sum, sumB, q1, q2, u1, u2, sigma2;
+                var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = 0;
                 for(int i=0; i<tmphist.size(); i++)
                 {
                     sum += i*tmphist.at(i);
@@ -850,7 +856,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 ThreshOtsu_vec.append(ThreshOtsu);
 
                 // Get SNR and CNR using mean intensity and Otsu as threshold for background
-                double SNRmean,CNRmean,SNRotsu,CNRotsu;
+                //double SNRmean,CNRmean,SNRotsu,CNRotsu;
 
                 vector<uint8_t> otsunoise;//,otsusignal;
                 double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
