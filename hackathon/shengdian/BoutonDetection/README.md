@@ -103,6 +103,7 @@ This plugin can detect axonal boutons based on axonal arbors.
           + Intensity(bouton)> mean_branch_intensity+std_branch_intensity
           + Radius(bouton)> radius_delta* mean_branch_radius
     + `BoutonSWC_pruning`
+        + remove very small tip-branches
         + remove near boutons (distance of two boutons is less than 4)
         + bouton swc internode prunning
         + tip redundancy nodes prunning
@@ -163,3 +164,4 @@ This plugin can detect axonal boutons based on axonal arbors.
 7. update at 2021-08-20
    > 1. add `AxonalBouton` struct
    > 2. add `adaptive thresholding` before enhancement
+   > 3. file io

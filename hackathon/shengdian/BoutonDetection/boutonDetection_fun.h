@@ -89,6 +89,7 @@ struct AxonalBouton
         this->x=s.x;this->y=s.y;this->z=s.z;
         this->nodetype=s.type;
         this->broder=s.level;
+        this->nodeR=s.radius;
         int sfsize=s.fea_val.size();
         switch (sfsize) {
         case 3:
@@ -132,6 +133,8 @@ struct AxonalBouton
         default:
             break;
         }
+        if(this->ccfR==0)
+            this->ccfR=this->nodeR;
     }
     void reset(){
         x=y=z=ccfx=ccfy=ccfz=0.0;
@@ -164,6 +167,7 @@ struct AxonalBouton
         return s;
     }
     void out_to_NeuronSWC(NeuronSWC& s){
+
         s.x=this->x; s.y=this->y; s.z=this->z;
         s.type=this->nodetype;
         s.r=this->nodeR;
@@ -172,14 +176,14 @@ struct AxonalBouton
         s.fea_val.append(this->ccfx);
         s.fea_val.append(this->ccfy);
         s.fea_val.append(this->ccfz);
-        s.fea_val.append(this->btype);
+        s.fea_val.append(this->btype);//index=3
         s.fea_val.append(this->ccfR);
         s.fea_val.append(this->br_r_mean);
         s.fea_val.append(this->br_r_std);
         s.fea_val.append(this->intensity);
         s.fea_val.append(this->br_intensity_mean);
         s.fea_val.append(this->br_intensity_std);
-        s.fea_val.append(this->density);
+        s.fea_val.append(this->density);//index=10
         s.fea_val.append(this->path_dist_to_soma);
         s.fea_val.append(this->euler_dist_to_soma);
     }
@@ -204,7 +208,7 @@ struct AxonalBouton
         s.intensity=this->intensity;
         return s;
     }
-    ImageMarker out_to_ImageMarker(){
+    ImageMarker out_to_ImageMarker(bool ccf=true){
         ImageMarker s;
         switch (this->btype) {
         case 1:
@@ -219,9 +223,18 @@ struct AxonalBouton
         default:
             return s;
         }
-        s.x=this->x; s.y=this->y; s.z=this->z;
+        if(ccf){
+            s.x=this->ccfx; s.y=this->ccfy; s.z=this->ccfz;
+            s.radius=this->ccfR;
+        }
+        else{
+            s.x=this->x; s.y=this->y; s.z=this->z;
+            s.radius=this->nodeR;
+        }
+        s.x+=(float)1.0;
+        s.y+=(float)1.0;
+        s.z+=(float)1.0;
         s.comment="bouton sites";
-        s.radius=this->nodeR;
         s.shape=1;
         return s;
     }
@@ -253,24 +266,28 @@ std::vector<double> get_sorted_fea_of_seg(V_NeuronSWC inseg,bool radiusfea=false
 std::vector<double> mean_and_std_seg_fea(std::vector<double> input);
 std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea=0,float delta=0.5);
 
-/*swc processing*/
-NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
-NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool ccf_domain=false);
-NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=1.5);
-void nearBouton_pruning(NeuronTree& nt,float pruning_dist=5.0,bool ccf_domain=false);
-NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist=1.0,bool ccf_domain=false);
+/*feature computation*/
 void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void boutonType_label(NeuronTree& nt,bool ccf_domain=true,int max_terminaux_bouton_branch_len=5);
 void rendering_different_bouton(NeuronTree& nt, int type_bias=BoutonSWCNodeType);
 void boutonDesity_computing(NeuronTree& nt,bool ccf_domain=true);
 void bouton_dist_to_soma(NeuronTree& nt,bool ccf_domain=true);
+/*pruning*/
 void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool ccf_domain=false);
+NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=1.5);
+void nearBouton_pruning(NeuronTree& nt,float pruning_dist=5.0,bool ccf_domain=false);
+NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist=1.0,bool ccf_domain=false);
+NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
+NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
+/*file io*/
+void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+void boutonswc_to_ccf(NeuronTree& nt,float scale=1.0);
+QList<CellAPO> bouton_to_apo(NeuronTree nt);
+QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);// for processing registered swc
 void scale_registered_swc(NeuronTree& nt,float xshift_pixels=20.0,float scale_xyz=25.0);
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered);
-QList<CellAPO> bouton_to_apo(NeuronTree nt);
-QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
-QList <CellAPO> nt_2_multi_centers(NeuronTree nt,float xs=256.0,float ys=256.0,float zs=256.0);
 
 /*radius estimation*/
 double radiusEstimation(unsigned char * & inimg1d,V3DLONG in_zz[4], NeuronSWC s,double dfactor,double bkg_thresh);
@@ -297,5 +314,6 @@ void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <
 
 /*other func:*/
 bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc, string inapo,QString save_path, int cropx, int cropy, int cropz);
+QList <CellAPO> nt_2_multi_centers(NeuronTree nt,float xs=256.0,float ys=256.0,float zs=256.0);
 void printHelp();
 #endif // BOUTONDETECTION_FUN_H

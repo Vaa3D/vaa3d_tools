@@ -32,7 +32,7 @@ QStringList BoutonDetectionPlugin::funclist() const
       <<tr("BoutonSWC_pruning")
      <<tr("CCF_profile")
     <<tr("Bouton_feature")
-    <<tr("ToMarkers")
+    <<tr("FileTo")
     <<tr("UpsampleImage")
     <<tr("SWC_Analysis")
     <<tr("help");
@@ -242,21 +242,9 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         bouton_feature_dofunc(callback,input,output);
     }
-    else if (func_name == tr("ToMarkers"))
+    else if (func_name == tr("FileTo"))
     {
-        QString inswc_file;
-        if(infiles.size()>=1) {inswc_file = infiles[0];}
-        NeuronTree nt = readSWC_file(inswc_file);
-        if(!nt.listNeuron.size()) return false;
-        int imageMarker=(inparas.size()>=1)?atoi(inparas[0]):1;
-        QList<CellAPO> apoboutons=bouton_to_apo(nt);
-        QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
-        writeAPO_file(apofilename,apoboutons);
-        if(imageMarker>0){
-            QString mfilename=(outfiles.size()>=2)?outfiles[1]:(inswc_file+ ".marker");
-            QList<ImageMarker> mboutons=bouton_to_imageMarker(nt);
-            writeMarker_file(mfilename,mboutons);
-        }
+        bouton_file_dofunc(callback,input,output);
     }
     else if (func_name == tr("SWC_Analysis"))
     {
@@ -303,9 +291,9 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         string inimg_file;
         if(infiles.size()>=1) {
             inimg_file = infiles[0];
-            double x_rez=(inparas.size()>=1)?atoi(inparas[0]):4;
-            double y_rez=(inparas.size()>=2)?atoi(inparas[1]):4;
-            double z_rez=(inparas.size()>=3)?atoi(inparas[2]):1;
+            double x_rez=(inparas.size()>=1)?atof(inparas[0]):4;
+            double y_rez=(inparas.size()>=2)?atof(inparas[1]):4;
+            double z_rez=(inparas.size()>=3)?atof(inparas[2]):1;
 
             //get out_image_path and out_swc_path
             string out_image_file=(outfiles.size()>=1)?outfiles[0]:(inimg_file+"_up.v3draw");
