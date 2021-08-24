@@ -34,7 +34,7 @@
 # registration MRI sample target
 ../binary/linux_bin/global_registration  -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw -m subject/MRI_raw.v3draw  -p r+f+n -o result/MRI/ -d 20
 
-../binary/linux_bin/global_registration  -p config/MRI_config.txt -s result/MRI/global.v3draw -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/MRI/
+../binary/linux_bin/local_registration  -p config/MRI_config.txt -s result/MRI/global.v3draw -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/MRI/
 
 
 # registration VISoR sample target
