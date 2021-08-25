@@ -203,7 +203,7 @@ struct AxonalBouton
             return s;
         }
         s.x=this->x; s.y=this->y; s.z=this->z;
-        s.sdev=this->nodeR;
+        s.volsize=this->nodeR;
         s.comment="bouton sites";
         s.intensity=this->intensity;
         return s;
@@ -235,10 +235,18 @@ struct AxonalBouton
         s.y+=(float)1.0;
         s.z+=(float)1.0;
         s.comment="bouton sites";
+        if(this->btype==BoutonType||this->btype==BoutonType+1)
+            s.comment="En-passant-bouton";
+        else if(this->btype==BoutonType+2)
+            s.comment="Terminaux-bouton";
         s.shape=1;
         return s;
     }
 };
+/*preprocess*/
+void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+
+
 /*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
 void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly=true);
 void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,long half_block_size=128,int nodeRefine_radius=2);
@@ -272,19 +280,23 @@ void boutonType_label(NeuronTree& nt,bool ccf_domain=true,int max_terminaux_bout
 void rendering_different_bouton(NeuronTree& nt, int type_bias=BoutonSWCNodeType);
 void boutonDesity_computing(NeuronTree& nt,bool ccf_domain=true);
 void bouton_dist_to_soma(NeuronTree& nt,bool ccf_domain=true);
+
 /*pruning*/
 void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool ccf_domain=false);
-NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=1.5);
 void nearBouton_pruning(NeuronTree& nt,float pruning_dist=5.0,bool ccf_domain=false);
 NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist=1.0,bool ccf_domain=false);
-NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
-NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels=1);
+
 /*file io*/
 void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void boutonswc_to_ccf(NeuronTree& nt,float scale=1.0);
 QList<CellAPO> bouton_to_apo(NeuronTree nt);
 QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
+void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,NeuronTree nt,QString outpath,int crop_half_size=16,bool mip_flag=false,int mask_size=0);
+void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
+void maskImg(unsigned char *&inimg1d,unsigned char * & im_transfer,long in_sz[], NeuronTree nt, int maskRadius=8);
+
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);// for processing registered swc
 void scale_registered_swc(NeuronTree& nt,float xshift_pixels=20.0,float scale_xyz=25.0);
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered);
@@ -307,10 +319,6 @@ template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c
 template <class T> bool interpolate_coord_linear(T * interpolatedVal, Coord3D *c, V3DLONG numCoord,
                                                  T * templateVol3d, V3DLONG tsz0, V3DLONG tsz1, V3DLONG tsz2,
                                                  V3DLONG tlow0, V3DLONG tup0, V3DLONG tlow1, V3DLONG tup1, V3DLONG tlow2, V3DLONG tup2);
-void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
-void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,QList <CellAPO> apolist,string outpath,int half_block_size=8,uint mip_flag=0);
-void getBoutonBlockSWC(NeuronTree nt,string outpath,int half_block_size=8);
-void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
 
 /*other func:*/
 bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc, string inapo,QString save_path, int cropx, int cropy, int cropz);

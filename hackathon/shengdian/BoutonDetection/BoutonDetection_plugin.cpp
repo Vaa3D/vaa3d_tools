@@ -23,6 +23,7 @@ QStringList BoutonDetectionPlugin::funclist() const
     return QStringList()
             <<tr("BoutonDetection_terafly")
            <<tr("BoutonDetection_image")
+          <<tr("Preprocess")
           << tr("Refinement_terafly")
           <<tr("Refinement_image")
         <<tr("SWC_profile_terafly")
@@ -245,6 +246,10 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     else if (func_name == tr("FileTo"))
     {
         bouton_file_dofunc(callback,input,output);
+    }
+    else if (func_name == tr("Preprocess"))
+    {
+        preprocess_dofunc(callback,input,output);
     }
     else if (func_name == tr("SWC_Analysis"))
     {

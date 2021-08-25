@@ -161,7 +161,8 @@ bool BranchTree::init(NeuronTree in_nt){
         return false;
     //get node type
     vector<int> ntype(siz,0);    ntype=getNodeType(nt);
-    vector<int> norder(siz,0);  norder=getNodeOrder(nt);
+    vector<int> norder(siz,0);
+    if(!getNodeOrder(nt,norder)) {return false;}
     V3DLONG soma_index=1;
     for (V3DLONG i=0;i<siz;i++){
         if(nt.listNeuron[i].pn<0&&nt.listNeuron[i].type==1)
@@ -545,7 +546,7 @@ bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool
     }
     return false;
 }
-vector<int> getNodeOrder(NeuronTree nt)
+bool getNodeOrder(NeuronTree nt,vector<int> & norder)
 {
     /*soma order=0
      * Workflow
@@ -554,9 +555,9 @@ vector<int> getNodeOrder(NeuronTree nt)
      * 3.out
      * PS: neuron tree must have only one soma node
     */
-    V3DLONG siz=nt.listNeuron.size();
-    vector<int> ntype(siz,0);     ntype=getNodeType(nt);
-    vector<int> norder(siz,0);     if(!siz) { return norder;}
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) { return false;}
+    vector<int> ntype(siz,0);
+    ntype=getNodeType(nt);
 
     QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
     V3DLONG somaid=-1;
@@ -564,14 +565,16 @@ vector<int> getNodeOrder(NeuronTree nt)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
         if(ntype.at(i)>2){
+            cout<<"index:"<<i<<",ntype:"<<ntype.at(i)<<",id="<<nt.listNeuron[i].n<<endl;
             if(nt.listNeuron.at(i).type!=1||nt.listNeuron.at(i).pn>=0||somaid>=0)
-                return norder;
+                return false;
             somaid=i;
         }
         else if(nt.listNeuron.at(i).type==1||nt.listNeuron.at(i).pn<0)
-            return norder;
+            return false;
     }
-    if(somaid<0){return norder;}
+    if(somaid<0){return false;}
+    cout<<"soma id "<<somaid<<endl;
     for (V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC s = nt.listNeuron[i];
@@ -591,7 +594,7 @@ vector<int> getNodeOrder(NeuronTree nt)
         }
         norder[i]+=1;
     }
-    return norder;
+    return true;
 }
 vector<int> getNodeType(NeuronTree nt)
 {
@@ -635,4 +638,488 @@ NeuronTree reindexNT(NeuronTree nt)
         nt_out_reindex.hashNeuron.insert(s.n,nt_out_reindex.listNeuron.size()-1);
     }
    return nt_out_reindex;
+}
+/*swc processing*/
+bool three_bifurcation_processing(NeuronTree& in_nt)
+{
+    //s1. detect three bifurcation points
+    //s2. move one of the branch to the parent of bifurcation node
+    //process bifurcation nodes one by one
+
+    V3DLONG siz=in_nt.listNeuron.size();
+    if(!siz) {return false;}
+
+    V3DLONG somaid=-1;
+    for (V3DLONG i=0;i<siz;i++)
+        if(in_nt.listNeuron.at(i).type==1&&in_nt.listNeuron.at(i).pn<0&&somaid<0){
+            somaid=i; break;
+        }
+    if(somaid<0){cout<<"soma id is not exist."<<endl; return false;}
+    std::vector<int> ntype(siz,0);    ntype=getNodeType(in_nt);
+
+    //s1
+    QList<V3DLONG> bifur_idlist; bifur_idlist.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        if(somaid!=i&&ntype.at(i)>2)
+            bifur_idlist.append(i);
+
+    cout<<"#bifurcation="<<bifur_idlist.size()<<endl;
+    //s2
+    for(int b=0;b<bifur_idlist.size();b++){
+        V3DLONG bifur_id=bifur_idlist.at(b);
+        bool processed=false;
+        for (V3DLONG i=0;i<siz;i++){
+            NeuronSWC s = in_nt.listNeuron.at(i);
+            if(s.pn>0&&in_nt.hashNeuron.contains(s.pn)){
+                 V3DLONG spn_id=in_nt.hashNeuron.value(s.pn);
+                 if(spn_id==bifur_id){
+                     //find the child node
+                     cout<<"Node: "<<s.pn<<",#child="<<ntype.at(spn_id)<<endl;
+                     NeuronSWC sp = in_nt.listNeuron[bifur_id];
+                     while(true){
+                         s=sp;
+                         if(s.pn<0||!in_nt.hashNeuron.contains(s.pn)){
+                             processed=false;
+                             break;
+                         }
+                         spn_id=in_nt.hashNeuron.value(s.pn);
+                         sp = in_nt.listNeuron.at(spn_id);
+                         if(ntype.at(spn_id)==1&&spn_id!=somaid){
+                             in_nt.listNeuron[i].pn=sp.n;
+                             cout<<"set "<<in_nt.listNeuron[i].n<<" parent to "<<sp.n<<endl;
+                             processed=true;
+                             ntype[spn_id]+=1;
+                             break;
+                         }
+                     }
+                 }
+            }
+            if(processed)
+                break;
+        }
+        if(!processed){cout<<"process fail"<<endl; return false;}
+    }
+    //check
+    ntype=getNodeType(in_nt);
+    for (V3DLONG i=0;i<siz;i++)
+        if(somaid!=i&&ntype.at(i)>2){
+            cout<<ntype.at(i)<<" childs,";
+            cout<<"bifurcation id="<<i<<endl;
+            return /*false*/three_bifurcation_processing(in_nt);
+        }
+    return true;
+}
+NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre)
+{
+    /*1. get tip, branch and soma nodes;
+     * 2. from tip nodes, get tip-branch
+     * 3. pruning
+     * 4. save
+    */
+    NeuronTree nt_out;
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return nt_out;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+
+    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    std::vector<int> nkept(siz,1);
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(i);
+        std::vector<V3DLONG> nscanned;
+        nscanned.clear();
+        if(ntype.at(i)==0&&s.pn&&hashNeuron.contains(s.pn))
+        {
+            nscanned.push_back(i);
+            //distance computing
+            V3DLONG spn_id=hashNeuron.value(s.pn);
+            NeuronSWC spn=nt.listNeuron.at(spn_id);
+            double tipbranch_dist=0.0;
+            while(true)
+            {
+                tipbranch_dist+=sqrt((spn.x-s.x)*(spn.x-s.x)+
+                                                        (spn.y-s.y)*(spn.y-s.y)+
+                                                        (spn.z-s.z)*(spn.z-s.z));
+                if(ntype.at(spn_id)>1) {break;}
+                nscanned.push_back(spn_id);
+                s=spn;
+                if(s.pn<0||!hashNeuron.contains(s.pn)){
+                    nscanned.clear(); tipbranch_dist+=(in_thre+1);break;
+                }
+                spn_id=hashNeuron.value(s.pn);
+                spn=nt.listNeuron.at(spn_id);
+            }
+            if(tipbranch_dist<=in_thre)
+            {
+                //remove this tip-branch
+                cout<<"tip branch len="<<tipbranch_dist;
+                cout<<",small tip-branch: "<<nt.listNeuron.at(i).n<<endl;
+
+                for(V3DLONG n=0;n<nscanned.size();n++)
+                    nkept[nscanned.at(n)]=0;
+            }
+        }
+        else //internode
+            continue;
+    }
+    //save
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(nkept[i]!=0)
+        {
+            NeuronSWC s = nt.listNeuron[i];
+            nt_out.listNeuron.append(s);
+            nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+        }
+    }
+    cout<<"# pruning nodes="<<nt.listNeuron.size()-nt_out.listNeuron.size()<<endl;
+    return nt_out;
+}
+NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels)
+{
+    cout<<"linear interpolation of neuron tree"<<endl;
+    QList<NeuronSWC> listNeuron =  nt.listNeuron;
+    V3DLONG siz = nt.listNeuron.size();
+    //step1: sort the index
+    QHash <V3DLONG, V3DLONG>  index_n; index_n.clear();
+    for(V3DLONG i=0;i<siz;i++)
+        index_n.insert(listNeuron[i].n,i);
+    NeuronTree nt_Index_sorted;nt_Index_sorted.listNeuron.clear();nt_Index_sorted.hashNeuron.clear();
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = listNeuron[i];
+        s.n=i+1;
+        if(s.parent&&index_n.contains(s.parent))
+            s.parent=index_n.value(s.parent)+1;
+        else
+            s.parent=-1;
+        nt_Index_sorted.listNeuron.append(s);
+        nt_Index_sorted.hashNeuron.insert(s.n,nt_Index_sorted.listNeuron.size()-1);
+    }
+    listNeuron.clear();
+    cout<<"finished the sorting of index"<<endl;
+    listNeuron=nt_Index_sorted.listNeuron;
+    QHash <int, int>  hashNeuron;hashNeuron.clear();
+    hashNeuron=nt_Index_sorted.hashNeuron;
+
+    //step2
+    QList <NeuronSWC> nt_out_listNeuron;nt_out_listNeuron.clear();
+    V3DLONG new_node_count=0;
+    for (V3DLONG i=0;i<listNeuron.size();i++)
+    {
+        NeuronSWC s = listNeuron[i];
+        if(s.parent&&hashNeuron.contains(s.parent))
+        {
+            V3DLONG pid=hashNeuron.value(s.parent);
+            NeuronSWC sp=listNeuron[pid];
+            double cp_dist=sqrt(long((sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z)));
+            double Min_Interpolation_Pixels_dist=sqrt(long(Min_Interpolation_Pixels*Min_Interpolation_Pixels*Min_Interpolation_Pixels));
+            int interpolate_times=int(cp_dist/Min_Interpolation_Pixels_dist);
+
+            if(interpolate_times==1)
+            {
+                NeuronSWC s_interpolated=s;
+                s_interpolated.n=siz+1+new_node_count;
+                //one node at the center of p and sp
+                s_interpolated.x=(sp.x+s.x)/2;
+                s_interpolated.y=(sp.y+s.y)/2;
+                s_interpolated.z=(sp.z+s.z)/2;
+                s.parent=s_interpolated.n;
+                new_node_count++;
+                nt_out_listNeuron.append(s);
+                nt_out_listNeuron.append(s_interpolated);
+            }
+            else if(interpolate_times>1)
+            {
+                //interpolate list of nodes
+                double x_Interpolation_dis=(sp.x-s.x)/interpolate_times;
+                double y_Interpolation_dis=(sp.y-s.y)/interpolate_times;
+                double z_Interpolation_dis=(sp.z-s.z)/interpolate_times;
+
+                NeuronSWC s_interpolated_start=s;
+                for(int ti=1;ti<=interpolate_times;ti++)
+                {
+                    NeuronSWC s_interpolated=s_interpolated_start;
+                    s_interpolated.n=siz+1+new_node_count;
+                    s_interpolated.x=s_interpolated_start.x+x_Interpolation_dis;
+                    s_interpolated.y=s_interpolated_start.y+y_Interpolation_dis;
+                    s_interpolated.z=s_interpolated_start.z+z_Interpolation_dis;
+                    if(ti==interpolate_times)
+                        s_interpolated_start.parent=s_interpolated.parent;
+                    else
+                        s_interpolated_start.parent=s_interpolated.n;
+                    nt_out_listNeuron.append(s_interpolated_start);
+                    s_interpolated_start=s_interpolated;
+                    new_node_count++;
+                }
+            }
+            else
+                nt_out_listNeuron.append(s);
+        }
+        else
+            nt_out_listNeuron.append(s);
+    }
+    cout<<"finished the interpolation"<<endl;
+    cout<<"from size: "<<siz<<" to "<<nt_out_listNeuron.size()<<endl;
+    //step3: re_sort index of nt_out
+    index_n.clear();
+    NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
+    for(V3DLONG i=0;i<nt_out_listNeuron.size();i++)
+    {
+        NeuronSWC s = nt_out_listNeuron[i];
+        index_n.insert(s.n,i);
+    }
+    for(V3DLONG i=0;i<nt_out_listNeuron.size();i++)
+    {
+        NeuronSWC s = nt_out_listNeuron[i];
+        s.n=i+1;
+        if(s.parent&&index_n.contains(s.parent))
+            s.parent=index_n.value(s.parent)+1;
+        else
+            s.parent=-1;
+        nt_out.listNeuron.append(s);
+        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+    }
+    return nt_out;
+}
+NeuronTree internode_pruning(NeuronTree nt,float pruning_dist){
+    /*1. if pruning_dist<=0, keep branch nodes, soma node, tip nodes
+     * 2. if pruning_dist>0, pruning the internode distance below pruning_dist
+    */
+    V3DLONG siz=nt.listNeuron.size();
+    NeuronTree out;    if(siz<=0){return out;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        hashNeuron.insert(s.n,i);
+    }
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+    vector<int> nprocessed(siz,0);
+
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(nprocessed[i]==1)
+            continue;
+        if(s.parent>0&&hashNeuron.contains(s.parent)){
+            V3DLONG pid=hashNeuron.value(s.parent);
+            NeuronSWC sp=nt.listNeuron.at(pid);
+            if(ntype.at(pid)==1)
+            {
+                double ssp_dist=sqrt((s.x-sp.x)*(s.x-sp.x)+
+                                     (s.y-sp.y)*(s.y-sp.y)+
+                                     (s.z-sp.z)*(s.z-sp.z));
+
+                if(ssp_dist<pruning_dist&&sp.parent>0){
+                    nt.listNeuron[i].parent=sp.parent;
+                    nprocessed[pid]=1;
+                }
+            }
+        }
+    }
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(nprocessed.at(i)==0){
+            out.listNeuron.append(s);
+            out.hashNeuron.insert(s.n,out.listNeuron.size()-1);
+        }
+    }
+    cout<<"pruning size="<<(nt.listNeuron.size()-out.listNeuron.size())<<endl;
+    return reindexNT(out);
+}
+NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre){
+    NeuronTree nt_out;
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return nt_out;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+
+    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    std::vector<int> nkept(siz,1);
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(i);
+        std::vector<V3DLONG> nscanned;
+        nscanned.clear();
+        if(ntype.at(i)==0&&s.pn&&hashNeuron.contains(s.pn))
+        {
+            nscanned.push_back(i);
+            //distance computing
+            V3DLONG spn_id=hashNeuron.value(s.pn);
+            NeuronSWC spn=nt.listNeuron.at(spn_id);
+            double tipbranch_dist=0.0;
+            while(true)
+            {
+                tipbranch_dist+=sqrt((spn.x-s.x)*(spn.x-s.x)+
+                                                        (spn.y-s.y)*(spn.y-s.y)+
+                                                        (spn.z-s.z)*(spn.z-s.z));
+                if(ntype.at(spn_id)>1) {break;}
+                nscanned.push_back(spn_id);
+                s=spn;
+                if(s.pn<0||!hashNeuron.contains(s.pn)){
+                    nscanned.clear(); tipbranch_dist+=(dist_thre+1);break;
+                }
+                spn_id=hashNeuron.value(s.pn);
+                spn=nt.listNeuron.at(spn_id);
+            }
+            if(tipbranch_dist<=dist_thre)
+            {
+                //remove this tip-branch
+                cout<<"tip branch len="<<tipbranch_dist;
+                cout<<",small tip-branch: "<<nt.listNeuron.at(i).n<<endl;
+                bool duplicated=true;
+                for(V3DLONG n=0;n<nscanned.size();n++)
+                {
+                    NeuronSWC cs=nt.listNeuron.at(nscanned.at(n));
+                    for(V3DLONG ii=0;ii<siz;ii++){
+                        NeuronSWC si=nt.listNeuron.at(ii);
+                        if(nscanned.at(n)!=ii&&
+                                cs.x==si.x&&
+                                cs.y==si.y&&
+                                cs.z==si.z){
+                            duplicated=true;
+                            break;
+                        }
+                    }
+                    if(!duplicated)
+                        break;
+                }
+                if(!duplicated)
+                    nscanned.clear();
+                else
+                    for(V3DLONG n=0;n<nscanned.size();n++)
+                        nkept[nscanned.at(n)]=0;
+            }
+        }
+        else //internode
+            continue;
+    }
+    //save
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(nkept[i]!=0)
+        {
+            NeuronSWC s = nt.listNeuron[i];
+            nt_out.listNeuron.append(s);
+            nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+        }
+    }
+    cout<<"#dup branch pruning nodes="<<nt.listNeuron.size()-nt_out.listNeuron.size()<<endl;
+    return nt_out;
+}
+NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size)
+{
+    /*method: moving avearage
+     * 1. get all the branches
+     * 2. smooth every nodes in each branch
+     * 3.
+    */
+    NeuronTree nt_smoothed,nt_out;
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz)
+        return nt_out;
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+
+    // 2. get node type: index -> node_type
+    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1*/
+    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    //get child id: n -> child_n; only for internodes
+    QHash <V3DLONG, V3DLONG>  hashChild;hashChild.clear();
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        if(ntype[i]==1)
+        {
+            V3DLONG this_node_n=nt.listNeuron[i].n;
+            for(V3DLONG j=0;j<siz;j++)
+            {
+                if(i==j)
+                    continue;
+                if(this_node_n==nt.listNeuron[j].pn)
+                {hashChild.insert(i,j); break;}
+            }
+        }
+    }
+    //3. start from one key points and end at one key points
+    int half_win_size=(smooth_win_size-1)/2;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        // make no changes to tip, branch and soma nodes
+        if(ntype[i]==0||ntype[i]>=2)
+        {
+            nt_smoothed.listNeuron.append(s);
+            nt_smoothed.hashNeuron.insert(s.n,nt_smoothed.listNeuron.size()-1);
+            continue;
+        }
+        int this_smooth_win_size=1;
+        //for children of this node
+        V3DLONG child_index=hashChild.value(i);
+        for(int c=0;c<half_win_size;c++)
+        {
+            NeuronSWC schild=nt.listNeuron[child_index];
+            s.x+=schild.x;
+            s.y+=schild.y;
+            s.z+=schild.z;
+            this_smooth_win_size++;
+            if(ntype[child_index]==0||ntype[child_index]>=2)
+                break;
+            child_index=hashChild.value(child_index);
+        }
+        //for parents of this node
+         V3DLONG parent_index=hashNeuron.value(s.pn);
+        for(int p=0;p<half_win_size;p++)
+        {
+            NeuronSWC sparent=nt.listNeuron[parent_index];
+            s.x+=sparent.x;
+            s.y+=sparent.y;
+            s.z+=sparent.z;
+            this_smooth_win_size++;
+            if(ntype[parent_index]==0||ntype[parent_index]>=2)
+                break;
+            parent_index=hashNeuron.value(sparent.pn);
+        }
+        // avearage
+        s.x/=this_smooth_win_size;
+        s.y/=this_smooth_win_size;
+        s.z/=this_smooth_win_size;
+        nt_smoothed.listNeuron.append(s);
+        nt_smoothed.hashNeuron.insert(s.n,nt_smoothed.listNeuron.size()-1);
+    }
+    //remove very near nodes
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt_smoothed.listNeuron[i];
+        if(ntype[i]==0||ntype[i]>=2)
+            continue;
+
+        NeuronSWC spn=nt_smoothed.listNeuron[hashNeuron.value(s.pn)];
+        double to_parent_dist=0;
+        to_parent_dist=sqrt((spn.x-s.x)*(spn.x-s.x)+
+                                                (spn.y-s.y)*(spn.y-s.y)+
+                                                (spn.z-s.z)*(spn.z-s.z));
+        if(to_parent_dist<1)
+        {
+            //remove this node
+            //get child id
+            V3DLONG child_index=hashChild.value(i);
+            nt_smoothed.listNeuron[child_index].pn=s.pn;
+            nt_smoothed.listNeuron[i].pn=0;
+            continue;
+        }
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(nt_smoothed.listNeuron[i].pn==0)
+            continue;
+        NeuronSWC s = nt_smoothed.listNeuron[i];
+        nt_out.listNeuron.append(s);
+        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+    }
+    cout<<"Remove duplicated node size: "<<(siz-nt_out.listNeuron.size())<<endl;
+    qDebug()<<"Finished smoothing process";
+    return nt_out;
 }

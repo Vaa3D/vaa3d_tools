@@ -34,6 +34,12 @@ This plugin can detect axonal boutons based on axonal arbors.
     + color 
       + *en passant bouton*: {r:0,g:0,b:255}
       + *terminaux bouton*:{r:0,g:255,b:0}
+  + bouton marker file (ccf space)
+  + image block (also can be masked)
+    + 3d 
+    + 2d mip
+    + swc
+
 + function list:(only for 8bit-3D image data)
   + For terafly datasets and image block
     + `BoutonDetection_terafly` or `BoutonDetection_image`
@@ -120,6 +126,18 @@ This plugin can detect axonal boutons based on axonal arbors.
         + axon_trunk_radius (2.5)
     + `Bouton_feature`
       + get feature {5~13}
+    + `Preprocess`
+      + three_bifurcation processing
+      + tip_branch pruning
+      + internode pruning
+      + linear interpolation
+    + `FileTo`
+      0. apofile
+      1. bouton image block (terafly)
+      2. bouton image block (image), not finished
+      3. marker file at ccf space
+      4. swc file at ccf space
+      5. 0 and 3 and 4
   + Image related
     + `TeraImage_SWC_Crop`
       + Note: crop image block and swc-nodes inside this block
@@ -165,3 +183,4 @@ This plugin can detect axonal boutons based on axonal arbors.
    > 1. add `AxonalBouton` struct
    > 2. add `adaptive thresholding` before enhancement
    > 3. file io
+   > 4. bouton blocks and renew the function of preprocessing
