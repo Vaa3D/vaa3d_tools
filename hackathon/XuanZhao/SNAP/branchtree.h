@@ -210,6 +210,7 @@ public:
     bool pruningAdjacentSoma(double somaRTh);
     bool pruningAdjacentSoma2(const QString &multiMarkerPath);
     bool pruningAdjacentSoma3(const QString &multiMarkerIndexPath, int lamda);
+    bool pruningAdjacentSoma3(const vector<long long> &somaNIndexes, int lamda);
 
     bool pruningAdjacentSoma4(float lengthMax, int lamda);
 
@@ -234,13 +235,127 @@ public:
     void calRlevel0Branches(unsigned char* pdata, V3DLONG* sz, ofstream &csvFile);
     void calBifurcationLocalAngle(ofstream &csvFile);
 
-    bool getSomaNList(const QString &multiMarkerIndexPath, vector<int>& somaNList);
+    bool getSomaNList(const QString &multiMarkerIndexPath, vector<long long> &somaNList);
     float getProbability(float angle, int lamda);
 
     bool update();
     bool saveNeuronTree(QString path);
     bool savePrunedNeuronTree(QString path);
 
+    NeuronTree getPrunedNeuronTree();
+
 };
+
+vector<V3DLONG> convertMarkers2SomaNList(const NeuronTree& nt, const QList<ImageMarker>& markers, int d = 20);
+vector<V3DLONG> convertMarkers2SomaNList(const NeuronTree& nt, const LandmarkList& markers, int d = 20);
+
+struct PARA_SNAP {
+    double lengthTh, linearityTh, angleTh;
+    int lamda;
+    float lengthMax;
+    double times;
+
+    bool noisyPruning,multiSomaPruning,structurePruning,inflectionPruning;
+
+    PARA_SNAP(){
+        lengthTh = 11;
+        linearityTh = 1.4;
+        angleTh = 160;
+        lamda = 2;
+        lengthMax = 850;
+        times = 5;
+        noisyPruning = true;
+        multiSomaPruning = true;
+        structurePruning = true;
+        inflectionPruning = false;
+    }
+
+
+    bool snap_dialog(){
+        QDialog* dialog = new QDialog();
+        dialog->setWindowTitle("SNAP");
+        QGridLayout* layout = new QGridLayout();
+        QSpinBox* lengthThSpinBox = new QSpinBox();
+        lengthThSpinBox->setValue(11);
+        QDoubleSpinBox* linearityThSpinBox = new QDoubleSpinBox();
+        linearityThSpinBox->setDecimals(1);
+        linearityThSpinBox->setValue(1.4);
+        QSpinBox* angleThSpinBox = new QSpinBox();
+        angleThSpinBox->setRange(0,180);
+        angleThSpinBox->setValue(160);
+        QSpinBox* lamdaSpinBox = new QSpinBox();
+        lamdaSpinBox->setValue(2);
+        QSpinBox* lengthMaxSpinBox = new QSpinBox();
+        lengthMaxSpinBox->setRange(0,2000);
+        lengthMaxSpinBox->setValue(850);
+        QSpinBox* timesSpinBox = new QSpinBox();
+        timesSpinBox->setValue(5);
+
+        QCheckBox* noisyPruningCheckBox = new QCheckBox();
+        noisyPruningCheckBox->setCheckable(true);
+        QCheckBox* multiSomaPruningCheckBox = new QCheckBox();
+        multiSomaPruningCheckBox->setCheckable(true);
+        QCheckBox* structurePruningCheckBox = new QCheckBox();
+        structurePruningCheckBox->setCheckable(true);
+        QCheckBox* inflectionPruningCheckBox = new QCheckBox();
+        inflectionPruningCheckBox->setCheckable(false);
+
+        layout->addWidget(new QLabel("length threshold"),0,0);
+        layout->addWidget(lengthThSpinBox,0,1,1,5);
+        layout->addWidget(new QLabel("linearity threshold"),1,0);
+        layout->addWidget(linearityThSpinBox,1,1,1,5);
+        layout->addWidget(new QLabel("angle threshold"),2,0);
+        layout->addWidget(angleThSpinBox,2,1,1,5);
+        layout->addWidget(new QLabel("lamda"),3,0);
+        layout->addWidget(lamdaSpinBox,3,1,1,5);
+        layout->addWidget(new QLabel("max length"),4,0);
+        layout->addWidget(lengthMaxSpinBox,4,1,1,5);
+        layout->addWidget(new QLabel("soma area"),5,0);
+        layout->addWidget(timesSpinBox,5,1,1,5);
+
+        QHBoxLayout * hbox = new QHBoxLayout();
+        hbox->addWidget(new QLabel("noisyPruning"));
+        hbox->addWidget(noisyPruningCheckBox);
+        hbox->addWidget(new QLabel("multiSomaPruning"));
+        hbox->addWidget(multiSomaPruningCheckBox);
+        hbox->addWidget(new QLabel("structurePruning"));
+        hbox->addWidget(structurePruningCheckBox);
+        hbox->addWidget(new QLabel("inflectionPruning"));
+        hbox->addWidget(inflectionPruningCheckBox);
+
+        layout->addLayout(hbox,6,0,1,6);
+
+        QHBoxLayout * hbox2 = new QHBoxLayout();
+        QPushButton * ok = new QPushButton(" ok ");
+        ok->setDefault(true);
+        QPushButton * cancel = new QPushButton("cancel");
+        hbox2->addWidget(cancel);
+        hbox2->addWidget(ok);
+
+        layout->addLayout(hbox2,7,0,1,6);
+
+        dialog->setLayout(layout);
+        QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+        QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+        if(dialog->exec() != QDialog::Accepted)
+            return false;
+
+        lengthTh = lengthThSpinBox->value();
+        linearityTh = linearityThSpinBox->value();
+        angleTh = angleThSpinBox->value();
+        lamda = lamdaSpinBox->value();
+        lengthMax = lengthMaxSpinBox->value();
+        times = timesSpinBox->value();
+        noisyPruning = noisyPruningCheckBox->isChecked();
+        multiSomaPruning = multiSomaPruningCheckBox->isChecked();
+        structurePruning = structurePruningCheckBox->isChecked();
+        inflectionPruning = inflectionPruningCheckBox->isChecked();
+
+        if (dialog) {delete dialog; dialog=0;}
+    }
+};
+
+void pruningMenu(V3DPluginCallback2 &callback);
 
 #endif // BRANCHTREE_H

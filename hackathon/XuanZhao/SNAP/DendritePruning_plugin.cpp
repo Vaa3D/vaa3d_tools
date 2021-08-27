@@ -11,34 +11,36 @@
 
 #include "swccompare.h"
 
+#include "neuronsplit.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(DendritePruning, DendritePruningPlugin);
  
 QStringList DendritePruningPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+        <<tr("Pruning")
+        <<tr("NeuronSplit")
 		<<tr("about");
 }
 
 QStringList DendritePruningPlugin::funclist() const
 {
 	return QStringList()
-        <<tr("pruning")
+        <<tr("func1")
 		<<tr("func2")
 		<<tr("help");
 }
 
 void DendritePruningPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("Pruning"))
 	{
-		v3d_msg("To be implemented.");
+        pruningMenu(callback);
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("NeuronSplit"))
 	{
-		v3d_msg("To be implemented.");
+        splitNeuronTreeManu(callback);
 	}
 	else
 	{
@@ -56,12 +58,11 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
     if (func_name == tr("pruning"))
 	{
-        if(infiles.size() != 3){
-            return false;
-        }
-        QString swcPath = infiles[0];
-        QString imgPath = infiles[1];
-        QString markerIndexPath = infiles[2];
+
+        QString swcPath = infiles.size()>=1 ? infiles[0] : "";
+        QString markerIndexPath = infiles.size()>=2 ? infiles[1] : "";
+        QString imgPath = infiles.size()>=3 ? infiles[2] : "";
+
 
 
         double lengthTh = inparas.size()>=1 ? atof(inparas[0]) : 11;
@@ -70,10 +71,23 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         int lamda = inparas.size()>=4 ? atoi(inparas[3]) : 2;
         float lengthMax = inparas.size()>=5 ? atof(inparas[4]) : 850;
         double times = inparas.size()>=6 ? atof(inparas[5]) : 5;
+
         bool noisyPruning = inparas.size()>=7 ? atoi(inparas[6]) : true;
         bool multiSomaPruning = inparas.size()>=8 ? atoi(inparas[7]) : true;
         bool structurePruning = inparas.size()>=9 ? atoi(inparas[8]) : true;
         bool inflectionPruning = inparas.size()>=10 ? atoi(inparas[9]) : false;
+
+        if(imgPath == ""){
+            noisyPruning = false;
+            inflectionPruning = false;
+        }
+        if(markerIndexPath == ""){
+            multiSomaPruning = false;
+        }
+        if(swcPath == ""){
+            qDebug()<<"Please specify SWC file!";
+            return false;
+        }
 
         unsigned char* pdata = 0;
         int dataType = 1;
@@ -101,7 +115,14 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         }
 
         if(multiSomaPruning){
-            bt.pruningAdjacentSoma3(markerIndexPath,lamda);
+            if(markerIndexPath.endsWith(".marker")){
+                QList<ImageMarker> markers = readMarker_file(markerIndexPath);
+                vector<V3DLONG> nIndexList = convertMarkers2SomaNList(t,markers);
+                bt.pruningAdjacentSoma3(nIndexList,lamda);
+            }else{
+                bt.pruningAdjacentSoma3(markerIndexPath,lamda);
+            }
+
             bt.update();
             bt.pruningAdjacentSoma4(lengthMax,lamda);
 
@@ -225,6 +246,34 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         csvFile.close();
 
 
+    }else if (func_name == tr("compareSwc2")) {
+        QString swcAutoPath = infiles.size()>=1 ? infiles[0] : "";
+        QString swcPrunedPath = infiles.size()>=2 ? infiles[1] : "";
+        QString swcOptimalPath = infiles.size()>=3 ? infiles[2] : "";
+
+        QString csvPath = outfiles.size()>=1 ? outfiles[0] : "F:\\manual\\compareResult.csv";
+
+        NeuronTree swcAuto = readSWC_file(swcAutoPath);
+        NeuronTree swcPruned = readSWC_file(swcPrunedPath);
+        NeuronTree swcOptimal = readSWC_file(swcOptimalPath);
+
+        qDebug()<<"----read swc end----";
+
+        compareResult cr;
+        if(!compareSwc3(swcAuto,swcPruned,swcOptimal,cr)){
+            return false;
+        }
+        ofstream csvFile;
+
+        csvFile.open(csvPath.toStdString().c_str(),ios::app);
+        csvFile<<swcAutoPath.toStdString()<<','<<cr.branchAutoSN<<','
+              <<cr.branchAutoSL<<','<<cr.branchOptimalSN<<','<<cr.branchOptimalSL<<','
+              <<cr.rBranchNumber<<','<<cr.fBranchNumber<<','
+             <<cr.negativeBranchNumber<<','<<cr.aBranchNumber<<','
+            <<cr.rLength<<','<<cr.fLength<<','<<cr.negativeLength<<','<<cr.alength<<endl;
+        csvFile.close();
+
+
     }
     else if (func_name == tr("shiftSwc")) {
         QString swcManualPath = infiles.size()>=1 ? infiles[0] : "";
@@ -275,6 +324,21 @@ bool DendritePruningPlugin::dofunc(const QString & func_name, const V3DPluginArg
         compareSwc2(swcAuto,swcManual,csvFile);
         csvFile.close();
 
+    }
+    else if (func_name == tr("convertMarkers2SomaNList")) {
+        QString swcPath = infiles.size()>=1 ? infiles[0] : "";
+        QString markerPath = infiles.size()>=2 ? infiles[1] : "";
+        QString nIndexPath = outfiles.size()>=1 ? outfiles[0]: "";
+
+        NeuronTree nt = readSWC_file(swcPath);
+        QList<ImageMarker> markers = readMarker_file(markerPath);
+        vector<V3DLONG> nIndexList = convertMarkers2SomaNList(nt,markers);
+        ofstream o;
+        o.open(nIndexPath.toStdString().c_str());
+        for(V3DLONG n : nIndexList){
+            o<<n<<endl;
+        }
+        o.close();
     }
 	else if (func_name == tr("help"))
 	{

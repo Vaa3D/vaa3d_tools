@@ -246,6 +246,40 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 
 
+    }else if(func_name == tr("retype"))
+    {
+        NeuronTree nt = readSWC_file(infiles[0]);
+        int type = atoi(inparas[0]);
+        for(int i=0; i<nt.listNeuron.size(); ++i){
+            nt.listNeuron[i].type = type;
+        }
+        writeSWC_file(infiles[0],nt);
+    }else if(func_name == tr("getBifurcationApo"))
+    {
+        NeuronTree nt = readSWC_file(infiles[0]);
+        QString apoPath = QString(infiles[0]) + ".apo";
+        int size = nt.listNeuron.size();
+        vector<int> childNumber = vector<int>(size,0);
+        for(int i=0; i<size; ++i){
+            int prt = nt.listNeuron[i].parent;
+            if(prt != -1){
+                childNumber[nt.hashNeuron.value(prt)]++;
+            }
+        }
+        QList<CellAPO> apoList;
+        for(int i=0; i<size; ++i){
+            if(childNumber[i]>1){
+                CellAPO m;
+                m.x = nt.listNeuron[i].x;
+                m.y = nt.listNeuron[i].y;
+                m.z = nt.listNeuron[i].z;
+                m.color.r = 0;
+                m.color.g = 0;
+                m.color.b = 255;
+                apoList.push_front(m);
+            }
+        }
+        writeAPO_file(apoPath,apoList);
     }
 
     else if (func_name == tr("help"))

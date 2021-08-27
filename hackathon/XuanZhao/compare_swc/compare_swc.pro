@@ -14,7 +14,7 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main/worm_straighten_c
 #INCLUDEPATH     += $$VAA3DPATH/v3d_main/cellseg
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 #INCLUDEPATH     += ../../zhi/IVSCC_sort_swc
-INCLUDEPATH     += $$(BOOST_PATH)
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include/boost #$$(BOOST_PATH)
 
 unix {
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++

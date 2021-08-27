@@ -23,5 +23,6 @@ bool compareSwc(NeuronTree swcAuto, NeuronTree swcManual, NeuronTree swcPruned, 
 bool shiftSwc(NeuronTree& nt, unsigned char* pdata, long long *sz);
 bool getBranchNumber(vector<NeuronTree> trees, ofstream &csvFile);
 bool compareSwc2(NeuronTree swcAuto, NeuronTree swcManual, ofstream& csvFile);
+bool compareSwc3(NeuronTree swcAuto, NeuronTree swcPruned, NeuronTree swcOptimal, compareResult& cr);
 
 #endif // SWCCOMPARE_H

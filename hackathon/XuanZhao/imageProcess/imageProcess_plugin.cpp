@@ -166,6 +166,36 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             data1d = 0;
         }
     }
+    else if (func_name == tr("v3draw2tif")) {
+        QString imgDir = infiles.size()>=1 ? infiles[0] : "";
+        QString outImgDir = outfiles.size()>=1 ? outfiles[0] : "";
+
+        QDir outDir = QDir(outImgDir);
+
+        QStringList nameFilters;
+        nameFilters<<"*.v3draw";
+        QFileInfoList imgList = QDir(imgDir).entryInfoList(nameFilters,QDir::Files);
+        for(int i=0; i<imgList.size(); ++i){
+            QString imgPath = imgList[i].absoluteFilePath();
+            QString imgName = imgList[i].completeBaseName();
+            unsigned char* pdata = 0;
+            V3DLONG sz[4] = {0,0,0,0};
+            int dataType = 1;
+            simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),pdata,sz,dataType);
+            QString imgNewFileName = imgName + ".tif";
+            QString imgNewPath = outDir.absoluteFilePath(imgNewFileName);
+            if(dataType != 1){
+                qDebug()<<"the dataType is not 1";
+                continue;
+            }
+            simple_saveimage_wrapper(callback,imgNewPath.toStdString().c_str(),pdata,sz,dataType);
+            if(pdata){
+                delete[] pdata;
+                pdata = 0;
+            }
+        }
+
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

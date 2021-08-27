@@ -186,6 +186,108 @@ bool compareSwc(NeuronTree swcAuto, NeuronTree swcManual, NeuronTree swcPruned, 
     return true;
 }
 
+bool compareSwc3(NeuronTree swcAuto, NeuronTree swcPruned, NeuronTree swcOptimal, compareResult &cr){
+    qDebug()<<"--------in compare3----------";
+    cr.aBranchNumber = cr.fBranchNumber = cr.kBranchNumber = cr.rBranchNumber = cr.negativeBranchNumber = 0;
+    cr.alength = cr.fLength = cr.rLength = cr.negativeLength = 0;
+    cr.branchAutoSL = cr.branchOptimalSL = 0;
+    cr.branchAutoSN = cr.branchOptimalSN = 0;
+    cr.otherSoma = false;
+
+    BranchTree btAuto = BranchTree();
+    btAuto.initialize(swcAuto);
+
+    BranchTree btPruned = BranchTree();
+    btPruned.initialize(swcPruned);
+
+    BranchTree btOptimal = BranchTree();
+    btOptimal.initialize(swcOptimal);
+
+    map<V3DLONG,V3DLONG> nMap;
+    for(V3DLONG i=0; i<swcAuto.listNeuron.size(); ++i){
+        nMap[swcAuto.listNeuron[i].n] = i;
+    }
+    vector<bool> groundTruth = vector<bool>(nMap.size(),false);
+    vector<bool> prunedTruth = vector<bool>(nMap.size(),false);
+    for(int i=0; i<swcOptimal.listNeuron.size(); ++i){
+        if(nMap.find(swcOptimal.listNeuron[i].n) != nMap.end()){
+            groundTruth[nMap[swcOptimal.listNeuron[i].n]] = true;
+        }
+    }
+    for(int i=0; i<swcPruned.listNeuron.size(); ++i){
+        if(nMap.find(swcPruned.listNeuron[i].n) != nMap.end()){
+            prunedTruth[nMap[swcPruned.listNeuron[i].n]] = true;
+        }
+    }
+    qDebug()<<"length end";
+
+    vector<bool> groundTruthBranch =vector<bool>(btAuto.branches.size(),false);
+    vector<bool> prunedTruthBranch =vector<bool>(btAuto.branches.size(),false);
+    vector<V3DLONG> indexs;
+    for(int i=0; i<btAuto.branches.size(); ++i){
+        indexs.clear();
+        btAuto.branches[i].get_pointsIndex_of_branch(indexs);
+
+        int gCount = 0, pCount = 0;
+        for(int j=0; j<indexs.size(); j++){
+//            qDebug()<<j<<":"<<indexs[j];
+            if(groundTruth[indexs[j]])
+                gCount++;
+            if(prunedTruth[indexs[j]])
+                pCount++;
+        }
+        if((float)gCount/indexs.size() > 0.5)
+            groundTruthBranch[i] = true;
+        if((float)pCount/indexs.size() > 0.5)
+            prunedTruthBranch[i] = true;
+    }
+
+    qDebug()<<"branch end";
+
+    for(int i=0; i<swcAuto.listNeuron.size(); ++i){
+        if(swcAuto.listNeuron[i].parent == -1)
+            continue;
+        int prtIndex = nMap[swcAuto.listNeuron[i].parent];
+        float length = zx_dist(swcAuto.listNeuron[i],swcAuto.listNeuron[prtIndex]);
+        cr.branchAutoSL += length;
+        if(!prunedTruth[i]){
+            cr.alength += length;
+            if(groundTruth[i]){
+                cr.fLength += length;
+            }else{
+                cr.rLength += length;
+            }
+        }else{
+            if(!groundTruth[i]){
+                cr.negativeLength += length;
+            }
+        }
+        if(groundTruth[i])
+            cr.branchOptimalSL += length;
+    }
+
+    for(int i=0; i<btAuto.branches.size(); ++i){
+        cr.branchAutoSN++;
+        if(!prunedTruthBranch[i]){
+            cr.aBranchNumber++;
+            if(groundTruthBranch[i]){
+                cr.fBranchNumber++;
+            }else{
+                cr.rBranchNumber++;
+            }
+        }else{
+            if(!groundTruthBranch[i]){
+                cr.negativeBranchNumber++;
+            }
+        }
+        if(groundTruthBranch[i])
+            cr.branchOptimalSN++;
+    }
+
+    return true;
+
+}
+
 bool shiftSwc(NeuronTree &nt, unsigned char *pdata, V3DLONG* sz){
     int step = 3;
     double sumMax = 0;

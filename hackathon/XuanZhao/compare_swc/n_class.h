@@ -10,6 +10,8 @@ using namespace std;
 
 #define IN 1000000000
 
+static QList<CellAPO> apos;
+
 template<class T>
 inline double norm_v(T &vector0)
 {
@@ -155,7 +157,7 @@ struct Branch{
     bool get_points_of_branch(vector<NeuronSWC> &points,NeuronTree &nt);
     bool get_r_points_of_branch(vector<NeuronSWC> &r_points,NeuronTree &nt);
 
-    bool refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt);
+    //bool refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt);
 
     bool get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
 
@@ -207,7 +209,7 @@ struct SwcTree{
 //    NeuronTree refine_swc(QString braindir, double thresh, V3DPluginCallback2 &callback);
 //    bool gd_on_nt(NeuronTree &branch_nt, NeuronTree & tree_out,QString braindir,V3DPluginCallback2 &callback);
 
-    NeuronTree refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &callback);
+    //NeuronTree refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &callback);
 
     bool test(QString braindir, V3DPluginCallback2 &callback);
 

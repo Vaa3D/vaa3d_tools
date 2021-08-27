@@ -39,7 +39,8 @@ LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
 
 HEADERS	+= DendritePruning_plugin.h \
     branchtree.h \
-    swccompare.h
+    swccompare.h \
+    neuronsplit.h
 
 HEADERS += ../app3/app2/fastmarching_tree.h
 HEADERS += ../app3/app2/hierarchy_prune.h
@@ -50,7 +51,8 @@ HEADERS += ../app3/app2/marker_radius.h
 HEADERS += $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h
 
 SOURCES += ../app3/app2/my_surf_objs.cpp \
-    swccompare.cpp
+    swccompare.cpp \
+    neuronsplit.cpp
 
 HEADERS += ../app3/swc_convert.h
 SOURCES += ../app3/swc_convert.cpp
@@ -71,5 +73,5 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
-TARGET	= $$qtLibraryTarget(DendritePruning)
-DESTDIR	= $$VAA3DPATH/bin/plugins/DendritePruning/
+TARGET	= $$qtLibraryTarget(SNAP)
+DESTDIR	= $$VAA3DPATH/bin/plugins/SNAP/
