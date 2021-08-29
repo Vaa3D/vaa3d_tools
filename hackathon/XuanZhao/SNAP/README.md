@@ -52,6 +52,7 @@ The following is an explanation of all parameters：
 | multiSomaPruning | Whether it is the case of multiple somas. If so, please mark the positions of other somas with a marker | No |
 | structurePruning | Structural pruning | No |
 | inflectionPruning | Are abnormal inflection points pruned | No |
+
 Among them, noisyPruning and inflectionPruning need image participation, and multiSomaPruning needs to specify the location of other somas. Generally, the first three items of pruning are selected, and the speed of inflectionPruning is slow.
 
 3.Neurosplit is to split a single tree, mark the position of each soma with a marker, then click neurosplit, wait for a period of time, and the split neurons will be displayed in different colors.
