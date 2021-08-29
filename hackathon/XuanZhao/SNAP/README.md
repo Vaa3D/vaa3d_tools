@@ -1,75 +1,77 @@
-# SNAP使用教程
- SNAP是一个包含整个剪枝流程的Vaa3D插件，它可以针对一个single-neuron tree进行剪枝，也可以指定多个soma将它进行拆分。
+# SNAP tutorial
 
-# 目录
-1.[安装](#安装)
+SNAP is a vaa3d plug-in that contains the whole pruning process. It can prune a single neuron tree or specify multiple somas to split it.
 
-2.[通过菜单调用](#通过菜单调用)
+# Outline
 
-3.[通过命令行调用](#通过命令行调用)
+1.[Installation](#Installation)
+
+2.[Call through menu](#Menu)
+
+3.[Call through command line](#Command)
 
 4.[License](#License)
 
-# <a name="安装"></a>安装
-开发者：
+# <a name="Installation"></a>Installation
 
- 1. Please follow the build instructions here to build released plugins along with the Vaa3d main program:
-         https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
+Developer：
 
- 2. Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki 
+1.  Please follow the build instructions here to build released plugins along with the Vaa3d main program:
+    https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
 
-用户：
+2.  Build this Vaa3D plugin following this wiki page: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki
 
-1.下载Vaa3d软件
+User：
 
-2.下载SNAP插件，将该文件夹复制到vaa3d主程序的plugin目录里面，再次打开Vaa3d时就能看到SNAP插件
+1.  Download vaa3d software:
+    
+    https://github.com/Vaa3D/release/releases/tag/v3.601
 
-# <a name="通过菜单调用"></a>通过菜单调用
+2.  Download the snap plug-in, unzip and copy the folder to the plugin directory of vaa3d main program, and you can see the snap plug-in when you open vaa3d again
 
-1.首先我们打开vaa3d的主菜单，点击plugin，找到SNAP插件并点击，如下图所示
-![SNAP](null)
+    https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/XuanZhao/SNAP/test/SNAP_dll.zip
 
-2.pruning功能是针对一个single tree进行剪枝，首先打开一张图，并将.swc/.eswc文件拖到图里，然后点击pruning会出现如下对话框：
-![SNAP Pruning](null)
-以下是对所有参数的解释：
-参数                
-| 参数    |   含义  |  默认值   |
+# <a name="Menu"></a>Call through menu
+
+1.First, open the main menu of vaa3d, click plugin, find the snap plug-in and click, as shown in the figure below
+![SNAP](./test/SNAP_menu.png)
+
+2.Pruning is used to prune a single tree. First open an image in 3D viewer and drag the. SWC /. ESWC file to the 3D viewer. Then click pruning to open the following dialog box：
+![SNAP Pruning](./test/SNAP_pruning.png)
+
+The following is an explanation of all parameters：  
+| parameter | usage | default |
 | --- | --- | --- |
-|  length threshold   | 长度阈值，用于第一步的剪枝   |  11   |
-|  linearity threshold   | 线性阈值，用于第一步的剪枝    | 1.4    |
-|  angle threshold   |  角度阈值，表示分叉点的夹角，用于第三步的剪枝   |  160   |
-|  lamda   | 第二步中将角度拟合到泊松分布的参数    |  2   |
-|  max length   | 正常tip点与soma点的路径长度的最大值    |   850  |
-|  soma area   |  第一步中在soma附近区域的剪枝，该数值表示soma多少倍半径区域的范围   |  5  |
-|   noisyPruning  | 是否进行噪声剪枝    |  否   |
-|   multiSomaPruning  |  是否为多个soma的情况，若是，请指将其他soma的位置用marker标出   |   否  |
-| structurePruning    |  是否进行结构剪枝  |  否   |
-| inflectionPruning  | 是否对不正常的拐点进行剪枝  | 否  | 
-其中noisyPruning，inflectionPruning需要图像参与，multiSomaPruning需要指定其他soma的位置，一般选择前三项Pruning，inflectionPruning速度较慢。
+| length threshold | Length threshold for first step pruning | 11 |
+| linearity threshold | Linear threshold for first step pruning | 1.4 |
+| angle threshold | The angle threshold, which represents the included angle of the bifurcation point, is used for pruning in the third step | 160 |
+| lamda | In the second step, the angle is fitted to the parameters of Poisson distribution | 2 |
+| max length | Maximum path length between normal tip point and soma point | 850 |
+| soma area | In the first step, prune the region near soma. This value represents the range of the region of how many times the radius of soma | 5 |
+| noisyPruning | Noise pruning | No |
+| multiSomaPruning | Whether it is the case of multiple somas. If so, please mark the positions of other somas with a marker | No |
+| structurePruning | Structural pruning | No |
+| inflectionPruning | Are abnormal inflection points pruned | No |
+Among them, noisyPruning and inflectionPruning need image participation, and multiSomaPruning needs to specify the location of other somas. Generally, the first three items of pruning are selected, and the speed of inflectionPruning is slow.
 
-3.NeuronSplit是针对一个single tree进行拆分，将每个soma的位置用marker标记出来，然后点击NeuronSplit，等待一段时间，拆分出来的神经元将以不同颜色展示出来。
+3.Neurosplit is to split a single tree, mark the position of each soma with a marker, then click neurosplit, wait for a period of time, and the split neurons will be displayed in different colors.
 
-# <a name="通过命令行调用"></a>通过命令行调用
+# <a name="Command"></a>Call through command line
 
-下面是一个命令行的通用例子
+The following is a general example of a command line
 
 ```
 vaa3dPath /x dllpath /f pruning /i swcPath markerNIndexPath imgPath /p lengththreshold linearitythreshold anglethreshold lamda maxlength somaarea noisyPruning multiSomaPruning structurePruning inflectionPruning
 ```
 
+The /p parameter is consistent with the parameters called through the menu. In /i, swcPath represents the path of SWC or ESWC file, markerNIndexPath is a TXT file, which records the n value of each soma in SWC file or the path of Marker file, and imgPath represents the path of image. For details, please refer to the format of test data.
+    
+    https://github.com/Vaa3D/vaa3d_tools/tree/master/hackathon/XuanZhao/SNAP/test/SNAP_testData.zip
 
-其中/p参数与通过菜单调用的参数一致，/i中，swcpath表示swc或者eswc文件的路径，markerNIndexPath为一个txt文件，它记录各个soma在swc文件中的n值，或者是一个.marker文件的路径，imgPath表示图像的路径，具体可参考测试数据的格式。
-
-命令行附有一个函数负责将.marker文件转换为各个soma在swc文件中的n值的txt文件，调用方式如下：
+A function is attached to the command line, which is responsible for converting the. Marker file into a TXT file of the n value of each soma in the SWC file. The call method is as follows:
 
 ```
 vaa3dPath /x dllpath /f convertMarkers2SomaNList /i swcPath markerPath /o markerNIndexPath
 ```
- 
 
-
-
-
-
-
-
+# <a name="License"></a>License
