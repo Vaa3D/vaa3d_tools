@@ -20,6 +20,7 @@
 
 using namespace std;
 
+// ========================================= Image Statistics ========================================= //
 map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& inputHistList)
 {
 	float sum = 0;
@@ -113,10 +114,41 @@ map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_
 
 	return basicStats;
 }
-
+// ===================================== END of [Image Statistics] ==================================== //
 
 
 // ========================================= Image Processing/Filtering ========================================= //
+void ImgProcessor::gammaCorrect(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const double gamma, const double coeff)
+{
+	boost::container::flat_map<double, int> normRangeMap;
+	for (double i = 0; i <= 255; ++i) normRangeMap.insert(pair<double, int>(i / 255, int(i)));
+
+	boost::container::flat_map<int, int> gammaTable;
+	for (double i = 0; i <= 255; ++i)
+	{
+		double newNormVal = std::pow(i / 255, gamma) * coeff;
+		
+		int newValue = 0;
+		double diff = 1000;
+		for (boost::container::flat_map<double, int>::iterator it = normRangeMap.begin() + 1; it != normRangeMap.end(); ++it)
+		{
+			if (std::abs(newNormVal - it->first) < diff)
+			{
+				diff = std::abs(newNormVal - it->first);
+				newValue = it->second;
+			}
+		}
+
+		gammaTable.insert(pair<int, int>(int(i), newValue));
+	}
+
+	int totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (int i = 0; i < totalPixNum; ++i) outputImgPtr[i] = unsigned char(gammaTable.at(int(inputImgPtr[i])));
+}
+// ==================================== END of [Image Processing/Filtering] ===================================== //
+
+
+// ========================================= Morphological Operations ========================================= //
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
 	// This method performs 2D skeletonization on 2D gray scale image with white-pixel address book approach.
@@ -618,4 +650,4 @@ void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[]
 		}
 	}
 }
-// ==================================== END of [Image Processing/Filtering] ==================================== //
+// ==================================== END of [Morphological Operations] ==================================== //

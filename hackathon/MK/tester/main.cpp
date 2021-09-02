@@ -112,48 +112,21 @@ int main(int argc, char* argv[])
 		sliceDims[0] = myManager.imgDatabase.at("bgWhiteCCF").dims[0];
 		sliceDims[1] = myManager.imgDatabase.at("bgWhiteCCF").dims[1];
 		sliceDims[2] = myManager.imgDatabase.at("bgWhiteCCF").dims[2];
-		
-		map<double, pair<int, size_t>> histLookupMap;
-		map<int, size_t> histMap = ImgProcessor::histQuickList(myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), sliceDims);
-		map<int, int> gammaTable;
-		for (auto& hist : histMap)
-		{
-			double key = double(hist.first) / 255;
-			histLookupMap.insert({ key, hist });
-			cout << key << " " << hist.first << " " << hist.second << endl;
-		}
-		cout << endl;
-
-		for (auto& hist : histLookupMap)
-		{
-			double powValue = std::pow(hist.first, 0.45);
-			double closestValue, diff = 10000;
-			for (auto& value : histLookupMap)
-			{
-				if (abs(powValue - value.first) < diff)
-				{
-					diff = abs(powValue - value.first);
-					closestValue = value.first;
-				}
-			}
-
-			cout << hist.second.first << " -> " << histLookupMap.at(closestValue).first << endl;
-			gammaTable.insert({ hist.second.first, histLookupMap.at(closestValue).first });
-		}
 
 		unsigned char* output1Dptr = new unsigned char[sliceDims[0] * sliceDims[1] * sliceDims[2]];
-		unsigned char* diff1Dptr = new unsigned char[sliceDims[0] * sliceDims[1] * sliceDims[2]];
-		memcpy(output1Dptr, myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), sliceDims[0] * sliceDims[1] * sliceDims[2]);
+		
+		/*memcpy(output1Dptr, myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), sliceDims[0] * sliceDims[1] * sliceDims[2]);
 		for (int i = 0; i < sliceDims[0] * sliceDims[1] * sliceDims[2]; ++i)
 		{
 			if (output1Dptr[i] <= 90) output1Dptr[i] = unsigned char(gammaTable.at(90));
 			else output1Dptr[i] = unsigned char(gammaTable.at(output1Dptr[i]));
 			//else output1Dptr[i] = myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get()[i];
-		}
+		}*/
 
 		//ImgProcessor::imgDiff(output1Dptr, myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), diff1Dptr, sliceDims);
 
-		string savePath = "C:\\Users\\hkuo9\\Desktop\\bgWhiteCCF45_90.tif";
+		ImgProcessor::gammaCorrect(myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), output1Dptr, sliceDims, 0.25);
+		string savePath = "C:\\Users\\hkuo9\\Desktop\\gammatest.tif";
 		const char* savePathC = savePath.c_str();
 		V3DLONG sz[4];
 		sz[0] = sliceDims[0];

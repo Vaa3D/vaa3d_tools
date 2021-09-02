@@ -128,6 +128,8 @@ public:
 	static void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 
+	static void gammaCorrect(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const double gamma, const double coeff = 1);
+
 	template<typename T> // Gamma correction with cut off intensity using stepped multiplying factor, i.e., 4 => (4 - cutoff) * 4; 10 => (10 - cutoff) * 10, etc.
 	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
 
