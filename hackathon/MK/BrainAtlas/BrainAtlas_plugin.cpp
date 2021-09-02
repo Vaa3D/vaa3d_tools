@@ -14,8 +14,9 @@ Q_EXPORT_PLUGIN2(BrainAtlas, BrainAtlas_plugin);
 QStringList BrainAtlas_plugin::menulist() const
 {
 	return QStringList() 
-		<<tr("start Brain Atlas app")
-		<<tr("about");
+		<< tr("Colored CCF")
+		<< tr("Grayed CCF witih white background")
+		<< tr("about");
 }
 
 QStringList BrainAtlas_plugin::funclist() const
@@ -28,12 +29,28 @@ QStringList BrainAtlas_plugin::funclist() const
 
 void BrainAtlas_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("start Brain Atlas app"))
+	if (menu_name == tr("Colored CCF"))
 	{
 		string imgPath;
 		if (!DEBUG) imgPath = ".\\BrainAtlas\\annotation_25_recolor.tif";
 		else imgPath = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\annotation_25_recolor.tif";
 		
+		const char* imgPathC = imgPath.c_str();
+		Image4DSimple* CCFimgPtr = callback.loadImage(&imgPath.at(0));
+		v3dhandle newwin = callback.newImageWindow();
+		callback.setImage(newwin, CCFimgPtr);
+		callback.open3DWindow(newwin);
+
+		this->ctrlPanelPtr = new BrainAtlasControlPanel(parent, &callback);
+		this->ctrlPanelPtr->exec();
+		delete this->ctrlPanelPtr;
+	}
+	if (menu_name == tr("Grayed CCF witih white background"))
+	{
+		string imgPath;
+		if (!DEBUG) imgPath = ".\\BrainAtlas\\bgWhiteCCF45_90.tif";
+		else imgPath = "D:\\AllenVaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\bgWhiteCCF45_90.tif";
+
 		const char* imgPathC = imgPath.c_str();
 		Image4DSimple* CCFimgPtr = callback.loadImage(&imgPath.at(0));
 		v3dhandle newwin = callback.newImageWindow();

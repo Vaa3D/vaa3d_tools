@@ -195,12 +195,17 @@ void ReconOperator::assembleSegs2tree()
 				boost::container::flat_map<int, profiledTree> connectedTrees = myNeuronStructExplorer.groupGeoConnectedTrees(inputProfiledTree.tree);	
 				if (NeuronReconTester::getInstance() != nullptr && GROUPED_TREES) 
 					NeuronReconTester::getInstance()->saveIntermediateResult(connectedTrees, NeuronReconTester::getInstance()->connectedTreePathQ, baseName);
-				
+
 				cout << endl << "-- " << connectedTrees.size() << " separate trees identified." << endl;
 				clock_t end = clock();
 				float duration = float(end - start) / CLOCKS_PER_SEC;
 				cout << "--> Goupring connected segments done. " << duration << " seconds elapsed." << endl << endl;
 				/***********************************************************/
+
+
+				// ******* ================= LOOP DETECTION FOR EACH CONNECTED TREE ================= ******* //
+
+				// ******* ========================================================================== ******* //
 				
 
 				/*********************************** START ASSEMBLING EACH SUBTREE ***********************************/
@@ -215,6 +220,7 @@ void ReconOperator::assembleSegs2tree()
 				if (this->removeSpike)
 					for (auto& tree : connectedTrees) tree.second = TreeTrimmer::spikeRemoval(tree.second, this->branchNodeMin);
 				// ****************************** //
+
 
 				/********* Reassign Soma And Connect Subtrees To It *********/
 				int minNodeID = 10000000, maxNodeID = 0;
@@ -256,7 +262,7 @@ void ReconOperator::assembleSegs2tree()
 						outputTree.listNeuron.append(connectedTree.second.tree.listNeuron);
 					}
 				}
-				outputTree.listNeuron.push_front(somaNode);
+				outputTree.listNeuron.push_front(somaNode); // Finally, add soma node to complete the whole tree structure.
 
 				/*if (!errorList.empty())
 				{
@@ -478,7 +484,7 @@ void ReconOperator::connectType7trees2otherTree(boost::container::flat_map<int, 
 				profiledTree& targetProfiledTree = (connectedTrees.begin() + targetTreeNum - 1)->second;
 				if (int(type7it - connectedTrees.begin()) + 1 == connectedTrees.size()) 
 				{
-					// If it's the largest tree, it's most like the main axon branch. There's no need to change type.
+					// If it's the largest tree, it's most likely the main axon branch. There's no need to change type.
 					for (auto& node : type7it->second.tree.listNeuron) node.type = 2;
 				}
 				else

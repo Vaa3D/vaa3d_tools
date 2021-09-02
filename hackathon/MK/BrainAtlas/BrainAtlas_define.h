@@ -2,7 +2,7 @@
 #define BRAINATLAS_DEFINE_H
 
 #define MAINVERSION_NUM 1
-#define SUBVERSION_NUM 2
+#define SUBVERSION_NUM 3
 #define PATCHVERSION_NUM 0
 
 #endif

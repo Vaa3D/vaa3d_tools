@@ -110,7 +110,7 @@ public:
 	// --------------- END of [segment-end clustering] --------------- //
 	/* ----------------------- END of [segment profiling] ----------------------- */
 
-	/* ----------------------- Seg-End Cluster Topology ------------------------ */	
+	/* ----------------------- Seg-End Cluster Topology ------------------------- */	
 	set<int> segEndClusterProbe(profiledTree& inputProfiledTree, const set<vector<float>>& inputProbes, const float rangeAllowance) const;
 	/* ------------------------------------------------------------------------- */
 	/***********************************************************************************/

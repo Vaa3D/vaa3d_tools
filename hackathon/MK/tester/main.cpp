@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <omp.h>
+#include <cmath>
 
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -78,8 +79,90 @@ int main(int argc, char* argv[])
 		string outputTest = "C:\\Users\\hkuo9\\Desktop\\test2.brg";
 		ofstream outputFile2(outputTest, ios::out | ios::binary);
 		outputFile2.write((char*)&testRegion, sizeof(testRegion));
+	}
+	else if (!funcName.compare("backgroundWhite"))
+	{
+		ImgManager myManager(QString::fromStdString(paras.at(0)));
+		myManager.imgEntry("CCF", ImgManager::singleCase);
+		
+		int sliceDims[3];
+		sliceDims[0] = myManager.imgDatabase.at("CCF").dims[0];
+		sliceDims[1] = myManager.imgDatabase.at("CCF").dims[1];
+		sliceDims[2] = myManager.imgDatabase.at("CCF").dims[2];	
+		unsigned char* output1Dptr = new unsigned char[sliceDims[0] * sliceDims[1] * sliceDims[2]];
+		//ImgProcessor::bgWhite(myManager.imgDatabase.at("CCF").slicePtrs.begin()->second.get(), output1Dptr, sliceDims);
+		ImgProcessor::invert8bit(myManager.imgDatabase.at("CCF").slicePtrs.begin()->second.get(), output1Dptr, sliceDims);
+		string savePath = "C:\\Users\\hkuo9\\Desktop\\bgWhiteCCF.tif";
+		const char* savePathC = savePath.c_str();
+		V3DLONG sz[4];
+		sz[0] = myManager.imgDatabase.at("CCF").dims[0];
+		sz[1] = myManager.imgDatabase.at("CCF").dims[1];
+		sz[2] = myManager.imgDatabase.at("CCF").dims[2];;
+		sz[3] = 1;
+		ImgManager::saveimage_wrapper(savePathC, output1Dptr, sz, V3D_UINT8);
 
+		delete[] output1Dptr;
+	}
+	else if (!funcName.compare("bottomY"))
+	{
+		ImgManager myManager("C:\\Users\\hkuo9\\Desktop\\bgWhiteCCF.tif");
+		myManager.imgEntry("bgWhiteCCF", ImgManager::singleCase);
 
+		int sliceDims[3];
+		sliceDims[0] = myManager.imgDatabase.at("bgWhiteCCF").dims[0];
+		sliceDims[1] = myManager.imgDatabase.at("bgWhiteCCF").dims[1];
+		sliceDims[2] = myManager.imgDatabase.at("bgWhiteCCF").dims[2];
+		
+		map<double, pair<int, size_t>> histLookupMap;
+		map<int, size_t> histMap = ImgProcessor::histQuickList(myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), sliceDims);
+		map<int, int> gammaTable;
+		for (auto& hist : histMap)
+		{
+			double key = double(hist.first) / 255;
+			histLookupMap.insert({ key, hist });
+			cout << key << " " << hist.first << " " << hist.second << endl;
+		}
+		cout << endl;
+
+		for (auto& hist : histLookupMap)
+		{
+			double powValue = std::pow(hist.first, 0.45);
+			double closestValue, diff = 10000;
+			for (auto& value : histLookupMap)
+			{
+				if (abs(powValue - value.first) < diff)
+				{
+					diff = abs(powValue - value.first);
+					closestValue = value.first;
+				}
+			}
+
+			cout << hist.second.first << " -> " << histLookupMap.at(closestValue).first << endl;
+			gammaTable.insert({ hist.second.first, histLookupMap.at(closestValue).first });
+		}
+
+		unsigned char* output1Dptr = new unsigned char[sliceDims[0] * sliceDims[1] * sliceDims[2]];
+		unsigned char* diff1Dptr = new unsigned char[sliceDims[0] * sliceDims[1] * sliceDims[2]];
+		memcpy(output1Dptr, myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), sliceDims[0] * sliceDims[1] * sliceDims[2]);
+		for (int i = 0; i < sliceDims[0] * sliceDims[1] * sliceDims[2]; ++i)
+		{
+			if (output1Dptr[i] <= 90) output1Dptr[i] = unsigned char(gammaTable.at(90));
+			else output1Dptr[i] = unsigned char(gammaTable.at(output1Dptr[i]));
+			//else output1Dptr[i] = myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get()[i];
+		}
+
+		//ImgProcessor::imgDiff(output1Dptr, myManager.imgDatabase.at("bgWhiteCCF").slicePtrs.begin()->second.get(), diff1Dptr, sliceDims);
+
+		string savePath = "C:\\Users\\hkuo9\\Desktop\\bgWhiteCCF45_90.tif";
+		const char* savePathC = savePath.c_str();
+		V3DLONG sz[4];
+		sz[0] = sliceDims[0];
+		sz[1] = sliceDims[1];
+		sz[2] = sliceDims[2];
+		sz[3] = 1;
+		ImgManager::saveimage_wrapper(savePathC, output1Dptr, sz, V3D_UINT8);
+
+		delete[] output1Dptr;
 	}
 	else if (!funcName.compare("nodeCoordKey2SegMapTime"))
 	{

@@ -47,15 +47,18 @@ public:
 	template<typename T> // Subtracts the input image with a constant.
 	static inline void imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
 
+	template<typename T> //
+	static inline void imgDiff(const T inputImgPtr1[], const T inputImgPtr2[], T outputImgPtr[], const int imgDims[]);
+
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 
-	template<typename T> // Cops image with specified ROI coordinates. (xlb = x lower bound; yhb = y higher bound, and so on)
+	template<typename T> // Crops image with specified ROI coordinates. (xlb = x lower bound; yhb = y higher bound, and so on)
 	static void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
 		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
 	template<typename T> // Inverts 8-bit images, i.e., dynamic range = [0, 255].
-	static inline void invert8bit(T input1D[], T output1D[]);
+	static inline void invert8bit(const T input1D[], T output1D[], const int imgDims[]);
 
 	template<typename T1, typename T2> // -> to be revised into 3D general form
 	static void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
@@ -111,6 +114,9 @@ public:
 	/***************** Image Processing/Filtering *****************/
 	template<typename T> // Thresholds the input image with specified thresholding value.
 	static inline void simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
+
+	template<typename T> // Change black image background to white.
+	static inline void bgWhite(const T inputImgPtr[], T outputImgPtr[], const int imgDims[]);
 
 	template<typename T> // Thresholds out all values that are HIGHER than the specified thresholding value.
 	static inline void simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
@@ -182,6 +188,14 @@ inline void ImgProcessor::imgSubtraction_const(const T inputImgPtr[], T outputIm
 	}
 }
 
+template<typename T>
+inline void ImgProcessor::imgDiff(const T inputImgPtr1[], const T inputImgPtr2[], T outputImgPtr[], const int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+		outputImgPtr[i] = T(abs(int(inputImgPtr1[i]) - int(inputImgPtr2[i])));
+}
+
 inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -234,10 +248,10 @@ inline void ImgProcessor::imgMax(const vector<T>* inputImgPtr1, const T inputImg
 }
 
 template<typename T>
-inline void ImgProcessor::invert8bit(T input[], T output[])
+inline void ImgProcessor::invert8bit(const T input[], T output[], const int imgDims[])
 {
-	int length = sizeof(input) / sizeof(input[0]);
-	for (int i = 0; i < length; ++i) output[i] = 255 - input[i];
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (int i = 0; i < totalPixNum; ++i) output[i] = 255 - input[i];
 }
 
 template<typename T1, typename T2>
@@ -519,11 +533,18 @@ inline void ImgProcessor::simpleThresh(const T inputImgPtr[], T outputImgPtr[], 
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		if (inputImgPtr[i] < threshold)
-		{
-			outputImgPtr[i] = 0;
-			continue;
-		}
+		if (inputImgPtr[i] < threshold) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<typename T>
+inline void ImgProcessor::bgWhite(const T inputImgPtr[], T outputImgPtr[], const int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0) outputImgPtr[i] = 255;
 		else outputImgPtr[i] = inputImgPtr[i];
 	}
 }
@@ -534,11 +555,7 @@ inline void ImgProcessor::simpleThresh_reverse(const T inputImgPtr[], T outputIm
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		if (inputImgPtr[i] > threshold)
-		{
-			outputImgPtr[i] = 0;
-			continue;
-		}
+		if (inputImgPtr[i] > threshold) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = inputImgPtr[i];
 	}
 }
@@ -549,11 +566,7 @@ inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], co
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		if (inputImgPtr[i] > threshold)
-		{
-			outputImgPtr[i] = 255;
-			continue;
-		}
+		if (inputImgPtr[i] > threshold) outputImgPtr[i] = 255;
 		else outputImgPtr[i] = inputImgPtr[i];
 	}
 }

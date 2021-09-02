@@ -102,6 +102,22 @@ namespace integratedDataTypes
 		boost::container::flat_set<coordUnit*> childCoordPtrs;
 	};
 
+	struct segLevel
+	{
+		segLevel() : childLevel(nullptr), parentLevel(nullptr) {}
+		segLevel(const segLevel&) = delete;
+		segLevel& operator=(const segLevel&) = delete;
+		~segLevel();
+
+		int level;
+
+		boost::container::flat_set<int> segIDs, endSegIDs;
+		boost::container::flat_map<int, int> paSegMap;
+		boost::container::flat_map<int, boost::container::flat_set<int>> childSegMap;
+
+		segLevel *childLevel, *parentLevel;
+	};
+
 
 	/************* Segment Unit Data Structure *************/
 	class segUnit
@@ -180,6 +196,7 @@ namespace integratedDataTypes
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		//profiledTree(const vector<segUnit>& inputSegs, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
+		~profiledTree() { this->cleanUpSegLevels(); }
 		
 		float segTileSize;
 		float nodeTileSize;
@@ -243,7 +260,7 @@ namespace integratedDataTypes
 		void nodeCoordKeyNodeIDmapGen(const QList<NeuronSWC>& nodeList, boost::container::flat_multimap<string, int>& nodeCoordKey2nodeIDmap);
 		
 		// This method is called by [this->combSegs] to recursively examine every segment and correct the heading direction.
-		void rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs);
+		void rc_reverseSegs(const int leadingSegID, const int startingNodeID, set<int>& checkedSegIDs);
 		
 		// This method is called when it needs to be converted to a segment that self-branches from the node to which other segment's end is attached.
 		pair<int, segUnit> splitSegWithMiddleHead(const segUnit& inputSeg, int newHeadID);
@@ -255,6 +272,14 @@ namespace integratedDataTypes
 		/* ================= END of [Segment-related Data Members and Functions] ================= */
 
 	public:
+		/* ================= Segment-Topology Data Members and Functions ================= */
+		map<int, set<int>> loops;
+		boost::container::flat_map<int, segLevel*> segLevelMap;
+
+		bool loopCheck(int leadingSegID);
+		void cleanUpSegLevels();
+		/* ============ END of [Segment-Topology Data Members and Functions] ============= */
+
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 

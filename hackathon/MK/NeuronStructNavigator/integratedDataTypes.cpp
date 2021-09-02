@@ -782,6 +782,18 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 	}
 }
 
+bool integratedDataTypes::profiledTree::loopCheck(int leadingSegID)
+{
+	this->loops.clear();
+
+	return true;
+}
+
+void integratedDataTypes::profiledTree::cleanUpSegLevels()
+{
+
+}
+
 void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 {
 	// This method iteratively calls [this->combSegs] to link all segments to become a single tree structure (segment).
@@ -794,20 +806,38 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 		return;
 	}
 
+	int iterCount = 0;
 	while (this->segs.size() > 1)
 	{
+		++iterCount;
+
 		int currSegSize = this->segs.size();
 		this->combSegs(rootNodeID);
 		this->tree.listNeuron.clear();
+		int splitCount = 0;
 		for (auto& seg : this->segs)
 		{
-			if (seg.second.to_be_deleted) this->tree.listNeuron.append(this->seg2MiddleBranchingMap.at(seg.first).nodes);
+			if (seg.second.to_be_deleted)
+			{
+				++splitCount;
+				this->tree.listNeuron.append(this->seg2MiddleBranchingMap.at(seg.first).nodes);
+			}
 			else this->tree.listNeuron.append(seg.second.nodes);
 		}
+		cout << " --> split count = " << splitCount << endl;
+		
+		if (iterCount == 1)
+		{
+			// Segment hierarchy only needs to be constructed once during the 1st iteration in which none of segments have been merged yet.
+			int leadingSegID = this->node2segMap.at(rootNodeID);
+
+		}
+
 		NeuronStructUtil::removeDupHeads(this->tree);
 		profiledTreeReInit(*this);
-		cout << " --> segment number: " << this->segs.size() << endl << endl;
-		
+		cout << " --> segment number after removing duplicated heads: " << this->segs.size() << endl << endl;
+		//system("pause");
+
 		if (this->segs.size() == currSegSize) return;
 	}
 }
@@ -829,18 +859,19 @@ void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
 	//cout << "total end to body count: " << end2bodyCount << endl;
 }
 
-void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, const int startingEndNodeID, set<int>& checkedSegIDs)
+void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, const int startingNodeID, set<int>& checkedSegIDs)
 {
 	// Taking the leading segment as the upstream, any segments that are attached to it need to be connected with their heads. This is the idea of "combing through".
-	// The process goes on recursively until all segments are checked and arranged.
-	// -- Note, running this method only once doesn't guarantee that the all connected segments are arranged in the right orientation down the stream. 
+	// The process goes recursively until all segments are checked and arranged.
+	// -- Note, running this method only once doesn't guarantee that the all connected segments are combed through (every segment's head pointing to the upstream) because the current segmet's end nodes can be in other segment's body.
+	//    This may lead to the subsequent segment not being merged into its parent segment by head removal in [integratedDataTypes::profiledTree::assembleSegs2singleTree], particularly, [head to body] situation.
 	//    This is the reason why [this->assembleSegs2singleTree] calls this method with [this->combSegs] iteratively until all segments have been linked and become 1 single structure (segment).
 
 	checkedSegIDs.insert(leadingSegID);
 
-	// If the given startingEndNodeID is some segment's tail, then the input segment needs to be reversed first.
-	if (find(this->segs.at(leadingSegID).tails.begin(), this->segs.at(leadingSegID).tails.end(), startingEndNodeID) != this->segs.at(leadingSegID).tails.end())
-		this->segs.find(leadingSegID)->second.reverse(startingEndNodeID);
+	// If the given startingNodeID is some segment's tail and ONLY tail, then the input segment needs to be reversed first.
+	if (find(this->segs.at(leadingSegID).tails.begin(), this->segs.at(leadingSegID).tails.end(), startingNodeID) != this->segs.at(leadingSegID).tails.end())
+		this->segs.find(leadingSegID)->second.reverse(startingNodeID);
 	const NeuronSWC& leadingSegHeadNode = this->tree.listNeuron.at(this->node2LocMap.at(this->segs.at(leadingSegID).head));
 	string leadingSegHeadCoordKey = to_string(leadingSegHeadNode.x) + "_" + to_string(leadingSegHeadNode.y) + "_" + to_string(leadingSegHeadNode.z);
 
@@ -873,6 +904,7 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 
 	// **************** Checking if the current segment ends are attaching to other segment's body **************** //
 	const segUnit& curSeg = this->segs.at(leadingSegID);
+
 	const NeuronSWC& headNode = this->tree.listNeuron.at(this->node2LocMap.at(curSeg.head));
 	string headCoordKey = to_string(headNode.x) + "_" + to_string(headNode.y) + "_" + to_string(headNode.z);
 	pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = this->nodeCoordKey2nodeIDMap.equal_range(headCoordKey);
@@ -882,8 +914,16 @@ void integratedDataTypes::profiledTree::rc_reverseSegs(const int leadingSegID, c
 		if (this->node2segMap.at(it->second) == leadingSegID || checkedSegIDs.find(this->node2segMap.at(it->second)) != checkedSegIDs.end()) continue; 
 		else
 		{
+			// NOTE: It's quite rare to enter this block.
+			//       Any segment comes to this function with starting end node ID being a tail will be forced to be reversed first in the beginning of this function.
+			//       Therefore, it only happens in [1st segment's tail -> 2nd segment's body; 2nd segment's head -> 3rd segment's body] situaion. ==> Needs to be verified.
+			//       In practice, the following print out in this block is indeed not common.
 			cout << "---------" << endl;
 			cout << "head to body: " << headNode.n << " -> " << it->second << endl;
+			
+			// May consider adding this line later
+			//this->seg2MiddleBranchingMap.insert(this->splitSegWithMiddleHead(this->segs.at(this->node2segMap.at(it->second)), it->second));
+			
 			cout << "---------" << endl << endl;
 			//++end2bodyCount;
 			this->rc_reverseSegs(this->node2segMap.at(it->second), it->second, checkedSegIDs);	
