@@ -102,6 +102,7 @@ bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool
 bool getNodeOrder(NeuronTree nt,vector<int> & norder);
 vector<int> getNodeType(NeuronTree nt);
 NeuronTree reindexNT(NeuronTree nt);
+double getNT_len(NeuronTree nt,float *res);
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
 bool three_bifurcation_processing(NeuronTree& in_nt);

@@ -639,7 +639,32 @@ NeuronTree reindexNT(NeuronTree nt)
     }
    return nt_out_reindex;
 }
+double getNT_len(NeuronTree nt,float *res)
+{
+    if(res[0]<=0||res[1]<=0||res[2]<=0){
+        res[0]=res[1]=res[2]=1.0;
+    }
+    double out_len=0.0;
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz)
+        return out_len;
+     for (V3DLONG i=0;i<siz;i++)
+     {
+          NeuronSWC s = nt.listNeuron[i];
+          if(s.pn>0&&nt.hashNeuron.contains(s.pn))
+          {
+              V3DLONG spid=nt.hashNeuron.value(s.pn);
+              NeuronSWC sp=nt.listNeuron[spid];
+              out_len+=sqrt
+                      (res[0]*res[0]*(s.x-sp.x)*(s.x-sp.x)+
+                      res[1]*res[1]*(s.y-sp.y)*(s.y-sp.y)+
+                      res[2]*res[2]* (s.z-sp.z)*(s.z-sp.z));
+          }
+     }
+    return out_len;
+}
 /*swc processing*/
+
 bool three_bifurcation_processing(NeuronTree& in_nt)
 {
     //s1. detect three bifurcation points
