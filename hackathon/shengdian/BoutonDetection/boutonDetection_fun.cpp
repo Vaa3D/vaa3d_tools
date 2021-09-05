@@ -1849,7 +1849,7 @@ void sparseBouton_pruning(NeuronTree& nt,float pruning_dist,int pruning_num,bool
         NeuronSWC s = nt.listNeuron.at(i);
         if(s.fea_val.at(btype_index)<BoutonType)
             continue;
-        double vol_density=-1.0;
+        double vol_density=0.0;
         for(V3DLONG ib=0;ib<siz;ib++){
             NeuronSWC ss = nt.listNeuron.at(ib);
             if(ss.fea_val.at(btype_index)<BoutonType)
@@ -1864,8 +1864,8 @@ void sparseBouton_pruning(NeuronTree& nt,float pruning_dist,int pruning_num,bool
             if(b_dist<=pruning_dist)
                 vol_density+=1.0;
         }
-        if(vol_density>pruning_num)
-            pruning_flag[i]=false;
+        if(vol_density<pruning_num)
+            pruning_flag[i]=true;
     }
     //out
     V3DLONG removing_num=0;
