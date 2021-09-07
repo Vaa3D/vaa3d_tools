@@ -69,19 +69,19 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 
   </center>
 
-3.  Click `See in 3D` buton to display the image in 3D mode. Right-click the mouse and select the "2-right-clicks to define a maker" button to generate matching marker-pairs in two images. The number of marker is preferably more than 10, and then save the two sets of points as marker files.
+3.  Click `See in 3D` buton to display the image in 3D mode. Right-click the mouse and select the "2-right-clicks to define a maker" button to generate matching marker-pairs in two images. The number of marker is preferably more than 10, and then save the two sets of points as marker files (example: target_global.marker,sub_global.marker).
   <center>
   <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image004.png width=70% >
 
   </center>
 
-4.	Click menu <Plug-In/image_registation/alignment_affine_TPS_warp/warp image based on given matched point pairs >, a dialog will pop up. 
-  <center>
-  <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image005.png width=30% ><img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image006.png width=50% >
+4. open terminal in windows, and run the following commands：
+```
+cd <your mBrainAligner_win64 directory>
+<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/CCF_25_u8_xpad.v3draw -m ../../examples/subject/fMOST_18458_raw.v3draw  -p a+n -o ../../examples/result/fMOST/ -d 1 -t target_global.marker -s sub_global.marker
 
-  </center>
-
-5.	In this dialog, choose marker file (the marker saved in the fourth step), and the image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the output file name. Then click `OK`. **(TIP)** The non-rigid registration can also be realized by choosing `warp mode` as `TPS`, however, it is not necessary in our pipeline since the local registraion module can do it much better.
+```
+The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the result image will be saved ("examples/result/fMOST/global.v3draw"). However, it is not necessary in our pipeline since the local registraion module can do it much better.
 
 **Step 4: Local registration**
 
