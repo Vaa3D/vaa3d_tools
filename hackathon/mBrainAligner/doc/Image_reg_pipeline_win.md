@@ -78,10 +78,10 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 4. open terminal in windows, and run the following commands：
 ```
 cd <your mBrainAligner_win64 directory>
-<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/CCF_25_u8_xpad.v3draw -m ../../examples/subject/fMOST_18458_raw.v3draw  -p a+n -o ../../examples/result/fMOST/ -d 1 -t target_global.marker -s sub_global.marker
+<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/CCF_25_u8_xpad.v3draw -m ../../examples/subject/fMOST_18458_raw.v3draw  -p a -o ../../examples/result/fMOST/ -d 1 -t target_global.marker -s sub_global.marker
 
 ```
-The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the result image will be saved ("examples/result/fMOST/global.v3draw"). However, it is not necessary in our pipeline since the local registraion module can do it much better.
+The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the result image will be saved ("examples/result/fMOST/fMOST_18458_raw_affine.v3draw"). However, it is not necessary in our pipeline since the local registraion module can do it much better.
 
 **Step 4: Local registration**
 
