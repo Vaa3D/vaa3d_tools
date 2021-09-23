@@ -78,18 +78,30 @@ template <class T> bool getVec(const T * pdata1d, V3DLONG datalen, vector<uint8_
 
 template <class T> bool getVecSWC(const T * pdata1d, V3DLONG mysz[4], int c, QList<NeuronSWC> neuron, vector<uint8_t> &Vec)
 {
-    V3DLONG id;
+    V3DLONG id,n;
+    n=0;
     // create vector of intensities
+    bool flag=0;
     for (id = 0; id < neuron.size(); id++) {
         V3DLONG nodex = neuron.at(id).x;
         V3DLONG nodey = neuron.at(id).y;
         V3DLONG nodez = neuron.at(id).z;
         struct XYZ treep = XYZ(nodex,nodey,nodez);
-        Vec.push_back(pdata1d[V3DLONG(c*mysz[0]*mysz[1]*mysz[2] + treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
-        //cout<<"\n\n";
+        //cout << "nodes:" << nodex << " " << nodey << " " << nodez << "\n";
+        //cout << "size:" << mysz[0] << " " << mysz[1] << " " << mysz[2] << "\n";
+        if(nodex > 0 && nodey > 0 && nodez > 0 && nodex < mysz[0] && nodey < mysz[1] && nodez < mysz[2]){
+            Vec.push_back(pdata1d[V3DLONG(c*mysz[0]*mysz[1]*mysz[2] + treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)]);
+        }
+        else
+        {
+            flag=1;
+            n++;
+        }
         //cout<<uint(pdata1d[V3DLONG(treep.z*mysz[0]*mysz[1]+treep.y*mysz[0]+treep.x)])<<" ";
         //cout<<uint(Vec.at(Vec.size()-1))<<" ";
     }
+    if(flag==1)cout<<"\n\nCaution, there are " << n << " nodes outside the image volume\n\n";
+    //cout<<"\nDone\n";
     return true;
 }
 
@@ -391,9 +403,11 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
         stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
 
-        SNRmean = avmeansignal/stdevmean;
+        //SNRmean = avmeansignal/stdevmean;
+        SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
         CNRmean = (maxint-meanint)/stdevmean;
-        SNRotsu = meanotsusignal/stdevotsu;
+        //SNRotsu = meanotsusignal/stdevotsu;
+        SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
         CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
         SNRmean_vec.append(SNRmean);
@@ -656,10 +670,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         if(inlist->size()==2)
         {
             int c=0;
-            //cout<<neuron.size();
-            mysize=neuron.size();
-            intvec.reserve(neuron.size());
+            cout << "Neuron size:" << neuron.size() << "\n";
+            //intvec.reserve(neuron.size());
             getVecSWC(inimg1d, sz, c, neuron, intvec);
+            mysize=intvec.size();
         }
         if (inlist->size()==1 && inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
