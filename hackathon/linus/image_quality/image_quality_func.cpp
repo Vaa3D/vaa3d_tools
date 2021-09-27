@@ -788,9 +788,11 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
             stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
 
-            SNRmean = avmeansignal/stdevmean;
+            //SNRmean = avmeansignal/stdevmean;
+            SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
             CNRmean = (maxint-meanint)/stdevmean;
-            SNRotsu = meanotsusignal/stdevotsu;
+            //SNRotsu = meanotsusignal/stdevotsu;
+            SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
             CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
             SNRmean_vec.append(SNRmean);
@@ -924,9 +926,11 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
                 stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
 
-                SNRmean = avmeansignal/stdevmean;
+                //SNRmean = avmeansignal/stdevmean;
+                SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
                 CNRmean = (maxint-meanint)/stdevmean;
-                SNRotsu = meanotsusignal/stdevotsu;
+                //SNRotsu = meanotsusignal/stdevotsu;
+                SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
                 CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
 
                 SNRmean_vec.append(SNRmean);
