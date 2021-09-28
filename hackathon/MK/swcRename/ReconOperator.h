@@ -14,8 +14,10 @@
 #include "NeuronStructExplorer.h"
 
 const bool DUPSEG_REMOVE = false;
+const bool REDUN_REMOVE = false;
 const bool TYPE1_REMOVE = false;
 const bool GROUPED_TREES = false;
+const bool PREPROCESS = false;
 const bool GROUPED_ASSEMBLED_TREES = false;
 
 class ReconOperator

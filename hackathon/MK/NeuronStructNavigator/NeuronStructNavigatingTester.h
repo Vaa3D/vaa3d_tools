@@ -30,6 +30,8 @@ namespace NeuronStructNavigator
 
 		inline void printOutEditedSegNode_end2endConn(const QList<NeuronSWC>& nodes);
 
+		void saveLoops(const profiledTree& inputProfiledTree, const set<int>& loopingSegIDs, const QString& saveNameQ) const;
+
 		map<int, set<vector<float>>> getSegEndClusterNodeMap(const profiledTree& inputProfiledTree) const;
 		void checkSegHeadClusters(const profiledTree& inputProfiledTree, const QString& saveNamePrefixQ) const;
 		void checkSegTailClusters(const profiledTree& inputProfiledTree, const QString& saveNamePrefixQ) const;

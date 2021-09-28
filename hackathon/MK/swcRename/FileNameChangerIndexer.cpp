@@ -70,6 +70,7 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 
 		for (auto& fileNameQ : fileNameList)
 		{
+			qDebug() << fileNameQ;
 			if (fileNameQ.endsWith("swc") || fileNameQ.endsWith("eswc"))
 			{ 
 				string newFileName;
@@ -96,7 +97,7 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 				(*oldMapPtr)[fileNameQ.toStdString()] = newFileName;
 
 				string oldName = fileNameQ.toStdString();
-				cout << oldName << endl << newFileName << endl << endl;
+				cout << endl << oldName << endl << newFileName << endl;
 
 				QString oldFullNameQ = this->rootPath + "\\" + fileNameQ;
 				QString newFullBaseNameQ = newSavingPathQ + "\\" + QString::fromStdString(newFileName);
@@ -108,10 +109,9 @@ void FileNameChangerIndexer::nameChange(const QStringList& fileNameList, FileNam
 				vector<float> somaCoords;
 				if (!this->getCoordsFromSWC(inputTree.listNeuron, somaCoords))
 				{
-					/*if (!unProcessedDir.exists()) unProcessedDir.mkpath(".");
-					QString newUnprocessdFullName = unProcessedSavingPathQ + "\\" + fileNameQ;
-					QFile::copy(oldFullNameQ, newUnprocessdFullName);
-					continue;*/
+					QString ErrorMsgQ = "No valid soma node found in file " + QString::fromStdString(oldName);
+					v3d_msg(ErrorMsgQ);
+					continue;
 				}
 				
 				int dupCount = 0;

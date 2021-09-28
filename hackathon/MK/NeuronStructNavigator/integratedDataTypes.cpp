@@ -782,16 +782,263 @@ int integratedDataTypes::profiledTree::findNearestSegEndNodeID(const CellAPO inp
 	}
 }
 
-bool integratedDataTypes::profiledTree::loopCheck(int leadingSegID)
+bool integratedDataTypes::profiledTree::loopCheck()
 {
-	this->loops.clear();
+	this->loopingSegs.clear();
 
-	return true;
+	map<int, segUnit> segsCopy = this->eliminateEndSegs(this->segs);
+	boost::container::flat_multimap<string, int> nodeCoordKey2segMapCopy;
+	this->nodeCoordKeySegMapGen(segsCopy, nodeCoordKey2segMapCopy);
+	
+	int updatedSegNum = 0;
+	while (updatedSegNum != segsCopy.size())
+	{
+		updatedSegNum = segsCopy.size();
+		if (updatedSegNum == 0) break;
+
+		this->rc_findLoopPathRecall = false;
+		this->pinpointLoopingSegs(segsCopy, nodeCoordKey2segMapCopy);
+
+		if (this->rc_findLoopPathRecall)
+		{
+			segsCopy = this->eliminateEndSegs(segsCopy);
+			this->nodeCoordKeySegMapGen(segsCopy, nodeCoordKey2segMapCopy);
+		}
+	}
+
+	cout << " ==> " << this->loopingSegs.size() << " loops found." << endl;
+	cout << " --------------------------------------- " << endl << endl;
+	if (!this->loopingSegs.empty()) return true;
+	else return false;
 }
 
-void integratedDataTypes::profiledTree::cleanUpSegLevels()
+void integratedDataTypes::profiledTree::pinpointLoopingSegs(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap)
 {
+	if (inputSegs.size() == 2)
+	{
+		set<int> candidates;
+		for (auto& segID : inputSegs) candidates.insert(segID.first);
+		if (this->loopExaminate(inputSegs, candidates)) this->loopingSegs.insert(candidates);
+		else return;
+	}
+	else
+	{
+		vector<int> pathHead = { 0 };
+		this->rc_findLoopPaths(inputSegs, nodeCoordKey2segMap, pathHead, inputSegs.begin()->first);
+	}
+}
 
+map<int, segUnit> integratedDataTypes::profiledTree::eliminateEndSegs(const map<int, segUnit>& inputSegs)
+{
+	map<int, segUnit> segsCopy = inputSegs;
+	boost::container::flat_multimap<string, int> nodeCoordKey2segMapCopy;
+	int curSegNum;
+	do
+	{
+		curSegNum = segsCopy.size();
+		cout << "segment number: " << curSegNum << endl;
+		this->nodeCoordKeySegMapGen(segsCopy, nodeCoordKey2segMapCopy);
+
+		vector<int> segIDs2beDeleted;
+		for (auto& seg : segsCopy)
+		{
+			int branchingCount = 0;
+			for (auto& node : seg.second.nodes)
+			{
+				string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+				pair<boost::container::flat_multimap<string, int>::iterator, boost::container::flat_multimap<string, int>::iterator> range = nodeCoordKey2segMapCopy.equal_range(nodeCoordKey);
+
+				bool branch = false;
+				if (range.second - range.first > 1)
+				{
+					for (boost::container::flat_multimap<string, int>::iterator it = range.first; it != range.second; ++it)
+					{
+						const segUnit& compareSeg = segsCopy.at(it->second);
+
+						const NeuronSWC compareHead = compareSeg.nodes.at(compareSeg.seg_nodeLocMap.at(compareSeg.head));
+						string compareHeadCoordKey = to_string(compareHead.x) + "_" + to_string(compareHead.y) + "_" + to_string(compareHead.z);
+						if (!compareHeadCoordKey.compare(nodeCoordKey))
+						{
+							++branchingCount;
+							break;
+						}
+
+						for (auto& compareTailID : compareSeg.tails)
+						{
+							const NeuronSWC& compareTail = compareSeg.nodes.at(compareSeg.seg_nodeLocMap.at(compareTailID));
+							string compareTailCoordKey = to_string(compareTail.x) + "_" + to_string(compareTail.y) + "_" + to_string(compareTail.z);
+							if (!compareTailCoordKey.compare(nodeCoordKey))
+							{
+								++branchingCount;
+								goto TAIL_BRANCH_FOUND;
+							}
+						}
+					}
+				}
+
+			TAIL_BRANCH_FOUND:
+				continue;
+			}
+
+			if (branchingCount <= 1) segIDs2beDeleted.push_back(seg.first);
+		}
+		cout << "segment to be deleted: ";
+		for (auto& segID : segIDs2beDeleted)
+		{
+			cout << segID << " ";
+			segsCopy.erase(segsCopy.find(segID));
+		}
+		cout << endl << "segment number left: " << segsCopy.size() << endl << endl;
+	} while (segsCopy.size() != curSegNum);
+
+	return segsCopy;
+}
+
+void integratedDataTypes::profiledTree::rc_findLoopPaths(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap, vector<int> pathHead, int leadingsegID)
+{
+	if (this->rc_findLoopPathRecall) return;
+
+	set<int> connectingSegIDs;
+	int currentSegID = leadingsegID;
+	while (1)
+	{
+		cout << "Current segID = " << currentSegID << endl;
+
+		connectingSegIDs.clear();
+		for (auto& node : inputSegs.at(currentSegID).nodes)
+		{
+			string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+			pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = nodeCoordKey2segMap.equal_range(nodeCoordKey);
+			if (range.second - range.first > 1)
+			{
+				for (boost::container::flat_multimap<string, int>::const_iterator it = range.first; it != range.second; ++it)
+					if (it->second != currentSegID && it->second != *(pathHead.end() - 1)) connectingSegIDs.insert(it->second);
+			}
+		}
+		pathHead.push_back(currentSegID);
+		cout << " connecting segIDs: ";
+		for (auto& connectingID : connectingSegIDs) cout << connectingID << " ";
+		cout << endl;
+		
+		if (connectingSegIDs.size() > 1)
+		{
+			cout << endl << " -- Branching recursive call -- " << endl;
+			for (auto& nextLeadingSegID : connectingSegIDs)
+			{
+				vector<int>::iterator targetSegIDpos = find(pathHead.begin(), pathHead.end(), nextLeadingSegID);
+				if (targetSegIDpos < pathHead.end() - 1)
+				{
+					cout << "  -> looping path found: ";
+					set<int> loop;
+					for (vector<int>::iterator it = targetSegIDpos; it != pathHead.end(); ++it)
+					{
+						cout << *it << " ";
+						loop.insert(*it);
+					}
+
+					if (this->loopExaminate(inputSegs, loop))
+					{
+						this->loopingSegs.insert(loop);
+						cout << *connectingSegIDs.begin() << endl;
+						this->rc_findLoopPathRecall = true;
+
+						for (auto& loopID : loop) inputSegs.erase(inputSegs.find(loopID));
+					}
+
+					return;
+				}
+				else this->rc_findLoopPaths(inputSegs, nodeCoordKey2segMap, pathHead, nextLeadingSegID);
+			}
+			cout << " -- Recursive call return -- " << endl;
+		}
+		else if (connectingSegIDs.size() == 1)
+		{
+			vector<int>::iterator targetSegIDpos = find(pathHead.begin(), pathHead.end(), *connectingSegIDs.begin());
+			if (targetSegIDpos < pathHead.end() - 1)
+			{
+				cout << "  -> looping path found: ";
+				set<int> loop;
+				for (vector<int>::iterator it = targetSegIDpos; it != pathHead.end(); ++it)
+				{
+					cout << *it << " ";
+					loop.insert(*it);
+				}
+
+				if (this->loopExaminate(inputSegs, loop))
+				{
+					this->loopingSegs.insert(loop);
+					cout << *connectingSegIDs.begin() << endl;
+					this->rc_findLoopPathRecall = true;
+
+					for (auto& loopID : loop) inputSegs.erase(inputSegs.find(loopID));
+				}
+				
+				return;
+			}
+			else
+			{
+				currentSegID = *connectingSegIDs.begin();
+				continue;
+			}
+		}
+		else if (connectingSegIDs.empty()) return;
+
+		if (currentSegID == *(pathHead.end() - 1)) return;
+	}
+}
+
+bool integratedDataTypes::profiledTree::loopExaminate(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate)
+{
+	if (loopCandidate.size() == 2)
+	{
+		map<int, segUnit> the2segs;
+		for (auto& segID : loopCandidate) the2segs.insert({ segID, inputSegs.at(segID) });
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap;
+		this->nodeCoordKeySegMapGen(the2segs, nodeCoordKey2segMap);
+
+		int validOverLapCount = 0;
+		for (auto& segID : loopCandidate)
+		{
+			for (auto& node : inputSegs.at(segID).nodes)
+			{
+				string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+				pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = nodeCoordKey2segMap.equal_range(nodeCoordKey);
+				if (range.second - range.first == 2)
+				{
+					if (node.n == inputSegs.at(segID).head) ++validOverLapCount;
+					for (auto& tailID : inputSegs.at(segID).tails)
+					{
+						if (node.n == tailID) ++validOverLapCount;
+					}
+				}
+			}
+		}
+
+		if (validOverLapCount >= 2) return true;
+		else return false;
+	}
+	else if (loopCandidate.size() == 3)
+	{
+		map<int, segUnit> the3segs;
+		for (auto& segID : loopCandidate) the3segs.insert({ segID, inputSegs.at(segID) });
+		boost::container::flat_multimap<string, int> nodeCoordKey2segMap;
+		this->nodeCoordKeySegMapGen(the3segs, nodeCoordKey2segMap);
+
+		map<string, int> coordOverlapCounts;
+		for (auto& segID : loopCandidate)
+		{
+			for (auto& node : inputSegs.at(segID).nodes)
+			{
+				string nodeCoordKey = to_string(node.x) + "_" + to_string(node.y) + "_" + to_string(node.z);
+				pair<boost::container::flat_multimap<string, int>::const_iterator, boost::container::flat_multimap<string, int>::const_iterator> range = nodeCoordKey2segMap.equal_range(nodeCoordKey);
+				if (range.second - range.first > 1) coordOverlapCounts.insert({ nodeCoordKey, int(range.second - range.first) });
+			}
+		}
+
+		if (coordOverlapCounts.size() == 1 && coordOverlapCounts.begin()->second == 3) return false;
+	}
+
+	return true;
 }
 
 void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
@@ -800,6 +1047,11 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 
 	if (this->segs.size() == 1)
 	{
+		this->nodeSegMapGen();
+		this->nodeCoordKeySegMapGen();
+		this->segEndCoordKeySegMapGen();
+		this->nodeCoordKeyNodeIDmapGen();
+
 		this->combSegs(rootNodeID);
 		this->tree.listNeuron = this->segs.begin()->second.nodes;
 		profiledTreeReInit(*this);
@@ -810,6 +1062,11 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 	while (this->segs.size() > 1)
 	{
 		++iterCount;
+
+		this->nodeSegMapGen();
+		this->nodeCoordKeySegMapGen();
+		this->segEndCoordKeySegMapGen();
+		this->nodeCoordKeyNodeIDmapGen();
 
 		int currSegSize = this->segs.size();
 		this->combSegs(rootNodeID);
@@ -825,13 +1082,6 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 			else this->tree.listNeuron.append(seg.second.nodes);
 		}
 		cout << " --> split count = " << splitCount << endl;
-		
-		if (iterCount == 1)
-		{
-			// Segment hierarchy only needs to be constructed once during the 1st iteration in which none of segments have been merged yet.
-			int leadingSegID = this->node2segMap.at(rootNodeID);
-
-		}
 
 		NeuronStructUtil::removeDupHeads(this->tree);
 		profiledTreeReInit(*this);
@@ -844,12 +1094,7 @@ void integratedDataTypes::profiledTree::assembleSegs2singleTree(int rootNodeID)
 
 //int end2bodyCount = 0;
 void integratedDataTypes::profiledTree::combSegs(int rootNodeID)
-{
-	this->nodeSegMapGen();
-	this->nodeCoordKeySegMapGen();
-	this->segEndCoordKeySegMapGen();
-	this->nodeCoordKeyNodeIDmapGen();
-	
+{	
 	int leadingSegID = this->node2segMap.at(rootNodeID);
 	set<int> checkedSegIDs = { this->node2segMap.at(rootNodeID) };
 	this->rc_reverseSegs(leadingSegID, rootNodeID, checkedSegIDs);

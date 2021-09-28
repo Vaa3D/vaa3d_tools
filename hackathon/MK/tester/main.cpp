@@ -51,34 +51,45 @@ int main(int argc, char* argv[])
 	NeuronStructExplorer myExplorer;
 	TreeTrimmer myTrimmer;
 
-	if (!funcName.compare("binaryCreate"))
+	if (!funcName.compare("loopCheck"))
 	{
-		string inputFilePath = "D:\\Vaa3D_2013_Qt486\\v3d_external\\bin\\BrainAtlas\\brgs\\AAA.brg";
-		string outputFilePath = "C:\\Users\\hkuo9\\Desktop\\test.brg";
-		ifstream inFile(inputFilePath);
-		ofstream outputFile(outputFilePath, ios::out | ios::binary);
-		char outChar;
-		while (inFile >> outChar)
+		QString inputNameQ = QString::fromStdString(paras.at(0));
+		NeuronTree noDupSegTree = NeuronStructUtil::removeDupStructures(readSWC_file(inputNameQ));
+		profiledTree inputProfiledTree(noDupSegTree);
+		NeuronStructUtil::removeRedunNodes(inputProfiledTree);
+		/*if (inputProfiledTree.loopCheck())
 		{
-			//cout << line << endl;
-			outputFile.write(&outChar, sizeof(outChar));
+			NeuronTree loopTree;
+			for (auto& segID : inputProfiledTree.loopingSegs)
+				loopTree.listNeuron.append(inputProfiledTree.segs.at(segID).nodes);
+			
+			QString outputNameQ = QString::fromStdString(paras.at(1));
+			writeSWC_file(outputNameQ, loopTree);
+		}*/
+
+		if (inputProfiledTree.loopCheck())
+		{
+			int count = 0;
+			for (set<set<int>>::iterator it = inputProfiledTree.loopingSegs.begin(); it != inputProfiledTree.loopingSegs.end(); ++it)
+			{
+				++count;
+				NeuronTree loopTree;
+				for (auto& segID : *it) loopTree.listNeuron.append(inputProfiledTree.segs.at(segID).nodes);
+
+				QString outputNameQ = QString::fromStdString(paras.at(1)) + QString::number(count) + ".swc";
+				writeSWC_file(outputNameQ, loopTree);
+			}
 		}
-		outputFile.close();
-
-		ifstream inFile2(outputFilePath);
-		char testChar;
-		while (inFile2 >> testChar) cout << testChar;
-
-		brainRegion testRegion;
-		clock_t start = clock();
-		testRegion.readBrainRegion_file(inputFilePath);
-		clock_t end = clock();
-		float duration = float(end - start) / CLOCKS_PER_SEC;
-		cout << "time elapsed: " << duration << " seconds" << endl;
-
-		string outputTest = "C:\\Users\\hkuo9\\Desktop\\test2.brg";
-		ofstream outputFile2(outputTest, ios::out | ios::binary);
-		outputFile2.write((char*)&testRegion, sizeof(testRegion));
+	}
+	else if (!funcName.compare("combine"))
+	{
+		QString inputName1Q = QString::fromStdString(paras.at(0));
+		QString inputName2Q = QString::fromStdString(paras.at(1));
+		NeuronTree tree1 = readSWC_file(inputName1Q);
+		NeuronTree tree2 = readSWC_file(inputName2Q);
+		vector<NeuronTree> trees = { tree1, tree2 };
+		NeuronTree combinedTree = NeuronStructUtil::swcCombine(trees);
+		writeSWC_file(QString::fromStdString(paras.at(2)), combinedTree);
 	}
 	else if (!funcName.compare("backgroundWhite"))
 	{

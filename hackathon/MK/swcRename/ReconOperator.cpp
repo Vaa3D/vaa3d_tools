@@ -158,6 +158,7 @@ void ReconOperator::assembleSegs2tree()
 		}
 		else continue;
 		
+		qDebug() << "Processing Cell: " << baseName;
 		if (apoFound)
 		{
 			cout << "Input soma coordinate: " << somaAPO.x << " " << somaAPO.y << " " << somaAPO.z << endl;
@@ -174,6 +175,7 @@ void ReconOperator::assembleSegs2tree()
 			/***************** Remove redundant nodes *****************/
 			profiledTree inputProfiledTree(noDupSegTree);
 			NeuronStructUtil::removeRedunNodes(inputProfiledTree);
+			if (NeuronReconTester::getInstance() != nullptr && REDUN_REMOVE) NeuronReconTester::getInstance()->saveIntermediateResult(noDupSegTree, "noRedunNodes", baseName);
 			/**********************************************************/
 
 
@@ -187,6 +189,9 @@ void ReconOperator::assembleSegs2tree()
 
 				/******************* ERROR STRUCTURE CHECK *******************/
 				this->errorCheckRepair(inputProfiledTree);
+
+				// The tree is said to be "preprocessed" after this step. It's supposed not to have any duplicated segments, nodes, and error segments. 
+				if (NeuronReconTester::getInstance() != nullptr && PREPROCESS) NeuronReconTester::getInstance()->saveIntermediateResult(inputProfiledTree.tree, "preprocessed", baseName);
 				/*************************************************************/
 
 
@@ -204,7 +209,34 @@ void ReconOperator::assembleSegs2tree()
 
 
 				// ******* ================= LOOP DETECTION FOR EACH CONNECTED TREE ================= ******* //
+				cout << "-- Scanning for loops: " << endl;
+				NeuronTree loopTree;
+				for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
+				{
+					cout << "Tree " << int(treeIt - connectedTrees.begin()) + 1 << ":" << endl;
+					treeIt->second.loopCheck();
+					if (!treeIt->second.loopingSegs.empty())
+					{
+						for (auto& loop : treeIt->second.loopingSegs)
+						{
+							for (auto& loopingSegID : loop) loopTree.listNeuron.append(treeIt->second.segs.at(loopingSegID).nodes);
+						}
+					}
+				}
 
+				if (loopTree.listNeuron.isEmpty()) qDebug() << "No loop found in Cell " << baseName;
+				else 
+				{
+					QString outputFolderQ = this->rootPath + "\\loopCases\\";
+					QDir outputDir(outputFolderQ);
+					if (!outputDir.exists()) outputDir.mkpath(".");
+
+					for (auto& node : loopTree.listNeuron) node.type = 6;
+					QString outputLoopTreeNameQ = outputFolderQ + baseName + ".swc";
+					writeSWC_file(outputLoopTreeNameQ, loopTree);
+
+					continue;
+				}
 				// ******* ========================================================================== ******* //
 				
 
@@ -300,6 +332,7 @@ void ReconOperator::assembleSegs2tree()
 					writeSWC_file(outputFolderQ + baseName + ".swc", outputTree);
 					//QString inputAPOfullNameQ = this->rootPath + "\\" + baseName + ".apo";
 					//QString inputANOfullNameQ = this->rootPath + "\\" + baseName;
+					cout << endl;
 				}
 			}
 			else
@@ -334,30 +367,32 @@ void ReconOperator::removeAdditionalType1Nodes(profiledTree& inputProfiledTree)
 	{
 		if (node.type == 1)
 		{
-			if (node.parent == -1)
+			if (node.parent == -1) // -- soma node (type 1, root node) --
 			{
-				// soma node (type 1, root node) 
 				somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 				if (inputProfiledTree.node2childLocMap.find(node.n) != inputProfiledTree.node2childLocMap.end())
 					for (auto& childLoc : inputProfiledTree.node2childLocMap.at(node.n)) inputProfiledTree.tree.listNeuron[childLoc].parent = -1;
 			}
-			else
+			else // -- type 1, but not a root --
 			{
-				// type 1, but not a root.
-				if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1)
-					// The child node type = 1.
-					somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
-				else
+				if (inputProfiledTree.node2childLocMap.find(node.n) != inputProfiledTree.node2childLocMap.end())
 				{
-					// The child node type is not 1, taking out type 1 nodes stops here. Changing that child node to root.
-					for (auto& childNodeLoc : inputProfiledTree.node2childLocMap.at(node.n))
+					// The child node type = 1.
+					if (inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type == 1)
+						somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
+					else
 					{
-						inputProfiledTree.tree.listNeuron[childNodeLoc].parent = -1;
-						//node.parent = -1;
-						//node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+						// The child node type is not 1, taking out type 1 nodes stops here. Changing that child node to root.
+						for (auto& childNodeLoc : inputProfiledTree.node2childLocMap.at(node.n))
+						{
+							inputProfiledTree.tree.listNeuron[childNodeLoc].parent = -1;
+							//node.parent = -1;
+							//node.type = inputProfiledTree.tree.listNeuron.at(*inputProfiledTree.node2childLocMap.at(node.n).begin()).type;
+						}
+						somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 					}
-					somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n));
 				}
+				else somaRemoveLocs.push_back(inputProfiledTree.node2LocMap.at(node.n)); // single dangling type 1 non-root node
 			}
 		}
 	}
@@ -407,6 +442,7 @@ void ReconOperator::assembleGroupedSegs(boost::container::flat_map<int, profiled
 
 	for (auto& connectedTree : connectedTrees)
 	{
+		connectedTree.second.treeName = to_string(connectedTree.first);
 		if (connectedTree.second.tree.listNeuron.size() <= 1) continue;
 
 		cout << "Processing tree " << int(connectedTrees.find(connectedTree.first) - connectedTrees.begin()) + 1 << "..." << endl;

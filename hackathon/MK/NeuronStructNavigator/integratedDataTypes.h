@@ -104,18 +104,19 @@ namespace integratedDataTypes
 
 	struct segLevel
 	{
-		segLevel() : childLevel(nullptr), parentLevel(nullptr) {}
-		segLevel(const segLevel&) = delete;
-		segLevel& operator=(const segLevel&) = delete;
-		~segLevel();
+		//segLevel() : childLevel(nullptr), parentLevel(nullptr) {}
+		//segLevel(const segLevel&) = delete;
+		//segLevel& operator=(const segLevel&) = delete;
+		//~segLevel();
+		//const bool operator==(const segLevel& comparedSegLevel) const;
 
 		int level;
 
-		boost::container::flat_set<int> segIDs, endSegIDs;
-		boost::container::flat_map<int, int> paSegMap;
-		boost::container::flat_map<int, boost::container::flat_set<int>> childSegMap;
+		boost::container::flat_set<int> segIDs;    // all segIDs at the current level
+		boost::container::flat_map<int, int> paSegMap;                                 // segID of current level -> segID of parental level
+		boost::container::flat_map<int, boost::container::flat_set<int>> childSegMap;  // segID of current level -> segIDs of child level
 
-		segLevel *childLevel, *parentLevel;
+		//segLevel *childLevel, *parentLevel;
 	};
 
 
@@ -196,8 +197,9 @@ namespace integratedDataTypes
 		profiledTree(const NeuronTree& inputTree, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		//profiledTree(const vector<segUnit>& inputSegs, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
 		profiledTree(const vector<V_NeuronSWC>& inputV_NeuronSWC, float nodeTileLength = NODE_TILE_LENGTH, float segTileLength = SEGtileXY_LENGTH);
-		~profiledTree() { this->cleanUpSegLevels(); }
 		
+		string treeName;
+
 		float segTileSize;
 		float nodeTileSize;
 		void nodeTileResize(float nodeTileLength);
@@ -273,13 +275,18 @@ namespace integratedDataTypes
 
 	public:
 		/* ================= Segment-Topology Data Members and Functions ================= */
-		map<int, set<int>> loops;
-		boost::container::flat_map<int, segLevel*> segLevelMap;
+		bool rc_findLoopPathRecall;
+		set<set<int>> loopingSegs;
+		bool loopCheck();
+		map<int, segUnit> eliminateEndSegs(const map<int, segUnit>& inputSegs);
+		void pinpointLoopingSegs(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
+		bool loopExaminate(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate);
 
-		bool loopCheck(int leadingSegID);
-		void cleanUpSegLevels();
+	private:
+		void rc_findLoopPaths(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap, vector<int> pathHead, int leadingsegID);
 		/* ============ END of [Segment-Topology Data Members and Functions] ============= */
 
+	public:
 		boost::container::flat_set<int> spikeRootIDs;    // IDs of the nodes where "spikes" grow upon
 		boost::container::flat_set<int> smoothedNodeIDs; // IDs of the nodes that have been "dragged" to the smoothed positions 
 

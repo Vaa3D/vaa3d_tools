@@ -101,6 +101,14 @@ NeuronStructNavigator::Tester* NeuronStructNavigator::Tester::reInstance(TreeTri
 	return NeuronStructNavigator::Tester::testerInstance;
 }
 
+void NeuronStructNavigator::Tester::saveLoops(const profiledTree& inputProfiledTree, const set<int>& loopingSegIDs, const QString& saveNameQ) const
+{
+	NeuronTree outputTree;
+	//for (auto& segID : inputProfiledTree.loopingSegs) outputTree.listNeuron.append(inputProfiledTree.segs.at(segID).nodes);
+
+	writeSWC_file(saveNameQ, outputTree);
+}
+
 void NeuronStructNavigator::Tester::checkClusterNodeMap(const profiledTree& inputProfiledTree, const QString& saveNamePrefixQ) const
 {
 	if (inputProfiledTree.segEndClusterNodeMap.empty())
