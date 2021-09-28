@@ -250,7 +250,7 @@ struct AxonalBouton
 };
 /*preprocess*/
 void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
-
+NeuronTree preprocess_simple(NeuronTree nt);//for swc in an image block
 
 /*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
 void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly=true);
@@ -263,7 +263,7 @@ NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLO
 NeuronSWC calc_mean_shift_center_v4(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius=3,int windowradius_limit=15);
 NeuronSWC calc_mean_shift_center_v5(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius=3,int windowradius_limit=15);
 
-NeuronSWC nodeRefine(unsigned char * & inimg1d,NeuronSWC s,V3DLONG * sz,int neighbor_size=5);
+NeuronSWC nodeRefine(unsigned char * & inimg1d,NeuronSWC s,V3DLONG * sz,int neighbor_size=2);
 double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);
 NeuronSWC lineRefine(unsigned char * & inimg1d,V3DLONG * sz,NeuronSWC snode,NeuronSWC spnode, int sqhere_radius=5,int searching_line_radius=2);
 
@@ -274,9 +274,8 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
 void boutonFilter_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 
 /*filter*/
-QList <CellAPO> getBouton_1D_filter(NeuronTree nt,double radius_delta=1.3,double intensity_delta=0.05,double AXON_BACKBONE_RADIUS=4);//old version, will remove later
-QList <NeuronSWC> boutonFilter_fun(NeuronTree nt,double radius_delta=1.3,double intensity_delta=1,double AXON_BACKBONE_RADIUS=3);
-QList <AxonalBouton> initboutonFilter_fun(NeuronTree nt,double radius_delta=1.3,double intensity_delta=3,double AXON_BACKBONE_RADIUS=3);
+QList <CellAPO> boutonFilter_1D(NeuronTree nt,double radius_delta=1.3,double intensity_delta=0.05,double AXON_BACKBONE_RADIUS=4);//old version, will remove later
+QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta=1.5,double intensity_delta=1.5,double AXON_BACKBONE_RADIUS=2);
 void map_bouton_2_neuronTree(NeuronTree& nt_bouton,QList <AxonalBouton>  bouton_sites);
 void map_bouton_2_neuronTree(NeuronTree& nt,QList <NeuronSWC> bouton_sites);
 void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly);
@@ -305,7 +304,8 @@ QList<CellAPO> bouton_to_apo(NeuronTree nt);
 QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
 void featureTable(const QString &filename,NeuronTree nt,float *res);
 void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
-void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,NeuronTree nt,QString outpath,int crop_half_size=16,bool mip_flag=false,int mask_size=0);
+void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,NeuronTree nt,QString outpath,
+                    int getbtype=BoutonType,int crop_half_size=16,bool mip_flag=false,int mask_size=0);
 void getBoutonBlock_inImg(V3DPluginCallback2 &callback,string inimg_file,QList <CellAPO> apolist,string outpath,int block_size=16);
 void maskImg(unsigned char *&inimg1d,unsigned char * & im_transfer,long in_sz[], NeuronTree nt, int maskRadius=8);
 
@@ -314,7 +314,8 @@ void scale_registered_swc(NeuronTree& nt,float xshift_pixels=20.0,float scale_xy
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered);
 
 /*radius estimation*/
-double radiusEstimation(unsigned char * & inimg1d,V3DLONG in_zz[4], NeuronSWC s,double dfactor,double bkg_thresh);
+double radiusEstimation(unsigned char *&inimg1d, long in_zz[], NeuronSWC s, double dfactor, double bkg_thresh);
+double radiusEstimation(V3DPluginCallback2 &callback,unsigned char * & inimg1d,V3DLONG in_zz[4], NeuronSWC s,double dfactor,double bkg_thresh);
 double getNodeRadius(unsigned char * & inimg1d,V3DLONG in_sz[4], NeuronSWC s,double bkg_thresh=40);
 double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh,int z_half_win_size);
 double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, double bkg_thresh);

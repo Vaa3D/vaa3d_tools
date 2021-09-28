@@ -35,6 +35,7 @@ QStringList UnsortedPlugin::funclist() const
     <<tr("somaBlockCrop")
     <<tr("MIP_Zslices")
     <<tr("multi_stems")
+    <<tr("get_soma_apo")
     <<tr("swc_combine")
     <<tr("mask_img_from_swc")
     <<tr("help");
@@ -423,6 +424,35 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         QString outswc=(outfiles.size()>=1)?outfiles[0]:inswc+"_multi_stem.swc";
         if(stems>1)
             writeSWC_file(outswc,nt);
+    }
+    else if (func_name == tr("get_soma_apo"))
+    {
+        QString inswc= infiles[0];
+        NeuronTree nt=readSWC_file(inswc);
+        V3DLONG niz=nt.listNeuron.size();
+        int somaid=-1;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.type==1&&s.pn<0){
+                if(somaid>0)
+                {
+                    cout<<"---------------Error: multiple soma nodes!!!-----------------------"<<endl;
+                    return false;
+                }else
+                    somaid=i;
+            }
+
+        }
+        NeuronSWC soma_node=nt.listNeuron.at(somaid);
+        CellAPO soma;
+        soma.x=soma_node.x;
+        soma.y=soma_node.y;
+        soma.z=soma_node.z;
+        soma.intensity=soma.volsize=soma.sdev=soma.pixmax=soma.mass=10;
+        QList<CellAPO> somaapo; somaapo.append(soma);
+        QString outapo=(outfiles.size()>=1)?outfiles[0]:inswc+"_soma.apo";
+        if(somaapo.size())
+            writeAPO_file(outapo,somaapo);
     }
     else if (func_name == tr("ReconstructionComplexity"))
     {
