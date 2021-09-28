@@ -210,28 +210,37 @@ void ReconOperator::assembleSegs2tree()
 
 				// ******* ================= LOOP DETECTION FOR EACH CONNECTED TREE ================= ******* //
 				cout << "-- Scanning for loops: " << endl;
-				NeuronTree loopTree;
+				
+				bool loopFound = false;
 				for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
 				{
 					cout << "Tree " << int(treeIt - connectedTrees.begin()) + 1 << ":" << endl;
-					treeIt->second.loopCheck();
-					if (!treeIt->second.loopingSegs.empty())
-					{
-						for (auto& loop : treeIt->second.loopingSegs)
-						{
-							for (auto& loopingSegID : loop) loopTree.listNeuron.append(treeIt->second.segs.at(loopingSegID).nodes);
-						}
-					}
+					if (treeIt->second.loopCheck()) loopFound = true;
 				}
 
-				if (loopTree.listNeuron.isEmpty()) qDebug() << "No loop found in Cell " << baseName;
-				else 
+				if (loopFound)
 				{
+					NeuronTree loopTree;
+					for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
+					{
+						map<int, segUnit> segsCopy = treeIt->second.segs;
+						if (!treeIt->second.loopingSegs.empty())
+						{
+							for (set<set<int>>::iterator loopIt = treeIt->second.loopingSegs.begin(); loopIt != treeIt->second.loopingSegs.end(); ++loopIt)
+							{
+								for (auto& segID : *loopIt)
+								{
+									for (auto& node : segsCopy[segID].nodes) node.type = 6;
+								}
+							}
+						}
+						for (auto& seg : segsCopy) loopTree.listNeuron.append(seg.second.nodes);
+					}
+
 					QString outputFolderQ = this->rootPath + "\\loopCases\\";
 					QDir outputDir(outputFolderQ);
 					if (!outputDir.exists()) outputDir.mkpath(".");
 
-					for (auto& node : loopTree.listNeuron) node.type = 6;
 					QString outputLoopTreeNameQ = outputFolderQ + baseName + ".swc";
 					writeSWC_file(outputLoopTreeNameQ, loopTree);
 
