@@ -359,7 +359,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         avmeannoise=avmeansignal=stdevmean=0;
         for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
         {
-            if(intvec.at(i)<ThreshOtsu)
+            if(intvec.at(i)<=ThreshOtsu)
             {
                 otsunoise.push_back(intvec.at(i));
                 meanotsunoise += intvec.at(i);
@@ -370,7 +370,7 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
                 meanotsusignal += intvec.at(i);
             }
 
-            if(intvec.at(i)<meanint)
+            if(intvec.at(i)<=round(meanint))
             {
                 meannoise.push_back(intvec.at(i));
                 avmeannoise += intvec.at(i);
@@ -744,7 +744,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             avmeannoise=avmeansignal=stdevmean=0;
             for(int i=0; i<mysize; i++)
             {
-                if(intvec.at(i)<ThreshOtsu)
+                if(intvec.at(i)<=ThreshOtsu)
                 {
                     otsunoise.push_back(intvec.at(i));
                     meanotsunoise += intvec.at(i);
@@ -755,7 +755,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                     meanotsusignal += intvec.at(i);
                 }
 
-                if(intvec.at(i)<meanint)
+                if(intvec.at(i)<=round(meanint))
                 {
                     meannoise.push_back(intvec.at(i));
                     avmeannoise += intvec.at(i);
@@ -789,6 +789,8 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
 
             //SNRmean = avmeansignal/stdevmean;
+            cout << "avemeansignal: " << avmeansignal << "\n";
+            cout << "meanint: " << meanint << "\n";
             SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
             CNRmean = (maxint-meanint)/stdevmean;
             //SNRotsu = meanotsusignal/stdevotsu;
@@ -882,7 +884,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 avmeannoise=avmeansignal=stdevmean=0;
                 for(int i=0; i<mysize; i++)
                 {
-                    if(subvec.at(i)<ThreshOtsu)
+                    if(subvec.at(i)<=ThreshOtsu)
                     {
                         otsunoise.push_back(subvec.at(i));
                         meanotsunoise += (double)subvec.at(i);
@@ -893,7 +895,7 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                         meanotsusignal += (double)subvec.at(i);
                     }
 
-                    if(subvec.at(i)<meanint)
+                    if(subvec.at(i)<=round(meanint))
                     {
                         meannoise.push_back(subvec.at(i));
                         avmeannoise += (double)subvec.at(i);
