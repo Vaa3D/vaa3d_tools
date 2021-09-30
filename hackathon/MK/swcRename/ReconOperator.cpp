@@ -209,42 +209,45 @@ void ReconOperator::assembleSegs2tree()
 
 
 				// ******* ================= LOOP DETECTION FOR EACH CONNECTED TREE ================= ******* //
-				cout << "-- Scanning for loops: " << endl;
-				
-				bool loopFound = false;
-				for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
+				if (LOOP_CHECK)
 				{
-					cout << "Tree " << int(treeIt - connectedTrees.begin()) + 1 << ":" << endl;
-					if (treeIt->second.loopCheck()) loopFound = true;
-				}
+					cout << "-- Scanning for loops: " << endl;
 
-				if (loopFound)
-				{
-					NeuronTree loopTree;
+					bool loopFound = false;
 					for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
 					{
-						map<int, segUnit> segsCopy = treeIt->second.segs;
-						if (!treeIt->second.loopingSegs.empty())
-						{
-							for (set<set<int>>::iterator loopIt = treeIt->second.loopingSegs.begin(); loopIt != treeIt->second.loopingSegs.end(); ++loopIt)
-							{
-								for (auto& segID : *loopIt)
-								{
-									for (auto& node : segsCopy[segID].nodes) node.type = 6;
-								}
-							}
-						}
-						for (auto& seg : segsCopy) loopTree.listNeuron.append(seg.second.nodes);
+						cout << "Tree " << int(treeIt - connectedTrees.begin()) + 1 << ":" << endl;
+						if (treeIt->second.loopCheck()) loopFound = true;
 					}
 
-					QString outputFolderQ = this->rootPath + "\\loopCases\\";
-					QDir outputDir(outputFolderQ);
-					if (!outputDir.exists()) outputDir.mkpath(".");
+					if (loopFound)
+					{
+						NeuronTree loopTree;
+						for (boost::container::flat_map<int, profiledTree>::iterator treeIt = connectedTrees.begin(); treeIt != connectedTrees.end(); ++treeIt)
+						{
+							map<int, segUnit> segsCopy = treeIt->second.segs;
+							if (!treeIt->second.loopingSegs.empty())
+							{
+								for (set<set<int>>::iterator loopIt = treeIt->second.loopingSegs.begin(); loopIt != treeIt->second.loopingSegs.end(); ++loopIt)
+								{
+									for (auto& segID : *loopIt)
+									{
+										for (auto& node : segsCopy[segID].nodes) node.type = 6;
+									}
+								}
+							}
+							for (auto& seg : segsCopy) loopTree.listNeuron.append(seg.second.nodes);
+						}
 
-					QString outputLoopTreeNameQ = outputFolderQ + baseName + ".swc";
-					writeSWC_file(outputLoopTreeNameQ, loopTree);
+						QString outputFolderQ = this->rootPath + "\\loopCases\\";
+						QDir outputDir(outputFolderQ);
+						if (!outputDir.exists()) outputDir.mkpath(".");
 
-					continue;
+						QString outputLoopTreeNameQ = outputFolderQ + baseName + ".swc";
+						writeSWC_file(outputLoopTreeNameQ, loopTree);
+
+						continue;
+					}
 				}
 				// ******* ========================================================================== ******* //
 				

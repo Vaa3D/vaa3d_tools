@@ -280,7 +280,7 @@ namespace integratedDataTypes
 		bool loopCheck();
 		map<int, segUnit> eliminateEndSegs(const map<int, segUnit>& inputSegs);
 		void pinpointLoopingSegs(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap);
-		bool loopExaminate(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate);
+		bool loopExamine(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate);
 
 	private:
 		void rc_findLoopPaths(map<int, segUnit>& inputSegs, const boost::container::flat_multimap<string, int>& nodeCoordKey2segMap, vector<int> pathHead, int leadingsegID);

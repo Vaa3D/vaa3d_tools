@@ -818,7 +818,7 @@ void integratedDataTypes::profiledTree::pinpointLoopingSegs(map<int, segUnit>& i
 	{
 		set<int> candidates;
 		for (auto& segID : inputSegs) candidates.insert(segID.first);
-		if (this->loopExaminate(inputSegs, candidates)) this->loopingSegs.insert(candidates);
+		if (this->loopExamine(inputSegs, candidates)) this->loopingSegs.insert(candidates);
 		else return;
 	}
 	else
@@ -936,7 +936,7 @@ void integratedDataTypes::profiledTree::rc_findLoopPaths(map<int, segUnit>& inpu
 						loop.insert(*it);
 					}
 
-					if (this->loopExaminate(inputSegs, loop))
+					if (this->loopExamine(inputSegs, loop))
 					{
 						this->loopingSegs.insert(loop);
 						cout << *connectingSegIDs.begin() << endl;
@@ -964,7 +964,7 @@ void integratedDataTypes::profiledTree::rc_findLoopPaths(map<int, segUnit>& inpu
 					loop.insert(*it);
 				}
 
-				if (this->loopExaminate(inputSegs, loop))
+				if (this->loopExamine(inputSegs, loop))
 				{
 					this->loopingSegs.insert(loop);
 					cout << *connectingSegIDs.begin() << endl;
@@ -987,7 +987,7 @@ void integratedDataTypes::profiledTree::rc_findLoopPaths(map<int, segUnit>& inpu
 	}
 }
 
-bool integratedDataTypes::profiledTree::loopExaminate(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate)
+bool integratedDataTypes::profiledTree::loopExamine(const map<int, segUnit>& inputSegs, const set<int>& loopCandidate)
 {
 	if (loopCandidate.size() == 2)
 	{

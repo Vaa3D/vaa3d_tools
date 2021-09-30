@@ -1168,6 +1168,7 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 	unGroupedSegIDs.clear();
 	for (auto& seg : inputProfiledTree.segs) unGroupedSegIDs.insert(seg.first);
 
+	//int segCount = 0;
 	while (!unGroupedSegIDs.empty())
 	{
 		set<int> groupedSegIDs;
@@ -1183,10 +1184,20 @@ boost::container::flat_map<int, profiledTree> NeuronStructExplorer::groupGeoConn
 			outputTree.listNeuron.append(inputProfiledTree.segs.at(id).nodes);
 			if (unGroupedSegIDs.find(id) != unGroupedSegIDs.end()) unGroupedSegIDs.erase(unGroupedSegIDs.find(id));
 		}
-		//cout << endl;
+		//cout << "(" << outputTree.listNeuron.size() << ")" << endl;
 		profiledTree outputProfiledTree(outputTree);
-		outputTreeSizeProfiledTreeMap.insert(pair<int, profiledTree>(outputTree.listNeuron.size(), outputProfiledTree));
+
+		// In case that there are different subtrees having the same [listNeuron] size.
+		if (outputTreeSizeProfiledTreeMap.find(outputTree.listNeuron.size()) != outputTreeSizeProfiledTreeMap.end())
+		{
+			int nodeSize = outputTree.listNeuron.size();
+			while (outputTreeSizeProfiledTreeMap.find(nodeSize) != outputTreeSizeProfiledTreeMap.end()) ++nodeSize;
+			outputTreeSizeProfiledTreeMap.insert(pair<int, profiledTree>(nodeSize, outputProfiledTree));
+		}
+		else outputTreeSizeProfiledTreeMap.insert(pair<int, profiledTree>(outputTree.listNeuron.size(), outputProfiledTree));
 		//cout << "unGroupedSegIDs size: " << unGroupedSegIDs.size() << endl << endl;
+
+		//segCount += outputProfiledTree.segs.size();
 	}
 
 	return outputTreeSizeProfiledTreeMap;
