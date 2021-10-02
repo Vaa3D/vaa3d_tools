@@ -61,7 +61,7 @@ void boutonDetection_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgLis
    else
        refinement_Image_fun(callback,inimg_file,nt_p,2,refine_radius,Shift_Pixels);
    NeuronTree nt_pruning=internode_pruning(nt_p);
-   NeuronTree nt_interpolated;   nt_interpolated=linearInterpolation(nt_pruning,3);
+   NeuronTree nt_interpolated=node_interpolation(nt_pruning,3);
 
    //2. profile
    if(in_terafly)
@@ -142,7 +142,7 @@ void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
         nt_2.listNeuron.clear(); nt_2.hashNeuron.clear();
 
         if(resample_pixels)
-            nt_4=linearInterpolation(nt_3,resample_pixels);
+            nt_4=node_interpolation(nt_3,resample_pixels);
         else
             nt_4.deepCopy(nt_3);
         nt_out=reindexNT(nt_4);
@@ -237,7 +237,7 @@ void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
    {
        refinement_terafly_fun(callback,inimg_file,nt,method_code,refine_radius,half_crop_size,nodeRefine_radius);
        NeuronTree nt_pruning=internode_pruning(nt,2.0);
-       nt_out=linearInterpolation(nt_pruning,interpolation_pixels);
+       nt_out=node_interpolation(nt_pruning,interpolation_pixels);
    }
    else
    {
@@ -1142,8 +1142,6 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
    if(in_terafly)
    {
           //remove duplicated nodes and resample
-
-//       NeuronTree nt=linearInterpolation(nt_pruning,3);
        swc_profile_terafly_fun(callback,inimg_file,nt_p,half_crop_size,bkg_thre_bias,block_upsample_factor);
        NeuronTree nt=internode_pruning(nt_p,2,true);
        if(true){

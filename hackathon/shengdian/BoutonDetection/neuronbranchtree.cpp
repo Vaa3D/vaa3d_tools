@@ -594,7 +594,7 @@ std::vector<int> getNodeType(NeuronTree nt)
     PS: not have to be a single tree */
     V3DLONG siz=nt.listNeuron.size();
     std::vector<int> ntype(siz,0);    if(!siz) {return ntype;}
-    cout<<"size="<<ntype.size()<<endl;
+//    cout<<"size="<<ntype.size()<<endl;
     V3DLONG somaid=get_soma(nt);
     if(somaid>=0)
         ntype[somaid]=2;
@@ -615,9 +615,7 @@ std::vector<int> getNodeType(NeuronTree nt)
         }
     }
 
-    for (V3DLONG i=0;i<siz;i++)
-        cout<<ntype.at(i)<<",";
-    cout<<"size="<<ntype.size()<<endl;
+//    cout<<"size="<<ntype.size()<<endl;
     return ntype;
 }
 NeuronTree reindexNT(NeuronTree nt)
@@ -909,118 +907,11 @@ NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels){
     }
     return nt_out;
 }
-NeuronTree linearInterpolation(NeuronTree nt,int Min_Interpolation_Pixels)
-{
-    cout<<"linear interpolation of neuron tree"<<endl;
-    QList<NeuronSWC> listNeuron =  nt.listNeuron;
-    V3DLONG siz = nt.listNeuron.size();
-    //step1: sort the index
-    QHash <V3DLONG, V3DLONG>  index_n; index_n.clear();
-    for(V3DLONG i=0;i<siz;i++)
-        index_n.insert(listNeuron[i].n,i);
-    NeuronTree nt_Index_sorted;
-    for(V3DLONG i=0;i<siz;i++)
-    {
-        NeuronSWC s = listNeuron[i];
-        s.n=i+1;
-        if(s.parent&&index_n.contains(s.parent))
-            s.parent=index_n.value(s.parent)+1;
-        else
-            s.parent=-1;
-        nt_Index_sorted.listNeuron.append(s);
-        nt_Index_sorted.hashNeuron.insert(s.n,nt_Index_sorted.listNeuron.size()-1);
-    }
-    listNeuron.clear();
-    cout<<"finished the sorting of index"<<endl;
-    listNeuron=nt_Index_sorted.listNeuron;
-    QHash <int, int>  hashNeuron;    hashNeuron=nt_Index_sorted.hashNeuron;
-
-    //step2
-    QList <NeuronSWC> nt_out_listNeuron;nt_out_listNeuron.clear();
-    V3DLONG new_node_count=0;
-    for (V3DLONG i=0;i<listNeuron.size();i++)
-    {
-        NeuronSWC s = listNeuron[i];
-        if(s.parent&&hashNeuron.contains(s.parent))
-        {
-            V3DLONG pid=hashNeuron.value(s.parent);
-            NeuronSWC sp=listNeuron[pid];
-            double cp_dist=sqrt(long((sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z)));
-            double Min_Interpolation_Pixels_dist=sqrt(long(Min_Interpolation_Pixels*Min_Interpolation_Pixels*Min_Interpolation_Pixels));
-            int interpolate_times=int(cp_dist/Min_Interpolation_Pixels_dist);
-
-            if(interpolate_times==1)
-            {
-                NeuronSWC s_interpolated=s;
-                s_interpolated.n=siz+1+new_node_count;
-                //one node at the center of p and sp
-                s_interpolated.x=(sp.x+s.x)/float(interpolate_times+1);
-                s_interpolated.y=(sp.y+s.y)/float(interpolate_times+1);
-                s_interpolated.z=(sp.z+s.z)/float(interpolate_times+1);
-                s.parent=s_interpolated.n;
-                new_node_count++;
-                nt_out_listNeuron.append(s);
-                nt_out_listNeuron.append(s_interpolated);
-            }
-            else if(interpolate_times>1)
-            {
-                //interpolate list of nodes
-                float x_Interpolation_dis=(sp.x-s.x)/float(interpolate_times);
-                float y_Interpolation_dis=(sp.y-s.y)/float(interpolate_times);
-                float z_Interpolation_dis=(sp.z-s.z)/float(interpolate_times);
-
-                NeuronSWC s_interpolated_start=s;
-                for(int ti=1;ti<=interpolate_times;ti++)
-                {
-                    NeuronSWC s_interpolated=s_interpolated_start;
-                    s_interpolated.n=siz+1+new_node_count;
-                    s_interpolated.x=s_interpolated_start.x+x_Interpolation_dis;
-                    s_interpolated.y=s_interpolated_start.y+y_Interpolation_dis;
-                    s_interpolated.z=s_interpolated_start.z+z_Interpolation_dis;
-                    if(ti==interpolate_times)
-                        s_interpolated_start.parent=s_interpolated.parent;
-                    else
-                        s_interpolated_start.parent=s_interpolated.n;
-                    nt_out_listNeuron.append(s_interpolated_start);
-                    s_interpolated_start=s_interpolated;
-                    new_node_count++;
-                }
-            }
-            else
-                nt_out_listNeuron.append(s);
-        }
-        else
-            nt_out_listNeuron.append(s);
-    }
-    cout<<"finished the interpolation"<<endl;
-    cout<<"from size: "<<siz<<" to "<<nt_out_listNeuron.size()<<endl;
-    //step3: re_sort index of nt_out
-    index_n.clear();
-    NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
-    for(V3DLONG i=0;i<nt_out_listNeuron.size();i++)
-    {
-        NeuronSWC s = nt_out_listNeuron[i];
-        index_n.insert(s.n,i);
-    }
-    for(V3DLONG i=0;i<nt_out_listNeuron.size();i++)
-    {
-        NeuronSWC s = nt_out_listNeuron[i];
-        s.n=i+1;
-        if(s.parent&&index_n.contains(s.parent))
-            s.parent=index_n.value(s.parent)+1;
-        else
-            s.parent=-1;
-        nt_out.listNeuron.append(s);
-        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
-    }
-    return nt_out;
-}
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
     /*1. if pruning_dist<=0, keep branch nodes, soma node, tip nodes
      * 2. if pruning_dist>0, pruning the internode distance below pruning_dist
     */
     V3DLONG siz=nt.listNeuron.size();
-    cout<<siz<<"ddfdf"<<endl;
     NeuronTree out;    if(siz<=0){return out;}
     QHash <V3DLONG, V3DLONG>  hashNeuron;
     for(V3DLONG i=0;i<siz;i++){
@@ -1028,7 +919,6 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
         hashNeuron.insert(s.n,i);
     }
     vector<int> ntype=getNodeType(nt);
-    cout<<"here oo";
     vector<int> nprocessed(siz,0);
 
     for(V3DLONG i=0;i<siz;i++)
@@ -1036,10 +926,9 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
         NeuronSWC s = nt.listNeuron.at(i);
         if(nprocessed.at(i)==1)
             continue;
-        if(s.parent>0&&hashNeuron.contains(s.parent))
+        if(s.parent>0&&hashNeuron.contains(s.parent)
+                &&ntype.at(hashNeuron.value(s.parent))==1)
         {
-            if(ntype.at(hashNeuron.value(s.parent))>1)
-                continue;
             V3DLONG pid=hashNeuron.value(s.parent);
             NeuronSWC sp=nt.listNeuron.at(pid);
             if(sp.parent>0&&hashNeuron.contains(sp.parent))
@@ -1054,7 +943,7 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
                         break;
                     }
                     gplist.append(gpid);
-                    if(!sgp.parent||!hashNeuron.contains(sgp.parent)
+                    if(sgp.parent<0||!hashNeuron.contains(sgp.parent)
                             ||ntype.at(hashNeuron.value(sgp.parent))>1)
                         break;
                     gpid=hashNeuron.value(sgp.parent);
@@ -1067,17 +956,18 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
                 V3DLONG kept_id=pid; float max_r=sp.r;
                 for(int p=0;p<gplist.size();p++)
                 {
-                    NeuronSWC sgp=nt.listNeuron.at(gplist.at(p));
-                    nprocessed[gplist.at(p)]=1;
+                    V3DLONG gpid=gplist.at(p);
+                    NeuronSWC sgp=nt.listNeuron.at(gpid);
+                    nprocessed[gpid]=1;
                     if(profiled&&sgp.r>max_r)
-                        kept_id=gplist.at(p);
+                        kept_id=gpid;
                 }
                 if(kept_id==pid)
                 {
                     //only keep parent node
-                    gpid=gplist.at(gplist.size()-1);
+                    V3DLONG gpid=gplist.at(gplist.size()-1);
                     NeuronSWC sgp=nt.listNeuron.at(gpid);
-                    nt.listNeuron[pid].parent=sgp.parent;
+                    nt.listNeuron[kept_id].parent=sgp.parent;
                 }
                 else
                 {
@@ -1085,7 +975,7 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
 //                    nt.listNeuron[i].parent=sp.parent;
                     nprocessed[pid]=1;
                     //s connect to this node
-                    gpid=gplist.at(kept_id);
+                    gpid=kept_id;
                     NeuronSWC sgp=nt.listNeuron.at(gpid);
                     nt.listNeuron[i].parent=sgp.n;
                     //this node to end node
