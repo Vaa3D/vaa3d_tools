@@ -223,7 +223,7 @@ void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
     int method_code=(inparas.size()>=1)?atoi(inparas[0]):2;
     int refine_radius=/*(inparas.size()>=2)?atoi(inparas[1]):*/3;
     int nodeRefine_radius=/*(inparas.size()>=3)?atoi(inparas[2]):*/2;
-    int interpolation_pixels=/*(inparas.size()>=4)?atoi(inparas[3]):*/3;
+    int interpolation_pixels=/*(inparas.size()>=4)?atoi(inparas[3]):*/4;
     int half_crop_size=/*(inparas.size()>=5)?atoi(inparas[4]):*/128;
     //read input swc to neuron-tree
    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -236,8 +236,11 @@ void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
    if(in_terafly)
    {
        refinement_terafly_fun(callback,inimg_file,nt,method_code,refine_radius,half_crop_size,nodeRefine_radius);
-       NeuronTree nt_pruning=internode_pruning(nt,2.0);
-       nt_out=node_interpolation(nt_pruning,interpolation_pixels);
+       //string refined_swc1=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_refined1.eswc");
+      // writeESWC_file(QString::fromStdString(refined_swc1),nt);
+       NeuronTree nt_pruning=internode_pruning(nt,1.0);
+       nt_out=node_interpolation(nt_pruning,interpolation_pixels,true);
+       //nt_out=reindexNT(nt_pre);
    }
    else
    {
@@ -387,7 +390,7 @@ void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronT
     V3DLONG *in_zz = 0;
     if(!callback.getDimTeraFly(imgPath,in_zz)){cout<<"can't load terafly img"<<endl;return;}
 
-    int min_dist_to_block_edge=32; int order_thre=9;
+    int min_dist_to_block_edge=32; int order_thre=7;
     for(V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC ss = listNeuron[i];
@@ -520,22 +523,22 @@ void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronT
                         else if(method_code==RefineAllinOne){
                             if(norder.at(j)<=order_thre){
                                 if(j%5==0){
-                                    out=calc_mean_shift_center_v5(inimg1d,sj_shifted,in_sz,bkg_thresh,windowradius_pid_tmp,refine_radius,windowradius_limit);
+                                    out=calc_mean_shift_center_v5(inimg1d,sj_shifted,in_sz,bkg_thresh,windowradius_pid_tmp,3,windowradius_limit);
                                     windowradius_pid.at(j%5)=windowradius_pid_tmp;
                                 }else{
-                                    out=calc_mean_shift_center_v4(inimg1d,sj_shifted,in_sz,bkg_thresh,windowradius_pid_tmp,refine_radius,windowradius_limit);
+                                    out=calc_mean_shift_center_v4(inimg1d,sj_shifted,in_sz,bkg_thresh,windowradius_pid_tmp,3,windowradius_limit);
                                     windowradius_pid.at(j%5)=windowradius_pid_tmp;
                                 }
                             }else{
-                                out=calc_mean_shift_center(inimg1d,sj_shifted,in_sz,bkg_thresh,refine_radius);
+                                out=calc_mean_shift_center(inimg1d,sj_shifted,in_sz,bkg_thresh,3);
                             }
                             if(scanned.at(j)<0)
                                 out=nodeRefine(inimg1d,out,in_sz,1);
                             else
-                                out=nodeRefine(inimg1d,out,in_sz,nodeRefine_radius);
+                                out=nodeRefine(inimg1d,out,in_sz,2);
                         }
                         scanned[j]=1/*inimg1d[thisz * sz01 + thisy* sz0 + thisx]*/;
-                        listNeuron[j].level=bkg_thresh;
+                        //listNeuron[j].level=bkg_thresh;
                         listNeuron[j].x=float(start_x)+out.x;
                         listNeuron[j].y=float(start_y)+out.y;
                         listNeuron[j].z=float(start_z)+out.z;
@@ -1138,7 +1141,7 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
 
    double block_upsample_factor=4;
    int half_crop_size=128;
-   NeuronTree nt_p=node_interpolation(nt_raw);
+   NeuronTree nt_p=node_interpolation(nt_raw,4,true);
    if(in_terafly)
    {
           //remove duplicated nodes and resample

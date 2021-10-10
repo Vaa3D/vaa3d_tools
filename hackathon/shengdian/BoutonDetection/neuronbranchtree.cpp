@@ -828,25 +828,27 @@ NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre)
     cout<<"# pruning nodes="<<nt.listNeuron.size()-nt_out.listNeuron.size()<<endl;
     return nt_out;
 }
-NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels){
+NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels,bool sort_index){
     cout<<"linear interpolation of neuron tree"<<endl;
     V3DLONG siz = nt.listNeuron.size(); if(!siz) return nt;
 
+    V3DLONG max_index=siz;
     QList<NeuronSWC> listNeuron =  nt.listNeuron;
     QHash <V3DLONG, V3DLONG>  hashNeuron;
-    for(V3DLONG i=0;i<siz;i++)
+    for(V3DLONG i=0;i<siz;i++){
         hashNeuron.insert(listNeuron[i].n,i);
-
+        max_index=MAX(max_index,listNeuron.at(i).n);
+    }
     //step2
     QList <NeuronSWC> nt_out_listNeuron;
     V3DLONG new_node_count=0;
     for (V3DLONG i=0;i<listNeuron.size();i++)
     {
         NeuronSWC s = listNeuron.at(i);
-        if(s.parent&&hashNeuron.contains(s.parent))
+        if(s.parent>0&&hashNeuron.contains(s.parent))
         {
             V3DLONG pid=hashNeuron.value(s.parent);
-            NeuronSWC sp=listNeuron[pid];
+            NeuronSWC sp=listNeuron.at(pid);
             double cp_dist=dis(s,sp);
             double Min_Interpolation_Pixels_dist=sqrt(long(Min_Interpolation_Pixels*Min_Interpolation_Pixels));
             int interpolate_times=int(cp_dist/Min_Interpolation_Pixels_dist);
@@ -854,14 +856,13 @@ NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels){
             if(interpolate_times==1)
             {
                 NeuronSWC s_interpolated=s;
-                s_interpolated.n=siz+1+new_node_count;
+                s_interpolated.n=max_index+1;
                 //one node at the center of p and sp
                 s_interpolated.x=(sp.x+s.x)/float(interpolate_times+1);
                 s_interpolated.y=(sp.y+s.y)/float(interpolate_times+1);
                 s_interpolated.z=(sp.z+s.z)/float(interpolate_times+1);
                 s.parent=s_interpolated.n;
-                new_node_count++;
-                nt_out_listNeuron.append(s);
+                max_index++;
                 nt_out_listNeuron.append(s_interpolated);
             }
             else if(interpolate_times>1)
@@ -872,27 +873,26 @@ NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels){
                 float z_Interpolation_dis=(sp.z-s.z)/float(interpolate_times);
 
                 NeuronSWC s_interpolated_start=s;
+                long spid=s.pn;
                 for(int ti=1;ti<=interpolate_times;ti++)
                 {
                     NeuronSWC s_interpolated=s_interpolated_start;
-                    s_interpolated.n=siz+1+new_node_count;
+                    s_interpolated.n=max_index+1;
                     s_interpolated.x=s_interpolated_start.x+x_Interpolation_dis;
                     s_interpolated.y=s_interpolated_start.y+y_Interpolation_dis;
                     s_interpolated.z=s_interpolated_start.z+z_Interpolation_dis;
+                    s_interpolated.parent=max_index+2;
                     if(ti==interpolate_times)
-                        s_interpolated_start.parent=s_interpolated.parent;
-                    else
-                        s_interpolated_start.parent=s_interpolated.n;
-                    nt_out_listNeuron.append(s_interpolated_start);
+                        s_interpolated.parent=spid;
+                    else if(ti==1)
+                        s.parent=s_interpolated.n;
+                    nt_out_listNeuron.append(s_interpolated);
+                    max_index++;
                     s_interpolated_start=s_interpolated;
-                    new_node_count++;
                 }
             }
-            else
-                nt_out_listNeuron.append(s);
         }
-        else
-            nt_out_listNeuron.append(s);
+        nt_out_listNeuron.append(s);
     }
     cout<<"finished the interpolation"<<endl;
     cout<<"from size: "<<siz<<" to "<<nt_out_listNeuron.size()<<endl;
@@ -905,7 +905,10 @@ NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels){
         nt_out.listNeuron.append(s);
         nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
     }
-    return nt_out;
+    if(sort_index)
+        return reindexNT(nt_out);
+    else
+        return nt_out;
 }
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
     /*1. if pruning_dist<=0, keep branch nodes, soma node, tip nodes

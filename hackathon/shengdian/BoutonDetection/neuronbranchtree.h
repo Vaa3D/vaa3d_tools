@@ -107,7 +107,7 @@ NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
 bool three_bifurcation_processing(NeuronTree& in_nt);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
-NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4);
+NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
 #endif // NEURONBRANCHTREE_H
