@@ -250,6 +250,7 @@ struct AxonalBouton
 };
 /*preprocess*/
 void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+QList<NeuronTree> nt_2_trees(NeuronTree& nt);
 NeuronTree preprocess_simple(NeuronTree nt);//for swc in an image block
 
 /*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
@@ -322,7 +323,7 @@ double getNodeRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronSWC s, doub
 void getNTRadius_XY(unsigned char *&inimg1d, long in_sz[], NeuronTree& nt, double bkg_thresh=40);
 
 /*Image processing*/
-void enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,bool biilateral_filter=false);
+bool enhanceImage(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz,bool biilateral_filter=false);
 void adaptiveThresholding(unsigned char * & data1d,unsigned char * & dst,V3DLONG *mysz);
 bool upsampleImage(unsigned char * & inimg1d,unsigned char * & outimg1d,V3DLONG *szin, V3DLONG *szout, double *dfactor);
 template <class T> bool upsample3dvol(T *outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor);

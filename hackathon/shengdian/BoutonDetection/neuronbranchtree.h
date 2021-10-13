@@ -105,6 +105,7 @@ NeuronTree reindexNT(NeuronTree nt);
 double getNT_len(NeuronTree nt,float *res);
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
+bool loop_checking(NeuronTree nt);
 bool three_bifurcation_processing(NeuronTree& in_nt);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);

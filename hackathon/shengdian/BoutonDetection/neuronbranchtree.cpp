@@ -695,6 +695,50 @@ V3DLONG get_soma(NeuronTree & nt,bool connect){
     }
     return somaid;
 }
+bool loop_checking(NeuronTree nt){
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron.at(i).n,i);
+
+    QVector<V3DLONG> scanned(siz,0);
+    int loop_count=0;
+    for (V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(scanned.at(i)>0)
+            continue;
+        scanned[i]=1;
+        if(s.pn>0&&hashNeuron.contains(s.pn)){
+            QList<V3DLONG> snodes;
+            snodes.clear();
+            snodes.append(i);
+            V3DLONG pid=hashNeuron.value(s.pn);
+            NeuronSWC sp=nt.listNeuron.at(pid);
+            while(true){
+                scanned[pid]=1;
+                snodes.append(pid);
+                if(s.n==sp.n)
+                {
+                    loop_count++;
+                    for(int s=0;s<snodes.size();s++)
+                        scanned[snodes.at(s)]=loop_count+1;
+                    cout<<"Loop at node "<<s.n<<endl;
+                    break;
+                }
+                if(sp.pn<=0 || !hashNeuron.contains(sp.pn))
+                    break;
+                pid=hashNeuron.value(sp.pn);
+                sp=nt.listNeuron.at(pid);
+            }
+        }
+    }
+    if(loop_count>0){
+        cout<<"Total loop="<<loop_count<<endl;
+        return true;
+    }
+    return false;
+}
 bool three_bifurcation_processing(NeuronTree& in_nt)
 {
     //s1. detect three bifurcation points
