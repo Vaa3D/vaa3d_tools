@@ -32,7 +32,7 @@ There are two ways to use `mBrainAligner`:
 1. follow the below instructions to build and run `mBrainAligner` on local machines.
 2. visit one of our Tencent cloud web portals, run `mBrainAligner online` (registration results and sample data can also be downloaded there).
 Questions can be sent to 17718151568@126.com . 
-China South (Guangzhou): http://159.75.201.35/
+China South (Guangzhou): http://159.75.201.35/ . China South (AHU): http://mbrainaligner.ahu.edu.cn
 Note: This cloud server is provided for tentative testing purpose only while we are moving to a more permanent solution. Different ISPs might have different access restrictions to some of these websites, and different web browsers might also show warning messages when naked IP addresses (i.e. without a domain name) are visited. You may choose to change the ISPs (such as switching among Verion, AT&T, Xfinity, etc), change your 5G/4G setting (sometimes with the same ISP still has different restriction for 5G and 4G), or ignore the warning messages. Feel to reach out to the above email address if you also want to deploy the web service code on your own local server for faster access.
 
 
@@ -100,7 +100,7 @@ Enter the `examples` folder, double-click `run_script_windows.bat`.
 In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `binary/linux_bin/lib/` needs to be added to the linker directory.
 
 Ctrl+Alt+t to open terminal
-   
+
     cd "(your file path)/binary/linux_bin/"
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
@@ -109,9 +109,9 @@ Ctrl+Alt+t to open terminal
     sudo chmod 777 -R  global_registration
     sudo chmod 777 -R  local_registration
     cd "(your file path)/example/"
-   
+
 Then run
-   
+
     sh run_script_linux.sh
 
 
