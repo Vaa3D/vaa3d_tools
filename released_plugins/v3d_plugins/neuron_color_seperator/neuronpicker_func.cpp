@@ -892,19 +892,19 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
         return neuronNum;
     }
     QTextStream myfile(&file);
-    myfile<<"cubSize: "<<cubSize<<endl;
-    myfile<<"conviter: "<<conviter<<endl;
-    myfile<<"fgthr: "<<fgthr<<endl;
-    myfile<<"bgthr_v: "<<thr_bg[0]<<endl;
-    myfile<<"bgthr_seed: "<<(int)thr_bg[1]<<endl;
-    myfile<<"bgthr_r: "<<thr_bg[2]<<endl;
-    myfile<<"bgthr_g: "<<thr_bg[3]<<endl;
-    myfile<<"bgthr_b: "<<thr_bg[4]<<endl;
-    myfile<<"sizethr: "<<sizethr<<endl;
-    myfile<<"margin_size: "<<margin_size<<endl;
-    myfile<<"sparsthr: "<<sparsthr<<endl;
-    myfile<<"touchthr: "<<touchthr<<endl;
-    myfile<<"seedwin: "<<seedwin<<endl;
+    myfile<<"cubSize: "<<cubSize<<Qt::endl;
+    myfile<<"conviter: "<<conviter<<Qt::endl;
+    myfile<<"fgthr: "<<fgthr<<Qt::endl;
+    myfile<<"bgthr_v: "<<thr_bg[0]<<Qt::endl;
+    myfile<<"bgthr_seed: "<<(int)thr_bg[1]<<Qt::endl;
+    myfile<<"bgthr_r: "<<thr_bg[2]<<Qt::endl;
+    myfile<<"bgthr_g: "<<thr_bg[3]<<Qt::endl;
+    myfile<<"bgthr_b: "<<thr_bg[4]<<Qt::endl;
+    myfile<<"sizethr: "<<sizethr<<Qt::endl;
+    myfile<<"margin_size: "<<margin_size<<Qt::endl;
+    myfile<<"sparsthr: "<<sparsthr<<Qt::endl;
+    myfile<<"touchthr: "<<touchthr<<Qt::endl;
+    myfile<<"seedwin: "<<seedwin<<Qt::endl;
     file.close();
 
     return neuronNum;
@@ -1143,8 +1143,8 @@ void neuronPickerMain::saveSingleMarker(V3DLONG pos_landmark, QString fname, V3D
         return;
     }
     QTextStream myfile(&file);
-    myfile<<"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b"<<endl;
-    myfile<<coord[0]<<", "<<coord[1]<<", "<<coord[2]<<",0, 1, , , 255, 0"<<endl;
+    myfile<<"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b"<<Qt::endl;
+    myfile<<coord[0]<<", "<<coord[1]<<", "<<coord[2]<<",0, 1, , , 255, 0"<<Qt::endl;
     file.close();
 }
 

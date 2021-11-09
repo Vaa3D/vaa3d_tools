@@ -1,5 +1,9 @@
 #include "mean_shift_dialog.h"
-
+#include <QLabel>
+#include <QSpinBox>
+#include <QMessageBox>
+#include <QGridLayout>
+#include <QPushButton>
 mean_shift_dialog::mean_shift_dialog(V3DPluginCallback2 *cb,int method)
 {
     callback=cb;

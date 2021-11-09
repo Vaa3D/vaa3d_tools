@@ -19,9 +19,10 @@
 #include "fastmarching_tree.h"
 #include "hierarchy_prune.h"
 #include "marker_radius.h"
+#include <QMessageBox>
+#include <QInputDialog>
 
-
-Q_EXPORT_PLUGIN2(APP2_ported, APP2_ported);
+//Q_EXPORT_PLUGIN2(APP2_ported, APP2_ported);
 
 using namespace std;
 
@@ -146,7 +147,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
         else
         {
-            c = QInputDialog::getInteger(parent, "Channel", "Enter channel NO:", 1, 1, sc, 1, &ok1);
+            c = QInputDialog::getInt(parent, "Channel", "Enter channel NO:", 1, 1, sc, 1, &ok1);
         }
 
         if(!ok1) return;

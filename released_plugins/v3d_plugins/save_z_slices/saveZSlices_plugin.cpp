@@ -7,7 +7,7 @@
 #include <QInputDialog>
 #include "saveZSlices_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(saveZSlices, saveZSlices);
+//Q_EXPORT_PLUGIN2(saveZSlices, saveZSlices);
  
 
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);

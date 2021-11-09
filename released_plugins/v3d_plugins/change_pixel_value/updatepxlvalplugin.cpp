@@ -11,12 +11,12 @@
 
 #include "updatepxlvalplugin.h"
 #include "stackutil.h"
-
+#include <QMessageBox>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(updatepxlval, UpdatePxlValPlugin)
+//Q_EXPORT_PLUGIN2(updatepxlval, UpdatePxlValPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);

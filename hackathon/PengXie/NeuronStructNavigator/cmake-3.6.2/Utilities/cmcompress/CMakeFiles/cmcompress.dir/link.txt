@@ -1,2 +1,0 @@
-/bin/ar qc libcmcompress.a  CMakeFiles/cmcompress.dir/cmcompress.c.o
-/bin/ranlib libcmcompress.a

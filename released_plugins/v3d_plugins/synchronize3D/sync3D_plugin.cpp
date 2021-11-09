@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Q_EXPORT_PLUGIN2(sync3D, sync3D)
+//Q_EXPORT_PLUGIN2(sync3D, sync3D)
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent);
@@ -438,7 +438,7 @@ void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent)
     }
 }
 
-void MyComboBox::enterEvent(QEvent *e)
+void MyComboBox::enterEvent(QEnterEvent *e)
 {
     updateList();
     QComboBox::enterEvent(e);

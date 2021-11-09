@@ -5,7 +5,9 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <vector>
-
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QCheckBox>
 using namespace std;
 
 class color_render_ESWC_dialog : public QDialog
@@ -13,7 +15,7 @@ class color_render_ESWC_dialog : public QDialog
     Q_OBJECT
 public:
     explicit color_render_ESWC_dialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin, int nid);
-    void enterEvent(QEvent *e);
+    void enterEvent(QEnterEvent *e);
 
 signals:
 

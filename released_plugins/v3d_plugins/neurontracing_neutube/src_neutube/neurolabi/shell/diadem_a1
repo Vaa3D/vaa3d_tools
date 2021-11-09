@@ -1,5 +1,0 @@
-#!/bin/bash
- 
-java -jar DiademMetric.jar -G '/Volumes/myerslab/DIADEM DATA/Ground_Truth/Cerebellar Climbing Fibers/CF_1.swc' -T '/Users/zhaot/Work/diadem_final/results/Cerebellar Climbing Fibers/CF_1.swc' -D 1
- 
-java -jar DiademMetric.jar -G '/Volumes/myerslab/DIADEM DATA/Ground_Truth/Cerebellar Climbing Fibers/CF_2.swc' -T '/Users/zhaot/Work/diadem_final/results/Cerebellar Climbing Fibers/CF_2.swc' -D 1

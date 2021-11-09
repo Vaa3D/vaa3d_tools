@@ -9,7 +9,7 @@
 #include <v3d_interface.h>
 #include "extract_fun.h"
 #include "basic_surf_objs.h"
-
+#include <QSpinBox>
 using namespace std;
 
 #define NAME_INWIN "Input_Shape_Extractor"

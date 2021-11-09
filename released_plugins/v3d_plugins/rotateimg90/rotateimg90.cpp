@@ -12,12 +12,12 @@
 
 #include "rotateimg90.h"
 #include "stackutil.h"
-
+#include <QMessageBox>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(rotateimg90, RotateImg90Plugin)
+//Q_EXPORT_PLUGIN2(rotateimg90, RotateImg90Plugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int rotateflag);

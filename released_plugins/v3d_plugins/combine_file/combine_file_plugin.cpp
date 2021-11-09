@@ -17,7 +17,7 @@
 #include <set>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(combine_file, combine_file);
+//Q_EXPORT_PLUGIN2(combine_file, combine_file);
 
 void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
 bool generatorcombined4FilesInDir(const V3DPluginArgList & input, V3DPluginArgList & output);

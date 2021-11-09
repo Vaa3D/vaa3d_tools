@@ -8,7 +8,7 @@
 #include "affine_transform_swc_plugin.h"
 #include "apply_transform_func.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(affine_transform, AffineTransformSWC);
+//Q_EXPORT_PLUGIN2(affine_transform, AffineTransformSWC);
  
 QStringList AffineTransformSWC::menulist() const
 {

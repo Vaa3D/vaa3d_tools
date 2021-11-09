@@ -4,8 +4,8 @@ CONFIG       += plugin
 #CONFIG       += x86_64
 CONFIG += qt warn_off
 CONFIG -= app_bundle
-
-V3DMAINPATH  = ../../../v3d_main
+QT += widgets
+V3DMAINPATH  = ../../../../v3d_external/v3d_main
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
@@ -15,12 +15,16 @@ unix {
      }
 
 
-win32 {
-    contains(QMAKE_HOST.arch, x86_64) {
-    LIBS         += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
-    } else {
-    LIBS         += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
-    }
+#win32 {
+#    contains(QMAKE_HOST.arch, x86_64) {
+#    LIBS         += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+#    } else {
+#    LIBS         += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
+#    }
+#}
+# modify by zll
+win32{
+    LIBS += -L$$V3DMAINPATH/common_lib/mingw -lv3dnewmat
 }
 
 HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h

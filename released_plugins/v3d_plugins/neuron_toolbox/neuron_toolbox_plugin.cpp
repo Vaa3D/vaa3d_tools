@@ -9,7 +9,7 @@
 #include "neuron_toolbox_func.h"
 using namespace std;
 
-Q_EXPORT_PLUGIN2(neuron_toolbox, NeuronToolboxPlugin);
+//Q_EXPORT_PLUGIN2(neuron_toolbox, NeuronToolboxPlugin);
  
 QStringList NeuronToolboxPlugin::menulist() const
 {

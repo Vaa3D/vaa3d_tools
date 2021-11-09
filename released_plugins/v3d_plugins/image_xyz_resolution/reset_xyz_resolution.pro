@@ -5,9 +5,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
-
+QT += widgets
 HEADERS += reset_xyz_resolution.h
 SOURCES  = reset_xyz_resolution.cpp
 

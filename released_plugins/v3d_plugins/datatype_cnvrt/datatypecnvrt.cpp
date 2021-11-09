@@ -23,7 +23,7 @@ using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(datatypeconvert, DTCPlugin);
+//Q_EXPORT_PLUGIN2(datatypeconvert, DTCPlugin);
 
 // func datatype converting main
 int  datatype_converting(V3DPluginCallback2 &callback, QWidget *parent);

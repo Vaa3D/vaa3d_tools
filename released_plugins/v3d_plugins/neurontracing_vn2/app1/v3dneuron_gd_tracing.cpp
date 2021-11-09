@@ -769,7 +769,8 @@ bool proj_trace_mergeAllClosebyNeuronNodes(V_NeuronSWC_list & tracedNeuron)
 			double scx = subject_swc.row.at(j).x;
 			double scy = subject_swc.row.at(j).y;
 			double scz = subject_swc.row.at(j).z;
-			double scr2 = subject_swc.row.at(j).r; scr2 *= scr2; //squared radius
+            double scr2 = subject_swc.row.at(j).r*subject_swc.row.at(j).r;
+//            scr2 *= scr2; //squared radius
 			
 			V3DLONG ind_best_merge_seg=-1, ind_best_merge_node=-1;	double r_best_merge=-1, dist_best; //set as -1 for initialization
 			for (cur_sid=seg_id+1;cur_sid<NSegs;cur_sid++)

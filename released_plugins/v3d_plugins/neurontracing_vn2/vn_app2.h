@@ -4,7 +4,12 @@
 #define __VN2_PARA_H__
 
 #include "vn.h"
-
+#include <QGridLayout>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QLabel>
 struct PARA_APP2: public PARA_VN
 {
     bool is_gsdt;

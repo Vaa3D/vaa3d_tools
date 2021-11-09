@@ -11,10 +11,13 @@
 #include "plugin_warp_affine_tps.h"
 #include "q_warp_affine_tps_dialogs.h"
 #include "q_warp_affine_tps.h"
-
+#include <QMessageBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QRadioButton>
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(plugin_warp_affin_tps, WarpAffineTPSPlugin);
+//Q_EXPORT_PLUGIN2(plugin_warp_affin_tps, WarpAffineTPSPlugin);
 
 void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent);
 void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent);

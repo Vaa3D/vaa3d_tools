@@ -10,7 +10,7 @@
 
 #include "my_surf_objs.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(inter_node_pruning, inter_node_pruning);
+//Q_EXPORT_PLUGIN2(inter_node_pruning, inter_node_pruning);
  
 QStringList inter_node_pruning::menulist() const
 {

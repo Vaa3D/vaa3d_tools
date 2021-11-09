@@ -1,1 +1,0 @@
-/bin/gcc     CMakeFiles/pseudo_iwyu.dir/pseudo_iwyu.c.o  -o pseudo_iwyu -rdynamic 

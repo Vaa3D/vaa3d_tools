@@ -6,8 +6,9 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuron_color_display_plugin.h"
+#include <QInputDialog>
 using namespace std;
-Q_EXPORT_PLUGIN2(neuron_color_display, SetNeuronDisplayColor);
+//Q_EXPORT_PLUGIN2(neuron_color_display, SetNeuronDisplayColor);
 
 unsigned char R_table[8]={255,0,0,255,255,128,96,0};
 unsigned char G_table[8]={0,0,255,0,196,0,96,128};

@@ -10,7 +10,7 @@
 #include <iostream>
 using namespace std;
  
-Q_EXPORT_PLUGIN2(histogram, HistogramPlugin);
+//Q_EXPORT_PLUGIN2(histogram, HistogramPlugin);
  
 QStringList HistogramPlugin::menulist() const
 {

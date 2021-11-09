@@ -9,9 +9,10 @@
 #include "populate_neurons.h"
 #include <iostream>
 #include "../neuron_image_profiling/openSWCDialog.h"
-
+#include <QInputDialog>
+#include <QDialog>
 using namespace std;
-Q_EXPORT_PLUGIN2(NeuronPopulator, NeuronPopulator);
+//Q_EXPORT_PLUGIN2(NeuronPopulator, NeuronPopulator);
 
 
 
@@ -59,6 +60,7 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
 {
 
 
+
     OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
     if (!openDlg->exec())
         return;
@@ -69,19 +71,19 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
      float maxRotation = QInputDialog::getDouble(parent, "max rotation",
                                           "Enter max rotation degrees:",
                                           15.0, 1.0, 360.0);
-     int  num_neurons = QInputDialog::getInteger(parent, "number of neurons",
+     int  num_neurons = QInputDialog::getInt(parent, "number of neurons",
                                           "Enter the number of neurons you want to populate:",
                                           10, 1, 10000);
 
-     int  siz_x = QInputDialog::getInteger(parent, "bounding box size in x-axis",
+     int  siz_x = QInputDialog::getInt(parent, "bounding box size in x-axis",
                                           "Enter bounding box size in x-axis:",
                                           100, 10, 10000);
 
-     int  siz_y = QInputDialog::getInteger(parent, "bounding box size in y-axis",
+     int  siz_y = QInputDialog::getInt(parent, "bounding box size in y-axis",
                                           "Enter bounding box size in y-axis:",
                                           100, 10, 10000);
 
-     int  siz_z = QInputDialog::getInteger(parent, "bounding box size in z-axis",
+     int  siz_z = QInputDialog::getInt(parent, "bounding box size in z-axis",
                                           "Enter bounding box size in z-axis:",
                                           100, 10, 10000);
 

@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 unix {V3DMAINPATH = ../../../v3d_main
 }
-win32{V3DMAINPATH = ..\\..\\..\\v3d_main
+win32{V3DMAINPATH = ../../../../v3d_external/v3d_main
 }
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
@@ -12,7 +12,7 @@ INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 HEADERS	+= bioformats_loader_plugin.h
 SOURCES	+= bioformats_loader_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
-
+QT += widgets
 TARGET	= $$qtLibraryTarget(bioformats_loader)
 DESTDIR	= $$V3DMAINPATH/../bin/plugins/data_IO/convert_and_load_with_Bioformats
 

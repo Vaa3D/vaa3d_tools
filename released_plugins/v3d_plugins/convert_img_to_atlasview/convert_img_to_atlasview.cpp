@@ -10,12 +10,13 @@
 
 #include "convert_img_to_atlasview.h"
 #include "v3d_message.h"
+#include <QMessageBox>
 
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(convert_img_to_atlasview, ConvertImg2AtlasPlugin);
+//Q_EXPORT_PLUGIN2(convert_img_to_atlasview, ConvertImg2AtlasPlugin);
 
 void convertImg2Atlas(V3DPluginCallback2 &callback, QWidget *parent);
 bool convertImg2Atlas(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
@@ -87,7 +88,7 @@ bool convertImg2Atlas(V3DPluginCallback2 &callback, const V3DPluginArgList & inp
     QFileInfo fileinfo = QFileInfo( QString(inimg_file) );
     QString folderName = QString(outimg_folder);
 
-    qDebug()<<"output foldername:" << folderName << endl;
+    qDebug()<<"output foldername:" << folderName;
 
     QDir d(folderName);
     if (!d.exists(folderName))

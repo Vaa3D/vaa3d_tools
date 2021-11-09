@@ -8,7 +8,7 @@
 #include "hier_label_plugin.h"
 #include "hier_label_func.h"
  
-Q_EXPORT_PLUGIN2(hier_label, HierLablPlugin);
+//Q_EXPORT_PLUGIN2(hier_label, HierLablPlugin);
  
 QStringList HierLablPlugin::menulist() const
 {

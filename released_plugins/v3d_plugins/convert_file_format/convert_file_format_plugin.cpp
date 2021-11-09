@@ -9,7 +9,7 @@
 #include <vector>
 #include "convert_file_format_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(convert_file_format, ConvertFileFormatPlugin);
+//Q_EXPORT_PLUGIN2(convert_file_format, ConvertFileFormatPlugin);
 
  
 QStringList ConvertFileFormatPlugin::menulist() const

@@ -6,8 +6,10 @@
 #include "v3d_message.h"
 #include <vector>
 #include "sync_swc_terafly_plugin.h"
+
+
 using namespace std;
-Q_EXPORT_PLUGIN2(sync_swc_terafly, sync_swc_terafly);
+//Q_EXPORT_PLUGIN2(sync_swc_terafly, sync_swc_terafly);
 
 static lookPanel *panel = 0;
 

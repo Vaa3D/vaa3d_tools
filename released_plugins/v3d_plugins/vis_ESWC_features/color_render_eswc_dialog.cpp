@@ -100,7 +100,7 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
     set_colormap();
 }
 
-void color_render_ESWC_dialog::enterEvent(QEvent *e)
+void color_render_ESWC_dialog::enterEvent(QEnterEvent *e)
 {
     checkwindow();
 

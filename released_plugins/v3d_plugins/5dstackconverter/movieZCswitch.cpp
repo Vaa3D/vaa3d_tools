@@ -47,7 +47,7 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFile)
     // 090731 RZC: fixed numerically sorting file names list, for XFormWidget::importGeneralImgSeries
     //-----------------------------------------------------------------------
     QString fileNameStr, fileNameDigits;	//absolute file name is separated to 2 parts: strings and digits
-        QRegExp r("(\\d+)");		//find digits
+    QRegularExpression r("(\\d+)");	//find digits
     QMap<V3DLONG, QString> mapList;
 
     mapList.clear();
@@ -63,11 +63,17 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFile)
 
         V3DLONG pos = 0;
         fileNameDigits = "";
-        while ((pos = r.indexIn(fileFullNameStr, pos)) != -1)
-        {
-                    fileNameDigits = r.cap(1);
-                    pos += r.matchedLength();
+        QRegularExpressionMatch match = r.match(fileFullNameStr);
+        if(match.hasMatch()){
+            fileNameDigits = match.captured(1);
+
         }
+
+//        while ((pos = r.indexIn(fileFullNameStr, pos)) != -1)
+//        {
+//                    fileNameDigits = r.cap(1);
+//                    pos += r.matchedLength();
+//        }
 
         if (fileNameDigits.isEmpty()) continue;
 
@@ -94,7 +100,7 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFile)
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(movieZCswitch, MovieZCswitchPlugin)
+//Q_EXPORT_PLUGIN2(movieZCswitch, MovieZCswitchPlugin)
 
 int changeMS(V3DPluginCallback2 &callback, QWidget *parent);
 int packInChannel(V3DPluginCallback2 &callback, QWidget *parent);
@@ -197,7 +203,7 @@ int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 	
     if(ok1)
     {
-        timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
+        timepoints = QInputDialog::getInt(parent, QObject::tr("Set time points"),
                                       QObject::tr("Enter the number of time points:"),
                                       1, 1, ts_max, 1, &ok2);
     }
@@ -520,7 +526,7 @@ int packInChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG ts_max = (sz>sc)?sz:sc;
     bool ok;
-    timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
+    timepoints = QInputDialog::getInt(parent, QObject::tr("Set time points"),
                                           QObject::tr("Enter the number of time points:"),
                                           1, 1, ts_max, 1, &ok);
     if(!ok)

@@ -4,9 +4,10 @@
 #include <iostream>
 #include <map>
 #include "heap.h"
-
+#include <math.h>
+#include <v3d_interface.h>
 #define INF 3.4e+38
-
+#include "common_value.h"
 using namespace std;
 
 #ifndef ABS
@@ -28,7 +29,7 @@ using namespace std;
 
 template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, V3DLONG sz0, V3DLONG sz1, V3DLONG sz2, int cnn_type = 3, int bkg_thresh = 0, double z_thickness = 1.0)
 {
-    enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+//    enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
     V3DLONG tol_sz = sz0 * sz1 * sz2;
     V3DLONG sz01 = sz0 * sz1;

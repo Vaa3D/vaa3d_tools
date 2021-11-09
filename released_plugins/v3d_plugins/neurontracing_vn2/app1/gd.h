@@ -43,6 +43,7 @@
 
 #include <math.h>
 
+
 #include <iostream>
 #include <vector>
 #include <algorithm> //added 100417 for Ubuntu, PHC
@@ -532,7 +533,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 				double dx, dy, dz, r2 = double(radius)*(radius);
 				for (iz = z0; iz <= z1; iz++)
 				{
-					dz = fabs(iz - zc) * zthickness; dz *= dz;
+                    dz =fabs(iz - zc) * zthickness; dz *= dz;
 					for (iy = y0; iy <= y1; iy++)
 					{
 						dy = fabs(iy - yc); dy *= dy;
@@ -923,7 +924,7 @@ bool point_bdb_minus_3d_localwinmass_prior_withGraphOrder(unsigned char*** img3d
 							dx = fabs(ix - xc); dx *= dx;
 							if (dx + dy > r2) continue;
 
-							register unsigned char tmpval = img3d[iz][iy][ix];
+                            unsigned char tmpval = img3d[iz][iy][ix];
 							if (tmpval)
 							{
 								sum_x += tmpval;

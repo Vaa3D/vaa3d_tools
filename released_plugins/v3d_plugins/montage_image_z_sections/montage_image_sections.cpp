@@ -17,7 +17,7 @@
 using namespace std;
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(Montage, MONTAGEPlugin);
+//Q_EXPORT_PLUGIN2(Montage, MONTAGEPlugin);
 
 bool do_computation(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, int method_code);
 void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_code);

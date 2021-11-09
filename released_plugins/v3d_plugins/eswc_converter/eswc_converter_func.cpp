@@ -8,6 +8,7 @@
 #include "eswc_converter_func.h"
 #include "read_eswc.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include <QMessageBox>
 const QString title = QObject::tr("eswc Converter");
 int swc2eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 {

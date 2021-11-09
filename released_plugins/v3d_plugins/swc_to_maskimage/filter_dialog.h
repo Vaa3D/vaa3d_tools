@@ -4,6 +4,8 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <vector>
+#include <QGridLayout>
+#include <QLineEdit>
 
 void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,double margin=0, QList<int>mark_other_nodes=QList<int>(),bool mark_other_nodes_or_not=0);
 void BoundNeuronCoordinates(NeuronTree & neuron, double & output_xmin,double & output_xmax,

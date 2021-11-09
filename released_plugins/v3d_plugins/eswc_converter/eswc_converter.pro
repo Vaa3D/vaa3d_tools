@@ -1,9 +1,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 CONFIG  -= bundle_off
-V3DMAINPATH  =  ../../../v3d_main   
+V3DMAINPATH  =../../../../v3d_external/v3d_main
 INCLUDEPATH +=  $$V3DMAINPATH/basic_c_fun
-
+QT += widgets
 HEADERS	+= eswc_converter_plugin.h
 HEADERS	+= eswc_converter_func.h
 

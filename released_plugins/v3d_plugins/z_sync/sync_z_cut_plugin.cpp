@@ -14,7 +14,7 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(sync_z_cut, SyncZ)
+//Q_EXPORT_PLUGIN2(sync_z_cut, SyncZ)
 
 static lookPanel *panel = 0;
 
@@ -278,7 +278,7 @@ else{
 
 }
 
-void MyComboBox::enterEvent(QEvent *e)
+void MyComboBox::enterEvent(QEnterEvent *e)
 {
     updateList();
     QComboBox::enterEvent(e);

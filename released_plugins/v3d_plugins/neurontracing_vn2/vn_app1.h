@@ -4,7 +4,12 @@
 #define __VN1_PARA_H__
 
 #include "vn.h"
-
+#include <QGridLayout>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QLabel>
 struct PARA_APP1: public PARA_VN
 {
     int  bkg_thresh; //for initial reconstruction generation

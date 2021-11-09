@@ -1,1 +1,0 @@
-/bin/gcc    -w   CMakeFiles/LIBCURL.dir/curltest.c.o  -o LIBCURL -rdynamic lib/libcmcurl.a -ldl -lssl -lcrypto ../cmzlib/libcmzlib.a 

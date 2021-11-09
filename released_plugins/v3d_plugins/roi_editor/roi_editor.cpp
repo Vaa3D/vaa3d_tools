@@ -16,13 +16,13 @@
 
 #include "roi_editor.h"
 #include "v3d_message.h"
-
+#include <QMessageBox>
 using namespace std;
 
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(roi_editor, ROI_Editor_Plugin);
+//Q_EXPORT_PLUGIN2(roi_editor, ROI_Editor_Plugin);
 
 void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
 
@@ -41,6 +41,7 @@ QStringList ROI_Editor_Plugin::menulist() const
      << tr("Load ROI")
 	<< tr("Help");
 }
+
 
 void ROI_Editor_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -317,7 +318,7 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
                               iss_npt >> num_pt; // ith ROI QPolygon have num_pt points
                               if(num_pt<=0)
                               {
-                                   pRoiList.append(NULL);
+                                   pRoiList.append(NULL,NULL);
                               }
                               else if(num_pt>0)
                               {

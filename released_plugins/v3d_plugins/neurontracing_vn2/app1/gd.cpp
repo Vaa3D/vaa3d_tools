@@ -47,9 +47,9 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #else
 #endif
 
-#ifdef _WIN32
-#define fabs(x) ((x<0)?-x:x)
-#endif
+//#ifdef _WIN32
+//#define fabs(x) ((x<0)?-x:x)
+//#endif
 
 
 #include "gd.h"
@@ -65,9 +65,9 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 using namespace boost;
 
 
-#include "../../v3d_main/graph/dijk.h"
+#include "../../graph/dijk.h"
 
-#include "../../v3d_main/v3d/compute_win_pca.h"
+#include "../../v3d/compute_win_pca.h"
 
 #include "volimg_proc.h"
 

@@ -12,9 +12,8 @@
 
 
 
-
 using namespace std;
-Q_EXPORT_PLUGIN2(save3dviewer2linker, saveToanoPlugin);
+//Q_EXPORT_PLUGIN2(save3dviewer2linker, saveToanoPlugin);
 
 void generatorAno43Dviewer(V3DPluginCallback2 &callback, QWidget *parent);
 void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *parent);
@@ -231,7 +230,7 @@ void generatorAno43Dviewer(V3DPluginCallback2 &v3d, QWidget *parent)
     }
 }
 
-void MyComboBox::enterEvent(QEvent *e)
+void MyComboBox::enterEvent(QEnterEvent *e)
 {
     updateList();
     QComboBox::enterEvent(e);

@@ -10,7 +10,10 @@
 #include <v3d_interface.h>
 #include <vector>
 #include "neuronpicker_func.h"
-
+#include <QComboBox>
+#include <QLineEdit>
+#include <QDoubleSpinBox>
+#include <QSpinBox>
 using namespace std;
 
 #define NAME_INWIN "Input_Neuron_Picker"
@@ -20,6 +23,8 @@ class neuronPicker : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
+    Q_PLUGIN_METADATA(IID"com.janelia.v3d.V3DPluginInterface/2.1")
+
 
 public:
 	bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent);

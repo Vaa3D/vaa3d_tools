@@ -1,5 +1,9 @@
 #include "gradient_transform_dialog.h"
-
+#include <QLabel>
+#include <QSpinBox>
+#include <QMessageBox>
+#include <QGridLayout>
+#include <QPushButton>
 gradient_transform_dialog::gradient_transform_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;

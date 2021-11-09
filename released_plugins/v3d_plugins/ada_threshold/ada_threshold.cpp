@@ -10,12 +10,12 @@
 #include "v3d_message.h"
 
 #include "stackutil.h"
-
+#include <QMessageBox>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(threshold, ThPlugin);
+//Q_EXPORT_PLUGIN2(threshold, ThPlugin);
 
 template <class T>
 void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)

@@ -4,10 +4,10 @@
  */
  
 #include "subtree_labelling_plugin.h"
-
+#include <QMessageBox>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(subtree_labelling, subtree_label);
+//Q_EXPORT_PLUGIN2(subtree_labelling, subtree_label);
 
 QStringList subtree_label::menulist() const
 {

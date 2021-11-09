@@ -41,7 +41,7 @@ using namespace std;
 void call_open_using_imagej();
 
 
-Q_EXPORT_PLUGIN2(bioformats_loader, bioformats_loader);
+//Q_EXPORT_PLUGIN2(bioformats_loader, bioformats_loader);
  
 QStringList bioformats_loader::menulist() const
 {

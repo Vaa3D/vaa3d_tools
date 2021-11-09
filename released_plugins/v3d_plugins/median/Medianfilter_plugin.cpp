@@ -22,7 +22,7 @@
 #define INF 1E9
 
 using namespace std;
-Q_EXPORT_PLUGIN2(medianfilter, MedianFilterPlugin);
+//Q_EXPORT_PLUGIN2(medianfilter, MedianFilterPlugin);
 
 void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent);
 bool median_fixed_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
@@ -205,13 +205,13 @@ void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     bool ok1, ok2, ok3, ok4;
     unsigned int Wx=1, Wy=1, Wz=1, c=1;
 
-    Wx = QInputDialog::getInteger(parent, "Window X ",
+    Wx = QInputDialog::getInt(parent, "Window X ",
                                   "Enter radius (window size is 2*radius+1):",
                                   1, 1, N, 1, &ok1);
 
     if(ok1)
     {
-        Wy = QInputDialog::getInteger(parent, "Window Y",
+        Wy = QInputDialog::getInt(parent, "Window Y",
                                       "Enter radius (window size is 2*radius+1):",
                                       1, 1, M, 1, &ok2);
     }
@@ -220,7 +220,7 @@ void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(ok2)
     {
-        Wz = QInputDialog::getInteger(parent, "Window Z",
+        Wz = QInputDialog::getInt(parent, "Window Z",
                                       "Enter radius (window size is 2*radius+1):",
                                       1, 1, P, 1, &ok3);
     }
@@ -236,7 +236,7 @@ void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     {
         if(ok3)
         {
-            c = QInputDialog::getInteger(parent, "Channel",
+            c = QInputDialog::getInt(parent, "Channel",
                                          "Enter channel NO:",
                                          1, 1, sc, 1, &ok4);
         }

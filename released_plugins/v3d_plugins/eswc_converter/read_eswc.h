@@ -1,3 +1,4 @@
+#include <basic_surf_objs.h>
 #ifndef __READ_ESWC_H__
 #define __READ_ESWC_H__
 //below is adapted from basic_surf_objs.cpp by RZC
@@ -43,7 +44,7 @@ NeuronTree read_eswc(vector<V3DLONG> & seg_id, vector<V3DLONG> & seg_layer, vect
         count++;
         NeuronSWC S;
 
-        QStringList qsl = QString(buf).split(" ",QString::SkipEmptyParts);
+        QStringList qsl = QString(buf).split(" ",Qt::SkipEmptyParts);
         if (qsl.size()==0)   continue;
 
         for (int i=0; i<qsl.size(); i++)

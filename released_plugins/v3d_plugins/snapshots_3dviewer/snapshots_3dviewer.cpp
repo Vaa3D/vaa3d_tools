@@ -2,11 +2,13 @@
 
 #include "basic_surf_objs.h"
 #include "snapshots_3dviewer.h"
-#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+//#include "neuron_xforms.h"
+#include "../neuron_editing/neuron_xforms.h"
+#include <QInputDialog>
 using namespace std;
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(snapshots_3dviewer, SnapShots_3Dviewer)
+//Q_EXPORT_PLUGIN2(snapshots_3dviewer, SnapShots_3Dviewer)
 
 
 void snapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent);
@@ -160,7 +162,7 @@ void  snapShots3Dviewer_tiled_groups(V3DPluginCallback2 & v3d, QWidget * parent)
                                                0, 0, 100000);
 
 
-    double num_per_row = QInputDialog::getInteger(parent, "Numer of objects per row",
+    double num_per_row = QInputDialog::getInt(parent, "Numer of objects per row",
                                                "Number per row :",
                                                5, 0, 100);
 

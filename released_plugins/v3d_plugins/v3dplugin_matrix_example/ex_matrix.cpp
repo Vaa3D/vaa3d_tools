@@ -9,7 +9,7 @@
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(ex_matrix, ExMatrixPlugin);
+//Q_EXPORT_PLUGIN2(ex_matrix, ExMatrixPlugin);
 
 bool compute(const V3DPluginArgList & input, V3DPluginArgList & output, int method);
 bool check_input_output(const V3DPluginArgList & input, V3DPluginArgList & output,

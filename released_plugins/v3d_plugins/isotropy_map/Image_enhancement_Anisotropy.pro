@@ -2,15 +2,17 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/jba/newmat11
+QT += widgets
 macx{
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
 #    CONFIG += x86_64
 }
 
 win32{
-    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/mingw -lv3dnewmat
 }
 
 unix:!macx {

@@ -1,1 +1,0 @@
-%scan time per area analysis

@@ -4,6 +4,9 @@
 #include <QDialog>
 #include <QtGui>
 #include <v3d_interface.h>
+#include <QCheckBox>
+#include <QGraphicsScene>
+#include <QLineEdit>
 
 #define NAME_INWIN "Neuron_Seperator_Result_Explorer_OrginalImage"
 #define NAME_OUTWIN "Neuron_Seperator_Result_Explorer_OverlapView"

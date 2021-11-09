@@ -8,7 +8,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
-
+#include <QInputDialog>
 #include "v3d_message.h"
 //#include "stackutil.h"
 
@@ -18,7 +18,7 @@ using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(rescale, RescaleConvertPlugin)
+//Q_EXPORT_PLUGIN2(rescale, RescaleConvertPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);
 bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8);
@@ -58,7 +58,7 @@ void RescaleConvertPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &
         }
 
         bool ok;
-        int bitnumber = QInputDialog::getInteger(parent, "Shifted Bit Number",
+        int bitnumber = QInputDialog::getInt(parent, "Shifted Bit Number",
                                      "Enter shifted number:",
                                      3, 1, 8, 1, &ok);
 
@@ -133,7 +133,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     {
         if (sc>1) //only need to ask if more than one channel
         {
-            c = QInputDialog::getInteger(parent, "Channel",
+            c = QInputDialog::getInt(parent, "Channel",
                                          "Enter channel # (0, 1... for the 1st, 2nd... channels; -1 for all channels):",
                                          -1, -1, sc-1, 1, &ok1);
             if (!ok1)

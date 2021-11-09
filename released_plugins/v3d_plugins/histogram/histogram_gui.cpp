@@ -11,6 +11,9 @@
 #include "histogram_gui.h"
 #include "volimg_proc.h"
 #include <math.h>
+#include <QGridLayout>
+#include <QPushButton>
+
 
 
 histogramDialog::histogramDialog(QVector< QVector<int> >& vvec, QStringList labelsOfLeftTop, QString labelOfRightBottom,

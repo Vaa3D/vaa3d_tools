@@ -6,6 +6,12 @@
 #ifndef __RESAMPLE_SWC_PLUGIN_H__
 #define __RESAMPLE_SWC_PLUGIN_H__
 
+
+#define byte win_byte_override
+#include <Windows.h>
+#include <gdiplus.h>
+#undef byte
+
 #include <QtGui>
 #include <v3d_interface.h>
 
@@ -13,6 +19,7 @@ class ResamplePlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
+    Q_PLUGIN_METADATA(IID"com.janelia.v3d.V3DPluginInterface/2.1")
 
 public:
 	float getPluginVersion() const {return 1.1f;}

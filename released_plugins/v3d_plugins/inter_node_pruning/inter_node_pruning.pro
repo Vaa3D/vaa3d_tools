@@ -2,10 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../v3d_main
+VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/common_lib/include
-
+QT += widgets
 HEADERS	+= inter_node_pruning_plugin.h
 HEADERS      += ../sort_neuron_swc/openSWCDialog.h
 

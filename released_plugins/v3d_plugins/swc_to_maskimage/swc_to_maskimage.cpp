@@ -14,13 +14,14 @@
 #include "basic_surf_objs.h"
 #include "stackutil.h"
 #include <vector>
+#include <QMessageBox>
 using namespace std;
 static filter_dialog *dialog=0;
 
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(swc_to_maskimage_sphere, SWC_TO_MASKIMAGElugin);
+//Q_EXPORT_PLUGIN2(swc_to_maskimage_sphere, SWC_TO_MASKIMAGElugin);
 
 
 //plugin funcs
@@ -91,8 +92,7 @@ void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent)
 	QStringList filenames;
     V3DLONG nx,ny,nz;
 
-    filenames = QFileDialog::getOpenFileNames(0, 0,"","Supported file (*.swc)" ";;Neuron structure(*.swc)",0,0);
-
+    filenames = QFileDialog::getOpenFileNames(0, 0,"","Supported file (*.swc)" ";;Neuron structure(*.swc)");
     if(filenames.isEmpty())
     {
         v3d_msg("You don't have any SWC file open in the main window.");

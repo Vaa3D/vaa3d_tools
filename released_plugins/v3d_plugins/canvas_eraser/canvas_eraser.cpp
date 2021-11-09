@@ -12,12 +12,13 @@
 #include <iostream>
 #include "canvas_eraser.h"
 #include "stackutil.h"
-
+#include <QInputDialog>
+#include <QMessageBox>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(canvas_eraser, CanvasEraserPlugin)
+//Q_EXPORT_PLUGIN2(canvas_eraser, CanvasEraserPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int flag);
 bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
@@ -204,17 +205,17 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int fl
      if(flag == 1 || flag== 2) // (arg == tr("Change canvas size and fill all 0 values") || arg == tr("Change canvas size and fill a specific value"))
     {
         bool ok;
-        V3DLONG xdim = QInputDialog::getInteger(parent, QObject::tr("X dim"),
+        V3DLONG xdim = QInputDialog::getInt(parent, QObject::tr("X dim"),
                                                  QObject::tr("X dim:"),
                                                  szx, 1, szx*2, 1, &ok);
         if (ok)
 		{
-			V3DLONG ydim = QInputDialog::getInteger(parent, QObject::tr("Y dim"),
+            V3DLONG ydim = QInputDialog::getInt(parent, QObject::tr("Y dim"),
                                                  QObject::tr("Y dim:"),
                                                  szy, 1, szy*2, 1, &ok);
 			if (ok)
 			{
-				V3DLONG zdim = QInputDialog::getInteger(parent, QObject::tr("Z dim"),
+                V3DLONG zdim = QInputDialog::getInt(parent, QObject::tr("Z dim"),
 													 QObject::tr("Z dim:"),
 													 szz, 1, szz*2, 1, &ok);
 				if (ok)
@@ -223,7 +224,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int fl
 
 					if (flag == 2) //(arg == tr("Change canvas size and fill a specific value"))
 					{
-						vv = QInputDialog::getInteger(parent, QObject::tr("fill in value"),
+                        vv = QInputDialog::getInt(parent, QObject::tr("fill in value"),
 														  QObject::tr("fill in value (between 0 and 255)"),
 														  0, 0, 255, 1, &ok);
 						if (!ok)

@@ -8,7 +8,7 @@
 #include "consensus_skeleton_plugin.h"
 #include "consensus_skeleton_func.h"
  
-Q_EXPORT_PLUGIN2(consensus_skeleton, ConsSkelPlugin);
+//Q_EXPORT_PLUGIN2(consensus_skeleton, ConsSkelPlugin);
  
 QStringList ConsSkelPlugin::menulist() const
 {

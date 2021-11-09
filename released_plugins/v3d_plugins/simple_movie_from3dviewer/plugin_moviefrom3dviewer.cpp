@@ -6,10 +6,13 @@
 #include <stdlib.h>
 
 #include "plugin_moviefrom3dviewer.h"
-
+#include <QMessageBox>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QLabel>
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(moviefrom3dviewer, MovieFrom3DviewerPlugin)
+//Q_EXPORT_PLUGIN2(moviefrom3dviewer, MovieFrom3DviewerPlugin)
 
 void MovieFrom3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent);
 void SnapShoot3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent);

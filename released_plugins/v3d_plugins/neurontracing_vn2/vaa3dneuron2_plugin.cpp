@@ -15,7 +15,7 @@
 #include "vaa3dneuron2_plugin.h"
 
 
-Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
+//Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
 
 QString versionStr = "v2.621";
 

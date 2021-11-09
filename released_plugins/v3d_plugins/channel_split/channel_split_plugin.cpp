@@ -13,12 +13,12 @@
 #include "stackutil.h"
 
 #include "channel_split_plugin.h"
-
+#include <QInputDialog>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(channelsplit, ChannelSplitPlugin)
+//Q_EXPORT_PLUGIN2(channelsplit, ChannelSplitPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);
@@ -180,7 +180,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     {
         if (sc>1) //only need to ask if more than one channel
         {
-            c = QInputDialog::getInteger(parent, "Channel",
+            c = QInputDialog::getInt(parent, "Channel",
                                              "Enter channel # (0, 1... for the 1st, 2nd... channels; -1 for all channels):",
                                              -1, -1, sc-1, 1, &ok1);
             if (!ok1)

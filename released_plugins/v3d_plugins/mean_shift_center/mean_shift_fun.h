@@ -7,7 +7,14 @@
 #include "mean_shift_extr_template.h"
 #include "basic_surf_objs.h"
 #include "fastmarching_dt.h"
-
+#include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QSpinBox>
+#include <QMessageBox>
+#include <QDialog>
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #ifndef ABS

@@ -2,9 +2,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DMAINPATH = ../../../v3d_main
+VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
-
+QT += widgets
 HEADERS	+= consensus_skeleton_plugin.h
 HEADERS	+= consensus_skeleton_func.h
 

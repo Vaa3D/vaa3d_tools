@@ -11,7 +11,8 @@
 #define BARFIGUREDIALOG_H_
 
 #include <QtGui>
-
+#include <QDialog>
+#include <QLabel>
 class histogramDialog : public QDialog
 {
 	Q_OBJECT

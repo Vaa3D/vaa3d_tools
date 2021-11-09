@@ -9,7 +9,7 @@
 #include "Lm/Neuron.h"
 #include "asc_to_swc.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(convert_neuron_file_to_SWC, neuronConverter);
+//Q_EXPORT_PLUGIN2(convert_neuron_file_to_SWC, neuronConverter);
  
 QStringList neuronConverter::menulist() const
 {

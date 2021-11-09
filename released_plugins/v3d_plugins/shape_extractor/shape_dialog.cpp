@@ -10,7 +10,10 @@
 #include <algorithm>
 #include <basic_landmark.h>
 #include <map>
-
+#include <QPushButton>
+#include <QLabel>
+#include <QComboBox>
+#include <QMessageBox>
 
 shape_dialog::shape_dialog(V3DPluginCallback2 *cb)
 {

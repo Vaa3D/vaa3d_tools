@@ -5,10 +5,14 @@
  
 
 #include "mean_shift_center_plugin.h"
-
+#include <QLabel>
+#include <QSpinBox>
+#include <QMessageBox>
+#include <QGridLayout>
+#include <QPushButton>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(mean_shift_center,mean_shift_plugin );
+//Q_EXPORT_PLUGIN2(mean_shift_center,mean_shift_plugin );
 //static mean_shift_dialog *dialog=0;
 //static ray_shoot_dialog *r_dialog=0;
 
@@ -276,7 +280,7 @@ void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, cons
     }
     QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_all_method_out.marker" : QString(outfiles[0]);
-    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    FILE * fp_1 = fopen(qs_output.toLatin1(), "w");
     if (!fp_1)
     {
         qDebug()<<"cannot open the file to save the landmark points.\n";
@@ -535,7 +539,7 @@ void mean_shift_plugin::load_image_marker(V3DPluginCallback2 & callback,const V3
         }
     }
     if (qs_input_mark.isEmpty())  return;
-    FILE * fp = fopen(qs_input_mark.toAscii(), "r");
+    FILE * fp = fopen(qs_input_mark.toLatin1(), "r");
     if (!fp)
     {
         qDebug()<<"Can not open the file to load the landmark points.\n";
@@ -546,7 +550,7 @@ void mean_shift_plugin::load_image_marker(V3DPluginCallback2 & callback,const V3
         fclose(fp);
     }
 
-    LList = readPosFile_usingMarkerCode(qs_input_mark.toAscii());
+    LList = readPosFile_usingMarkerCode(qs_input_mark.toLatin1());
 
     if (LList.count()<=0)
     {
@@ -703,7 +707,7 @@ void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginA
     //Write data in the file
     QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_gt_out.marker" : QString(outfiles[0]);
-    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    FILE * fp_1 = fopen(qs_output.toLatin1(), "w");
     if (!fp_1)
     {
         qDebug()<<"cannot open the file to save the landmark points.\n";
@@ -812,7 +816,7 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
     //Write data in the file
     QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_rs_out.marker" : QString(outfiles[0]);
-    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    FILE * fp_1 = fopen(qs_output.toLatin1(), "w");
     if (!fp_1)
     {
         qDebug()<<"cannot open the file to save the landmark points.\n";
@@ -938,7 +942,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         qs_output = outfiles.empty() ? qs_input_image + "_ms_c_out.marker" : QString(outfiles[0]);
     else
         qs_output = outfiles.empty() ? qs_input_image + "_ms_out.marker" : QString(outfiles[0]);
-    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    FILE * fp_1 = fopen(qs_output.toLatin1(), "w");
     if (!fp_1)
     {
         qDebug()<<"cannot open the file to save the landmark points.\n";

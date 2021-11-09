@@ -8,6 +8,17 @@
 
 #include <v3d_interface.h>
 
+
+#define byte win_byte_override
+
+#include <Windows.h>
+
+
+#include <gdiplus.h>
+
+#undef byte
+
+
 int resample_swc(V3DPluginCallback2 &callback, QWidget *parent);
 bool resample_swc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool resample_swc_toolbox(const V3DPluginArgList & input);

@@ -4,7 +4,15 @@
 
 #include <QtGui>
 #include "q_warp_affine_tps_dialogs.h"
-
+#include <QLineEdit>
+#include <QPushButton>
+#include <QCheckBox>
+#include <QGroupBox>
+#include <QGridLayout>
+#include <QVBoxLayout>
+#include <QTextEdit>
+#include <QRadioButton>
+#include <QMessageBox>
 
 //------------------------------------------------------------------------------------------------------------------------------------
 WarpAffineTpsDialog_pts::WarpAffineTpsDialog_pts(QWidget *parent):QDialog(parent)

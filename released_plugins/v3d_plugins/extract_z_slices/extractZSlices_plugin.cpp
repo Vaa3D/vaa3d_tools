@@ -6,8 +6,9 @@
 #include "v3d_message.h"
 #include <QInputDialog>
 #include "extractZSlices_plugin.h"
+#include <QMessageBox>
 using namespace std;
-Q_EXPORT_PLUGIN2(extractZSlices, extractZSlices);
+//Q_EXPORT_PLUGIN2(extractZSlices, extractZSlices);
  
 
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);

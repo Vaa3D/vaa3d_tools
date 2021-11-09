@@ -2,10 +2,10 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
-VAA3D_DIR = ../../../v3d_main
+VAA3D_DIR = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3D_DIR/basic_c_fun
 INCLUDEPATH     += $$VAA3D_DIR/common_lib/include
-
+QT += widgets
 HEADERS	+= swc2mask_plugin.h
 HEADERS += my_surf_objs.h
 HEADERS += swc_convert.h

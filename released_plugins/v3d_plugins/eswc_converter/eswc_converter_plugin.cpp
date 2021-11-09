@@ -8,7 +8,7 @@
 #include "eswc_converter_plugin.h"
 #include "eswc_converter_func.h"
  
-Q_EXPORT_PLUGIN2(eswc_converter, ESWCPlugin);
+//Q_EXPORT_PLUGIN2(eswc_converter, ESWCPlugin);
  
 QStringList ESWCPlugin::menulist() const
 {

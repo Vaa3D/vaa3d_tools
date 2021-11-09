@@ -2,9 +2,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../v3d_main
+VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
-
+QT += widgets
 HEADERS	+= hier_label_plugin.h
 HEADERS	+= hier_label_func.h
 

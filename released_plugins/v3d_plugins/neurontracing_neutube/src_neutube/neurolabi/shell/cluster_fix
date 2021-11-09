@@ -1,8 +1,0 @@
-#!/bin/bash
-
-cat ../c/include/neurolabi_config.h | ./cluster_fix_config_header > ../c/include/neurolabi_config.h.tmp
-mv ../c/include/neurolabi_config.h.tmp ../c/include/neurolabi_config.h
-cat ../c/Makefile-def | ./cluster_fix_makefile > ../c/Makefile-def.tmp
-mv ../c/Makefile-def.tmp ../c/Makefile-def
-./cluster_fix_cmake ../cpp/src/CMakeLists.txt > ../cpp/src/CMakeLists.txt.tmp
-mv ../cpp/src/CMakeLists.txt.tmp ../cpp/src/CMakeLists.txt

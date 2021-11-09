@@ -1,7 +1,0 @@
-## !
-qmake and make to build this plugin in your computer of linux
-## !
-use this plugin in Vaa3D and open a sorted swc.file
-## !
-and it shows all the remote angles of branchs(y) and the ids of corresponding branch node(x) from dendrite
-also angle of branch bigger than 90 degree will be in red in R

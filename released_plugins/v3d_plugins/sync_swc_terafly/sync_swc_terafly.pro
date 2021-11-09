@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
-
+QT += widgets
 HEADERS	+= sync_swc_terafly_plugin.h
 
 SOURCES	+= sync_swc_terafly_plugin.cpp

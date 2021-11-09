@@ -3,11 +3,11 @@ TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 #CONFIG       += x86_64
 
-V3DMAINDIR = ../../../v3d_main
+V3DMAINDIR = ../../../../v3d_external/v3d_main
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
-
+QT += widgets
 HEADERS       = convert_img_to_atlasview.h
 
 SOURCES       = convert_img_to_atlasview.cpp

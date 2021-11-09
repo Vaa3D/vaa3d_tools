@@ -15,6 +15,10 @@
 #include <fstream>
 #include <algorithm>
 #include <basic_landmark.h>
+#include <QPushButton>
+#include <QLabel>
+#include <QGridLayout>
+
 
 #include "neuronpicker_templates.h"
 using namespace std;
@@ -34,7 +38,7 @@ void finishnpdiag()
     }
 }
 
-Q_EXPORT_PLUGIN2(neuronPicker, neuronPicker);
+//Q_EXPORT_PLUGIN2(neuronPicker, neuronPicker);
 
 QStringList neuronPicker::menulist() const
 {

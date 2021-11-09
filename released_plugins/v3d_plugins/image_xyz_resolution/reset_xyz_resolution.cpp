@@ -14,12 +14,13 @@
 #include <iostream>
 
 #include "reset_xyz_resolution.h"
-
+#include <QMessageBox>
+#include <QInputDialog>
 using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(example_reset_xyz_resolution, example_reset_xyz_resolutionPlugin)
+//Q_EXPORT_PLUGIN2(example_reset_xyz_resolution, example_reset_xyz_resolutionPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int flag);

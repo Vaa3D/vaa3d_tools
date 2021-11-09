@@ -1,5 +1,0 @@
-Code/Algorithms/
-itkEuclideanDistancePointMetric.h
-itkFastChamferDistanceImageFilter.h
-itkIsoContourDistanceImageFilter.h
-

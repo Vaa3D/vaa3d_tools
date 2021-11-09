@@ -1,6 +1,0 @@
-
-SET(PLUGIN_GROUP_NAME "RegionGrowing")
-
-CONFIGURE_V3D_PLUGIN(ITKConfidenceConnected)
-CONFIGURE_V3D_PLUGIN(ITKConnectedThreshold)
-CONFIGURE_V3D_PLUGIN(ITKIsolatedConnected)

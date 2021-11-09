@@ -12,9 +12,9 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(marker2others, Marker2OthersPlugin);
+//Q_EXPORT_PLUGIN2(marker2others, Marker2OthersPlugin);
  
-//
+
 void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3dhandle curwin = callback.currentImageWindow();

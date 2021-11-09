@@ -8,7 +8,7 @@
 #include "resample_swc_plugin.h"
 #include "resample_swc_func.h"
  
-Q_EXPORT_PLUGIN2(resample_swc, ResamplePlugin);
+//Q_EXPORT_PLUGIN2(resample_swc, ResamplePlugin);
  
 QStringList ResamplePlugin::menulist() const
 {

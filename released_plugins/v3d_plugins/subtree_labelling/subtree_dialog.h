@@ -8,7 +8,7 @@
 #include "math.h"
 #include <vector>
 #include "v3d_message.h"
-
+#include <QComboBox>
 using namespace std;
 
 struct tree{int tree_id; //start from 1

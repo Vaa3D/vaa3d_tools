@@ -11,7 +11,9 @@
 #include "basic_surf_objs.h"
 #include <iostream>
 #include "my_surf_objs.h"
-
+#include <QInputDialog>
+#include <QComboBox>
+#include <QPushButton>
 
 static controlPanel *ControlPanel=0;
 
@@ -36,7 +38,7 @@ using namespace std;
 
 
 
-Q_EXPORT_PLUGIN2(pruning_swc, pruning_swc);
+//Q_EXPORT_PLUGIN2(pruning_swc, pruning_swc);
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
 {
@@ -64,7 +66,7 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
         if (buf[0]=='#')
         {
            info = buf;
-           myfile<< info.remove('\n') <<endl;
+           myfile<< info.remove('\n');
         }
 
     }
@@ -670,7 +672,7 @@ bool pruning_swc::dofunc(const QString &func_name, const V3DPluginArgList &input
 //    }
 }
 
-void MyComboBox::enterEvent(QEvent *e)
+void MyComboBox::enterEvent(QEnterEvent *e)
 {
     updateList();
     QComboBox::enterEvent(e);

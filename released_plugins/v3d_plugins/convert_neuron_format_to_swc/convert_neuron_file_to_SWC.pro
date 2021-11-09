@@ -4,15 +4,15 @@ CONFIG	+= qt plugin warn_off
 #CONFIG += debug_and_release
 #CONFIG	+= x86_64
 
-VAA3DPATH = ../../../../v3d_external
-INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-
+VAA3DPATH =  ../../../../v3d_external/v3d_main
+INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
+QT += widgets
 HEADERS	+= convert_neuron_file_to_SWC_plugin.h \
     asc_to_swc.h
 SOURCES	+= convert_neuron_file_to_SWC_plugin.cpp \
     asc_to_swc.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 #SOURCES += main.cpp
 
 #=============L-Measure===============

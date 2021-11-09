@@ -6,8 +6,9 @@
 #include <vector>
 #include "color_render_ESWC_features_plugin.h"
 #include "color_render_eswc_dialog.h"
+#include <QInputDialog>
 using namespace std;
-Q_EXPORT_PLUGIN2(color_render_ESWC_features, neuron_render_ESWC_features);
+//Q_EXPORT_PLUGIN2(color_render_ESWC_features, neuron_render_ESWC_features);
  
 QStringList neuron_render_ESWC_features::menulist() const
 {

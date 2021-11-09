@@ -5,8 +5,9 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
-
-HEADERS	+= CWlab_method1_version1_plugin.h
+QT += widgets
+HEADERS	+= CWlab_method1_version1_plugin.h \
+    common_value.h
 HEADERS += vn_imgpreprocess.h
 HEADERS += fastmarching_tree.h
 HEADERS += hierarchy_prune.h

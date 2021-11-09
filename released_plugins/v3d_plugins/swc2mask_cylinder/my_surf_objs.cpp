@@ -89,6 +89,12 @@ bool saveMarker_file(string marker_file, vector<MyMarker> & outmarkers)
     cout<<"save "<<outmarkers.size()<<" markers to file "<<marker_file<<endl;
 	ofstream ofs(marker_file.c_str()); 
 	
+        
+        
+        
+        
+        
+        
 	if(ofs.fail())
 	{
         cout<<"open marker file error"<<endl;

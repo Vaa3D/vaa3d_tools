@@ -7,7 +7,7 @@
 #include <vector>
 #include "demo_opensurfacefile_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(demo_opensurfacefile, DemoOpenSurfaceFilePlugin);
+//Q_EXPORT_PLUGIN2(demo_opensurfacefile, DemoOpenSurfaceFilePlugin);
  
 QStringList DemoOpenSurfaceFilePlugin::menulist() const
 {

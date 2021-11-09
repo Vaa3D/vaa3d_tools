@@ -7,6 +7,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
+#include <QPushButton>
+#include <QLabel>
+#include <QMessageBox>
 using namespace std;
 // lroundf() is gcc-specific --CMB
 #ifdef _MSC_VER
@@ -78,7 +81,7 @@ void filter_dialog::dialoguefinish(int)
 void filter_dialog::load_swc()
 {
     QString filename;
-    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.swc)" ";;Neuron structure(*.swc)",0,0);
+    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.swc)" ";;Neuron structure(*.swc)");
 
     if(filename.isEmpty())
     {

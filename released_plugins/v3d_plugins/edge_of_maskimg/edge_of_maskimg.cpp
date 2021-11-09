@@ -19,7 +19,7 @@ using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(edge_of_maskimg, EdgeOfMaskImgPlugin);
+//Q_EXPORT_PLUGIN2(edge_of_maskimg, EdgeOfMaskImgPlugin);
 
 void findedgeimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
 bool findedgeimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);

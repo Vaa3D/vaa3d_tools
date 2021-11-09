@@ -5,10 +5,11 @@
 #include <stdlib.h>
 
 #include "extrafiltersplugin.h"
-
+#include <QInputDialog>
+#include <QMessageBox>
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(extrafilters, ExtraFilters);
+//Q_EXPORT_PLUGIN2(extrafilters, ExtraFilters);
 
 const QString title = "V3DSingleImageInterface demo";
 QStringList ExtraFilters::menulist() const
@@ -39,7 +40,7 @@ void ExtraFilters::processImage(const QString &arg, Image4DSimple *image, QWidge
     if (arg == tr("Threshold..."))
     {
         bool ok;
-        int threshold = QInputDialog::getInteger(parent, tr("Threshold"),
+        int threshold = QInputDialog::getInt(parent, tr("Threshold"),
                                                  tr("Enter threshold:"),
                                                  100, 0, 255, 1, &ok);
         if (ok)

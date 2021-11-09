@@ -7,7 +7,7 @@
 #include <QInputDialog>
 #include "mipZSlices_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(mipZSlices, MIPZSlices);
+//Q_EXPORT_PLUGIN2(mipZSlices, MIPZSlices);
  
 
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);

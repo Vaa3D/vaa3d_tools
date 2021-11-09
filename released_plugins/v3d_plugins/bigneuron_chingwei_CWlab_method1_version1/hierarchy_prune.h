@@ -3,7 +3,10 @@
 
 #include <map>
 #include <set>
+#include <math.h>
 #include "smooth_curve.h"
+#include "my_surf_objs.h"
+#include <basic_surf_objs.h>
 using namespace std;
 
 #define INTENSITY_DISTANCE_METHOD 0

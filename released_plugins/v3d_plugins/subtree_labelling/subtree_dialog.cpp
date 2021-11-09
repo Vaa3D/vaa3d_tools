@@ -1,5 +1,9 @@
 #include "subtree_dialog.h"
-
+#include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QMessageBox>
 #define swc_win_name "subtree_labelling_swc"
 
 #ifndef VOID

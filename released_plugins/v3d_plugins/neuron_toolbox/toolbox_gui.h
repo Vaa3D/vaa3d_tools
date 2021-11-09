@@ -2,6 +2,7 @@
 #define __TOOLBOX_GUI_H__
 #include <QtGui>
 #include "v3d_interface.h"
+#include <QTreeWidget>
 class SelectPluginDlg : public QDialog
 {
 	Q_OBJECT

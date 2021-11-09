@@ -2,9 +2,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
-
+QT += widgets
 HEADERS	+= neuron_toolbox_plugin.h
 HEADERS	+= neuron_toolbox_func.h
 HEADERS	+= toolbox_gui.h

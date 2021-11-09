@@ -1,6 +1,11 @@
 #include "neuron_seperator_explorer.h"
 #include <fstream>
 #include <iostream>
+#include <QPushButton>
+#include <QLabel>
+#include <QMessageBox>
+#include <QGridLayout>
+#include <QGraphicsView>
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -556,7 +561,7 @@ void neuron_seperator_explorer::updateAll()
         QTextStream in(&file);
         while(!in.atEnd()) {
             QString line = in.readLine();
-            QStringList fields = line.split(QRegExp("="));
+            QStringList fields = line.split(QRegularExpression("="));
             QString fname_tmp=fields.at(1).trimmed();
 
             if(fields.size()>1){

@@ -1,3 +1,0 @@
-/local1/vaa3d_test/vaa3d_tools/hackathon/MK/NeuronStructNavigator/CMakeFiles/edit_cache.dir
-/local1/vaa3d_test/vaa3d_tools/hackathon/MK/NeuronStructNavigator/CMakeFiles/rebuild_cache.dir
-/local1/vaa3d_test/vaa3d_tools/hackathon/MK/NeuronStructNavigator/CMakeFiles/NeuronStructNavigator.dir

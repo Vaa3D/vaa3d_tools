@@ -1,27 +1,29 @@
 
 TEMPLATE	= lib
-CONFIG	+= qt plugin warn_off
+CONFIG	+= qt plugin warn_off c11
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH     += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app2
 INCLUDEPATH     += app1
 INCLUDEPATH     += $$V3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
-
+QT += widgets
 unix {
 LIBS += -L$$V3DMAINPATH/jba/c++
 LIBS += -lv3dnewmat
 }
 win32 {
-LIBS += -L$$V3DMAINPATH/common_lib/winlib64
-LIBS += -llibnewmat
+LIBS += -L$$V3DMAINPATH/common_lib/mingw -lv3dnewmat
+#LIBS += -L$$V3DMAINPATH/common_lib/mingw -lv3dnewmat
+#LIBS += -llibnewmat
 }
 
 #LIBS += -llibm
 
-HEADERS	+= vaa3dneuron2_plugin.h
+HEADERS	+= vaa3dneuron2_plugin.h \
+    common_value.h
 HEADERS += vn_imgpreprocess.h
 HEADERS += vn.h
 HEADERS += vn_app2.h

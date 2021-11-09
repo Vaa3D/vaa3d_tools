@@ -1,2 +1,0 @@
-name        y_n    ratio(x/y)    overlap_level    count    grey_std
-/home/lxf/marker/test/marker137.marker_color.txt     1   0.294118   0.411765   72   7.82331

@@ -9,7 +9,8 @@
 #include "neuron_connector_plugin.h"
 #include "neuron_connector_func.h"
 #include <iostream>
-
+#include <QPushButton>
+#include <QGridLayout>
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
 #ifndef MAX_DOUBLE
@@ -18,7 +19,7 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(neuron_connector, neuron_connector_swc);
+//Q_EXPORT_PLUGIN2(neuron_connector, neuron_connector_swc);
  
 QStringList neuron_connector_swc::menulist() const
 {
@@ -146,7 +147,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
         qDebug()<<"output result: "<<fname_output;
         //output result
         if(!export_list2file(newNeuron, fname_output)){
-            qDebug()<<"error: Cannot open file "<<fname_output<<" for writing!"<<endl;
+            qDebug()<<"error: Cannot open file "<<fname_output<<" for writing!"<<Qt::endl;
         }
     }
     else if (func_name == tr("help"))

@@ -1,5 +1,5 @@
 #include "ray_shoot_dialog.h"
-
+#include "mean_shift_fun.h"
 ray_shoot_dialog::ray_shoot_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;

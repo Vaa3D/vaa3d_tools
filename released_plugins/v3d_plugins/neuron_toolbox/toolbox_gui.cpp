@@ -1,6 +1,11 @@
 #include "toolbox_gui.h"
 #include <iostream>
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include <QTreeWidgetItem>
+#include <QVBoxLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QHeaderView>
 using namespace std;
 
 static QString toolboxRootPath = QObject::tr("/Users/xiaoh10/Applications/v3d/plugins");

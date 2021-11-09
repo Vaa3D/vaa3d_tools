@@ -10,6 +10,7 @@
 #include "consensus_skeleton.h"
 #include <vector>
 #include <iostream>
+#include <QInputDialog>
 using namespace std;
 
 const QString title = QObject::tr("Consensus Skeleton");

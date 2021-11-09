@@ -6,9 +6,10 @@
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
-
+#include <QMessageBox>
+#include <QInputDialog>
 #include "TipDetection_plugin.h"
-Q_EXPORT_PLUGIN2(TipDetection, TestPlugin);
+//Q_EXPORT_PLUGIN2(TipDetection, TestPlugin);
 
 using namespace std;
 
@@ -130,7 +131,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
         else
         {
-            c = QInputDialog::getInteger(parent, "Channel",
+            c = QInputDialog::getInt(parent, "Channel",
                                              "Enter channel NO:",
                                              1, 1, sc, 1, &ok1);
         }

@@ -1,9 +1,0 @@
-#!/bin/bash
- 
-if [ -f ../data/diadem_d1_$1_$2_pos.txt ]
-then
-    echo 'already there'
-else
-    ../c/bin/stitchstack ../data/diadem_d1_$1.xml ../data/diadem_d1_$2.xml -o ../data/diadem_d1_$1_$2_pos.txt
-    #../c/bin/stitchstack ../data/diadem_d1_$1_$2_pos.txt -o ../data/test.tif    
-fi

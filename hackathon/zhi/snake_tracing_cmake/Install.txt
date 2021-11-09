@@ -1,4 +1,0 @@
-FARSIGHT INSTALL GUIDE
-
-Located online at http://farsight-toolkit.org/wiki/FARSIGHT_HowToBuild
-

@@ -9,11 +9,15 @@
 #include "smooth_curve.h"
 #include "hierarchy_prune.h"
 #include  "volimg_proc.h"
-
-
+#include <QLineEdit>
+#include <QGridLayout>
+#include <QPushButton>
+#include <QCheckBox>
+#include <QLabel>
+#include <QMessageBox>
 using namespace std;
-Q_EXPORT_PLUGIN2(neuron_radius, SWCRadiusPlugin);
- 
+//Q_EXPORT_PLUGIN2(neuron_radius, SWCRadiusPlugin);
+
 QStringList SWCRadiusPlugin::menulist() const
 {
 	return QStringList() 

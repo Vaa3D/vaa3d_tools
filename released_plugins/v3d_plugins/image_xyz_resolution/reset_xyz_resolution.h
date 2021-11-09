@@ -12,6 +12,8 @@ class example_reset_xyz_resolutionPlugin : public QObject, public V3DPluginInter
 {
     Q_OBJECT
     Q_INTERFACES(V3DPluginInterface2_1)
+    Q_PLUGIN_METADATA(IID"com.janelia.v3d.V3DPluginInterface/2.1")
+
 
 public:
      float getPluginVersion() const {return 1.2f;}

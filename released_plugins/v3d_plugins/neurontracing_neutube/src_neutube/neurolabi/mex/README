@@ -1,6 +1,0 @@
-This is obsolete because libtiff is no longer used in the programs.
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-Matlab (even the version as new as MATLAB 7.5.0) is using an old version of libtiff. This could cause link problem when the mex functions building from a newer libtiff version are used. To solve the problem, you can change the libtiff symbolic link provided by Matlab originally (assume Matlab is installed under /Applications/MATLAB_R2007b and the new libtiff is installed under /usr/local/ib):
-
-> sudo ln -fs /usr/local/lib/libtiff.3.dylib /Applications/MATLAB_R2007b/bin/maci/libtiff.3.dylib

@@ -10,9 +10,9 @@
 #include "my_surf_objs.h"
 #include "basic_surf_objs.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include <QMessageBox>
 
-
-Q_EXPORT_PLUGIN2(swc2mask, SWC2MaskPlugin);
+//Q_EXPORT_PLUGIN2(swc2mask, SWC2MaskPlugin);
 
 using namespace std;
 

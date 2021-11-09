@@ -7,7 +7,7 @@
 #include <vector>
 #include "tip_detection_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(tip_detection, TestPlugin);
+//Q_EXPORT_PLUGIN2(tip_detection, TestPlugin);
  
 QStringList TestPlugin::menulist() const
 {

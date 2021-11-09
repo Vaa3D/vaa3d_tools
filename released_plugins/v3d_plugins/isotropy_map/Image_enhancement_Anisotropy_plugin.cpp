@@ -6,12 +6,13 @@
 #include "v3d_message.h"
 #include <vector>
 #include "Image_enhancement_Anisotropy_plugin.h"
-#include "../../../v3d_main/jba/newmat11/newmatap.h"
-#include "../../../v3d_main/jba/newmat11/newmatio.h"
-
+#include "newmatap.h"
+#include "newmatio.h"
+#include <QMessageBox>
+#include <QInputDialog>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(image_anisotropy_map, anisotropy_enhancement);
+//Q_EXPORT_PLUGIN2(image_anisotropy_map, anisotropy_enhancement);
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag);
 
@@ -290,7 +291,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
         }
         else
         {
-            c = QInputDialog::getInteger(parent, "Channel",
+            c = QInputDialog::getInt(parent, "Channel",
                                          "Enter channel NO:",
                                          1, 1, sc, 1, &ok2);
         }

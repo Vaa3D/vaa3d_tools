@@ -7,10 +7,10 @@
 #include <vector>
 #include "shape_extractor_plugin.h"
 #include "shape_dialog.h"
-
+#include <QMessageBox>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(shape_extractor, shape_extr_plugin);
+//Q_EXPORT_PLUGIN2(shape_extractor, shape_extr_plugin);
 static shape_dialog *dialog=0;
 
 QStringList shape_extr_plugin::menulist() const

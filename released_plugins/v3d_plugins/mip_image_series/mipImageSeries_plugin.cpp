@@ -6,8 +6,8 @@
 #include "v3d_message.h"
 #include <vector>
 #include "mipImageSeries_plugin.h"
-#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-
+//#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+#include "../istitch/y_imglib.h"
 using namespace std;
 
 // Open a series of inputs
@@ -39,7 +39,7 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
-Q_EXPORT_PLUGIN2(mipImageSeries, mipImageSeries);
+//Q_EXPORT_PLUGIN2(mipImageSeries, mipImageSeries);
  
 QStringList mipImageSeries::menulist() const
 {
