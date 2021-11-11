@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>KG-Aligner</title>
+
+  <style type="text/css">
+    .word {
+      text-align: center;
+      font-size: 30px;
+    }
+
+    .logbox {
+      width: 600px;
+      height: 200px;
+      border: 2px solid black;
+    }
+  </style>
+
+</head>
+
+
+<body>
+  <!-- Webpage Title -->
+  <div class="word">Knowledge Graph Alignment Demo</div>
+  <hr style="height:1px;border:none;border-top:2px dashed #0066CC;" />
+
+  <!-- /* Create main canvas */ -->
+  <div id="myContainer"></div>
+  <!-- Load data from local json file -->
+  <script type="text/javascript" src="data/sample-data-js.json"></script>
+  <!-- /* Import G6 */ -->
+  <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.12/dist/g6.min.js"></script>
+  <script src="src/graph-vis.js"></script>
+
+  <hr style="height:1px;border:none;border-top:2px dashed #0066CC;" />
+
+  <h2>Knowledge Graph Visualization</h2>
+  <div>Please choose the knowledge graph you would like to visualise</div>
+  <select>
+    <option value="EN_15K_V1">DBpedia-EN-15K-V1</option>
+    <option value="EN_15K_V2">DBpedia-EN-15K-V2</option>
+    <option value="DE_15K_V1">DBpedia-DE-15K-V1</option>
+    <option value="DE_15K_V2">DBpedia-DE-15K-V2</option>
+    <option value="FR_15K_V1">DBpedia-FR-15K-V1</option>
+    <option value="FR_15K_V2">DBpedia-FR-15K-V2</option>
+  </select>
+  <button type="button">OK</button>
+
+  <h2>Knowledge Graph Alignment</h2>
+  <div>Please choose the to-be-aligned knowledge graphs and press OK to run the KG-alignment system PRASE</div>
+  <select>
+    <option value="EN_DE_15K_V1">DBpedia-EN-DE-15K-V1</option>
+    <option value="EN_DE_15K_V2">DBpedia-EN-DE-15K-V2</option>
+    <option value="EN_FR_15K_V1">DBpedia-EN-FR-15K-V1</option>
+    <option value="EN_FR_15K_V2">DBpedia-EN-FR-15K-V2</option>
+  </select>
+  <button type="button">OK</button>
+  <br />
+
+  <br />
+  <div class="logbox">WHERE THE LOG GOES</div>
+  <br />
+  <button type="button">Download predicted mapping result</button>
+  <button type="button">Download ground-truth mapping result</button>
+
+</body>
+
+</html>

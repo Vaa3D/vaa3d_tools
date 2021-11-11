@@ -1,0 +1,20 @@
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 152-105-986
+ * Running on http://0.0.0.0:3000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 152-105-986
+ * Running on http://0.0.0.0:3000/ (Press CTRL+C to quit)
+register
+ Common.user_email:543323433@qq.com
+127.0.0.1 - - [02/Sep/2021 15:42:36] "[37mPOST /api/register HTTP/1.1[0m" 200 -
+sample
+sample_opt_current fMOST 
+Common.sample_opt_current:fMOST
+get_abs_path: F:\home\ubuntu\mBrainAligner\examples\registered_results\fMOST 
+
+sample_data_path:F:\home\ubuntu\mBrainAligner\examples\registered_results\fMOST 
+
+sample , zip res: [{"send_status": "true"}]
+127.0.0.1 - - [02/Sep/2021 15:42:37] "[37mGET /api/sample_data?sample_opt_current=fMOST HTTP/1.1[0m" 200 -
