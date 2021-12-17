@@ -1,0 +1,4 @@
+This plugin works only for 8-bit data. Thus if 16bit data is used as an input, then need to use Vaa3D to convert to 8bit first.
+
+noted by Hanchuan Peng, 2012-01-13
+
