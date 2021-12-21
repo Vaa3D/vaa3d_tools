@@ -1,0 +1,20 @@
+#command lines tools for script running
+
+cd main_src
+
+qmake main_atlasguided_stranno.pro 
+make
+qmake main_annoresultanalysis.pro
+make -j8
+ 
+# need to also change matlab script for paths
+
+cd main_src
+sh job_1.sh
+
+
+# how to build plugin for V3D
+
+qmake plugin_atlasguided_stranno_partial.pro
+make
+

@@ -7,7 +7,7 @@
 #include <vector>
 #include "combine_file_plugin.h"
 #include "basic_surf_objs.h"
-
+#include <QInputDialog>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
 
@@ -107,7 +107,7 @@ void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             QString fileSaveName = fileOpenName + QString("_type_%1.swc").arg(it->first);
 
             NeuronTree nt_sorted;
-            SortSWC(nt_trees.listNeuron,nt_sorted.listNeuron,VOID,0);
+            SortSWC(nt_trees.listNeuron,nt_sorted.listNeuron,VOID_VALUE,0);
             writeSWC_file(fileSaveName,nt_sorted);
             nt_trees.listNeuron.clear();
             nt_sorted.listNeuron.clear();
