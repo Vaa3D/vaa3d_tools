@@ -10,4 +10,4 @@ SOURCES	+= neuron_color_display_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_color_display)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/neuron_color_display/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/neuron_color_display/

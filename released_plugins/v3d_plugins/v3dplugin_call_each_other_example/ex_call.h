@@ -7,7 +7,7 @@
 #ifndef __EX_CALL_H__
 #define __EX_CALL_H__
 
-#include <QtGui>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <QDoubleSpinBox>

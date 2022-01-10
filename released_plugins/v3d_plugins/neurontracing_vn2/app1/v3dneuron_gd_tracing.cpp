@@ -769,7 +769,7 @@ bool proj_trace_mergeAllClosebyNeuronNodes(V_NeuronSWC_list & tracedNeuron)
 			double scx = subject_swc.row.at(j).x;
 			double scy = subject_swc.row.at(j).y;
 			double scz = subject_swc.row.at(j).z;
-            double scr2 = subject_swc.row.at(j).r*subject_swc.row.at(j).r;
+            double scr_second = subject_swc.row.at(j).r*subject_swc.row.at(j).r;
 //            scr2 *= scr2; //squared radius
 			
 			V3DLONG ind_best_merge_seg=-1, ind_best_merge_node=-1;	double r_best_merge=-1, dist_best; //set as -1 for initialization
@@ -786,7 +786,7 @@ bool proj_trace_mergeAllClosebyNeuronNodes(V_NeuronSWC_list & tracedNeuron)
 				{
 					double tcr2 = target_swc.row.at(i).r; tcr2 *= tcr2; //squared radius
 					
-					double tt = (scr2>tcr2)?scr2:tcr2; 
+                    double tt = (scr_second>tcr2)?scr_second:tcr2;
 					tt=tt; //4; //devide by 2*2=4 so that the transition will be smoother
 					
 					double dtcx = target_swc.row.at(i).x - scx; dtcx *= dtcx;
@@ -801,7 +801,7 @@ bool proj_trace_mergeAllClosebyNeuronNodes(V_NeuronSWC_list & tracedNeuron)
 					if (dtcz>tt || dtcz+dtcy+dtcx>tt)
 						continue;
 					
-					if (tcr2>scr2 && tcr2>r_best_merge)
+                    if (tcr2>scr_second && tcr2>r_best_merge)
 					{
 						ind_best_merge_seg = cur_sid;
 						ind_best_merge_node = i;

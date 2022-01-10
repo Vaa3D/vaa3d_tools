@@ -7,11 +7,10 @@
 #define __GSDT_PLUGIN_H__
 
 #define byte win_byte_override
-#include <Windows.h>
-#include <gdiplus.h>
+
+
 #undef byte
 
-#include <QtGui>
 #include <v3d_interface.h>
 
 class GrayScaleDistanceTransformationPlugin : public QObject, public V3DPluginInterface2_1

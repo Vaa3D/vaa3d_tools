@@ -1,0 +1,11 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+  <file>icons/Pause.png</file>
+  <file>icons/Go.png</file>
+  <file>icons/Back.png</file>
+  <file>icons/Forward.png</file>
+  <file>icons/Start.png</file>
+  <file>icons/Stop.png</file>
+  <file>icons/banner.bmp</file>
+</qresource>
+</RCC>

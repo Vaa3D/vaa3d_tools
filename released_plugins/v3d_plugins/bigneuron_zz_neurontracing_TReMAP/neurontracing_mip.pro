@@ -16,17 +16,17 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/stackutil.cpp
 SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_utilities.cpp
 SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
-#SOURCES += ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
-SOURCES +=  C:\Users\Braintell\Desktop\hackathon\zhi\APP2_large_scale\readrawfile_func.cpp
+SOURCES += ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
+
 win32{
     LIBS         += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
     LIBS	 += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
 }
 
 unix{
-    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
+    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
     LIBS         += -lpthread
-    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+    LIBS	     += -lv3dfftw3f -libv3dfftw3f_threads
 }
 
 TARGET	= $$qtLibraryTarget(neurontracing_mip)

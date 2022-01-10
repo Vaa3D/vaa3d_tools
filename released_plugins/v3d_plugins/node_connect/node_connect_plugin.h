@@ -5,8 +5,8 @@
  
 #ifndef __NODE_CONNECT_PLUGIN_H__
 #define __NODE_CONNECT_PLUGIN_H__
-
-#include <QtGui>
+#define byte win_byte_override
+#undef byte
 #include <v3d_interface.h>
 #include <QLabel>
 #include <QComboBox>

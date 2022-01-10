@@ -10,13 +10,13 @@
 #ifndef __MONTAGE_IMAGE_SECTION_H_
 #define __MONTAGE_IMAGE_SECTION_H_
 
-#include <QtGui>
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "v3d_interface.h"
 #include <QDialog>
-#include <QGridlayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QSpinBox>
 #include <QPushButton>

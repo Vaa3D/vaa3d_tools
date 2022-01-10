@@ -1,0 +1,276 @@
+Version history of Vaa3D-TeraStitcher
+============================================================================================
+
+Below you find a list with the added  features, changes and fixes  for each version. Activi-
+ties names are:
+- New: a new feature implemented
+- Fix: bug fixed
+- Bug: bug to be fixed
+- Dev: for developers only
+- Opt: optimization
+- Rem: a feature no longer available
+
+============================================================================================
+Vaa3D-TeraStitcher version 1.9.41
+September 18th, 2015
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug which caused image regex to be ignored when scanning the folder tree.
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.9.1
+January 20th, 2015
+--------------------------------------------------------------------------------------------
+- New: syncronized with TeraStitcher-standalone v1.9.1.
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.8.0
+December 11th, 2014
+--------------------------------------------------------------------------------------------
+- New: added 8/16 bits selection for "Stitch test" function in the "Import" step.
+- Dev: added static link of winlib/libtiff.lib under Windows in the .pro file.
+- Dev: using Vaa3D for loading image files into Vaa3D.
+- New: syncronized with TeraStitcher-standalone v1.8.0: removed dependency from OpenCV libs
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.7.0
+November 17th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor bug fixes and improvements.
+- New: syncronized with TeraStitcher-standalone v1.7.0.
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.6.10
+October 6th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor bug fixes and improvements.
+- New: syncronized with TeraStitcher-standalone v1.6.10.
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.6.7
+September 22nd, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor bug fixes and improvements.
+- New: syncronized with TeraStitcher-standalone v1.6.7.
+--------------------------------------------------------------------------------------------
+
+Vaa3D-TeraStitcher version 1.6.0
+September 13th, 2014
+--------------------------------------------------------------------------------------------
+- Dev: re-designed cmake build process with interactive plugins/library selection.
+- New: added subdata selection along Z in the displacecement computation step (--displcomp).
+- New: added volume format plugin selection (--volin_plugin and --volout_plugin).
+- New: added IO plugin selection (--imin_plugin and --imout_plugin).
+- New: added IO plugin architecture to easily include at compilation time your own I/O plug-
+       in w/o the need of modifying any portion of code within  TeraStitcher. Just copy your
+	   folder with headers and sources and it will be automatically  discovered and included
+       in the cmake build process.
+- New: added  sparse data support  to deal with  empty and/or incomplete tiles. Depending on
+       the amount of sparseness, both aligning and merging steps are speeded up considerably
+	   up to 2x if 50% of the tiles are empty or incomplete.
+- Fix: minor bug fixes and improvements.
+--------------------------------------------------------------------------------------------
+
+
+Vaa3D-TeraStitcher version 1.502
+June 26th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: show an error if  no stitchable  stacks are found in the selected stacks range in the
+       "Merging step".
+--------------------------------------------------------------------------------------------
+
+
+Version 1.501
+June 26th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor fix in StackStitcher.cpp
+--------------------------------------------------------------------------------------------
+
+
+Version 1.5
+June 25th, 2014
+--------------------------------------------------------------------------------------------
+- New: re-designed "MergeTiles" step graphical interface.
+- New: added support (still experimental) to 3D tiffs (input and output) and Vaa3D raw (out-
+       put only) formats.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.4.1
+June 3rd, 2014
+--------------------------------------------------------------------------------------------
+- Dev: changes to the i/o module
+--------------------------------------------------------------------------------------------
+
+
+
+
+Version 1.4.0
+April 8th, 2014
+--------------------------------------------------------------------------------------------
+- New: added regular expression filter for image filenames in the "Import" step.
+- New: added channel selection in "Test", "Aligning" and "Merging" steps.
+- New: added support for images bigger than 2 GB (both read / write).
+- Fix: fixed bug which might cause exceptions not to be caught correctly  in TeraStitcher if
+       compiled with MSVC.
+- Fix: fixed bug in Vaa3D-TeraStitcher  which caused  the "Portion to be stitched" ranges in
+       the "Merging" step not to be properly updated on user input.
+- Fix: fixed bug in Vaa3D-TeraStitcher which caused the Merging step not to take into account
+       the computed displacements when running in "Basic" mode.
+- Fix: fixed bug which caused Vaa3D-TeraStitcher not to properly determine  the volume range
+       to be stitched in the Merging step.
+- Fix: fixed bug which caused Vaa3D-TeraStitcher to crash when verbosity was set to the max-
+       imum level.
+- Fix: fixed Vaa3D-TeraStitcher compilation issues on MSVC compilers.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.3.2
+April 1st, 2014
+--------------------------------------------------------------------------------------------
+- New: added a more robust check of the input file format. Stacks with uneven number of sli-
+       ces and/or uneven number of  stack rows/columns are now detected  and signaled to the
+	   user.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.3.1
+March 6th, 2014
+--------------------------------------------------------------------------------------------
+- New: added "dump" function to print mdata.bin content
+--------------------------------------------------------------------------------------------
+
+
+Version 1.3
+December 17th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a series of bugs which prevented to import xml directly without performing steps
+       0 and 1.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.2
+September 30th, 2013
+--------------------------------------------------------------------------------------------
+- New: added compilation support for VC 9 + Qt 4.7.2.
+--------------------------------------------------------------------------------------------
+
+Version 1.1.0
+August 22st, 2013
+--------------------------------------------------------------------------------------------
+- New: added automatic completion of the "projout" command line parameter. Whatever the user
+       input (missing prefix, name or extension),  the tool is able to auto-complete it with
+	   default values (volume's path  for missing path, the operation name for missing name,
+	   and "xml" extension for missing extension).
+- Fix: fixed a bug which caused the  "Place tiles"  step to crash when  no stitchable stacks
+       are found.
+- Fix: fixed bug which caused TeraStitcher to crash  when importing volumes with a huge num-
+       ber of tiles (> 10000).
+--------------------------------------------------------------------------------------------
+
+Version 1.0.9
+August 22nd, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed compilation bug on VS 2010.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.8
+August 21st, 2013
+--------------------------------------------------------------------------------------------
+- New: support for 2D stitching added!
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.7
+July 23th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: compilation error on gcc.
+- Fix: static linkage of OpenCV did not work on all compilers.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.6b
+July 20th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: static linkage of OpenCV library is now enabled by default.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.6
+July 8th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which may cause the plugin to crash when an acquisition is merged without
+       computing displacements.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.5
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- Fix: changed error message when overlapping extent is not big enough.
+- Fix: "Close volume" and "Exit" menu actions were not disabled while performing long steps.
+- Fix: fixed bug which caused incorrect reliability measures when  mixing displacements com-
+       puted with different search region sizes.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.4
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- New: new parameters are now stored into XML files while  guaranteeing at the same time the
+       retrocompatibility with the old XML files.
+- Fix: fixed bug which caused  reliability measures  not 100% correct when the search region
+       was bigger than 30 x 30 x 30.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.3
+May 31st, 2013
+--------------------------------------------------------------------------------------------
+- New: added "Step successfully performed!" message when a step is successfully performed.
+- Fix: fixed bug which caused stitched volume not to be opened in Vaa3D in "Basic mode" when
+       a resolution was selected to be opened in Vaa3D with "Open" checkbox.
+- New: added "Advanced options" button in "Aligning" and "Merging" tabs.
+- Fix: fixed bug in the "Projecting" tab which caused XML output path to be  incorrectly up-
+       dated after the step was performed.
+- Fix: "Basic mode" is enabled by default (previously it was "Advanced mode").
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.2
+May 30th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed compilation issue on MacOS X.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.1
+May 29th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which  caused incompatible XML files  (not signaled by any error message)
+       when saving/loading  to/from different  platform/O.S. combinations (i.e. the "locale"
+       problem). This caused real numbers (such as displacements or reliability measures) to
+       be incorretcly read/written.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.0
+May 26th, 2013
+--------------------------------------------------------------------------------------------
+- New: input of reference system and voxel  dimensions when a volume has  to be  imported is
+       now constrained by a limited set of choices available  through a  pull-down  menu for
+       the axes and a spinbox for volume dimension.
+- New: added "Options->Mode->Basic", "Options->Mode->Advanced". In "Basic" mode only 3 steps
+       have to be performed ("Importing", "Aligning", "Merging")  and most of  the  advanced
+       settings are hidden. In this way, stitching  under "Basic"  mode is much simpler than
+       before. 
+- New: added menubar.
+- New: VHD convention changed to XYZ.
+- New: interface has been re-designed to fit into 800x600 window.
+- New: added "What's this?" helpbox.
+--------------------------------------------------------------------------------------------

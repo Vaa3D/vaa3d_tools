@@ -46,4 +46,4 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(NeuronPopulator)
-DESTDIR	= $$VAA3DPATH/bin/plugins/AllenApps/neuron_populator/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/AllenApps/neuron_populator/

@@ -11,10 +11,6 @@
 
 #define byte win_byte_override
 
-#include <Windows.h>
-
-
-#include <gdiplus.h>
 
 #undef byte
 

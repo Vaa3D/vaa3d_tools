@@ -28,7 +28,7 @@ LIBS         += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
 unix{
 LIBS         += -lpthread
 LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
-LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
+LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
 }
 
 TARGET	= $$qtLibraryTarget(cropped3DImageSeries)

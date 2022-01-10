@@ -33,4 +33,4 @@ SOURCES	+= io_affine_transform.cpp
 
 
 TARGET	= $$qtLibraryTarget(affine_transform_swc)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/affine_transform_swc/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_utilities/affine_transform_swc/

@@ -2,11 +2,10 @@
 #define __COMMON_DIALOG_H__
 
 #define byte win_byte_override
-#include <Windows.h>
-#include <gdiplus.h>
+
 #undef byte
 
-#include <QtGui>
+
 
 #include <iostream>
 #include <map>

@@ -17,4 +17,4 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_radius)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/neuron_radius/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/neuron_radius/

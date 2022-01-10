@@ -15,8 +15,9 @@ SOURCES	+= N3DFix_plugin.cpp \
     Struct_from_swc.cpp \
     myFuncs.cpp \
     Load_and_Write_DATA.cpp \
-    openSWCDialog.cpp \
-    C:/Users/Braintell/Desktop/v3d_external-Qt6_Win10/v3d_main/basic_c_fun/basic_surf_objs.cpp
+    openSWCDialog.cpp
+
+SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(N3DFix)

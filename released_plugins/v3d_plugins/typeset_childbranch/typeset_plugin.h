@@ -3,15 +3,15 @@
  * 2014-06-26 : by Surobhi Ganguly
  */
 #define byte win_byte_override
-#include <Windows.h>
-#include <gdiplus.h>
+
+
 #undef byte
 
 #ifndef __TYPESET_PLUGIN_H__
 #define __TYPESET_PLUGIN_H__
 
 
-#include <QtGui>
+
 #include <v3d_interface.h>
 #include <QComboBox>
 #include <QGridLayout>

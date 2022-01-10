@@ -10,7 +10,7 @@ SOURCES       = movieZCswitch.cpp
 SOURCES       += $$V3DMAINPATH//basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(movieZCswitch)
-DESTDIR       = $$V3DMAINPATH/bin/plugins/data_type/5D_Stack_Converter
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/data_type/5D_Stack_Converter
 
 
 

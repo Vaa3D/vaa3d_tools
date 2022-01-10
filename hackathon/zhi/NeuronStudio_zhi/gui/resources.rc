@@ -1,0 +1,1851 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+OPENGL_WINDOW_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "View"
+    BEGIN
+        MENUITEM "Lighting",                    IDM_GL_VIEW_LIGHTING
+        MENUITEM "Anti-Aliasing",               IDM_GL_VIEW_ANTIALIASING
+        MENUITEM "Solid Background",            IDM_GL_VIEW_SOLID_BACKGROUND
+        MENUITEM "Axes",                        IDM_GL_VIEW_AXIS
+        MENUITEM "Grid",                        IDM_GL_VIEW_GRID
+        POPUP "Shape Complexity"
+        BEGIN
+            MENUITEM "Lowest",                      IDM_GL_VIEW_POLYGONS_COMPLEXITY_LOWEST
+
+            MENUITEM "Low",                         IDM_GL_VIEW_POLYGONS_COMPLEXITY_LOW
+
+            MENUITEM "Medium",                      IDM_GL_VIEW_POLYGONS_COMPLEXITY_MEDIUM
+
+            MENUITEM "High",                        IDM_GL_VIEW_POLYGONS_COMPLEXITY_HIGH
+
+            MENUITEM "Highest",                     IDM_GL_VIEW_POLYGONS_COMPLEXITY_HIGHEST
+
+        END
+        POPUP "Bounding Box"
+        BEGIN
+            MENUITEM "Image",                       IDM_GL_VIEW_BOUNDING_CUBE
+
+            MENUITEM "R.O.I.",                      IDM_GL_ROI_BOUNDING_BOX
+        END
+        POPUP "Center On"
+        BEGIN
+            MENUITEM "Image",                       IDM_GL_VIEW_CENTER_ON_IMAGE
+
+            MENUITEM "R.O.I.",                      IDM_GL_VIEW_CENTER_ON_ROI
+
+            MENUITEM "Seed",                        IDM_GL_VIEW_CENTER_ON_SEED
+
+        END
+        POPUP "Octree"
+        BEGIN
+            MENUITEM "Empty Nodes",                 IDM_GL_VIEW_OCTREE_EMPTY_LEAFS
+
+            MENUITEM "Non-Empty Nodes",             IDM_GL_VIEW_OCTREE_NON_EMPTY_LEAFS
+
+            MENUITEM "All Nodes",                   IDM_GL_VIEW_OCTREE_ALL_LEAFS
+
+            MENUITEM "Off",                         IDM_GL_VIEW_OCTREE_OFF
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Reset XY (Axial)",            IDM_GL_VIEW_RESET
+        MENUITEM "Reset ZY (Side)",             IDM_GL_VIEW_RESET_SIDE
+        MENUITEM "Reset XZ (Side)",             IDM_GL_VIEW_RESET_BOTTOM
+        MENUITEM SEPARATOR
+        POPUP "Mode"
+        BEGIN
+            MENUITEM "Track   T",                   IDM_GL_MODE_TRANSLATE
+            MENUITEM "Seed   E",                    IDM_GL_MODE_SEED
+            MENUITEM "Measure   M",                 IDM_GL_MODE_RAYS
+            MENUITEM "Spine   I",                   IDM_GL_MODE_SPINE
+            MENUITEM "Neurite   U",                 IDM_GL_MODE_NEURITE
+            MENUITEM "R.O.I.   R",                  IDM_GL_MODE_ROI
+        END
+    END
+    POPUP "Volume Rendering"
+    BEGIN
+        MENUITEM "Threshold...",                IDM_GL_SPLATS_THRESHOLD
+        MENUITEM "Opacity...",                  IDM_GL_SPLATS_OPACITY
+        MENUITEM SEPARATOR
+        MENUITEM "Show",                        IDM_GL_VIEW_SPLATS
+        MENUITEM SEPARATOR
+        MENUITEM "Use Palette",                 IDM_GL_VIEW_PALETTE
+        MENUITEM "Surface Only",                IDM_GL_SPLATS_SURFACE_ONLY
+        MENUITEM "Use Point Pre-Rendering",     IDM_GL_SPLATS_OPTIMIZE_FOR_MOVEMENT
+
+        MENUITEM SEPARATOR
+        MENUITEM "Regenerate",                  IDM_GL_SPLATS_REGENERATE
+    END
+END
+
+MAIN_WINDOW_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "Open...   Ctrl+O",            IDM_FILE_OPEN
+        MENUITEM "Close",                       IDM_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "Save Neurites   Ctrl+S",      IDM_FILE_SAVE_TREE
+        MENUITEM "Save Neurites As...",         IDM_FILE_SAVE_NEURITES_AS
+        MENUITEM "Save Spines...",              IDM_FILE_SPINE_STATS
+        MENUITEM "Save Labeling...",            IDM_FILE_BRANCH_STATS
+        MENUITEM "Save Measurements...",        IDM_FILE_SAVE_SAMPLES
+        MENUITEM SEPARATOR
+        MENUITEM "Save Image...",               IDM_FILE_SAVE_IMAGE
+        MENUITEM "Save Projections...",         IDM_FILE_SAVE_PROJECTIONS
+        MENUITEM SEPARATOR
+        MENUITEM "Import SWC...",               IDM_FILE_IMPORT_SWC
+        MENUITEM "Import Spines...",            IDM_FILE_IMPORT_SPINES
+        MENUITEM SEPARATOR
+        MENUITEM "Image Info...",               IDM_FILE_IMAGE_INFO
+        MENUITEM "Model Info...",               IDM_FILE_MODEL_INFO
+    END
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Delete Neurites   X+N",       IDM_RUN_CLEAR_NEURITES
+        MENUITEM "Delete Spines   X+S",         IDM_RUN_CLEAR_SPINES
+        MENUITEM "Delete Measurements   X+M",   IDM_RUN_CLEAR_SAMPLES
+        MENUITEM "Delete All   X+A",            IDM_CLEAR_ALL
+        MENUITEM "Delete Selected   Delete",    IDM_EDIT_DELETE_SELECTED
+        MENUITEM SEPARATOR
+        MENUITEM "Join / Unjoin 2-Selected   J", IDM_EDIT_JOIN_SELECTED
+        MENUITEM "Set 1-Selected as Origin",    IDM_EDIT_SET_SELECTED_AS_ORIGIN
+
+        MENUITEM SEPARATOR
+        MENUITEM "Select All Connected",        IDM_EDIT_SELECT_COMPONENT
+        MENUITEM "Select Sub-Trees",            IDM_EDIT_SELECT_SUB_TREE
+        POPUP "Select by Type / Function"
+        BEGIN
+            MENUITEM "Origin Vertices",             IDM_SELECT_ORIGIN_VERTICES
+
+            MENUITEM "External Vertices",           IDM_SELECT_EXTERNAL_VERTICES
+
+            MENUITEM "Line Vertices",               IDM_SELECT_LINE_VERTICES
+            MENUITEM "Junction Vertices",           IDM_SELECT_JUNCTION_VERTICES
+
+            MENUITEM SEPARATOR
+            MENUITEM "Soma Vertices",               IDM_SELECT_SOMA_VERTICES
+            MENUITEM "Basal Dendrite Vertices",     IDM_SELECT_BASAL_DENDRITE_VERTICES
+
+            MENUITEM "Apical Dendrite Vertices",    IDM_SELECT_APICAL_DENDRITE_VERTICES
+
+            MENUITEM "Axon Vertices",               IDM_SELECT_AXON_VERTICES
+            MENUITEM "Unknown Vertices",            IDM_SELECT_UNKNOWN_VERTICES
+
+            MENUITEM SEPARATOR
+            MENUITEM "Stubby Spines",               IDM_SELECT_SPINES_STUBBY
+            MENUITEM "Thin Spines",                 IDM_SELECT_SPINES_THIN
+            MENUITEM "Mushroom Spines",             IDM_SELECT_SPINES_MUSHROOM
+
+            MENUITEM "Other Spines",                IDM_SELECT_SPINES_OTHER
+        END
+        MENUITEM "Select Spine Stems",          IDM_RUN_SELECT_SPINE_BASES
+        MENUITEM "Select Spines on Selected Neurites", 
+                                                IDM_RUN_SELECT_SPINES_ON_SELECTED_NEURITES
+
+        MENUITEM "Select Spines with Invalid S.A.", 
+                                                IDM_EDIT_SELECT_SPINES_WITH_INVALID_SA
+
+        MENUITEM "Create Neurite Selection Paths", 
+                                                IDM_EDIT_CREATE_SELECTION_PATHS
+
+        MENUITEM SEPARATOR
+        MENUITEM "Set Order of Selected Neurites...", 
+                                                IDM_EDIT_SET_ORDER_OF_SELECTED_NEURITES
+
+        MENUITEM "Add Selected Spines to Classifier", 
+                                                IDM_EDIT_ADD_SELECTED_SPINES_TO_CLASSIFIER
+
+        MENUITEM "Transpose Children of Selected Vertices", 
+                                                IDM_EDIT_TRANSPOSE_EDGES
+        MENUITEM SEPARATOR
+        MENUITEM "Hide Selected",               IDM_EDIT_HIDE_SELECTED
+        MENUITEM "Unhide All",                  IDM_EDIT_UNHIDE_ALL
+        MENUITEM SEPARATOR
+        MENUITEM "Select All   Ctrl+A",         IDM_EDIT_SELECT_ALL
+        MENUITEM "Deselect All   Esc",          IDM_EDIT_DESELECT_ALL
+        MENUITEM SEPARATOR
+        MENUITEM "Convert Measurements   C",    IDM_EDIT_CONVERT_MEASUREMENTS
+
+        MENUITEM SEPARATOR
+        POPUP "Mode"
+        BEGIN
+            MENUITEM "Zoom   Z",                    IDM_FILE_MODE_ZOOM
+            MENUITEM "Track   T",                   IDM_FILE_MODE_TRANSLATE
+            MENUITEM "Seed   E",                    IDM_MODE_SEED
+            MENUITEM "Measure   M",                 IDM_MODE_RAYS
+            MENUITEM "Spine   I",                   IDM_MODE_SPINE
+            MENUITEM "Neurite   U",                 IDM_MODE_NEURITE
+            MENUITEM "R.O.I.   R",                  IDM_MODE_ROI
+            MENUITEM "Magnet   G",                  IDM_MODE_MAGNET
+        END
+    END
+    POPUP "Run"
+    BEGIN
+        MENUITEM "Settings...",                 IDM_RUN_SETTINGS
+        MENUITEM "Spine Classifier...",         IDM_RUN_ADVANCED_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "Build Neurites   N",          IDM_RUN_BUILD_TREE
+        MENUITEM "Build Spines   S",            IDM_RUN_SPINE_ANALYSIS
+        MENUITEM "Recompute Spine Attachments", IDM_RUN_RECOMPUTE_SPINE_ATTACHMENTS
+
+        MENUITEM "Recompute Manual Spines",     IDM_RUN_RECOMPUTE_MANUAL_SPINES
+
+        MENUITEM SEPARATOR
+        MENUITEM "Visualize R.O.I.   F9",       IDM_RUN_ACCEPT_ROI
+        MENUITEM SEPARATOR
+        POPUP "Image Filter"
+        BEGIN
+            MENUITEM "Subsample...",                IDM_RUN_FILTER_SUBSAMPLE
+            MENUITEM SEPARATOR
+            MENUITEM "Blur - MP",                   IDM_RUN_FILTER_BLUR_MP
+            MENUITEM "Blur More - MP   F8",         IDM_RUN_FILTER_BLUR_MORE_MP
+
+            MENUITEM "Median Blur - MP",            IDM_RUN_FILTER_MEDIAN_MP
+            MENUITEM "Invert - MP",                 IDM_RUN_FILTER_INVERT_MP
+            MENUITEM "Z-Blur - MP",                 IDM_RUN_FILTER_Z_BLUR_MP
+            MENUITEM SEPARATOR
+            MENUITEM "Blur",                        IDM_RUN_FILTER_BLUR
+            MENUITEM "Blur More",                   IDM_RUN_FILTER_BLUR_MORE
+            MENUITEM "Dynamic Range...",            IDM_RUN_FILTER_DYNAMIC_RANGE
+
+            MENUITEM "Brightness/Contrast...",      IDM_RUN_FILTER_BRIGHTNESS_CONTRAST
+
+            MENUITEM "Gamma Correction...",         IDM_RUN_FILTER_GAMMA_CORRECTION
+
+            MENUITEM "Noise...",                    IDM_RUN_FILTER_NOISE
+            MENUITEM SEPARATOR
+            MENUITEM "Flip Vertical",               IDM_RUN_FILTER_FLIP_VERTICAL
+
+            MENUITEM "Flip Horizontal",             IDM_RUN_FILTER_FLIP_HORIZONTAL
+
+            MENUITEM "Flip Optical Axis",           IDM_RUN_FILTER_FLIP_OPTICAL_AXIS
+
+            MENUITEM "Resize...",                   IDM_RUN_FILTER_RESIZE
+        END
+        MENUITEM SEPARATOR
+        POPUP "Projections"
+        BEGIN
+            MENUITEM "Regenerate   F5",             IDM_RUN_PROJECTION
+            MENUITEM SEPARATOR
+            MENUITEM "Maximum",                     IDM_VIEW_PROJECTION_MAX
+            MENUITEM "Minimum",                     IDM_VIEW_PROJECTION_MIN
+            MENUITEM "Sum",                         IDM_VIEW_PROJECTION_SUM
+        END
+        MENUITEM SEPARATOR
+        POPUP "Edge Labeling"
+        BEGIN
+            MENUITEM "No Order",                    IDM_EDGE_NO_ORDER
+            MENUITEM "Centrifugal Order",           IDM_EDGE_CENTRIFUGAL_ORDER
+
+            MENUITEM "Centripetal Order",           IDM_EDGE_CENTRIPETAL_ORDER
+
+            MENUITEM SEPARATOR
+            MENUITEM "No Sections",                 IDM_EDGE_NO_SECTIONS
+            MENUITEM "Depth-First Sections (Spines)", 
+                                                    IDM_EDGE_DEPTH_FIRST_SECTIONS
+
+            MENUITEM "Breadth-First Sections",      IDM_EDGE_BREADTH_FIRST_SECTIONS
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Sholl Analysis",              IDM_RUN_SHOLL_ANALYSIS
+        MENUITEM SEPARATOR
+        POPUP "Number of CPU's"
+        BEGIN
+            MENUITEM "1",                           IDM_RUN_NUM_CPU_1
+            MENUITEM "2",                           IDM_RUN_NUM_CPU_2
+            MENUITEM "4",                           IDM_RUN_NUM_CPU_4
+            MENUITEM "8",                           IDM_RUN_NUM_CPU_8
+        END
+    END
+    POPUP "View"
+    BEGIN
+        MENUITEM "Image",                       IDM_VIEW_IMAGE
+        POPUP "Palette"
+        BEGIN
+            MENUITEM "&Standard",                   IDM_VIEW_PALETTE_STANDARD
+
+            MENUITEM "&Inverse",                    IDM_VIEW_PALETTE_INVERSE
+            MENUITEM "Gamma Correction (1.7)",      IDM_VIEW_PALETTE_GAMMA_CORRECTION_1_7
+
+            MENUITEM "Gamma Correction (2.2)",      IDM_VIEW_PALETTE_GAMMA_CORRECTION_2_2
+
+            MENUITEM "Topographic",                 IDM_VIEW_PALETTE_TOPOGRAPHIC
+
+            MENUITEM "Intensity Mask",              IDM_VIEW_PALETTE_INTENSITY_MASK
+
+            MENUITEM "Red",                         IDM_VIEW_PALETTE_RED
+            MENUITEM "Green",                       IDM_VIEW_PALETTE_GREEN
+            MENUITEM "Blue",                        IDM_VIEW_PALETTE_BLUE
+            MENUITEM "Yellow",                      IDM_VIEW_PALETTE_YELLOW
+        END
+        POPUP "Line / Point Size"
+        BEGIN
+            MENUITEM "1 px",                        IDM_VIEW_PEN_THICKNESS_1
+            MENUITEM "2 px",                        IDM_VIEW_PEN_THICKNESS_2
+            MENUITEM "3 px",                        IDM_VIEW_PEN_THICKNESS_3
+            MENUITEM "4 px",                        IDM_VIEW_PEN_THICKNESS_4
+            MENUITEM "5 px",                        IDM_VIEW_PEN_THICKNESS_5
+            MENUITEM "6 px",                        IDM_VIEW_PEN_THICKNESS_6
+            MENUITEM "7 px",                        IDM_VIEW_PEN_THICKNESS_7
+            MENUITEM "8 px",                        IDM_VIEW_PEN_THICKNESS_8
+        END
+        MENUITEM "Colors...",                   IDM_VIEW_COLORS
+        MENUITEM SEPARATOR
+        MENUITEM "3D Viewer...",                IDM_VIEW_3D_MODEL
+        MENUITEM "XY Slice Viewer",             IDM_VIEW_XY_SLICE_VIEWER
+        MENUITEM SEPARATOR
+        MENUITEM "XY Projection (Axial)",       IDM_VIEW_FORWARD
+        MENUITEM "ZY Projection (Side)",        IDM_VIEW_SIDE
+        MENUITEM "XZ Projection (Side)",        IDM_VIEW_TOP
+        MENUITEM SEPARATOR
+        MENUITEM "Fit Image   F",               IDM_VIEW_FIT_IMAGES
+        MENUITEM "Actual Pixels   A",           IDM_VIEW_ACTUAL_PIXELS
+        MENUITEM SEPARATOR
+        MENUITEM "Center && Limit Image",       IDM_VIEW_CENTER_AND_LIMIT_IMAGE
+
+        MENUITEM SEPARATOR
+        MENUITEM "Seed Always Visible",         IDM_VIEW_SEED_ALWAYS_VISIBLE
+        MENUITEM "R.O.I. Always Visible",       IDM_VIEW_ROI_ALWAYS_VISIBLE
+        MENUITEM "Spine Axes",                  IDM_VIEW_SPINE_VECTORS
+        MENUITEM "Spine Attachments",           IDM_VIEW_SPINE_ATTACHMENTS
+        MENUITEM "Spine ID's (2D Only)",        IDM_VIEW_SPINE_IDS
+        MENUITEM "Edge Order Numbers (2D Only)", IDM_VIEW_EDGE_ORDER_NUMBERS
+        MENUITEM "Edge Section Numbers (2D Only)", 
+                                                IDM_VIEW_EDGE_SECTION_NUMBERS
+
+        MENUITEM "Sholl Spheres (2D Only)",     IDM_VIEW_SHOLL_ANALYSIS
+        MENUITEM "Projection Axes",             IDM_VIEW_PROJECTION_AXES
+        MENUITEM SEPARATOR
+        MENUITEM "Flash Model   F4",            IDM_VIEW_FLASH_IMAGE
+        MENUITEM "Flash Hidden   F3",           IDM_VIEW_FLASH_HIDDEN
+    END
+    POPUP "Render"
+    BEGIN
+        POPUP "Neurite Vertex Shape"
+        BEGIN
+            MENUITEM "Solid Ellipse",               IDM_RENDER_MODE_VERTEX_SOLID_ELLIPSES
+
+            MENUITEM "Hollow Ellipse",              IDM_RENDER_MODE_VERTEX_HOLLOW_ELLIPSES
+
+            MENUITEM "Point",                       IDM_RENDER_MODE_VERTEX_POINTS
+
+            MENUITEM "Off",                         IDM_RENDER_MODE_VERTEX_OFF
+
+        END
+        POPUP "Neurite Vertex Color"
+        BEGIN
+            MENUITEM "Single Color",                IDM_COLOR_SCHEME_VERTEX_SINGLE_COLOR
+
+            MENUITEM "By Type",                     IDM_COLOR_SCHEME_VERTEX_BY_TYPE
+
+            MENUITEM "By Function",                 IDM_COLOR_SCHEME_VERTEX_BY_FUNCTION
+
+            MENUITEM "By Component",                IDM_COLOR_SCHEME_VERTEX_BY_COMPONENT
+
+            MENUITEM "By Order",                    IDM_COLOR_SCHEME_VERTEX_BY_ORDER
+
+            MENUITEM "By Section",                  IDM_COLOR_SCHEME_VERTEX_BY_SECTION
+
+            MENUITEM "By File Number",              IDM_COLOR_SCHEME_VERTEX_BY_FILE_NUMBER
+
+            MENUITEM "Is Manually Edited",          IDM_COLOR_SCHEME_VERTEX_IS_MANUALLY_TRACED
+
+        END
+        MENUITEM SEPARATOR
+        POPUP "Neurite Edge Shape"
+        BEGIN
+            MENUITEM "Line",                        IDM_RENDER_MODE_EDGE_LINES
+
+            MENUITEM "Solid Frustum",               IDM_RENDER_MODE_EDGE_SOLID_FRUSTUMS
+
+            MENUITEM "Hollow Frustum",              IDM_RENDER_MODE_EDGE_HOLLOW_FRUSTUMS
+
+            MENUITEM "Off",                         IDM_RENDER_MODE_EDGE_OFF
+        END
+        POPUP "Neurite Edge Color"
+        BEGIN
+            MENUITEM "Single Color",                IDM_COLOR_SCHEME_EDGE_SINGLE_COLOR
+
+            MENUITEM "By Function",                 IDM_COLOR_SCHEME_EDGE_BY_FUNCTION
+
+            MENUITEM "By Component",                IDM_COLOR_SCHEME_EDGE_BY_CONN_COMP
+
+            MENUITEM "By Order",                    IDM_COLOR_SCHEME_EDGE_BY_ORDER
+
+            MENUITEM "By Section",                  IDM_COLOR_SCHEME_EDGE_BY_SECTION
+
+        END
+        MENUITEM SEPARATOR
+        POPUP "Spine Shape"
+        BEGIN
+            MENUITEM "Solid Ellipse",               IDM_VIEW_SPINE_MODE_SOLID_ELLIPSES
+
+            MENUITEM "Hollow Ellipse",              IDM_VIEW_SPINE_MODE_HOLLOW_ELLIPSES
+
+            MENUITEM "Solid Ellipse (Head Diam.)",  IDM_VIEW_SPINE_MODE_SOLID_ELLIPSE_HEAD_DIAM
+
+            MENUITEM "Hollow Ellipse (Head Diam.)", IDM_VIEW_SPINE_MODE_HOLLOW_ELLIPSE_HEAD_DIAM
+
+            MENUITEM "Solid Surface (3D Only)",     IDM_VIEW_SPINE_MODE_SOLID_SURFACE
+
+            MENUITEM "Hollow Surface (3D Only)",    IDM_VIEW_SPINE_MODE_HOLLOW_SURFACE
+
+            MENUITEM "Voxels",                      IDM_VIEW_SPINE_MODE_POINTS
+
+            MENUITEM "Off",                         IDM_VIEW_SPINE_MODE_OFF
+        END
+        POPUP "Spine Color"
+        BEGIN
+            MENUITEM "Single Color",                IDM_RENDER_SPINE_COLOR_SINGLE
+
+            MENUITEM "By Type",                     IDM_RENDER_SPINE_COLOR_BY_TYPE
+
+            MENUITEM "Random",                      IDM_RENDER_SPINE_COLOR_RANDOM
+
+            MENUITEM "Is Manual",                   IDM_RENDER_SPINE_COLOR_IS_MANUAL
+
+            MENUITEM "By Angle",                    IDM_RENDER_SPINE_COLOR_BY_ANGLE
+
+        END
+        MENUITEM SEPARATOR
+        POPUP "Model Shape (Neurite, Edge, Spine)"
+        BEGIN
+            MENUITEM "Solid Ellipse, Line, Solid Ellipse", 
+                                                    IDM_RENDER_MODEL_STANDARD
+
+            MENUITEM "Off, Off, Off",               IDM_RENDER_MODEL_OFF
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Flicker Free (Slower)",       IDM_RENDER_FLICKER_FREE
+    END
+    POPUP "Help"
+    BEGIN
+        MENUITEM "Contents...   F1",            IDM_HELP_CONTENTS
+        MENUITEM "About...",                    IDM_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+ICON_MKDIR              ICON    DISCARDABLE     "display\\icon_mkd.ico"
+ICON_PARENTCD           ICON    DISCARDABLE     "display\\icon_par.ico"
+APP_ICON                ICON    DISCARDABLE     "display\\icon1.ico"
+ICON_TARGET             ICON    DISCARDABLE     "display\\ico00001.ico"
+ICON_CORNER             ICON    DISCARDABLE     "display\\ico00002.ico"
+ICON_RIGHT_ARROW        ICON    DISCARDABLE     "display\\icon2.ico"
+ICON_DOWN_ARROW         ICON    DISCARDABLE     "display\\ico00003.ico"
+ICON_LARGE_RIGHT_ARROW  ICON    DISCARDABLE     "display\\icon_rig.ico"
+ICON_BIG_RIGHT_ARROW    ICON    DISCARDABLE     "display\\ico00004.ico"
+ICON_BIG_DOWN_ARROW     ICON    DISCARDABLE     "display\\icon_dow.ico"
+LOCK_ICON               ICON    DISCARDABLE     "display\\icon_lock.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+DRAG_TOOL_CURSOR        CURSOR  DISCARDABLE     "display\\cur00001.cur"
+ZOOM_IN_TOOL_CURSOR     CURSOR  DISCARDABLE     "display\\cur00002.cur"
+ZOOM_OUT_TOOL_CURSOR    CURSOR  DISCARDABLE     "display\\zoom_in_.cur"
+CUR_FORWARD             CURSOR  DISCARDABLE     "display\\cursor1.cur"
+CUR_SIDE                CURSOR  DISCARDABLE     "display\\cur_forw.cur"
+CUR_TOP                 CURSOR  DISCARDABLE     "display\\cur00004.cur"
+SEED_TOOL_CURSOR        CURSOR  DISCARDABLE     "display\\cur00003.cur"
+RAY_TOOL_CURSOR         CURSOR  DISCARDABLE     "display\\cur00005.cur"
+SPINE_TOOL_CURSOR       CURSOR  DISCARDABLE     "display\\spine_to.cur"
+NEURITE_TOOL_CURSOR     CURSOR  DISCARDABLE     "display\\cur00007.cur"
+ROI_TOOL_CURSOR         CURSOR  DISCARDABLE     "display\\cursor2.cur"
+MAGNET_TOOL_CURSOR_OLD  CURSOR  DISCARDABLE     "display\\cur00006.cur"
+MAGNET_TOOL_CURSOR      CURSOR  DISCARDABLE     "display\\magnet_t.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    "PROGRESS_DIALOG", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 141
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 8
+    END
+
+    "ABOUT_DIALOG", DIALOG
+    BEGIN
+        RIGHTMARGIN, 267
+        BOTTOMMARGIN, 213
+    END
+
+    "DLG_COLORS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 434
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 207
+    END
+
+    "SWC_DIALOG", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 253
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 279
+    END
+
+    "BUILD_TREE_DIALOG", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 168
+    END
+
+    "DLG_DIR_SEARCH", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 237
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    "DLG_INTEGRATION", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 163
+    END
+
+    "SETTINGS_VOLUME", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 219
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+
+    "SETTINGS_NEURITES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 188
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 68
+    END
+
+    "SETTINGS_DEFAULTS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 108
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 11
+    END
+
+    "IMAGE_INFO_DIMENSIONS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 149
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 43
+    END
+
+    "IMAGE_INFO_PIXELS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 128
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 59
+    END
+
+    "IMAGE_INFO_SIZES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 181
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 59
+    END
+
+    "IMAGE_INFO_INTENSITY", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 111
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 5
+    END
+
+    "MODEL_INFO", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 168
+    END
+
+    "MODEL_INFO_VERTICES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 195
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 101
+    END
+
+    "MODEL_INFO_EDGES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 79
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 6
+    END
+
+    "MODEL_INFO_SPINES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 117
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 77
+    END
+
+    "MODEL_INFO_VERTEX_LIST_", DIALOG
+    BEGIN
+        RIGHTMARGIN, 225
+    END
+
+    "MODEL_INFO_SPINE_LIST", DIALOG
+    BEGIN
+        RIGHTMARGIN, 199
+        BOTTOMMARGIN, 100
+    END
+
+    "DLG_RAW_OPTIONS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 238
+    END
+
+    "MODEL_INFO_EDGE_LIST", DIALOG
+    BEGIN
+        RIGHTMARGIN, 199
+        BOTTOMMARGIN, 100
+    END
+
+    "SAVE_PROJECTIONS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 131
+    END
+
+    "SAVE_ALL", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 120
+    END
+
+    "SETTINGS_THRESHOLD", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 187
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 116
+    END
+
+    "IMAGE_INFO", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 168
+    END
+
+    "MODEL_INFO_TREES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 117
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 95
+    END
+
+    "MODEL_INFO_TREE_LIST", DIALOG
+    BEGIN
+        RIGHTMARGIN, 225
+    END
+
+    "IMAGE_INFO_ROI", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 218
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 82
+    END
+
+    "SETTINGS_SPINES", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 201
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 91
+    END
+
+    "ADVANCED_SETTINGS", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 216
+    END
+
+    "SET_ORDER", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 125
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    "MODEL_INFO_ALL", DIALOG
+    BEGIN
+        RIGHTMARGIN, 199
+        BOTTOMMARGIN, 100
+    END
+
+    "SPLATS_THRESHOLD", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    "NEW_SPINE_CLASSIFIER", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 200
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 106
+    END
+
+    "SPINE_CLASSIFIER", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 168
+    END
+
+    "SPINE_CLASSIFIER_DEFAULT", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 113
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 94
+    END
+
+    "SPINE_CLASSIFIER_ANN", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 161
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 112
+    END
+
+    "SPINE_CLASSIFIER_EDITOR", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 240
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 146
+    END
+
+    "MODEL_INFO_SPINES_ANN", DIALOG
+    BEGIN
+        RIGHTMARGIN, 199
+        BOTTOMMARGIN, 100
+    END
+
+    "SPLATS_OPACITY", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 74
+    END
+
+    "SUBSAMPLE", DIALOG
+    BEGIN
+        BOTTOMMARGIN, 163
+    END
+
+    "BRIGHTNESS_CONTRAST", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 160
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 97
+    END
+
+    "DYNAMIC_RANGE", DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 160
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 97
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+PROGRESS_DIALOG DIALOG DISCARDABLE  0, 0, 148, 15
+STYLE WS_POPUP | WS_BORDER
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,112,2,33,11,NOT WS_TABSTOP
+    CONTROL         "",IDS_PROGRESS_BAR,"Static",SS_OWNERDRAW | SS_SUNKEN | 
+                    WS_GROUP,2,2,107,11
+END
+
+ABOUT_DIALOG DIALOGEX 75, 50, 268, 214
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About NeuronStudio"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "NeuronStudio©",IDC_STATIC,77,3,52,8
+    LTEXT           "Susan L. Wearne  -  Principal Investigator",IDC_STATIC,
+                    77,39,144,10
+    EDITTEXT        IDE_LICENSE,77,99,184,74,ES_MULTILINE | NOT WS_BORDER | 
+                    NOT WS_TABSTOP,WS_EX_STATICEDGE
+    LTEXT           "Alfredo Rodriguez  -  Sr. Software Engineer",IDC_STATIC,
+                    77,61,144,10
+    LTEXT           "Douglas Ehlenberger  -  Software Engineer",IDC_STATIC,
+                    77,72,160,10
+    CONTROL         "NSLOGO_SMALL",IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,
+                    3,4,20,20
+    LTEXT           "Computational Neurobiology and Imaging Center",
+                    IDC_STATIC,77,13,155,8
+    LTEXT           "Mount Sinai School of Medicine, New York, NY",
+                    IDC_STATIC,77,23,154,8
+    LTEXT           "",IDS_ABOUT_DATE,183,3,64,8
+    LTEXT           "Patrick R. Hof  -  Co-Investigator",IDC_STATIC,77,50,
+                    123,10
+    LTEXT           "Supported by NIH grants MH071818, MH58911, and DC05669",
+                    IDC_STATIC,33,198,200,10
+    LTEXT           "",IDS_ABOUT_VERSION,131,3,50,8
+    LTEXT           "License:",IDC_STATIC,77,88,29,8
+    LTEXT           "",IDS_LICENSE_NUM_DAYS,109,88,124,8
+    LTEXT           "Executable:",IDC_STATIC,77,181,38,8
+    EDITTEXT        IDE_ABOUT_PATH,119,180,142,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+END
+
+DLG_COLORS DIALOG DISCARDABLE  0, 0, 441, 214
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Colors"
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_COLOR_ELEMENTS,24,21,88,116,CBS_DROPDOWN | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDS_COLORS_COLORBOX,"Static",SS_OWNERDRAW | SS_SUNKEN | 
+                    WS_GROUP,140,21,50,45
+    PUSHBUTTON      "OK",IDOK,7,190,42,14
+    PUSHBUTTON      "Cancel",IDCANCEL,56,190,42,14
+    DEFPUSHBUTTON   "Apply",IDB_APPLY_COLORS,105,190,42,14
+    LTEXT           "Element:",IDC_STATIC,24,6,29,8
+    LTEXT           "Color:",IDC_STATIC,140,6,29,8
+    CONTROL         "",IDS_COLORS_RED_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,82,175,10
+    CONTROL         "",IDS_COLORS_GREEN_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,98,175,10
+    CONTROL         "",IDS_COLORS_BLUE_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,114,175,10
+    LTEXT           "Red:",IDC_STATIC,12,83,16,8
+    LTEXT           "Green:",IDC_STATIC,6,98,22,8
+    LTEXT           "Blue:",IDC_STATIC,11,114,15,8
+    CONTROL         "",IDS_COLORS_HUE_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,137,175,10
+    CONTROL         "",IDS_COLORS_SATURATION_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,153,175,10
+    CONTROL         "",IDS_COLORS_VALUE_CHANNEL,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN | WS_GROUP,33,169,175,10
+    LTEXT           "Hue:",IDC_STATIC,12,137,15,8
+    LTEXT           "Sat.:",IDC_STATIC,12,153,15,8
+    LTEXT           "Value:",IDC_STATIC,6,169,20,8
+    EDITTEXT        IDE_COLORS_RED_CHANNEL,215,81,17,11,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_RED_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,81,
+                    10,11
+    EDITTEXT        IDE_COLORS_GREEN_CHANNEL,215,97,17,11,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_GREEN_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,97,
+                    11,11
+    EDITTEXT        IDE_COLORS_BLUE_CHANNEL,215,113,17,11,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_BLUE_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,
+                    113,11,11
+    EDITTEXT        IDE_COLORS_HUE_CHANNEL,215,136,17,11,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_HUE_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,
+                    136,11,11
+    EDITTEXT        IDE_COLORS_SATURATION_CHANNEL,215,152,17,11,
+                    ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_SATURATION_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,
+                    152,11,11
+    EDITTEXT        IDE_COLORS_VALUE_CHANNEL,215,168,17,11,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",IDSP_COLORS_VALUE_CHANNEL,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ARROWKEYS | UDS_NOTHOUSANDS,233,
+                    168,11,11
+    CONTROL         "",IDS_COLORS_GRID,"Static",SS_OWNERDRAW | SS_SUNKEN | 
+                    WS_GROUP,257,21,172,159
+    PUSHBUTTON      "Default",IDB_COLORS_DEFAULTS,154,190,42,14
+    LTEXT           "<- Initial",IDC_STATIC,193,24,35,8
+    LTEXT           "<- Current",IDC_STATIC,193,39,35,8
+    LTEXT           "<- Default",IDC_STATIC,193,54,35,8
+    PUSHBUTTON      "<<< Grid",IDB_COLORS_GRID_TOGGLE,203,190,42,14
+END
+
+SWC_DIALOG DIALOG DISCARDABLE  0, 0, 260, 286
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "SWC Properties"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SWC_ORIGINAL_SOURCE,79,5,175,12,ES_AUTOHSCROLL | 
+                    WS_DISABLED
+    EDITTEXT        IDE_SWC_CREATURE,79,21,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_REGION,79,37,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_FIELDLAYER,79,53,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_TYPE,79,69,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_CONTRIBUTOR,79,85,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_REFERENCE,79,101,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_RAW,79,117,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_EXTRAS,79,133,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_SOMA_AREA,79,149,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_SHRINKAGE_CORRECTION,79,165,175,12,
+                    ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_VERSION_NUMBER,79,181,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_VERSION_DATE,79,197,175,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SWC_SCALE,79,213,175,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,77,260,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,133,260,50,14
+    LTEXT           "Original Source:",IDC_STATIC,24,7,52,9
+    LTEXT           "Creature:",IDC_STATIC,45,23,30,9
+    LTEXT           "Region:",IDC_STATIC,49,39,26,9
+    LTEXT           "Field/Layer:",IDC_STATIC,37,55,38,9
+    LTEXT           "Type:",IDC_STATIC,55,71,21,9
+    LTEXT           "Contributor:",IDC_STATIC,37,87,37,9
+    LTEXT           "Reference:",IDC_STATIC,38,103,36,9
+    LTEXT           "Raw:",IDC_STATIC,56,119,18,9
+    LTEXT           "Extras:",IDC_STATIC,51,135,23,9
+    LTEXT           "Soma Area:",IDC_STATIC,36,151,38,9
+    LTEXT           "Shrinkage Correction:",IDC_STATIC,5,167,70,9
+    LTEXT           "Version Number:",IDC_STATIC,21,183,53,9
+    LTEXT           "Version Date:",IDC_STATIC,30,199,44,9
+    LTEXT           "Scale:",IDC_STATIC,52,215,21,9
+    CONTROL         "Output Edge Section and Order",
+                    IDC_SWC_OUTPUT_SECTIONS_AND_ORDERS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,72,239,115,10
+END
+
+BUILD_TREE_DIALOG DIALOG DISCARDABLE  0, 0, 250, 175
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,138,157,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,194,157,50,14
+    CONTROL         "Tab1",IDT_SETTINGS,"SysTabControl32",0x0,5,4,239,147
+END
+
+DLG_DIR_SEARCH DIALOGEX 0, 0, 244, 185
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDB_DSN_OK,68,160,50,14
+    PUSHBUTTON      "Cancel",IDB_DSN_CANCEL,125,160,50,14
+    CONTROL         "",IDC_DSN_DRIVES,"ComboBoxEx32",CBS_DROPDOWNLIST | 
+                    WS_TABSTOP,186,23,51,93
+    CONTROL         "List2",IDL_DSN_DIRS,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_EDITLABELS | 
+                    LVS_NOCOLUMNHEADER | WS_TABSTOP,7,23,170,94,
+                    WS_EX_CLIENTEDGE
+    LTEXT           "Drives:",IDC_STATIC,186,10,36,10
+    LTEXT           "Directories:",IDC_STATIC,7,10,38,9
+    LTEXT           "Selection:",IDC_STATIC,7,128,34,8
+    CONTROL         "",IDS_DSN_DIR,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX | 
+                    WS_GROUP,7,139,230,10
+    PUSHBUTTON      "",IDB_DSN_MKDIR,74,4,17,15,BS_ICON
+    PUSHBUTTON      "",IDB_DSN_CDPARENT,52,4,17,15,BS_ICON
+END
+
+DLG_INTEGRATION DIALOG DISCARDABLE  0, 0, 276, 170
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save Image"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_VI_DESTINATION,51,16,194,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDB_VI_BROWSE,251,16,13,12
+    EDITTEXT        IDE_VI_PREFIX,51,33,194,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_VI_SAVE_AS,51,51,103,48,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "Pad with Zeros",IDC_VI_PAD_NUMBER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,107,64,12
+    PUSHBUTTON      "OK",IDOK,84,148,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,140,148,50,14
+    LTEXT           "Destination:",-1,10,17,38,10
+    LTEXT           "Prefix:",-1,27,35,20,10
+    LTEXT           "Save as:",-1,19,52,29,10
+    GROUPBOX        "Files",-1,4,4,268,85
+    GROUPBOX        "Names",-1,4,95,268,44
+    CONTROL         "Save as Series",IDC_VI_SAVE_AS_SERIES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,51,70,62,12
+    COMBOBOX        IDC_VI_BIT_DEPTH,202,51,43,48,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Bit Depth:",-1,166,53,32,10
+    CONTROL         "",IDS_VI_NAMES,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,10,
+                    123,255,10
+END
+
+SETTINGS_VOLUME DIALOG DISCARDABLE  0, 0, 226, 90
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_TREE_VOX_X,26,24,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_TREE_VOX_Y,96,24,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_TREE_VOX_Z,168,24,30,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_VOLUME_LABELING,34,75,63,43,CBS_DROPDOWN | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RESIDUAL_SMEAR,161,75,63,76,CBS_DROPDOWN | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "X:",IDC_STATIC,16,26,8,10
+    LTEXT           "Y:",IDC_STATIC,84,26,8,10
+    LTEXT           "Z:",IDC_STATIC,156,26,8,10
+    LTEXT           "um",IDC_STATIC,61,25,10,9
+    LTEXT           "um",IDC_STATIC,131,25,10,9
+    LTEXT           "um",IDC_STATIC,200,25,10,9
+    GROUPBOX        "Voxel Dimensions",IDC_STATIC,1,1,223,53
+    LTEXT           "Labeling:",IDC_STATIC,2,77,29,10
+    LTEXT           "Residual Smear:",IDC_STATIC,107,77,52,10
+END
+
+SETTINGS_NEURITES DIALOG DISCARDABLE  0, 0, 195, 75
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_TREE_MBR,48,0,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_TREE_MIN_LENGTH,48,27,30,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Apply",IDB_SETTINGS_NEURITES_APPLY,72,60,50,14
+    LTEXT           "Attach Ratio:",IDC_STATIC,1,2,42,8
+    LTEXT           "Min Length:",IDC_STATIC,4,29,38,8
+    LTEXT           "um",IDC_STATIC,82,29,10,9
+    CONTROL         "Realign Junctions",IDC_REALIGN_JUNCTIONS,"Button",
+                    BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,123,28,71,10
+    EDITTEXT        IDE_DISCRETIZATION_RATIO,174,0,20,12,ES_AUTOHSCROLL
+    LTEXT           "Discretization Ratio:",IDC_STATIC,104,2,64,8
+END
+
+SETTINGS_DEFAULTS DIALOG DISCARDABLE  0, 0, 115, 18
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Save Current",IDB_SETTINGS_SAVE_CURRENT,1,2,50,14
+    PUSHBUTTON      "Load Initial",IDB_SETTINGS_LOAD_INITIAL,63,2,50,14
+END
+
+IMAGE_INFO_DIMENSIONS DIALOGEX 0, 0, 156, 50
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Width (Pixels in X):",IDC_STATIC,0,2,67,10,0,
+                    WS_EX_RIGHT
+    LTEXT           "Height (Pixels in Y):",IDC_STATIC,0,20,67,10,0,
+                    WS_EX_RIGHT
+    LTEXT           "Length (Pixels in Z):",IDC_STATIC,0,38,67,10,0,
+                    WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_WIDTH,73,2,81,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_LENGTH,73,38,81,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_HEIGHT,73,20,81,10,0,WS_EX_STATICEDGE
+END
+
+IMAGE_INFO_PIXELS DIALOGEX 0, 0, 135, 66
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Total:",IDC_STATIC,1,1,46,10,0,WS_EX_RIGHT
+    LTEXT           "Format Type:",IDC_STATIC,1,20,46,10,0,WS_EX_RIGHT
+    LTEXT           "Channel Type:",IDC_STATIC,1,38,46,10,0,WS_EX_RIGHT
+    LTEXT           "Type:",IDC_STATIC,1,55,46,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_TOTAL_PIXELS,51,1,81,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_PIXEL_FORMAT_TYPE,51,19,81,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_PIXEL_CHANNEL_TYPE,51,37,81,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_PIXEL_TYPE,51,55,81,10,0,
+                    WS_EX_STATICEDGE
+END
+
+IMAGE_INFO_SIZES DIALOGEX 0, 0, 188, 66
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Bits Per Pixel:",IDC_STATIC,1,1,66,10,0,WS_EX_RIGHT
+    LTEXT           "Bytes Per Scan-Line:",IDC_STATIC,1,19,66,10,0,
+                    WS_EX_RIGHT
+    LTEXT           "Bytes Per XY Slice:",IDC_STATIC,1,37,66,10,0,
+                    WS_EX_RIGHT
+    LTEXT           "Total Bytes:",IDC_STATIC,1,55,66,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_BITS_PER_PIXEL,72,1,115,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_BYTES_PER_ROW,72,19,115,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_BYTES_PER_SLICE,72,37,115,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_TOTAL_BYTES,72,55,115,10,0,
+                    WS_EX_STATICEDGE
+END
+
+IMAGE_INFO_INTENSITY DIALOGEX 0, 0, 118, 12
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Average:",IDC_STATIC,1,1,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_AVERAGE_INTENSITY,35,1,81,10,0,
+                    WS_EX_STATICEDGE
+END
+
+MODEL_INFO DIALOG DISCARDABLE  0, 0, 250, 175
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Model Info"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,194,157,50,14
+    CONTROL         "Tab1",IDT_MODEL_INFO,"SysTabControl32",0x0,5,4,239,147
+END
+
+MODEL_INFO_VERTICES DIALOGEX 0, 0, 202, 108
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Origin:",IDC_STATIC,2,1,29,10,0,WS_EX_RIGHT
+    LTEXT           "External:",IDC_STATIC,2,19,29,10,0,WS_EX_RIGHT
+    LTEXT           "Line:",IDC_STATIC,2,37,29,10,0,WS_EX_RIGHT
+    LTEXT           "Junction:",IDC_STATIC,2,55,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_LINE_VERTICES,37,37,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_EXTERNAL_VERTICES,37,19,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_ORIGIN_VERTICES,37,1,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_JUNCTION_VERTICES,37,55,36,10,0,
+                    WS_EX_STATICEDGE
+    CONTROL         "",IDS_MODEL_INFO_ORIGIN_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,77,1,16,10
+    CONTROL         "",IDS_MODEL_INFO_EXTERNAL_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,77,19,16,10
+    CONTROL         "",IDS_MODEL_INFO_LINE_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,77,37,16,10
+    CONTROL         "",IDS_MODEL_INFO_JUNCTION_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,77,55,16,10
+    LTEXT           "Total:",IDC_STATIC,52,97,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_VERTICES,88,97,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Soma:",IDC_STATIC,108,1,29,10,0,WS_EX_RIGHT
+    LTEXT           "Basal:",IDC_STATIC,108,19,29,10,0,WS_EX_RIGHT
+    LTEXT           "Apical:",IDC_STATIC,108,37,29,10,0,WS_EX_RIGHT
+    LTEXT           "Axon:",IDC_STATIC,108,55,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_APICAL_VERTICES,144,37,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_BASAL_VERTICES,144,19,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_SOMA_VERTICES,144,1,36,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_AXON_VERTICES,144,55,36,10,0,
+                    WS_EX_STATICEDGE
+    CONTROL         "",IDS_MODEL_INFO_SOMA_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,184,1,16,10
+    CONTROL         "",IDS_MODEL_INFO_BASAL_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,184,19,16,10
+    CONTROL         "",IDS_MODEL_INFO_APICAL_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,184,37,16,10
+    CONTROL         "",IDS_MODEL_INFO_AXON_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,184,55,16,10
+    LTEXT           "Unknown:",IDC_STATIC,104,73,33,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_UNKNOWN_VERTICES,144,73,36,10,0,
+                    WS_EX_STATICEDGE
+    CONTROL         "",IDS_MODEL_INFO_UNKNOWN_VERTICES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,184,73,16,10
+END
+
+MODEL_INFO_EDGES DIALOGEX 0, 0, 86, 13
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Total:",IDC_STATIC,1,2,17,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_EDGES,23,2,60,10,0,
+                    WS_EX_STATICEDGE
+END
+
+MODEL_INFO_SPINES DIALOGEX 0, 0, 124, 84
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "",IDS_MODEL_INFO_NUM_STUBBY_SPINES,42,1,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_THIN_SPINES,42,19,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_MUSHROOM_SPINES,42,37,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_UNKNOWN_SPINES,42,55,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_SPINES,42,73,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Total:",IDC_STATIC,2,73,34,10,0,WS_EX_RIGHT
+    LTEXT           "Mushroom:",IDC_STATIC,2,37,34,10,0,WS_EX_RIGHT
+    LTEXT           "Thin:",IDC_STATIC,2,19,34,10,0,WS_EX_RIGHT
+    LTEXT           "Stubby:",IDC_STATIC,2,1,34,10,0,WS_EX_RIGHT
+    LTEXT           "Other:",IDC_STATIC,2,55,34,10,0,WS_EX_RIGHT
+    CONTROL         "",IDS_MODEL_INFO_STUBBY_SPINES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,1,16,10
+    CONTROL         "",IDS_MODEL_INFO_THIN_SPINES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,19,16,10
+    CONTROL         "",IDS_MODEL_INFO_MUSHROOM_SPINES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,37,16,10
+    CONTROL         "",IDS_MODEL_INFO_OTHER_SPINES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,55,16,10
+END
+
+MODEL_INFO_VERTEX_LIST_ DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDL_MODEL_INFO_VERTEX_LIST,1,1,224,122,
+                    LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
+END
+
+MODEL_INFO_SPINE_LIST DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDL_MODEL_INFO_SPINE_LIST,1,1,224,122,
+                    LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
+END
+
+DLG_RAW_OPTIONS DIALOG DISCARDABLE  0, 0, 189, 245
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Describe Raw"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_RAW_PIXEL_WIDTH,76,50,55,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_RAW_PIXEL_HEIGHT,76,68,55,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_RAW_PIXEL_LENGTH,76,86,55,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_RAW_CHANNEL_COUNT,68,122,30,65,CBS_DROPDOWN | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "8 bits",IDR_RAW_CHANNEL_DEPTH_8BIT,"Button",
+                    BS_AUTORADIOBUTTON,68,143,32,10
+    CONTROL         "16 bits",IDR_RAW_CHANNEL_DEPTH_16BIT,"Button",
+                    BS_AUTORADIOBUTTON,112,143,36,10
+    CONTROL         "IBM PC",IDR_RAW_CHANNEL_ENDIAN_LITTLE,"Button",
+                    BS_AUTORADIOBUTTON,68,160,38,10
+    CONTROL         "UNIX/Mac",IDR_RAW_CHANNEL_ENDIAN_BIG,"Button",
+                    BS_AUTORADIOBUTTON,112,160,49,10
+    EDITTEXT        IDE_RAW_HEADER_SIZE,62,192,62,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,41,221,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,97,221,50,14
+    LTEXT           "",IDS_RAW_FILENAME,68,6,115,10
+    LTEXT           "",IDS_RAW_FILESIZE,68,22,115,10
+    GROUPBOX        "Dimensions",IDC_STATIC,6,39,177,67
+    GROUPBOX        "Channels",IDC_STATIC,6,110,177,66
+    GROUPBOX        "Header",IDC_STATIC,6,181,177,31
+    LTEXT           "Width ( X ):",IDC_STATIC,35,52,35,9
+    LTEXT           "Height ( Y ):",IDC_STATIC,33,70,38,9
+    LTEXT           "Length ( Z ):",IDC_STATIC,31,88,39,9
+    LTEXT           "pixels",IDC_STATIC,138,52,20,10
+    LTEXT           "pixels",IDC_STATIC,138,70,20,10
+    LTEXT           "pixels",IDC_STATIC,138,88,20,10
+    LTEXT           "Size:",IDC_STATIC,41,194,15,8
+    LTEXT           "bytes",IDC_STATIC,130,194,18,8
+    LTEXT           "Count:",IDC_STATIC,42,124,22,10
+    LTEXT           "Depth:",IDC_STATIC,41,143,23,10
+    LTEXT           "Byte Order:",IDC_STATIC,27,160,36,8
+    LTEXT           "Describe:",IDS_RAW_FILENAME2,31,6,31,10
+    LTEXT           "Size:",IDS_RAW_FILENAME3,46,22,17,10
+END
+
+MODEL_INFO_EDGE_LIST DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDL_MODEL_INFO_EDGE_LIST,1,1,224,122,
+                    LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
+END
+
+SAVE_PROJECTIONS DIALOG DISCARDABLE  0, 0, 276, 138
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save Projections"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_VI_DESTINATION,51,16,194,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDB_VI_BROWSE,251,16,13,12
+    EDITTEXT        IDE_VI_PREFIX,51,33,194,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_VI_SAVE_AS,51,51,103,51,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "OK",IDOK,84,115,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,140,115,50,14
+    LTEXT           "Destination:",-1,10,17,38,10
+    LTEXT           "Prefix:",-1,27,35,20,10
+    LTEXT           "Save as:",-1,19,53,28,10
+    GROUPBOX        "Files",-1,4,4,268,67
+    GROUPBOX        "Names",-1,4,77,268,29
+    CONTROL         "",IDS_VI_NAMES,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,10,
+                    89,255,10
+END
+
+SAVE_ALL DIALOG DISCARDABLE  0, 0, 276, 127
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save All"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_VI_DESTINATION,51,16,194,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDB_VI_BROWSE,251,16,13,12
+    EDITTEXT        IDE_VI_PREFIX,51,33,194,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "OK",IDOK,84,102,50,14
+    DEFPUSHBUTTON   "Cancel",IDCANCEL,140,102,50,14
+    LTEXT           "Destination:",-1,10,17,38,10
+    LTEXT           "Prefix:",-1,10,35,24,10
+    GROUPBOX        "Files",-1,4,4,268,50
+    GROUPBOX        "Names",-1,4,60,268,29
+    CONTROL         "",IDS_VI_NAMES,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,10,
+                    89,255,10
+END
+
+SETTINGS_THRESHOLD DIALOG DISCARDABLE  0, 0, 194, 123
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Use Dynamic",IDC_USE_DYNAMIC_THRESHOLD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,17,19,55,9
+    CONTROL         "Use Fixed:",IDC_USE_FIXED_THRESHOLD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,17,62,45,9
+    EDITTEXT        IDE_FIXED_THRESHOLD_VALUE,70,61,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINE_THRESHOLD_CORRECTION,98,101,23,12,
+                    ES_AUTOHSCROLL
+    LTEXT           "Correction:",IDC_STATIC,59,102,37,8
+    LTEXT           "%",IDC_STATIC,126,103,8,8
+    GROUPBOX        "Neurite Tracing",IDC_STATIC,1,1,192,81
+    GROUPBOX        "Spine Analysis",IDC_STATIC,1,86,192,36
+    LTEXT           "Range: [0.0 - 255.0]",IDC_STATIC,115,62,64,8
+    CONTROL         "Use Scattered Sampling (Faster)",
+                    IDC_USE_SCATTERED_SAMPLING,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,17,40,114,10
+END
+
+IMAGE_INFO_FILTERS DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDL_IMAGE_INFO_APPLIED_FILTERS,2,1,224,123,ES_MULTILINE | 
+                    ES_READONLY | NOT WS_BORDER | WS_VSCROLL,
+                    WS_EX_STATICEDGE
+END
+
+IMAGE_INFO DIALOG DISCARDABLE  0, 0, 250, 175
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Image Info"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,194,157,50,14
+    CONTROL         "Tab1",IDT_IMAGE_INFO,"SysTabControl32",0x0,5,4,239,147
+END
+
+MODEL_INFO_TREES DIALOGEX 0, 0, 124, 102
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "Total:",IDC_STATIC,5,91,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_TREES,41,91,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Basal:",IDC_STATIC,5,1,29,10,0,WS_EX_RIGHT
+    LTEXT           "Apical:",IDC_STATIC,5,19,29,10,0,WS_EX_RIGHT
+    LTEXT           "Axon:",IDC_STATIC,5,37,29,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_APICAL_TREES,41,19,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_BASAL_TREES,41,1,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_MODEL_INFO_NUM_AXON_TREES,41,37,60,10,0,
+                    WS_EX_STATICEDGE
+    CONTROL         "",IDS_MODEL_INFO_BASAL_TREES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,1,16,10
+    CONTROL         "",IDS_MODEL_INFO_APICAL_TREES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,19,16,10
+    CONTROL         "",IDS_MODEL_INFO_AXON_TREES_COLOR,"Static",SS_OWNERDRAW | 
+                    SS_SUNKEN,106,37,16,10
+    LTEXT           "Unknown:",IDC_STATIC,1,55,33,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_UNKNOWN_TREES,41,55,60,10,0,
+                    WS_EX_STATICEDGE
+    CONTROL         "",IDS_MODEL_INFO_UNKNOWN_TREES_COLOR,"Static",
+                    SS_OWNERDRAW | SS_SUNKEN,106,55,16,10
+    LTEXT           "Invalid:",IDC_STATIC,1,73,33,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_MODEL_INFO_NUM_INVALID_TREES,41,73,60,10,0,
+                    WS_EX_STATICEDGE
+END
+
+MODEL_INFO_TREE_LIST DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDL_MODEL_INFO_TREE_LIST,1,1,224,122,
+                    LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
+END
+
+IMAGE_INFO_ROI DIALOGEX 0, 0, 225, 89
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LTEXT           "",IDS_IMAGE_INFO_ROI_X1,29,1,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_PERCENT_X,29,55,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_X2,29,19,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_WIDTH,29,37,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "X1:",IDC_STATIC,9,1,14,10,0,WS_EX_RIGHT
+    LTEXT           "X2:",IDC_STATIC,9,19,14,10,0,WS_EX_RIGHT
+    LTEXT           "Width:",IDC_STATIC,0,37,23,10,0,WS_EX_RIGHT
+    LTEXT           "%X:",IDC_STATIC,9,55,14,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_ROI_Y1,106,1,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_PERCENT_Y,106,55,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_Y2,106,19,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_HEIGHT,106,37,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Y1:",IDC_STATIC,86,1,14,10,0,WS_EX_RIGHT
+    LTEXT           "Y2:",IDC_STATIC,86,19,14,10,0,WS_EX_RIGHT
+    LTEXT           "Height:",IDC_STATIC,77,37,23,10,0,WS_EX_RIGHT
+    LTEXT           "%Y:",IDC_STATIC,86,55,14,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_ROI_Z1,184,1,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_PERCENT_Z,184,55,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_Z2,184,19,40,10,0,WS_EX_STATICEDGE
+    LTEXT           "",IDS_IMAGE_INFO_ROI_LENGTH,184,37,40,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Z1:",IDC_STATIC,164,1,14,10,0,WS_EX_RIGHT
+    LTEXT           "Z2:",IDC_STATIC,164,19,14,10,0,WS_EX_RIGHT
+    LTEXT           "Length:",IDC_STATIC,155,37,23,10,0,WS_EX_RIGHT
+    LTEXT           "%Z:",IDC_STATIC,164,55,14,10,0,WS_EX_RIGHT
+    LTEXT           "",IDS_IMAGE_INFO_ROI_TOTAL_PERCENT,106,78,60,10,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Total %:",IDC_STATIC,68,78,32,10,0,WS_EX_RIGHT
+END
+
+SETTINGS_SPINES DIALOG DISCARDABLE  0, 0, 208, 98
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SPINES_MIN_HEIGHT,45,2,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINES_ZONE_THICKNESS,149,2,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINES_MAX_WIDTH,75,30,30,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINES_MIN_ATTACHED_SIZE,75,57,30,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    LTEXT           "Max Width:",IDC_STATIC,33,32,38,10
+    LTEXT           "um",IDC_STATIC,111,32,10,9
+    LTEXT           "Min Stubby Size:",IDC_STATIC,16,59,53,10
+    LTEXT           "um",IDC_STATIC,185,4,10,9
+    LTEXT           "um",IDC_STATIC,81,4,10,9
+    LTEXT           "Min Height:",IDC_STATIC,3,3,36,10
+    LTEXT           "Max Height:",IDC_STATIC,105,3,38,10
+    EDITTEXT        IDE_SPINES_MIN_DETACHED_SIZE,75,85,30,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    LTEXT           "Min Non-Stubby Size:",IDC_STATIC,1,87,69,10
+    LTEXT           "voxels",IDC_STATIC,111,59,23,9
+    LTEXT           "voxels",IDC_STATIC,111,87,23,9
+    GROUPBOX        "Z-Smear Comp.",IDC_STATIC,143,27,63,70
+    EDITTEXT        IDE_SPINES_Z_SMEAR_COMPENSATION,160,70,30,12,
+                    ES_AUTOHSCROLL
+    CONTROL         "Auto",IDC_SPINES_Z_SMEAR_COMPENSATION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,160,48,31,10
+END
+
+ADVANCED_SETTINGS DIALOG DISCARDABLE  0, 0, 239, 223
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_ADV_SET_NECK_RATIO,39,43,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_ADV_SET_THIN_RATIO,39,107,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_ADV_SET_MUSHROOM_SIZE,39,171,40,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,200,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,62,200,50,14
+    PUSHBUTTON      "Apply",IDB_ADV_SET_APPLY,117,200,50,14
+    PUSHBUTTON      "Reset Defaults",IDB_ADV_SET_RESET_DEFAULTS,172,200,60,
+                    14
+    GROUPBOX        "Thin Ratio",IDC_STATIC,7,68,225,58
+    LTEXT           "For spines without a neck, any spine with a height to width ratio greater than or equal to this value is classified as a thin, else it is classified as a stubby.",
+                    IDC_STATIC,14,79,212,24
+    LTEXT           "Value:",IDC_STATIC,14,109,22,9
+    GROUPBOX        "Neck Ratio",IDC_STATIC,7,5,225,57
+    LTEXT           "Any spine with a head to neck diameter ratio greater than or equal to this value is considered to have a neck.",
+                    IDC_STATIC,14,16,207,26
+    LTEXT           "Value:",IDC_STATIC,14,45,22,9
+    GROUPBOX        "Mushroom Size",IDC_STATIC,7,132,225,58
+    LTEXT           "For spines with a neck, any spine with a head diameter greater than or equal to this value is classified as a mushroom, else it is classified as a thin.",
+                    IDC_STATIC,14,143,211,25
+    LTEXT           "Value:",IDC_STATIC,14,173,22,9
+    LTEXT           "um",IDC_STATIC,84,173,10,9
+END
+
+SET_ORDER DIALOG DISCARDABLE  0, 0, 132, 81
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Order"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SET_ORDER_VALUE,43,10,45,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",ID_SET_ORDER_UD,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,90,9,11,14
+    CONTROL         "Propagate",IDC_SET_ORDER_PROPAGATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,43,34,47,10
+    DEFPUSHBUTTON   "OK",IDOK,13,56,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,69,56,50,14
+END
+
+IMAGE_INFO_ADDITIONAL DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDL_IMAGE_INFO_ADDITIONAL_INFO,2,1,224,123,ES_MULTILINE | 
+                    ES_READONLY | NOT WS_BORDER | WS_VSCROLL,
+                    WS_EX_STATICEDGE
+END
+
+MODEL_INFO_ALL DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDE_MODEL_INFO,2,1,224,123,ES_MULTILINE | ES_READONLY | 
+                    NOT WS_BORDER | WS_VSCROLL,WS_EX_STATICEDGE
+END
+
+SPLATS_THRESHOLD DIALOG DISCARDABLE  0, 0, 189, 81
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Threshold"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SPLATS_THRESHOLD_VALUE,43,10,45,12,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin1",ID_SPLATS_THRESHOLD_UD,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | 
+                    UDS_ARROWKEYS | UDS_NOTHOUSANDS,90,9,11,14
+    CONTROL         "Regenerate Volume Rendering",
+                    IDC_SPLATS_THRESHOLD_REGENERATE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,43,34,112,10
+    DEFPUSHBUTTON   "OK",IDOK,13,56,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,69,56,50,14
+    LTEXT           "Range: [0 - 255]",IDC_STATIC,94,11,74,10
+    PUSHBUTTON      "Default",IDB_SPLATS_THRESHOLD_DEFAULT,125,56,50,14
+END
+
+NEW_SPINE_CLASSIFIER DIALOG DISCARDABLE  0, 0, 207, 113
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Create Spine Classifier"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SPINE_CLASSIFIER_NAME,38,8,161,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINE_CLASS_NAMES,38,45,161,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,50,88,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,106,88,50,14
+    LTEXT           "Classes:",IDC_STATIC,7,46,28,9
+    LTEXT           "Enter the spine class names above. Use commas to separate each class name.",
+                    IDC_STATIC,38,60,161,19
+    LTEXT           "Name:",IDC_STATIC,12,9,20,9
+    LTEXT           "Enter an optional name for this classifier above.",
+                    IDC_STATIC,38,23,153,11
+    EDITTEXT        IDE_SPINE_CLASSIFIER_NAME2,38,8,161,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_SPINE_CLASS_NAMES2,38,45,161,12,ES_AUTOHSCROLL
+END
+
+SPINE_CLASSIFIER DIALOG DISCARDABLE  0, 0, 250, 175
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Spine Classifier"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,138,157,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,194,157,50,14
+    CONTROL         "Tab1",IDT_SPINE_CLASSIFIER,"SysTabControl32",0x0,5,4,
+                    239,147
+END
+
+SPINE_CLASSIFIER_DEFAULT DIALOG DISCARDABLE  0, 0, 120, 101
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Reset",IDB_ADV_SET_RESET_DEFAULTS,35,86,50,14
+    EDITTEXT        IDE_ADV_SET_NECK_RATIO,59,1,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_ADV_SET_THIN_RATIO,59,29,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_ADV_SET_MUSHROOM_SIZE,59,57,40,12,ES_AUTOHSCROLL
+    LTEXT           "Thin Ratio:",IDC_STATIC,19,31,35,9
+    LTEXT           "Neck Ratio:",IDC_STATIC,15,2,39,9
+    LTEXT           "Mushroom Size:",IDC_STATIC,3,59,52,9
+    LTEXT           "um",IDC_STATIC,105,59,10,9
+END
+
+SPINE_CLASSIFIER_ANN DIALOGEX 0, 0, 168, 119
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Enable",IDC_SC_ANN_ENABLE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,1,4,37,10
+    PUSHBUTTON      "Edit...",IDB_SC_ANN_EDIT,107,95,50,14,WS_DISABLED
+    GROUPBOX        "Current",IDG_SC_ANN_CURRENT,1,44,166,74,WS_DISABLED
+    EDITTEXT        IDE_SC_ANN_NAME,50,58,107,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | WS_DISABLED | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        IDE_SC_ANN_CLASSES,50,77,107,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | WS_DISABLED | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    LTEXT           "Classes:",IDS_SC_ANN_CLASSES,18,77,28,9,WS_DISABLED
+    LTEXT           "Name:",IDS_SC_ANN_NAME,23,58,20,9,WS_DISABLED
+    COMBOBOX        IDC_SC_ANN_PLUGINS,1,24,166,86,CBS_DROPDOWN | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "New...",IDB_SC_ANN_NEW,60,2,50,14,WS_DISABLED
+    LTEXT           "Examples:",IDS_SC_ANN_EXAMPLES,12,97,31,9,WS_DISABLED
+    EDITTEXT        IDE_SC_ANN_EXAMPLES,50,97,48,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | WS_DISABLED | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "Delete",IDB_SC_ANN_DELETE,117,2,50,14,WS_DISABLED
+END
+
+SPINE_CLASSIFIER_EDITOR DIALOGEX 0, 0, 247, 153
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Training Examples"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "|<",IDB_SC_EDITOR_FIRST,6,135,17,14
+    PUSHBUTTON      "<",IDB_SC_EDITOR_PREV,47,135,17,14
+    PUSHBUTTON      ">",IDB_SC_EDITOR_NEXT,68,135,17,14
+    PUSHBUTTON      ">|",IDB_SC_EDITOR_LAST,110,135,17,14
+    PUSHBUTTON      "+",IDB_SC_EDITOR_ZOOM_IN,110,119,11,9
+    PUSHBUTTON      "-",IDB_SC_EDITOR_ZOOM_OUT,12,119,11,9
+    PUSHBUTTON      "Delete",IDB_SC_EDITOR_DELETE,163,128,50,14
+    CONTROL         "",IDS_SC_EDITOR_CANVAS,"Static",SS_OWNERDRAW | WS_GROUP,
+                    6,5,121,112
+    LTEXT           "Head Diam.:",IDC_STATIC,131,19,41,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_HEAD_DIAM,177,19,64,10
+    LTEXT           "Neck Diam.:",IDC_STATIC,133,33,39,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_NECK_DIAM,177,33,64,10
+    LTEXT           "Height:",IDC_STATIC,147,47,25,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_HEIGHT,177,47,64,10
+    LTEXT           "Base Width:",IDC_STATIC,131,61,41,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_WIDTH,177,61,64,10
+    LTEXT           "Angle:",IDC_STATIC,149,75,23,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_ANGLE,177,75,64,10
+    LTEXT           "I.D.:",IDC_STATIC,158,5,14,10,0,WS_EX_RIGHT
+    LTEXT           "",IDE_SC_EDITOR_ID,177,5,64,10
+    COMBOBOX        IDC_SC_EDITOR_CLASSES,134,104,108,63,CBS_DROPDOWN | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDS_SC_EDITOR_ZOOM_LEVEL,31,120,72,9
+END
+
+MODEL_INFO_SPINES_ANN DIALOGEX 0, 0, 227, 125
+STYLE DS_CONTROL | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDE_MODEL_INFO_SPINES_ANN,2,1,224,123,ES_MULTILINE | 
+                    ES_READONLY | NOT WS_BORDER | WS_VSCROLL,
+                    WS_EX_STATICEDGE
+END
+
+SPLATS_OPACITY DIALOG DISCARDABLE  0, 0, 189, 81
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Opacity"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,41,56,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,97,56,50,14
+    CONTROL         "Slider2",IDS_SPLATS_OPACITY_VALUE,"msctls_trackbar32",
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,3,32,160,14
+    CONTROL         "Automatic by Intensity",IDC_SPLATS_OPACITY_AUTOMATIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,53,9,82,10
+    LTEXT           "",IDE_SPLATS_OPACITY_VALUE,163,34,19,8
+END
+
+SUBSAMPLE DIALOG DISCARDABLE  0, 0, 227, 168
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Subsample"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_SUB_DESTINATION_WIDTH_PIXELS,84,42,32,12,
+                    ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDE_SUB_DESTINATION_HEIGHT_PIXELS,135,42,32,12,
+                    ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDE_SUB_DESTINATION_LENGTH_PIXELS,186,42,32,12,
+                    ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDE_SUB_DESTINATION_WIDTH_PERCENT,84,62,32,12,
+                    ES_AUTOHSCROLL
+    EDITTEXT        IDE_SUB_DESTINATION_HEIGHT_PERCENT,135,62,32,12,
+                    ES_AUTOHSCROLL
+    EDITTEXT        IDE_SUB_DESTINATION_LENGTH_PERCENT,186,62,32,12,
+                    ES_AUTOHSCROLL
+    CONTROL         "Constrain Width/Height",
+                    IDC_SUB_DESTINATION_CONSTRAIN_WIDTH_HEIGHT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,86,92,10
+    CONTROL         "Constrain All",IDC_SUB_DESTINATION_CONSTRAIN_ALL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,135,86,55,10
+    PUSHBUTTON      "OK",IDOK,61,144,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,117,144,50,14
+    LTEXT           "Width ( X )",IDC_STATIC,83,8,35,8
+    LTEXT           "Height ( Y )",IDC_STATIC,132,8,38,8
+    LTEXT           "Length ( Z )",IDC_STATIC,182,8,39,8
+    LTEXT           "",IDS_SUB_DESTINATION_SIZE,69,125,149,8
+    LTEXT           "",IDS_SUB_SOURCE_SIZE,69,107,149,8
+    LTEXT           "Source ( Pixels ) :",IDC_STATIC,19,24,55,8
+    LTEXT           "Destination ( Pixels ) :",IDC_STATIC,7,44,68,8
+    LTEXT           "Destination ( % ) :",IDC_STATIC,19,64,57,8
+    LTEXT           "",IDS_SUB_SOURCE_WIDTH_PIXELS,84,24,32,10
+    LTEXT           "",IDS_SUB_SOURCE_HEIGHT_PIXELS,135,24,32,10
+    LTEXT           "",IDS_SUB_SOURCE_LENGTH_PIXELS,186,24,32,10
+    LTEXT           "Source Size :",IDC_STATIC,19,107,44,8
+    LTEXT           "Destination Size :",IDC_STATIC,7,125,57,8
+    CONTROL         "",IDS_SUB_LOCK_XY,"Static",SS_OWNERDRAW | WS_GROUP,118,
+                    52,15,11
+    CONTROL         "",IDS_SUB_LOCK_YZ,"Static",SS_OWNERDRAW | WS_GROUP,169,
+                    52,15,11
+END
+
+BRIGHTNESS_CONTRAST DIALOG DISCARDABLE  0, 0, 167, 104
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Brightness/Contrast"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_BRIGHTNESS_VALUE,135,7,23,12,ES_AUTOHSCROLL
+    CONTROL         "Slider2",IDS_BRIGHTNESS_VALUE,"msctls_trackbar32",
+                    TBS_TOP | TBS_NOTICKS | WS_TABSTOP,3,21,160,14
+    EDITTEXT        IDE_CONTRAST_VALUE,135,41,23,12,ES_AUTOHSCROLL
+    CONTROL         "Slider2",IDS_CONTRAST_VALUE,"msctls_trackbar32",TBS_TOP | 
+                    TBS_NOTICKS | WS_TABSTOP,3,55,160,14
+    DEFPUSHBUTTON   "OK",IDOK,31,79,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,87,79,50,14
+    LTEXT           "Brightness:",IDC_STATIC,8,9,36,8
+    LTEXT           "Contrast:",IDC_STATIC,8,43,29,8
+END
+
+DYNAMIC_RANGE DIALOG DISCARDABLE  0, 0, 167, 104
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dynamic Range"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDE_DYN_RANGE_MIN_VALUE,135,7,23,12,ES_AUTOHSCROLL
+    CONTROL         "Slider2",IDS_DYN_RANGE_MIN_VALUE,"msctls_trackbar32",
+                    TBS_TOP | TBS_NOTICKS | WS_TABSTOP,3,21,160,14
+    EDITTEXT        IDE_DYN_RANGE_MAX_VALUE,135,41,23,12,ES_AUTOHSCROLL
+    CONTROL         "Slider2",IDS_DYN_RANGE_MAX_VALUE,"msctls_trackbar32",
+                    TBS_TOP | TBS_NOTICKS | WS_TABSTOP,3,55,160,14
+    DEFPUSHBUTTON   "OK",IDOK,31,79,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,87,79,50,14
+    LTEXT           "Minimum:",IDC_STATIC,8,9,30,8
+    LTEXT           "Maximum:",IDC_STATIC,8,43,32,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+NSLOGO_SMALL            BITMAP  DISCARDABLE     "display\\neuronstudio2.bmp"
+BMP_DIR_SEARCH          BITMAP  MOVEABLE PURE   "display\\files.bmp"
+BMP_MASK_DIR_SEARCH     BITMAP  MOVEABLE PURE   "display\\filesmask.bmp"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

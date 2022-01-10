@@ -5,7 +5,7 @@
 // add dofunc() by Jianlong Zhou, 2012-04-16
 
 
-#include <QtGui>
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>

@@ -1,0 +1,6 @@
+The FARSIGHT Toolkit is not a single tightly integrated software package with a
+graphical user interface. Instead, it is an organized collection of software
+modules for image data handling, pre-processing, segmentation, inspection &
+editing, post-processing, and secondary analysis. These modules can be scripted
+to accomplish a variety of automated image analysis tasks. 
+

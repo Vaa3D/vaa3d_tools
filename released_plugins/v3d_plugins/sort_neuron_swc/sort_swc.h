@@ -71,7 +71,7 @@ bool fexists(QString filename)
   std::ifstream ifile(qPrintable(filename));
   return ifile.good();
 }
-QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QMultiMap<V3DLONG,V3DLONG> & LUT)
+QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QHash<V3DLONG,V3DLONG> & LUT)
 {
     // generate neighbor lists for each node, using new ids.
     // LUT (look-up table): old name -> new ids
@@ -120,11 +120,11 @@ QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QMult
     return neighbors;
 }
 
-QMultiMap<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons, QMultiMap<V3DLONG, NeuronSWC> & LUT_newid_to_node)
+QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons, QHash<V3DLONG, NeuronSWC> & LUT_newid_to_node)
 {
     // Range of LUT values: [0, # deduplicated neuron list)
 //    QHash<V3DLONG,V3DLONG> LUT;
-    QMultiMap<V3DLONG,V3DLONG> LUT;
+    QHash<V3DLONG,V3DLONG> LUT;
     V3DLONG cur_id=0;
     for (V3DLONG i=0;i<neurons.size();i++)
     {
@@ -139,12 +139,12 @@ QMultiMap<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons, QMultiMap<V3
             }
         }
         if(i==j){  // not a duplicate
-            LUT.insertMulti(neurons.at(i).n, cur_id);
-            LUT_newid_to_node.insertMulti(cur_id, neurons.at(j));
+            LUT.insert(neurons.at(i).n, cur_id);
+            LUT_newid_to_node.insert(cur_id, neurons.at(j));
             cur_id++;
         }
         else{  // is a duplicate
-            LUT.insertMulti(neurons.at(i).n, LUT.value(neurons.at(j).n));
+            LUT.insert(neurons.at(i).n, LUT.value(neurons.at(j).n));
         }
     }
     return (LUT);
@@ -256,8 +256,8 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
     //create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
 //    QHash<V3DLONG, NeuronSWC> LUT_newid_to_node;
 //    QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons, LUT_newid_to_node);
-    QMultiMap<V3DLONG, NeuronSWC> LUT_newid_to_node;
-    QMultiMap<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons, LUT_newid_to_node);
+    QHash<V3DLONG, NeuronSWC> LUT_newid_to_node;
+    QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons, LUT_newid_to_node);
 
     qDebug()<<"LUT/n";
     auto keys=LUT.keys();

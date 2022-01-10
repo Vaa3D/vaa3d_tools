@@ -2,7 +2,8 @@
  * This is a plugin that takes two marker point inputs, and connects the two swc nodes corresponding to the same location.
  * 2014-08-08 : by SurobhiGanguly
  */
- 
+#define byte win_byte_override
+#undef byte
 #include "v3d_message.h"
 #include <vector>
 #include <v3d_interface.h>

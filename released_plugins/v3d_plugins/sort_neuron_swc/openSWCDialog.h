@@ -1,7 +1,10 @@
 #ifndef __OPENSWCDIALOG_H_
 #define __OPENSWCDIALOG_H_
+#define byte win_byte_override
+#undef byte
+
 #include <QListWidget>
-#include <QtGui>
+
 
 #include "v3d_interface.h"
 class OpenSWCDialog: public QDialog

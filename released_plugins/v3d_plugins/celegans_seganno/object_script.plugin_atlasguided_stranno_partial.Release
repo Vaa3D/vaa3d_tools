@@ -1,0 +1,12 @@
+release/v3d_message.o
+release/basic_surf_objs.o
+release/spline_cubic.o
+release/q_morphology.o
+release/q_principalskeleton_detection.o
+release/q_celegans_straighten.o
+release/q_atlasguided_seganno.o
+release/q_paradialog_stranno.o
+release/plugin_atlasguided_stranno_partial.o
+release/moc_q_atlasguided_seganno.o
+release/moc_q_paradialog_stranno.o
+release/moc_plugin_atlasguided_stranno_partial.o

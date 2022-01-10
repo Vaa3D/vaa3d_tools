@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include "hang/topology_analysis.h"
 #include "mrmr/mrmr.h"
-//#include "marker_radius.h"
-#include "C:/Users/Braintell/Desktop/released_plugins/neurontracing_vn2/neuron_radius/marker_radius.h"
+#include "marker_radius.h"
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 #define FLAG_TEST 0

@@ -22,4 +22,4 @@ SOURCES      += ../sort_neuron_swc/openSWCDialog.cpp
 
 
 TARGET        = $$qtLibraryTarget(global_neuron_feature)
-DESTDIR       = $$V3DMAINPATH/bin/plugins/neuron_utilities/global_neuron_feature/
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/neuron_utilities/global_neuron_feature/

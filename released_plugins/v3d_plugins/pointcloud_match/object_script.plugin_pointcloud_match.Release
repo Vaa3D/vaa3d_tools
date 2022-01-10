@@ -1,0 +1,11 @@
+release/v3d_message.o
+release/basic_surf_objs.o
+release/q_pointcloud_match_basic.o
+release/q_pointcloud_match_initialmatch.o
+release/q_pointcloud_match_refinematch_manifold.o
+release/q_pointcloud_match_refinematch_affine.o
+release/q_pointcloud_match.o
+release/q_pointcloud_match_dialogs.o
+release/plugin_pointcloud_match.o
+release/moc_q_pointcloud_match_dialogs.o
+release/moc_plugin_pointcloud_match.o

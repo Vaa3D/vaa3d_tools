@@ -8,7 +8,7 @@
 #ifndef __ROI_EDITOR_H__
 #define __ROI_EDITOR_H__
 
-#include <QtGui>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "v3d_interface.h"

@@ -22,7 +22,7 @@ unix {
 #    LIBS         += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
 #    }
 #}
-# modify by zll
+
 win32{
     LIBS += -L$$V3DMAINPATH/common_lib/mingw -lv3dnewmat
 }

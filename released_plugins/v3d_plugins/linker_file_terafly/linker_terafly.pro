@@ -16,4 +16,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= ../../../hackathon/zhi/IVSCC_sort_swc/openSWCDialog.cpp
 
 TARGET	= $$qtLibraryTarget(linker_terafly)
-DESTDIR	= $$VAA3DPATH/bin/plugins/linker_file/linker_terafly/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/linker_file/linker_terafly/

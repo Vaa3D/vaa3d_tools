@@ -12,4 +12,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(TipDetection)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/TipDetection/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/bigneuronhackathon/TipDetection/

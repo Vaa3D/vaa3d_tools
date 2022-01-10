@@ -1,0 +1,14 @@
+release/v3d_message.o
+release/stackutil.o
+release/basic_surf_objs.o
+release/mg_image_lib.o
+release/mg_utilities.o
+release/jba_mainfunc.o
+release/jba_match_landmarks.o
+release/remove_nonaffine_points.o
+release/q_paradialog_littlequickwarp.o
+release/q_interpolate.o
+release/q_bspline.o
+release/plugin_littlequickwarp.o
+release/moc_q_paradialog_littlequickwarp.o
+release/moc_plugin_littlequickwarp.o

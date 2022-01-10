@@ -1,0 +1,11 @@
+release/mean_shift_dialog.o
+release/mean_shift_center_plugin.o
+release/ray_shoot_dialog.o
+release/mean_shift_fun.o
+release/gradient_transform_dialog.o
+release/v3d_message.o
+release/basic_surf_objs.o
+release/moc_mean_shift_dialog.o
+release/moc_mean_shift_center_plugin.o
+release/moc_ray_shoot_dialog.o
+release/moc_gradient_transform_dialog.o

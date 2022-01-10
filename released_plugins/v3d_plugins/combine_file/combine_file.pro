@@ -6,8 +6,8 @@ VAA3DPATH =  ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 
 HEADERS	+= combine_file_plugin.h
-#HEADERS      += ../sort_neuron_swc/openSWCDialog.h
-HEADERS      += C:\Users\Braintell\Desktop\released_plugins\finished\sort_neuron_swc\openSWCDialog.h
+HEADERS      += ../sort_neuron_swc/openSWCDialog.h
+
 
 QT += widgets
 SOURCES	+= combine_file_plugin.cpp

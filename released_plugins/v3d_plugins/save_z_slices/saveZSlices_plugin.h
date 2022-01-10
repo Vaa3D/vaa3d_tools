@@ -6,7 +6,7 @@
 #ifndef __EXTRACTZSLICES_PLUGIN_H__
 #define __EXTRACTZSLICES_PLUGIN_H__
 
-#include <QtGui>
+
 #include <v3d_interface.h>
 
 class saveZSlices : public QObject, public V3DPluginInterface2_1

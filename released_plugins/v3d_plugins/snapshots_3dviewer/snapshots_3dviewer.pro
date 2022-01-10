@@ -17,5 +17,5 @@ SOURCES      += $$V3DMAINPATH/neuron_editing/neuron_xforms.cpp
 
 TARGET        = $$qtLibraryTarget(snapshots_3dviewer)
 
-DESTDIR       = $$V3DMAINPATH/bin/plugins/movies_and_snapshots/snapshots_3dviewer
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/movies_and_snapshots/snapshots_3dviewer
 

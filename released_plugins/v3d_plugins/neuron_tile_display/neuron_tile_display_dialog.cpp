@@ -1,7 +1,6 @@
 #include "neuron_tile_display_dialog.h"
 
-//#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
-#include "C:/Users/Braintell/Desktop/v3d_external-Qt6_Win10/v3d_main/neuron_editing/neuron_xforms.h"
+#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <QDoubleSpinBox>
 #include <QPushButton>
 #include <QLabel>

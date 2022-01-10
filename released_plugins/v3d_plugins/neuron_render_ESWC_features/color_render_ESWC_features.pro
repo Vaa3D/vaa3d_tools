@@ -12,4 +12,4 @@ SOURCES	+= color_render_ESWC_features_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(color_render_ESWC_features)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/color_render_ESWC_features/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/color_render_ESWC_features/

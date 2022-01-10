@@ -1,0 +1,11 @@
+release/N3DFix_plugin.o
+release/remove_artifacts.o
+release/main.o
+release/Struct_from_swc.o
+release/myFuncs.o
+release/Load_and_Write_DATA.o
+release/openSWCDialog.o
+release/basic_surf_objs.o
+release/v3d_message.o
+release/moc_N3DFix_plugin.o
+release/moc_openSWCDialog.o

@@ -1,0 +1,14 @@
+release/smartTrace_plugin.o
+release/nt_selfcorrect_func.o
+release/mg_utilities.o
+release/mg_image_lib.o
+release/stackutil.o
+release/v3d_message.o
+release/basic_surf_objs.o
+release/crank.o
+release/gnu_getline.o
+release/mrmr.o
+release/svm.o
+release/simple_c.o
+release/my_surf_objs.o
+release/moc_smartTrace_plugin.o

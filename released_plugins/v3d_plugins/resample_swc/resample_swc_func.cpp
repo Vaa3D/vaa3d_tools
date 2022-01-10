@@ -2,7 +2,8 @@
  * This is a plugin to resample neuron swc subject to a fixed step length.
  * 2012-03-02 : by Yinan Wan
  */
-
+#define byte win_byte_override
+#undef byte
 #include <v3d_interface.h>
 #include "v3d_message.h"
 #include "resample_swc_func.h"

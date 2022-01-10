@@ -28,4 +28,4 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(mean_shift_center_finder)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_analysis/mean_shift_center_finder/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/image_analysis/mean_shift_center_finder/

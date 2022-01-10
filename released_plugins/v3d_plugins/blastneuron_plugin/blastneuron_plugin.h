@@ -8,8 +8,8 @@
 
 #define NOMINMAX 1
 #define byte win_byte_override
-#include <Windows.h>
-#include <gdiplus.h>
+
+
 #undef byte
 #define byte win_byte_override
 
@@ -25,14 +25,14 @@
 #error min macro is already defined
 #endif
 
-#include <gdiplus.h>
+
 
 #undef min
 #undef max
 
 #undef byte
 
-#include <QtGui>
+
 #include <v3d_interface.h>
 
 class BlastNeuronPlugin : public QObject, public V3DPluginInterface2_1

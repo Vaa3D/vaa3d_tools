@@ -4,8 +4,6 @@
  */
 
 #define byte win_byte_override
-#include <Windows.h>
-#include <gdiplus.h>
 #undef byte
 
 #include <v3d_interface.h>

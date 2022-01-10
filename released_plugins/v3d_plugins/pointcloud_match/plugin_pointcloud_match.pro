@@ -15,7 +15,7 @@ win32 {
     }
 }
 
-unix {
+unix!macx {
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
 }
 

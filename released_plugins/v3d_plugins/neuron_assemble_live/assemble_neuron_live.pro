@@ -27,9 +27,9 @@ win32 {
     }
 }
 
-unix {
+unix!macx {
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/hdf5
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_unix64 -lhdf5 -lszip -lz -ldl
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_ubuntu -lhdf5 -lszip -lz -ldl
 }
 
 HEADERS	+= assemble_neuron_live_plugin.h \
