@@ -9,7 +9,9 @@
 #ifndef __SORT_SWC_H_
 #define __SORT_SWC_H_
 
-//#include <windows.h>
+#ifdef WIN32
+#include <Windows.h>
+#endif
 
 #include <QtGlobal>
 #include <math.h>

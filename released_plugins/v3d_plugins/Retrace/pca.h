@@ -6,7 +6,9 @@
 #include "../../../v3d_main/v3d/compute_win_pca_wp.h"
 
 #include<time.h>
-#include<Windows.h>
+#ifdef WIN32
+#include <Windows.h>
+#endif
 //template <class T> bool grayValue_at_xyz(T *indata1d, int x, int y, int z, int c, int sx, int sy, int sz, int cc);
 //template <class T> bool grayValue_at_xyz(T ***indata3d, int x, int y, int z);
 //template <class T> bool compute_rgn_stat_new(LocationSimple & pt, T *indata1d, int channo, int sx, int sy, int sz, int sc, int datatype);

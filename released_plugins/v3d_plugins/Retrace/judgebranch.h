@@ -1,8 +1,10 @@
 #ifndef JUDGEBRANCH_H
 #define JUDGEBRANCH_H
 #define byte win_byte_override
+#ifdef WIN32
 #include <Windows.h>
 #include <gdiplus.h>
+#endif
 #undef byte
 #include "v3d_interface.h"
 
