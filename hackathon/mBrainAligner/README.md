@@ -108,7 +108,7 @@ Ctrl+Alt+t to open terminal
     sudo ldconfig
     sudo chmod 777 -R  global_registration
     sudo chmod 777 -R  local_registration
-    cd "(your file path)/example/"
+    cd "(your file path)/examples/"
 
 Then run
 
