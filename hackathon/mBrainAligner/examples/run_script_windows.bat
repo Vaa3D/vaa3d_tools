@@ -19,28 +19,28 @@
 :: -o <Results_save_path> Local registration result will saved here.
 
 :: registration fMOST sample data
-..\binary\win64_bin\global_registration.exe -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
+..\binary\win64_bin\global_registration.exe -f target/CCF_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
 ^ -m subject/fMOST_18458_raw.v3draw  -p r+f+n -o result/fMOST/ -d 1
 ..\binary\win64_bin\local_registration.exe -p config/fMOST_config.txt -s result/fMOST/global.v3draw ^
 ^ -m subject/fMOST_segmentation/ -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/fMOST/
 
 
 :: registration LSFM sample data
-..\binary\win64_bin\global_registration.exe -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
+..\binary\win64_bin\global_registration.exe -f target/CCF_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
 ^ -m subject/LSFM_raw.v3draw  -p r+f+n -o result/LSFM/ -d 70
 ..\binary\win64_bin\local_registration.exe -p config/LSFM_config.txt -s result/LSFM/global.v3draw ^
 ^ -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/LSFM/
 
 
 :: registration MRI sample data
-..\binary\win64_bin\global_registration.exe -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
+..\binary\win64_bin\global_registration.exe -f target/CCF_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
 ^ -m subject/MRI_raw.v3draw  -p r+f+n -o result/MRI/ -d 20
 ..\binary\win64_bin\local_registration.exe -p config/MRI_config.txt -s result/MRI/global.v3draw ^
 ^ -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/MRI/
 
 
 :: registration VISoR sample data
-..\binary\win64_bin\global_registration.exe -f target/CCF_25_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
+..\binary\win64_bin\global_registration.exe -f target/CCF_u8_xpad.v3draw -c target/CCF_mask.v3draw ^
 ^ -m subject/VISoR_raw.v3draw  -p r+f+n -o result/VISoR/ -d 20
 ..\binary\win64_bin\local_registration.exe -p config/VISoR_config.txt -s result/VISoR/global.v3draw ^
 ^ -l target/target_landmarks/low_landmarks.marker  -g target/ -o result/VISoR/
