@@ -8,7 +8,7 @@
 #include "test_plugin.h"
 #include "myswitch.h"
 using namespace std;
-//Q_EXPORT_PLUGIN2(test, TestPlugin);
+
  
 QStringList TestPlugin::menulist() const
 {
@@ -20,8 +20,7 @@ QStringList TestPlugin::menulist() const
 QStringList TestPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("before_after")
 		<<tr("help");
 }
 
@@ -49,13 +48,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("before_after"))
 	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("help"))
 	{
