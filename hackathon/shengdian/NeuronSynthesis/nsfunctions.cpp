@@ -725,11 +725,56 @@ NeuronTree to_topology_tree(NeuronTree nt)
 }
 NeuronTree reindexNT(NeuronTree nt)
 {
-    NeuronTree nt_out_reindex;nt_out_reindex.listNeuron.clear();nt_out_reindex.hashNeuron.clear();
-    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+    NeuronTree nt_out_reindex,nt_f;
+
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    V3DLONG siz=nt.listNeuron.size();
+    V3DLONG somaid=-1;
+    for (V3DLONG i=0;i<siz;i++)
     {
-        NeuronSWC s = nt.listNeuron[i];
-        s.pn=(s.pn<0)?s.pn:(nt.hashNeuron.value(s.pn)+1);
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0&&somaid<0)
+            somaid=i;
+    }
+    cout<<"soma id "<<somaid<<endl;
+    if(somaid<0)
+        return nt_out_reindex;
+
+    //only kept nodes that can reach to soma node
+    std::vector<int> nkept(siz,-1);    nkept[somaid]=1;
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(nkept.at(i)<0){
+            if(!hashNeuron.contains(s.pn)) {nkept[i]=0;continue;}
+            QList<V3DLONG> scanned_id_list; scanned_id_list.clear();
+            scanned_id_list.append(i);
+            bool isok=false;
+            V3DLONG sp_id=hashNeuron.value(s.pn);
+            NeuronSWC sp=nt.listNeuron.at(sp_id);
+            while(true){
+                if(nkept.at(sp_id)>0) {isok=true; break;}
+                scanned_id_list.append(sp_id);
+                s=sp;
+                if(!hashNeuron.contains(s.pn)) {break;}
+                sp_id=hashNeuron.value(s.pn);
+                sp=nt.listNeuron.at(sp_id);
+            }
+            for(V3DLONG sj=0;sj<scanned_id_list.size();sj++)
+                nkept[scanned_id_list.at(sj)]=(isok)?1:0;
+        }
+    }
+    for(V3DLONG i=0;i<siz;i++){
+        if(nkept.at(i)>0){
+            nt_f.listNeuron.append(nt.listNeuron.at(i));
+            nt_f.hashNeuron.insert(nt.listNeuron.at(i).n,nt_f.listNeuron.size()-1);
+        }
+    }
+
+    //reindex
+    for(V3DLONG i=0;i<nt_f.listNeuron.size();i++)
+    {
+        NeuronSWC s = nt_f.listNeuron[i];
+        s.pn=(s.pn<0)?s.pn:(nt_f.hashNeuron.value(s.pn)+1);
 //        s.n=nt.hashNeuron.value(s.n)+1;
         s.n=i+1;
         nt_out_reindex.listNeuron.append(s);
@@ -895,39 +940,47 @@ NeuronTree three_bifurcation_processing(NeuronTree nt)
 }
 bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC)
 {
-    /*dendrite,axon,apical_dendrite
+    /*make sure type consistence
+     * dendrite,axon,apical_dendrite
      * each type should have soma point
     */
     NeuronTree nt = readSWC_file(inswcpath);
-    if(!nt.listNeuron.size())
-        return false;
     V3DLONG siz=nt.listNeuron.size();
-    /*1. get the index of nt:
-                                        * swc_n -> index */
-    QHash <int, int>  hashNeuron;hashNeuron.clear();
-    V3DLONG somaid=1;
+    if(!siz) {return false;}
+
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    V3DLONG somaid=-1;
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
-        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
+        if(nt.listNeuron[i].type==2&&nt.listNeuron[i].pn<0)
+        {
+            cout<<"Error: multiple -1 nodes"<<endl;
+            return false;
+        }
+        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0/*&&somaid<0*/){
+            if(somaid>=0){cout<<"Error: multiple soma nodes"<<endl;return false;}
             somaid=i;
+        }
     }
-    //generation
-    NeuronSWC soma_node = nt.listNeuron[somaid];
+    if(somaid<0){cout<<"Error: can't find any soma node"<<endl;   return false;}
 
-    NeuronTree nt_dendrite_whole;nt_dendrite_whole.listNeuron.clear();nt_dendrite_whole.hashNeuron.clear();
+    //generation
+    NeuronSWC soma_node = nt.listNeuron.at(somaid);
+
+    NeuronTree nt_dendrite_whole;
     nt_dendrite_whole.listNeuron.append(soma_node);
     nt_dendrite_whole.hashNeuron.insert(soma_node.n,nt_dendrite_whole.listNeuron.size()-1);
 
-    NeuronTree nt_dendrite;nt_dendrite.listNeuron.clear();nt_dendrite.hashNeuron.clear();
+    NeuronTree nt_dendrite;
     nt_dendrite.listNeuron.append(soma_node);
     nt_dendrite.hashNeuron.insert(soma_node.n,nt_dendrite.listNeuron.size()-1);
 
-    NeuronTree nt_apicaldendrite;nt_apicaldendrite.listNeuron.clear();nt_apicaldendrite.hashNeuron.clear();
+    NeuronTree nt_apicaldendrite;
     nt_apicaldendrite.listNeuron.append(soma_node);
     nt_apicaldendrite.hashNeuron.insert(soma_node.n,nt_apicaldendrite.listNeuron.size()-1);
 
-    NeuronTree nt_axon;nt_axon.listNeuron.clear();nt_axon.hashNeuron.clear();
+    NeuronTree nt_axon;
     nt_axon.listNeuron.append(soma_node);
     nt_axon.hashNeuron.insert(soma_node.n,nt_axon.listNeuron.size()-1);
 
@@ -960,13 +1013,14 @@ bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC)
         {
             if(sp.type!=2&&sp.type!=1)
             {
+//                cout<<"Error in connection"<<endl;
+//                return false;
                 s.pn=soma_node.n;
+//                s.pn=-1; s.type=1;
             }
             nt_axon.listNeuron.append(s);
             nt_axon.hashNeuron.insert(s.n,nt_axon.listNeuron.size()-1);
         }
-        else
-            continue;
     }
     //reorder index
     nt_dendrite_whole=reindexNT(nt_dendrite_whole);
@@ -1013,7 +1067,7 @@ NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size)
     V3DLONG siz=nt.listNeuron.size();
     /*1. get the index of nt:
                                         * swc_n -> index */
-    QHash <int, int>  hashNeuron;hashNeuron.clear();
+    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
     V3DLONG somaid=1;
     for (V3DLONG i=0;i<siz;i++)
     {

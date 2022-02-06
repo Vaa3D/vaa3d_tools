@@ -146,28 +146,25 @@ NeuronTree resample(NeuronTree input, double step)
         result.hashNeuron.insert(result.listNeuron[i].n, i);
     return result;
 }
+
 vector<int> getNodeType(NeuronTree nt)
 {
-    /*1. get tip, branch and soma nodes;
+    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1
+    PS: not have to be a single tree
     */
+    /*1. get tip, branch and soma nodes;    */
     V3DLONG siz=nt.listNeuron.size();
     vector<int> ntype(siz,0);
-    if(!siz)
-        return ntype;
-    /*1. get the index of nt:
-                                        * swc_n -> index */
-    QHash <int, int>  hashNeuron;hashNeuron.clear();
-    V3DLONG somaid=1;
+    if(!siz) {return ntype;}
+    /*1. get the index of nt:     * swc_n -> index */
+    QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
         if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
-            somaid=i;
+            ntype[i]=2; //soma node
     }
     // 2. get node type: index -> node_type
-    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1*/
-
-    ntype[somaid]=2;
     for (V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC s = nt.listNeuron[i];

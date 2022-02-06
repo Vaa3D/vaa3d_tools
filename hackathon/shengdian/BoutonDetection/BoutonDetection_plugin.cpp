@@ -183,7 +183,7 @@ void BoutonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 //        getNodeRadius(inimg1d,in_sz,nt);
         QString outswc_file =savepath+"/"+"IntensityResult_original.eswc";
         writeESWC_file(outswc_file,nt);
-        QList <CellAPO> apolist=getBouton_1D_filter(nt);
+        QList <CellAPO> apolist=boutonFilter_1D(nt);
         QString apo_file_path = savepath +"/"+ "bouton.apo";
         writeAPO_file(apo_file_path,apolist);
         if(inimg1d) {delete []inimg1d; inimg1d=0;}

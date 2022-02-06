@@ -63,7 +63,7 @@ bool loadImageData(Parameter input_Parameter,QString data_file, QString qs_filen
 
 	if (input_Parameter.Select_modal < 2)
 	{
-		qs_filename_img_tar = data_file + "/CCF_25_u8_xpad.v3draw";
+		qs_filename_img_tar = data_file + "/CCF_u8_xpad.v3draw";
 		qs_filename_img_label = data_file + "/CCF_roi.v3draw";
 		
 		if (!qs_filename_img_label.isNull())

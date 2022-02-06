@@ -22,10 +22,10 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 		printf("ERROR: Invalid input image size!\n");
 		return false;
 	}
-	vector<vector<Coord3D_PCM>> points_t(sz_tar[0]); 
+	vector<vector<Coord3D_PCM> > points_t(sz_tar[0]); 
 	for (int x = 0; x < sz_tar[0]; x++)
 	{
-		vector<vector<Point>> contours;
+		vector<vector<Point> > contours;
 		Mat img2_yz = Mat(sz_tar[1], sz_tar[2], CV_8UC1);
 		for (int y = 0; y < sz_tar[1]; y++)
 			for (int z = 0; z < sz_tar[2]; z++)
@@ -135,10 +135,10 @@ bool edgeContourExtract(unsigned char* img_tar, unsigned char* img_sub, long lon
 		}
 	}
 	unsigned int direction_size = sz_sub[2];
-	vector<vector<Coord3D_PCM>> points_s(direction_size);
+	vector<vector<Coord3D_PCM> > points_s(direction_size);
 	for (int z = 0; z < sz_sub[2]; z++)
 	{
-		vector<vector<Point>> contours;
+		vector<vector<Point> > contours;
 		Mat img2_xy = Mat(sz_sub[1], sz_sub[0], CV_8UC1);
 		for (int y = 0; y < sz_sub[1]; y++)
 			for (int x = 0; x < sz_sub[0]; x++)

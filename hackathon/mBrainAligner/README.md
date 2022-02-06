@@ -32,9 +32,8 @@ There are two ways to use `mBrainAligner`:
 1. follow the below instructions to build and run `mBrainAligner` on local machines.
 2. visit one of our Tencent cloud web portals, run `mBrainAligner online` (registration results and sample data can also be downloaded there).
 Questions can be sent to 17718151568@126.com . 
-China South (Guangzhou): http://159.75.201.35/
-USA West Coast: http://170.106.83.3/
-Note: These cloud servers are provided for tentative testing purpose only while we are moving to a more permanent solution. Different ISPs might have different access restrictions to some of these websites, and different web browsers might also show warning messages when naked IP addresses (i.e. without a domain name) are visited. You may choose to change the ISPs (such as switching among Verion, AT&T, Xfinity, etc), change your 5G/4G setting (sometimes with the same ISP still has different restriction for 5G and 4G), or ignore the warning messages. Feel to reach out to the above email address if you also want to deploy the web service code on your own local server for faster access.
+China South (Guangzhou): http://159.75.201.35/ . China South (AHU): http://mbrainaligner.ahu.edu.cn .
+Note: This cloud server is provided for tentative testing purpose only while we are moving to a more permanent solution. Different ISPs might have different access restrictions to some of these websites, and different web browsers might also show warning messages when naked IP addresses (i.e. without a domain name) are visited. You may choose to change the ISPs (such as switching among Verion, AT&T, Xfinity, etc), change your 5G/4G setting (sometimes with the same ISP still has different restriction for 5G and 4G), or ignore the warning messages. Feel to reach out to the above email address if you also want to deploy the web service code on your own local server for faster access.
 
 
 # System requirements
@@ -80,7 +79,7 @@ Note that mBrainAligner has been only tested on Windows 10 and Linux.
 
 # Run mBrainAligner
 
-We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images (~50um)) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small down-sampled brains are provided here (even part of the data can only be compressed into the ".zip" format, so you need to make sure that the data has been decompressed before running any script). For better registration accuracy, 25um image resolution is recommanded and we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or contact us by email qulei@ahu.edu.cn.
+We provide executable files, scripts and sample data (downsampled `fMOST`,`VISoR`,`MRI`,`LSFM` mouse brain images (~50um)) for running `mBraiAligner` on Windows and Linux platforms. You can find compiled executable files in `binary`, and scripts, sample data and config files in `examples`. In `examples/registered_results` folder, the registration results of brains of four modalities are also provided. Note that due to the size of brain images, only small down-sampled brains are provided here (even part of the data can only be compressed into the ".zip" format, so you need to make sure that the data has been decompressed before running any script). For better registration accuracy, 25um image resolution is recommanded and we encourage the user to download raw data from the scalable Brain Atlas website https://scalablebrainatlas.incf.org/mouse/ABA_v3#about or https://drive.google.com/file/d/1mrZxI2nhk_4wc7M2aAGJTlJkhzWp8jd0/view?usp=sharing (download and replace the file "example/target").
 
 An overview of the pipeline is shown below. For a deeper understanding of each module please read the paper: <https://www.researchsquare.com/article/rs-321118/v1>.
 
@@ -101,7 +100,7 @@ Enter the `examples` folder, double-click `run_script_windows.bat`.
 In Linux, you need to first complete a simple environment configuration and unzip step. The path for the lib files `binary/linux_bin/lib/` needs to be added to the linker directory.
 
 Ctrl+Alt+t to open terminal
-   
+
     cd "(your file path)/binary/linux_bin/"
     tar -zxvf lib.tar.gz
     sudo gedit /etc/ld.so.conf
@@ -109,10 +108,10 @@ Ctrl+Alt+t to open terminal
     sudo ldconfig
     sudo chmod 777 -R  global_registration
     sudo chmod 777 -R  local_registration
-    cd "(your file path)/example/"
-   
+    cd "(your file path)/examples/"
+
 Then run
-   
+
     sh run_script_linux.sh
 
 
