@@ -283,9 +283,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
         if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
 
-        //qDebug() << "before voxels marked";
         //mark all voxels close to the others swc node(s) with different markers
-        /*if(mark_other_nodes_or_not && ii==mark_other_nodes.at(0)){ //in this case only mark the first node(tip node),added by OYQ 2019.3.23.
+        if(mark_other_nodes_or_not && ii==mark_other_nodes.at(0)){ //in this case only mark the first node(tip node),added by OYQ 2019.3.23.
         for (k = ballz0; k <= ballz1; k++){
             for (j = bally0; j <= bally1; j++){
                 for (i = ballx0; i <= ballx1; i++){
@@ -297,7 +296,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 }
             }
           }
-        qDebug() << "Voxels marked";
 
         //find previous node
         if (p_cur->pn < 0) continue;//then it is root node already
@@ -348,8 +346,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
             z = ( z > sz )? sz : z;
 
             V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-            if (pImMask[idex]>0) continue;
             if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+            if (pImMask[idex]>0) continue;
             pImMask[idex] = 254;
         }
 
@@ -415,10 +413,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         }
 
       }
-      */
         //mark all voxels close to the swc node(s)
-       //else{
-        qDebug() << "before voxels marked";
+      else{
         for (k = ballz0; k <= ballz1; k++){
             for (j = bally0; j <= bally1; j++){
                 for (i = ballx0; i <= ballx1; i++){
@@ -430,7 +426,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 }
             }
         }
-        qDebug() << "after voxels marked";
 
         //find previous node
         if (p_cur->pn < 0) continue;//then it is root node already
@@ -441,7 +436,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         ze = pp.z;
         re = pp.r;
 
-        qDebug() << "previous node found";
         //judge if two points overlap, if yes, then do nothing as the sphere has already been drawn
         if (xe==xs && ye==ys && ze==zs)
         {
@@ -471,7 +465,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
          pImMask[idex1] = 255;
 
-         qDebug() << "overlap loop";
         for (int i = 0; i <= steps; i++)
         {
             x += xIncrement;
@@ -483,9 +476,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
             z = ( z > sz )? sz : z;
 
             V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-            qDebug() << "first if " << idex << " " << sx*sy*sz;
             if (idex <0 || lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
-            qDebug() << "second if";
             if (pImMask[idex]>0) continue;
             pImMask[idex] = 255;
         }
@@ -502,7 +493,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
 
         //compute cylinder and flag mask
 
-        qDebug() << "last loop";
         for (k=z_down; k<=z_top; k++)
         {
             for (j=y_down; j<=y_top; j++)
@@ -542,8 +532,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                         rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
                     }
                     V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
-                    if (pImMask[ind1]>0) continue;
                     if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+                    if (pImMask[ind1]>0) continue;
                     if (dist <= rr || dist<=1)
                     {
                         pImMask[ind1] = 255;
@@ -551,7 +541,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 }
             }
         }
-      //}
+      }
     }
 
 }
