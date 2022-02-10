@@ -342,7 +342,9 @@ void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & inp
     V3DLONG stacksz = sx*sy*sz;
     pImMask = new unsigned char [stacksz];
     memset(pImMask,0,stacksz*sizeof(unsigned char));
+    qDebug() << "before bound";
     ComputemaskImage(neuron, pImMask, sx, sy, sz);
+    qDebug() << "before bound";
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
     memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
 

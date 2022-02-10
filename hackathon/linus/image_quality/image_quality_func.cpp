@@ -204,7 +204,103 @@ bool getStats(vector<uint8_t> pdata1d, V3DLONG datalen, int &minint, int &maxint
 
 }
 
+bool getOtsu(QVector<int> tmphist, V3DLONG sz0, V3DLONG sz1, V3DLONG sz2, int &ThreshOtsu){
+    double var_max, sum, sumB, q1, q2, u1, u2, sigma2;
+    var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = 0;
+    for(int i=0; i<tmphist.size(); i++)
+    {
+        sum = sum + i*double(tmphist.at(i));
+    }
+    for(int t=0; t<tmphist.size(); t++)
+    {
+        q1 = q1 + double(tmphist.at(t));
+        //cout << q1 << " ";
+        if(q1>0)
+        {
+            //q2 = sz[0]*sz[1]*sz[2]-q1;
+            q2 = sz0*sz1*sz2-q1;
+            //cout << q2 << " ";
+            sumB = sumB + double(t)*double(tmphist.at(t));
+            u1 = sumB/q1;
+            //cout << u1 << " ";
+            u2 = (sum-sumB)/q2;
+            sigma2 = q1*q2*(u1-u2)*(u1-u2);
+            if(sigma2 > var_max)
+            {
+                ThreshOtsu = t;
+                var_max =sigma2;
+            }
+        }
+    }
 
+    return true;
+}
+
+
+bool getSNRCNR(V3DLONG mysize, vector<uint8_t> intvec, double meanint, int maxint, int ThreshOtsu, double &SNRmean, double &SNRotsu, double &CNRmean, double &CNRotsu){
+    vector<uint8_t> otsunoise;//,otsusignal;
+    double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
+    meanotsunoise=meanotsusignal=stdevotsu=0;
+    vector<uint8_t> meannoise;//,meansignal;
+    double avmeannoise,avmeansignal,stdevmean;
+    avmeannoise=avmeansignal=stdevmean=0;
+    for(int i=0; i<mysize; i++)
+    {
+        if(intvec.at(i)<=ThreshOtsu)
+        {
+            otsunoise.push_back(intvec.at(i));
+            meanotsunoise += intvec.at(i);
+        }
+        else
+        {
+            //otsusignal.push_back(intvec.at(i));
+            meanotsusignal += intvec.at(i);
+        }
+
+        if(intvec.at(i)<=round(meanint))
+        {
+            meannoise.push_back(intvec.at(i));
+            avmeannoise += intvec.at(i);
+        }
+        else
+        {
+            //meansignal.push_back(intvec.at(i));
+            avmeansignal += intvec.at(i);
+        }
+    }
+    meanotsunoise = meanotsunoise/otsunoise.size();
+    meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
+    for (V3DLONG i=0;i<otsunoise.size();i++)
+    {
+        stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
+    }
+    stdevotsu /= otsunoise.size();
+    stdevotsu = sqrt(stdevotsu);
+//        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
+//        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
+
+    avmeannoise = avmeannoise/meannoise.size();
+    avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
+    for (V3DLONG i=0;i<meannoise.size();i++)
+    {
+        stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
+    }
+    stdevmean /= meannoise.size();
+    stdevmean = sqrt(stdevmean);
+    /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
+    stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
+
+    //SNRmean = avmeansignal/stdevmean;
+    cout << "avemeansignal: " << avmeansignal << "\n";
+    cout << "meanint: " << meanint << "\n";
+    SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
+    CNRmean = (maxint-meanint)/stdevmean;
+    //SNRotsu = meanotsusignal/stdevotsu;
+    SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
+    CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+
+    return true;
+}
 
 
 int compute(V3DPluginCallback2 &callback, QWidget *parent)
@@ -293,8 +389,10 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         cout << "\nComputing statistics\n";
-        int  maxint,minint;
-        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
+        int  maxint,minint,ThreshOtsu;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore,SNRmean,CNRmean,SNRotsu,CNRotsu;
+        maxint=minint=ThreshOtsu=0;
+        meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
         vector<uint8_t> intvec;
         getVec(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], intvec);
         if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
@@ -322,93 +420,13 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
         FocusScore_vec.append(focusscore);
 
         // Get Otsu threshold
-        double var_max, sum, sumB, q1, q2, u1, u2, sigma2, ThreshOtsu;
-        var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = ThreshOtsu = 0;
-        for(int i=0; i<tmphist.size(); i++)
-        {
-            sum += i*double(tmphist.at(i));
-        }
-        for(int t=0; t<tmphist.size(); t++)
-        {
-            q1 += double(tmphist.at(t));
-            if(q1>0)
-            {
-                q2 = sz[0]*sz[1]*sz[2]-q1;
-                sumB += t*double(tmphist.at(t));
-                u1 = sumB/q1;
-                u2 = (sum-sumB)/q2;
-                sigma2 = q1*q2*(u1-u2)*(u1-u2);
-                if(sigma2 > var_max)
-                {
-                    ThreshOtsu = t;
-                    var_max =sigma2;
-                }
-            }
-        }
+        getOtsu(tmphist, sz[0], sz[1], sz[3], ThreshOtsu);
         cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
         ThreshOtsu_vec.append(ThreshOtsu);
 
         // Get SNR and CNR using mean intensity and Otsu as threshold for background
-        double SNRmean,CNRmean,SNRotsu,CNRotsu;
-
-        vector<uint8_t> otsunoise;//,otsusignal;
-        double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
-        meanotsunoise=meanotsusignal=stdevotsu=0;
-        vector<uint8_t> meannoise;//,meansignal;
-        double avmeannoise,avmeansignal,stdevmean;
-        avmeannoise=avmeansignal=stdevmean=0;
-        for(int i=0; i<sz[0]*sz[1]*sz[2]; i++)
-        {
-            if(intvec.at(i)<=ThreshOtsu)
-            {
-                otsunoise.push_back(intvec.at(i));
-                meanotsunoise += intvec.at(i);
-            }
-            else
-            {
-                //otsusignal.push_back(intvec.at(i));
-                meanotsusignal += intvec.at(i);
-            }
-
-            if(intvec.at(i)<=round(meanint))
-            {
-                meannoise.push_back(intvec.at(i));
-                avmeannoise += intvec.at(i);
-            }
-            else
-            {
-                //meansignal.push_back(intvec.at(i));
-                avmeansignal += intvec.at(i);
-            }
-        }
-        meanotsunoise = meanotsunoise/otsunoise.size();
-        meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
-        for (V3DLONG i=0;i<otsunoise.size();i++)
-        {
-            stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
-        }
-        stdevotsu /= otsunoise.size();
-        stdevotsu = sqrt(stdevotsu);
-//        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
-//        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
-
-        avmeannoise = avmeannoise/meannoise.size();
-        avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
-        for (V3DLONG i=0;i<meannoise.size();i++)
-        {
-            stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
-        }
-        stdevmean /= meannoise.size();
-        stdevmean = sqrt(stdevmean);
-        /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
-        stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
-
-        //SNRmean = avmeansignal/stdevmean;
-        SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
-        CNRmean = (maxint-meanint)/stdevmean;
-        //SNRotsu = meanotsusignal/stdevotsu;
-        SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
-        CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+        V3DLONG mysize = sz[0]*sz[1]*sz[2];
+        getSNRCNR(mysize, intvec, meanint, maxint, ThreshOtsu, SNRmean, SNRotsu, CNRmean, CNRotsu);
 
         SNRmean_vec.append(SNRmean);
         CNRmean_vec.append(CNRmean);
@@ -678,10 +696,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
         if (inlist->size()==1 && inimg1d) {delete []inimg1d; inimg1d=NULL;}
 
         cout << "\nComputing statistics\n";
-        int  maxint,minint;
-        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore,ThreshOtsu,SNRmean,CNRmean,SNRotsu,CNRotsu;
-        maxint=minint=0;
-        meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=ThreshOtsu=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
+        int  maxint,minint,ThreshOtsu;
+        double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore,SNRmean,CNRmean,SNRotsu,CNRotsu;
+        maxint=minint=ThreshOtsu=0;
+        meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
         if(nChannel == 1 && neuron.size()>1)
         {
             //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
@@ -706,96 +724,12 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             FocusScore_vec.append(focusscore);
 
             // Get Otsu threshold
-            double var_max, sum, sumB, q1, q2, u1, u2, sigma2;
-            var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = 0;
-            for(int i=0; i<tmphist.size(); i++)
-            {
-                sum = sum + i*double(tmphist.at(i));
-            }
-            for(int t=0; t<tmphist.size(); t++)
-            {
-                q1 = q1 + double(tmphist.at(t));
-                //cout << q1 << " ";
-                if(q1>0)
-                {
-                    q2 = sz[0]*sz[1]*sz[2]-q1;
-                    //cout << q2 << " ";
-                    sumB = sumB + double(t)*double(tmphist.at(t));
-                    u1 = sumB/q1;
-                    //cout << u1 << " ";
-                    u2 = (sum-sumB)/q2;
-                    sigma2 = q1*q2*(u1-u2)*(u1-u2);
-                    if(sigma2 > var_max)
-                    {
-                        ThreshOtsu = t;
-                        var_max =sigma2;
-                    }
-                }
-            }
+            getOtsu(tmphist, sz[0], sz[1], sz[3], ThreshOtsu);
             cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
             ThreshOtsu_vec.append(ThreshOtsu);
 
             // Get SNR and CNR using mean intensity and Otsu as threshold for background
-            vector<uint8_t> otsunoise;//,otsusignal;
-            double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
-            meanotsunoise=meanotsusignal=stdevotsu=0;
-            vector<uint8_t> meannoise;//,meansignal;
-            double avmeannoise,avmeansignal,stdevmean;
-            avmeannoise=avmeansignal=stdevmean=0;
-            for(int i=0; i<mysize; i++)
-            {
-                if(intvec.at(i)<=ThreshOtsu)
-                {
-                    otsunoise.push_back(intvec.at(i));
-                    meanotsunoise += intvec.at(i);
-                }
-                else
-                {
-                    //otsusignal.push_back(intvec.at(i));
-                    meanotsusignal += intvec.at(i);
-                }
-
-                if(intvec.at(i)<=round(meanint))
-                {
-                    meannoise.push_back(intvec.at(i));
-                    avmeannoise += intvec.at(i);
-                }
-                else
-                {
-                    //meansignal.push_back(intvec.at(i));
-                    avmeansignal += intvec.at(i);
-                }
-            }
-            meanotsunoise = meanotsunoise/otsunoise.size();
-            meanotsusignal = meanotsusignal/(intvec.size() - otsunoise.size());
-            for (V3DLONG i=0;i<otsunoise.size();i++)
-            {
-                stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
-            }
-            stdevotsu /= otsunoise.size();
-            stdevotsu = sqrt(stdevotsu);
-    //        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
-    //        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
-
-            avmeannoise = avmeannoise/meannoise.size();
-            avmeansignal = avmeansignal/(intvec.size() - meannoise.size());
-            for (V3DLONG i=0;i<meannoise.size();i++)
-            {
-                stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
-            }
-            stdevmean /= meannoise.size();
-            stdevmean = sqrt(stdevmean);
-            /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
-            stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
-
-            //SNRmean = avmeansignal/stdevmean;
-            cout << "avemeansignal: " << avmeansignal << "\n";
-            cout << "meanint: " << meanint << "\n";
-            SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
-            CNRmean = (maxint-meanint)/stdevmean;
-            //SNRotsu = meanotsusignal/stdevotsu;
-            SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
-            CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+            getSNRCNR(mysize, intvec, meanint, maxint, ThreshOtsu, SNRmean, SNRotsu, CNRmean, CNRotsu);
 
             SNRmean_vec.append(SNRmean);
             CNRmean_vec.append(CNRmean);
@@ -813,8 +747,8 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
             {
                 //int  maxint,minint;
                 //double meanint,medianint,madint,stdevint,pcmin,pcmax,focusscore;
-                maxint=minint=0;
-                meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=ThreshOtsu=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
+                maxint=minint=ThreshOtsu=0;
+                meanint=medianint=madint=stdevint=pcmin=pcmax=focusscore=SNRmean=CNRmean=SNRotsu=CNRotsu=0;
                 vector<uint8_t> subvec;
 
                 //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
@@ -847,93 +781,13 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 FocusScore_vec.append(focusscore);
 
                 // Get Otsu threshold
-                double var_max, sum, sumB, q1, q2, u1, u2, sigma2;
-                var_max = sum = sumB = q1 = q2 = u1 = u2 = sigma2 = 0;
-                for(int i=0; i<tmphist.size(); i++)
-                {
-                    sum += i*tmphist.at(i);
-                }
-                for(int t=0; t<tmphist.size(); t++)
-                {
-                    q1 += tmphist.at(t);
-                    if(q1>0)
-                    {
-                        q2 = sz[0]*sz[1]*sz[2]-q1;
-                        sumB += t*tmphist.at(t);
-                        u1 = sumB/q1;
-                        u2 = (sum-sumB)/q2;
-                        sigma2 = q1*q2*(u1-u2)*(u1-u2);
-                        if(sigma2 > var_max)
-                        {
-                            ThreshOtsu = t;
-                            var_max =sigma2;
-                        }
-                    }
-                }
+                getOtsu(tmphist, sz[0], sz[1], sz[3], ThreshOtsu);
                 cout << "Otsu threshold:\t" << ThreshOtsu << "\n";
                 ThreshOtsu_vec.append(ThreshOtsu);
 
                 // Get SNR and CNR using mean intensity and Otsu as threshold for background
                 //double SNRmean,CNRmean,SNRotsu,CNRotsu;
-
-                vector<uint8_t> otsunoise;//,otsusignal;
-                double meanotsunoise,meanotsusignal,stdevotsu;//,sqsum;
-                meanotsunoise=meanotsusignal=stdevotsu=0;
-                vector<uint8_t> meannoise;//,meansignal;
-                double avmeannoise,avmeansignal,stdevmean;
-                avmeannoise=avmeansignal=stdevmean=0;
-                for(int i=0; i<mysize; i++)
-                {
-                    if(subvec.at(i)<=ThreshOtsu)
-                    {
-                        otsunoise.push_back(subvec.at(i));
-                        meanotsunoise += (double)subvec.at(i);
-                    }
-                    else
-                    {
-                        //otsusignal.push_back(intvec.at(i));
-                        meanotsusignal += (double)subvec.at(i);
-                    }
-
-                    if(subvec.at(i)<=round(meanint))
-                    {
-                        meannoise.push_back(subvec.at(i));
-                        avmeannoise += (double)subvec.at(i);
-                    }
-                    else
-                    {
-                        //meansignal.push_back(intvec.at(i));
-                        avmeansignal += (double)subvec.at(i);
-                    }
-                }
-                meanotsunoise = meanotsunoise/(double)otsunoise.size();
-                meanotsusignal = meanotsusignal/((double)subvec.size() - (double)otsunoise.size());
-                for (V3DLONG i=0;i<otsunoise.size();i++)
-                {
-                    stdevotsu += (otsunoise.at(i) - meanotsunoise)*(otsunoise.at(i) - meanotsunoise);
-                }
-                stdevotsu /= otsunoise.size();
-                stdevotsu = sqrt(stdevotsu);
-        //        sqsum = inner_product(otsunoise.begin(),otsunoise.end(),otsunoise.begin(),0);
-        //        stdevotsu = sqrt(sqsum/sz[0]*sz[1]*sz[2] - meanotsunoise*meanotsunoise);
-
-                avmeannoise = avmeannoise/(double)meannoise.size();
-                avmeansignal = avmeansignal/((double)subvec.size() - (double)meannoise.size());
-                for (V3DLONG i=0;i<meannoise.size();i++)
-                {
-                    stdevmean += (meannoise.at(i) - avmeannoise)*(meannoise.at(i) - avmeannoise);
-                }
-                stdevmean /= meannoise.size();
-                stdevmean = sqrt(stdevmean);
-                /*sqsum = inner_product(meannoise.begin(),meannoise.end(),meannoise.begin(),0);
-                stdevmean = sqrt(sqsum/sz[0]*sz[1]*sz[2] -avmeannoise*avmeannoise);*/
-
-                //SNRmean = avmeansignal/stdevmean;
-                SNRmean = (avmeansignal-meanint)/sqrt(avmeansignal);
-                CNRmean = (maxint-meanint)/stdevmean;
-                //SNRotsu = meanotsusignal/stdevotsu;
-                SNRotsu = (meanotsusignal-ThreshOtsu)/sqrt(meanotsusignal);
-                CNRotsu = (maxint-ThreshOtsu)/stdevotsu;
+                getSNRCNR(mysize, subvec, meanint, maxint, ThreshOtsu, SNRmean, SNRotsu, CNRmean, CNRotsu);
 
                 SNRmean_vec.append(SNRmean);
                 CNRmean_vec.append(CNRmean);

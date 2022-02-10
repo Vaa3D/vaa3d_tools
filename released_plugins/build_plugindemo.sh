@@ -14,7 +14,7 @@
 cd v3d_plugins
  
 QMAKE_CONFIG=
-MAKE_ARGS=
+MAKE_ARGS= -I ../v3d_main/common_lib/include/boost/container/
 MYDIR=
 
 for arg in $*; do
