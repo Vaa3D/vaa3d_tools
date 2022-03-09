@@ -2,7 +2,7 @@
 
 #include "app2.h"
 #include "branchtree.h"
-#include "../../../../v3d_main/neuron_editing/neuron_sim_scores.h"
+#include "../../../../../v3d_external/v3d_main/neuron_editing/neuron_sim_scores.h"
 #include "../../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 #include "../../../released_plugins/v3d_plugins/swc2mask_cylinder/src/swc2mask.h"

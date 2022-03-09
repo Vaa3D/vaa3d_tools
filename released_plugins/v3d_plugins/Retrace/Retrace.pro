@@ -28,10 +28,12 @@ macx{
 }
 
 win32{
+    DEFINES += WIN32
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/mingw -lv3dnewmat
 }
 
 unix:!macx {
+    DEFINES += WIN32
     LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 }
 

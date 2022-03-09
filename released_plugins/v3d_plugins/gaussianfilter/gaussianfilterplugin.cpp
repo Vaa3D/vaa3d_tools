@@ -15,7 +15,6 @@
 #include <QDialog>
 #include "v3d_message.h"
 #include "stackutil.h"
-
 #include "gaussianfilterplugin.h"
 
 using namespace std;
@@ -226,13 +225,39 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 
+
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
      new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
+     //ljs,dlc,csz
+     //给terafly cViewer 的imgdata
+
+    const Image4DSimple *newTerafly4dImage = callback.getImageTeraFly();
+
+    const unsigned char *temp = newTerafly4dImage->getRawData();//获取data1d
+
+
+    qDebug()<<"-------------------jazz";
+    qDebug()<<temp;
+    qDebug()<<"-------------------jazz";
+    //把temp放进CViewer::setImageData里
+
+    temp = new4DImage->getRawData();
+    qDebug()<<temp;
+    //callback.putDataToCViewer(temp,&callback);
+
+
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
+
      callback.updateImageWindow(newwin);
+
+     callback.pushImageToTeraWin(newwin);
+
+
+
+
 	return;
 }
 

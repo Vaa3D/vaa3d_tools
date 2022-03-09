@@ -1,6 +1,8 @@
 #define byte win_byte_override
+#ifdef WIN32
 #include <Windows.h>
 #include <gdiplus.h>
+#endif
 #undef byte
 #include "judgebranch.h"
 
