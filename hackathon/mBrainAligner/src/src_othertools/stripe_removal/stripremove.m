@@ -5,6 +5,7 @@ function main
 clc
 clear all
 close all
+addpath('./matlab_io_basicdatatype');
 
 foldername_input='../../../examples/subject/';
 foldername_output='../../../examples/subject_stripe_removal_result/';
