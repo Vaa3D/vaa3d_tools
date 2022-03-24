@@ -296,7 +296,8 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
         points[i].y /= 8;
         points[i].z /= 8;
     }
-
+    V3DLONG *in_zz=0;
+    callback.getDimTeraFly(current_braindir.toStdString().c_str(),in_zz);
     for(int i=0; i<3; ++i)
     {
         for(V3DLONG j=0; j<points.size(); ++j)
@@ -316,7 +317,12 @@ bool Branch::refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPlugi
             z1 = (z1<points[j].z) ? points[j].z : z1;
         }
         x0 -= 10, x1 += 10, y0 -= 10, y1 += 10, z0 -= 10, z1 += 10;
-
+        if(x0<=0){x0=1;}
+        if(x1>=in_zz[0]){x1=in_zz[0]-1;}
+        if(y0<=0){y0=1;}
+        if(y1>=in_zz[1]){y1=in_zz[1]-1;}
+        if(z0<=0){z0=1;}
+        if(z1>=in_zz[2]){z1=in_zz[2]-1;}
         V3DLONG sz0 = x1 - x0, sz1 = y1 - y0, sz2 = z1 - z0;
 
         V3DLONG sz[4] = {sz0,sz1,sz2,1};
@@ -548,6 +554,8 @@ bool Branch::get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronT
         points[i].y /= times;
         points[i].z /= times;
     }
+    V3DLONG *in_zz=0;
+    callback.getDimTeraFly(current_braindir.toStdString().c_str(),in_zz);
     size_t x0 = IN, x1 = 0, y0 = IN, y1 = 0, z0 = IN, z1 = 0;
     for(V3DLONG j=0; j<points.size(); ++j)
     {
@@ -559,7 +567,12 @@ bool Branch::get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronT
         z1 = (z1<points[j].z) ? points[j].z : z1;
     }
     x0 -= 10, x1 += 10, y0 -= 10, y1 += 10, z0 -= 10, z1 += 10;
-
+    if(x0<=0){x0=1;}
+    if(x1>=in_zz[0]){x1=in_zz[0]-1;}
+    if(y0<=0){y0=1;}
+    if(y1>=in_zz[1]){y1=in_zz[1]-1;}
+    if(z0<=0){z0=1;}
+    if(z1>=in_zz[2]){z1=in_zz[2]-1;}
     V3DLONG sz0 = x1 - x0, sz1 = y1 - y0, sz2 = z1 - z0;
 
     unsigned char* pdata = 0;
@@ -706,7 +719,8 @@ bool Branch::refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> 
     qDebug()<<current_braindir;
 
     qDebug()<<"points size: "<<points.size();
-
+    V3DLONG *in_zz=0;
+    callback.getDimTeraFly(current_braindir.toStdString().c_str(),in_zz);
     NeuronTree t;
     for(int i=0; i<points.size(); ++i)
     {
@@ -739,7 +753,12 @@ bool Branch::refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> 
             z1 = (z1<points[j].z) ? points[j].z : z1;
         }
         x0 -= 10, x1 += 10, y0 -= 10, y1 += 10, z0 -= 10, z1 += 10;
-
+        if(x0<=0){x0=1;}
+        if(x1>=in_zz[0]){x1=in_zz[0]-1;}
+        if(y0<=0){y0=1;}
+        if(y1>=in_zz[1]){y1=in_zz[1]-1;}
+        if(z0<=0){z0=1;}
+        if(z1>=in_zz[2]){z1=in_zz[2]-1;}
         qDebug()<<"subvolume: "<<x0<<" "<<x1<<" "<<y0<<" "<<y1<<" "<<z0<<" "<<z1;
 
         V3DLONG sz0 = x1 - x0, sz1 = y1 - y0, sz2 = z1 - z0;
@@ -1989,7 +2008,7 @@ NeuronTree SwcTree::refine_swc_by_bdb(QString braindir, V3DPluginCallback2 &call
 
 NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback)
 {
-    const double thres = 80;
+    const double thres = 50;
 
     NeuronTree refinetree;
 
@@ -2036,7 +2055,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
         branchs[branchindex].get_meanstd(braindir,callback,nt,branchmean,branchstd);
 
         qDebug()<<"branchmean: "<<branchmean;
-
+        //加入branch order的判断  Yiwei Li 2022/1/18
         if((branchs[branchindex].length_to_soma<30||branchs[branchindex].length<80)&&branchs[branchindex].length<300)
         {
             branchs[branchindex].get_points_of_branch(points,nt);
