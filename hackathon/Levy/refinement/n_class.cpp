@@ -871,18 +871,39 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
         qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
         vector<LocationSimple> outpoints;
         this->refine_by_gd(inpoints,outpoints,braindir,callback);
-
         qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
-
         int index = outpoints.size()/2 + gd1_points.size();
         indexs_of_gd2.push_back(index);
         if(i!=(seg_count-1))
         {
-            gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+//            if(outpoints.size()==0)
+//            {
+//                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end()-1);
+//            }
+//            else
+//            {
+//                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+//            }
+
+              if(outpoints.size()>0)
+              {
+                  gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+              }
         }
         else
         {
-            gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+//            if(outpoints.size()==0)
+//            {
+//                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end());
+//            }
+//            else
+//            {
+//                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+//            }
+            if(outpoints.size()>0)
+            {
+                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+            }
         }
 
     }
@@ -906,11 +927,33 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
         qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
         if(i!=(indexs_of_gd2.size()-1))
         {
-            outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end()-1);
+//            if(outpoints.size()==0)
+//            {
+//                outbranch.insert(outbranch.end(),inpoints.begin(),inpoints.end()-1);
+//            }
+//            else
+//            {
+//                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end()-1);
+//            }
+            if(outpoints.size()>0)
+            {
+                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end()-1);
+            }
         }
         else
         {
-            outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end());
+//            if(outpoints.size()==0)
+//            {
+//                outbranch.insert(outbranch.end(),inpoints.begin(),inpoints.end());
+//            }
+//            else
+//            {
+//                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end());
+//            }
+            if(outpoints.size()>0)
+            {
+                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end());
+            }
         }
     }
 
