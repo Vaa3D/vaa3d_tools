@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include "n_class.h"
 #include <algorithm>
 #include <map>
@@ -7638,13 +7637,3 @@ bool Swc_Compare::get_accurate_false_point_image(QString dir, vector<int> &false
     }
     return true;
 }
-
-
-
-
-
-
-
-
-
->>>>>>> 0aa8787cb625ed957b27088423bfe28abed39e44
