@@ -73,3 +73,4 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 	return true;
 }
+

@@ -871,7 +871,9 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
         qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
         vector<LocationSimple> outpoints;
         this->refine_by_gd(inpoints,outpoints,braindir,callback);
+
         qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
+
         int index = outpoints.size()/2 + gd1_points.size();
         indexs_of_gd2.push_back(index);
         if(i!=(seg_count-1))
@@ -905,7 +907,6 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
                 gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
             }
         }
-
     }
 
     qDebug()<<__LINE__<<"index_of_gd size: "<<indexs_of_gd2.size();
@@ -3834,4 +3835,12 @@ bool Swc_Compare::get_accurate_false_point_image(QString dir, vector<int> &false
     }
     return true;
 }
+
+
+
+
+
+
+
+
 

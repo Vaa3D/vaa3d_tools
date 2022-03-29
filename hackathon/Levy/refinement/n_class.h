@@ -250,5 +250,28 @@ public:
 
 };
 
-#endif // N_CLASS_H
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // N_CLASS_H
