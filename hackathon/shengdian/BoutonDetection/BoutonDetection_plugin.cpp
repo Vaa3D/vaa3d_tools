@@ -24,18 +24,19 @@ QStringList BoutonDetectionPlugin::funclist() const
             <<tr("BoutonDetection_terafly")
            <<tr("BoutonDetection_image")
           <<tr("Preprocess")
-          << tr("Refinement_terafly")
-          <<tr("Refinement_image")
+         << tr("Refinement_terafly")
+         <<tr("Refinement_image")
         <<tr("SWC_profile_terafly")
        <<tr("SWC_profile")
-       <<tr("Bouton_filter")
-      << tr("TeraImage_SWC_Crop")
-      <<tr("BoutonSWC_pruning")
-     <<tr("CCF_profile")
+      <<tr("Bouton_filter")
+     << tr("TeraImage_SWC_Crop")
+     <<tr("BoutonSWC_pruning")
+    <<tr("CCF_profile")
     <<tr("Bouton_feature")
     <<tr("FileTo")
     <<tr("UpsampleImage")
-    <<tr("SWC_Analysis")
+    <<tr("Postprocess")
+    << tr("to_swc")
     <<tr("help");
 }
 
@@ -59,7 +60,7 @@ void BoutonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
         }
 
         V3DLONG  in_sz[4];
-        unsigned char* inimg1d = p4DImage->getRawData();
+        unsigned char* inimg1d_raw = p4DImage->getRawData();
 
         in_sz[0] = p4DImage->getXDim();
         in_sz[1] = p4DImage->getYDim();
@@ -67,24 +68,9 @@ void BoutonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
         in_sz[3] = p4DImage->getCDim();
 
         cout<<"Img size,x="<<in_sz[0]<<",y="<<in_sz[1]<<",z="<<in_sz[2]<<endl;
-        long sz01 = in_sz[0] * in_sz[1];
-        long sz0 = in_sz[0];
-        double imgave,imgstd;
-        V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
-        mean_and_std(inimg1d,total_size,imgave,imgstd);
         NeuronTree nt =callback.getSWC(curwin);
-        QList<NeuronSWC>& listNeuron =  nt.listNeuron;
-
         V3DLONG siz = nt.listNeuron.size();
         cout<<"SWC size:"<<siz<<endl;
-//        int max_intensity=1;
-        QHash <int, int>  hashNeuron;
-        hashNeuron.clear();
-        for (V3DLONG i=0;i<siz;i++)
-        {
-            listNeuron[i].level=1;
-            hashNeuron.insert(listNeuron[i].n,i);
-        }
 
         QDialog * dialog = new QDialog();
         QLineEdit * savePath_box = new QLineEdit("");
@@ -109,85 +95,101 @@ void BoutonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
         }
         if(dialog->exec() != QDialog::Accepted) return;
         string save_path = savePath_box->text().toStdString();
-        bool useNeighborArea = useNeighborArea_checkbox->isChecked();
-        int threshold = atof(thresh_box->text().toStdString().c_str());
+//        float threshold = atof(thresh_box->text().toStdString().c_str());
         QString savepath=QString::fromStdString(save_path);
         QDir path(savepath);
         if(!path.exists())
-        {
             path.mkpath(savepath);
-        }
+        if(loop_checking(nt)){return;}
+        NeuronTree nt_pre=preprocess_simple(nt);
+        NeuronTree nt_interpolated=node_interpolation(nt_pre,4,true);
+        cout<<"get radius and intensity profile from image block"<<endl;
+        QList<NeuronSWC>& listNeuron =  nt_interpolated.listNeuron;
 
-        for(V3DLONG i=0;i<siz;i++)
+        //get the background threshold
+        V3DLONG sz01 = in_sz[0] * in_sz[1];
+        V3DLONG sz0 = in_sz[0];
+        V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+
+        /*image enhancement*/
+        unsigned char * inimg1d = 0;
+        try {inimg1d = new unsigned char [total_size];}
+        catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
+
+        if(!enhanceImage(inimg1d_raw,inimg1d,in_sz))
         {
-            NeuronSWC s = listNeuron[i];
-            if(listNeuron[i].level==1)
+            cout<<"adaptive thresholding and enhancement fail"<<endl;
+            inimg1d_raw = p4DImage->getRawData();
+            double imgave,imgstd;
+            mean_and_std(inimg1d_raw,total_size,imgave,imgstd);
+            double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
+            cout<<"bkg thresh="<<bkg_thresh<<","<<imgave<<","<<imgstd<<endl;
+
+            for(V3DLONG i=0;i<siz;i++)
             {
-
-                int thisx,thisy,thisz;
-                thisx=s.x;
-                thisy=s.y;
-                thisz=s.z;
-
-                if(useNeighborArea)
-                {
-                    listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                    NeuronSWC out=nodeRefine(inimg1d,listNeuron.at(i),in_sz);
-                    if(listNeuron[i].level+imgave+imgstd<out.level)
-                    {
-                        cout<<"update intensity:old="<<listNeuron[i].level<<";New="<<out.level<<endl;
-                        cout<<"Distance changes:x="<<(listNeuron[i].x-out.x)<<";y="<<(listNeuron[i].y-out.y)<<";z="<<(listNeuron[i].z-out.z)<<endl;
-                        listNeuron[i].level=out.level;
-                        listNeuron[i].x=out.x;
-                        listNeuron[i].y=out.y;
-                        listNeuron[i].z=out.z;
-                    }
-                }
-                else
-                {
-                    listNeuron[i].level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                    float childIntensity=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
-                    //get their parent node intensity
-
-                    if(s.parent>0)
-                    {
-                        long pid=hashNeuron.value(s.parent);
-                        NeuronSWC sp=listNeuron[pid];
-                        //consider the distance of child-parent node
-                        float distanceThre=5;
-                        float child_parent_distance=(sp.x-s.x)*(sp.x-s.x)+(sp.y-s.y)*(sp.y-s.y)+(sp.z-s.z)*(sp.z-s.z);
-                        if(child_parent_distance<distanceThre*distanceThre)
-                        {
-
-                            NeuronSWC sm;
-                            sm.x=(sp.x-s.x)/2+s.x;
-                            sm.y=(sp.y-s.y)/2+s.y;
-                            sm.z=(sp.z-s.z)/2+s.z;
-                            float parentIntensity=inimg1d[int(sp.z) * sz01 + int(sp.y) * sz0 + int(sp.x)];
-                            float middleIntensity=inimg1d[int(sm.z) * sz01 + int(sm.y) * sz0 + int(sm.x)];
-                            //this may need another threshold
-                            int updateThre=10;
-                            if((middleIntensity-childIntensity>updateThre)&&(middleIntensity-parentIntensity>updateThre))
-                            {
-                                cout<<"update child intensity:old = "<<childIntensity<<";New="<<middleIntensity<<". this node id:"<<s.n<<endl;
-
-                                //                    update child node Intensity
-                                listNeuron[i].level=middleIntensity;
-                            }
-                        }
-                    }
-
-                }
+                //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+                NeuronSWC s = listNeuron.at(i);
+                V3DLONG thisx,thisy,thisz;
+                thisx=s.x;thisy=s.y;thisz=s.z;
+                s.level=inimg1d_raw[thisz * sz01 + thisy * sz0 + thisx];
+                //get node radius
+                s.r=radiusEstimation(inimg1d_raw,in_sz,s,4,bkg_thresh);
+                s.timestamp=bkg_thresh;
+                listNeuron[i].level=s.level;
+                listNeuron[i].x=s.x;
+                listNeuron[i].y=s.y;
+                listNeuron[i].z=s.z;
+                listNeuron[i].r=s.r;
             }
         }
-//        getNodeRadius(inimg1d,in_sz,nt);
-        QString outswc_file =savepath+"/"+"IntensityResult_original.eswc";
-        writeESWC_file(outswc_file,nt);
-        QList <CellAPO> apolist=boutonFilter_1D(nt);
+        else
+        {
+            cout<<"adaptive thresholding and enhancement"<<endl;
+            double imgave,imgstd;
+            mean_and_std(inimg1d,total_size,imgave,imgstd);
+            double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
+            cout<<"bkg thresh="<<bkg_thresh<<","<<imgave<<","<<imgstd<<endl;
+
+            for(V3DLONG i=0;i<siz;i++)
+            {
+                //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+                NeuronSWC s = listNeuron.at(i);
+                V3DLONG thisx,thisy,thisz;
+                thisx=s.x;thisy=s.y;thisz=s.z;
+                s.level=inimg1d[thisz * sz01 + thisy * sz0 + thisx];
+                //get node radius
+                s.r=radiusEstimation(inimg1d,in_sz,s,4,bkg_thresh);
+                s.timestamp=bkg_thresh;
+                listNeuron[i].level=s.level;
+                listNeuron[i].x=s.x;
+                listNeuron[i].y=s.y;
+                listNeuron[i].z=s.z;
+                listNeuron[i].r=s.r;
+            }
+        }
+
+        NeuronTree nt_profiled=internode_pruning(nt_interpolated,2,true);
+         cout<<"end of getting intensity and radius profile"<<endl;
+
+         //3. get initial bouton-sites and out to list of NeuronSWC
+          QList <AxonalBouton> init_bouton_sites=boutonFilter_fun(nt_profiled,1.5,1.0,1.5);
+          if(!init_bouton_sites.size()) {return;}
+          //map bouton-sites to swc, enlarge fea_val size to 12
+          map_bouton_2_neuronTree(nt_profiled,init_bouton_sites);
+
+          //4. filter and pruning
+          float min_bouton_dist=8.0;
+          nearBouton_pruning(nt_profiled,min_bouton_dist,false);
+
+        QString outswc_file =savepath+"/"+"bouton.eswc";
+        writeESWC_file(outswc_file,nt_profiled);
+
+        QList<CellAPO> apolist=bouton_to_apo(nt_profiled);
         QString apo_file_path = savepath +"/"+ "bouton.apo";
         writeAPO_file(apo_file_path,apolist);
+        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
-        callback.setSWC(curwin,nt);
+        callback.setSWC(curwin,nt_profiled);
 	}
 	else
 	{
@@ -251,44 +253,9 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         preprocess_dofunc(callback,input,output);
     }
-    else if (func_name == tr("SWC_Analysis"))
+    else if (func_name == tr("Postprocess"))
     {
-        string inswc_file;
-        if(infiles.size()>=1) {inswc_file = infiles[0];}
-        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-        if(!nt.listNeuron.size()) return false;
-         V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt);
-         cout<<"seg list size: "<<nt_nslist.seg.size()<<endl;
-          string filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_statistics.csv");
-         QFile tofile(QString::fromStdString(filename));
-         if(tofile.exists())
-             cout<<"File overwrite to "<<filename<<endl;
-         QString confTitle="nodes,mean,std\n";
-         if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
-         {
-              tofile.write(confTitle.toAscii());
-         }
-         for(int i=0;i<nt_nslist.seg.size();i++){
-             V_NeuronSWC curseg=nt_nslist.seg.at(i);
-             vector<double> seg_levels; seg_levels.clear();
-             seg_levels=get_sorted_fea_of_seg(curseg);
-             long seg_nodes=seg_levels.size();
-             int seg_level_mean=0;
-             for(int j=0;j<seg_nodes;j++){
-                 seg_level_mean+=seg_levels[j];
-             }
-             seg_level_mean/=seg_nodes;
-             int seg_level_std=0;
-             for(int j=0;j<seg_nodes;j++){
-                 seg_level_std+=(seg_levels[j]-seg_level_mean)*(seg_levels[j]-seg_level_mean);
-             }
-             seg_level_std/=seg_nodes;             seg_level_std=sqrt(seg_level_std);
-             QString outline=(QString::number(seg_nodes)+","
-                              +QString::number(seg_level_mean)+","
-                              +QString::number(seg_level_std)+"\n");
-             tofile.write(outline.toAscii());
-         }
-         tofile.close();
+        postprocess_dofunc(callback,input,output);
     }
     else if (func_name == tr("UpsampleImage"))
     {
@@ -341,6 +308,19 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         else
             printHelp();
         return true;
+    }
+    else if (func_name == tr("to_swc"))
+    {
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        NeuronTree nt = readSWC_file(inswc_file);
+        if(!nt.listNeuron.size()) return false;
+        int level_2_type=(inparas.size()>=1)?atoi(inparas[0]):0;
+        if(level_2_type>0)
+            for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+                nt.listNeuron[i].type=nt.listNeuron.at(i).level;
+        QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out.swc");
+        writeSWC_file(out_swc_file,nt);
     }
     else if (func_name == tr("TeraImage_SWC_Crop"))
     {

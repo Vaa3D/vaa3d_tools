@@ -2,6 +2,7 @@
 #define NEURONBRANCHTREE_H
 #include "basic_surf_objs.h"
 #include <vector>
+#include "v_neuronswc.h"
 #include <iostream>
 using namespace std;
 template<typename T>
@@ -111,4 +112,5 @@ V3DLONG get_soma(NeuronTree& nt,bool connect=false);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
+
 #endif // NEURONBRANCHTREE_H

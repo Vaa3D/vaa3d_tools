@@ -33,6 +33,7 @@ QStringList UnsortedPlugin::funclist() const
       <<tr("renderingSWC")
      <<tr("SomaRefinement")
     <<tr("somaBlockCrop")
+    <<tr("Seg_Connection_Turn_over")
     <<tr("MIP_Zslices")
     <<tr("multi_stems")
     <<tr("get_soma_apo")
@@ -118,6 +119,21 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
              }
         }
         writeESWC_file(QString::fromStdString(out_swc_file),outswc);
+        return true;
+    }
+    else if (func_name==tr("Seg_Connection_Turn_over"))
+    {
+        /*this fun will combine swc files in one dir*/
+        if (input.size() < 1) return false;
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_result.eswc");
+        long index_b=(inparas.size()>=1)?atoi(inparas[0]):1;
+        long index_old_root=(inparas.size()>=2)?atoi(inparas[1]):1;
+        long index_bp=(inparas.size()>=3)?atoi(inparas[2]):index_b;
+        NeuronTree outswc;
+
+        writeESWC_file(out_swc_file,outswc);
         return true;
     }
     else if (func_name==tr("mask_img_from_swc"))
