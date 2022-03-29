@@ -556,11 +556,12 @@ bool getNodeOrder(NeuronTree nt,vector<int> & norder)
      * PS: neuron tree must have only one soma node
     */
     V3DLONG siz=nt.listNeuron.size(); if(!siz) { return false;}
-    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
 
     QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
     V3DLONG somaid=get_soma(nt);
-    if(somaid<0){return false;}
+    if(somaid<0){cout<<"no soma"<<endl;return false;}
+    cout<<"Soma index="<<somaid<<endl;
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
@@ -1267,3 +1268,4 @@ NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size)
     qDebug()<<"Finished smoothing process";
     return nt_out;
 }
+

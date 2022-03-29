@@ -659,7 +659,7 @@ NeuronTree to_topology_tree(NeuronTree nt)
      * 3. reindex
      * 3. save
     */
-    NeuronTree nt_out;nt_out.listNeuron.clear();nt_out.hashNeuron.clear();
+    NeuronTree nt_out;
     if(!nt.listNeuron.size())
         return nt_out;
     V3DLONG siz=nt.listNeuron.size();

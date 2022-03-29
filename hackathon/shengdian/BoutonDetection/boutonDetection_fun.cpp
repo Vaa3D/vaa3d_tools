@@ -543,10 +543,12 @@ void refinement_Image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuron
     unsigned char * inimg1d = 0;
     try {inimg1d = new unsigned char [total_size];}
     catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-    enhanceImage(inimg1d_raw,inimg1d,in_sz,true);
-    if(inimg1d==NULL/*true*/)
+
+    if(!enhanceImage(inimg1d_raw,inimg1d,in_sz,false))
     {
         cout<<"adaptive thresholding and enhancement fail"<<endl;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d_raw, in_sz, datatype)) return;
+
         double imgave,imgstd;
         mean_and_std(inimg1d_raw,total_size,imgave,imgstd);
         double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
@@ -576,12 +578,11 @@ void refinement_Image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuron
             listNeuron[i].z=out.z;
             listNeuron[i].level=bkg_thresh;
         }
-        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
+
     }
     else
     {
         cout<<"adaptive thresholding and enhancement finished"<<endl;
-        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
         double imgave,imgstd;
         mean_and_std(inimg1d,total_size,imgave,imgstd);
         double bkg_thresh=MIN(MAX(imgave+imgstd+15,30),60);
@@ -606,8 +607,10 @@ void refinement_Image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuron
             listNeuron[i].level=bkg_thresh;
         }
        cout<<"Refine finished"<<endl;
-       if(inimg1d) {delete []inimg1d; inimg1d=0;}
+
     }
+    if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
 }
 NeuronSWC calc_mean_shift_center_v5(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius,int windowradius_limit)
 {
@@ -1304,10 +1307,11 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
     unsigned char * inimg1d = 0;
     try {inimg1d = new unsigned char [total_size];}
     catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
-    enhanceImage(inimg1d_raw,inimg1d,in_sz);
-    if(inimg1d==NULL)
+
+    if(!enhanceImage(inimg1d_raw,inimg1d,in_sz))
     {
         cout<<"adaptive thresholding and enhancement fail"<<endl;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d_raw, in_sz, datatype)) return;
         double imgave,imgstd;
         mean_and_std(inimg1d_raw,total_size,imgave,imgstd);
         double bkg_thresh=MIN(MAX(imgave+imgstd+bkg_bias,30),60);
@@ -1329,12 +1333,10 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
             listNeuron[i].z=s.z;
             listNeuron[i].r=s.r;
         }
-        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
     }
     else
     {
         cout<<"adaptive thresholding and enhancement"<<endl;
-        if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
 
         double imgave,imgstd;
         mean_and_std(inimg1d,total_size,imgave,imgstd);
@@ -1357,8 +1359,9 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
             listNeuron[i].z=s.z;
             listNeuron[i].r=s.r;
         }
-        if(inimg1d) {delete []inimg1d; inimg1d=0;}
     }
+    if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
 }
 //ccf profile
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
@@ -1380,37 +1383,13 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     if(!nt.listNeuron.size()||
             !nt_registered.listNeuron.size()||
             nt.listNeuron.size()!=nt_registered.listNeuron.size())
+    {
+        cout<<"size not match. "<<nt.listNeuron.size()<<" and "<<nt_registered.listNeuron.size()<<endl;
         return;
+    }
     QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(in_raw_swc_file + "_ccfprofiled.eswc");
     scale_registered_swc(nt_registered,shift_pixels,scale_para);
     merge_registered_swc_onto_raw(nt,nt_registered);
-    //remove this part later
-//    if(!three_bifurcation_processing(nt_raw)){return;}
-//    NeuronTree nt_2nd=tip_branch_pruning(nt_raw,4.0);
-//    NeuronTree nt_3=duplicated_tip_branch_pruning(nt_2nd,10);
-//    NeuronTree nt=reindexNT(nt_3);
-    if(true){
-        //smooth very large radius
-        float radius_thre=8.0;
-        for(V3DLONG i=0;i<nt.listNeuron.size();i++){
-            NeuronSWC s=nt.listNeuron.at(i);
-            if(s.pn<0||!nt.hashNeuron.contains(s.pn)){continue;}
-            if(s.r>radius_thre){
-                V3DLONG spn_id=nt.hashNeuron.value(s.pn);
-                NeuronSWC spn=nt.listNeuron.at(spn_id);
-                while(true)
-                {
-                    if(spn.r<radius_thre){nt.listNeuron[i].r=spn.r;break;}
-                    s=spn;
-                    if(s.pn<0||!nt.hashNeuron.contains(s.pn)){
-                        nt.listNeuron[i].r=1;break;
-                    }
-                    spn_id=nt.hashNeuron.value(s.pn);
-                    spn=nt.listNeuron.at(spn_id);
-                }
-            }
-        }
-    }
     writeESWC_file(out_nt_filename,nt);
 }
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered){
@@ -1455,89 +1434,30 @@ void boutonFilter_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList &
     //read para list
     double radius_delta=(inparas.size()>=1)?atof(inparas[0]):1.5;
     double intensity_delta=(inparas.size()>=2)?atof(inparas[1]):1.5;
-    double axon_trunk_radius=(inparas.size()>=3)?atof(inparas[2]):2;
+    double axon_trunk_radius=(inparas.size()>=3)?atof(inparas[2]):1.5;
 
     //read input swc to neuron-tree
    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
    if(!nt.listNeuron.size()) return;
-
     QList <AxonalBouton> init_bouton_sites=boutonFilter_fun(nt,radius_delta,intensity_delta,axon_trunk_radius);
-    if(!init_bouton_sites.size()) {return;}
+    if(!init_bouton_sites.size()) {cout<<"No detected bouton in "<<inswc_file<<endl;return;}
     //map bouton-sites to swc, enlarge fea_val size to 12
     map_bouton_2_neuronTree(nt,init_bouton_sites);
     QString out_bouton_swc_file=(outfiles.size()>=1)?outfiles[0]:(QString::fromStdString(inswc_file)+"_bouton.eswc");
     writeESWC_file(out_bouton_swc_file,nt);
 }
-QList <CellAPO> boutonFilter_1D(NeuronTree nt,double radius_delta,double intensity_delta,double AXON_BACKBONE_RADIUS){
-
-    int MIN_PROCESSED_SEG_LEN=7;
-    QList <CellAPO> apolist;apolist.clear();
-    //4 feature extraction
-    V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt);
-    cout<<"segment size="<<nt_nslist.seg.size()<<endl;
-    for(int i=0;i<nt_nslist.seg.size();i++)
-    {
-        V_NeuronSWC curseg=nt_nslist.seg.at(i);
-
-        //4.1 peak detection of radius profile
-        vector<double> seg_radius,seg_radius_feas;
-        seg_radius.clear(); seg_radius_feas.clear();
-        seg_radius=get_sorted_fea_of_seg(curseg,true);
-
-        seg_radius_feas=mean_and_std_seg_fea(seg_radius);
-        double radius_mean=seg_radius_feas[0];
-        double radius_std=seg_radius_feas[1];
-//        double radius_delta=1;
-//        if(curseg.row.size()>MIN_PROCESSED_SEG_LEN)
-//            radius_delta=1.3;
-        if(radius_mean>AXON_BACKBONE_RADIUS)
-            radius_delta=2;
-        else if(radius_mean<2)
-            radius_delta=1;
-        double bouton_radius_thre=radius_mean*radius_delta+radius_std*0;
-//        cout<<"Min bouton radius "<<bouton_radius_thre<<endl;
-//        cout<<"Radius change std "<<radius_std<<endl;
-        std::vector<int> outflag_radius=peaks_in_seg(seg_radius,1,0.05*radius_std);
-
-        //4.2 peak detection of intensity profile
-        vector<double> seg_levels,seg_levels_feas;
-        seg_levels.clear(); seg_levels_feas.clear();
-        seg_levels=get_sorted_fea_of_seg(curseg,false);
-
-        seg_levels_feas=mean_and_std_seg_fea(seg_levels);
-        double level_mean=seg_levels_feas[0];
-        double level_std=seg_levels_feas[1];
-        double bouton_intensity_thre=(curseg.row.size()>MIN_PROCESSED_SEG_LEN)
-                ?(level_mean+intensity_delta*level_std):level_mean;
-        std::vector<int> outflag_level=peaks_in_seg(seg_levels,0,0.05*level_std);
-        //4.3 processed
-        for(int io=0;io<curseg.row.size();io++){
-            if(outflag_level[io]>0&&
-                    outflag_radius[io]>0&&
-                    curseg.row[io].r>bouton_radius_thre&&
-                     curseg.row[io].r<6
-                    &&curseg.row[io].level>bouton_intensity_thre){
-                CellAPO apo;
-                apo.n=apolist.size()+1;
-                apo.x=curseg.row[io].x; apo.y=curseg.row[io].y; apo.z=curseg.row[io].z;
-                apo.volsize=curseg.row[io].r;
-                apo.intensity=curseg.row[io].level; //intensity value
-                apo.color.r=0; apo.color.g=20; apo.color.b=200;
-                apo.sdev=radius_mean;
-                apo.mass=level_mean;
-                apo.comment="bouton_site";
-                apolist.push_back(apo);
-            }
-        }
-    }
-    cout<<"Bouton size: "<<apolist.size()<<endl;
-    return apolist;
-}
-
 QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double intensity_delta,double AXON_BACKBONE_RADIUS){
 
-    int MIN_PROCESSED_SEG_LEN=20; int MAX_PROCESSED_SEG_LEN=100;
-    QList <AxonalBouton> bouton_sites;bouton_sites.clear();
+    /*1. neuron to branch list
+     * for each branch:
+            *radius and intensity list
+            * peak detection
+            * merge and filter
+    */
+    int MIN_PROCESSED_SEG_LEN=30; int MAX_PROCESSED_SEG_LEN=500;
+
+    QList <AxonalBouton> bouton_sites;
+    bouton_sites.clear();
     //4 feature extraction
     V_NeuronSWC_list nt_nslist=NeuronTree__2__V_NeuronSWC_list(nt);
     cout<<"segment size="<<nt_nslist.seg.size()<<endl;
@@ -1545,31 +1465,31 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
     {
         V_NeuronSWC curseg=nt_nslist.seg.at(i);
 
-        //4.1 peak detection of radius profile
+        //peak detection of radius profile
         vector<double> seg_radius,seg_radius_feas;
         seg_radius.clear(); seg_radius_feas.clear();
         seg_radius=get_sorted_fea_of_seg(curseg,true);
-
         seg_radius_feas=mean_and_std_seg_fea(seg_radius);
         double radius_mean=seg_radius_feas[0];
         double radius_std=seg_radius_feas[1];
         double bouton_radius_thre=radius_mean*
-                ((radius_delta>AXON_BACKBONE_RADIUS)?(radius_delta+1):radius_delta);
+                ((radius_mean>AXON_BACKBONE_RADIUS)?(radius_delta+1):radius_delta);
+        bouton_radius_thre=radius_mean*
+                        ((MAX_PROCESSED_SEG_LEN<curseg.row.size())?(radius_delta+2):radius_delta);
         bouton_radius_thre=MIN(MAX(bouton_radius_thre,0.49),8);
 
         std::vector<int> outflag_radius=peaks_in_seg(seg_radius,1,0.01*radius_std);
 
-        //4.2 peak detection of intensity profile
+        //peak detection of intensity profile
         vector<double> seg_levels,seg_levels_feas;
         seg_levels.clear(); seg_levels_feas.clear();
         seg_levels=get_sorted_fea_of_seg(curseg,false);
-
         seg_levels_feas=mean_and_std_seg_fea(seg_levels);
         double level_mean=seg_levels_feas[0];
         double level_std=seg_levels_feas[1];
         double bouton_intensity_thre=level_mean*
                 ((MAX_PROCESSED_SEG_LEN<curseg.row.size())?(intensity_delta+2):intensity_delta);
-        bouton_intensity_thre=MIN(MAX(bouton_intensity_thre,100),250);
+        bouton_intensity_thre=MIN(MAX(bouton_intensity_thre,80),250);
         std::vector<int> outflag_level=peaks_in_seg(seg_levels,0,0.05*level_std);
         //4.3 processed
         if(MIN_PROCESSED_SEG_LEN>curseg.row.size()){
@@ -1600,8 +1520,8 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
             for(int io=0;io<curseg.row.size();io++){
                 if(outflag_level[io]>0&&
                         outflag_radius[io]>0&&
-                        curseg.row[io].r>bouton_radius_thre
-                        &&curseg.row[io].level>bouton_intensity_thre){
+                        curseg.row[io].r>bouton_radius_thre&&
+                        curseg.row[io].level>bouton_intensity_thre){
                     AxonalBouton ab;
                     ab.x=curseg.row.at(io).x;
                     ab.y=curseg.row.at(io).y;
@@ -1629,6 +1549,8 @@ void map_bouton_2_neuronTree(NeuronTree& nt_bouton,QList <AxonalBouton>  bouton_
     if(biz<=0) {return;}
     for(V3DLONG i=0;i<nt_bouton.listNeuron.size();i++)
     {
+        if(nt_bouton.listNeuron.at(i).type!=2)
+            continue;
         AxonalBouton sb;
         sb.init_bouton(nt_bouton.listNeuron.at(i));
 
@@ -1647,31 +1569,6 @@ void map_bouton_2_neuronTree(NeuronTree& nt_bouton,QList <AxonalBouton>  bouton_
         }
         if(sb.btype<BoutonType)
             sb.out_to_NeuronSWC(nt_bouton.listNeuron[i]);
-    }
-}
-void map_bouton_2_neuronTree(NeuronTree& nt_bouton,QList <NeuronSWC> bouton_sites){
-    V3DLONG biz=bouton_sites.size();
-    if(biz<=0) {return;}
-    int bfea_size=bouton_sites.at(0).fea_val.size();
-    int ntfea_size=nt_bouton.listNeuron.at(0).fea_val.size();
-    cout<<"nt fea size="<<ntfea_size<<endl;
-    for(V3DLONG i=0;i<nt_bouton.listNeuron.size();i++)
-    {
-        for(int f=0;f<bfea_size;f++)
-            nt_bouton.listNeuron[i].fea_val.append(0.0);
-        for(V3DLONG b=0;b<bouton_sites.size();b++)
-        {
-            if(nt_bouton.listNeuron[i].x==bouton_sites[b].x
-                    &&nt_bouton.listNeuron[i].y==bouton_sites[b].y
-                    &&nt_bouton.listNeuron[i].z==bouton_sites[b].z)
-            {
-                nt_bouton.listNeuron[i].r=bouton_sites.at(b).r;
-                nt_bouton.listNeuron[i].type=bouton_sites.at(b).type;
-                for(int f=0;f<bfea_size;f++)
-                    nt_bouton.listNeuron[i].fea_val[ntfea_size+f]=bouton_sites.at(b).fea_val.at(f);
-                break;
-            }
-        }
     }
 }
 //peak detection
@@ -1774,23 +1671,20 @@ std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea, float 
         }
     }
     //peak-brother-checking
-    if(isRadius_fea){
-        std::vector<int> final_peaks(input.size(), 0.0);
-        for(V3DLONG i=0;i<input.size();i++){
-            if(signals_flag_highpeaks.at(i)==1){
-                final_peaks[i]=1;
-                V3DLONG bro1_index=(i>0)?i-1:0;
-                V3DLONG bro2_index=(i<input.size()-1)?i+1:(i);
-                if(input.at(i)-input.at(bro1_index)<=double(0.1)*input.at(i))
-                    final_peaks[bro1_index]=1;
-                if(input.at(i)-input.at(bro2_index)<=double(0.1)*input.at(i))
-                    final_peaks[bro2_index]=1;
-            }
+    double bro_factor=(isRadius_fea)?0.1:0.15;
+    std::vector<int> final_peaks(input.size(), 0.0);
+    for(V3DLONG i=0;i<input.size();i++){
+        if(signals_flag_highpeaks.at(i)==1){
+            final_peaks[i]=1;
+            V3DLONG bro1_index=(i>0)?i-1:0;
+            V3DLONG bro2_index=(i<input.size()-1)?i+1:(i);
+            if(input.at(i)-input.at(bro1_index)<=bro_factor*input.at(i))
+                final_peaks[bro1_index]=1;
+            if(input.at(i)-input.at(bro2_index)<=bro_factor*input.at(i))
+                final_peaks[bro2_index]=1;
         }
-        return final_peaks;
     }
-    else
-        return signals_flag_highpeaks;
+    return final_peaks;
 }
 
 //bouton swc pruning
@@ -1803,7 +1697,7 @@ void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgL
     string inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
     int ccf_domain_flag=(inparas.size()>=1)?atoi(inparas[0]):0;
-    float pruning_vol_r=(inparas.size()>=2)?atof(inparas[1]):100.0;
+    float pruning_vol_r=(inparas.size()>=2)?atof(inparas[1]):500.0;
     float pruning_vol_num=(inparas.size()>=3)?atof(inparas[2]):5.0;
     float pruning_tip_thre=(inparas.size()>=4)?atof(inparas[3]):5.0;
 
@@ -1815,10 +1709,11 @@ void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgL
     float min_bouton_dist=8.0;
     nearBouton_pruning(nt,min_bouton_dist,ccf_domain);
     sparseBouton_pruning(nt,pruning_vol_r,pruning_vol_num,false);
-    float pruning_thre=5.0;
+    float pruning_thre=2.0;
     NeuronTree nt_internode_pruning=boutonSWC_internode_pruning(nt,pruning_thre,ccf_domain);
     NeuronTree nt_bouton_tip_pruning=tipNode_pruning(nt_internode_pruning,pruning_tip_thre,ccf_domain);
 
+    smooth_radius(nt_bouton_tip_pruning,5,true);
 //    rendering_different_bouton(nt_bouton_tip_pruning);
     writeESWC_file(QString::fromStdString(out_nt_filename),nt_bouton_tip_pruning);
 }
@@ -1869,16 +1764,17 @@ void nearBouton_pruning(NeuronTree& nt,float pruning_dist,bool ccf_domain){
     int btype_index=3;
     V3DLONG siz=nt.listNeuron.size();
     if(siz<=0){return;}
-    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
     for(V3DLONG i=0;i<siz;i++){
         NeuronSWC s = nt.listNeuron.at(i);
         hashNeuron.insert(s.n,i);
     }
-    QHash <V3DLONG, V3DLONG>  child_parent_bouton;child_parent_bouton.clear();
+    QHash <V3DLONG, V3DLONG>  child_parent_bouton;
     vector<float> dist_to_parent(siz,0.0);
     for(V3DLONG i=0;i<siz;i++){
         NeuronSWC s = nt.listNeuron.at(i);
-        if(s.parent<0||!hashNeuron.contains(s.parent))
+        if(s.parent<0||!hashNeuron.contains(s.parent)
+                ||s.fea_val.size()<=btype_index)
             continue;
         float dist_to_parent_bouton=0.0;
         if(s.fea_val.at(btype_index)>=BoutonType){
@@ -1891,9 +1787,7 @@ void nearBouton_pruning(NeuronTree& nt,float pruning_dist,bool ccf_domain){
                                                 (s.fea_val.at(1)-sp.fea_val.at(1))*(s.fea_val.at(1)-sp.fea_val.at(2))+
                                                 (s.fea_val.at(2)-sp.fea_val.at(2))*(s.fea_val.at(1)-sp.fea_val.at(2)));
                 else
-                    dist_to_parent_bouton+=sqrt((s.x-sp.x)*(s.x-sp.x)+
-                                                (s.y-sp.y)*(s.y-sp.y)+
-                                                (s.z-sp.z)*(s.z-sp.z));
+                    dist_to_parent_bouton+=dis(s,sp);
 
                 if(sp.fea_val.at(btype_index)==BoutonType){
                     child_parent_bouton.insert(i,pid);
@@ -1914,6 +1808,7 @@ void nearBouton_pruning(NeuronTree& nt,float pruning_dist,bool ccf_domain){
         }
     }
     vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+
     vector<bool> pruning_flag(siz,false);
     for(V3DLONG i=0;i<siz;i++){
         NeuronSWC s = nt.listNeuron.at(i);
@@ -1976,7 +1871,7 @@ NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist,bool ccf
     vector<int> ntype(siz,0);    ntype=getNodeType(nt);
     vector<int> nprocessed(siz,0);
 
-    if(pruning_dist>0){
+    if(pruning_dist>=1){
         for(V3DLONG i=0;i<siz;i++){
             NeuronSWC s = nt.listNeuron.at(i);
             if(nprocessed[i]==1)
@@ -2004,7 +1899,45 @@ NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist,bool ccf
             }
         }
     }
+    else if(pruning_dist>0&&pruning_dist<1){
+        cout<<"Only keep branch points and boutons"<<endl;
+        for(V3DLONG i=0;i<siz;i++){
+            NeuronSWC s = nt.listNeuron.at(i);
+            if(s.type==1&&s.parent<0)
+                continue;
+            if(nprocessed[i]==1)
+                continue;
+            //start from tip / branch point / bouton point
+            AxonalBouton sb;sb.init_bouton(s);
+            if(ntype.at(i)==2||sb.btype>=BoutonType){
+                //kept find parent node, until it is branch or Bouton
+                if(!hashNeuron.contains(s.parent))
+                    continue;
+                V3DLONG pid=hashNeuron.value(s.parent);
+                NeuronSWC sp=nt.listNeuron.at(pid);
+                AxonalBouton spb;spb.init_bouton(sp);
+                while(true){
+                    if(ntype.at(pid)>=2||spb.btype>=BoutonType||
+                            !hashNeuron.contains(sp.parent)||sp.parent<0){
+                        nt.listNeuron[i].parent=sp.n;
+                        break;
+                    }
+                    nprocessed[pid]=1;
+                    s=sp;
+                    pid=hashNeuron.value(s.parent);
+                    sp=nt.listNeuron.at(pid);
+                    spb.init_bouton(sp);
+                }
+            }
+            else
+            {
+                nprocessed[i]=1;
+                continue;
+            }
+        }
+    }
     else{
+        cout<<"Only keep branch points, tip and boutons"<<endl;
         for(V3DLONG i=0;i<siz;i++){
             NeuronSWC s = nt.listNeuron.at(i);
             if(s.type==1&&s.parent<0)
@@ -2120,7 +2053,47 @@ NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist,bool ccf_domain){
      }
      return nt_out;
 }
+bool smooth_radius(NeuronTree& nt,int win,bool notbouton){
+    int btype_index=3;
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz||win<2){return true;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron[i].n,i);
+    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(i);
 
+        if(s.parent>0&&hashNeuron.contains(s.parent)
+                &&ntype.at(hashNeuron.value(s.parent))==1)
+        {
+            QList<V3DLONG> nodelist;nodelist.clear();
+            nodelist.append(i);
+            V3DLONG pid=hashNeuron.value(s.parent);
+            NeuronSWC sp=nt.listNeuron.at(pid);
+            float smooth_r=s.r;
+            while(nodelist.size()<win){
+                nodelist.append(pid);
+                smooth_r+=sp.r;
+                if(sp.parent<0||!hashNeuron.contains(sp.parent)
+                        ||ntype.at(hashNeuron.value(sp.parent))>1)
+                    break;
+                pid=hashNeuron.value(sp.parent);
+                sp=nt.listNeuron.at(pid);
+            }
+            if(nodelist.size()==win){
+                smooth_r/=(float)win;
+                V3DLONG sid=nodelist.at(int(win/2));
+                NeuronSWC ss = nt.listNeuron.at(sid);
+                if(notbouton&&ss.fea_val.at(btype_index)>=BoutonType)
+                    continue;
+                nt.listNeuron[sid].r=smooth_r;
+            }
+        }
+    }
+    return true;
+}
 /*bouton features computing*/
 void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
     vector<char*> infiles, inparas, outfiles;
@@ -2147,39 +2120,46 @@ void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList
     V3DLONG siz=nt.listNeuron.size();
     if(!siz) {return;}
     //1.
-    vector<int> norder(siz,0);
-    if(!getNodeOrder(nt,norder)) {return;};
-    for(V3DLONG i=0;i<siz;i++)
-        nt.listNeuron[i].level=norder.at(i);
-    //2.
-    bool ccf_domain=(ccf_domain_flag>0)?true:false;
-    boutonType_label(nt,xy_res,ccf_domain);
-    //3. bouton_density feature to fea_val_list
-    boutonDesity_computing(nt,xy_res,ccf_domain);
-    boutonVolDesity_computing(nt,vol_radius,xy_res,ccf_domain);
-    //4. distance
-    dist_to_soma(nt,xy_res,ccf_domain,false);
-    //5.
-    for(V3DLONG i=0;i<siz;i++){
-         nt.listNeuron[i].fea_val[4]*=xy_res;
-         nt.listNeuron[i].fea_val[5]*=xy_res;
-         nt.listNeuron[i].fea_val[6]*=xy_res;
+    if(xy_res>0){
+        //for whole brain neuron
+        vector<int> norder(siz,0);
+        if(!getNodeOrder(nt,norder)) {return;};
+        for(V3DLONG i=0;i<siz;i++)
+            nt.listNeuron[i].level=norder.at(i);
+        //2.
+        bool ccf_domain=(ccf_domain_flag>0)?true:false;
+        boutonType_label(nt,ccf_domain);
+        //3. bouton_density feature to fea_val_list
+        boutonDesity_computing(nt,xy_res,ccf_domain);
+        boutonVolDesity_computing(nt,vol_radius,xy_res,ccf_domain);
+        //4. distance
+        dist_to_soma(nt,xy_res,ccf_domain,false);
+        //5.
+        for(V3DLONG i=0;i<siz;i++){
+             nt.listNeuron[i].fea_val[4]*=xy_res;
+             nt.listNeuron[i].fea_val[5]*=xy_res;
+             nt.listNeuron[i].fea_val[6]*=xy_res;
+        }
+    }
+    else{
+        cout<<"only label bouton type"<<endl;
+        boutonType_label(nt,false);
     }
     QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_featured.eswc");
     writeESWC_file(out_nt_filename,nt);
 }
-void boutonType_label(NeuronTree& nt,float xy_res,bool ccf_domain){
+void boutonType_label(NeuronTree& nt,bool ccf_domain){
     /*1. tip bouton: boutonType+=1
      * 2. terminaux bouton: boutonType+=1
         * for all the tip branch whose length are less than max_terminaux_bouton_branch_len,
         * if there only exist one bouton at the tip, this is Terminaux bouton.
     */
-    int btype_index=3;    float z_res=1.0;
+    int btype_index=3;
     float max_terminaux_bouton_branch_len=5.0;
 
     V3DLONG siz=nt.listNeuron.size();
     if(siz==0){return;}
-    QHash <V3DLONG, V3DLONG>  hashNeuron;hashNeuron.clear();
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
     for(V3DLONG i=0;i<siz;i++){
         NeuronSWC s = nt.listNeuron.at(i);
         hashNeuron.insert(s.n,i);
@@ -2206,9 +2186,7 @@ void boutonType_label(NeuronTree& nt,float xy_res,bool ccf_domain){
                                       (s.fea_val.at(1)-sp.fea_val.at(1))*(s.fea_val.at(1)-sp.fea_val.at(2))+
                                       (s.fea_val.at(2)-sp.fea_val.at(2))*(s.fea_val.at(1)-sp.fea_val.at(2)));
                  else
-                     dist_count+=sqrt(xy_res*xy_res*(s.x-sp.x)*(s.x-sp.x)+
-                                      xy_res*xy_res*(s.y-sp.y)*(s.y-sp.y)+
-                                      z_res*z_res*(s.z-sp.z)*(s.z-sp.z));
+                     dist_count+=dis(s,sp);
                  if(ntype.at(pid)==2)
                      break;
                  //update node
@@ -2438,9 +2416,14 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     switch (filetype) {
     case 0:
     {
+        //float min_bouton_dist=8.0;
+        //nearBouton_pruning(nt,min_bouton_dist);
         QList<CellAPO> apoboutons=bouton_to_apo(nt);
-        QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
-        writeAPO_file(apofilename,apoboutons);
+        if(apoboutons.size()>0){
+            cout<<"convert "<<apoboutons.size()<<" into apo markers"<<endl;
+            QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
+            writeAPO_file(apofilename,apoboutons);
+        }
     }
         break;
     case 1:
@@ -2475,9 +2458,36 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     case 4:
     {
         float radius_scale=(inparas.size()>=2)?atof(inparas[1]):1.0;
-        QString ccfname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_ccf.eswc");
+        int x_shift=(inparas.size()>=3)?atoi(inparas[2]):0;
+        int xyz_scale=(inparas.size()>=4)?atoi(inparas[3]):1;
+        int to_swc=(inparas.size()>=5)?atoi(inparas[4]):0;
+        int clear_fea_val=(inparas.size()>=6)?atoi(inparas[5]):0;
+
         boutonswc_to_ccf(nt,radius_scale);
-        writeESWC_file(ccfname,nt);
+        QString ccfname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_ccf.eswc");
+        V3DLONG siz=nt.listNeuron.size();
+        if(clear_fea_val>0){
+            //skip fea_val
+            cout<<"clear fea_val list"<<endl;
+
+            for(V3DLONG i=0;i<siz;i++)
+                nt.listNeuron[i].fea_val.clear();
+        }
+        if(xyz_scale>1||x_shift>0){
+            for(V3DLONG i=0;i<siz;i++){
+                nt.listNeuron[i].x-=float(x_shift);
+                nt.listNeuron[i].x*=float(xyz_scale);
+                nt.listNeuron[i].y*=float(xyz_scale);
+                nt.listNeuron[i].z*=float(xyz_scale);
+            }
+        }
+        if(to_swc>0)
+        {
+            ccfname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_ccf.swc");
+            writeSWC_file(ccfname,nt);
+        }
+        else
+            writeESWC_file(ccfname,nt);
     }
         break;
     case 5:
@@ -2493,15 +2503,27 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     {
         float pruning_thre=(inparas.size()>=2)?atof(inparas[1]):0;
         QString outname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_pruned.eswc");
+        cout<<"function id:"<<pruning_thre<<endl;
         NeuronTree nt_out=boutonSWC_internode_pruning(nt,pruning_thre);
         writeESWC_file(outname,nt_out);
+    }
+        break;
+    case 7:
+    {
+        int ccf=(inparas.size()>=2)?atoi(inparas[1]):0;
+        //float min_bouton_dist=8.0;
+        //nearBouton_pruning(nt,min_bouton_dist);
+        QList<ImageMarker> mboutons=bouton_to_imageMarker(nt,(bool)ccf);
+        QString mfilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".marker");
+        if(mboutons.size())
+            writeMarker_file(mfilename,mboutons);
     }
         break;
     default:
     {
         float radius_scale=(inparas.size()>=2)?atof(inparas[1]):1.0;
         QList<CellAPO> apoboutons=bouton_to_apo(nt);
-        QList<ImageMarker> mboutons=bouton_to_imageMarker(nt);
+        QList<ImageMarker> mboutons=bouton_to_imageMarker(nt,true);
         boutonswc_to_ccf(nt,radius_scale);
         QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
         QString mfilename=(outfiles.size()>=2)?outfiles[1]:(inswc_file+ "_ccf.marker");
@@ -2539,7 +2561,7 @@ QList<CellAPO> bouton_to_apo(NeuronTree nt){
      }
      return boutons;
 }
-QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt){
+QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt,bool ccf){
     /*this function will generate bouton.marker file*/
     V3DLONG siz=nt.listNeuron.size();
     QList<ImageMarker> boutons; boutons.clear();
@@ -2548,7 +2570,7 @@ QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt){
          NeuronSWC s=nt.listNeuron.at(i);
          AxonalBouton sb; sb.init_bouton(s);
          if(sb.btype<BoutonType){continue;}
-         ImageMarker bim=sb.out_to_ImageMarker();
+         ImageMarker bim=sb.out_to_ImageMarker(ccf);
          boutons.append(bim);
      }
      return boutons;
@@ -3067,6 +3089,185 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
             writeESWC_file(save_path_swc,out);
         }
     }
+}
+
+void postprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    /*1. remove bouton if region_id=0,
+     * 2.
+    */
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    NeuronTree nt = readSWC_file(inswc_file);
+    if(!nt.listNeuron.size()) return;
+
+    int region_id_index=nt.listNeuron.at(0).fea_val.size()-1;
+    int function_id=(inparas.size()>=1)?atof(inparas[0]):0;
+    float xy_res=(inparas.size()>=2)?atof(inparas[1]):(0.3);
+    double propagate_dist=(inparas.size()>=3)?atof(inparas[2]):25;
+    bool acolor=((inparas.size()>=4)?atoi(inparas[3]):1)>0?true:false;
+
+    int btype_index=3;
+    //1.
+    V3DLONG siz=nt.listNeuron.size();
+    if(siz==0){return;}
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        hashNeuron.insert(s.n,i);
+    }
+    QList<long> bregion_ids;
+    if(function_id==0){
+        for(V3DLONG i=0;i<siz;i++){
+            NeuronSWC s = nt.listNeuron.at(i);
+            nt.listNeuron[i].level=1;
+            AxonalBouton sb; sb.init_bouton(s);
+            if(s.fea_val.at(region_id_index)<0){
+                if(sb.btype>=BoutonType)
+                {
+                    nt.listNeuron[i].type=2;
+                    nt.listNeuron[i].fea_val[btype_index]=0;
+                }
+                nt.listNeuron[i].level=0;
+                continue;
+            }
+            if(!bregion_ids.contains(s.fea_val.at(region_id_index)))
+                bregion_ids.append(s.fea_val.at(region_id_index));
+        }
+        cout<<"projection regions="<<bregion_ids.size()<<endl;
+        long set_to_level=3;
+    //    QString out_swc_file1=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_s1.eswc");
+    //    writeESWC_file(out_swc_file1,nt);
+        //2.
+    //    for(V3DLONG i1=0;i1<siz;i1++){
+    //        NeuronSWC s1 = nt.listNeuron.at(i1);
+    //        if(s1.level==0)
+    //            continue;
+    //        long set_to_level=1;
+    //        for(V3DLONG i2=0;i2<siz;i2++){
+    //            NeuronSWC s2 = nt.listNeuron.at(i2);
+    //            AxonalBouton s2b; s2b.init_bouton(s2);
+    //            if(s2b.btype>=BoutonType){
+    //                double dist_to_bouton=dis(s1,s2);
+    //                if(dist_to_bouton<propagate_dist){
+    //                    set_to_level=2+ (acolor)?0:bregion_ids.indexOf(s2.fea_val.at(region_id_index));
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //        if(set_to_level>1){
+    //            nt.listNeuron[i1].level=set_to_level;
+    //        }
+    //    }
+        for(V3DLONG i=0;i<siz;i++){
+            NeuronSWC s = nt.listNeuron.at(i);
+            if(s.level!=1){continue;}
+            if(s.parent>0&&hashNeuron.contains(s.parent))
+            {
+                AxonalBouton sb; sb.init_bouton(s);
+    //            bool start_at_bouton=(sb.btype>=BoutonType)?true:false;
+                set_to_level+=acolor?0:bregion_ids.indexOf(s.fea_val.at(region_id_index));
+    //            cout<<"set level="<<set_to_level<<endl;
+
+                double dist_to_bouton=0.0;
+                QList<V3DLONG> nodelist;nodelist.clear();
+                nodelist.append(i);
+                V3DLONG pid=hashNeuron.value(s.parent);
+                NeuronSWC sp=nt.listNeuron.at(pid);
+                AxonalBouton spb;
+                spb.init_bouton(sp);
+                bool related_to_bouton=(sb.btype>=BoutonType)?true:false;
+                while(true){
+                    dist_to_bouton+=dis(s,sp);
+    //                cout<<"dist to bouton="<<dist_to_bouton<<endl;
+                    if(sp.parent<0||!hashNeuron.contains(sp.parent))
+                        break;
+                    if(sb.region_id!=spb.region_id){related_to_bouton=false;break;}
+                    if(dist_to_bouton>propagate_dist){break;}
+                    if(spb.btype>=BoutonType){related_to_bouton=true;break;}
+                    nodelist.append(pid);
+                    s=sp;
+                    pid=hashNeuron.value(s.parent);
+                    sp=nt.listNeuron.at(pid);
+                    spb.init_bouton(sp);
+                }
+                if(related_to_bouton/*&&dist_to_bouton<=propagate_dist*/)
+                    for(int n=0;n<nodelist.size();n++)
+                        nt.listNeuron[nodelist.at(n)].level=set_to_level;
+            }
+        }
+    }
+    else if(function_id==1){
+        //label axon
+        for(V3DLONG i=0;i<siz;i++){
+            NeuronSWC s = nt.listNeuron.at(i);
+            nt.listNeuron[i].level=2;
+            if(!bregion_ids.contains(s.fea_val.at(region_id_index)))
+                bregion_ids.append(s.fea_val.at(region_id_index));
+        }
+        for(int b=0;b<bregion_ids.size();b++){
+            V3DLONG this_region_id=bregion_ids.at(b);
+            //cout<<"region id="<<this_region_id<<",seg_len=";
+            double this_region_seg_len=0;
+            QList<V3DLONG> nodelist;nodelist.clear();
+            for(V3DLONG i=0;i<siz;i++){
+                NeuronSWC s = nt.listNeuron.at(i);
+                if(s.fea_val.at(region_id_index)!=this_region_id||
+                        s.parent<0||!hashNeuron.contains(s.parent))
+                    continue;
+                V3DLONG pid=hashNeuron.value(s.parent);
+                NeuronSWC sp=nt.listNeuron.at(pid);
+                if(s.fea_val.at(region_id_index)==this_region_id)
+                {
+                    if(!nodelist.contains(i))
+                        nodelist.append(i);
+                    if(!nodelist.contains(pid))
+                        nodelist.append(pid);
+                    s.x*=xy_res; s.y*=xy_res;
+                    sp.x*=xy_res; sp.y*=xy_res;
+                    this_region_seg_len+=dis(s,sp);
+                }
+                if(this_region_seg_len>1000)
+                    break;
+            }
+            cout<<this_region_seg_len<<endl;
+            if(this_region_seg_len<1000)
+                for(V3DLONG i=0;i<nodelist.size();i++)
+                    nt.listNeuron[nodelist.at(i)].level=1;
+        }
+    }
+    else{
+        QString inswca,inswcb;
+        if(infiles.size()>=2) {inswca = infiles[0];inswcb = infiles[1];}
+        NeuronTree nt_axon = readSWC_file(inswca);
+        NeuronTree nt_bouton = readSWC_file(inswcb);
+        NeuronTree nt_out; nt_out.deepCopy(nt_axon);
+        for(V3DLONG i=0;i<siz;i++){
+            NeuronSWC sa = nt_axon.listNeuron.at(i);
+            NeuronSWC sb = nt_bouton.listNeuron.at(i);
+            if(sa.level==1){
+                if(sb.level<=1)
+                    nt_out.listNeuron[i].level=0;
+                else
+                    nt_out.listNeuron[i].level=3;
+            }
+            else{
+                if(sb.level<=1)
+                    nt_out.listNeuron[i].level=2;
+                else
+                    nt_out.listNeuron[i].level=0;
+            }
+        }
+        QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out.eswc");
+        writeESWC_file(out_swc_file,nt_out);
+        return;
+    }
+    QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out"+QString::number(function_id)+".eswc");
+    writeESWC_file(out_swc_file,nt);
 }
 
 /*radius estimation*/

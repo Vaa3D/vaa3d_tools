@@ -76,6 +76,7 @@ struct AxonalBouton
     float nodeR,ccfR,br_r_mean,br_r_std;
     int intensity, br_intensity_mean,br_intensity_std;
     float density,vol_density;
+    long region_id;
     AxonalBouton() {
         x=y=z=ccfx=ccfy=ccfz=0.0;
         path_dist_to_soma=euler_dist_to_soma=0.0;
@@ -84,6 +85,7 @@ struct AxonalBouton
         intensity=br_intensity_mean=br_intensity_std=0;
         density=vol_density=nodeR=br_r_mean=br_r_std=ccfR=0.0;
         color.color_ele_r=color.color_ele_g=0;color.color_ele_b=255;
+        region_id=0;
     }
     void init_bouton(NeuronSWC s){
         this->x=s.x;this->y=s.y;this->z=s.z;
@@ -91,6 +93,7 @@ struct AxonalBouton
         this->broder=s.level;
         this->nodeR=s.radius;
         int sfsize=s.fea_val.size();
+//        cout<<"fea_val size="<<sfsize<<endl;
         switch (sfsize) {
         case 0:
             this->ccfx=this->ccfy=this->ccfz=0.0;
@@ -134,6 +137,23 @@ struct AxonalBouton
             this->path_dist_to_soma=s.fea_val.at(12);
             this->euler_dist_to_soma=s.fea_val.at(13);
             break;
+        case 15:
+            this->ccfx=s.fea_val.at(0);
+            this->ccfy=s.fea_val.at(1);
+            this->ccfz=s.fea_val.at(2);
+            this->btype=s.fea_val.at(3);
+            this->ccfR=s.fea_val.at(4);
+            this->br_r_mean=s.fea_val.at(5);
+            this->br_r_std=s.fea_val.at(6);
+            this->intensity=s.fea_val.at(7);
+            this->br_intensity_mean=s.fea_val.at(8);
+            this->br_intensity_std=s.fea_val.at(9);
+            this->density=s.fea_val.at(10);
+            this->vol_density=s.fea_val.at(11);
+            this->path_dist_to_soma=s.fea_val.at(12);
+            this->euler_dist_to_soma=s.fea_val.at(13);
+            this->region_id=s.fea_val.at(14);
+            break;
         default:
             break;
         }
@@ -148,6 +168,7 @@ struct AxonalBouton
         intensity=br_intensity_mean=br_intensity_std=0;
         density=vol_density=nodeR=br_r_mean=br_r_std=ccfR=0.0;
         color.color_ele_r=color.color_ele_g=0;color.color_ele_b=255;
+        region_id=0;
     }
     NeuronSWC out_to_NeuronSWC(){
         NeuronSWC s; s.fea_val.clear();
@@ -253,6 +274,8 @@ void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 QList<NeuronTree> nt_2_trees(NeuronTree& nt);
 NeuronTree preprocess_simple(NeuronTree nt);//for swc in an image block
 
+void postprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+
 /*refinement: 1. mean-shift; 2. node_refine;3.line_refine*/
 void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly=true);
 void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,long half_block_size=128,int nodeRefine_radius=2);
@@ -275,10 +298,8 @@ void swc_profile_image_fun(V3DPluginCallback2 &callback,string inimg_file, Neuro
 void boutonFilter_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 
 /*filter*/
-QList <CellAPO> boutonFilter_1D(NeuronTree nt,double radius_delta=1.3,double intensity_delta=0.05,double AXON_BACKBONE_RADIUS=4);//old version, will remove later
 QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta=1.5,double intensity_delta=1.5,double AXON_BACKBONE_RADIUS=2);
 void map_bouton_2_neuronTree(NeuronTree& nt_bouton,QList <AxonalBouton>  bouton_sites);
-void map_bouton_2_neuronTree(NeuronTree& nt,QList <NeuronSWC> bouton_sites);
 void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly);
 std::vector<double> get_sorted_fea_of_seg(V_NeuronSWC inseg,bool radiusfea=false);
 std::vector<double> mean_and_std_seg_fea(std::vector<double> input);
@@ -286,7 +307,7 @@ std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea=0,float
 
 /*feature computation*/
 void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
-void boutonType_label(NeuronTree& nt,float xy_res=0.3,bool ccf_domain=true);
+void boutonType_label(NeuronTree& nt,bool ccf_domain=true);
 void rendering_different_bouton(NeuronTree& nt, int type_bias=BoutonSWCNodeType);
 void boutonVolDesity_computing(NeuronTree& nt,float vol_r,float xy_res=0.3,bool ccf_domain=true);
 void boutonDesity_computing(NeuronTree& nt,float xy_res=0.3,bool ccf_domain=true);
@@ -297,12 +318,12 @@ NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool
 void nearBouton_pruning(NeuronTree& nt,float pruning_dist=5.0,bool ccf_domain=false);
 NeuronTree tipNode_pruning(NeuronTree nt, float pruning_dist=1.0,bool ccf_domain=false);
 void sparseBouton_pruning(NeuronTree& nt,float pruning_dist,int pruning_num,bool ccf_domain=false);
-
+bool smooth_radius(NeuronTree& nt,int win=5,bool notbouton=true);
 /*file io*/
 void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void boutonswc_to_ccf(NeuronTree& nt,float scale=1.0);
 QList<CellAPO> bouton_to_apo(NeuronTree nt);
-QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt);
+QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt,bool ccf=true);
 void featureTable(const QString &filename,NeuronTree nt,float *res);
 void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);
 void getBoutonBlock(V3DPluginCallback2 &callback, string imgPath,NeuronTree nt,QString outpath,
