@@ -59,7 +59,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         SwcTree a;
         a.initialize(nt1);
         NeuronTree refinetree = a.refine_swc_by_gd(braindir,callback);
-        QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : "";
+        string inswc_file=infiles[0];
+        QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
         writeESWC_file(eswcfile,refinetree);
     }
 
