@@ -850,7 +850,6 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
     vector<Branch> segs;
     this->splitbranch(nt,segs,thres);
     int seg_count = segs.size();
-
     qDebug()<<__LINE__<<"seg size: "<<seg_count;
 
     vector<int> indexs_of_gd2;
@@ -896,6 +895,8 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
               if(outpoints.size()>0)
               {
                   gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+              }else{
+                  gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end()-1);
               }
         }
         else
@@ -911,6 +912,8 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
             if(outpoints.size()>0)
             {
                 gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+            }else{
+                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end());
             }
         }
     }
@@ -940,6 +943,21 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
             color=neuron_type1[i];
         }
         qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
+        if(inpoints.size()==0){
+            vector<NeuronSWC> points;
+            vector<LocationSimple> rawpoints;
+            this->get_points_of_branch(points,nt);
+            for(int k=0; k<points.size(); ++k)
+            {
+                LocationSimple local(points[k].x,points[k].y,points[k].z);
+                rawpoints.push_back(local);
+                neuron_type.push_back(points[k].type);
+            }
+            for(int k=0;k<rawpoints.size(); ++k){
+                outbranch.push_back(rawpoints[k]);
+            }
+            return true;
+        }
         this->refine_by_gd(inpoints,outpoints,braindir,callback);
         qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
         if(i!=(indexs_of_gd2.size()-1))
@@ -2145,14 +2163,28 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
             qDebug()<<__LINE__<<"outbranch size: "<<outbranch.size();
             for(int i=0; i<outbranch.size(); ++i)
             {
-                NeuronSWC p;
-                p.n = i+1;
-                p.parent = (p.n==1) ? -1 : i;
-                p.x = outbranch[i].x;
-                p.y = outbranch[i].y;
-                p.z = outbranch[i].z;
-                p.type = neuron_type[i];
-                points.push_back(p);
+                    NeuronSWC p;
+                    p.n = i+1;
+                    p.parent = (p.n==1) ? -1 : i;
+                    p.x = outbranch[i].x;
+                    p.y = outbranch[i].y;
+                    p.z = outbranch[i].z;
+                    vector<NeuronSWC> ps;
+                    branchs[branchindex].get_points_of_branch(ps,nt);
+                    float x0=ps[0].x;
+                    float y0=ps[0].y;
+                    float z0=ps[0].z;
+                    float dis = sqrt((x0-p.x)*(x0-p.x)+(y0-p.y)*(y0-p.y)+(z0-p.z)*(z0-p.z));
+                    float dis1;
+                    for(int j=1; j<ps.size();++j){
+                        dis1 = sqrt((ps[j].x-p.x)*(ps[j].x-p.x)+(ps[j].y-p.y)*(ps[j].y-p.y)+(ps[j].z-p.z)*(ps[j].z-p.z));
+                        if(dis1<=dis){
+                              dis=dis1;
+                              p.type = ps[j].type;
+                        }
+                    }
+//                    p.type = neuron_type[i];
+                    points.push_back(p);
             }
         }
         qDebug()<<__LINE__<<"_______________________________________";
