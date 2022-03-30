@@ -2531,7 +2531,7 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
 
     }
     else if(region=="CTX"){
-        if((feas[0]>=22)&&(feas[0]<=121)&&(feas[1]>=6.77)&&(feas[1]<=31.354)&&(feas[2]>=6.683)&&(feas[2]<=46.143)&&(feas[3]>=6.36)&&(feas[3]<=35.99)
+        if((feas[0]>=22)&&(feas[0]<=121)&&(feas[1]>=6.77)&&(feas[1]<=31.354)&&(feas[2]>=2.687)&&(feas[2]<=46.143)&&(feas[3]>=6.36)&&(feas[3]<=35.99)
                 &&(feas[4]>=71.317)&&(feas[4]<=585.043)&&(feas[5]>=5)&&(feas[5]<=30)){
             result<<","<<1<<endl;
         }
@@ -2542,6 +2542,16 @@ void arbor_analysis(QString swc, QString outgf, QHash <QString, QString> swc_cel
     else{
         if((feas[0]>=21)&&(feas[0]<=125)&&(feas[1]>=6.132)&&(feas[1]<=38.328)&&(feas[2]>=6.353)&&(feas[2]<=46.256)&&(feas[3]>=5.592)&&(feas[3]<=39.227)
                 &&(feas[4]>=68.434)&&(feas[4]<=662.401)&&(feas[5]>=5)&&(feas[5]<=29)){
+            result<<","<<1<<endl;
+        }
+        else{
+            result<<","<<0<<endl;
+        }
+    }
+    if(region=="unknown")
+    {
+        if((feas[0]>=1)&&(feas[0]<=208)&&(feas[1]>=2.665*25)&&(feas[1]<=66.578*25)&&(feas[2]>=2.687*25)&&(feas[2]<=72.919*25)&&(feas[3]>=0.956*25)&&(feas[3]<=54.891*25)
+                &&(feas[4]>=6.028*25)&&(feas[4]<=1312.98*25)&&(feas[5]>=5)&&(feas[5]<=29)){
             result<<","<<1<<endl;
         }
         else{

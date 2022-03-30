@@ -842,7 +842,6 @@ bool Branch::refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> 
 
 
 
-
     return true;
 }
 
@@ -941,8 +940,6 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
             color=neuron_type1[i];
         }
         qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
-        if(inpoints.size()>0)
-        {
         this->refine_by_gd(inpoints,outpoints,braindir,callback);
         qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
         if(i!=(indexs_of_gd2.size()-1))
@@ -980,7 +977,6 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
                 vector<int> tt(outpoints.size(), color);
                 neuron_type.insert(neuron_type.end(),tt.begin(),tt.end());
             }
-        }
         }
     }
 
