@@ -2111,7 +2111,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
                 p.x = points[i].x;
                 p.y = points[i].y;
                 p.z = points[i].z;
-                p.type = 5;
+                p.type = points[i].type;
                 points[i] = p;
             }
         }
@@ -2128,7 +2128,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
                 p.x = outbranch[i].x;
                 p.y = outbranch[i].y;
                 p.z = outbranch[i].z;
-                p.type = 6;
+                p.type = points[i].type;
                 points.push_back(p);
             }
         }
