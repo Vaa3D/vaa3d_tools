@@ -52,6 +52,7 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<""<<endl;
 	ofs<<"TEMPLATE\t= lib"<<endl;
 	ofs<<"CONFIG\t+= qt plugin warn_off"<<endl;
+    ofs<<"QT\t+= widgets"<<endl;
 	ofs<<"#CONFIG\t+= x86_64"<<endl;
 	ofs<<"VAA3DPATH = "<<pt.VAA3D_PATH<<endl;
 	ofs<<"INCLUDEPATH\t+= $$VAA3DPATH/v3d_main/basic_c_fun"<<endl;
@@ -127,7 +128,7 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<"#include <vector>"<<endl;
 	ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
 	ofs<<"using namespace std;"<<endl;
-	ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
+    //ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 	ofs<<" "<<endl;
 	ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::menulist() const"<<endl;
 	ofs<<"{"<<endl;
@@ -209,7 +210,7 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
         }
 
         ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
-        ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
+        //ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 
         for(int d = 4;d< 14; d++)
         {
@@ -321,7 +322,7 @@ void create_plugin_neuronML_cpp(PluginTemplate & pt)
         }
 
         ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
-        ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
+        //ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 
         for(int d = 4;d< 16; d++)
         {
@@ -432,6 +433,7 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
 	ofs<<"{"<<endl;
 	ofs<<"\tQ_OBJECT"<<endl;
 	ofs<<"\tQ_INTERFACES(V3DPluginInterface2_1);"<<endl;
+    ofs<<"\tQ_PLUGIN_METADATA(IID\"com.janelia.v3d.V3DPluginInterface/2.1\")" <<endl;
 	ofs<<""<<endl;
 	ofs<<"public:"<<endl;
 	ofs<<"\tfloat getPluginVersion() const {return 1.1f;}"<<endl;
