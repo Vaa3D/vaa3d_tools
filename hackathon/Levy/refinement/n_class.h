@@ -158,13 +158,13 @@ struct Branch{
     bool refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt);
 
     bool get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
-
+    bool get_meanstd_img(string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
     bool splitbranch(NeuronTree& nt, vector<Branch> &segs, double thres);
 
     bool refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> &outpoints, QString braindir, V3DPluginCallback2 &callback);
-
+    bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
     bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
-
+    bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
 };
 
 struct SwcTree{
@@ -212,6 +212,7 @@ struct SwcTree{
     bool test(QString braindir, V3DPluginCallback2 &callback);
 
     NeuronTree refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback);
+    NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
 
 };
 

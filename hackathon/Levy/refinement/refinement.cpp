@@ -63,14 +63,25 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
         writeESWC_file(eswcfile,refinetree);
     }
-
     else if (func_name == tr("help"))
     {
         cout<<"usage:"<<endl;
-        cout<<"v3d -x refine_swc -f func2 -i [file_swc] [brain_path] -o [txt_file]"<<endl;
+        cout<<"v3d -x refine_swc -f refine -i [file_swc] [brain_path] -o [txt_file]"<<endl;
+        cout<<"v3d -x refine_swc -f refine_img -i [file_swc] [img_path] -o [txt_file]"<<endl;
 
-	}
-	else return false;
+    }else if(func_name==tr("refine_img"))
+    {
+     NeuronTree nt1=readSWC_file(infiles[0]);
+     string inimg_file= infiles[1];
+     SwcTree a;
+     qDebug()<<"1111"<<endl;
+     a.initialize(nt1);
+     qDebug()<<"1111"<<endl;
+     NeuronTree refinetree = a.refine_swc_by_gd_img(inimg_file,callback);
+     string inswc_file=infiles[0];
+     QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
+     writeESWC_file(eswcfile,refinetree);
+    }else return false;
 
 	return true;
 }

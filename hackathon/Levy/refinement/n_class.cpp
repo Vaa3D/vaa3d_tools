@@ -626,7 +626,135 @@ bool Branch::get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronT
 
 
 }
+bool Branch::get_meanstd_img(string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode, int resolution)
+{
+//    QDir all_braindir(braindir);
+//    QFileInfoList list_braindir = all_braindir.entryInfoList(QStringList(),QDir::Dirs|QDir::NoDotAndDotDot);
+//    int dir_count = list_braindir.size();
 
+//    map<int,int> sizemap;
+
+//    for(int i=0; i<dir_count; ++i)
+//    {
+////        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+//        QString t = list_braindir[i].baseName();
+//        QStringList ts =t.split('x');
+//        int resolution = ts[1].toInt();
+//        sizemap[resolution] = i;
+//    }
+
+//    QVector<QFileInfo> vtmp;
+//    map<int,int>::iterator it =sizemap.begin();
+
+//    while(it!=sizemap.end())
+//    {
+//        int index = it->second;
+//        vtmp.push_back(list_braindir[index]);
+//        it++;
+//    }
+
+//    list_braindir.clear();
+//    for(int i=0; i<dir_count; ++i)
+//    {
+//        list_braindir.push_back(vtmp[i]);
+////        qDebug()<<list_braindir[i].absoluteFilePath();
+//    }
+
+//    QString current_braindir = list_braindir[dir_count-resolution].absoluteFilePath();
+
+//    qDebug()<<current_braindir;
+
+    vector<NeuronSWC> points;
+    if(mode==0)
+    {
+        this->get_points_of_branch(points,nt);
+    }
+    else if(mode==1)
+    {
+        points.assign(nt.listNeuron.begin(),nt.listNeuron.end());
+    }
+
+
+    int times = 1;  //???
+
+    for(int i=0; i<points.size(); ++i)
+    {
+        points[i].x /= times;
+        points[i].y /= times;
+        points[i].z /= times;
+    }
+    V3DLONG *in_zz=0;
+    callback.getDimTeraFly(inimg_file,in_zz);
+    size_t x0 = IN, x1 = 0, y0 = IN, y1 = 0, z0 = IN, z1 = 0;
+    for(V3DLONG j=0; j<points.size(); ++j)
+    {
+        x0 = (x0>points[j].x) ? points[j].x : x0;
+        x1 = (x1<points[j].x) ? points[j].x : x1;
+        y0 = (y0>points[j].y) ? points[j].y : y0;
+        y1 = (y1<points[j].y) ? points[j].y : y1;
+        z0 = (z0>points[j].z) ? points[j].z : z0;
+        z1 = (z1<points[j].z) ? points[j].z : z1;
+    }
+    x0 -= 10, x1 += 10, y0 -= 10, y1 += 10, z0 -= 10, z1 += 10;
+    if(x0<=0){x0=1;}
+    if(x1>=in_zz[0]){x1=in_zz[0]-1;}
+    if(y0<=0){y0=1;}
+    if(y1>=in_zz[1]){y1=in_zz[1]-1;}
+    if(z0<=0){z0=1;}
+    if(z1>=in_zz[2]){z1=in_zz[2]-1;}
+    V3DLONG sz0 = x1 - x0, sz1 = y1 - y0, sz2 = z1 - z0;
+
+    unsigned char* pdata = 0;
+
+    pdata = callback.getSubVolumeTeraFly(inimg_file,x0,x1,y0,y1,z0,z1);
+
+    for(V3DLONG j=0; j<points.size(); ++j)
+    {
+        points[j].x -= x0;
+        points[j].y -= y0;
+        points[j].z -= z0;
+    }
+
+    NeuronTree orig_nt;
+    for(int i=0; i<points.size(); ++i)
+    {
+        orig_nt.listNeuron.push_back(points[i]);
+    }
+
+
+    unsigned char* data1d_mask = 0;
+    V3DLONG sz_num = sz0*sz1*sz2;
+    data1d_mask = new unsigned char[sz_num];
+    memset(data1d_mask,0,sz_num*sizeof(unsigned char));
+    double margin = 1;
+    ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
+
+    int count = 0;
+
+    for(V3DLONG i=0; i<sz_num; ++i)
+    {
+        if(data1d_mask[i]!=0)
+        {
+            branchmean += pdata[i];
+            count++;
+        }
+    }
+    branchmean /= count;
+
+    for(V3DLONG i=0; i<sz_num; ++i)
+    {
+        if(data1d_mask[i]!=0)
+        {
+            branchstd += (pdata[i]-branchmean)*(pdata[i]-branchmean);
+        }
+    }
+
+    branchstd = sqrt(branchstd)/count;
+
+    return true;
+
+
+}
 bool Branch::splitbranch(NeuronTree &nt, vector<Branch> &segs, double thres)
 {
     vector<NeuronSWC> points;
@@ -844,14 +972,177 @@ bool Branch::refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> 
 
     return true;
 }
+bool Branch::refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback)
+{
+//    QDir all_braindir(braindir);
+//    QFileInfoList list_braindir = all_braindir.entryInfoList(QStringList(),QDir::Dirs|QDir::NoDotAndDotDot);
+//    int dir_count = list_braindir.size();
 
+//    map<int,int> sizemap;
+
+//    for(int i=0; i<dir_count; ++i)
+//    {
+////        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+//        QString t = list_braindir[i].baseName();
+//        QStringList ts =t.split('x');
+//        int resolution = ts[1].toInt();
+//        sizemap[resolution] = i;
+//    }
+
+//    QVector<QFileInfo> vtmp;
+//    map<int,int>::iterator it =sizemap.begin();
+
+//    while(it!=sizemap.end())
+//    {
+//        int index = it->second;
+//        vtmp.push_back(list_braindir[index]);
+//        it++;
+//    }
+
+//    list_braindir.clear();
+//    for(int i=0; i<dir_count; ++i)
+//    {
+//        list_braindir.push_back(vtmp[i]);
+//        qDebug()<<list_braindir[i].absoluteFilePath();
+//    }
+
+//    QString current_braindir = list_braindir[dir_count-1].absoluteFilePath();
+
+//    qDebug()<<current_braindir;
+
+    qDebug()<<"points size: "<<points.size();
+    V3DLONG *in_zz=0;
+    callback.getDimTeraFly(inimg_file,in_zz);
+    NeuronTree t;
+    for(int i=0; i<points.size(); ++i)
+    {
+        NeuronSWC tmpswc;
+        tmpswc.x = points[i].x;
+        tmpswc.y = points[i].y;
+        tmpswc.z = points[i].z;
+        tmpswc.n = i+1;
+        tmpswc.parent = (i==0) ? -1 : i;
+        t.listNeuron.push_back(tmpswc);
+    }
+    int mode = 1;
+    double branchmean,branchstd;
+    this->get_meanstd_img(inimg_file,callback,t,branchmean,branchstd,mode);
+
+    if(branchmean<30)
+    {
+        outpoints.assign(points.begin(),points.end());
+    }
+    else
+    {
+        size_t x0 = IN, x1 = 0, y0 = IN, y1 = 0, z0 = IN, z1 = 0;
+        for(V3DLONG j=0; j<points.size(); ++j)
+        {
+            x0 = (x0>points[j].x) ? points[j].x : x0;
+            x1 = (x1<points[j].x) ? points[j].x : x1;
+            y0 = (y0>points[j].y) ? points[j].y : y0;
+            y1 = (y1<points[j].y) ? points[j].y : y1;
+            z0 = (z0>points[j].z) ? points[j].z : z0;
+            z1 = (z1<points[j].z) ? points[j].z : z1;
+        }
+        x0 -= 10, x1 += 10, y0 -= 10, y1 += 10, z0 -= 10, z1 += 10;
+        if(x0<=0){x0=1;}
+        if(x1>=in_zz[0]){x1=in_zz[0]-1;}
+        if(y0<=0){y0=1;}
+        if(y1>=in_zz[1]){y1=in_zz[1]-1;}
+        if(z0<=0){z0=1;}
+        if(z1>=in_zz[2]){z1=in_zz[2]-1;}
+        qDebug()<<"subvolume: "<<x0<<" "<<x1<<" "<<y0<<" "<<y1<<" "<<z0<<" "<<z1;
+
+        V3DLONG sz0 = x1 - x0, sz1 = y1 - y0, sz2 = z1 - z0;
+        V3DLONG sz[4] = {sz0,sz1,sz2,1};
+
+        NeuronTree orig_nt;
+        for(V3DLONG j=0; j<points.size(); ++j)
+        {
+            points[j].x -= x0;
+            points[j].y -= y0;
+            points[j].z -= z0;
+            NeuronSWC p;
+            p.x = points[j].x;
+            p.y = points[j].y;
+            p.z = points[j].z;
+            p.n = j+1;
+            p.parent = (j==1) ? -1 : j;
+            orig_nt.listNeuron.push_back(p);
+        }
+
+        unsigned char* pdata = 0;
+        pdata = callback.getSubVolumeTeraFly(inimg_file,x0,x1,y0,y1,z0,z1);
+
+        unsigned char* data1d_mask = 0;
+        V3DLONG sz_num = sz0*sz1*sz2;
+        data1d_mask = new unsigned char[sz_num];
+        memset(data1d_mask,0,sz_num*sizeof(unsigned char));
+        double margin = 5;
+        ComputemaskImage(orig_nt,data1d_mask,sz0,sz1,sz2,margin);
+
+        for(V3DLONG i=0; i<sz_num; ++i)
+        {
+            if(data1d_mask[i]==0 && (double)pdata[i]>branchmean)
+            {
+                pdata[i] = 0;
+            }
+        }
+
+        unsigned char**** p4d = 0;
+        if(!new4dpointer(p4d,sz[0],sz[1],sz[2],sz[3],pdata))
+        {
+            fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+            if(p4d) {delete[] p4d; p4d = 0;}
+            return false;
+        }
+
+        LocationSimple p0(points[0].x,points[0].y,points[0].z);
+        qDebug()<<"poins size: "<<points.size()<<"???????????????????????????????????";
+        vector<LocationSimple> pp;
+        pp.clear();
+        LocationSimple pend((points.end()-1)->x,(points.end()-1)->y,(points.end()-1)->z);
+        pp.push_back(pend);
+
+        qDebug()<<"start point: "<<p0.x<<" "<<p0.y<<" "<<p0.z<<" end point: "<<pend.x<<" "<<pend.y<<" "<<pend.z;
+
+        double weight_xy_z = 1.0;
+        CurveTracePara trace_para;
+        trace_para.channo = 0;
+        trace_para.sp_graph_background = 0;
+        trace_para.b_postMergeClosebyBranches = false;
+        trace_para.b_3dcurve_width_from_xyonly = false;
+        trace_para.b_pruneArtifactBranches = false;
+        trace_para.sp_num_end_nodes = 2;
+        trace_para.b_deformcurve = false;
+        trace_para.sp_graph_resolution_step = 1;
+        trace_para.b_estRadii = false;
+
+        qDebug()<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+
+        NeuronTree nt_gd = v3dneuron_GD_tracing(p4d,sz,p0,pp,trace_para,weight_xy_z);
+        qDebug()<<"--------------------------------------------------------------------------------------";
+
+        for(int i=0; i<nt_gd.listNeuron.size(); ++i)
+        {
+    //        qDebug()<<__LINE__<<"i: "<<i<<" n: "<<nt_gd.listNeuron[i].n<<" p: "<<nt_gd.listNeuron[i].parent;
+            LocationSimple local((nt_gd.listNeuron[i].x+x0),(nt_gd.listNeuron[i].y+y0),(nt_gd.listNeuron[i].z+z0));
+            outpoints.push_back(local);
+        }
+        reverse(outpoints.begin(),outpoints.end());
+    }
+
+
+
+    return true;
+}
 bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type)
 {
     vector<Branch> segs;
     this->splitbranch(nt,segs,thres);
     int seg_count = segs.size();
     qDebug()<<__LINE__<<"seg size: "<<seg_count;
-
+//    vector<LocationSimple> tmp;
     vector<int> indexs_of_gd2;
     vector<int> neuron_type1;
 //    vector<NeuronSWC> points1;
@@ -997,12 +1288,211 @@ bool Branch::refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, 
             }
         }
     }
-
+//    outbranch.push_back(tmp[0]);
+//    if(outbranch.size()>=2)
+//    {
+//        for(int k=1;k<outbranch.size()-1;++k)
+//        {
+//              float x0=outbranch[k-1].x;
+//              float y0=outbranch[k-1].y;
+//              float z0=outbranch[k-1].z;
+//              float x1=outbranch[k].x;
+//              float y1=outbranch[k].y;
+//              float z1=outbranch[k].z;
+//              float x2=outbranch[k+1].x;
+//              float y2=outbranch[k+1].y;
+//              float z2=outbranch[k+1].z;
+//              float x3=(x0+x2)/2;
+//              float y3=(y0+y2)/2;
+//              float z3=(z0+z2)/2;
+//              if((abs(x3-x1)>=1)&&(abs(y3-y1)>=1)&&(abs(z3-z1)>=1))
+//              {
+//                  tmp.push_back(outbranch[k]);
+//              }
+//        }
+//    }
     return true;
 
 }
 
+bool Branch::refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type)
+{
+    vector<Branch> segs;
+    this->splitbranch(nt,segs,thres);
+    int seg_count = segs.size();
+    qDebug()<<__LINE__<<"seg size: "<<seg_count;
+//    vector<LocationSimple> tmp;
+    vector<int> indexs_of_gd2;
+    vector<int> neuron_type1;
+//    vector<NeuronSWC> points1;
+//    segs[0].get_points_of_branch(points1,nt);
+    indexs_of_gd2.push_back(0);
+//    neuron_type1.push_back(points1[0].type);
+    neuron_type1.push_back(2);
+    vector<LocationSimple> gd1_points;
 
+    for(int i=0; i<seg_count; ++i)
+    {
+        vector<NeuronSWC> points;
+        segs[i].get_points_of_branch(points,nt);
+        vector<LocationSimple> inpoints;
+        int color=2;
+        for(int j=0; j<points.size(); ++j)
+        {
+            LocationSimple local(points[j].x,points[j].y,points[j].z);
+            inpoints.push_back(local);
+            if(points[j].type==3){color=3;}
+        }
+        qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
+        vector<LocationSimple> outpoints;
+        this->refine_by_gd_img(inpoints,outpoints,inimg_file,callback);
+        qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
+
+        int index = outpoints.size()/2 + gd1_points.size();
+        indexs_of_gd2.push_back(index);
+        neuron_type1.push_back(color);
+        if(i!=(seg_count-1))
+        {
+//            if(outpoints.size()==0)
+//            {
+//                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end()-1);
+//            }
+//            else
+//            {
+//                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+//            }
+
+              if(outpoints.size()>0)
+              {
+                  gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end()-1);
+              }else{
+                  gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end()-1);
+              }
+        }
+        else
+        {
+//            if(outpoints.size()==0)
+//            {
+//                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end());
+//            }
+//            else
+//            {
+//                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+//            }
+            if(outpoints.size()>0)
+            {
+                gd1_points.insert(gd1_points.end(),outpoints.begin(),outpoints.end());
+            }else{
+                gd1_points.insert(gd1_points.end(),inpoints.begin(),inpoints.end());
+            }
+        }
+    }
+
+    qDebug()<<__LINE__<<"index_of_gd size: "<<indexs_of_gd2.size();
+
+    for(int i=0; i<indexs_of_gd2.size(); ++i)
+    {
+        vector<LocationSimple> inpoints;
+        vector<LocationSimple> outpoints;
+        int color;
+        if(i!=(indexs_of_gd2.size()-1))
+        {
+            inpoints.assign(gd1_points.begin()+indexs_of_gd2[i],gd1_points.begin()+indexs_of_gd2[i+1]);
+            if(neuron_type1[i]!=neuron_type1[i+1])
+            {
+                color=3;
+            }
+//            else
+//            {
+//                color=neuron_type1[i];
+//            }
+        }
+        else
+        {
+            inpoints.assign(gd1_points.begin()+indexs_of_gd2[i],gd1_points.end());
+            color=neuron_type1[i];
+        }
+        qDebug()<<__LINE__<<"i: "<<i<<" "<<inpoints.size();
+        if(inpoints.size()==0){
+            vector<NeuronSWC> points;
+            vector<LocationSimple> rawpoints;
+            this->get_points_of_branch(points,nt);
+            for(int k=0; k<points.size(); ++k)
+            {
+                LocationSimple local(points[k].x,points[k].y,points[k].z);
+                rawpoints.push_back(local);
+                neuron_type.push_back(points[k].type);
+            }
+            for(int k=0;k<rawpoints.size(); ++k){
+                outbranch.push_back(rawpoints[k]);
+            }
+            return true;
+        }
+        this->refine_by_gd_img(inpoints,outpoints,inimg_file,callback);
+        qDebug()<<__LINE__<<"i: outpoints: "<<i<<" "<<outpoints.size();
+        if(i!=(indexs_of_gd2.size()-1))
+        {
+//            if(outpoints.size()==0)
+//            {
+//                outbranch.insert(outbranch.end(),inpoints.begin(),inpoints.end()-1);
+//            }
+//            else
+//            {
+//                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end()-1);
+//            }
+            if(outpoints.size()>0)
+            {
+                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end()-1);
+                if(color!=3){color=2;}
+                vector<int> tt(outpoints.size(), color);
+                neuron_type.insert(neuron_type.end(),tt.begin(),tt.end()-1);
+            }
+        }
+        else
+        {
+//            if(outpoints.size()==0)
+//            {
+//                outbranch.insert(outbranch.end(),inpoints.begin(),inpoints.end());
+//            }
+//            else
+//            {
+//                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end());
+//            }
+            if(outpoints.size()>0)
+            {
+                outbranch.insert(outbranch.end(),outpoints.begin(),outpoints.end());
+                if(color!=3){color=2;}
+                vector<int> tt(outpoints.size(), color);
+                neuron_type.insert(neuron_type.end(),tt.begin(),tt.end());
+            }
+        }
+    }
+//    outbranch.push_back(tmp[0]);
+//    if(outbranch.size()>=2)
+//    {
+//        for(int k=1;k<outbranch.size()-1;++k)
+//        {
+//              float x0=outbranch[k-1].x;
+//              float y0=outbranch[k-1].y;
+//              float z0=outbranch[k-1].z;
+//              float x1=outbranch[k].x;
+//              float y1=outbranch[k].y;
+//              float z1=outbranch[k].z;
+//              float x2=outbranch[k+1].x;
+//              float y2=outbranch[k+1].y;
+//              float z2=outbranch[k+1].z;
+//              float x3=(x0+x2)/2;
+//              float y3=(y0+y2)/2;
+//              float z3=(z0+z2)/2;
+//              if((abs(x3-x1)>=1)&&(abs(y3-y1)>=1)&&(abs(z3-z1)>=1))
+//              {
+//                  tmp.push_back(outbranch[k]);
+//              }
+//        }
+//    }
+    return true;
+
+}
 
 
 
@@ -2265,7 +2755,181 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
     return refinetree;
 
 }
+NeuronTree SwcTree::refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback)
+{
+    const double thres = 50;
 
+    NeuronTree refinetree;
+
+    int size = branchs.size();
+    qDebug()<<"branch size : "<<size<<"----------------------------------------------------------------";
+
+    map<Branch,int> mapbranch;
+    for(int i=0; i<size; ++i)
+    {
+        mapbranch[branchs[i]] = i;
+    }
+
+    vector<vector<int> >children_b = vector<vector<int> >(size,vector<int>());
+    vector<int> queue;
+
+    for(int i =0; i<size; ++i)
+    {
+        if(branchs[i].parent==0)
+        {
+            queue.push_back(i);
+            continue;
+        }
+        children_b[mapbranch[*branchs[i].parent]].push_back(i);
+    }
+
+    vector<vector<NeuronSWC> > pointslist;
+    map<int,int> branchindex_to_pointslistindex;
+
+    while(!queue.empty())
+    {
+        int branchindex = queue.front();
+        queue.erase(queue.begin());
+        vector<NeuronSWC> points;
+        if(branchs[branchindex].parent==0)
+        {
+            branchs[branchindex].length_to_soma = 0;
+        }
+        else
+        {
+            branchs[branchindex].length_to_soma = branchs[branchindex].parent->length_to_soma + branchs[branchindex].parent->length;
+        }
+
+        double branchmean,branchstd;
+        branchs[branchindex].get_meanstd_img(inimg_file,callback,nt,branchmean,branchstd);
+
+        qDebug()<<"branchmean: "<<branchmean;
+        //加入branch order的判断  Yiwei Li 2022/1/18
+        if((branchs[branchindex].length_to_soma<30||branchs[branchindex].length<80)&&branchs[branchindex].length<300)
+        {
+            branchs[branchindex].get_points_of_branch(points,nt);
+            for(int i=0; i<points.size(); ++i)
+            {
+                NeuronSWC p;
+                p.n = i+1;
+                p.parent = (p.n==1) ? -1 : i;
+                p.x = points[i].x;
+                p.y = points[i].y;
+                p.z = points[i].z;
+                p.type = points[i].type;
+                points[i] = p;
+            }
+        }
+        else
+        {
+            vector<int> neuron_type;
+            vector<LocationSimple> outbranch;
+            branchs[branchindex].refine_by_2gd_img(outbranch,inimg_file,callback,nt,thres,neuron_type);
+            qDebug()<<__LINE__<<"outbranch size: "<<outbranch.size();
+            for(int i=0; i<outbranch.size(); ++i)
+            {
+                    NeuronSWC p;
+                    p.n = i+1;
+                    p.parent = (p.n==1) ? -1 : i;
+                    p.x = outbranch[i].x;
+                    p.y = outbranch[i].y;
+                    p.z = outbranch[i].z;
+                    vector<NeuronSWC> ps;
+                    branchs[branchindex].get_points_of_branch(ps,nt);
+                    float x0=ps[0].x;
+                    float y0=ps[0].y;
+                    float z0=ps[0].z;
+                    float dis = sqrt((x0-p.x)*(x0-p.x)+(y0-p.y)*(y0-p.y)+(z0-p.z)*(z0-p.z));
+                    float dis1;
+                    p.type = 2;
+                    for(int j=1; j<ps.size();++j){
+                        dis1 = sqrt((ps[j].x-p.x)*(ps[j].x-p.x)+(ps[j].y-p.y)*(ps[j].y-p.y)+(ps[j].z-p.z)*(ps[j].z-p.z));
+                        if(dis1<=dis){
+                              dis=dis1;
+                              p.type = ps[j].type;
+                        }
+                    }
+//                    p.type = neuron_type[i];
+                    points.push_back(p);
+            }
+        }
+        qDebug()<<__LINE__<<"_______________________________________";
+
+        pointslist.push_back(points);
+        branchindex_to_pointslistindex[branchindex] = pointslist.size()-1;
+
+        qDebug()<<__LINE__<<"children size: "<<children_b[branchindex].size();
+
+        for(int i=0; i<children_b[branchindex].size(); ++i)
+        {
+            queue.push_back(children_b[branchindex][i]);
+        }
+    }
+
+    for(int i=0; i<size; ++i)
+    {
+        if(branchs[i].parent==0)
+        {
+            queue.push_back(i);
+            continue;
+        }
+    }
+    NeuronSWC o;
+    o.n = 1;
+    o.parent = -1;
+    o.type = 1;
+    o.x = pointslist[branchindex_to_pointslistindex[queue[0]]].at(0).x;
+    o.y = pointslist[branchindex_to_pointslistindex[queue[0]]].at(0).y;
+    o.z = pointslist[branchindex_to_pointslistindex[queue[0]]].at(0).z;
+    refinetree.listNeuron.push_back(o);
+
+    int lastindex;
+
+    while(!queue.empty())
+    {
+        lastindex = refinetree.listNeuron.size();
+        int branchindex = queue.front();
+        queue.erase(queue.begin());
+        int pointslistindex = branchindex_to_pointslistindex[branchindex];
+
+        V3DLONG lastparent;
+        if(branchs[branchindex].parent==0)
+        {
+            lastparent = 1;
+        }
+        else
+        {
+            int lastpointslistindex = branchindex_to_pointslistindex[mapbranch[*(branchs[branchindex].parent)]];
+            lastparent = (pointslist[lastpointslistindex].end()-1)->n;
+        }
+
+        for(int i=1; i<pointslist[pointslistindex].size(); ++i)
+        {
+
+//            NeuronSWC p;
+            if(i==1)
+            {
+                pointslist[pointslistindex].at(i).parent = lastparent;
+            }
+            else
+            {
+                pointslist[pointslistindex].at(i).parent += lastindex;
+            }
+
+            pointslist[pointslistindex].at(i).n += lastindex;
+
+            refinetree.listNeuron.push_back(pointslist[pointslistindex].at(i));
+        }
+
+        for(int i=0; i<children_b[branchindex].size(); ++i)
+        {
+            queue.push_back(children_b[branchindex][i]);
+        }
+    }
+
+    return refinetree;
+
+}
 bool SwcTree::test(QString braindir, V3DPluginCallback2 &callback)
 {
     int size = branchs.size();
