@@ -78,10 +78,43 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
      a.initialize(nt1);
      qDebug()<<"1111"<<endl;
      NeuronTree refinetree = a.refine_swc_by_gd_img(inimg_file,callback);
+//     SwcTree b;
+//     b.initialize(refinetree);
+//     NeuronTree refinebranchtree=b.refine_swc_branch_by_gd_img(inimg_file,callback);
      string inswc_file=infiles[0];
      QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
      writeESWC_file(eswcfile,refinetree);
-    }else return false;
+ }else if(func_name==tr("feature_extraction_rate")){
+        string inimg_file= infiles[1];
+        string inswc_file=infiles[0];
+//        QString inputfolder=QString::fromStdString(infiles[0]);
+        NeuronTree nt=readSWC_file(infiles[0]);
+        float feature_extraction_rate;
+        feature_extraction_rate=get_feature_extraction_rate(inimg_file,nt,callback);
+        if(feature_extraction_rate>=1){feature_extraction_rate=1;}
+        QString feature_extraction_rate_txt = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_feature_extraction_rate.csv"));
+        ofstream csvOutFile;
+        //cout<<outgf.toStdString()<<endl;
+        csvOutFile.open(feature_extraction_rate_txt.toStdString().c_str(),ios::out | ios::app);
+        //csvOutFile<<"feature_extraction_rate,swc_file"<<endl;
+        csvOutFile<<feature_extraction_rate<<","<<inswc_file<<endl;
+        csvOutFile.close();
+ }else if(func_name==tr("swc_compress")){
+
+ }else if(func_name==tr("image_snr")){
+        QString infolder_1=infiles[0];
+        QString infolder_2=infiles[1];
+        QString SNr_out = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString(("image_snr.csv"));
+        compute_image_snr(infolder_1,infolder_2,SNr_out,callback);
+ }else if(func_name==tr("compare_2swc_change")){
+//        string inswc_file=infiles[0];
+        NeuronTree nt1=readSWC_file(infiles[0]);
+        NeuronTree nt2=readSWC_file(infiles[1]);
+        string inswc_file=infiles[0];
+        QString change_out = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+".csv"));
+        compare_2swc_change(nt1,nt2,callback,change_out);
+ }
+    else return false;
 
 	return true;
 }

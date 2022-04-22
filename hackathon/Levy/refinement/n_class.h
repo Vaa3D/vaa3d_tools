@@ -125,6 +125,9 @@ struct Trunk{
 struct Branch{
     NeuronSWC head_point,end_point;
     Branch* parent;
+    Branch* child_a;
+//    Branch* child_b;
+    int child_num=0;
     Angle head_angle,end_angle;
     int level;
     double distance,length,length_to_soma,sum_angle;
@@ -213,6 +216,7 @@ struct SwcTree{
 
     NeuronTree refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback);
     NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
+    NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
 
 };
 
@@ -251,7 +255,9 @@ public:
 
 };
 
-
+float get_feature_extraction_rate(string inimg_file,NeuronTree &nt,V3DPluginCallback2 &callback);
+void  compute_image_snr(QString infolder_1,QString infolder_2,QString SNr_out, V3DPluginCallback2 &callback);
+void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &callback,QString out_path);
 
 
 
