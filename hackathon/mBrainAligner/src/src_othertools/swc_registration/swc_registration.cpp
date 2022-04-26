@@ -69,10 +69,11 @@ int main(int argc, char *argv[])
 	//output
 	QString qs_filename_res_swc = NULL; //resample swc data
 	QString qs_filename_global_swc = NULL; //global swc data
+	QString qs_filename_ffd_swc = NULL;//FFD swc data
 	QString qs_filename_stps_swc = NULL; //stps swc data
 
 	int c;
-	static char optstring[] = "hC:M:o:T:S:d:x:y:z:a:b:c:r:f:s:";
+	static char optstring[] = "hC:M:o:T:S:d:x:y:z:a:b:c:r:g:f:s:";
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstring)) != -1)
 	{
@@ -186,13 +187,21 @@ int main(int argc, char *argv[])
 			}
 			qs_filename_res_swc.append(optarg);
 			break;
+		case 'g':
+			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
+			{
+				fprintf(stderr, "Found illegal or NULL parameter for the option -r.\n");
+				return 1;
+			}
+			qs_filename_global_swc.append(optarg);
+			break;
 		case 'f':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
 			{
 				fprintf(stderr, "Found illegal or NULL parameter for the option -f.\n");
 				return 1;
 			}
-			qs_filename_global_swc.append(optarg);
+			qs_filename_ffd_swc.append(optarg);
 			break;
 		case 's':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -309,14 +318,13 @@ int main(int argc, char *argv[])
 
 	//warp
 	printf("----------Warp------------\n");
-	unsigned char *p_img_sub = 0;
 	long long *sz_img_sub = 0, *sz_img_tar = 0;
 	NeuronTree nt_sub;
 	vector<Coord3D_PCM> vec_ctlpt_affine_tar(8, Coord3D_PCM()), vec_ctlpt_affine_sub(8, Coord3D_PCM());
 	QList<ImageMarker> ql_marker_tar, ql_marker_sub;
 
 	printf("1. Read input subject files. \n");
-	printf("1-1. Read subject image file. \n");
+	printf("1-1. Read subject marker file. \n");
 	
 	sz_img_sub = new V3DLONG[5]; sz_img_tar = new V3DLONG[5];
 	sz_img_sub[0] = stol(x_average.toStdString()); sz_img_tar[0] = sz_img_sub[0];
@@ -324,7 +332,6 @@ int main(int argc, char *argv[])
 	sz_img_sub[2] = stol(z_average.toStdString()); sz_img_tar[2] = sz_img_sub[2];
 	sz_img_sub[3] = 1; sz_img_tar[3] = sz_img_sub[3];
 	sz_img_sub[4] = 1; sz_img_tar[4] = sz_img_sub[4];
-	p_img_sub = new unsigned char[sz_img_sub[0] * sz_img_sub[1] * sz_img_sub[2]];
 	printf("\t\timage size: [w=%ld, h=%ld, z=%ld]\n", sz_img_sub[0], sz_img_sub[1], sz_img_sub[2]);
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -404,19 +411,15 @@ int main(int argc, char *argv[])
 	//	return false;
 	//}
 
-	printf("2-2. Read subject swc files. \n");
-	nt_sub = readSWC_file(qs_filename_global_swc);
+	printf("2-2. FFD warp. \n");
+	nt_sub.copy(nt_affine_sub);
 	//------------------------------------------------------------------------------------------
 	if (!qs_filename_ssd_grid.isNull())
 	{
 		printf("3. warp image based on affine grid. \n");
 		long sz_img_tar[4] = { vec_ctlpt_affine_tar[4].x + 1, vec_ctlpt_affine_tar[2].y + 1, vec_ctlpt_affine_tar[1].z + 1, 1 };
-		unsigned char *p_img_sub_affine = 0;
-		long long *sz_img_sub_affine = 0;
-		NeuronTree nt_sub_affine;
-		nt_sub_affine.copy(nt_sub);
 
-		printf("3-1. resize subject image/swc to the same size as target image. \n");
+		printf("3-1. resize subject swc to the same size as target image. \n");
 		if (!qs_filename_stps_swc.isNull())
 		{
 			double d_resizeratio[3];
@@ -424,9 +427,9 @@ int main(int argc, char *argv[])
 
 			for (long long i = 0; i < nt_sub.listNeuron.size(); i++)
 			{
-				nt_sub_affine.listNeuron[i].x *= d_resizeratio[0];
-				nt_sub_affine.listNeuron[i].y *= d_resizeratio[1];
-				nt_sub_affine.listNeuron[i].z *= d_resizeratio[2];
+				nt_affine_sub.listNeuron[i].x *= d_resizeratio[0];
+				nt_affine_sub.listNeuron[i].y *= d_resizeratio[1];
+				nt_affine_sub.listNeuron[i].z *= d_resizeratio[2];
 			}
 		}
 
@@ -442,20 +445,26 @@ int main(int argc, char *argv[])
 				return 0;
 			}
 			Matrix x_ori(4, 1), x_trans(4, 1);
-			for (long long i = 0; i < nt_sub_affine.listNeuron.size(); i++)
+			for (long long i = 0; i < nt_affine_sub.listNeuron.size(); i++)
 			{
-				x_ori(1, 1) = nt_sub_affine.listNeuron[i].x;
-				x_ori(2, 1) = nt_sub_affine.listNeuron[i].y;
-				x_ori(3, 1) = nt_sub_affine.listNeuron[i].z;
+				x_ori(1, 1) = nt_affine_sub.listNeuron[i].x;
+				x_ori(2, 1) = nt_affine_sub.listNeuron[i].y;
+				x_ori(3, 1) = nt_affine_sub.listNeuron[i].z;
 				x_ori(4, 1) = 1.0;
 				x_trans = x4x4_transmatrix*x_ori;
-				nt_sub_affine.listNeuron[i].x = x_trans(1, 1) / x_trans(4, 1);
-				nt_sub_affine.listNeuron[i].y = x_trans(2, 1) / x_trans(4, 1);
-				nt_sub_affine.listNeuron[i].z = x_trans(3, 1) / x_trans(4, 1);
+				nt_affine_sub.listNeuron[i].x = x_trans(1, 1) / x_trans(4, 1);
+				nt_affine_sub.listNeuron[i].y = x_trans(2, 1) / x_trans(4, 1);
+				nt_affine_sub.listNeuron[i].z = x_trans(3, 1) / x_trans(4, 1);
 			}
-			nt_sub.copy(nt_sub_affine);
+			nt_sub.copy(nt_affine_sub);
 		}
 	}
+
+	if (!qs_filename_ffd_swc.isNull())
+	{
+		writeSWC_file(qs_filename_ffd_swc, nt_sub);
+	}
+
 	if (!forward_stps)
 	{
 		//生成初始值抖动搜索场
@@ -498,24 +507,17 @@ int main(int argc, char *argv[])
 			Matrix x4x4_affine, xnx4_c, xnxn_K;
 			printf("\t4-1: stps warp subject image...\n");
 			{
-				unsigned char *p_img_stps = 0;
-				/*	if(!q_imagewarp_stps(vec_tar, vec_sub, p_img_sub, sz_img_sub, sz_img_tar, x4x4_affine, xnx4_c, xnxn_K, p_img_stps))
-				{
-				printf("ERROR: q_imagewarp_stps() return false.\n");
-				return false;
-				}*/
 
 				V3DLONG szBlock_x, szBlock_y, szBlock_z;
 				szBlock_x = szBlock_y = szBlock_z = 4;
 				int		i_interpmethod_df = 1;		//default B-spline
 				int		i_interpmethod_img = 0;		//default trilinear
-				if (!imgwarp_smallmemory(p_img_sub, sz_img_sub, ql_marker_sub, ql_marker_tar, szBlock_x, szBlock_y, szBlock_z, i_interpmethod_df, i_interpmethod_img, p_img_stps, x4x4_affine, xnx4_c, xnxn_K))
+				if (!q_stps_cd(vec_tar, vec_sub, 0.2, x4x4_affine, xnx4_c, xnxn_K))
 				{
-					printf("ERROR: imgwarp_smallmemory() return false.\n");
+					printf("ERROR: q_stps_cd() return false.\n");
 					getchar();
 					return false;
 				}
-				if (p_img_stps) 		{ delete[]p_img_stps;			p_img_stps = 0; }
 			}
 
 			printf("\t4-2: stps warp subject swc (Newton's optimiazation)...\n");
@@ -745,7 +747,6 @@ int main(int argc, char *argv[])
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("4. free memory. \n");
 	if (sz_img_tar) 			{ delete[]sz_img_tar;			sz_img_tar = 0; }
-	if (p_img_sub) 				{ delete[]p_img_sub;			p_img_sub = 0; }
 	if (sz_img_sub) 			{ delete[]sz_img_sub;			sz_img_sub = 0; }
 
 	printf("Program exit success.\n");
@@ -775,7 +776,8 @@ void printHelp()
 	printf("\t  -c   <average_template image size_z>     input average_template brain image size_z, default 456.\n");
 	printf("Output paras:\n");
 	printf("\t  -r   <filename_out_resample_swc>    output resample swc file full name.\n");
-	printf("\t  -f   <filename_out_global_swc>      output global swc file full name.\n");
+	printf("\t  -g   <filename_out_global_swc>    output global swc file full name.\n");
+	printf("\t  -f   <filename_out_FFD_swc>      output FFD swc file full name.\n");
 	printf("\t  -s   <filename_out_stps_swc>        output result swc file full name.\n");
 	printf("\n");
 	printf("\t [-h]	print this message.\n");
