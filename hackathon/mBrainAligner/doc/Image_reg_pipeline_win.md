@@ -48,8 +48,8 @@ you could modify manually the parameters in source code to determine the "angle 
   ```
   cd <your mBrainAligner_win64 directory>
   
-  <your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/ -m ../../examples/result/fMOST/global.v3draw -p r+f -o ../../examples/result/fMOST/ -d 1
-
+  <your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/ -m ../../examples/result/fMOST/global.v3draw -p r+f -o ../../examples/result/fMOST/ -d 1 -l 20+0+0 -u 1
+  
   ```
 
 The globally aligned image will be save in the `results` directory. 
@@ -85,7 +85,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 4. open terminal in windows, and run the following commands：
 ```
 cd <your mBrainAligner_win64 directory>
-<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/  -p a -o ../../examples/result/fMOST/ -d 1 -t target_global.marker -s sub_global.marker
+<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/  -p a -o ../../examples/result/fMOST/ -d 1 -l 20+0+0 -u 1 -t target_global.marker -s sub_global.marker
 
 ```
 The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the result image will be saved ("examples/result/fMOST/fMOST_18458_raw_affine.v3draw"). However, it is not necessary in our pipeline since the local registraion module can do it much better.
@@ -94,7 +94,7 @@ The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the
 
 open terminal in windows, and run the following commands：
 ```
-<your mBrainAligner_win64 directory>/local_registration.exe -p ../../examples/config/fMOST_config.txt -s ../../examples/result/fMOST/global.v3draw -m ../../examples/subject/fMOST_segmentation/ -l ../../examples/target/target_landmarks/low_landmarks.marker  -g ../../examples/target/ -o ../../examples/result/fMOST/
+<your mBrainAligner_win64 directory>/local_registration.exe -p ../../examples/config/fMOST_config.txt -s ../../examples/result/fMOST/global.v3draw -m ../../examples/subject/fMOST_segmentation/ -l ../../examples/target/target_landmarks/low_landmarks.marker  -g ../../examples/target/25um/ -o ../../examples/result/fMOST/
 ```
 if we use parameter `-u 1`,GPU mode open;if we use parameter `-u 0`,GPU mode close;
 The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the `Select_modal` in the `fMOST_config.txt` needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
