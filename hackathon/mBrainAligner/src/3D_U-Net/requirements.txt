@@ -1,7 +1,7 @@
 tables==3.4.0
 numpy==1.13.3
 keras_contrib==2.0.8
-tensorflow_gpu==1.4.0
+tensorflow_gpu==2.5.3
 Keras==2.1.2
 scipy==1.0.0
 SimpleITK==2.1.0
