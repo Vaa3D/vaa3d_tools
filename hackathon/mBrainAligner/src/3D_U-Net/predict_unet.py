@@ -1,25 +1,23 @@
 import os
+import sys
+import copy
 import numpy as np
-from train_unet import config
-import tables
 import SimpleITK as sitk
 from scipy.ndimage.interpolation import zoom
-import copy
-import sys
-sys.path.append("..")
-import tables
-from model import unet_model_3d
-from keras.utils.np_utils import to_categorical
-from Formatcov import load_v3d_raw_img_file1,save_v3d_raw_img_file1
 
+from train_unet import config
+from model import unet_model_3d
+from Formatcov import load_v3d_raw_img_file1, save_v3d_raw_img_file1
+from metrics import dice_coefficient
 import argparse
+sys.path.append("..")
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--opt", type=str, default='Adam')
-parser.add_argument("--WeightLoss", type=int, default=0)
-parser.add_argument("--lr", type=float, default=0.001)
+parser.add_argument("--nii", action='store_true')
+parser.add_argument("--gpu", '-g', default='1', type=str)
 args = parser.parse_args()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
 
 def itensity_normalize_one_volume(volume):
@@ -33,116 +31,127 @@ def itensity_normalize_one_volume(volume):
     return out
 
 
-def dice_coefficient(y_true, y_pred, smooth=1e-5):
-    y_true_d = np.sum(y_true*y_true)
-    y_pred_d = np.sum(y_pred*y_pred)
-    intersection = np.sum(y_true * y_pred)
-    return round((2. * intersection + smooth) / (y_true_d + y_pred_d + smooth),4)
-
-
-def saveimage(array,imagepath):
-    image = sitk.GetImageFromArray(array)
-    sitk.WriteImage(image,imagepath)
-
-
-def LoadImage(imagePath):
-    image = sitk.ReadImage(imagePath)
-    array = sitk.GetArrayFromImage(image)
-    return array
-
-
-def ResizeData(data,InputShape):
-    [W,H,D] = data.shape
-    scale = [InputShape[0]*1.0/W,InputShape[1]*1.0/H,InputShape[2]*1.0/D]
-    data = zoom(data,scale,order = 0)
+def ResizeData(data, InputShape):
+    [W, H, D] = data.shape
+    scale = [InputShape[0] * 1.0 / W, InputShape[1] * 1.0 / H, InputShape[2] * 1.0 / D]
+    data = zoom(data, scale, order=1)
     return data
 
 
+def ResizeMap(data, InputShape):
+    [W, H, D, C] = data.shape
+    scale = [InputShape[0] * 1.0 / W, InputShape[1] * 1.0 / H, InputShape[2] * 1.0 / D, 1]
+    data = zoom(data, scale, order=1)
+    return data
 
 
+def main():
+    save_dir = './data/predict/'
+    image_dir = './data/test/'
+    model_dir = config["model_file"]
+
+    model = unet_model_3d(input_shape=config["input_shape"],
+                          pool_size=config["pool_size"],
+                          n_labels=config["n_labels"],
+                          deconvolution=config["deconvolution"])
+    if os.path.exists(model_dir):
+        model.load_weights(model_dir, by_name=True)
+        print(' ------------  load model !')
+    else:
+        print('model do not existing in ', model_dir)
+        return
+    input_shape = config["image_shape"]
+
+    class2inten = {0: 0, 1: 62, 2: 75, 3: 80, 4: 100, 5: 145, 6: 159, 7: 168, 8: 0, 9: 249}
+
+    names = os.listdir(image_dir)
+    for name in names:
+        image_path = os.path.join(image_dir, name)
+        if name.endswith('.v3draw'):
+            v3d_flag = True
+            im_v3d = load_v3d_raw_img_file1(image_path)['data']
+            shape_v3d = im_v3d.shape
+            im_np = im_v3d[..., 0]
+            ori_shape = im_np.shape
+            im_np = ResizeData(im_np, input_shape)
+            im_np = itensity_normalize_one_volume(im_np)
+            im_np = im_np[np.newaxis, ..., np.newaxis]
+            im_save = {}
+            im_save['size'] = shape_v3d
+            im_save['datatype'] = 4
+        elif name.endswith('.nii') or name.endswith('.nii.gz'):
+            # nii should have size: 320 568 456
+            # TODO: only handle 456 320 568 like issue
+            v3d_flag = False
+            gz_flag = False
+            if name.endswith('.nii.gz'):
+                gz_flag = True
+            im_np = sitk.GetArrayFromImage(sitk.ReadImage(image_path))
+            ori_shape = im_np.shape
+            if ori_shape[-1] > ori_shape[0] and ori_shape[-1] > ori_shape[1]:
+                print('transfer nii shape ', ori_shape)
+                im_np = im_np.transpose(1, -1, 0)
+                ori_shape = im_np.shape
+                print('to ', ori_shape)
+            im_np = ResizeData(im_np, input_shape)
+            im_np = itensity_normalize_one_volume(im_np)
+            im_np = im_np[np.newaxis, ..., np.newaxis]
+        else:
+            print('wrong image format')
+            return
+
+        print('input image has shape: ', ori_shape, ' and will resize to shape: ', input_shape, ' as model input')
+
+        print('--------------------- predicting: ', name, '... ----------------------------')
+        pre_hot = model.predict(im_np)[0]
+
+        # saving segmentation map to nii or v3draw
+        print('resize predict map...')
+        pre_hot = ResizeMap(pre_hot, ori_shape + (10,))
+        print(pre_hot.shape)
+        pre_class = np.float32(np.argmax(pre_hot, axis=3))
+
+        for i in range(10):
+            print('processing class ', i, ' result...')
+            # processing classes prediction
+            pre_class[pre_class == i] = class2inten[i]
+            # saving one hot
+            if i != 8:
+                if v3d_flag:
+                    im_save['data'] = pre_hot[:, :, :, i]
+                    im_save['data'] = im_save['data'][..., np.newaxis]
+                    im_save['data'].flags['WRITEABLE'] = True
+                    save_path = save_dir + name.split('.v3draw')[0] + '/'
+                    if not os.path.exists(save_path):
+                        os.mkdir(save_path)
+                    if i != 9:
+                        save_path = save_path + str(i) + '.v3draw'
+                    elif i == 9:
+                        save_path = save_path + '/8.v3draw'
+                    save_v3d_raw_img_file1(im_save, save_path)
+                else:
+                    im_save = sitk.GetImageFromArray(pre_hot[:, :, :, i].transpose(-1, 0, 1))
+                    save_path = os.path.join(save_dir, name.split('.nii.gz' if gz_flag else '.nii')[0])
+                    if not os.path.exists(save_path):
+                        os.mkdir(save_path)
+                    if i != 9:
+                        save_path = os.path.join(save_path, str(i) + '.nii.gz' if gz_flag else str(i) + '.nii')
+                    elif i == 9:
+                        save_path = os.path.join(save_path, '8.nii.gz' if gz_flag else '8.nii')
+
+                    sitk.WriteImage(im_save, save_path)
+
+        # saving classes prediction
+        print('saving seg result...')
+        if v3d_flag:
+            im_save['data'] = pre_class[..., np.newaxis]
+            save_path = save_dir + name.split('.v3draw')[0] + '/seg.v3draw'
+            save_v3d_raw_img_file1(im_save, save_path)
+        else:
+            im_save = sitk.GetImageFromArray(pre_class.transpose(-1, 0, 1))
+            save_path = os.path.join(save_dir, name.split('.nii.gz' if gz_flag else '.nii')[0], 'seg.nii.gz' if gz_flag else 'seg.nii')
+            sitk.WriteImage(im_save, save_path)
 
 
-SaveDir = './data/predict/'
-ImageDir = './data/test/'
-
-
-
-model = unet_model_3d(input_shape=config["input_shape"],
-              pool_size=config["pool_size"],
-              n_labels=config["n_labels"],
-              deconvolution=config["deconvolution"])
-if os.path.exists(config["model_file"]):
-    model.load_weights(config["model_file"],by_name = True)
-    print(' ------------  load model !')
-
-input_shape = config["image_shape"]
-
-Names = os.listdir(ImageDir)
-count = 0
-for name in Names:
-    print('predicting ',name,'.......')
-    count+=1
-    ImagePath = ImageDir + name
-    Im = load_v3d_raw_img_file1(ImagePath)
-    ImageArray = Im['data']
-    shape = ImageArray.shape    # this shape is for save v3d image (has channel information)
-    ImageArray = ImageArray[:,:,:,0]
-    ori_shape=ImageArray.shape
-
-    ImageArray = ResizeData(ImageArray, input_shape)
-    ImageArray = itensity_normalize_one_volume(ImageArray)
-    ImageArray = np.asarray(ImageArray)[np.newaxis][np.newaxis]
-    ImageArray = np.moveaxis(ImageArray, 1, 4)
-
-    prediction = model.predict(ImageArray)
-    prediction = prediction[0]
-
-    Im={}
-    Im['size']=shape
-    Im['datatype']=4 #float32
-
-    # remove no.9 class cause it is no longer needed
-    # save solo class image i.e. save 10 images in total
-    for i in range(10):
-        if i<=7:
-            prediction1 = ResizeData(prediction[:, :, :, i], ori_shape)
-            Im['data'] = prediction1[:, :, :, np.newaxis]
-            Im['data'] .flags['WRITEABLE'] = True
-            savepath=SaveDir + name.split('.v')[0] + '/' + str(i) + '.v3draw'
-            if not os.path.exists(savepath.split(str(i)+'.v')[0]):
-                os.mkdir(savepath.split(str(i)+'.v')[0])
-            save_v3d_raw_img_file1(Im, savepath)
-        elif i==9:
-            prediction1 = ResizeData(prediction[:, :, :, i], ori_shape)
-            Im['data'] = prediction1[:, :, :, np.newaxis]
-            Im['data'] .flags['WRITEABLE'] = True
-            savepath=SaveDir + name.split('.v')[0] + '/8.v3draw'
-            save_v3d_raw_img_file1(Im, savepath)
-
-
-
-    # save the segmentation image
-    # attention: prediction1 get int64 dtype
-    prediction1 = np.argmax(prediction, axis=3)
-    prediction1 = ResizeData(prediction1, ori_shape)
-    prediction2 = copy.deepcopy(prediction1)
-    prediction2=prediction2.astype('float32')
-
-    prediction2[prediction2 == 1] = 62
-    prediction2[prediction2 == 2] = 75
-    prediction2[prediction2 == 3] = 80
-    prediction2[prediction2 == 4] = 100
-    prediction2[prediction2 == 5] = 145
-    prediction2[prediction2 == 6] = 159
-    prediction2[prediction2 == 7] = 168
-    # prediction2[prediction2 == 8] = 237
-    prediction2[prediction2 == 8] = 0
-    prediction2[prediction2 == 9] = 249
-
-    Im['data'] = prediction2[:, :, :, np.newaxis]
-    savepath = SaveDir + name.split('.v')[0] + '/' + 'seg.v3draw'
-    if not os.path.exists(savepath.split('seg')[0]):
-        os.mkdir(savepath.split('seg')[0])
-    save_v3d_raw_img_file1(Im, savepath)
-
-
+if __name__ == "__main__":
+    main()
