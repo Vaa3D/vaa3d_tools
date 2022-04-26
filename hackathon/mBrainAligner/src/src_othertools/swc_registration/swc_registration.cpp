@@ -59,16 +59,12 @@ int main(int argc, char *argv[])
 	QString qs_filename_ssd_grid = NULL; //If ffd is required during brain registration, add it.
 	int forward_stps = 0;
 
-	QString x_initial = NULL; //original image size_x
-	QString y_initial = NULL; //original image size_y
-	QString z_initial = NULL; //original image size_z
-	QString x_after = NULL; //resample image size_x
-	QString y_after = NULL; //resample image size_y
-	QString z_after = NULL; //resample image size_z
+	QString x_downsample = NULL; //original image sample reduction x
+	QString y_downsample = NULL; //original image sample reduction y
+	QString z_downsample = NULL; //original image sample reduction z
 	QString x_average = NULL; //average_template image size_x
 	QString y_average = NULL; //average_template image size_y
 	QString z_average = NULL; //average_template image size_z
-	QString x_pading = NULL; //The X-axis of the template brain is subtracted
 
 	//output
 	QString qs_filename_res_swc = NULL; //resample swc data
@@ -76,7 +72,7 @@ int main(int argc, char *argv[])
 	QString qs_filename_stps_swc = NULL; //stps swc data
 
 	int c;
-	static char optstring[] = "hC:M:o:T:S:d:X:Y:Z:x:y:z:a:b:c:p:r:f:s:";
+	static char optstring[] = "hC:M:o:T:S:d:x:y:z:a:b:c:r:f:s:";
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstring)) != -1)
 	{
@@ -134,37 +130,13 @@ int main(int argc, char *argv[])
 			}
 			qs_filename_ssd_grid.append(optarg);
 			break;
-		case 'X':
-			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
-			{
-				fprintf(stderr, "Found illegal or NULL parameter for the option -X.\n");
-				return 1;
-			}
-			x_initial.append(optarg);
-			break;
-		case 'Y':
-			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
-			{
-				fprintf(stderr, "Found illegal or NULL parameter for the option -Y.\n");
-				return 1;
-			}
-			y_initial.append(optarg);
-			break;
-		case 'Z':
-			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
-			{
-				fprintf(stderr, "Found illegal or NULL parameter for the option -Z.\n");
-				return 1;
-			}
-			z_initial.append(optarg);
-			break;
 		case 'x':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
 			{
 				fprintf(stderr, "Found illegal or NULL parameter for the option -x.\n");
 				return 1;
 			}
-			x_after.append(optarg);
+			x_downsample.append(optarg);
 			break;
 		case 'y':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -172,7 +144,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Found illegal or NULL parameter for the option -y.\n");
 				return 1;
 			}
-			y_after.append(optarg);
+			y_downsample.append(optarg);
 			break;
 		case 'z':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -180,7 +152,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Found illegal or NULL parameter for the option -z.\n");
 				return 1;
 			}
-			z_after.append(optarg);
+			z_downsample.append(optarg);
 			break;
 		case 'a':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -205,14 +177,6 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			z_average.append(optarg);
-			break;
-		case 'p':
-			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
-			{
-				fprintf(stderr, "Found illegal or NULL parameter for the option -p.\n");
-				return 1;
-			}
-			x_pading.append(optarg);
 			break;
 		case 'r':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -245,16 +209,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	float X_initial = stringToNum<float>(x_initial.toStdString());
-	float Y_initial = stringToNum<float>(y_initial.toStdString());
-	float Z_initial = stringToNum<float>(z_initial.toStdString());
-	float X_after = stringToNum<float>(x_after.toStdString());
-	float Y_after = stringToNum<float>(y_after.toStdString());
-	float Z_after = stringToNum<float>(z_after.toStdString());
-	float x_downsample = X_initial / X_after;
-	float y_downsample = Y_initial / Y_after;
-	float z_downsample = Z_initial / Z_after;
-	float X_pading = stringToNum<float>(x_pading.toStdString());
+	float X_downsample = stringToNum<float>(x_downsample.toStdString());
+	float Y_downsample = stringToNum<float>(y_downsample.toStdString());
+	float Z_downsample = stringToNum<float>(z_downsample.toStdString());
 
 	printf("--------DOWNSAMPLE---------\n");
 	
@@ -266,9 +223,9 @@ int main(int argc, char *argv[])
 		_ori(1, 1) = nt_ori.listNeuron[n].x;
 		_ori(2, 1) = nt_ori.listNeuron[n].y;
 		_ori(3, 1) = nt_ori.listNeuron[n].z;
-		nt_ori.listNeuron[n].x = _ori(1, 1) / x_downsample;
-		nt_ori.listNeuron[n].y = _ori(2, 1) / y_downsample;
-		nt_ori.listNeuron[n].z = _ori(3, 1) / z_downsample;
+		nt_ori.listNeuron[n].x = _ori(1, 1) / X_downsample;
+		nt_ori.listNeuron[n].y = _ori(2, 1) / Y_downsample;
+		nt_ori.listNeuron[n].z = _ori(3, 1) / Z_downsample;
 	}
 
 	QString outputname_res_swc = qs_filename_res_swc;
@@ -300,29 +257,9 @@ int main(int argc, char *argv[])
 		return false;
 	}
 
-	unsigned char *p_img_str = 0;
-	long long *sz_img_str = 0;
-	long long *sz_img_tar = 0;
 	NeuronTree nt_affine_sub;
-	sz_img_tar = new V3DLONG[5];
-	//读取标准脑，暂定采用average_template_25_u8_xpad作为标准脑
-	sz_img_tar[0] = stol(x_average.toStdString());
-	sz_img_tar[1] = stol(y_average.toStdString());
-	sz_img_tar[2] = stol(z_average.toStdString());
-	sz_img_tar[3] = 1;
-	sz_img_tar[4] = 1;
-	printf("\t\timage size: [w=%ld, h=%ld, z=%ld]\n", sz_img_tar[0], sz_img_tar[1], sz_img_tar[2]);
 
 	printf("1. Read input subject files. \n");
-
-	sz_img_str = new V3DLONG[5];
-	sz_img_str[0] = stol(x_after.toStdString());
-	sz_img_str[1] = stol(y_after.toStdString());
-	sz_img_str[2] = stol(z_after.toStdString());
-	sz_img_str[3] = 1;
-	sz_img_str[4] = 1;
-	p_img_str = new unsigned char[sz_img_str[0] * sz_img_str[1] * sz_img_str[2]];
-	printf("\t\timage size: [w=%ld, h=%ld, z=%ld]\n", sz_img_str[0], sz_img_str[1], sz_img_str[2]);
 
 	//re-formate to vector
 	//since marker coordinate starts from 1 instead of 0, need -1 !!!
@@ -339,18 +276,11 @@ int main(int argc, char *argv[])
 		Matrix x4x4_affinematrix;
 		printf("\t2-1: affine warp subject image...\n");
 		{
-			unsigned char *p_img_warp_affine = 0;
-			if (!q_imagewarp_affine(vec_affine_tar, vec_affine_sub,
-				p_img_str, sz_img_str, sz_img_tar,
-				x4x4_affinematrix, p_img_warp_affine))
+			if (!q_affine_compute_affinmatrix_3D(vec_affine_tar, vec_affine_sub, x4x4_affinematrix))	//B=T*A
 			{
-				printf("ERROR: q_imagewarp_affine() return false!\n");
-				getchar();
-				return 0;
+				printf("ERROR: q_affine_compute_affinmatrix_2D() return false.\n");
+				return false;
 			}
-			if (p_img_str) 			{ delete[]p_img_str;			p_img_str = 0; }
-			p_img_str = p_img_warp_affine;	p_img_warp_affine = 0;
-			for (int i = 0; i < 3; i++) sz_img_str[i] = sz_img_tar[i];
 		}
 
 		printf("\t2-1. Read subject swc files. \n");
@@ -375,15 +305,12 @@ int main(int argc, char *argv[])
 		}
 	}
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("3. free memory. \n");
-	if (p_img_str) 				{ delete[]p_img_str;			p_img_str = 0; }
-	if (sz_img_str) 			{ delete[]sz_img_str;			sz_img_str = 0; }
 	printf("Program exit success.\n");
 
 	//warp
 	printf("----------Warp------------\n");
 	unsigned char *p_img_sub = 0;
-	long long *sz_img_sub = 0;
+	long long *sz_img_sub = 0, *sz_img_tar = 0;
 	NeuronTree nt_sub;
 	vector<Coord3D_PCM> vec_ctlpt_affine_tar(8, Coord3D_PCM()), vec_ctlpt_affine_sub(8, Coord3D_PCM());
 	QList<ImageMarker> ql_marker_tar, ql_marker_sub;
@@ -391,12 +318,12 @@ int main(int argc, char *argv[])
 	printf("1. Read input subject files. \n");
 	printf("1-1. Read subject image file. \n");
 	
-	sz_img_sub = new V3DLONG[5];
-	sz_img_sub[0] = stol(x_average.toStdString());
-	sz_img_sub[1] = stol(y_average.toStdString());
-	sz_img_sub[2] = stol(z_average.toStdString());
-	sz_img_sub[3] = 1;
-	sz_img_sub[4] = 1;
+	sz_img_sub = new V3DLONG[5]; sz_img_tar = new V3DLONG[5];
+	sz_img_sub[0] = stol(x_average.toStdString()); sz_img_tar[0] = sz_img_sub[0];
+	sz_img_sub[1] = stol(y_average.toStdString()); sz_img_tar[1] = sz_img_sub[1];
+	sz_img_sub[2] = stol(z_average.toStdString()); sz_img_tar[2] = sz_img_sub[2];
+	sz_img_sub[3] = 1; sz_img_tar[3] = sz_img_sub[3];
+	sz_img_sub[4] = 1; sz_img_tar[4] = sz_img_sub[4];
 	p_img_sub = new unsigned char[sz_img_sub[0] * sz_img_sub[1] * sz_img_sub[2]];
 	printf("\t\timage size: [w=%ld, h=%ld, z=%ld]\n", sz_img_sub[0], sz_img_sub[1], sz_img_sub[2]);
 
@@ -747,7 +674,7 @@ int main(int argc, char *argv[])
 						if (!isnan(fx) && fx < 1.0 /*&& d_dis2parent < 5*/)
 						{
 							b_find = true;
-							nt_sub.listNeuron[i].x = pt_inv.x - X_pading;
+							nt_sub.listNeuron[i].x = pt_inv.x;
 							nt_sub.listNeuron[i].y = pt_inv.y;
 							nt_sub.listNeuron[i].z = pt_inv.z;
 							if (iter_redonewton > 0)//error to success
@@ -772,7 +699,7 @@ int main(int argc, char *argv[])
 							if (iter_redonewton > iter_thresh)
 							{
 								printf("Try %d times, still cannot find minima, set to pos with min loss!\n", iter_thresh);
-								nt_sub.listNeuron[i].x = pt_inv_min.x - X_pading;
+								nt_sub.listNeuron[i].x = pt_inv_min.x;
 								nt_sub.listNeuron[i].y = pt_inv_min.y;
 								nt_sub.listNeuron[i].z = pt_inv_min.z;
 								b_find = true;//避免死循环
@@ -808,7 +735,7 @@ int main(int argc, char *argv[])
 				getchar();
 				return false;
 			}
-			nt_sub.listNeuron[i].x = spt_sub2tar.x - X_pading;
+			nt_sub.listNeuron[i].x = spt_sub2tar.x;
 			nt_sub.listNeuron[i].y = spt_sub2tar.y;
 			nt_sub.listNeuron[i].z = spt_sub2tar.z;
 		}
@@ -840,16 +767,12 @@ void printHelp()
 	printf("\t  -T   <filename_tar_auto_marker>      input ori_local_registered_tar.marker file full name.\n");
 	printf("\t  -S   <filename_brain_auto_marker>    input ori_local_registered_sub.marker file full name.\n");
 	printf("\t  -d   <filename_ffd_grid>             input _FFD_grid.swc file full name. If FFD is included in the brain registration, add it.\n");
-	printf("\t  -X   <original image size_x>     input original brain image size_x.\n");
-	printf("\t  -Y   <original image size_y>     input original brain image size_y.\n");
-	printf("\t  -Z   <original image size_z>     input original brain image size_z.\n");
-	printf("\t  -x   <resample image size_x>     input resample brain image size_x.\n");
-	printf("\t  -y   <resample image size_y>     input resample brain image size_y.\n");
-	printf("\t  -z   <resample image size_z>     input resample brain image size_z.\n");
+	printf("\t  -x   <downsample ratio x>     input downsample ratio of image x-axis.\n");
+	printf("\t  -y   <downsample ratio y>     input downsample ratio of image y-axis.\n");
+	printf("\t  -z   <downsample ratio z>     input downsample ratio of image z-axis.\n");
 	printf("\t  -a   <average_template image size_x>     input average_template brain image size_x, default 568.\n");
 	printf("\t  -b   <average_template image size_y>     input average_template brain image size_y, default 320.\n");
 	printf("\t  -c   <average_template image size_z>     input average_template brain image size_z, default 456.\n");
-	printf("\t  -p   <pading x>       input template brain xpad, if you don't want to keep it, default 20.\n");
 	printf("Output paras:\n");
 	printf("\t  -r   <filename_out_resample_swc>    output resample swc file full name.\n");
 	printf("\t  -f   <filename_out_global_swc>      output global swc file full name.\n");
