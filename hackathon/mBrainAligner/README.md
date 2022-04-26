@@ -65,7 +65,7 @@ If you only want to test or use `mBrainAligner`, the simplest way is to use the 
 >**binary**
 > > **win64_bin**: contains the global and local registration, 2.5D corner detector and neuron or soma warping related executable files and `dlls` for Windows. (note: you need download "win64_bin.7z" from https://drive.google.com/file/d/18JYYv0BZ15QxMm98Gdmm8AeTTzj_fMbe/view?usp=sharing and unzip it here.)
 > >
-> > **linux_bin**: contains the global and local registration executable files and `libs` for Linux. (note: you need download "lib.tar.xz" from ************ and unzip it here.)
+> > **linux_bin**: contains the global and local registration executable files and `libs` for Linux. (note: you need download "lib.tar.xz" from https://drive.google.com/file/d/11nL-oqnBgDTgaZFhoL0YJeIGbsYpyIRB/view?usp=sharing and unzip it here.)
 > >
 > > The stripe removal tool is implement in Matlab, you can find the code in `src/src_othertools/stripe_removal/`. 
 > > The precompiled semi-automatic registration program for windows can be found in `src/semi_automatic_registration/semi_automatic_registration.7z`.
