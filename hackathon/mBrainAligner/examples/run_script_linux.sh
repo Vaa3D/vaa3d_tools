@@ -14,7 +14,7 @@
 #                                If the user is registering with private data, we need to generate "...txt" file (see fmost_config.txt file).
 # -s <global_result_image>  The file name is fixed. If the result save path is "result/fMOST/", 
 #                           then "-s" is "result/fMOST/global.v3draw".
-# -m <fmost_segmentation_result> 
+# -m <fmost_segmentation_result> If you don't have segmentation result, you can still choose "Select_modal=0", but this parameter is not entered.
 # -l <landmarks_file_path> example: "high_landmarks.txt" "middle_landmarks.txt" "low_landmarks.txt" 
 # -o the result save path
 # -u <gpu mode>,0:gpu_off,1:gpu_on  If your runtime environment does not have GPU, please select "0"
