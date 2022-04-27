@@ -20,8 +20,8 @@
 :: -u <gpu mode>,0:gpu_off,1:gpu_on  If your runtime environment does not have GPU, please select "0"
 
 :: registration fMOST sample data
-::..\binary\win64_bin\global_registration.exe -f target/25um/  -m subject/fMOST_18458_raw.v3draw  -p r+f+n -o result/fMOST/ -d 1 -l 30+20+20 -u 1
-::..\binary\win64_bin\local_registration.exe -p config/fMOST_config.txt -s result/fMOST/global.v3draw -m subject/fMOST_segmentation_50um/ -l target/25um/target_landmarks/low_landmarks.marker  -g target/25um/ -o result/fMOST/ -u 1  
+..\binary\win64_bin\global_registration.exe -f target/25um/  -m subject/fMOST_18458_raw.v3draw  -p r+f+n -o result/fMOST/ -d 1 -l 30+20+20 -u 1
+..\binary\win64_bin\local_registration.exe -p config/fMOST_config.txt -s result/fMOST/global.v3draw -m subject/fMOST_segmentation_50um/ -l target/25um/target_landmarks/low_landmarks.marker  -g target/25um/ -o result/fMOST/ -u 1  
 
 ..\binary\win64_bin\global_registration.exe -f target/25um/  -m subject/18052_red_mm_RSA_x2.nii.gz  -p r+f+n -o result/fMOST_nii/ -d 1 -l 20+0+0 -u 1
 ..\binary\win64_bin\local_registration.exe -p config/fMOST_withou_seg_config.txt -s result/fMOST_nii/global.nii.gz -l target/25um/target_landmarks/low_landmarks.marker  -g target/25um/ -o result/fMOST_nii/ -u 1  
