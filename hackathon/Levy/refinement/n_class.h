@@ -168,6 +168,7 @@ struct Branch{
     bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
     bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
     bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
+
 };
 
 struct SwcTree{
@@ -258,6 +259,8 @@ public:
 float get_feature_extraction_rate(string inimg_file,NeuronTree &nt,V3DPluginCallback2 &callback);
 void  compute_image_snr(QString infolder_1,QString infolder_2,QString SNr_out, V3DPluginCallback2 &callback);
 void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &callback,QString out_path);
+NeuronSWC meanshift(V3DPluginCallback2 &callback, NeuronSWC p0, QString braindir);
+NeuronSWC meanshift_img(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir);
 
 
 

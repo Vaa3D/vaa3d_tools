@@ -2666,6 +2666,12 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
         }
         else
         {
+            if(branchs[branchindex].child_num==2){
+               qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
+               NeuronSWC p0;
+               p0=branchs[branchindex].end_point;
+               branchs[branchindex].end_point=meanshift(callback, p0,braindir);
+            }
             vector<int> neuron_type;
             vector<LocationSimple> outbranch;
             branchs[branchindex].refine_by_2gd(outbranch,braindir,callback,nt,thres,neuron_type);
@@ -2834,17 +2840,20 @@ NeuronTree SwcTree::refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &
             branchs[branchindex].length_to_soma = branchs[branchindex].parent->length_to_soma + branchs[branchindex].parent->length;
         }
 
-        double branchmean,branchstd;
-        branchs[branchindex].get_meanstd_img(inimg_file,callback,nt,branchmean,branchstd);
+//        double branchmean,branchstd;
+//        branchs[branchindex].get_meanstd_img(inimg_file,callback,nt,branchmean,branchstd);
 
-        qDebug()<<"branchmean: "<<branchmean;
+//        qDebug()<<"branchmean: "<<branchmean;
         //add the judgement of branch order  Yiwei Li 2022/1/18
             vector<int> neuron_type;
             vector<LocationSimple> outbranch;
+            if(branchs[branchindex].child_num==2){
+               qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
+               NeuronSWC p0;
+               p0=branchs[branchindex].end_point;
+            }
             branchs[branchindex].refine_by_2gd_img(outbranch,inimg_file,callback,nt,thres,neuron_type);
-//            if(branchs[branchindex].child_num==2){
-//                qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
-//            }
+
             qDebug()<<__LINE__<<"outbranch size: "<<outbranch.size();
             for(int i=0; i<outbranch.size(); ++i)
             {
@@ -4794,7 +4803,251 @@ void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &ca
        csvOutFile.close();
 }
 
+NeuronSWC meanshift(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir)
+{
+    QDir all_braindir(braindir);
+    QFileInfoList list_braindir = all_braindir.entryInfoList(QStringList(),QDir::Dirs|QDir::NoDotAndDotDot);
+    int dir_count = list_braindir.size();
+
+    map<int,int> sizemap;
+
+    for(int i=0; i<dir_count; ++i)
+    {
+//        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+        QString t = list_braindir[i].baseName();
+        QStringList ts =t.split('x');
+        int resolution = ts[1].toInt();
+        sizemap[resolution] = i;
+    }
+
+    QVector<QFileInfo> vtmp;
+    map<int,int>::iterator it =sizemap.begin();
+
+    while(it!=sizemap.end())
+    {
+        int index = it->second;
+        vtmp.push_back(list_braindir[index]);
+        it++;
+    }
+
+    list_braindir.clear();
+    for(int i=0; i<dir_count; ++i)
+    {
+        list_braindir.push_back(vtmp[i]);
+//        qDebug()<<list_braindir[i].absoluteFilePath();
+    }
+
+    QString current_braindir = list_braindir[dir_count-3].absoluteFilePath();
+
+    qDebug()<<current_braindir;
+
+           NeuronSWC p1;
+           int r=10;
+           V3DLONG *in_zz = 0;
+           if(!callback.getDimTeraFly(current_braindir.toStdString().c_str(),in_zz)){cout<<"can't load terafly img"<<endl;}
+           V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+           start_x=p0.x-r; if(start_x<0){start_x=0;} if(start_x>=in_zz[0]){start_x=in_zz[0]-1;cout<<"x axis over border"<<endl;}
+           start_y=p0.y-r;if(start_y<0){start_y=0;}if(start_y>=in_zz[1]){start_y=in_zz[1]-1;cout<<"y axis over border"<<endl; }
+           start_z=p0.z-r;if(start_z<0){start_z=0;}if(start_z>=in_zz[2]){start_z=in_zz[2]-1;cout<<"z axis over border"<<endl; }
+           end_x=p0.x+r;if(end_x>in_zz[0]){end_x=in_zz[0]-1;}
+           end_y=p0.y+r;if(end_y>in_zz[1]){end_y=in_zz[1]-1;}
+           end_z=p0.z+r;if(end_z>in_zz[2]){end_z=in_zz[2]-1;}
+           unsigned char * im_cropped = 0;
+           V3DLONG *in_sz = new V3DLONG[4];
+           if(end_x<=start_x){cout<<"over border"<<endl; return p0;}
+           if(end_y<=start_y){cout<<"over border"<<endl;return p0;}
+           if(end_z<=start_z){cout<<"over border"<<endl;return p0;}
+           in_sz[0] = end_x-start_x+1;
+           in_sz[1] = end_y-start_y+1;
+           in_sz[2] = end_z-start_z+1;
+           in_sz[3]=in_zz[3];
+           V3DLONG pagesz;
+           pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
+           try {im_cropped = new unsigned char [pagesz];}
+           catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl;}
+           cout<<"2"<<endl;
+           im_cropped = callback.getSubVolumeTeraFly(current_braindir.toStdString().c_str(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+           cout<<"1"<<endl;
+           if(im_cropped==NULL){
+               cout<<"3"<<endl;}
+           V3DLONG y_offset=in_sz[0];
+           V3DLONG z_offset=in_sz[0]*in_sz[1];
+           V3DLONG windowradius=r-1;
+           V3DLONG pos;
+           V3DLONG pos0;
+   //        float thresHold =100;
+           float total_x,total_y,total_z,v_color,sum_v,thresHold,mean,std;
+           total_x=0;
+           total_y=0;
+           total_z=0;
+           v_color=0;
+           sum_v=0;
+           mean=0;
+           std=0;
+           pos0=p0.z*z_offset+p0.y*y_offset+p0.x;
+//center_intensity[i]=im_cropped[pos0];
+           for(int j=0; j<pagesz;j++){
+                  mean=mean+im_cropped[j];
+           }
+           mean=mean/pagesz;
+           for(int j=0; j<pagesz;j++){
+                  std=std+(mean-im_cropped[j])*(mean-im_cropped[j]);
+           }
+           std=sqrt(std)/pagesz;
+           thresHold=mean+std;
+           if(thresHold<=100){thresHold=100;}
+           for(V3DLONG dx=p0.x+0.5-start_x-windowradius; dx<=p0.x+0.5-start_x+windowradius; dx++){
+               for(V3DLONG dy=p0.y+0.5-start_y-windowradius; dy<=p0.y+0.5-start_y+windowradius; dy++){
+                   for(V3DLONG dz=p0.z+0.5-start_z-windowradius; dz<=p0.z+0.5-start_z+windowradius; dz++){
+                       pos=dz*z_offset+dy*y_offset+dx;
+   //                    double tmp=(dx-s.x)*(dx-s.x)+(dy-s.y)*(dy-s.y)
+   //                         +(dz-s.z)*(dz-s.z);
+   //                    double distance=sqrt(tmp);
+   //                    if (distance>windowradius) continue;
+                       v_color=im_cropped[pos];
+                       //cout<<v_color<<endl;
+                       if(v_color<thresHold)
+                           v_color=0;
+                       total_x=v_color*(float)dx+total_x;
+                       total_y=v_color*(float)dy+total_y;
+                       total_z=v_color*(float)dz+total_z;
+                       sum_v=sum_v+v_color;
+                    }
+                }
+            }
+           if(sum_v>0){
+               p1.x=total_x/sum_v+start_x;
+               p1.y=total_y/sum_v+start_y;
+               p1.z=total_z/sum_v+start_z;
+           }else{
+               p1=p0;
+           }
+           if(im_cropped) {delete []im_cropped; im_cropped=0;}
+       return p1;
+}
 
 
+NeuronSWC meanshift_img(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir)
+{
+    QDir all_braindir(braindir);
+    QFileInfoList list_braindir = all_braindir.entryInfoList(QStringList(),QDir::Dirs|QDir::NoDotAndDotDot);
+    int dir_count = list_braindir.size();
+
+    map<int,int> sizemap;
+
+    for(int i=0; i<dir_count; ++i)
+    {
+//        qDebug()<<i<<": "<<list_braindir[i].absoluteFilePath();
+        QString t = list_braindir[i].baseName();
+        QStringList ts =t.split('x');
+        int resolution = ts[1].toInt();
+        sizemap[resolution] = i;
+    }
+
+    QVector<QFileInfo> vtmp;
+    map<int,int>::iterator it =sizemap.begin();
+
+    while(it!=sizemap.end())
+    {
+        int index = it->second;
+        vtmp.push_back(list_braindir[index]);
+        it++;
+    }
+
+    list_braindir.clear();
+    for(int i=0; i<dir_count; ++i)
+    {
+        list_braindir.push_back(vtmp[i]);
+//        qDebug()<<list_braindir[i].absoluteFilePath();
+    }
+
+    QString current_braindir = list_braindir[dir_count-3].absoluteFilePath();
+
+    qDebug()<<current_braindir;
+
+           NeuronSWC p1;
+           int r=10;
+           V3DLONG *in_zz = 0;
+           if(!callback.getDimTeraFly(current_braindir.toStdString().c_str(),in_zz)){cout<<"can't load terafly img"<<endl;}
+           V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+           start_x=p0.x-r; if(start_x<0){start_x=0;} if(start_x>=in_zz[0]){start_x=in_zz[0]-1;cout<<"x axis over border"<<endl;}
+           start_y=p0.y-r;if(start_y<0){start_y=0;}if(start_y>=in_zz[1]){start_y=in_zz[1]-1;cout<<"y axis over border"<<endl; }
+           start_z=p0.z-r;if(start_z<0){start_z=0;}if(start_z>=in_zz[2]){start_z=in_zz[2]-1;cout<<"z axis over border"<<endl; }
+           end_x=p0.x+r;if(end_x>in_zz[0]){end_x=in_zz[0]-1;}
+           end_y=p0.y+r;if(end_y>in_zz[1]){end_y=in_zz[1]-1;}
+           end_z=p0.z+r;if(end_z>in_zz[2]){end_z=in_zz[2]-1;}
+           unsigned char * im_cropped = 0;
+           V3DLONG *in_sz = new V3DLONG[4];
+           if(end_x<=start_x){cout<<"over border"<<endl; return p0;}
+           if(end_y<=start_y){cout<<"over border"<<endl;return p0;}
+           if(end_z<=start_z){cout<<"over border"<<endl;return p0;}
+           in_sz[0] = end_x-start_x+1;
+           in_sz[1] = end_y-start_y+1;
+           in_sz[2] = end_z-start_z+1;
+           in_sz[3]=in_zz[3];
+           V3DLONG pagesz;
+           pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
+           try {im_cropped = new unsigned char [pagesz];}
+           catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl;}
+           cout<<"2"<<endl;
+           im_cropped = callback.getSubVolumeTeraFly(current_braindir.toStdString().c_str(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+           cout<<"1"<<endl;
+           if(im_cropped==NULL){
+               cout<<"3"<<endl;}
+           V3DLONG y_offset=in_sz[0];
+           V3DLONG z_offset=in_sz[0]*in_sz[1];
+           V3DLONG windowradius=r-1;
+           V3DLONG pos;
+           V3DLONG pos0;
+   //        float thresHold =100;
+           float total_x,total_y,total_z,v_color,sum_v,thresHold,mean,std;
+           total_x=0;
+           total_y=0;
+           total_z=0;
+           v_color=0;
+           sum_v=0;
+           mean=0;
+           std=0;
+           pos0=p0.z*z_offset+p0.y*y_offset+p0.x;
+//center_intensity[i]=im_cropped[pos0];
+           for(int j=0; j<pagesz;j++){
+                  mean=mean+im_cropped[j];
+           }
+           mean=mean/pagesz;
+           for(int j=0; j<pagesz;j++){
+                  std=std+(mean-im_cropped[j])*(mean-im_cropped[j]);
+           }
+           std=sqrt(std)/pagesz;
+           thresHold=mean+std;
+           if(thresHold<=100){thresHold=100;}
+           for(V3DLONG dx=p0.x+0.5-start_x-windowradius; dx<=p0.x+0.5-start_x+windowradius; dx++){
+               for(V3DLONG dy=p0.y+0.5-start_y-windowradius; dy<=p0.y+0.5-start_y+windowradius; dy++){
+                   for(V3DLONG dz=p0.z+0.5-start_z-windowradius; dz<=p0.z+0.5-start_z+windowradius; dz++){
+                       pos=dz*z_offset+dy*y_offset+dx;
+   //                    double tmp=(dx-s.x)*(dx-s.x)+(dy-s.y)*(dy-s.y)
+   //                         +(dz-s.z)*(dz-s.z);
+   //                    double distance=sqrt(tmp);
+   //                    if (distance>windowradius) continue;
+                       v_color=im_cropped[pos];
+                       //cout<<v_color<<endl;
+                       if(v_color<thresHold)
+                           v_color=0;
+                       total_x=v_color*(float)dx+total_x;
+                       total_y=v_color*(float)dy+total_y;
+                       total_z=v_color*(float)dz+total_z;
+                       sum_v=sum_v+v_color;
+                    }
+                }
+            }
+           if(sum_v>0){
+               p1.x=total_x/sum_v+start_x;
+               p1.y=total_y/sum_v+start_y;
+               p1.z=total_z/sum_v+start_z;
+           }else{
+               p1=p0;
+           }
+           if(im_cropped) {delete []im_cropped; im_cropped=0;}
+       return p1;
+}
 
 
