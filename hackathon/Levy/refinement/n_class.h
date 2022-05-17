@@ -10,6 +10,8 @@ using namespace std;
 
 #define IN 1000000000
 
+#define zx_dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
 template<class T>
 inline double norm_v(T &vector0)
 {
@@ -124,6 +126,8 @@ struct Trunk{
 
 struct Branch{
     NeuronSWC head_point,end_point;
+    vector<NeuronSWC> allpoints;
+    int type;
     Branch* parent;
     Branch* child_a;
 //    Branch* child_b;
@@ -168,7 +172,7 @@ struct Branch{
     bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
     bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
     bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
-
+    bool refine_branch_by_gd(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd, QString braindir, V3DPluginCallback2 &callback);
 };
 
 struct SwcTree{
@@ -216,6 +220,7 @@ struct SwcTree{
     bool test(QString braindir, V3DPluginCallback2 &callback);
 
     NeuronTree refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback);
+    NeuronTree refine_bifurcation_by_gd(QString braindir, V3DPluginCallback2 &callback,QString eswcfile);
     NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
     NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
 
@@ -262,12 +267,9 @@ void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &ca
 NeuronSWC meanshift(V3DPluginCallback2 &callback, NeuronSWC p0, QString braindir);
 NeuronSWC meanshift_img(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir);
 
+bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, NeuronSWC s);
 
-
-
-
-
-
+bool sortSWC(NeuronTree& nt, NeuronSWC s);
 
 
 

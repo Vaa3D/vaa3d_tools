@@ -7,6 +7,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/sort_neuron_swc/
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/swc_to_maskimage
 #INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
@@ -29,10 +30,12 @@ LIBS += -llibnewmat
 HEADERS	+= refinement.h \
            n_class.h \
 #    $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h\
-    $$VAA3DPATH/released_plugins_more/v3d_plugins/swc_to_maskimage/filter_dialog.h
+    $$VAA3DPATH/released_plugins_more/v3d_plugins/swc_to_maskimage/filter_dialog.h \
+    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
+HEADERS += ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 
 
 SOURCES	+= refinement.cpp \
