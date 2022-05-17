@@ -1,16 +1,17 @@
 #parameter configuration
-#Select_modal:Registration mouse brain modal selection
+#Select_modal:0,1,2 (the modality of registered image)
 #            0->fMost mouse image
 #            1->mouse brain images in other modalities
 #            2->other species image, such as zebrafish
 #max_iteration_number: Number of iterative optimization
-#smoothness_constraint_outer_initial,smoothness_constraint_inner_initial: Constrain the smoothness (initial strength) of the external and internal deformation fields. The larger the value, the greater the constraint.
-#smoothness_constraint_outer_end,smoothness_constraint_inner_end: Constrain the smoothness (attenuation cut-off strength) of the external and internal deformation fields. The larger the value, the greater the constraint.
+#smoothness_constraint_outer_initial,smoothness_constraint_inner_initial:The initial constraint value of STPS, 
+#            the larger the value, the stronger the constraint
 #kernel_radius:feature extraction scope
-#search_radius:search matching feature scope
+#search_radius:search matching marker scope
 #interval_save:frequency of saving result files
-#interval_region_constraint:frequency of region_constraint (Reduce the frequency to get stronger constraints).
-#interval_global_constraint:frequency of global_constraint (Reduce the frequency to get stronger constraints).
+#interval_region_constraint:frequency of region_constraint
+#interval_global_constraint:frequency of global_constraint
+#smoothness_constraint_outer_end,smoothness_constraint_inner_end:the minimum value for annealing constraints
 #multiscale:selection of scale in multi-scale registration
 
 Select_modal = 1
