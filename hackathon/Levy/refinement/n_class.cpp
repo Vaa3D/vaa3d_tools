@@ -18,12 +18,19 @@
 bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result, NeuronSWC s){
     float d = 10000;
     int root_id = -1;
-    for (NeuronSWC n : neurons) {
-        if (n.parent == -1 && zx_dist(s, n) < d) {
-            root_id = n.n;
-            d = zx_dist(s, n);
-        }
+    for(int i=0; i<neurons.size();++i){
+            NeuronSWC n =neurons.at(i);
+            if (n.parent == -1 && zx_dist(s, n) < d) {
+                root_id = n.n;
+                d = zx_dist(s, n);
+            }
     }
+//    for (NeuronSWC n : neurons) {
+//        if (n.parent == -1 && zx_dist(s, n) < d) {
+//            root_id = n.n;
+//            d = zx_dist(s, n);
+//        }
+//    }
     return root_id == -1 ? SortSWC(neurons,result,VOID,1) : SortSWC(neurons, result, root_id, 1);
 }
 
