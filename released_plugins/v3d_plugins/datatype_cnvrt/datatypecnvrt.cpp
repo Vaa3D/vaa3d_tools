@@ -86,20 +86,53 @@ bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, 
 bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"DataType/file_format Converter"<<endl;
-	if (output.size() != 1) return false;
 
-     int tar_dt = 0;
+	if (output.size() != 1) return false;
+    unsigned char * subject1d = 0;
+    V3DLONG in_sz[4];
+    int sub_dt;
+     int tar_dt = 0,isdatafile=1,isout=1;
+     Image4DSimple *ipimg,*otimg;
      if (input.size()>=2)
      {
           vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) tar_dt = atoi(paras.at(0));
+          if(paras.size() >= 1) isdatafile = atoi(paras.at(0));
+          if(paras.size() >= 2) isout = atoi(paras.at(1));
+          if(paras.size() >= 3) tar_dt = atoi(paras.at(2));
 	}
+     cout<<"target data type = "<<tar_dt<<endl;
 
-	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    cout<<"target data type = "<<tar_dt<<endl;
-	cout<<"inimg_file = "<<inimg_file<<endl;
-	cout<<"outimg_file = "<<outimg_file<<endl;
+
+    char * inimg_file ;
+    char * outimg_file ;
+
+    if(isdatafile==1){
+        inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        cout<<"inimg_file = "<<inimg_file<<endl;
+        if(!simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt))
+         {
+              cerr<<"load image ["<<inimg_file<<"] error!"<<endl;
+              return false;
+         }
+    }else{
+        ipimg=((vector<Image4DSimple *> *)(input.at(0).p))->at(0);
+        V3DLONG totalbytes = ipimg->getTotalBytes();
+        subject1d = new unsigned char [totalbytes];
+        memcpy(subject1d, ipimg->getRawData(), totalbytes);
+        sub_dt = ipimg->getUnitBytes(); //1,2,or 4
+        in_sz[0] = ipimg->getXDim();
+        in_sz[1] = ipimg->getYDim();
+        in_sz[2] = ipimg->getZDim();
+        in_sz[3] = ipimg->getCDim();
+    }
+
+    if(isout==1){
+        outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        cout<<"outimg_file = "<<outimg_file<<endl;
+    }else{
+        otimg=((vector<Image4DSimple*> *)(output.at(0).p))->at(0);
+    }
+
 
      if(tar_dt!=1 && tar_dt!=2 && tar_dt!=4
              && tar_dt!=0)
@@ -108,15 +141,11 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
           return false;
      }
 
-	unsigned char * subject1d = 0;
-    V3DLONG in_sz[4];
 
-	int sub_dt;
-    if(!simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt))
-     {
-          cerr<<"load image ["<<inimg_file<<"] error!"<<endl;
-          return false;
-     }
+
+
+
+
 
     if (tar_dt==0) //in this case, set the target data type to be the same as the input image file. In this case, the file format can be converted without changing of the data. by PHC, 20130809
         tar_dt = sub_dt;
@@ -152,11 +181,15 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		}
 
           // save image
+        if(isout==1){
         v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
           if(!simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1))
               v3d_msg("Fail to save the output image.\n",0);
 
           if (data1d) {delete []data1d; data1d=0;}
+        }else{
+            otimg->setData(data1d,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
+        }
 	}
 	else if(tar_dt == 2) //V3D_UINT16
 	{
@@ -185,12 +218,15 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		{
             converting<float, unsigned short>((float *)subject1d, data1d, sz_sub, V3D_UINT16);
 		}
-
+        if(isout==1){
           // save image
         v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
           if(!simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 2))
               v3d_msg("Fail to save the output image.\n",0);
           if (data1d) {delete []data1d; data1d=0;}
+        }else{
+            otimg->setData((unsigned char *)data1d,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT16);
+        }
 	}
 	else if(tar_dt == 4) //V3D_FLOAT32
 	{
@@ -221,11 +257,15 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		}
 
           // save image
+        if(isout==1){
         v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
         if(simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 4))
             v3d_msg("Fail to save the output image.\n",0);
 
         if (data1d) {delete []data1d; data1d=0;}
+        }else{
+            otimg->setData((unsigned char *)data1d,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_FLOAT32);
+        }
 	}
 	else
 	{
@@ -233,7 +273,7 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		return false;
 	}
 
-     if(subject1d) {delete []subject1d; subject1d=0;}
+     if(isdatafile==1&&subject1d) {delete []subject1d; subject1d=0;}
 
      return true;
 }

@@ -16,12 +16,13 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include "common_value.h"
+
 #include "stackutil.h"
 #include "my_surf_objs.h"
 #include "heap.h"
 #include "upwind_solver.h"
 #include "fastmarching_macro.h"
+#include "common_value.h"
 using namespace std;
 
 
@@ -63,7 +64,7 @@ struct HeapElemXX : public HeapElem
  * *******************************************************************/
 template<class T> bool fastmarching_linear_tree(MyMarker root, T * inimg1d, vector<MyMarker*> &outtree, int sz0, int sz1, int sz2, int cnn_type = 3, double bkg_thresh = 1)
 {
-//	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	//enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
@@ -244,7 +245,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
                                          double bkg_thresh = 20,
                                          bool is_break_accept = false)
 {
-//	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	//enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
@@ -453,7 +454,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
 // inimg1d is binary
 template<class T> bool fastmarching_tree_old(MyMarker root, T * inimg1d, vector<MyMarker*> &tree, double * & phi, int sz0, int sz1, int sz2)
 {
-//	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	//enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 	
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
@@ -626,7 +627,7 @@ template<class T> bool fastmarching_tree_old(MyMarker root, T * inimg1d, vector<
 
 template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target, T * inimg1d, vector<MyMarker*> &outtree, long sz0, long sz1, long sz2, int cnn_type = 3)
 {
-//	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	//enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
@@ -843,7 +844,7 @@ template<class T1, class T2> bool fastmarching_tracing(MyMarker root, vector<MyM
 		cerr<<"Invalid root marker("<<root.x<<","<<root.y<<","<<root.z<<")"<<endl; return false;
 	}
 
-//	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	//enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;

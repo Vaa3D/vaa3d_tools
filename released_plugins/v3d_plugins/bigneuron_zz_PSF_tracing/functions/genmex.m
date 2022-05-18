@@ -1,0 +1,1 @@
+mex -g -lpthread main_mexcode.cpp Create3DLookUpTable.cpp EigenDec_2D.cpp EigenDec_3D.cpp FunctionsForMainCode.cpp KernelDensityEstimation.cpp MatrixMultiplication.cpp ML_Divide.cpp Parse_Input.cpp PreProcessDataImage.cpp -o ../pcMultithreaded

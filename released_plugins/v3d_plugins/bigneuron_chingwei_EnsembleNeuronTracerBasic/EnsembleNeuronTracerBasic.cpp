@@ -10,6 +10,8 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <QMessageBox>
+#include <QInputDialog>
 #include "basic_surf_objs.h"
 
 #include "EnsembleNeuronTracerBasic.h"
@@ -19,8 +21,7 @@
 #include "fastmarching_tree.h"
 #include "hierarchy_prune.h"
 #include "marker_radius.h"
-#include <QMessageBox>
-#include <QInputDialog>
+
 //Q_EXPORT_PLUGIN2(APP2_ported, APP2_ported);
 
 using namespace std;
