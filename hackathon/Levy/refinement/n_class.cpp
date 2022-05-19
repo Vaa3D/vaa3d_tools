@@ -2037,11 +2037,18 @@ bool SwcTree::initialize(NeuronTree t)
     // give branch type
     for (int i=0; i<branchs.size(); ++i) {
         branchs[i].get_points_of_branch(branchs[i].allpoints, nt);
-        branchs[i].type=branchs[i].allpoints[branchs[i].allpoints.size()-2].type;
+        if(branchs[i].allpoints.size()>=2)
+        {
+            branchs[i].type=branchs[i].allpoints[branchs[i].allpoints.size()-2].type;
+        }else
+        {
+            branchs[i].type=branchs[i].allpoints[0].type;
+        }
+
     }
     for(int i=0;i<branchs.size();++i)
     {
-        if(branchs[i].type==2)
+        if(branchs[i].type==2 && branchs[i].allpoints.size()>0)
         {
             int flag=0;
             for(int j=0;j<branchs.size();++j)
@@ -2056,6 +2063,7 @@ bool SwcTree::initialize(NeuronTree t)
                             if(dis<=30)
                             {
                                 flag=1;
+                                break;
                             }
                         }
                     }

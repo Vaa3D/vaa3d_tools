@@ -127,7 +127,7 @@ struct Trunk{
 struct Branch{
     NeuronSWC head_point,end_point;
     vector<NeuronSWC> allpoints;
-    int type;
+    int type=2;
     int flag_near_dendrite=0;
     Branch* parent;
     Branch* child_a;
