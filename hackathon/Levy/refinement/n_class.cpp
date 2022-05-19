@@ -2034,11 +2034,49 @@ bool SwcTree::initialize(NeuronTree t)
         }
     }
 */
+    // give branch type
     for (int i=0; i<branchs.size(); ++i) {
         branchs[i].get_points_of_branch(branchs[i].allpoints, nt);
-        branchs[i].type=branchs[i].allpoints[(branchs[i].allpoints.size()-2)].type;
+        branchs[i].type=branchs[i].allpoints[branchs[i].allpoints.size()-2].type;
     }
-
+    for(int i=0;i<branchs.size();++i)
+    {
+        if(branchs[i].type==2)
+        {
+            int flag=0;
+            for(int j=0;j<branchs.size();++j)
+            {
+                if(branchs[j].type==3 || branchs[j].type==4)
+                {
+                    for(int i1=0; i1<branchs[i].allpoints.size();++i1)
+                    {
+                        for(int j1=0; j1<branchs[j].allpoints.size();++j1)
+                        {
+                            double dis=zx_dist(branchs[i].allpoints[i1],branchs[j].allpoints[j1]);
+                            if(dis<=30)
+                            {
+                                flag=1;
+                            }
+                        }
+                    }
+                }/*else
+                {
+                    for(int i1=0; i1<branchs[i].allpoints.size();++i1)
+                    {
+                        for(int j1=0; j1<branchs[j].allpoints.size();++j1)
+                        {
+                            double dis=zx_dist(branchs[i].allpoints[i1],branchs[j].allpoints[j1]);
+                            if(dis<=5)
+                            {
+                                flag=1;
+                            }
+                        }
+                    }
+                }*/
+            }
+         branchs[i].flag_near_dendrite=flag;
+        }
+    }
     return true;
 }
 
@@ -2850,7 +2888,15 @@ NeuronTree SwcTree::refine_bifurcation_by_gd(QString braindir, V3DPluginCallback
         Branch& cur_b = branchs[branchindex];
         int type=branchs[branchindex].type;
         vector<NeuronSWC> points;
-        if(children_b[branchindex].size()==2){
+        if(branchs[branchindex].parent==0)
+        {
+            branchs[branchindex].length_to_soma = 0;
+        }
+        else
+        {
+            branchs[branchindex].length_to_soma = branchs[branchindex].parent->length_to_soma + branchs[branchindex].parent->length;
+        }
+        if(children_b[branchindex].size()==2 && branchs[branchindex].length_to_soma>150 && branchs[branchindex].level>3 && branchs[branchindex].flag_near_dendrite==0){
            qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
 
            vector<NeuronSWC> pp0_list, pp1_list, pp2_list;
@@ -3008,7 +3054,7 @@ NeuronTree SwcTree::refine_bifurcation_by_gd(QString braindir, V3DPluginCallback
                        p.x = cur_b.allpoints[i].x;
                        p.y = cur_b.allpoints[i].y;
                        p.z = cur_b.allpoints[i].z;
-                       p.type = cur_b.type;
+                       p.type = type;
                        cur_b.allpoints[i] = p;
                        qDebug()<<"cur_b n p: "<<cur_b.allpoints[i].n<<" "<<cur_b.allpoints[i].parent;
 //                       points.push_back(p);
@@ -3050,7 +3096,7 @@ NeuronTree SwcTree::refine_bifurcation_by_gd(QString braindir, V3DPluginCallback
             p.x = cur_b.allpoints[i].x;
             p.y = cur_b.allpoints[i].y;
             p.z = cur_b.allpoints[i].z;
-            p.type = cur_b.type;
+            p.type = type;
 //            cur_b.allpoints[i] = p;
             points.push_back(p);
         }
@@ -3198,7 +3244,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
 
         qDebug()<<"branchmean: "<<branchmean;
         //加入branch order的判断  Yiwei Li 2022/1/18
-        if((branchs[branchindex].length_to_soma<30||branchs[branchindex].length<80)&&branchs[branchindex].length<300)
+        if((branchs[branchindex].length_to_soma<0||branchs[branchindex].length<0)&&branchs[branchindex].length<300 || branchs[branchindex].level<=3 || branchs[branchindex].flag_near_dendrite==1)
         {
             branchs[branchindex].get_points_of_branch(points,nt);
             for(int i=0; i<points.size(); ++i)
@@ -3224,7 +3270,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
             vector<int> neuron_type;
             vector<LocationSimple> outbranch;
             branchs[branchindex].refine_by_2gd(outbranch,braindir,callback,nt,thres,neuron_type);
-            smooth_curve(outbranch,7);
+            smooth_curve(outbranch,6);
             qDebug()<<__LINE__<<"outbranch size: "<<outbranch.size();
             for(int i=0; i<outbranch.size(); ++i)
             {
@@ -3234,22 +3280,22 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
                     p.x = outbranch[i].x;
                     p.y = outbranch[i].y;
                     p.z = outbranch[i].z;
-                    vector<NeuronSWC> ps;
-                    branchs[branchindex].get_points_of_branch(ps,nt);
-                    float x0=ps[0].x;
-                    float y0=ps[0].y;
-                    float z0=ps[0].z;
-                    float dis = sqrt((x0-p.x)*(x0-p.x)+(y0-p.y)*(y0-p.y)+(z0-p.z)*(z0-p.z));
-                    float dis1;
-                    p.type = 2;
-                    for(int j=1; j<ps.size();++j){
-                        dis1 = sqrt((ps[j].x-p.x)*(ps[j].x-p.x)+(ps[j].y-p.y)*(ps[j].y-p.y)+(ps[j].z-p.z)*(ps[j].z-p.z));
-                        if(dis1<=dis){
-                              dis=dis1;
-                              p.type = ps[j].type;
-                        }
-                    }
-//                    p.type = neuron_type[i];
+//                    vector<NeuronSWC> ps;
+//                    branchs[branchindex].get_points_of_branch(ps,nt);
+//                    float x0=ps[0].x;
+//                    float y0=ps[0].y;
+//                    float z0=ps[0].z;
+//                    float dis = sqrt((x0-p.x)*(x0-p.x)+(y0-p.y)*(y0-p.y)+(z0-p.z)*(z0-p.z));
+//                    float dis1;
+//                    p.type = 2;
+//                    for(int j=1; j<ps.size();++j){
+//                        dis1 = sqrt((ps[j].x-p.x)*(ps[j].x-p.x)+(ps[j].y-p.y)*(ps[j].y-p.y)+(ps[j].z-p.z)*(ps[j].z-p.z));
+//                        if(dis1<=dis){
+//                              dis=dis1;
+//                              p.type = ps[j].type;
+//                        }
+//                    }
+                    p.type = branchs[branchindex].type;
                     points.push_back(p);
             }
         }
@@ -3264,7 +3310,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
         {
             queue.push_back(children_b[branchindex][i]);
         }
-    }
+   }
 
     for(int i=0; i<size; ++i)
     {
