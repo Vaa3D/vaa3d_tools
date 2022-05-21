@@ -3252,7 +3252,7 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
 
         qDebug()<<"branchmean: "<<branchmean;
         //加入branch order的判断  Yiwei Li 2022/1/18
-        if((branchs[branchindex].length_to_soma<100||branchs[branchindex].length<80)&&branchs[branchindex].length<300 || branchs[branchindex].level<=3 || branchs[branchindex].flag_near_dendrite==1)
+        if((branchs[branchindex].length_to_soma<100||branchs[branchindex].length<80)&&branchs[branchindex].length<300 || (branchs[branchindex].level<=3 && (branchs[branchindex].type==3||branchs[branchindex].type==4)) || branchs[branchindex].flag_near_dendrite==1)
         {
             branchs[branchindex].get_points_of_branch(points,nt);
             for(int i=0; i<points.size(); ++i)
