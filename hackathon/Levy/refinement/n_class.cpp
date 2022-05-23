@@ -3269,12 +3269,12 @@ NeuronTree SwcTree::refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callb
         }
         else
         {
-            if(branchs[branchindex].child_num==2){
-               qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
-               NeuronSWC p0;
-               p0=branchs[branchindex].end_point;
-               branchs[branchindex].end_point=meanshift(callback, p0,braindir);
-            }
+//            if(branchs[branchindex].child_num==2){
+//               qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
+//               NeuronSWC p0;
+//               p0=branchs[branchindex].end_point;
+//               branchs[branchindex].end_point=meanshift(callback, p0,braindir);
+//            }
             vector<int> neuron_type;
             vector<LocationSimple> outbranch;
             branchs[branchindex].refine_by_2gd(outbranch,braindir,callback,nt,thres,neuron_type);
