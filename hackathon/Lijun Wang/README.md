@@ -1,5 +1,4 @@
-V1.0版本当前只支持windows端。
-使用V1.0版本插件请按照以下步骤配置环境：
+V1.0版本当前只支持windows端，使用V1.0版本插件请按照以下步骤配置环境：
 1. 按照https://github.com/Vaa3D/Vaa3D_Wiki/wiki/Build-Vaa3D-on-Windows-(QMake) 网页所示方法配置好vaa3d环境（若已有vaa3d环境则忽略此条）。
 2. 安装配置python3，并在Pro文件和cpp文件中修改相应地址。
 3. 下载最新版本的imagej（Fiji），将bin文件夹中的ConvertTo8bit.ijm放到../imagej/Fiji.app下。然后将这个imagej文件夹拷贝到../v3d_external/bin目录下。
