@@ -5,4 +5,4 @@ tensorflow_gpu==1.4.0
 Keras==2.1.2
 scipy==1.0.0
 SimpleITK==2.1.0
-tensorflow==2.5.0
+tensorflow==2.6.4
