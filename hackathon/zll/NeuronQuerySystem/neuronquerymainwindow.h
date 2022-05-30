@@ -1,0 +1,71 @@
+#ifndef NEURONQUERYMAINWINDOW_H
+#define NEURONQUERYMAINWINDOW_H
+
+#include <QGridLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMainWindow>
+#include <QTextEdit>
+#include "NeuronQuerySystem_plugin.h"
+#include "basicinfo.h"
+namespace Ui {
+class NeuronQueryMainWindow;
+}
+
+class NeuronQueryMainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit NeuronQueryMainWindow(V3DPluginCallback2 &callback,QWidget *parent = nullptr);
+    ~NeuronQueryMainWindow();
+
+private:
+    QWidget *originParent;
+    V3DPluginCallback2 *QueryNeuroncallback;
+    Handler author;
+
+    /*..............Login or out Dialog............*/
+    QToolBar *loginToolbar;
+    QDialog *loginDialog;
+    QGridLayout *loginMainlayout;
+    QAction *loginAction;
+    QLineEdit *loginUserIDQLineEdit;
+    QLineEdit *loginPasswordQlineedit;
+    QPushButton *loginCancelButton;
+    QPushButton *loginOkayButton;
+    QAction *logoutAction;
+    QLabel *userStatusLabel;
+    QTextEdit *logtextedit;//for log
+    QLineEdit *userID_QLineEdit;
+
+    QAction *quitAction;
+    QAction *aboutAction;
+    QAction *aboutQtAction;
+
+    void createMenuBar();
+    void about();
+    void toLogWindow(const QString& logtext);
+
+private slots:
+
+    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
+
+    void on_loadApoButton_customContextMenuRequested(const QPoint &pos);
+
+    void on_querySwcButton_clicked();
+    void on_queryAnoButton_clicked();
+    void on_queryApoButton_clicked();
+
+    void on_LoadSwcButton_clicked();
+
+    void loginAction_slot();
+    void loginOkayButton_slot();
+    void loginCancelButton_slot();
+    void logoutAction_slot();
+
+private:
+    Ui::NeuronQueryMainWindow *ui;
+};
+
+#endif // NEURONQUERYMAINWINDOW_H
