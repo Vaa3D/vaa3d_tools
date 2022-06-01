@@ -4,6 +4,7 @@
 
 #include <QDialog>
 #include <QMessageBox>
+#include <QProgressDialog>
 NeuronQueryMainWindow::NeuronQueryMainWindow(V3DPluginCallback2 &callback,QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NeuronQueryMainWindow)
@@ -12,6 +13,12 @@ NeuronQueryMainWindow::NeuronQueryMainWindow(V3DPluginCallback2 &callback,QWidge
     QueryNeuroncallback=&callback;
     this->setCentralWidget(ui->dataTabWidget);
     this->createMenuBar();
+    this->creatDataTable();
+
+//    connect(ui->MorphoID_Swc_comboBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
+//    connect(ui->BrainArea_Swc_ComboBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
+//    connect(ui->Batch_Swc_SpinBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
+//    connect(ui->NeuronID_Swc_lineEdit->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
 
 }
 
@@ -45,10 +52,15 @@ void NeuronQueryMainWindow::createMenuBar(){
 
     logoutAction->setEnabled(false);
     connect(logoutAction,SIGNAL(triggered()),this,SLOT(logoutAction_slot()));
-
     connect(quitAction, &QAction::triggered, this, &NeuronQueryMainWindow::close);
     connect(aboutAction, &QAction::triggered, this, &NeuronQueryMainWindow::about);
     connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);
+}
+
+void NeuronQueryMainWindow::creatDataTable()
+{
+
+
 }
 
 void NeuronQueryMainWindow::about()
@@ -59,12 +71,12 @@ void NeuronQueryMainWindow::about()
 
 }
 
+//void NeuronQueryMainWindow::animateFindClick()
+//{
+//    ui->querySwcButton->animateClick();
+//}
 
 
-void NeuronQueryMainWindow::on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos)
-{
-
-}
 
 
 void NeuronQueryMainWindow::on_loadApoButton_customContextMenuRequested(const QPoint &pos)
@@ -75,6 +87,20 @@ void NeuronQueryMainWindow::on_loadApoButton_customContextMenuRequested(const QP
 
 void NeuronQueryMainWindow::on_querySwcButton_clicked()
 {
+//    ui->querySwcTable->setRowCount(0);
+
+//    updateComboBox(BrainID_Swc_ComboBox);
+//    updateComboBox(MorphoID_swc_ComboBox);
+//    updateComboBox(BrainArea_Swc_ComboBox);
+
+
+//    QProgressDialog progressDialog(this);
+//    preressDialog.setCancelButtonText(tr("&Cancel"));
+//    progressDialog.setRange(0.files.size());
+//    progressDialog.setWindowTitle(tr("Find Files"));
+
+
+
 
 }
 
@@ -96,6 +122,12 @@ void NeuronQueryMainWindow::on_LoadSwcButton_clicked()
 
 }
 
+static void updateComboBox(QComboBox *comboBox)
+{
+    if (comboBox->findText(comboBox->currentText()) == -1)
+        comboBox->addItem(comboBox->currentText());
+}
+
 void NeuronQueryMainWindow::toLogWindow(const QString &logtext)
 {
     QString getlogtext=logtextedit->toPlainText();
@@ -107,7 +139,7 @@ void NeuronQueryMainWindow::toLogWindow(const QString &logtext)
 void NeuronQueryMainWindow::loginAction_slot()
 {
     loginDialog=new QDialog(this);
-    loginDialog->setWindowTitle("Neuron-Query-System-Login-Window");
+    loginDialog->setWindowTitle("Neuron-Query-System");
 
     QLabel *userIDQLabel=new QLabel("UserID:");
     loginUserIDQLineEdit=new QLineEdit();
@@ -178,4 +210,16 @@ void NeuronQueryMainWindow::logoutAction_slot()
     userStatusLabel->setText(tr("UserID: Nobody"));
 }
 
+
+
+void NeuronQueryMainWindow::on_dataTabWidget_currentChanged(int tabindex)
+{
+
+}
+
+
+void NeuronQueryMainWindow::on_querySwcButton_customContextMenuRequested(const QPoint &pos)
+{
+
+}
 

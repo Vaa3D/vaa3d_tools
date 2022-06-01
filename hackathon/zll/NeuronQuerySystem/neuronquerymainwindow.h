@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QTextEdit>
+#include <QComboBox>
 #include "NeuronQuerySystem_plugin.h"
 #include "basicinfo.h"
 namespace Ui {
@@ -44,12 +45,15 @@ private:
     QAction *aboutQtAction;
 
     void createMenuBar();
+    void creatDataTable();
     void about();
     void toLogWindow(const QString& logtext);
+    static void updateComboBox(QComboBox &comboBox);
+    void animateFindClick(QPushButton *pushButton);
 
 private slots:
 
-    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
+//    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
 
     void on_loadApoButton_customContextMenuRequested(const QPoint &pos);
 
@@ -63,6 +67,10 @@ private slots:
     void loginOkayButton_slot();
     void loginCancelButton_slot();
     void logoutAction_slot();
+
+    void on_dataTabWidget_currentChanged(int index);
+
+    void on_querySwcButton_customContextMenuRequested(const QPoint &pos);
 
 private:
     Ui::NeuronQueryMainWindow *ui;

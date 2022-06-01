@@ -14,480 +14,413 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTabWidget" name="dataTabWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>681</width>
-      <height>601</height>
-     </rect>
-    </property>
-    <property name="currentIndex">
-     <number>1</number>
-    </property>
-    <widget class="QWidget" name="QuerySwc">
-     <attribute name="title">
-      <string>QuerySwc</string>
-     </attribute>
-     <widget class="QGroupBox" name="QuerySwcGroupBox">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>661</width>
-        <height>101</height>
-       </rect>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="dataTabWidget">
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <property name="title">
-       <string>Query</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_7">
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="QuerySwcGridLayout" rowstretch="0,0,0">
-         <property name="horizontalSpacing">
-          <number>4</number>
-         </property>
+      <widget class="QWidget" name="QuerySwc">
+       <attribute name="title">
+        <string>QuerySwc</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>681</width>
+          <height>571</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QGroupBox" name="QuerySwcGroupBox">
+           <property name="title">
+            <string>Query</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_7" rowstretch="2,1,11,2">
+            <item row="2" column="0">
+             <widget class="QTableWidget" name="querySwcTable"/>
+            </item>
+            <item row="0" column="0">
+             <layout class="QGridLayout" name="QuerySwcGridLayout" rowstretch="0,0,0">
+              <property name="horizontalSpacing">
+               <number>4</number>
+              </property>
+              <item row="2" column="0">
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item alignment="Qt::AlignLeft">
+                 <widget class="QLabel" name="MorphoID_Swc">
+                  <property name="text">
+                   <string>MorphoID</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="MorphoID_Swc_ComboBox"/>
+                </item>
+                <item>
+                 <widget class="QLabel" name="BrainID_Swc">
+                  <property name="text">
+                   <string>BrainID</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="BrainID_Swc_ComboBox"/>
+                </item>
+                <item>
+                 <widget class="QLabel" name="BrainArea_Swc">
+                  <property name="text">
+                   <string>BrainArea</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="BrainArea_Swc_ComboBox"/>
+                </item>
+                <item>
+                 <widget class="QLabel" name="Batch_Swc">
+                  <property name="text">
+                   <string>Batch</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="Batch_Swc_SpinBox"/>
+                </item>
+                <item>
+                 <widget class="QLabel" name="NueonID_Swc">
+                  <property name="text">
+                   <string>NeuronID</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="NeuronID_Swc_lineEdit"/>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item row="3" column="0">
+             <widget class="QGroupBox" name="groupBox">
+              <property name="title">
+               <string>GroupBox</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QPushButton" name="querySwcButton">
+              <property name="text">
+               <string>Click to query</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="QueryAno">
+       <attribute name="title">
+        <string>QueryAno</string>
+       </attribute>
+       <widget class="QGroupBox" name="QueryAnoGroupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>679</width>
+          <height>569</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Query</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_12" rowstretch="2,1,11,2">
          <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item alignment="Qt::AlignLeft">
-            <widget class="QLabel" name="MorphoID_Swc">
-             <property name="text">
-              <string>MorphoID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="MorphoID_swc_comboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainID_Swc">
-             <property name="text">
-              <string>BrainID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainID_Swc_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainArea_Swc">
-             <property name="text">
-              <string>BrainArea</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainArea_Swc_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="Batch_Swc">
-             <property name="text">
-              <string>Batch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="Batch_Swc_SpinBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="NueonID_Swc">
-             <property name="text">
-              <string>NeuronID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="NeuronID_Swc_lineEdit"/>
+          <widget class="QTableWidget" name="queryAnoTable"/>
+         </item>
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="QueryAnoGridLayout" rowstretch="0,0,0">
+           <property name="horizontalSpacing">
+            <number>4</number>
+           </property>
+           <item row="2" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <item alignment="Qt::AlignLeft">
+              <widget class="QLabel" name="MorphoID_Ano">
+               <property name="text">
+                <string>MorphoID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="MorphoID_Ano_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainID_Ano">
+               <property name="text">
+                <string>BrainID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainID_Ano_ComboBox_"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainArea_Ano">
+               <property name="text">
+                <string>BrainArea</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainArea_Ano_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="Batch_Ano">
+               <property name="text">
+                <string>Batch</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="Batch_Ano_SpinBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="NueonID_Ano">
+               <property name="text">
+                <string>NeuronID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="NeuronID_Ano_lineEdit"/>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
+         <item row="3" column="0">
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>GroupBox</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="queryAnoButton">
+           <property name="text">
+            <string>Click to query</string>
+           </property>
+          </widget>
+         </item>
         </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QTableView" name="querySwcTable">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>130</y>
-        <width>661</width>
-        <height>391</height>
-       </rect>
-      </property>
-      <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>true</bool>
-      </attribute>
-     </widget>
-     <widget class="QPushButton" name="LoadSwcButton">
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>540</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Load</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="querySwcButton">
-      <property name="geometry">
-       <rect>
-        <x>280</x>
-        <y>110</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Click to query</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="QueryAno">
-     <attribute name="title">
-      <string>QueryAno</string>
-     </attribute>
-     <widget class="QGroupBox" name="QueryAnoGroupBox">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>661</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Query</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_8">
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="QueryAnoGridLayout" rowstretch="0,0,0">
-         <property name="horizontalSpacing">
-          <number>4</number>
-         </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="QueryApo">
+       <attribute name="title">
+        <string>QueryApo</string>
+       </attribute>
+       <widget class="QGroupBox" name="QueryApoGroupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>679</width>
+          <height>569</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Query</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_9" rowstretch="2,1,11,2">
          <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QLabel" name="MorphoID_Ano">
-             <property name="text">
-              <string>MorphoID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="MorphoID_Ano_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainID_Ano">
-             <property name="text">
-              <string>BrainID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainID_Ano_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainArea_Ano">
-             <property name="text">
-              <string>BrainArea</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainArea_Ano_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="Batch_Ano">
-             <property name="text">
-              <string>Batch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="Batch_Ano_SpinBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="NeuronID_Ano">
-             <property name="text">
-              <string>NeuronID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="NeuronID_Ano_lineEdit"/>
+          <widget class="QTableWidget" name="queryApoTable"/>
+         </item>
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="QueryApoGridLayout" rowstretch="0,0,0">
+           <property name="horizontalSpacing">
+            <number>4</number>
+           </property>
+           <item row="2" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item alignment="Qt::AlignLeft">
+              <widget class="QLabel" name="MorphoID_Apo">
+               <property name="text">
+                <string>MorphoID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="MorphoID_Apo_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainID_Apo">
+               <property name="text">
+                <string>BrainID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainID_Apo_ComboBox_"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainArea_Apo">
+               <property name="text">
+                <string>BrainArea</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainArea_Apo_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="Batch_Apo">
+               <property name="text">
+                <string>Batch</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="Batch_Apo_SpinBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="NueonID_Apo">
+               <property name="text">
+                <string>NeuronID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="NeuronID_Apo_lineEdit"/>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
+         <item row="3" column="0">
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>GroupBox</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="queryApoButton">
+           <property name="text">
+            <string>Click to query</string>
+           </property>
+          </widget>
+         </item>
         </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QTableView" name="queryAnoTable">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>140</y>
-        <width>661</width>
-        <height>391</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="queryAnoButton">
-      <property name="geometry">
-       <rect>
-        <x>280</x>
-        <y>110</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Click to query</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="LoadSwcButton_2">
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>550</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Load</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="QueryApo">
-     <attribute name="title">
-      <string>QueryApo</string>
-     </attribute>
-     <widget class="QPushButton" name="queryApoButton">
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>110</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Click to query</string>
-      </property>
-     </widget>
-     <widget class="QTableView" name="queryApoTable">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>140</y>
-        <width>661</width>
-        <height>391</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="loadApoButton">
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>540</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Load</string>
-      </property>
-     </widget>
-     <widget class="QGroupBox" name="QueryApoGroupBox">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>661</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Query</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_9">
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0">
-         <property name="horizontalSpacing">
-          <number>4</number>
-         </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="QueryBouton">
+       <attribute name="title">
+        <string>QueryBouton</string>
+       </attribute>
+       <widget class="QGroupBox" name="QueryBoutonGroup">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>679</width>
+          <height>569</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Query</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,1,11,2">
          <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_6">
-           <item>
-            <widget class="QLabel" name="MorphoID_Apo">
-             <property name="text">
-              <string>MorphoID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="MorphoID_Apo_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainID_Apo">
-             <property name="text">
-              <string>BrainID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainID_Apo_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="BrainArea_Apo">
-             <property name="text">
-              <string>BrainArea</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="BrainArea_Apo_ComboBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="Batch_Apo">
-             <property name="text">
-              <string>Batch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="Batch_Apo_SpinBox"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="NeuronID_Apo">
-             <property name="text">
-              <string>NeuronID</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="NeuronID_Apo_lineEdit"/>
+          <widget class="QTableWidget" name="queryBoutonTable"/>
+         </item>
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="QueryBoutonGridLayout" rowstretch="0,0,0">
+           <property name="horizontalSpacing">
+            <number>4</number>
+           </property>
+           <item row="2" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item alignment="Qt::AlignLeft">
+              <widget class="QLabel" name="MorphoID_Bouton">
+               <property name="text">
+                <string>MorphoID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="MorphoID_Bouton_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainID_Bouton">
+               <property name="text">
+                <string>BrainID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainID_Bouton_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="BrainArea_Bouton">
+               <property name="text">
+                <string>BrainArea</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="BrainArea_Bouton_ComboBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="Batch_Bouton">
+               <property name="text">
+                <string>Batch</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="Batch_Bouton_SpinBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="NueonID_Bouton">
+               <property name="text">
+                <string>NeuronID</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="NeuronID_Bouton_lineEdit"/>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="QueryBouton">
-     <attribute name="title">
-      <string>QueryBouton</string>
-     </attribute>
-     <widget class="QPushButton" name="queryBoutonButton">
-      <property name="geometry">
-       <rect>
-        <x>260</x>
-        <y>100</y>
-        <width>80</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Click to query</string>
-      </property>
-     </widget>
-     <widget class="QTableView" name="queryBoutonTable">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>130</y>
-        <width>661</width>
-        <height>391</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QGroupBox" name="QueryBoutonGroupBox">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>661</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Query</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_10">
-       <item row="0" column="0">
-        <layout class="QGridLayout" name="gridLayout_11" rowstretch="0,0,0">
-         <property name="horizontalSpacing">
-          <number>4</number>
-         </property>
-         <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
-            <widget class="QLabel" name="label_16">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBox_10"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBox_11"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_18">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBox_12"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_19">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="spinBox_4"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_20">
-             <property name="text">
-              <string>TextLabel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="lineEdit_4"/>
-           </item>
-          </layout>
+         <item row="3" column="0">
+          <widget class="QGroupBox" name="groupBox_4">
+           <property name="title">
+            <string>GroupBox</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="queryBoutonButton">
+           <property name="text">
+            <string>Click to query</string>
+           </property>
+          </widget>
          </item>
         </layout>
-       </item>
-      </layout>
+       </widget>
+      </widget>
      </widget>
-    </widget>
-   </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
