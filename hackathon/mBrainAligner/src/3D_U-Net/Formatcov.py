@@ -117,7 +117,7 @@ def save_v3d_raw_img_file1(im, filename):
 
     im_data = np.moveaxis(im_data, -2, 0)
     im_data = np.moveaxis(im_data, -1, 0)
-    print(im_data.shape)
+    # print(im_data.shape)
     im_data = im_data.tobytes()
     f_obj.write(im_data)
     f_obj.close()

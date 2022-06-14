@@ -10,16 +10,39 @@ bool isPower(int n)
 
 bool FFT_1d(complex_type* & data, V3DLONG size, const FFT_direction fft_direction)
 {
-    if(!isPower(size)) return false;
+    if(!isPower(size))
+    {
+        V3DLONG size_new = pow(2, int(log2(size))+1);
+        complex_type* data1;
+        data1 = new complex_type[size_new];
+        for (int i=0; i<size_new; ++i)
+            if(i<size) data1[i] = data[i];
+            else data1[i] = 0;
+        rearrangeData(data1, size_new);
 
-    rearrangeData(data, size);
+        if(!makeTransform(data1, size_new, fft_direction)) {
+            return false;
+        }
 
-    if(!makeTransform(data, size, fft_direction)) {
-        return false;
+        if (FFT_BACKWARD == fft_direction) {
+            scaleValues(data1, size_new);
+        }
+
+        for (int i=0; i<size; ++i)
+            data[i] = data1[i];
     }
 
-    if (FFT_BACKWARD == fft_direction) {
-        scaleValues(data, size);
+    else
+    {
+        rearrangeData(data, size);
+
+        if(!makeTransform(data, size, fft_direction)) {
+            return false;
+        }
+
+        if (FFT_BACKWARD == fft_direction) {
+            scaleValues(data, size);
+        }
     }
 
     return true;

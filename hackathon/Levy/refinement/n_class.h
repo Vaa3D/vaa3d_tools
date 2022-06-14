@@ -10,6 +10,8 @@ using namespace std;
 
 #define IN 1000000000
 
+#define zx_dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
 template<class T>
 inline double norm_v(T &vector0)
 {
@@ -124,7 +126,13 @@ struct Trunk{
 
 struct Branch{
     NeuronSWC head_point,end_point;
+    vector<NeuronSWC> allpoints;
+    int type=2;
+    int flag_near_dendrite=0;
     Branch* parent;
+    Branch* child_a;
+//    Branch* child_b;
+    int child_num=0;
     Angle head_angle,end_angle;
     int level;
     double distance,length,length_to_soma,sum_angle;
@@ -158,13 +166,14 @@ struct Branch{
     bool refine_branch(vector<NeuronSWC> &points, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt);
 
     bool get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
-
+    bool get_meanstd_img(string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
     bool splitbranch(NeuronTree& nt, vector<Branch> &segs, double thres);
 
     bool refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> &outpoints, QString braindir, V3DPluginCallback2 &callback);
-
-    bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres);
-
+    bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
+    bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
+    bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
+    bool refine_branch_by_gd(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd, QString braindir, V3DPluginCallback2 &callback);
 };
 
 struct SwcTree{
@@ -212,6 +221,9 @@ struct SwcTree{
     bool test(QString braindir, V3DPluginCallback2 &callback);
 
     NeuronTree refine_swc_by_gd(QString braindir, V3DPluginCallback2 &callback);
+    NeuronTree refine_bifurcation_by_gd(QString braindir, V3DPluginCallback2 &callback,QString eswcfile);
+    NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
+    NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
 
 };
 
@@ -250,14 +262,15 @@ public:
 
 };
 
+float get_feature_extraction_rate(string inimg_file,NeuronTree &nt,V3DPluginCallback2 &callback);
+void  compute_image_snr(QString infolder_1,QString infolder_2,QString SNr_out, V3DPluginCallback2 &callback);
+void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &callback,QString out_path);
+NeuronSWC meanshift(V3DPluginCallback2 &callback, NeuronSWC p0, QString braindir);
+NeuronSWC meanshift_img(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir);
 
+bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, NeuronSWC s);
 
-
-
-
-
-
-
+bool sortSWC(NeuronTree& nt, NeuronSWC s);
 
 
 

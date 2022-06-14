@@ -18,22 +18,27 @@ We assume all example and executable files are in the original folder structure 
 The raw whole mouse brain image stack of fMOST modality generally has the volume size of 40k x 30k x 10k voxels. First, we need to downsample the raw image anisotropically to roughly match the size of the target image (we recommend using CCFv3 25um to achieve a good balance between registration accuracy and computation time). 
 
 
-**Step 2: Stripe artifact removal** 
+**Step 2: Brightness optimization and stripe artifact removal** 
 
-The periodic stripe noise present in the raw fMOST images is mainly caused by fluorescent bleaching during the knife cutting and imaging process. It will deteriorate the image registration performance. This kind of periodic stripe noise can be effectively removed using our `stripe_removal` tool. This tool was implement in Matlab, and the source code can be found in `src\src_othertools\stripe_removal\`. 
+We developed `matlab_preprocessing` tool to remove the periodic stripe noise, large artifacts  and adaptive brightness adjustment for the original image.This tool was implement in Matlab,the source code can be found in `src\src_othertools\matlab_preprocessing\`. 
 
-Open Matlab and navigate to the ‘/src/src_othertools/stripe_removal/’ directory, and modify script:
-```
-foldername_input='../../../examples/subject/';
-foldername_output='../../../examples/subject_stripe_removal_result/';
-angle=175
-cutoff=10
-radius=10
-```
-Run `stripremove.m`. This script will find all `.raw` or `v3draw` files in the specified directory `../../../examples/subject/` and perform stripe removal and output the results images to directory `../../../subject_stripe_removal_result/`. 
-
-We can determine the "angle (orientation), cutoff (cutoff frequency), radius (bandwidth)" parameters of notch filter by examining the frequency spectrum of one 2D coronal slice of subject image. 
-
+Open Matlab and navigate to the `/src/src_othertools/matlab_preprocessing/` directory, and modify script `main.m`
+  ```
+  foldername_input='.../../../examples/subject/preprocess'; % Input filepath
+  foldername_output='../../../examples/subject/preprocess'; % Output filepath
+  curdir=dir(foldername_input);
+  ch_s=1; % stripe_removal switch, 0:closed; 1:open;
+  DOWN=2; % Downsample size
+  Artifact=13; % pixel of artifact,[0~255];
+  direction=0; % slice direction to removing stripe, 0:coronal; 1:horizontal; 2:sagittal;
+  angle=0; % between the filter direction and the horizontal axis [0~360];
+  cutoff=15; % filter cutoff;
+  radius=5; % filter width;
+  
+  ```
+Run`main.m`,This script will support  `.raw` , `.v3draw` , `.nii` or `.nii.gz` files in the specified directory `../../../examples/subject/` and output the results images to directory `../../../examples/subject/*_preprocess.*`. 
+you could modify manually the parameters in source code to determine the "angle (orientation), cutoff (cutoff frequency), radius (bandwidth) , direction(slice direction)" parameters of notch filter by examining the frequency spectrum of one 2D coronal slice of subject image.
+  
 **Note that** stripe_removal step may not be necessay if there is no tissue sectioning involved in the imaging process. 
 
 
@@ -43,12 +48,14 @@ We can determine the "angle (orientation), cutoff (cutoff frequency), radius (ba
   ```
   cd <your mBrainAligner_win64 directory>
   
-  <your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/CCF_25_u8_xpad.v3draw -c ../../examples/target/CCF_mask.v3draw -m ../../examples/subject_stripe_removal_result/fMOST_18458_raw_stripremove.v3draw  -p r+f -o ../../examples/result/fMOST/ -d 1
-
+  <your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/ -m ../../examples/result/fMOST/global.v3draw -p r+f -o ../../examples/result/fMOST/ -d 1 -l 20+0+0 -u 1
+  
   ```
 
 The globally aligned image will be save in the `results` directory. 
 If we use parameter `-p r+f+n`, the intensity normalization will be performed following the global registration. 
+
+if we use parameter `-u 1`,GPU mode open;if we use parameter `-u 0`,GPU mode close;
 
 The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 
@@ -63,7 +70,7 @@ The detailed desciption of all avialble parameters can be found in `examples/run
 For partially imaged or damaged images, if you cannot obtain satisfactory results with automatic global registration, you try to implement it by providing matching points manually. 
 1. Launch the Vaa3D software (http://penglab.janelia.org/proj/v3d);
 
-2. Drag the target image (e.g. `examples/target/CCF_25_u8_xpad.v3draw`) and subject image (e.g. `examples/subject/fMOST_18458_raw.v3draw` into Vaa3D window. Once images are loaded, you will see the following window. 
+2. Drag the target image (e.g. `examples/target/25um/CCF_u8_xpad.v3draw`) and subject image (e.g. `examples/subject/fMOST_18458_raw.v3draw` into Vaa3D window. Once images are loaded, you will see the following window. 
   <center>
   <img src= https://github.com/Vaa3D/vaa3d_tools/blob/master/hackathon/mBrainAligner/doc/step_by_step_tutorial/image003.png width=70%>
 
@@ -78,7 +85,7 @@ For partially imaged or damaged images, if you cannot obtain satisfactory result
 4. open terminal in windows, and run the following commands：
 ```
 cd <your mBrainAligner_win64 directory>
-<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/CCF_25_u8_xpad.v3draw -m ../../examples/subject/fMOST_18458_raw.v3draw  -p a -o ../../examples/result/fMOST/ -d 1 -t target_global.marker -s sub_global.marker
+<your mBrainAligner_win64 directory>/global_registration.exe -f ../../examples/target/25um/  -p a -o ../../examples/result/fMOST/ -d 1 -l 20+0+0 -u 1 -t target_global.marker -s sub_global.marker
 
 ```
 The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the result image will be saved ("examples/result/fMOST/fMOST_18458_raw_affine.v3draw"). However, it is not necessary in our pipeline since the local registraion module can do it much better.
@@ -87,8 +94,9 @@ The image to be warpped (“examples/subject/fMOST_18458_raw.v3draw”), and the
 
 open terminal in windows, and run the following commands：
 ```
-<your mBrainAligner_win64 directory>/local_registration.exe -p ../../examples/config/fMOST_config.txt -s ../../examples/result/fMOST/global.v3draw -m ../../examples/subject/fMOST_segmentation/ -l ../../examples/target/target_landmarks/low_landmarks.marker  -g ../../examples/target/ -o ../../examples/result/fMOST/
+<your mBrainAligner_win64 directory>/local_registration.exe -p ../../examples/config/fMOST_config.txt -s ../../examples/result/fMOST/global.v3draw -m ../../examples/subject/fMOST_segmentation/ -l ../../examples/target/target_landmarks/low_landmarks.marker  -g ../../examples/target/25um/ -o ../../examples/result/fMOST/
 ```
+if we use parameter `-u 1`,GPU mode open;if we use parameter `-u 0`,GPU mode close;
 The local registration parameters are defined in `fMOST_config.txt`. Noted that if you don't have segmentation images, the `Select_modal` in the `fMOST_config.txt` needs to be set to 1. The detailed desciption of all avialble parameters can be found in `examples/run_script_windows.bat`.
 The globally aligned image will be save in the `results` directory.
    <center>

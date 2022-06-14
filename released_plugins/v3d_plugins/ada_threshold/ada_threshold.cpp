@@ -86,6 +86,7 @@ QStringList ThPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("adath")
+       << tr("simple_thresholding")
 		<<tr("help");
 }
 
@@ -96,6 +97,70 @@ bool ThPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 	{
         return thimg(callback, input, output);
 	}
+     else if(func_name == tr("simple_thresholding"))
+     {
+         vector<char*> infiles, inparas, outfiles;
+         if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+         if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+         if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+         cout<<"Welcome to simple thresholding"<<endl;
+          string inimg_file;
+          if(infiles.size()>=1) {
+              inimg_file = infiles[0];
+              int thre_thre=(inparas.size()>=1)?atoi(inparas[0]):20;
+              int toMinValue=(inparas.size()>=2)?atoi(inparas[1]):0;
+              int toMaxValue=(inparas.size()>=3)?atoi(inparas[2]):0;
+
+              //get out_image_path and out_swc_path
+              string out_image_file=(outfiles.size()>=1)?outfiles[0]:(inimg_file+"_out.v3draw");
+
+              unsigned char * data1d = 0;
+              V3DLONG in_sz[4];
+              int datatype;
+              if(!simple_loadimage_wrapper(callback, (char*)inimg_file.c_str(), data1d, in_sz, datatype))
+              {
+                  cerr<<"load image "<<inimg_file<<" error!"<<endl;
+                  return false;
+              }
+
+              V3DLONG iImageWidth = in_sz[0];
+              V3DLONG iImageHeight = in_sz[1];
+              V3DLONG iImageLayer = in_sz[2];
+              V3DLONG pagesz = iImageWidth*iImageHeight*iImageLayer;
+              in_sz[3] = 1;
+
+              unsigned char * outImg = 0;
+              try {outImg = new unsigned char [pagesz];}
+              catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+
+              V3DLONG i, j,k;
+              double t;
+
+              V3DLONG mCount = iImageHeight * iImageWidth;
+              for (i=0; i<iImageLayer; i++)
+              {
+                  for (j=0; j<iImageHeight; j++)
+                  {
+                      for (k=0; k<iImageWidth; k++)
+                      {
+                          V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                          t =  data1d[curpos];
+                          if(toMaxValue>thre_thre)
+                              outImg[curpos]= (t > thre_thre)? toMaxValue:t;
+                          else
+                              outImg[curpos]= (t < thre_thre)? toMinValue:t;
+                      }
+                  }
+              }
+
+              simple_saveimage_wrapper(callback, (char*)out_image_file.c_str(),(unsigned char *)outImg, in_sz, 1);
+              if(data1d) {delete []data1d; data1d =0;}
+              if(outImg) {delete []outImg; outImg =0;}
+              return true;
+          }
+          return true;
+     }
 	else if(func_name == tr("help"))
 	{
 		cout<<"Usage : v3d -x threshold -f adath -i <inimg_file> -o <outimg_file> -p <h> <d>"<<endl;
@@ -105,6 +170,15 @@ bool ThPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 		cout<<endl;
 		cout<<"e.g. v3d -x threshold -f adath -i input.raw -o output.raw -p 5 3"<<endl;
 		cout<<endl;
+        cout<<"Usage : v3d -x  <dll>  -f  simple_thresholding -i <inimg_file> -o <outimg_file> -p <bkg_thre> <min_value> <max_value>"<<endl;
+        cout<<endl;
+        cout<<"bkg_thre: background threshold (default 20),"<<endl;
+        cout<<"min_value: pixel value below bkg_thre will set to min_value (default 0),"<<endl;
+        cout<<"max_value: pixel value higher than bkg_thre will set to max_value (default 0)"<<endl;
+        cout<<"Note: only when max_value is higher than bkg_thre, pixel intensity will set to max_value"<<endl;
+        cout<<endl;
+        cout<<"e.g. v3d -x threshold -f simple_thresholding -i input.raw -o output.raw -p 15 0 0"<<endl;
+        cout<<endl;
 		return true;
 	}
 }
