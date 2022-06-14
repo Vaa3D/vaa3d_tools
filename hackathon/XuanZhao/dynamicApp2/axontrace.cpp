@@ -22,18 +22,18 @@ void BinaryProcess(unsigned char* &apsInput, V3DLONG* in_sz){
     }
 }
 
-bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result){
-    return SortSWC(neurons,result,VOID,1);
+bool sortSWC(QList<NeuronSWC> &neurons, QList<NeuronSWC> &result, float d){
+    return SortSWC(neurons,result,VOID,d);
 }
 
-bool sortSWC(NeuronTree& nt){
+bool sortSWC(NeuronTree& nt, float d){
     QList<NeuronSWC> sortListNeuron = QList<NeuronSWC>();
     if(!nt.listNeuron.isEmpty()){
         nt.hashNeuron.clear();
         for(int i=0; i<nt.listNeuron.size(); i++){
             nt.hashNeuron.insert(nt.listNeuron[i].n,i);
         }
-        sortSWC(nt.listNeuron,sortListNeuron);
+        sortSWC(nt.listNeuron,sortListNeuron,d);
         nt.listNeuron.clear();
         nt.listNeuron = sortListNeuron;
         nt.hashNeuron.clear();
@@ -265,10 +265,12 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
         saveImageDir.mkdir("D:\\reTraceTest");
     }
 
-    QString saveImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
-            QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
-            QString::number(end_z) + ".v3draw";
-    simple_saveimage_wrapper(callback,saveImagePath.toStdString().c_str(),pdata,in_sz,1);
+    if (tmpImageDir != "") {
+        QString saveImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+                QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
+                QString::number(end_z) + ".v3draw";
+        simple_saveimage_wrapper(callback,saveImagePath.toStdString().c_str(),pdata,in_sz,1);
+    }
 
     unsigned char* maskImage = pdata;
 //    getMaskImage(pdata,maskImage,in_sz,maskR);
@@ -282,14 +284,17 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     qDebug()<<"maskImage meanStd: "<<imageMean<<" "<<imageStd;
     BinaryProcess(maskImage,in_sz);
 
-    QString maskThresImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
-            QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
-            QString::number(end_z) + "_maskThres.v3draw";
-    simple_saveimage_wrapper(callback,maskThresImagePath.toStdString().c_str(),maskImage,in_sz,1);
+    if (tmpImageDir != "") {
+        QString maskThresImagePath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+                QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" +
+                QString::number(end_z) + "_maskThres.v3draw";
+        simple_saveimage_wrapper(callback,maskThresImagePath.toStdString().c_str(),maskImage,in_sz,1);
+    }
+
 
     Image4DSimple* app2Image = new Image4DSimple();
     app2Image->setData(maskImage,in_sz[0],in_sz[1],in_sz[2],in_sz[3],V3D_UINT8);
-    app2Image->setFileName(maskThresImagePath.toStdString().c_str());
+//    app2Image->setFileName(maskThresImagePath.toStdString().c_str());
     PARA_APP2 p2 = PARA_APP2();
     p2.p4dImage = app2Image;
     p2.bkg_thresh = -1;
@@ -306,9 +311,12 @@ NeuronTree imageBlock::getNeuronTree(QString brainPath, V3DPluginCallback2 &call
     LocationSimple m = LocationSimple(startMarker.x + 1 - start_x, startMarker.y + 1 - start_y, startMarker.z + 1 - start_z);
     QList<ImageMarker> ms;
     ms.push_back(ImageMarker(m.x,m.y,m.z));
-    QString saveMarkerPath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
-            QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" + QString::number(end_z) + ".marker";
-    writeMarker_file(saveMarkerPath,ms);
+
+    if (tmpImageDir != "") {
+        QString saveMarkerPath = tmpImageDir + "\\" + QString::number(start_x) + "_" + QString::number(end_x) + "_" +
+                QString::number(start_y) + "_" + QString::number(end_y) + "_" + QString::number(start_z) + "_" + QString::number(end_z) + ".marker";
+        writeMarker_file(saveMarkerPath,ms);
+    }
 
     NeuronTree foreTree = cutBlockSWC(finalResult);
     qDebug()<<"foreTree size"<<foreTree.listNeuron.size();

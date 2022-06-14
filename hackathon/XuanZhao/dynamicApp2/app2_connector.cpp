@@ -2095,6 +2095,20 @@ bool proc_app2_line(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
     long tol_sz = sz01*sz2;
     unsigned char* inimg = p.p4dImage->getRawData();
 
+    if (p.bkg_thresh < 0)
+    {
+        if (p.channel >=0 && p.channel <= p.p4dImage->getCDim()-1)
+        {
+            double imgAve, imgStd;
+            mean_and_std(inimg, tol_sz, imgAve, imgStd);
+//            p.bkg_thresh = imgAve; //+0.5*imgStd ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5;
+            double td= imgStd;
+            p.bkg_thresh = imgAve +0.5*td ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5; //20170523, PHC
+        }
+        else
+            p.bkg_thresh = 0;
+    }
+
     float * fphi = 0;
     long * fparent = 0;
     char * fstate = 0;
@@ -2150,9 +2164,10 @@ bool proc_app2_line(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & 
     qDebug()<<"start lineThres: "<<lineThres;
 
     XYZ lastDire = XYZ(leafMarker->x - foreMarker->x, leafMarker->y - foreMarker->y, leafMarker->z - foreMarker->z);
+    // lineThres to bkg_thresh
     fastmarching_ultratracer2_line(leafMarker, inimg, p.rootFore, outMarkers,
                               fphi, fparent, fstate, fpath,
-                              sz0, sz1, sz2, lineThres, callback,
+                              sz0, sz1, sz2, p.bkg_thresh, callback,
                               p.cnn_type, p.f_length, lastDire);
 
     if(fphi){delete [] fphi; fphi = 0;}

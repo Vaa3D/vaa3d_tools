@@ -14,6 +14,7 @@
 
 
 #include "dlog.h"
+#include "test.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(dynamicApp2, dynamicApp2Plugin);
@@ -160,6 +161,7 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
         p.root = leafMarker;
         p.rootFore = rootMarker;
         p.f_length = length_thresh;
+        p.bkg_thresh = -1;
         proc_app2_line(callback,p,versionStr);
 
 
@@ -169,6 +171,31 @@ bool dynamicApp2Plugin::dofunc(const QString & func_name, const V3DPluginArgList
             p.p4dImage = 0;
         }
 
+    }
+    else if (func_name == tr("calPrecision")) {
+        QString tracedPath = infiles.size()>=1 ? infiles[0] : "";
+        QString manualPath = infiles.size()>=2 ? infiles[1] : "";
+        QString originPointPath = infiles.size()>=3 ? infiles[2] : "";
+        double d_thresh = inparas.size()>=1 ? atof(inparas[0]) : 5;
+
+        QString outPath = outfiles.size()>=1 ? outfiles[0] : "";
+
+        NeuronTree traced = readSWC_file(tracedPath);
+        NeuronTree manual = readSWC_file(manualPath);
+        NeuronTree originPointSWC = readSWC_file(originPointPath);
+
+        XYZ origin;
+        for(NeuronSWC& s : originPointSWC.listNeuron){
+            if(s.parent < 0){
+                origin = XYZ(s.x, s.y, s.z);
+            }
+        }
+        float ratio = calPrecision(traced, manual, origin, d_thresh);
+        cout<<"retio: "<<ratio<<endl;
+
+        ofstream csv_file;
+        csv_file.open(outPath.toStdString().c_str(), ios_base::app);
+        csv_file<<manualPath.toStdString().c_str()<<','<<ratio<<endl;
     }
 	else if (func_name == tr("help"))
 	{

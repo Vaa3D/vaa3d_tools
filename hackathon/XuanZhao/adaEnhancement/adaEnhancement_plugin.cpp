@@ -11,7 +11,9 @@
 #include "../jba/newmat11/newmatio.h"
 
 #include "fastmarching_dt.h"
-#include<map>
+#include <map>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(adaEnhancement, adaEnhancementPlugin);
@@ -41,6 +43,8 @@ bool computeCylinderPcaEigVec(T* data1d, V3DLONG* sz,
                               double *vec1, double *vec2, double *vec3);
 
 void computeNeuronTreeLineScore(unsigned char* data1d, V3DLONG* sz, NeuronTree& nt);
+
+void computeNeuronTreePCA(unsigned char *data1d, long long *sz, NeuronTree &nt, QString csvPath);
 
 QStringList adaEnhancementPlugin::menulist() const
 {
@@ -168,6 +172,25 @@ bool adaEnhancementPlugin::dofunc(const QString & func_name, const V3DPluginArgL
         writeSWC_file(swcOutPath,nt);
 
 	}
+    else if (func_name == tr("func3"))
+    {
+        QString imgPath = infiles[0];
+        QString swcPath = infiles[1];
+        QString csvPath = outfiles[0];
+
+        V3DLONG sz[4] = {0,0,0,0};
+        int dataType = 1;
+        unsigned char* data1d = 0;
+        simple_loadimage_wrapper(callback,imgPath.toStdString().c_str(),data1d,sz,dataType);
+
+        NeuronTree nt = readSWC_file(swcPath);
+        computeNeuronTreePCA(data1d,sz,nt,csvPath);
+
+        if(data1d){
+            delete[] data1d;
+            data1d = 0;
+        }
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
@@ -1099,3 +1122,53 @@ void computeNeuronTreeLineScore(unsigned char *data1d, long long *sz, NeuronTree
     }
 }
 
+void computeNeuronTreePCA(unsigned char *data1d, long long *sz, NeuronTree &nt, QString csvPath){
+    V3DLONG x0,y0,z0;
+    V3DLONG wx,wy,wz;
+    double pc1,pc2,pc3;
+    double* vec1 = new double[3];
+    double* vec2 = new double[3];
+    double* vec3 = new double[3];
+
+    int pointSize = nt.listNeuron.size();
+
+    vector<vector<V3DLONG> > children = vector<vector<V3DLONG> >(pointSize,vector<V3DLONG>());
+
+    for(int i=0 ; i<pointSize; i++){
+        if(nt.listNeuron[i].parent<0){
+            continue;
+        }
+        V3DLONG prtIndex = nt.hashNeuron.value(nt.listNeuron[i].parent);
+        children[prtIndex].push_back(i);
+    }
+
+    ofstream csvFile;
+    csvFile.open(csvPath.toStdString().c_str(),ios::app);
+
+    for(int i=0; i<pointSize; i++){
+        XYZ p1(nt.listNeuron[i].x,nt.listNeuron[i].y,nt.listNeuron[i].z);
+
+        x0 = p1.x + 0.5;
+        y0 = p1.y + 0.5;
+        z0 = p1.z + 0.5;
+        wx = wy = wz = 5;
+        computeCubePcaEigVec(data1d,sz,x0,y0,z0,wx,wy,wz,pc1,pc2,pc3,vec1,vec2,vec3);
+        int tip = children[i].size()>0 ? 0 : 1;
+        csvFile<<pc1<<','<<pc2<<','<<pc3<<','<<pc1/pc2<<','<<pc1/pc3<<','<<pc2/pc3<<','<<tip<<endl;
+    }
+    csvFile.close();
+
+
+    if(vec1){
+        delete[] vec1;
+        vec1 = 0;
+    }
+    if(vec2){
+        delete[] vec2;
+        vec2 = 0;
+    }
+    if(vec3){
+        delete[] vec3;
+        vec3 = 0;
+    }
+}
