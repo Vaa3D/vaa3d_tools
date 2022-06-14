@@ -6,6 +6,7 @@
 
 QStringList getImgNames(const QString &path);
 QStringList getSwcNames(const QString &path);
+QStringList getNames(const QString &path);
 
 
 #endif // DATA_IO_H

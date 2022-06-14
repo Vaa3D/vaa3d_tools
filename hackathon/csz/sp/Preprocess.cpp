@@ -44,7 +44,7 @@ void Preprocess::gaussfilter(DataFlow *Predatamem,vector<char *> inputarg,int i,
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"gf start";
-    qDebug()<<mcallback->callPluginFunc("gaussianfilter1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("gspaussianfilter.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"gf end";
 
     Predatamem->outputimg[i]=otimg;
@@ -176,7 +176,7 @@ void Preprocess::imPreprocess(DataFlow *Predatamem, std::vector<char *> inputarg
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"imPreprocess start";
-    qDebug()<<mcallback->callPluginFunc("imPreProcess1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("ispmPreProcess.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"imPreprocess end";
 
     Predatamem->outputimg[i]=otimg;
@@ -217,7 +217,7 @@ void Preprocess::gsdt(DataFlow *Predatamem, std::vector<char *> inputarg, int i,
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"gsdt start";
-    qDebug()<<mcallback->callPluginFunc("gsdt1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("gspsdt.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"gsdt end";
     //mcallback->saveImage(otimg,"D:\\A_DLcsz\\DLtrain\\fixed_data\\result\\1.tiff");
     //qDebug()<<otimg->getTotalBytes();
@@ -261,7 +261,7 @@ void Preprocess::cropTerafly(DataFlow *Predatamem, char * inputfile,std::vector<
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"cropTerafly start";
-    qDebug()<<mcallback->callPluginFunc("cropped3DImageSeries1.dll","cropTerafly",pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("cspropped3DImageSeries.dll","cropTerafly",pluginInputList, pluginOutputList);
     qDebug()<<"cropTerafly end";
 
     //Predatamem->outputimg[i]=otimg;
@@ -301,7 +301,7 @@ void Preprocess::histogramEqualization(DataFlow *Predatamem, std::vector<char *>
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"histogramEqualization start";
-    qDebug()<<mcallback->callPluginFunc("HistogramEqualization1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("HspistogramEqualization.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"histogramEqualization end";
 
     Predatamem->outputimg[i]=otimg;
@@ -341,7 +341,7 @@ void Preprocess::standardize(DataFlow *Predatamem, std::vector<char *> inputarg,
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"standardize start";
-    qDebug()<<mcallback->callPluginFunc("standardize_image1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("ssptandardize_image.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"standardize end";
 
     Predatamem->outputimg[i]=otimg;
@@ -381,7 +381,7 @@ void Preprocess::datatypeconvert(DataFlow *Predatamem, std::vector<char *> input
     pluginOutputList.push_back(Outputimg);
 
     qDebug()<<"datatypeconvert start";
-    qDebug()<<mcallback->callPluginFunc("datatypeconvert1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("dspatatypeconvert.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"datatypeconvert end";
 
     Predatamem->outputimg[i]=otimg;

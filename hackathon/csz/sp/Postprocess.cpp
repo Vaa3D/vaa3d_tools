@@ -34,7 +34,7 @@ void Postprocess::resample_swc(DataFlow *Postdatamem, std::vector<char *> inputa
     pluginOutputList.push_back(Outputswc);
 
     qDebug()<<"resample_swc start";
-    qDebug()<<mcallback->callPluginFunc("resample_swc1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("rspesample_swc.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"resample_swc end";
 
     Postdatamem->outputswc[i]=otswc;
@@ -74,7 +74,7 @@ void Postprocess::sort_neuron_swc(DataFlow *Postdatamem, std::vector<char *> inp
     pluginOutputList.push_back(Outputswc);
 
     qDebug()<<"sort_neuron_swc start";
-    qDebug()<<mcallback->callPluginFunc("sort_neuron_swc1.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("ssport_neuron_swc.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"sort_neuron_swc end";
 
     Postdatamem->outputswc[i]=otswc;

@@ -770,7 +770,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                 arg.p =(void *)(&outputswc);
                 output.push_back(arg);
                 if(p.b_resample){
-                    callback.callPluginFunc("resample_swc1.dll","resample_swc",input_resample,output);
+                    callback.callPluginFunc("rspesample_swc.dll","resample_swc",input_resample,output);
                     p.pneurontree->deepCopy(*otswc);
                 }
 
@@ -789,7 +789,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                 arg.p =(void *)(&outputswc);
                 output.clear();
                 output.push_back(arg);
-                callback.callPluginFunc("sort_neuron_swc1.dll","sort_swc", input_sort,output);
+                callback.callPluginFunc("ssport_neuron_swc.dll","sort_swc", input_sort,output);
                 p.pneurontree->deepCopy(*otswc2);
             }
         }

@@ -34,7 +34,7 @@ void Computation::vn2(DataFlow *Comdatamem, std::vector<char *> inputarg, int i,
     pluginOutputList.push_back(Outputswc);
 
     qDebug()<<"app2 start";
-    qDebug()<<mcallback->callPluginFunc("vn21.dll",funcname,pluginInputList, pluginOutputList);
+    qDebug()<<mcallback->callPluginFunc("vspn2.dll",funcname,pluginInputList, pluginOutputList);
     qDebug()<<"app2 end";
 
     //qDebug()<<otswc;

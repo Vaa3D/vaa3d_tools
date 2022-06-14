@@ -158,29 +158,121 @@ template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, 
 					for (V3DLONG k1=k2low;k1<=k2high;k1++)
 					{
 						long tmp1 = k1*szin_01;
-						
-						for (V3DLONG j1=j2low;j1<=j2high;j1++)
-						{
-							long tmp2 = j1*szin[0];
+//                        for (V3DLONG j1=j2low;j1<=j2high;j1++)
+//                        {
+//                            long tmp2 = j1*szin[0];
+
+//                            for (V3DLONG i1=i2low;i1<=i2high;i1++)
+//                            {
+//                                long idx_in = tmp1+ tmp2 + i1;
+//                                //s += indata[idx_in];
+//                                if(s<indata[idx_in])
+//                                {
+//                                    s=indata[idx_in];
+//                                }
+////								if (indata[idx_in]>0)
+////									printf("%d, %d, %d, %d, %d, %d, %d\n", k, j, i, k1, j1, i1, indata[idx_in]);
+//                            }
+//                        }
+//                    }
+
+//                    outdata[idx_out] = (T)(s);
+                        for (V3DLONG j1=j2low;j1<=j2high;j1++)
+                        {
+                            long tmp2 = j1*szin[0];
 							
-							for (V3DLONG i1=i2low;i1<=i2high;i1++)
-							{
-								long idx_in = tmp1+ tmp2 + i1;
-								s += indata[idx_in];
+                            for (V3DLONG i1=i2low;i1<=i2high;i1++)
+                            {
+                                long idx_in = tmp1+ tmp2 + i1;
+                                s += indata[idx_in];
 //								if (indata[idx_in]>0)
 //									printf("%d, %d, %d, %d, %d, %d, %d\n", k, j, i, k1, j1, i1, indata[idx_in]);
-							}
-						}
-					}
+                            }
+                        }
+                    }
 					
-					outdata[idx_out] = (T)(s/cubevolume);
+                    outdata[idx_out] = (T)(s/cubevolume);
 //					if (outdata[idx_out]>0)
 //						printf("*******%f\n", s/cubevolume);
 				}
 			}
 		}
 	}
-	else
+    else if (tag == 2)
+    {
+        for (V3DLONG k=0;k<szout[2];k++)
+        {
+            long tt1 = k*szout_01;
+
+            V3DLONG k2low=(V3DLONG)(floor(k*dfactor[2])), k2high=(V3DLONG)(floor((k+1)*dfactor[2]-1));
+            if (k2high>szin[2]) k2high = szin[2];
+            V3DLONG kw = k2high - k2low + 1;
+
+            for (V3DLONG j=0;j<szout[1];j++)
+            {
+                long tt2 = j*szout[0];
+
+                V3DLONG j2low=(V3DLONG)(floor(j*dfactor[1])), j2high=(V3DLONG)(floor((j+1)*dfactor[1]-1));
+                if (j2high>szin[1]) j2high = szin[1];
+                V3DLONG jw = j2high - j2low + 1;
+
+                for (V3DLONG i=0;i<szout[0];i++)
+                {
+                    long idx_out = tt1 + tt2 + i;
+
+                    V3DLONG i2low=(V3DLONG)(floor(i*dfactor[0])), i2high=(V3DLONG)(floor((i+1)*dfactor[0]-1));
+                    if (i2high>szin[0]) i2high = szin[0];
+                    V3DLONG iw = i2high - i2low + 1;
+
+                    double cubevolume = double(kw) * jw * iw;
+                    //cout<<cubevolume <<" ";
+
+//printf("%ld,%ld, %ld\n", i,j,k);
+                    double s=0.0;
+                    for (V3DLONG k1=k2low;k1<=k2high;k1++)
+                    {
+                        long tmp1 = k1*szin_01;
+                        for (V3DLONG j1=j2low;j1<=j2high;j1++)
+                        {
+                            long tmp2 = j1*szin[0];
+
+                            for (V3DLONG i1=i2low;i1<=i2high;i1++)
+                            {
+                                long idx_in = tmp1+ tmp2 + i1;
+                                //s += indata[idx_in];
+                                if(s<indata[idx_in])
+                                {
+                                    s=indata[idx_in];
+                                }
+//								if (indata[idx_in]>0)
+//									printf("%d, %d, %d, %d, %d, %d, %d\n", k, j, i, k1, j1, i1, indata[idx_in]);
+                            }
+                        }
+                    }
+
+                    outdata[idx_out] = (T)(s);
+//						for (V3DLONG j1=j2low;j1<=j2high;j1++)
+//						{
+//							long tmp2 = j1*szin[0];
+
+//							for (V3DLONG i1=i2low;i1<=i2high;i1++)
+//							{
+//								long idx_in = tmp1+ tmp2 + i1;
+//								s += indata[idx_in];
+////								if (indata[idx_in]>0)
+////									printf("%d, %d, %d, %d, %d, %d, %d\n", k, j, i, k1, j1, i1, indata[idx_in]);
+//							}
+//						}
+//					}
+
+//					outdata[idx_out] = (T)(s/cubevolume);
+//					if (outdata[idx_out]>0)
+//						printf("*******%f\n", s/cubevolume);
+                }
+            }
+        }
+    }
+    else if(tag==1)
 	{
 		for (V3DLONG k=0;k<szout[2]; k++)
 		{

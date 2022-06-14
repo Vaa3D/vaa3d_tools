@@ -25,41 +25,43 @@ using namespace std;
 bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versionStr)
 {
     //  bool b_menu = true;
-      bool b_dofunc = false;
+    bool b_dofunc = false;
     
     if (!p.p4dImage || !p.p4dImage->valid())
     {
         if (p.inimg_file.isEmpty())
             return false;
-        
+
         b_dofunc = false;
 
         //in this case try to read the image files
         QString infile = p.inimg_file;
         p.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
-        if (!p.p4dImage || !p.p4dImage->valid())
-            return false;
-        else
-        {
-            p.xc0 = p.yc0 = p.zc0 = 0;
-            p.xc1 = p.p4dImage->getXDim()-1;
-            p.yc1 = p.p4dImage->getYDim()-1;
-            p.zc1 = p.p4dImage->getZDim()-1;
-        }
-        
-        QList <ImageMarker> file_inmarkers;
-        if(!p.inmarker_file.isEmpty()) 
-            file_inmarkers = readMarker_file(p.inmarker_file);
-        
-        LocationSimple t;
-        for(V3DLONG i = 0; i < file_inmarkers.size(); i++)
-        {
-            t.x = file_inmarkers[i].x;
-            t.y = file_inmarkers[i].y;
-            t.z = file_inmarkers[i].z;
-            p.landmarks.push_back(t);
-        }
     }
+
+    if (!p.p4dImage || !p.p4dImage->valid())
+        return false;
+    else
+    {
+        p.xc0 = p.yc0 = p.zc0 = 0;
+        p.xc1 = p.p4dImage->getXDim()-1;
+        p.yc1 = p.p4dImage->getYDim()-1;
+        p.zc1 = p.p4dImage->getZDim()-1;
+    }
+
+    QList <ImageMarker> file_inmarkers;
+    if(!p.inmarker_file.isEmpty())
+        file_inmarkers = readMarker_file(p.inmarker_file);
+
+    LocationSimple t;
+    for(V3DLONG i = 0; i < file_inmarkers.size(); i++)
+    {
+        t.x = file_inmarkers[i].x;
+        t.y = file_inmarkers[i].y;
+        t.z = file_inmarkers[i].z;
+        p.landmarks.push_back(t);
+    }
+
     
     //these info should also be output to the swc file. need to add later. Noted by PHC, 121124
     QStringList infostring;
@@ -458,45 +460,48 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
     
     if (1)
     {
-        
-        QString rootposstr="", tmps;
-        tmps.setNum(int(inmarkers[0].x+0.5)).prepend("_x"); rootposstr += tmps;
-        tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
-        tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
+        if(p.isout){
+            QString rootposstr="", tmps;
+            tmps.setNum(int(inmarkers[0].x+0.5)).prepend("_x"); rootposstr += tmps;
+            tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
+            tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
 
-        QString outswc_file;
-        if(!p.outswc_file.isEmpty())
-            outswc_file = p.outswc_file;
-        else
-            outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app1.swc";
+            QString outswc_file;
+            if(!p.outswc_file.isEmpty())
+                outswc_file = p.outswc_file;
+            else
+                outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app1.swc";
 
-        if (0) //130220. instead of direct downsampling, try to use the original APP1 method
-        {
-            QList <NeuronSWC> &nn = nt.listNeuron;
-            V3DLONG i;
-            for(i = 0; i < nn.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
+            if (0) //130220. instead of direct downsampling, try to use the original APP1 method
             {
-                if (dfactor_xy>1) nn[i].x *= dfactor_xy; nn[i].x += (p.xc0); if (dfactor_xy>1) nn[i].x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
-                if (dfactor_xy>1) nn[i].y *= dfactor_xy; nn[i].y += (p.yc0); if (dfactor_xy>1) nn[i].y += dfactor_xy/2;
-                if (dfactor_z>1) nn[i].z *= dfactor_z;  nn[i].z += (p.zc0); if (dfactor_z>1)  nn[i].z += dfactor_z/2;
-                nn[i].radius *= dfactor_xy; //use xy for now
+                QList <NeuronSWC> &nn = nt.listNeuron;
+                V3DLONG i;
+                for(i = 0; i < nn.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
+                {
+                    if (dfactor_xy>1) nn[i].x *= dfactor_xy; nn[i].x += (p.xc0); if (dfactor_xy>1) nn[i].x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
+                    if (dfactor_xy>1) nn[i].y *= dfactor_xy; nn[i].y += (p.yc0); if (dfactor_xy>1) nn[i].y += dfactor_xy/2;
+                    if (dfactor_z>1) nn[i].z *= dfactor_z;  nn[i].z += (p.zc0); if (dfactor_z>1)  nn[i].z += dfactor_z/2;
+                    nn[i].radius *= dfactor_xy; //use xy for now
+                }
             }
+
+            //need to add radius re-est code later here.
+
+            //if(!writeSWC_file(outswc_file, nt))
+            //    fprintf(stderr, "Fail to produce the output file %s.\n", qPrintable(outswc_file));
+
+            tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+            tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+
+            //writeSWC_file(outswc_file.toStdString(), nt, infostring);
+            if(!writeSWC_file(outswc_file, nt, &infostring))
+                fprintf(stderr, "Fail to produce the output file %s.\n", qPrintable(outswc_file));
+
+            v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
+                            ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
+        }else{
+            p.pneurontree->deepCopy(nt);
         }
-        
-        //need to add radius re-est code later here.
-        
-        //if(!writeSWC_file(outswc_file, nt))
-        //    fprintf(stderr, "Fail to produce the output file %s.\n", qPrintable(outswc_file));
-
-        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-        
-        //writeSWC_file(outswc_file.toStdString(), nt, infostring);
-        if(!writeSWC_file(outswc_file, nt, &infostring))
-            fprintf(stderr, "Fail to produce the output file %s.\n", qPrintable(outswc_file));
-
-        v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
     }
     else //save SWC
     {
@@ -602,36 +607,50 @@ Label_exit:
     
 //    for(int i = 0; i < outtree.size(); i++) delete outtree[i];
 //    outtree.clear();
-    
-    if (b_dofunc)
-    {
-        if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
+    if(p.isout){
+        if (b_dofunc)
+        {
+            if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
+        }
     }
-    
     return true;
 }
 
 
 bool PARA_APP1::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
-    vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
     vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
-    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
-    vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
     vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
-    
-    if(infiles.empty())
-    {
-        cerr<<"Need input image"<<endl;
-        return false;
+    vector<char*> * pinfiles,infiles,* poutfiles,outfiles;
+    isdatafile=atoi(paras[0]);
+    isout=atoi(paras[1]);
+    if(isdatafile){
+        pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+        inimg_file = infiles[0];
+    }else{
+        p4dImage=((vector<Image4DSimple*> *)(input.at(0).p))->at(0);
+    }
+    if(isout){
+        poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        if(!outfiles.empty()) outswc_file = outfiles[0];
+    }else{
+        pneurontree=((vector<NeuronTree*> *)(output.at(0).p))->at(0);
     }
     
-    inimg_file = infiles[0];
-    int k=0;
+
+    
+
+    int k=2;
     inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
     
-    if(!outfiles.empty()) outswc_file = outfiles[0];
+
 
     //try to use as much as the default value in the PARA_APP2 constructor as possible
     channel = paras.size() >= k+1 ? atoi(paras[k]) : channel;  k++;//0;

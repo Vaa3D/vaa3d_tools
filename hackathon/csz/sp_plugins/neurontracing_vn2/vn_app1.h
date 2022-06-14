@@ -19,6 +19,8 @@ struct PARA_APP1: public PARA_VN
     int  b_256cube;
 
     bool b_menu;
+    int isout;
+    int isdatafile;
 
     QString inimg_file, inmarker_file, outswc_file;
     
@@ -29,7 +31,8 @@ struct PARA_APP1: public PARA_VN
         channel = 0;
         downsample_factor = 2;
         b_256cube = 1; //whether or not preprocessing to downsample to a 256xYxZ cube UINT8 for tracing
-
+        isout=1;
+        isdatafile=1;
         b_menu = true;
 
         inimg_file = "";
