@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>691</width>
-    <height>639</height>
+    <width>1212</width>
+    <height>1075</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,22 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="QTabWidget" name="dataTabWidget">
+      <property name="minimumSize">
+       <size>
+        <width>1200</width>
+        <height>0</height>
+       </size>
+      </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="QuerySwc">
+       <property name="minimumSize">
+        <size>
+         <width>1200</width>
+         <height>1000</height>
+        </size>
+       </property>
        <attribute name="title">
         <string>QuerySwc</string>
        </attribute>
@@ -29,19 +41,35 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>681</width>
-          <height>571</height>
+          <width>1202</width>
+          <height>1082</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QGroupBox" name="QuerySwcGroupBox">
+           <property name="minimumSize">
+            <size>
+             <width>1200</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="title">
             <string>Query</string>
            </property>
-           <layout class="QGridLayout" name="gridLayout_7" rowstretch="2,1,11,2">
-            <item row="2" column="0">
-             <widget class="QTableWidget" name="querySwcTable"/>
+           <layout class="QGridLayout" name="gridLayout_7" rowstretch="2,1,6,1">
+            <item row="1" column="0">
+             <widget class="QPushButton" name="querySwcButton">
+              <property name="minimumSize">
+               <size>
+                <width>1200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Click to query</string>
+              </property>
+             </widget>
             </item>
             <item row="0" column="0">
              <layout class="QGridLayout" name="QuerySwcGridLayout" rowstretch="0,0,0">
@@ -82,6 +110,12 @@
                 </item>
                 <item>
                  <widget class="QLabel" name="Batch_Swc">
+                  <property name="minimumSize">
+                   <size>
+                    <width>1200</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>Batch</string>
                   </property>
@@ -100,22 +134,73 @@
                 <item>
                  <widget class="QLineEdit" name="NeuronID_Swc_lineEdit"/>
                 </item>
+                <item>
+                 <widget class="QLabel" name="in_directory">
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>In directory</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="directoryComboBox"/>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="browse_button">
+                  <property name="text">
+                   <string>Browse</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </item>
              </layout>
             </item>
-            <item row="3" column="0">
-             <widget class="QGroupBox" name="groupBox">
-              <property name="title">
-               <string>GroupBox</string>
+            <item row="2" column="0">
+             <widget class="QTableWidget" name="querySwcTable">
+              <property name="minimumSize">
+               <size>
+                <width>1200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1200</width>
+                <height>600</height>
+               </size>
+              </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QAbstractScrollArea::AdjustToContents</enum>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QPushButton" name="querySwcButton">
-              <property name="text">
-               <string>Click to query</string>
+            <item row="3" column="0">
+             <widget class="QGroupBox" name="groupBox">
+              <property name="minimumSize">
+               <size>
+                <width>1200</width>
+                <height>0</height>
+               </size>
               </property>
+              <property name="title">
+               <string>GroupBox</string>
+              </property>
+              <widget class="QLabel" name="swcFileFoundLable">
+               <property name="geometry">
+                <rect>
+                 <x>10</x>
+                 <y>40</y>
+                 <width>40</width>
+                 <height>12</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
              </widget>
             </item>
            </layout>
@@ -406,12 +491,227 @@
            <property name="title">
             <string>GroupBox</string>
            </property>
+           <widget class="QPushButton" name="pushButton">
+            <property name="geometry">
+             <rect>
+              <x>340</x>
+              <y>30</y>
+              <width>80</width>
+              <height>18</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Load</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="geometry">
+             <rect>
+              <x>430</x>
+              <y>30</y>
+              <width>80</width>
+              <height>18</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Select</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_3">
+            <property name="geometry">
+             <rect>
+              <x>520</x>
+              <y>30</y>
+              <width>80</width>
+              <height>18</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>SelectAll</string>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>30</y>
+              <width>311</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
           </widget>
          </item>
          <item row="1" column="0">
           <widget class="QPushButton" name="queryBoutonButton">
            <property name="text">
             <string>Click to query</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>页</string>
+       </attribute>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>761</width>
+          <height>102</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetFixedSize</enum>
+         </property>
+         <item row="2" column="4">
+          <widget class="QPushButton" name="btnSend">
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="text">
+            <string>发送</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QComboBox" name="cboxPort">
+           <item>
+            <property name="text">
+             <string>25</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>465</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>587</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <widget class="QCheckBox" name="ckSSL">
+           <property name="text">
+            <string>SSL</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="labPort">
+           <property name="text">
+            <string>BrainID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QPushButton" name="btnSelect">
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="text">
+            <string>浏览</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLineEdit" name="txtReceiverAddr">
+           <property name="text">
+            <string>feiyangqingyun@163.com;517216493@qq.com</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1" colspan="3">
+          <widget class="QLineEdit" name="txtFileName"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="labTitle">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="txtTitle">
+           <property name="text">
+            <string>测试邮件</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cboxServer">
+           <item>
+            <property name="text">
+             <string>18454-0001</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>新建项目</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="labReceiverAddr">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="labFileName">
+           <property name="text">
+            <string>选择附件</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="labServer">
+           <property name="text">
+            <string>MorphoID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="labSenderAddr">
+           <property name="text">
+            <string>NeuronID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="txtSenderAddr">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="labSenderPwd">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLineEdit" name="txtSenderPwd">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="echoMode">
+            <enum>QLineEdit::Password</enum>
            </property>
           </widget>
          </item>
@@ -427,7 +727,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>691</width>
+     <width>1212</width>
      <height>17</height>
     </rect>
    </property>

@@ -31,11 +31,12 @@ void NeuronQuerySystemPlugin::domenu(const QString &menu_name, V3DPluginCallback
 	if (menu_name == tr("NeuronQuerySystem"))
 	{
         NeuronQueryMainWindow *mainwindow=new NeuronQueryMainWindow(callback,parent);
+        mainwindow->setGeometry(0,0,1280,1080);
         QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Floor);
         mainwindow->setWindowState(Qt::WindowNoState);
         mainwindow->activateWindow();
         mainwindow->raise();
-//        mainwindow->setGeometry(100,400,1280,1080);
+
         mainwindow->show();
 
 	}

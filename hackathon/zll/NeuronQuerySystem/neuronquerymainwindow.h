@@ -44,18 +44,27 @@ private:
     QAction *aboutAction;
     QAction *aboutQtAction;
 
+    QDir currentDir;
+
+    void init();
+
     void createMenuBar();
-    void creatDataTable();
+
     void about();
     void toLogWindow(const QString& logtext);
     static void updateComboBox(QComboBox &comboBox);
-    void animateFindClick(QPushButton *pushButton);
+    void animateFindClick();
+    void showSwcTables(const QStringList &paths);
+    QStringList querySwcFiles(const QStringList &files, const QString &text);
 
 private slots:
+    void browse();
+    void openFileOfItem(int row, int column);
+    void contextMenu(const QPoint &pos);
 
 //    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
 
-    void on_loadApoButton_customContextMenuRequested(const QPoint &pos);
+//    void on_loadApoButton_customContextMenuRequested(const QPoint &pos);
 
     void on_querySwcButton_clicked();
     void on_queryAnoButton_clicked();
@@ -63,14 +72,17 @@ private slots:
 
     void on_LoadSwcButton_clicked();
 
+
+
     void loginAction_slot();
     void loginOkayButton_slot();
     void loginCancelButton_slot();
     void logoutAction_slot();
+    void popAction_3Dview_slot();
 
-    void on_dataTabWidget_currentChanged(int index);
+//    void dataTabChange(int index);
 
-    void on_querySwcButton_customContextMenuRequested(const QPoint &pos);
+//    void on_querySwcButton_customContextMenuRequested(const QPoint &pos);
 
 private:
     Ui::NeuronQueryMainWindow *ui;

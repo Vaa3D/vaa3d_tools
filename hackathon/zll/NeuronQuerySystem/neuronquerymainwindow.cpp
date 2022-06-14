@@ -5,6 +5,18 @@
 #include <QDialog>
 #include <QMessageBox>
 #include <QProgressDialog>
+
+enum { absoluteFileNameRole = Qt::UserRole + 1 };
+static inline QString fileNameOfItem(const QTableWidgetItem *item)
+{
+    return item->data(absoluteFileNameRole).toString();
+}
+
+static inline void openFile(const QString &fileName)
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
+}
+
 NeuronQueryMainWindow::NeuronQueryMainWindow(V3DPluginCallback2 &callback,QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::NeuronQueryMainWindow)
@@ -12,13 +24,15 @@ NeuronQueryMainWindow::NeuronQueryMainWindow(V3DPluginCallback2 &callback,QWidge
     ui->setupUi(this);
     QueryNeuroncallback=&callback;
     this->setCentralWidget(ui->dataTabWidget);
-    this->createMenuBar();
-    this->creatDataTable();
 
-//    connect(ui->MorphoID_Swc_comboBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
-//    connect(ui->BrainArea_Swc_ComboBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
-//    connect(ui->Batch_Swc_SpinBox->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
-//    connect(ui->NeuronID_Swc_lineEdit->lineEdit(),&QLineEdit::returnPressed,this,&NeuronQueryMainWindow::animateFindClick());
+    this->createMenuBar();
+    this->init();
+
+//    connect(ui->dataTabWidget,SIGNAL(currentChanged(int)),this,SLOT(dataTabChange(int)));
+
+    connect(ui->browse_button, &QAbstractButton::clicked, this, &NeuronQueryMainWindow::browse);
+    connect(ui->querySwcButton,&QAbstractButton::clicked,this,&NeuronQueryMainWindow::on_querySwcButton_clicked);
+
 
 }
 
@@ -34,7 +48,6 @@ void NeuronQueryMainWindow::createMenuBar(){
     aboutQtAction = new QAction(tr("&About Qt"), this);
     loginAction = new QAction(tr("&Login"),this);
     logoutAction=new QAction(tr("&Logout"),this);
-
 
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(quitAction);
@@ -57,53 +70,181 @@ void NeuronQueryMainWindow::createMenuBar(){
     connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);
 }
 
-void NeuronQueryMainWindow::creatDataTable()
+
+void NeuronQueryMainWindow::init()
+
 {
+    ui->directoryComboBox->setEditable(true);
+    ui->directoryComboBox->addItem(QDir::toNativeSeparators(QDir::currentPath()));
+    ui->directoryComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    ui->BrainID_Swc_ComboBox->setEditable(true);
+    ui->BrainID_Swc_ComboBox->addItem(QDir::toNativeSeparators(QDir::currentPath()));
+    ui->BrainID_Swc_ComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
 
+    connect(ui->BrainID_Swc_ComboBox->lineEdit(), &QLineEdit::returnPressed,
+            this, &NeuronQueryMainWindow::animateFindClick);
+
+    connect(ui->directoryComboBox->lineEdit(), &QLineEdit::returnPressed,
+            this, &NeuronQueryMainWindow::animateFindClick);
+
+    ui->querySwcTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    QStringList labels;
+    labels << tr("Filename") << tr("Size");
+    ui->querySwcTable->setHorizontalHeaderLabels(labels);
+//    ui->querySwcTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->querySwcTable->verticalHeader()->hide();
+    ui->querySwcTable->setShowGrid(false);
+    ui->querySwcTable->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(ui->querySwcTable, &QTableWidget::customContextMenuRequested,
+            this, &NeuronQueryMainWindow::contextMenu);
+    connect(ui->querySwcTable, &QTableWidget::cellActivated,
+            this, &NeuronQueryMainWindow::openFileOfItem);
 }
 
-void NeuronQueryMainWindow::about()
-{
-    QMessageBox::about(this, tr("About Books"),
-            tr("<p>The <b>Books</b> example shows how to use Qt SQL classes "
-               "with a model/view framework."));
 
+void NeuronQueryMainWindow::openFileOfItem(int row, int /* column */)
+{
+    const QTableWidgetItem *item = ui->querySwcTable->item(row, 0);
+    openFile(fileNameOfItem(item));
 }
 
-//void NeuronQueryMainWindow::animateFindClick()
+void NeuronQueryMainWindow::contextMenu(const QPoint &pos)
+{
+    const QTableWidgetItem *item = ui->querySwcTable->itemAt(pos);
+    if (!item)
+        return;
+    QMenu menu;
+#ifndef QT_NO_CLIPBOARD
+    QAction *copyAction = menu.addAction("Copy Name");
+#endif
+    QAction *openAction = menu.addAction("Open");
+    QAction *action = menu.exec(ui->querySwcTable->mapToGlobal(pos));
+    if (!action)
+        return;
+    const QString fileName = fileNameOfItem(item);
+    if (action == openAction)
+        openFile(fileName);
+#ifndef QT_NO_CLIPBOARD
+    else if (action == copyAction)
+        QGuiApplication::clipboard()->setText(QDir::toNativeSeparators(fileName));
+#endif
+}
+
+
+void NeuronQueryMainWindow::animateFindClick()
+{
+    ui->querySwcButton->animateClick();
+}
+
+
+
+
+//void NeuronQueryMainWindow::on_loadApoButton_customContextMenuRequested(const QPoint &pos)
 //{
-//    ui->querySwcButton->animateClick();
+
 //}
-
-
-
-
-void NeuronQueryMainWindow::on_loadApoButton_customContextMenuRequested(const QPoint &pos)
-{
-
-}
 
 
 void NeuronQueryMainWindow::on_querySwcButton_clicked()
 {
-//    ui->querySwcTable->setRowCount(0);
+    qDebug()<<"begin to click query swc";
+    ui->querySwcTable->setRowCount(0);
 
-//    updateComboBox(BrainID_Swc_ComboBox);
-//    updateComboBox(MorphoID_swc_ComboBox);
-//    updateComboBox(BrainArea_Swc_ComboBox);
+//    QString BrainArea = ui->BrainArea_Swc_ComboBox->currentText();
+//    QString MorphoID = ui->MorphoID_Swc_ComboBox->currentText();
+//    int Batch = ui->Batch_Swc_SpinBox->value();
+//    QString NeuronID = ui->NeuronID_Swc_lineEdit->displayText();
+    QString BrainID =ui->BrainID_Swc_ComboBox->currentText();
+    qDebug()<<"brain id: "<<BrainID;
+
+    QString path = QDir::cleanPath(ui->directoryComboBox->currentText());
+    qDebug()<<path;
+    currentDir = QDir(path);
+
+    if (ui->BrainID_Swc_ComboBox->findText(ui->BrainID_Swc_ComboBox->currentText()) == -1)
+        ui->BrainID_Swc_ComboBox->addItem(ui->BrainID_Swc_ComboBox->currentText());
+    if (ui->directoryComboBox->findText(ui->directoryComboBox->currentText()) == -1)
+        ui->directoryComboBox->addItem(ui->directoryComboBox->currentText());
 
 
-//    QProgressDialog progressDialog(this);
-//    preressDialog.setCancelButtonText(tr("&Cancel"));
-//    progressDialog.setRange(0.files.size());
-//    progressDialog.setWindowTitle(tr("Find Files"));
+    QStringList filter;
+    if(!BrainID.isEmpty()){
+        filter <<BrainID;
+        QDirIterator it(path, filter, QDir::AllEntries | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+        QStringList files;
+        while (it.hasNext()) {
+            files<<it.next();
+            qDebug()<<files;
+        }
 
+        if(!!BrainID.isEmpty())
+            files = querySwcFiles(files,BrainID);
+            qDebug()<<"query swc files"<<files;
+        files.sort();
+        showSwcTables(files);
+    }
+}
+QStringList NeuronQueryMainWindow::querySwcFiles(const QStringList &files, const QString &text)
+{
+    QProgressDialog progressDialog(this);
+    progressDialog.setCancelButtonText(tr("&Cancel"));
+    progressDialog.setRange(0, files.size());
+    progressDialog.setWindowTitle(tr("Find Files"));
 
+//! [5] //! [6]
+    QMimeDatabase mimeDatabase;
+    QStringList foundFiles;
 
+    for (int i = 0; i < files.size(); ++i) {
+        progressDialog.setValue(i);
+        progressDialog.setLabelText(tr("Searching file number %1 of %n...", nullptr, files.size()).arg(i));
+        QCoreApplication::processEvents();
+//! [6]
+
+        if (progressDialog.wasCanceled())
+            break;
+
+//! [7]
+        const QString fileName = files.at(i);
+        const QMimeType mimeType = mimeDatabase.mimeTypeForFile(fileName);
+        if (mimeType.isValid() && !mimeType.inherits(QStringLiteral("text/plain"))) {
+            qWarning() << "Not searching binary file " << QDir::toNativeSeparators(fileName);
+            continue;
+        }
+        QFile file(fileName);
+        if (file.open(QIODevice::ReadOnly)) {
+            QString line;
+            QTextStream in(&file);
+            while (!in.atEnd()) {
+                if (progressDialog.wasCanceled())
+                    break;
+                line = in.readLine();
+                if (line.contains(text, Qt::CaseInsensitive)) {
+                    foundFiles << files[i];
+                    break;
+                }
+            }
+        }
+    }
+    return foundFiles;
 
 }
 
+
+void NeuronQueryMainWindow::browse()
+{
+    QString directory =
+        QDir::toNativeSeparators(QFileDialog::getExistingDirectory(this, tr("Find Files"), QDir::currentPath()));
+
+    if (!directory.isEmpty()) {
+        if (ui->directoryComboBox->findText(directory) == -1)
+            ui->directoryComboBox->addItem(directory);
+        ui->directoryComboBox->setCurrentIndex(ui->directoryComboBox->findText(directory));
+    }
+}
 
 void NeuronQueryMainWindow::on_queryAnoButton_clicked()
 {
@@ -120,6 +261,34 @@ void NeuronQueryMainWindow::on_queryApoButton_clicked()
 void NeuronQueryMainWindow::on_LoadSwcButton_clicked()
 {
 
+}
+
+void NeuronQueryMainWindow::showSwcTables(const QStringList &paths)
+{
+    qDebug()<<"begin to showSwcTables";
+    for (const QString &filePath : paths) {
+        const QString toolTip = QDir::toNativeSeparators(filePath);
+        const QString relativePath = QDir::toNativeSeparators(currentDir.relativeFilePath(filePath));
+        const qint64 size = QFileInfo(filePath).size();
+        QTableWidgetItem *fileNameItem = new QTableWidgetItem(relativePath);
+        fileNameItem->setData(absoluteFileNameRole, QVariant(filePath));
+        fileNameItem->setToolTip(toolTip);
+        fileNameItem->setFlags(fileNameItem->flags() ^ Qt::ItemIsEditable);
+        qDebug()<<"fileNameItem:"<<fileNameItem;
+        QTableWidgetItem *sizeItem = new QTableWidgetItem(QLocale().formattedDataSize(size));
+        sizeItem->setData(absoluteFileNameRole, QVariant(filePath));
+        sizeItem->setToolTip(toolTip);
+        sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        sizeItem->setFlags(sizeItem->flags() ^ Qt::ItemIsEditable);
+        qDebug()<<"sizeItem:"<<sizeItem;
+
+        int row = ui->querySwcTable->rowCount();
+        ui->querySwcTable->insertRow(row);
+        ui->querySwcTable->setItem(row, 0, fileNameItem);
+        ui->querySwcTable->setItem(row, 1, sizeItem);
+    }
+    ui->swcFileFoundLable->setText(tr("%n file(s) found (Double click on a file to open it)", nullptr, paths.size()));
+    ui->swcFileFoundLable->setWordWrap(true);
 }
 
 static void updateComboBox(QComboBox *comboBox)
@@ -211,15 +380,76 @@ void NeuronQueryMainWindow::logoutAction_slot()
 }
 
 
+//void NeuronQueryMainWindow::dataTabChange(int tabIndex){
+//    QTableWidget *dataTable = dataTableList.at(tabIndex);
+//    QString itemtext = dataTabletilelist.at(tabIndex);
+//    dataTable->clear();
+//    updateDataTable()
+//}
 
-void NeuronQueryMainWindow::on_dataTabWidget_currentChanged(int tabindex)
+
+
+//void NeuronQueryMainWindow::on_querySwcButton_customContextMenuRequested(const QPoint &pos)
+//{
+
+//}
+
+void NeuronQueryMainWindow::popAction_3Dview_slot()
 {
-
+//    qDebug()<<"call 3d view";
+//    int curtabindex=ui->dataTabWidget->currentIndex();
+//    QTableWidget *levelTable=datatablelist.at(curtabindex);
+//    if(levelTable!=NULL)
+//    {
+//        QTreeWidgetItem* tempqtreeitem=contentTreewidget->currentItem();
+//        QString parentSpaceName="WorkingSpace";
+//        if(tempqtreeitem != NULL)
+//        {
+//            if(tempqtreeitem->parent()!= NULL)
+//            {
+//                parentSpaceName=tempqtreeitem->parent()->text(0);
+//            }
+//            else
+//            {
+//                parentSpaceName=contentTreewidget->currentItem()->text(contentTreewidget->currentColumn());
+//            }
+//        }
+//    //    qDebug()<<"content "<<parentSpaceName;
+//        QString curPathSWC = this->dbpath+"/"+parentSpaceName+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+//        //QString curPathSWC = this->dbpath+"/"+this->contentTreewidget->currentItem()->text(this->contentTreewidget->currentColumn())+"/"+curRecon.levelID+"/"+curRecon.fatherDirName+"/"+curRecon.fileName+".ano";
+//        //iscurReconExist();
+//        //qDebug()<<"swc path:"<<curPathSWC;
+//        QFileInfo curSWCBase(curPathSWC);
+//        if(curSWCBase.exists())
+//        {
+//            //qDebug()<<"path "<<curPathSWC;
+//            V3dR_MainWindow * surface_win = QueryNeuroncallback->open3DViewerForLinkerFile(curPathSWC);
+////            QueryNeuroncallback->open3DViewerForLinkerFile(curPathSWC);
+////                new3DWindow = MorphoHubcallback->open3DViewerForSingleSurfaceFile(curPathSWC);
+//            //reset window title to basename instead of path name
+//                QueryNeuroncallback->setWindowDataTitle(surface_win,curSWCBase.baseName());
+//        }
+//    }
 }
 
 
-void NeuronQueryMainWindow::on_querySwcButton_customContextMenuRequested(const QPoint &pos)
+//void NeuronQueryMainWindow::on_dataTabWidget_customContextMenuRequested(const QPoint &pos)
+//{
+//    int curtabindex = ui->dataTabWidget->currentIndex();
+//    QTableWidget *dataTable = dataTableList.at(curtabindex);
+//    QTableWidgetItem *item = dataTable->itemAt(pos);
+
+//}
+
+//void NeuronQueryMainWindow::updateDataTable()
+
+
+
+void NeuronQueryMainWindow::about()
 {
+    QMessageBox::about(this, tr("About Books"),
+            tr("<p>The <b>Books</b> example shows how to use Qt SQL classes "
+               "with a model/view framework."));
 
 }
 

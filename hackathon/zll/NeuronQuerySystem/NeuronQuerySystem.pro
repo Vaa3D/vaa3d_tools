@@ -9,9 +9,13 @@ QT += widgets
 
 HEADERS	+= NeuronQuerySystem_plugin.h \
     basicinfo.h \
+    datasource.h \
+    httpclient.h \
     neuronquerymainwindow.h
 SOURCES	+= NeuronQuerySystem_plugin.cpp \
     basicinfo.cpp \
+    datasource.cpp \
+    httpclient.cpp \
     neuronquerymainwindow.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 

@@ -1,0 +1,10 @@
+release/NeuronQuerySystem_plugin.o
+release/basicinfo.o
+release/datasource.o
+release/httpclient.o
+release/neuronquerymainwindow.o
+release/v3d_message.o
+release/moc_NeuronQuerySystem_plugin.o
+release/moc_datasource.o
+release/moc_httpclient.o
+release/moc_neuronquerymainwindow.o
