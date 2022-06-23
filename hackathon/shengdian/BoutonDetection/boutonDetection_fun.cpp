@@ -1102,7 +1102,9 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     }
 
     //read para list
-    int bkg_thre_bias=(inparas.size()>=1)?atoi(inparas[0]):15;
+    int interpolated=(inparas.size()>=1)?atoi(inparas[0]):0;
+    int bkg_thre_bias=(inparas.size()>=2)?atoi(inparas[1]):15;
+
     //read input swc to neuron-tree
    NeuronTree nt_raw = readSWC_file(QString::fromStdString(inswc_file));
    if(!nt_raw.listNeuron.size()) return;
@@ -1112,12 +1114,21 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
 
    double block_upsample_factor=4;
    int half_crop_size=128;
-   NeuronTree nt_p=node_interpolation(nt_raw,4,true);
+   NeuronTree nt_p;
+   if(interpolated>0)
+       nt_p=node_interpolation(nt_raw,interpolated,true);
+   else
+       nt_p.deepCopy(nt_raw);
    if(in_terafly)
    {
           //remove duplicated nodes and resample
        swc_profile_terafly_fun(callback,inimg_file,nt_p,half_crop_size,bkg_thre_bias,block_upsample_factor);
-       NeuronTree nt=internode_pruning(nt_p,2,true);
+//       NeuronTree nt=internode_pruning(nt_p,2,true);
+       NeuronTree nt;
+       if(interpolated>0)
+           nt=internode_pruning(nt_p,interpolated,true);
+       else
+           nt.deepCopy(nt_p);
        if(true){
            //smooth very large radius
            float radius_thre=8.0;
@@ -1146,7 +1157,11 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
    {
 //       writeESWC_file(QString::fromStdString(inswc_file + "_resample.eswc"),nt_p);
        swc_profile_image_fun(callback,inimg_file,nt_p,bkg_thre_bias,block_upsample_factor);
-       NeuronTree nt_out=internode_pruning(nt_p,2,true);
+       NeuronTree nt_out;
+       if(interpolated>0)
+           nt_out=internode_pruning(nt_p,interpolated,true);
+       else
+           nt_out.deepCopy(nt_p);
        writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
    }
 

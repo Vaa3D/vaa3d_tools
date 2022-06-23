@@ -469,7 +469,7 @@ end2:
     s.timestamp=total_num;
     s.tfresindex=total_intensity/total_num;
 }
-void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz)
+void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz, int sample)
 {
     cout<<"Welcome into terafly block crop"<<endl;
     V3DLONG siz = apolist.size();
@@ -480,9 +480,28 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         return;
     }
     cout<<"Input crop size x="<<cropx<<";y="<<cropy<<";z="<<cropz<<endl;
+
+    QString save_path = QString::fromStdString(outpath);
+    QDir path(save_path);
+    if(!path.exists())
+    {
+        path.mkpath(save_path);
+    }
     for(V3DLONG i=0;i<siz;i++)
     {
         CellAPO s = apolist[i];
+        s.x/=sample;s.y/=sample;s.z/=sample;
+        QString tmpstr = "";
+        tmpstr.append("_X_").append(QString("%1").arg(s.x));
+        tmpstr.append("_Y_").append(QString("%1").arg(s.y));
+        tmpstr.append("_Z_").append(QString("%1").arg(s.z));
+
+        QString default_name = "Img"+tmpstr+".v3dpbd";
+        QString save_path_img =save_path+"/"+default_name;
+        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        QFileInfo spathimage(save_path_img);
+        if(spathimage.isFile())
+            continue;
         long start_x,start_y,start_z,end_x,end_y,end_z;
         start_x = s.x - cropx/2; if(start_x<0) start_x = 0;
         end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0]-1;
@@ -506,19 +525,7 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         if(im_cropped==NULL){
             continue;
         }
-        QString tmpstr = "";
-        tmpstr.append("_x_").append(QString("%1").arg(s.x));
-        tmpstr.append("_y_").append(QString("%1").arg(s.y));
-        tmpstr.append("_z_").append(QString("%1").arg(s.z));
-        QString default_name = "Img"+tmpstr+".v3draw";
-        QString save_path = QString::fromStdString(outpath);
-        QDir path(save_path);
-        if(!path.exists())
-        {
-            path.mkpath(save_path);
-        }
-        QString save_path_img =save_path+"/"+default_name;
-        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
         if(in_sz){delete []in_sz; in_sz = 0;}
