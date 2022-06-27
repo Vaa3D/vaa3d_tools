@@ -79,11 +79,12 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         int cropx=(inparas.size()>=1)?atoi(inparas[0]):1024;
         int cropy=(inparas.size()>=2)?atoi(inparas[1]):1024;
         int cropz=(inparas.size()>=3)?atoi(inparas[2]):512;
+        int sample=(inparas.size()>=4)?atoi(inparas[3]):1;
         string out_path=outfiles[0];
         QList <CellAPO> apolist=readAPO_file(QString::fromStdString(inapo_file));
         if(apolist.size()>0)
         {
-            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz);
+            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz,sample);
         }
         else
             cout<<"apo size is zero"<<endl;
