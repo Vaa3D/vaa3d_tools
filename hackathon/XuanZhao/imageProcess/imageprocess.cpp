@@ -312,11 +312,20 @@ void get_2d_image2(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
     QString input_image = inparas.at(0);
 
+    int lineWidth = 1;
+    if (inparas.size() >= 2) {
+        lineWidth = atof(inparas.at(1));
+    }
+
     cout<<"+++++++++++"<<endl;
 //    QStringList list=input_swc.split(".");
     QStringList list=input_image.split(".");
     list.pop_back();
     QString mipoutput = list.join(".") + "_2d.tif";
+
+    if(outfiles.size() >= 1) {
+        mipoutput = outfiles[0];
+    }
 
     qDebug()<<input_image;
 
@@ -327,7 +336,7 @@ void get_2d_image2(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     for(int i=0; i<input_swcs.size(); ++i){
         NeuronTree nt_crop_sorted=readSWC_file(input_swcs[i]);
         for(int i=0; i<nt_crop_sorted.listNeuron.size(); i++){
-            nt_crop_sorted.listNeuron[i].r = 1;
+            nt_crop_sorted.listNeuron[i].r = lineWidth;
         }
         nts_crop_sorted.push_back(nt_crop_sorted);
     }

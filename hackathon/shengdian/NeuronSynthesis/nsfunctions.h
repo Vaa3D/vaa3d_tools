@@ -20,6 +20,7 @@ struct BranchUnit
     */
     V3DLONG id; V3DLONG parent_id;
     int type,level;
+    double angle;//angle of two child branches, if tip branch, angle=0
     double length,pathLength;
     double lclength,lcpathLength,rclength,rcpathLength;
     double lslength,lspathLength,rslength,rspathLength;
@@ -28,6 +29,7 @@ struct BranchUnit
     QHash <int, int>  hashNode;
     BranchUnit() {
         id=0;parent_id=0;
+        angle=0;
         type=level=0;
         length=pathLength=0.0;
         lclength=lcpathLength=rclength=rcpathLength=0.0;
@@ -87,13 +89,16 @@ struct BranchTree
     bool init(NeuronTree in_nt);
     bool init_branch_sequence(); //from tip-branch to soma-branch
     bool get_enhacedFeatures();
+    bool get_branch_child_angle();
     void get_globalFeatures();
     vector<int> getBranchType();
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
 };
+void scale_swc(NeuronTree& nt,float scale_xy=1.0,float scale_z=0.3);
 NeuronTree branchTree_to_neurontree(const BranchTree& bt);
 BranchTree readBranchTree_file(const QString& filename);
+bool writeBranchMotif_file(const QString& filename, const BranchTree& bt);
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre=5);

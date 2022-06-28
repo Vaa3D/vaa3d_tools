@@ -6365,7 +6365,7 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
 
     */
 
-    if(tmptree.size() <= 1){
+    if(tmptree.size() <= 1 || tmpMarkers.size() <= 1){
         for(int i=0; i<tmptree.size(); i++){
             if(tmptree[i]){
                 delete tmptree[i];
@@ -6380,10 +6380,15 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
     }
 
     computeLocalPcaEigVec2(tmptree,sz0,sz1,sz2,pc1,pc2,pc3,vec1,vec2,vec3);
+    double tmptree_intensity_mean = 0;
+    for(int i=0; i<tmpMarkers.size(); i++){
+        tmptree_intensity_mean += inimg1d[tmpMarkers[i]->ind(sz0,sz01)];
+    }
+    tmptree_intensity_mean /= tmpMarkers.size();
     qDebug()<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
            <<" pc1 pc2 pc3: "<<pc1<<" "<<pc2<<" "<<pc3;
 
-    if(pc3>8){
+    if(pc3>8 && tmptree_intensity_mean<lineThres){
         max_int = 0;
         min_int = INT_MAX;
         for(int i=0; i<tmptree.size(); i++){
@@ -6609,19 +6614,21 @@ bool fastmarching_ultratracer2_line(MyMarker* root,
         qDebug()<<"init 3: "<<QString::number(rootx) + "_" + QString::number(rooty) + "_" + QString::number(rootz)
                <<" pc1 pc2 pc3: "<<pc1<<" "<<pc2<<" "<<pc3;
 
-//        if(pc3>5){
-//            for(int i=0; i<tmptree.size(); i++){
-//                if(tmptree[i]){
-//                    delete tmptree[i];
-//                }
-//            }
-//            tmptree.clear();
+        qDebug()<<"tmptree size: "<<tmptree.size()<<" "<<tmpMarkers.size();
 
-//            if(vec1){delete[] vec1; vec1 = 0;}
-//            if(vec2){delete[] vec2; vec2 = 0;}
-//            if(vec3){delete[] vec3; vec3 = 0;}
-//            return true;
-//        }
+        if(tmptree.size() <= 1 || tmpMarkers.size() <= 1){
+            for(int i=0; i<tmptree.size(); i++){
+                if(tmptree[i]){
+                    delete tmptree[i];
+                }
+            }
+            tmptree.clear();
+
+            if(vec1){delete[] vec1; vec1 = 0;}
+            if(vec2){delete[] vec2; vec2 = 0;}
+            if(vec3){delete[] vec3; vec3 = 0;}
+            return true;
+        }
 
         for(int i=0; i<tmptree.size(); i++){
             if(tmptree[i]){

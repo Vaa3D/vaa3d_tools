@@ -64,7 +64,7 @@ bool writeLinesFeatures(vector<Branch*> branches, const QString &csv_path) {
     return true;
 }
 
-bool writeLinesMatrix(vector<Branch*> branches, const QString &csv_path) {
+bool writeLinesMatrix(vector<Branch*> branches, const QString &csv_path, bool symmetry) {
     ofstream csv_file;
     csv_file.open(csv_path.toStdString().c_str());
     map<Branch*, int> branch_map;
@@ -78,7 +78,9 @@ bool writeLinesMatrix(vector<Branch*> branches, const QString &csv_path) {
         int cIndex = i;
         if (branches[cIndex]->parent) {
             int pIndex = branch_map[branches[cIndex]->parent];
-            line_matrix[cIndex][pIndex] = 1;
+            if (symmetry) {
+                line_matrix[cIndex][pIndex] = 1;
+            }
             line_matrix[pIndex][cIndex] = 1;
         }
     }
@@ -149,7 +151,7 @@ vector<NeuronTree> getAllTreesInBlock(QString image_path, QString swc_brain_dir_
 void getLinesInBlock(vector<NeuronTree> trees, QString lines_features_csv_path, QString lines_matrix_csv_path,
                      unsigned char *pdata, long long *sz,
                      float inflection_d, float cosAngleThres,
-                     float l_thres_max, float l_thres_min, float t_length, float soma_ratio) {
+                     float l_thres_max, float l_thres_min, float t_length, float soma_ratio, bool symmetry) {
     vector<Branch*> results;
     for (NeuronTree nt : trees) {
         BranchTree bt;
@@ -163,5 +165,7 @@ void getLinesInBlock(vector<NeuronTree> trees, QString lines_features_csv_path, 
     qDebug()<<"write lines features to "<<lines_features_csv_path;
     writeLinesFeatures(results, lines_features_csv_path);
     qDebug()<<"write lines matrix to "<<lines_matrix_csv_path;
-    writeLinesMatrix(results, lines_matrix_csv_path);
+    writeLinesMatrix(results, lines_matrix_csv_path, symmetry);
 }
+
+

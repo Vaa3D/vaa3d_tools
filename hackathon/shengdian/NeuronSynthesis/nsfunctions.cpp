@@ -1,4 +1,12 @@
 #include"nsfunctions.h"
+void scale_swc(NeuronTree& nt,float scale_xy,float scale_z){
+    V3DLONG siz=nt.listNeuron.size();
+    for(V3DLONG i=0;i<siz;i++){
+        nt.listNeuron[i].x*=scale_xy;
+        nt.listNeuron[i].y*=scale_xy;
+        nt.listNeuron[i].z*=scale_z;
+    }
+}
 void BranchUnit::get_features(){
     //length, path length
     //angle
@@ -36,6 +44,56 @@ void BranchTree::get_globalFeatures(){
             this->soma_branches+=1;
         this->max_branch_level=(bu.level>this->max_branch_level)?bu.level:this->max_branch_level;
     }
+}
+bool BranchTree::get_branch_child_angle()
+{
+    /*angle of two child branches
+     * 1. get branch type
+      * 2. get child index of branch
+    */
+    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0);
+    btype=this->getBranchType();
+
+    vector< vector<V3DLONG> > child_index_list(siz,vector<V3DLONG>());
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        BranchUnit bu = this->listBranch.at(i);
+        if(bu.parent_id>0)
+        {
+            V3DLONG p_index=this->hashBranch.value(bu.parent_id);
+            child_index_list[p_index].push_back(i);
+        }
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(btype.at(i)!=2)
+            continue;
+        if(child_index_list.at(i).size()!=2) {
+            cout<<this->listBranch.at(i).id<<" child branch size: "<<child_index_list.at(i).size()<<endl;
+            return false;
+        }
+        //left branch
+        V3DLONG lc=child_index_list.at(i).at(0);
+        BranchUnit lc_bu = this->listBranch.at(lc);
+        NeuronSWC lc_bu_snode=lc_bu.listNode.at(0);
+        NeuronSWC lc_bu_enode=lc_bu.listNode.at(lc_bu.listNode.size()-1);
+
+        //right branch
+        V3DLONG rc=child_index_list.at(i).at(1);
+        BranchUnit rc_bu = this->listBranch.at(rc);
+        NeuronSWC rc_bu_snode=rc_bu.listNode.at(0);
+        NeuronSWC rc_bu_enode=rc_bu.listNode.at(rc_bu.listNode.size()-1);
+//        if(i<5){
+//            cout<<"left snode:"<<lc_bu_snode.x<<","<<lc_bu_snode.y<<","<<lc_bu_snode.z<<endl;
+//            cout<<"left enode:"<<lc_bu_enode.x<<","<<lc_bu_enode.y<<","<<lc_bu_enode.z<<endl;
+//            cout<<"right snode:"<<rc_bu_snode.x<<","<<rc_bu_snode.y<<","<<rc_bu_snode.z<<endl;
+//            cout<<"right enode:"<<rc_bu_enode.x<<","<<rc_bu_enode.y<<","<<rc_bu_enode.z<<endl;
+//        }
+        this->listBranch[i].angle=angle_3d(lc_bu_snode,lc_bu_enode,rc_bu_snode,rc_bu_enode);
+    }
+    return true;
 }
 bool BranchTree::get_enhacedFeatures()
 {
@@ -417,6 +475,46 @@ BranchTree readBranchTree_file(const QString& filename)
 NeuronTree branchTree_to_neurontree(const BranchTree& bt)
 {
     cout<<"reback the connection"<<endl;
+}
+bool writeBranchMotif_file(const QString& filename, const BranchTree& bt)
+{
+    /*File Format:
+      * ###id,type,level,angle,length,lclength,rclength,lslength,rslength,lstips,rstips
+    */
+    if (filename.isEmpty()||bt.listBranch.size()==0)
+        return false;
+    QFile tofile(filename);
+    if(tofile.exists())
+        cout<<"File overwrite to "<<filename.toStdString()<<endl;
+//    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
+    QString brfHead="id,parent_id,type,level,angle,length,lclength,rclength,lslength,rslength,lstips,rstips\n";
+    if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        //title
+//        tofile.write(confTitle.toAscii());
+        tofile.write(brfHead.toAscii());
+        //inside for each branch
+        for(V3DLONG i=0;i<bt.listBranch.size();i++)
+        {
+            BranchUnit bu = bt.listBranch[i];
+            QString brf=QString::number(bu.id);
+            brf+=(","+QString::number(bu.parent_id));
+            brf+=(","+QString::number(bu.type));
+            brf+=(","+QString::number(bu.level));
+            brf+=(","+QString::number(bu.angle));
+            brf+=(","+QString::number(bu.length));
+            brf+=(","+QString::number(bu.lclength));
+            brf+=(","+QString::number(bu.rclength));
+            brf+=(","+QString::number(bu.lslength));
+            brf+=(","+QString::number(bu.rslength));
+            brf+=(","+QString::number(bu.lstips));
+            brf+=(","+QString::number(bu.rstips)+"\n");
+            tofile.write(brf.toAscii());
+        }
+        tofile.close();
+        return true;
+    }
+    return false;
 }
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced)
 {

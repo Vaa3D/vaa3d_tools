@@ -72,6 +72,7 @@ bool TraceNeuronBasedLinePlugin::dofunc(const QString & func_name, const V3DPlug
         float soma_ratio = inparas.size() >= k + 1 ? atof(inparas[k]) : 1.2; k++;
         float inflection_d = inparas.size() >= k + 1 ? atof(inparas[k]) : 10; k++;
         float cos_angle_thres = inparas.size() >= k + 1 ? atof(inparas[k]) : 0; k++;
+        bool symmetry = inparas.size() >= k + 1 ? atoi(inparas[k]) : false; k++;
         bool save_mid_result = inparas.size() >= k + 1 ? atoi(inparas[k]) : false;
 
         unsigned char* pdata = 0;
@@ -92,7 +93,7 @@ bool TraceNeuronBasedLinePlugin::dofunc(const QString & func_name, const V3DPlug
         qDebug()<<"get Lines in block";
 
         getLinesInBlock(results, lines_features_csv_path, lines_matrix_csv_path,
-                        pdata, sz, inflection_d, cos_angle_thres, l_thres_max, l_thres_min, t_length, soma_ratio);
+                        pdata, sz, inflection_d, cos_angle_thres, l_thres_max, l_thres_min, t_length, soma_ratio, symmetry);
 
 	}
 	else if (func_name == tr("func2"))

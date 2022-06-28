@@ -26,6 +26,7 @@ QStringList NeuronSynthesis::funclist() const
          << tr("Smooth_branch")
          <<tr("Split_neuron_types")
         <<tr("To_topology_tree")
+       << tr("branch_motif")
        <<tr("SWC_to_branches")
       <<tr("SWC_to_enhanced_branches")
      <<tr("Branch_to_NeuronTree")
@@ -378,6 +379,38 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
+    }
+    else if (func_name == tr("branch_motif"))
+    {
+        /* designed by shengdian, 2022-06-22
+         * ---for detecting the axonal motif
+         * convert neuron tree to branches
+         * save branches
+                 * ###id,type,level,angle,length,lclength,rclength,lslength,rslength,lstips,rstips
+         * --Usage--
+         * input: swc or eswc file
+         * output: <filename>.csv
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else { printHelp(); return false;}
+        //read para
+        float pixelz=(inparas.size()>=1)?atof(inparas[0]):0.3;
+        float pixel_xy=(inparas.size()>=2)?atof(inparas[1]):1.0;
+        //read swc
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        scale_swc(nt,pixel_xy,pixelz);
+        //convert to branch-tree
+        BranchTree bt;
+        bt.initialized=bt.init(nt);
+        bt.init_branch_sequence();
+        //save to file
+        //write branch motif to file
+        string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
+        if(bt.get_enhacedFeatures()){
+            if(bt.get_branch_child_angle())
+                writeBranchMotif_file(QString::fromStdString(out_f),bt);
+        }
     }
     else if (func_name == tr("SWC_to_branches"))
     {
