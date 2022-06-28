@@ -131,6 +131,12 @@ struct Branch{
     int flag_near_dendrite=0;
     Branch* parent;
     Branch* child_a;
+    double x0=1000000;   // xyz_min scale
+    double y0=1000000;
+    double z0=1000000;
+    double x1=0;   // xyz_max scale
+    double y1=0;
+    double z1=0;
 //    Branch* child_b;
     int child_num=0;
     Angle head_angle,end_angle;
@@ -173,7 +179,8 @@ struct Branch{
     bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
     bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
     bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
-    bool refine_branch_by_gd(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd, QString braindir, V3DPluginCallback2 &callback);
+    bool refine_branch_by_gd(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd,vector<NeuronSWC> pp0_orig_list,vector<NeuronSWC> pp1_orig_list,vector<NeuronSWC> pp2_orig_list,QString braindir, V3DPluginCallback2 &callback);
+    void mip(NeuronTree &nt1,vector<Branch> &B,QString braindir,V3DPluginCallback2 &callback,QString imgdir,double thres,double dis_thre);
 };
 
 struct SwcTree{
@@ -224,7 +231,7 @@ struct SwcTree{
     NeuronTree refine_bifurcation_by_gd(QString braindir, V3DPluginCallback2 &callback,QString eswcfile);
     NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
     NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
-
+    void MIP_terafly(NeuronTree &nt1,NeuronTree &nt2,QString braindir,QString imgdir,V3DPluginCallback2 &callback);
 };
 
 class Swc_Compare{
@@ -265,26 +272,21 @@ public:
 float get_feature_extraction_rate(string inimg_file,NeuronTree &nt,V3DPluginCallback2 &callback);
 void  compute_image_snr(QString infolder_1,QString infolder_2,QString SNr_out, V3DPluginCallback2 &callback);
 void  compare_2swc_change(NeuronTree &nt1,NeuronTree &nt2,V3DPluginCallback2 &callback,QString out_path);
+void  blend(NeuronTree &nt1,NeuronTree &nt2,QString file_out);
 NeuronSWC meanshift(V3DPluginCallback2 &callback, NeuronSWC p0, QString braindir);
 NeuronSWC meanshift_img(V3DPluginCallback2 &callback, NeuronSWC p0,QString braindir);
 
 bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, NeuronSWC s);
 
 bool sortSWC(NeuronTree& nt, NeuronSWC s);
+double dis(NeuronSWC p1, NeuronSWC p2);
+NeuronSWC blend_point(NeuronSWC p1, NeuronSWC p2,double alpha);
+void branch_order(SwcTree a, SwcTree b, map<int,int> &branch_map);
+double average_dist(vector<NeuronSWC> points_a,vector<NeuronSWC> points_b);
+void refine_analysis(QString infolder_1,QString infolder_2,QString refine_analysis_file,V3DPluginCallback2 &callback);
+void refine_analysis_swc(QString infolder_1,QString infolder_2,QString refine_analysis_folder,V3DPluginCallback2 &callback);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void MIP_terafly2(NeuronTree &nt1,NeuronTree &nt2,QString braindir,QString imgdir,V3DPluginCallback2 &callback);
+void Branch_terafly2(vector<Branch> tmp,vector<Branch> tmp1,QString braindir,QString imgdir, double x_min, double y_min, double z_min, double windows,double windows_z,V3DPluginCallback2 &callback);
+void SortNT(NeuronTree &nt2_crop,int offset,int x_min,int y_min, int z_min);
 #endif // N_CLASS_H

@@ -117,6 +117,38 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         string inswc_file=infiles[0];
         QString change_out = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+".csv"));
         compare_2swc_change(nt1,nt2,callback,change_out);
+ }else if(func_name==tr("blend")){
+        NeuronTree nt1=readSWC_file(infiles[0]);
+        NeuronTree nt2=readSWC_file(infiles[1]);
+        string inswc_file=infiles[0];
+        QString file_out = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+".swc"));
+        blend(nt1,nt2,file_out);
+        cout<<"blend done"<<endl;
+
+ }else if(func_name==tr("refine_analysis")){
+         QString infolder_1=infiles[0];
+         QString infolder_2=infiles[1];
+         QString refine_analysis_file = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString(("refine_analysis.csv"));
+         refine_analysis(infolder_1,infolder_2,refine_analysis_file,callback);
+ } else if(func_name==tr("refine_analysis_swc")){
+     QString infolder_1=infiles[0];
+     QString infolder_2=infiles[1];
+     QString refine_analysis_folder = (outfiles.size()>=1) ? outfiles[0] : infolder_1;
+     refine_analysis_swc(infolder_1,infolder_2,refine_analysis_folder,callback);
+}else if(func_name==tr("MIP")){
+     NeuronTree nt1=readSWC_file(infiles[0]);//after refine
+     NeuronTree nt2=readSWC_file(infiles[1]);// raw swc
+     QString braindir= infiles[2];
+     SwcTree a;
+     a.initialize(nt1);
+     QString imgdir=outfiles[0];
+     a.MIP_terafly(nt1,nt2,braindir,imgdir,callback);
+ }else if(func_name==tr("MIP2")){
+     NeuronTree nt1=readSWC_file(infiles[0]);//after refine
+     NeuronTree nt2=readSWC_file(infiles[1]);// raw swc
+     QString braindir= infiles[2];
+     QString imgdir=outfiles[0];
+     MIP_terafly2(nt1,nt2,braindir,imgdir,callback);
  }
     else return false;
 
