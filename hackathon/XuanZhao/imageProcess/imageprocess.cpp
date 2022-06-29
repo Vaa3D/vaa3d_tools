@@ -425,6 +425,7 @@ void get_2d_image2(const V3DPluginArgList & input, V3DPluginArgList & output, V3
    static unsigned char colortable[][3]={
    {255,   0,    0},
    {  0, 255,    0},
+   {40, 210,  240},
    {255, 255,    0},
    {255,   0,  255},
    {255, 128,    0},

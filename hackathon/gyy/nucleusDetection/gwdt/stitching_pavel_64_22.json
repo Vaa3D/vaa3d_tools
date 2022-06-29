@@ -1,0 +1,98 @@
+{
+    "nput_folder": "F:/pavelData/pavel_stitching",
+    "result_folder": "F:/pavelData/results_64_22",
+    "planes_num": 2036,
+    "thread_num": 8,
+    "tiles": [
+        {
+            "posX": 0,
+            "posY": 0,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 638,
+            "posY": 0,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1276,
+            "posY": 0,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1914,
+            "posY": 0,
+           "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 2572,
+            "posY": 0,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 0,
+            "posY": 531,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 638,
+            "posY":531,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1276,
+            "posY": 531,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1914,
+            "posY": 531,
+           "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 2552,
+            "posY": 531,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 0,
+            "posY": 1062,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 638,
+            "posY": 1062,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1276,
+            "posY": 1062,
+            "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 1914,
+            "posY": 1062,
+           "x_length": 682,
+            "y_length": 682
+        },
+        {
+            "posX": 2552,
+            "posY": 1062,
+            "x_length": 682,
+            "y_length": 682
+        }
+    ]
+}

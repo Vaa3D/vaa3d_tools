@@ -1,0 +1,138 @@
+{
+    "input_folder": "F:/ZhaoHuImages/results",
+    "z_result_file": "F:/ZhaoHuImages/AI_denoise/Zhaohu_StitchCode/Z_shift.json",
+    "xy_result_file": "F:/ZhaoHuImages/AI_denoise/Zhaohu_StitchCode/XY_shift.json",
+    "locations": [
+        [
+            "floor11_y9",
+            "floor11_y10",
+            "floor11_y11",
+            "floor11_y12",
+            "floor11_y13",
+            "floor11_y14",
+            "floor11_y15",
+            "floor11_y16",
+            "floor11_y17"
+        ],
+        [
+            "floor10_y9",
+            "floor10_y10",
+            "floor10_y11",
+            "floor10_y12",
+            "floor10_y13",
+            "floor10_y14",
+            "floor10_y15",
+            "floor10_y16",
+            "floor10_y17"
+        ],
+        [
+            "floor9_y9",
+            "floor9_y10",
+            "floor9_y11",
+            "floor9_y12",
+            "floor9_y13",
+            "floor9_y14",
+            "floor9_y15",
+            "floor9_y16",
+            "floor9_y17"
+        ],
+        [
+            "None",
+            "floor8_y10",
+            "floor8_y11",
+            "floor8_y12",
+            "floor8_y13",
+            "floor8_y14",
+            "floor8_y15",
+            "floor8_y16",
+            "floor8_y17"
+        ],
+        [
+            "None",
+            "floor7_y10",
+            "floor7_y11",
+            "floor7_y12",
+            "floor7_y13",
+            "floor7_y14",
+            "floor7_y15",
+            "floor7_y16",
+            "floor7_y17"
+        ],
+        [
+            "None",
+            "floor6_y10",
+            "floor6_y11",
+            "floor6_y12",
+            "floor6_y13",
+            "floor6_y14",
+            "floor6_y15",
+            "floor6_y16",
+            "floor6_y17"
+        ],
+        [
+            "None",
+            "floor5_y10",
+            "floor5_y11",
+            "floor5_y12",
+            "floor5_y13",
+            "floor5_y14",
+            "floor5_y15",
+            "floor5_y16",
+            "floor5_y17"
+        ],
+        [
+            "None",
+            "floor4_y10",
+            "floor4_y11",
+            "floor4_y12",
+            "floor4_y13",
+            "floor4_y14",
+            "floor4_y15",
+            "floor4_y16",
+            "floor4_y17"
+        ],
+        [
+            "None",
+            "floor3_y10",
+            "floor3_y11",
+            "floor3_y12",
+            "floor3_y13",
+            "floor3_y14",
+            "floor3_y15",
+            "floor3_y16",
+            "floor3_y17"
+        ],
+        [
+            "None",
+            "None",
+            "floor2_y11",
+            "floor2_y12",
+            "floor2_y13",
+            "floor2_y14",
+            "floor2_y15",
+            "floor2_y16",
+            "None"
+        ],
+        [
+            "None",
+            "None",
+            "floor1_y11",
+            "floor1_y12",
+            "floor1_y13",
+            "floor1_y14",
+            "floor1_y15",
+            "floor1_y16",
+            "None"
+        ]
+    ],
+    "x_length": 2048,
+    "y_length": 1024,
+    "shift_x_P": 204,
+    "shift_y_P": 158,
+    "shift_x_P_d": 80,
+    "shift_y_P_d": 80,
+    "shift_x_P_d_": 80,
+    "shift_y_P_d_": 80,
+    "shift_z_P_d_": 80,
+    "thread_num": 10
+}
