@@ -346,8 +346,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
             z = ( z > sz )? sz : z;
 
             V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-            if (pImMask[idex]>0) continue;
             if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+            if (pImMask[idex]>0) continue;
             pImMask[idex] = 254;
         }
 
@@ -414,7 +414,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
 
       }
         //mark all voxels close to the swc node(s)
-       else{
+      else{
         for (k = ballz0; k <= ballz1; k++){
             for (j = bally0; j <= bally1; j++){
                 for (i = ballx0; i <= ballx1; i++){
@@ -476,8 +476,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
             z = ( z > sz )? sz : z;
 
             V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+            if (idex <0 || lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
             if (pImMask[idex]>0) continue;
-            if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
             pImMask[idex] = 255;
         }
 
@@ -532,8 +532,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                         rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
                     }
                     V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
-                    if (pImMask[ind1]>0) continue;
                     if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+                    if (pImMask[ind1]>0) continue;
                     if (dist <= rr || dist<=1)
                     {
                         pImMask[ind1] = 255;

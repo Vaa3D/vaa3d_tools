@@ -376,23 +376,23 @@ void getSomaBlock(V3DPluginCallback2 &callback, string imgPath, QString inapo_fi
         CellAPO s = apolist[i];
         long start_x,start_y,start_z,end_x,end_y,end_z;
         start_x = s.x - cropx/2; if(start_x<0) start_x = 0;
-        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0];
+        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0]-1;
         start_y =s.y - cropy/2;if(start_y<0) start_y = 0;
-        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1];
+        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1]-1;
         start_z = s.z - cropz/2;if(start_z<0) start_z = 0;
-        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2];
+        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2]-1;
         V3DLONG *in_sz = new V3DLONG[4];
-        in_sz[0] = cropx;
-        in_sz[1] = cropy;
-        in_sz[2] = cropz;
+        in_sz[0] = end_x-start_x+1;
+        in_sz[1] = end_y-start_y+1;
+        in_sz[2] = end_z-start_z+1;
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
+        pagesz =in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 
-        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x,start_y,end_y,start_z,end_z);
+        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         if(im_cropped==NULL){
             continue;
         }
@@ -406,7 +406,9 @@ void getSomaBlock(V3DPluginCallback2 &callback, string imgPath, QString inapo_fi
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+        if(in_sz) {delete []in_sz; in_sz = 0;}
     }
+    if(in_zz) {delete []in_zz; in_zz = 0;}
 }
 void getMarkerRadius(unsigned char *&inimg1d, long in_sz[], NeuronSWC& s)
 {
@@ -467,7 +469,7 @@ end2:
     s.timestamp=total_num;
     s.tfresindex=total_intensity/total_num;
 }
-void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz)
+void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO> apolist, string outpath, int cropx, int cropy, int cropz, int sample)
 {
     cout<<"Welcome into terafly block crop"<<endl;
     V3DLONG siz = apolist.size();
@@ -478,49 +480,57 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         return;
     }
     cout<<"Input crop size x="<<cropx<<";y="<<cropy<<";z="<<cropz<<endl;
+
+    QString save_path = QString::fromStdString(outpath);
+    QDir path(save_path);
+    if(!path.exists())
+    {
+        path.mkpath(save_path);
+    }
     for(V3DLONG i=0;i<siz;i++)
     {
         CellAPO s = apolist[i];
+        s.x/=sample;s.y/=sample;s.z/=sample;
+        QString tmpstr = "";
+        tmpstr.append("_X_").append(QString("%1").arg(s.x));
+        tmpstr.append("_Y_").append(QString("%1").arg(s.y));
+        tmpstr.append("_Z_").append(QString("%1").arg(s.z));
+
+        QString default_name = "Img"+tmpstr+".v3dpbd";
+        QString save_path_img =save_path+"/"+default_name;
+        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+        QFileInfo spathimage(save_path_img);
+        if(spathimage.isFile())
+            continue;
         long start_x,start_y,start_z,end_x,end_y,end_z;
         start_x = s.x - cropx/2; if(start_x<0) start_x = 0;
-        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0];
+        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0]-1;
         start_y =s.y - cropy/2;if(start_y<0) start_y = 0;
-        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1];
+        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1]-1;
         start_z = s.z - cropz/2;if(start_z<0) start_z = 0;
-        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2];
+        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2]-1;
         cout<<"crop size x="<<start_x<<";y="<<start_y<<";z="<<start_z<<endl;
         V3DLONG *in_sz = new V3DLONG[4];
-        in_sz[0] = cropx;
-        in_sz[1] = cropy;
-        in_sz[2] = cropz;
+        in_sz[0] = end_x -start_x+1;
+        in_sz[1] = end_y -start_y+1;
+        in_sz[2] = end_z -start_z+1;
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = (end_x-start_x)*(end_y-start_y)*(end_z-start_z);
+        pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 
-        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x,start_y,end_y,start_z,end_z);
+        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         if(im_cropped==NULL){
             continue;
         }
-        QString tmpstr = "";
-        tmpstr.append("_x_").append(QString("%1").arg(s.x));
-        tmpstr.append("_y_").append(QString("%1").arg(s.y));
-        tmpstr.append("_z_").append(QString("%1").arg(s.z));
-        QString default_name = "Img"+tmpstr+".v3draw";
-        QString save_path = QString::fromStdString(outpath);
-        QDir path(save_path);
-        if(!path.exists())
-        {
-            path.mkpath(save_path);
-        }
-        QString save_path_img =save_path+"/"+default_name;
-        cout<<"save img path:"<<save_path_img.toStdString()<<endl;
+
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+        if(in_sz){delete []in_sz; in_sz = 0;}
     }
-
+    if(in_zz){delete []in_zz; in_zz = 0;}
 }
 void getSWCIntensityInTerafly(V3DPluginCallback2 &callback, string imgPath, QString inswc_file)
 {

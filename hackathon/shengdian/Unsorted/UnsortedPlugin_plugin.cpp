@@ -33,7 +33,10 @@ QStringList UnsortedPlugin::funclist() const
       <<tr("renderingSWC")
      <<tr("SomaRefinement")
     <<tr("somaBlockCrop")
+    <<tr("Seg_Connection_Turn_over")
     <<tr("MIP_Zslices")
+    <<tr("multi_stems")
+    <<tr("get_soma_apo")
     <<tr("swc_combine")
     <<tr("mask_img_from_swc")
     <<tr("help");
@@ -76,11 +79,12 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         int cropx=(inparas.size()>=1)?atoi(inparas[0]):1024;
         int cropy=(inparas.size()>=2)?atoi(inparas[1]):1024;
         int cropz=(inparas.size()>=3)?atoi(inparas[2]):512;
+        int sample=(inparas.size()>=4)?atoi(inparas[3]):1;
         string out_path=outfiles[0];
         QList <CellAPO> apolist=readAPO_file(QString::fromStdString(inapo_file));
         if(apolist.size()>0)
         {
-            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz);
+            getTeraflyBlock(callback,inimg_file,apolist,out_path,cropx,cropy,cropz,sample);
         }
         else
             cout<<"apo size is zero"<<endl;
@@ -116,6 +120,21 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
              }
         }
         writeESWC_file(QString::fromStdString(out_swc_file),outswc);
+        return true;
+    }
+    else if (func_name==tr("Seg_Connection_Turn_over"))
+    {
+        /*this fun will combine swc files in one dir*/
+        if (input.size() < 1) return false;
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_result.eswc");
+        long index_b=(inparas.size()>=1)?atoi(inparas[0]):1;
+        long index_old_root=(inparas.size()>=2)?atoi(inparas[1]):1;
+        long index_bp=(inparas.size()>=3)?atoi(inparas[2]):index_b;
+        NeuronTree outswc;
+
+        writeESWC_file(out_swc_file,outswc);
         return true;
     }
     else if (func_name==tr("mask_img_from_swc"))
@@ -399,6 +418,58 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
         getSWCIntensityInTerafly(callback,inimg_file,QString::fromStdString(inswc_file));
+    }
+    else if (func_name == tr("multi_stems"))
+    {
+        QString inswc= infiles[0];
+        NeuronTree nt=readSWC_file(inswc);
+        V3DLONG niz=nt.listNeuron.size();
+        int somaid=0;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.type==1&&s.pn<0)
+            {somaid=i;break;}
+        }
+        int stems=0;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.pn>0&&somaid==nt.hashNeuron.value(s.pn))
+            {
+                stems++;
+            }
+        }
+        QString outswc=(outfiles.size()>=1)?outfiles[0]:inswc+"_multi_stem.swc";
+        if(stems>1)
+            writeSWC_file(outswc,nt);
+    }
+    else if (func_name == tr("get_soma_apo"))
+    {
+        QString inswc= infiles[0];
+        NeuronTree nt=readSWC_file(inswc);
+        V3DLONG niz=nt.listNeuron.size();
+        int somaid=-1;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.type==1&&s.pn<0){
+                if(somaid>0)
+                {
+                    cout<<"---------------Error: multiple soma nodes!!!-----------------------"<<endl;
+                    return false;
+                }else
+                    somaid=i;
+            }
+
+        }
+        NeuronSWC soma_node=nt.listNeuron.at(somaid);
+        CellAPO soma;
+        soma.x=soma_node.x;
+        soma.y=soma_node.y;
+        soma.z=soma_node.z;
+        soma.intensity=soma.volsize=soma.sdev=soma.pixmax=soma.mass=10;
+        QList<CellAPO> somaapo; somaapo.append(soma);
+        QString outapo=(outfiles.size()>=1)?outfiles[0]:inswc+"_soma.apo";
+        if(somaapo.size())
+            writeAPO_file(outapo,somaapo);
     }
     else if (func_name == tr("ReconstructionComplexity"))
     {

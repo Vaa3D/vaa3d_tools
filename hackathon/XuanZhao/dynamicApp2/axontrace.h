@@ -11,7 +11,7 @@ using namespace std;
 
 static NeuronTree finalResult;
 
-static QString tmpImageDir;
+static QString tmpImageDir = "";
 
 void setTmpImageDir(QString imageDir);
 
@@ -90,9 +90,9 @@ struct imageBlock{
 
 };
 
-bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result);
+bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, float d = 1);
 
-bool sortSWC(NeuronTree& nt);
+bool sortSWC(NeuronTree& nt, float d = 1);
 
 NeuronTree ultratracerAxon(QString brainPath, BoundingBox box, NeuronTree ori, V3DPluginCallback2& callback);
 

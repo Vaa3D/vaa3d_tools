@@ -9,6 +9,17 @@ double dis(T node1, T node2){
     double a = (node1.x - node2.x)*(node1.x - node2.x) + (node1.y - node2.y)*(node1.y - node2.y) + (node1.z - node2.z)*(node1.z - node2.z);
     return sqrt(a);
 }
+template<typename T>
+double angle_3d(T n1, T n2, T n3, T n4){
+    T v1,v2;
+    v1.x=n1.x-n2.x; v1.y=n1.y-n2.y; v1.z=n1.z-n2.z;
+    v2.x=n3.x-n4.x; v2.y=n3.y-n4.y; v2.z=n3.z-n4.z;
+    double v1_len=sqrt(v1.x*v1.x+v1.y*v1.y+v1.z*v1.z);
+    double v2_len=sqrt(v2.x*v2.x+v2.y*v2.y+v2.z*v2.z);
+    double angle_3d=(v1.x*v2.x+v1.y*v2.y+v1.z*v2.z)/(v1_len*v2_len);
+    //angle_3d=(angle_3d>0)?angle_3d:(-1.0)*angle_3d;
+    return (angle_3d);
+}
 struct Branch{
     NeuronSWC head_point,end_point;
     Branch* parent;
@@ -32,7 +43,22 @@ struct SwcTree{
     bool get_level_index(vector<int> &level_index,int level);
     int get_max_level();
 };
-
+/*for resample swc*/
+#define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
+struct Point
+{
+    double x,y,z,r;
+    V3DLONG type;
+    Point* p;
+    V3DLONG childNum;
+    V3DLONG level,seg_id;
+    QList<float> fea_val;
+};
+typedef vector<Point*> Segment;
+typedef vector<Point*> Tree;
+void resample_path(Segment * seg, double step);
+NeuronTree resample(NeuronTree input, double step);
+//
 vector<int> getNodeType(NeuronTree nt);
 vector<int> getNodeTips(NeuronTree nt);
 vector<int> getNodeOrder(NeuronTree nt);

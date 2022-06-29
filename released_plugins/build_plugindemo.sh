@@ -14,7 +14,7 @@
 cd v3d_plugins
  
 QMAKE_CONFIG=
-MAKE_ARGS=
+MAKE_ARGS= 
 MYDIR=
 
 for arg in $*; do

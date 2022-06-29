@@ -271,15 +271,23 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             vector<int> segment;
             walknode = i;
             //neuron[walknode].seg_id = segid;
+//            qDebug() << "walkthrough segment";
+            V3DLONG jloop = 0;
             while(neuron.at(walknode).pn!=-1)
             {
                 neuron[walknode].seg_id = segid;
                 segment.push_back(walknode);
                 visited_walknodes[walknode] = 1;
                 walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode).pn) - ids.begin();
+                jloop ++;
+                if(jloop > neuron.size()){
+                    neuron[walknode].pn =-1;
+                    qDebug() << "Broke Loop at node:" << walknode;
+                }
             }
             if(visited_walknodes.at(walknode)==0)
             {
+//                qDebug() << "unvisited walknode";
                 visited_walknodes[walknode] = 1;
                 neuron[walknode].seg_id = segid;
                 //qDebug()<<walknode<<segid;
@@ -291,6 +299,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             }
             else
             {
+//                qDebug() << "visited walknode";
                 for(int j=0;j<segment.size();j++)
                 {
                     neuron[segment.at(j)].seg_id =  neuron.at(walknode).seg_id;
@@ -783,14 +792,21 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         }
         neuron[0].n=1;
         neuron[0].pn=-1;
+        neuron[0].type=1;
         int newpn;
         for (V3DLONG j = 1; j<=neuron.size(); j++)
         {
             ptrdiff_t newpn = find(ordoldids.begin(), ordoldids.end(), neuron.at(j-1).pn) - ordoldids.begin()+1;
             neuron[j-1].pn=newpn;
             neuron[j-1].n=j;
+            if(neuron.at(j-1).n!=1)
+            {
+                neuron[j-1].type=3;
+            }
         }
+        neuron[0].n=1;
         neuron[0].pn=-1;
+        neuron[0].type=1;
         qDebug()<<"Sorted swc";
 
         //construct neuron
