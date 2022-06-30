@@ -21,8 +21,8 @@ SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
 
 win32{
-    LIBS         += -L$$VAA3DPATH/common_lib/mingw64 -llibtiff
-    LIBS	 += -L$$VAA3DPATH/common_lib/mingw64 -llibfftw3f-3
+    LIBS         += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
+#    LIBS	 += -L$$VAA3DPATH/common_lib/mingw64 -llibfftw3f-3
 }
 
 unix{

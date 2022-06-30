@@ -1,0 +1,14 @@
+release/neuron_stitch_plugin.o
+release/neuron_geometry_dialog.o
+release/neuron_xforms.o
+release/neuron_stitch_func.o
+release/marker_match_dialog.o
+release/neuron_match_clique.o
+release/performance_timer.o
+release/neuron_match_gmhash.o
+release/basic_surf_objs.o
+release/v3d_message.o
+release/moc_neuron_stitch_plugin.o
+release/moc_neuron_geometry_dialog.o
+release/moc_marker_match_dialog.o
+release/moc_neuron_match_clique.o

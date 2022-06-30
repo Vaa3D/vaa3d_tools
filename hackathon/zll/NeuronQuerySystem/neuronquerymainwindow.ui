@@ -17,706 +17,561 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="QTabWidget" name="dataTabWidget">
-      <property name="minimumSize">
-       <size>
-        <width>1200</width>
-        <height>0</height>
-       </size>
+      <property name="tabPosition">
+       <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
-      <widget class="QWidget" name="QuerySwc">
-       <property name="minimumSize">
-        <size>
-         <width>1200</width>
-         <height>1000</height>
-        </size>
-       </property>
+      <widget class="QWidget" name="querySwcTab">
        <attribute name="title">
-        <string>QuerySwc</string>
-       </attribute>
-       <widget class="QWidget" name="verticalLayoutWidget">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>1202</width>
-          <height>1082</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <widget class="QGroupBox" name="QuerySwcGroupBox">
-           <property name="minimumSize">
-            <size>
-             <width>1200</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="title">
-            <string>Query</string>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_7" rowstretch="2,1,6,1">
-            <item row="1" column="0">
-             <widget class="QPushButton" name="querySwcButton">
-              <property name="minimumSize">
-               <size>
-                <width>1200</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Click to query</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <layout class="QGridLayout" name="QuerySwcGridLayout" rowstretch="0,0,0">
-              <property name="horizontalSpacing">
-               <number>4</number>
-              </property>
-              <item row="2" column="0">
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item alignment="Qt::AlignLeft">
-                 <widget class="QLabel" name="MorphoID_Swc">
-                  <property name="text">
-                   <string>MorphoID</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="MorphoID_Swc_ComboBox"/>
-                </item>
-                <item>
-                 <widget class="QLabel" name="BrainID_Swc">
-                  <property name="text">
-                   <string>BrainID</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="BrainID_Swc_ComboBox"/>
-                </item>
-                <item>
-                 <widget class="QLabel" name="BrainArea_Swc">
-                  <property name="text">
-                   <string>BrainArea</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="BrainArea_Swc_ComboBox"/>
-                </item>
-                <item>
-                 <widget class="QLabel" name="Batch_Swc">
-                  <property name="minimumSize">
-                   <size>
-                    <width>1200</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Batch</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QSpinBox" name="Batch_Swc_SpinBox"/>
-                </item>
-                <item>
-                 <widget class="QLabel" name="NueonID_Swc">
-                  <property name="text">
-                   <string>NeuronID</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLineEdit" name="NeuronID_Swc_lineEdit"/>
-                </item>
-                <item>
-                 <widget class="QLabel" name="in_directory">
-                  <property name="layoutDirection">
-                   <enum>Qt::LeftToRight</enum>
-                  </property>
-                  <property name="text">
-                   <string>In directory</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="directoryComboBox"/>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="browse_button">
-                  <property name="text">
-                   <string>Browse</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </item>
-            <item row="2" column="0">
-             <widget class="QTableWidget" name="querySwcTable">
-              <property name="minimumSize">
-               <size>
-                <width>1200</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1200</width>
-                <height>600</height>
-               </size>
-              </property>
-              <property name="sizeAdjustPolicy">
-               <enum>QAbstractScrollArea::AdjustToContents</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QGroupBox" name="groupBox">
-              <property name="minimumSize">
-               <size>
-                <width>1200</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="title">
-               <string>GroupBox</string>
-              </property>
-              <widget class="QLabel" name="swcFileFoundLable">
-               <property name="geometry">
-                <rect>
-                 <x>10</x>
-                 <y>40</y>
-                 <width>40</width>
-                 <height>12</height>
-                </rect>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="QueryAno">
-       <attribute name="title">
-        <string>QueryAno</string>
-       </attribute>
-       <widget class="QGroupBox" name="QueryAnoGroupBox">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>679</width>
-          <height>569</height>
-         </rect>
-        </property>
-        <property name="title">
-         <string>Query</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_12" rowstretch="2,1,11,2">
-         <item row="2" column="0">
-          <widget class="QTableWidget" name="queryAnoTable"/>
-         </item>
-         <item row="0" column="0">
-          <layout class="QGridLayout" name="QueryAnoGridLayout" rowstretch="0,0,0">
-           <property name="horizontalSpacing">
-            <number>4</number>
-           </property>
-           <item row="2" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="MorphoID_Ano">
-               <property name="text">
-                <string>MorphoID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="MorphoID_Ano_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainID_Ano">
-               <property name="text">
-                <string>BrainID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainID_Ano_ComboBox_"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainArea_Ano">
-               <property name="text">
-                <string>BrainArea</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainArea_Ano_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="Batch_Ano">
-               <property name="text">
-                <string>Batch</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="Batch_Ano_SpinBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="NueonID_Ano">
-               <property name="text">
-                <string>NeuronID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="NeuronID_Ano_lineEdit"/>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="3" column="0">
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="title">
-            <string>GroupBox</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="queryAnoButton">
-           <property name="text">
-            <string>Click to query</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="QueryApo">
-       <attribute name="title">
-        <string>QueryApo</string>
-       </attribute>
-       <widget class="QGroupBox" name="QueryApoGroupBox">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>679</width>
-          <height>569</height>
-         </rect>
-        </property>
-        <property name="title">
-         <string>Query</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_9" rowstretch="2,1,11,2">
-         <item row="2" column="0">
-          <widget class="QTableWidget" name="queryApoTable"/>
-         </item>
-         <item row="0" column="0">
-          <layout class="QGridLayout" name="QueryApoGridLayout" rowstretch="0,0,0">
-           <property name="horizontalSpacing">
-            <number>4</number>
-           </property>
-           <item row="2" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <item alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="MorphoID_Apo">
-               <property name="text">
-                <string>MorphoID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="MorphoID_Apo_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainID_Apo">
-               <property name="text">
-                <string>BrainID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainID_Apo_ComboBox_"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainArea_Apo">
-               <property name="text">
-                <string>BrainArea</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainArea_Apo_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="Batch_Apo">
-               <property name="text">
-                <string>Batch</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="Batch_Apo_SpinBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="NueonID_Apo">
-               <property name="text">
-                <string>NeuronID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="NeuronID_Apo_lineEdit"/>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="3" column="0">
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>GroupBox</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="queryApoButton">
-           <property name="text">
-            <string>Click to query</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="QueryBouton">
-       <attribute name="title">
-        <string>QueryBouton</string>
-       </attribute>
-       <widget class="QGroupBox" name="QueryBoutonGroup">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>679</width>
-          <height>569</height>
-         </rect>
-        </property>
-        <property name="title">
-         <string>Query</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_8" rowstretch="2,1,11,2">
-         <item row="2" column="0">
-          <widget class="QTableWidget" name="queryBoutonTable"/>
-         </item>
-         <item row="0" column="0">
-          <layout class="QGridLayout" name="QueryBoutonGridLayout" rowstretch="0,0,0">
-           <property name="horizontalSpacing">
-            <number>4</number>
-           </property>
-           <item row="2" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="MorphoID_Bouton">
-               <property name="text">
-                <string>MorphoID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="MorphoID_Bouton_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainID_Bouton">
-               <property name="text">
-                <string>BrainID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainID_Bouton_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="BrainArea_Bouton">
-               <property name="text">
-                <string>BrainArea</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="BrainArea_Bouton_ComboBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="Batch_Bouton">
-               <property name="text">
-                <string>Batch</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="Batch_Bouton_SpinBox"/>
-             </item>
-             <item>
-              <widget class="QLabel" name="NueonID_Bouton">
-               <property name="text">
-                <string>NeuronID</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="NeuronID_Bouton_lineEdit"/>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="3" column="0">
-          <widget class="QGroupBox" name="groupBox_4">
-           <property name="title">
-            <string>GroupBox</string>
-           </property>
-           <widget class="QPushButton" name="pushButton">
-            <property name="geometry">
-             <rect>
-              <x>340</x>
-              <y>30</y>
-              <width>80</width>
-              <height>18</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>Load</string>
-            </property>
-           </widget>
-           <widget class="QPushButton" name="pushButton_2">
-            <property name="geometry">
-             <rect>
-              <x>430</x>
-              <y>30</y>
-              <width>80</width>
-              <height>18</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>Select</string>
-            </property>
-           </widget>
-           <widget class="QPushButton" name="pushButton_3">
-            <property name="geometry">
-             <rect>
-              <x>520</x>
-              <y>30</y>
-              <width>80</width>
-              <height>18</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>SelectAll</string>
-            </property>
-           </widget>
-           <widget class="QLabel" name="label">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>30</y>
-              <width>311</width>
-              <height>16</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="queryBoutonButton">
-           <property name="text">
-            <string>Click to query</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>页</string>
+        <string>querySwc</string>
        </attribute>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>761</width>
-          <height>102</height>
+          <x>10</x>
+          <y>10</y>
+          <width>1161</width>
+          <height>1011</height>
          </rect>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetFixedSize</enum>
-         </property>
-         <item row="2" column="4">
-          <widget class="QPushButton" name="btnSend">
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetDefaultConstraint</enum>
            </property>
-           <property name="text">
-            <string>发送</string>
+           <item row="0" column="2">
+            <widget class="QComboBox" name="BrainID_Swc_ComboBox">
+             <item>
+              <property name="text">
+               <string>191813</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>18454</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>18455</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLabel" name="labReceiverAddr_2">
+             <property name="text">
+              <string>other</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labSenderAddr_2">
+             <property name="text">
+              <string>BrainID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QCheckBox" name="ckSSL_2">
+             <property name="text">
+              <string>SSL</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLineEdit" name="txtTitle_2">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
+            <widget class="QPushButton" name="querySwcButton">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+    background-color: #ffffff;
+}
+
+QPushButton:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+}
+
+QPushButton:pressed, QPushButton:checked {
+    border: 1px solid #3a8ee6;
+    color: #409eff;
+}</string>
+             </property>
+             <property name="text">
+              <string>query</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QComboBox" name="cboxPort_2">
+             <item>
+              <property name="text">
+               <string>00001</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string/>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="labSenderPwd_2">
+             <property name="text">
+              <string>BrainArea</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLineEdit" name="BrainArea_Swc_lineEdit">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labFileName_2">
+             <property name="text">
+              <string>In directory</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="4">
+            <widget class="QLineEdit" name="txtReceiverAddr_2">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QComboBox" name="cboxServer_2">
+             <item>
+              <property name="text">
+               <string/>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string/>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="3" column="5">
+            <widget class="QPushButton" name="browse_swc_button">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+    background-color: #ffffff;
+}
+
+QPushButton:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+}
+
+QPushButton:pressed, QPushButton:checked {
+    border: 1px solid #3a8ee6;
+    color: #409eff;
+}</string>
+             </property>
+             <property name="text">
+              <string>browse</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QLabel" name="labPort_2">
+             <property name="text">
+              <string>Batch</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labTitle_2">
+             <property name="text">
+              <string>NeuronID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labServer_2">
+             <property name="text">
+              <string>MorphoID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2" colspan="3">
+            <widget class="QComboBox" name="directorySwcComboBox"/>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="querySwcTable">
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
            </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOn</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <attribute name="horizontalHeaderCascadingSectionResizes">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
           </widget>
          </item>
-         <item row="1" column="3">
-          <widget class="QComboBox" name="cboxPort">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <property name="text">
-             <string>25</string>
-            </property>
+            <widget class="QLabel" name="swcFileFoundLable">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
            </item>
            <item>
-            <property name="text">
-             <string>465</string>
-            </property>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
-            <property name="text">
-             <string>587</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="1" column="4">
-          <widget class="QCheckBox" name="ckSSL">
-           <property name="text">
-            <string>SSL</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="labPort">
-           <property name="text">
-            <string>BrainID</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="4">
-          <widget class="QPushButton" name="btnSelect">
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
-           </property>
-           <property name="text">
-            <string>浏览</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3">
-          <widget class="QLineEdit" name="txtReceiverAddr">
-           <property name="text">
-            <string>feiyangqingyun@163.com;517216493@qq.com</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1" colspan="3">
-          <widget class="QLineEdit" name="txtFileName"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="labTitle">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="txtTitle">
-           <property name="text">
-            <string>测试邮件</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="cboxServer">
-           <item>
-            <property name="text">
-             <string>18454-0001</string>
-            </property>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Load</string>
+             </property>
+            </widget>
            </item>
            <item>
-            <property name="text">
-             <string>新建项目</string>
-            </property>
+            <widget class="QPushButton" name="pushButton_3">
+             <property name="text">
+              <string>Select All</string>
+             </property>
+            </widget>
            </item>
-          </widget>
-         </item>
-         <item row="2" column="2">
-          <widget class="QLabel" name="labReceiverAddr">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="labFileName">
-           <property name="text">
-            <string>选择附件</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="labServer">
-           <property name="text">
-            <string>MorphoID</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="labSenderAddr">
-           <property name="text">
-            <string>NeuronID</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="txtSenderAddr">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="labSenderPwd">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QLineEdit" name="txtSenderPwd">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="echoMode">
-            <enum>QLineEdit::Password</enum>
-           </property>
-          </widget>
+           <item>
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="text">
+              <string>Select Inverse</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
+      </widget>
+      <widget class="QWidget" name="queryAnoTab">
+       <attribute name="title">
+        <string>queryAno</string>
+       </attribute>
+       <widget class="QWidget" name="layoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>1161</width>
+          <height>1011</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetDefaultConstraint</enum>
+           </property>
+           <item row="2" column="3">
+            <widget class="QLabel" name="labReceiverAddr_3">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QCheckBox" name="ckSSL_3">
+             <property name="text">
+              <string>SSL</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="5">
+            <widget class="QPushButton" name="browse_ano_button">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+    background-color: #ffffff;
+}
+
+QPushButton:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+}
+
+QPushButton:pressed, QPushButton:checked {
+    border: 1px solid #3a8ee6;
+    color: #409eff;
+}</string>
+             </property>
+             <property name="text">
+              <string>browse</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLineEdit" name="txtTitle_3">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2" colspan="3">
+            <widget class="QComboBox" name="directoryAnoComboBox"/>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="labSenderPwd_3">
+             <property name="text">
+              <string>BrainArea</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labServer_3">
+             <property name="text">
+              <string>MorphoID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labTitle_3">
+             <property name="text">
+              <string>NeuronID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labFileName_3">
+             <property name="text">
+              <string>In directory</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLineEdit" name="txtSenderPwd_3">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QComboBox" name="cboxServer_3"/>
+           </item>
+           <item row="2" column="5">
+            <widget class="QPushButton" name="queryAnoButton">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+    background-color: #ffffff;
+}
+
+QPushButton:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+}
+
+QPushButton:pressed, QPushButton:checked {
+    border: 1px solid #3a8ee6;
+    color: #409eff;
+}</string>
+             </property>
+             <property name="text">
+              <string>query</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QComboBox" name="cboxPort_3">
+             <item>
+              <property name="text">
+               <string>00001</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>00002</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QComboBox" name="BrainID_Ano_ComboBox">
+             <item>
+              <property name="text">
+               <string>191813</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>18454</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>18455</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labSenderAddr_3">
+             <property name="text">
+              <string>BrainID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QLabel" name="labPort_3">
+             <property name="text">
+              <string>Batch</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="4">
+            <widget class="QLineEdit" name="txtReceiverAddr_3">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="queryAnoTable">
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOn</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <attribute name="horizontalHeaderDefaultSectionSize">
+            <number>200</number>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="anoFileFoundLable">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_4">
+             <property name="text">
+              <string>Load</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_5">
+             <property name="text">
+              <string>Select All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_6">
+             <property name="text">
+              <string>Select Inverse</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="queryApoTab">
+       <attribute name="title">
+        <string>queryAno</string>
+       </attribute>
       </widget>
      </widget>
     </item>

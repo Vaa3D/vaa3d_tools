@@ -34,6 +34,7 @@ void NeuronQuerySystemPlugin::domenu(const QString &menu_name, V3DPluginCallback
         mainwindow->setGeometry(0,0,1280,1080);
         QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Floor);
         mainwindow->setWindowState(Qt::WindowNoState);
+        mainwindow->setWindowTitle("Neuron Query System");
         mainwindow->activateWindow();
         mainwindow->raise();
 

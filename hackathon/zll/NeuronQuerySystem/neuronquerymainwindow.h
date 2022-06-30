@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QTextEdit>
 #include <QComboBox>
+#include <QTableWidget>
 #include "NeuronQuerySystem_plugin.h"
 #include "basicinfo.h"
 namespace Ui {
@@ -44,6 +45,7 @@ private:
     QAction *aboutAction;
     QAction *aboutQtAction;
 
+
     QDir currentDir;
 
     void init();
@@ -54,13 +56,18 @@ private:
     void toLogWindow(const QString& logtext);
     static void updateComboBox(QComboBox &comboBox);
     void animateFindClick();
+    void animateFindClickAno();
     void showSwcTables(const QStringList &paths);
-    QStringList querySwcFiles(const QStringList &files, const QString &text);
+    void showAnoTables(const QStringList &paths);
+    QStringList queryFiles(const QStringList &files, const QString &text);
 
 private slots:
     void browse();
     void openFileOfItem(int row, int column);
-    void contextMenu(const QPoint &pos);
+    void contextMenuSwc(const QPoint &pos);
+    void contextMenuAno(const QPoint &pos);
+    void pop3Dview(const QString &fileName);
+    void popTerafly(const QString &fileName);
 
 //    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
 
@@ -78,11 +85,24 @@ private slots:
     void loginOkayButton_slot();
     void loginCancelButton_slot();
     void logoutAction_slot();
-    void popAction_3Dview_slot();
+
+
+//    void selectAll();
 
 //    void dataTabChange(int index);
 
-//    void on_querySwcButton_customContextMenuRequested(const QPoint &pos);
+    void on_querySwcButton_customContextMenuRequested(const QPoint &pos);
+//    QTableWidget *table[1+6];
+//    for (int i=0; i<=6; i++)  table[i]=0;
+
+
+protected:
+//    void createTables();
+//    void clearTables();
+//    QTableWidget* currentTableWidget();
+//    QTableWidget* createTableSwc();
+//    QTableWidget* createTableApo();
+//    QTableWidget* createTableAno();
 
 private:
     Ui::NeuronQueryMainWindow *ui;

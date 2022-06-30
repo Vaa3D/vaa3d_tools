@@ -10,8 +10,10 @@
 #define __SORT_SWC_H_
 
 #ifdef WIN32
-#include <Windows.h>
 #endif
+
+#define byte win_byte_override
+#undef byte
 
 #include <QtGlobal>
 #include <math.h>
@@ -23,6 +25,8 @@
 #include "fstream"
 #include <QStack>
 #include <QQueue>
+
+
 using namespace std;
 
 //class MessageBox : public QMessageBox
