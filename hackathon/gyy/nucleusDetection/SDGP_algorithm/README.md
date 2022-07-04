@@ -9,10 +9,10 @@ Semantic deconvolution based on Gaussian probability (SDGP) model is used for Nu
 - Open "Anaconda Prompt (anaconda3)";
 - In the terminal change to the "SDGP.yaml" file folder.
 	
-	`$ cd <your SDGP.yaml folder path>`
+	```$ cd <your SDGP.yaml folder path>```
 - Create a SDGP conda enviroment using the SDGP environmrnt file "SDGP.yaml".
 	
-	`$ conda env create -f SDGP.yaml`
+	```$ conda env create -f SDGP.yaml```
 - Create a new python project using the SDGP environmrnt.
 - Copy the nucleus detection codeto the python project.
 
