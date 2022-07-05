@@ -1,7 +1,7 @@
 # Instruction Stitching
 The process flow chart of stitching is shown below, and the format of the JSON file obtained by each step is referenced in the "para" folder.
 
-![alt](flowchart.jpg "process flow chart")
+![alt](pictures/flowchart.jpg "process flow chart")
 
 # 1. a\_get\_files\_name
 Get the relative position of each tile and store it in a JSON file called "tiles_position.json".  If there are no corresponding tiles for a position, "None" is used.  The Json file also holds additional variable information for subsequent operations.
@@ -93,7 +93,7 @@ The program has 7 functions, the first 3 functions get the MIP image of each til
 	XZ_projection_MIP_U (input, output)
 	XZ_projection_MIP_D (input, output)
 
-![alt](overlapMIP.jpg "MIP of overlap area")
+![alt](pictures/overlapMIP.jpg "MIP of overlap area")
 ## 2.2	getMIP\_One_folder.py
 
 Obtain the MIP image of all tiles after imaging when all tiles data is placed in a folder. 
@@ -105,7 +105,7 @@ Calculates the shift in the XYZ direction between adjacent tiles.
 Input "tiles_position.json" to obtain the Z\_shift of the adjacent tiles. The result is saved in the "z\_shift. json" file.
 ## 3.2	XY_shift.py
 Calculate the XY shift of adjacent tiles corresponding to the MIP image or to a single plane with Z\_shift taken into account.
-![alt](overlapShift.jpg "overlap and shift")
+![alt](pictures/overlapShift.jpg "overlap and shift")
 ## 3.3 improved\_shift.py
 The image is preprocessed by iterative denoising so that the program is suitable for dendrite and other sparse signals. 
 ## 3.4 adjust_overlap\_shift.py
