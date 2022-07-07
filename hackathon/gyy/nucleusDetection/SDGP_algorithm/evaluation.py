@@ -18,9 +18,6 @@ from skimage import filters
 
 plt.rcParams["figure.figsize"] = [16, 12]
 from aicsimageio.aics_image import AICSImage
-from aicssegmentation.core.seg_dot import dot_3d_wrapper
-from aicssegmentation.cli.to_analysis import masked_builder
-from aicssegmentation.core.pre_processing_utils import intensity_normalization, edge_preserving_smoothing_3d
 
 
 def mylabel2rgb(mylabel):

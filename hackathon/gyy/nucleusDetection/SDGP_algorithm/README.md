@@ -17,8 +17,8 @@ Semantic deconvolution based on Gaussian probability (SDGP) model is used for Nu
 - Copy the nucleus detection codeto the python project.
 
 #Nucleus Detection
-- **trainingModel.py**: Train the ".h5 "model by entering the labeled images and labeled points folder as a training set.
-- **useModel.py**: Input ".h5 "model and image folder to be run as test set to get semantic image.
+- **SDGP_algorithm/u3d/unet3d/model/trainingModel.py**: Train the ".h5 "model by entering the labeled images and labeled points folder as a training set.
+- **SDGP_algorithm/u3d/unet3d/model/useModel.py**: Input ".h5 "model and image folder to be run as test set to get semantic image.
 - **gwdtFunction.searchLocalMax**: Obtain the local maximum value of semantic image.
 - **evaluation.watershed**: Taking the local maximum point of semantic image as the seed point, the rough segmentation of watershed algorithm is carried out.
 - **evaluation.mylabel2rgb**: Use different colors to represent the segmentation results of each nucleus.
