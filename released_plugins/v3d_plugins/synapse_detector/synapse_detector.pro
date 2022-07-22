@@ -18,9 +18,9 @@ macx{
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/mingw_dll -llibtiff
+    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/mingw -llibtiff
     } else {
-    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/mingw_dll -llibtiff
+    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/mingw -llibtiff
     }
 }
 

@@ -64,10 +64,15 @@ private:
 private slots:
     void browse();
     void openFileOfItem(int row, int column);
+<<<<<<< Updated upstream
     void contextMenuSwc(const QPoint &pos);
     void contextMenuAno(const QPoint &pos);
     void pop3Dview(const QString &fileName);
     void popTerafly(const QString &fileName);
+=======
+    void contextMenu(const QPoint &pos);
+    void pop3Dview(const QString &fileName);
+>>>>>>> Stashed changes
 
 //    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
 

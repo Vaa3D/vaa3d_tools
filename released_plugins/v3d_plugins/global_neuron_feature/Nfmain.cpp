@@ -209,6 +209,83 @@ void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
 	delete openDlg; // MK, Oct, 2017, free up dialog pointer to memory violation.
 }
 
+void nf_main_batch(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString inputSwcFolder = QFileDialog::getExistingDirectory(parent,
+                                                           QString(QObject::tr("Choose the directory that including all swcs."))
+                                                           );
+    if(inputSwcFolder.size()==0){
+        v3d_msg("Empty input folder.\n Let the developer know if you see this message.");
+        return;
+    }
+    if(!inputSwcFolder.endsWith("/")){inputSwcFolder = inputSwcFolder + "/";}
+
+    QString CsvName;
+    CsvName = QFileDialog::getOpenFileName(0,QObject::tr("Open empty csv file(output result)."),"",QObject::tr("Supported file(*.csv)"));
+    if(CsvName.isEmpty())
+        return;
+
+//    QString outputFolder = QFileDialog::getExistingDirectory(parent,
+//                                                              QString(QObject::tr("Choose the output file folder")));
+
+//    if((outputFolder.size()>0) && (!outputFolder.endsWith("/"))){outputFolder = outputFolder + "/";}
+//    if(outputFolder.size()==0){outputFolder = inputSwcFolder;}
+    QStringList nameFilters;
+    nameFilters<<"*.swc";
+    nameFilters<<"*.eswc";
+    nameFilters<<"*.ESWC";
+    nameFilters<<"*.SWC";
+
+    QDir inputDir(inputSwcFolder);
+    QStringList nameList = inputDir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+    vector<NeuronTree> nt_list;
+    if(nameList.size()==0)
+    {
+        cerr<<"Error in input. This is an empty folder or I can't find swc and eswc files in it"<<endl;
+        return;
+    }
+    for(V3DLONG i=0;i<nameList.size();i++)
+    {
+        QString thisname=inputSwcFolder+"/"+nameList.at(i);
+        NeuronTree tmp = readSWC_file(thisname);
+        nt_list.push_back(tmp);
+    }
+
+
+
+    ofstream csvOutFile(CsvName.toStdString().c_str());
+    if(!csvOutFile.is_open()){
+         cerr<<"out Error: cannot open file to save"<<endl;
+         return;
+    }
+    csvOutFile<<"Name,Nodes,SomaSurface,Stems,Bifurcations,Branches,Tips,OverallWidth,OverallHeight,OverallDepth";
+    csvOutFile<<",AverageDiameter,Length,Surface,Volume,MaxEuclideanDistance,MaxPathDistance,MaxBranchOrder";
+    csvOutFile<<",AverageContraction,AverageFragmentation,AverageParent-daughterRatio,AverageBifurcationAngleLocal,AverageBifurcationAngleRemote,HausdorffDimension"<<endl;
+
+    for (V3DLONG i=0;i<nameList.size();i++)
+    {
+        NeuronTree nt = nt_list[i];
+        cout<<"\n----------Neuron #"<<(i+1)<<",Total #"<<nameList.size()<<"-----------\n";
+        double * features = new double[FNUM];
+        computeFeature(nt, features);
+        //save features to file
+
+        QString thisname=nameList[i];
+        csvOutFile<<thisname.toStdString();
+        for (int i=0;i<FNUM;i++)
+        {
+            csvOutFile<<","<<features[i];
+        }
+        csvOutFile<<endl;
+
+        if (features) {delete []features; features = NULL;}
+    }
+    csvOutFile.close();
+    return;
+
+
+}
+// Added by zll for global neuron batch in gui.07.22.2022
 void nf_first_main(V3DPluginCallback2 &callback, QWidget *parent)
 {
     OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);

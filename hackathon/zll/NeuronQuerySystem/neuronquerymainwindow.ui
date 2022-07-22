@@ -43,14 +43,63 @@
             <enum>QLayout::SetDefaultConstraint</enum>
            </property>
            <item row="0" column="2">
+<<<<<<< Updated upstream
             <widget class="QComboBox" name="BrainID_Swc_ComboBox">
              <item>
               <property name="text">
                <string>191813</string>
+=======
+            <widget class="QComboBox" name="BrainID_Swc_ComboBox"/>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLabel" name="labReceiverAddr_2">
+             <property name="text">
+              <string>other</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labSenderAddr_2">
+             <property name="text">
+              <string>BrainID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QCheckBox" name="ckSSL_2">
+             <property name="text">
+              <string>SSL</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLineEdit" name="txtTitle_2">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
+            <widget class="QPushButton" name="querySwcButton">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="text">
+              <string>query</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QComboBox" name="cboxPort_2">
+             <item>
+              <property name="text">
+               <string>25</string>
+>>>>>>> Stashed changes
               </property>
              </item>
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string>18454</string>
               </property>
              </item>
@@ -119,11 +168,18 @@ QPushButton:pressed, QPushButton:checked {
              <item>
               <property name="text">
                <string>00001</string>
+=======
+               <string>465</string>
+>>>>>>> Stashed changes
               </property>
              </item>
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string/>
+=======
+               <string>587</string>
+>>>>>>> Stashed changes
               </property>
              </item>
             </widget>
@@ -163,12 +219,20 @@ QPushButton:pressed, QPushButton:checked {
             <widget class="QComboBox" name="cboxServer_2">
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string/>
+=======
+               <string>18454-0001</string>
+>>>>>>> Stashed changes
               </property>
              </item>
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string/>
+=======
+               <string>新建项目</string>
+>>>>>>> Stashed changes
               </property>
              </item>
             </widget>
@@ -178,6 +242,7 @@ QPushButton:pressed, QPushButton:checked {
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
+<<<<<<< Updated upstream
              <property name="styleSheet">
               <string notr="true">QPushButton {
     background-color: #ffffff;
@@ -193,6 +258,8 @@ QPushButton:pressed, QPushButton:checked {
     color: #409eff;
 }</string>
              </property>
+=======
+>>>>>>> Stashed changes
              <property name="text">
               <string>browse</string>
              </property>
@@ -235,6 +302,7 @@ QPushButton:pressed, QPushButton:checked {
            <property name="horizontalScrollBarPolicy">
             <enum>Qt::ScrollBarAsNeeded</enum>
            </property>
+<<<<<<< Updated upstream
            <attribute name="horizontalHeaderCascadingSectionResizes">
             <bool>false</bool>
            </attribute>
@@ -246,6 +314,8 @@ QPushButton:pressed, QPushButton:checked {
              <string/>
             </property>
            </column>
+=======
+>>>>>>> Stashed changes
            <column>
             <property name="text">
              <string/>
@@ -292,7 +362,11 @@ QPushButton:pressed, QPushButton:checked {
            <item>
             <widget class="QPushButton" name="pushButton_2">
              <property name="text">
+<<<<<<< Updated upstream
               <string>Select Inverse</string>
+=======
+              <string>PushButton</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>
@@ -320,6 +394,12 @@ QPushButton:pressed, QPushButton:checked {
            <property name="sizeConstraint">
             <enum>QLayout::SetDefaultConstraint</enum>
            </property>
+<<<<<<< Updated upstream
+=======
+           <item row="0" column="2">
+            <widget class="QComboBox" name="BrainID_Ano_ComboBox"/>
+           </item>
+>>>>>>> Stashed changes
            <item row="2" column="3">
             <widget class="QLabel" name="labReceiverAddr_3">
              <property name="text">
@@ -327,6 +407,7 @@ QPushButton:pressed, QPushButton:checked {
              </property>
             </widget>
            </item>
+<<<<<<< Updated upstream
            <item row="1" column="5">
             <widget class="QCheckBox" name="ckSSL_3">
              <property name="text">
@@ -356,6 +437,19 @@ QPushButton:pressed, QPushButton:checked {
              </property>
              <property name="text">
               <string>browse</string>
+=======
+           <item row="0" column="0">
+            <widget class="QLabel" name="labSenderAddr_3">
+             <property name="text">
+              <string>BrainID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QCheckBox" name="ckSSL_3">
+             <property name="text">
+              <string>SSL</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>
@@ -366,6 +460,7 @@ QPushButton:pressed, QPushButton:checked {
              </property>
             </widget>
            </item>
+<<<<<<< Updated upstream
            <item row="3" column="2" colspan="3">
             <widget class="QComboBox" name="directoryAnoComboBox"/>
            </item>
@@ -410,11 +505,14 @@ QPushButton:pressed, QPushButton:checked {
            <item row="1" column="2">
             <widget class="QComboBox" name="cboxServer_3"/>
            </item>
+=======
+>>>>>>> Stashed changes
            <item row="2" column="5">
             <widget class="QPushButton" name="queryAnoButton">
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
+<<<<<<< Updated upstream
              <property name="styleSheet">
               <string notr="true">QPushButton {
     background-color: #ffffff;
@@ -430,6 +528,8 @@ QPushButton:pressed, QPushButton:checked {
     color: #409eff;
 }</string>
              </property>
+=======
+>>>>>>> Stashed changes
              <property name="text">
               <string>query</string>
              </property>
@@ -439,12 +539,20 @@ QPushButton:pressed, QPushButton:checked {
             <widget class="QComboBox" name="cboxPort_3">
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string>00001</string>
+=======
+               <string>25</string>
+>>>>>>> Stashed changes
               </property>
              </item>
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string>00002</string>
+=======
+               <string>465</string>
+>>>>>>> Stashed changes
               </property>
              </item>
             </widget>
@@ -453,31 +561,89 @@ QPushButton:pressed, QPushButton:checked {
             <widget class="QComboBox" name="BrainID_Ano_ComboBox">
              <item>
               <property name="text">
+<<<<<<< Updated upstream
                <string>191813</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>18454</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>18455</string>
+=======
+               <string>587</string>
+>>>>>>> Stashed changes
               </property>
              </item>
             </widget>
            </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="labSenderPwd_3">
+             <property name="text">
+              <string>Batch</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLineEdit" name="txtSenderPwd_3">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labFileName_3">
+             <property name="text">
+              <string>In directory</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="4">
+            <widget class="QLineEdit" name="txtReceiverAddr_3">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QComboBox" name="cboxServer_3">
+             <item>
+              <property name="text">
+<<<<<<< Updated upstream
+               <string>18454</string>
+=======
+               <string>18454-0001</string>
+>>>>>>> Stashed changes
+              </property>
+             </item>
+             <item>
+              <property name="text">
+<<<<<<< Updated upstream
+               <string>18455</string>
+=======
+               <string>新建项目</string>
+>>>>>>> Stashed changes
+              </property>
+             </item>
+            </widget>
+           </item>
+<<<<<<< Updated upstream
            <item row="0" column="0">
             <widget class="QLabel" name="labSenderAddr_3">
              <property name="text">
               <string>BrainID</string>
+=======
+           <item row="3" column="5">
+            <widget class="QPushButton" name="browse_ano_button">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="text">
+              <string>browse</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>
            <item row="1" column="3">
             <widget class="QLabel" name="labPort_3">
              <property name="text">
+<<<<<<< Updated upstream
               <string>Batch</string>
              </property>
             </widget>
@@ -488,6 +654,28 @@ QPushButton:pressed, QPushButton:checked {
               <string/>
              </property>
             </widget>
+=======
+              <string>BrainArea</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labTitle_3">
+             <property name="text">
+              <string>NeuronID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labServer_3">
+             <property name="text">
+              <string>MorphoID</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2" colspan="3">
+            <widget class="QComboBox" name="directoryAnoComboBox"/>
+>>>>>>> Stashed changes
            </item>
           </layout>
          </item>
@@ -502,6 +690,7 @@ QPushButton:pressed, QPushButton:checked {
            <property name="horizontalScrollBarPolicy">
             <enum>Qt::ScrollBarAsNeeded</enum>
            </property>
+<<<<<<< Updated upstream
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>200</number>
            </attribute>
@@ -518,10 +707,13 @@ QPushButton:pressed, QPushButton:checked {
              <string/>
             </property>
            </column>
+=======
+>>>>>>> Stashed changes
           </widget>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
+<<<<<<< Updated upstream
            <item>
             <widget class="QLabel" name="anoFileFoundLable">
              <property name="text">
@@ -541,25 +733,45 @@ QPushButton:pressed, QPushButton:checked {
               </size>
              </property>
             </spacer>
+=======
+           <item>
+            <widget class="QLabel" name="anoFileFoundLable">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+            </widget>
+>>>>>>> Stashed changes
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_4">
              <property name="text">
+<<<<<<< Updated upstream
               <string>Load</string>
+=======
+              <string>PushButton</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_5">
              <property name="text">
+<<<<<<< Updated upstream
               <string>Select All</string>
+=======
+              <string>PushButton</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_6">
              <property name="text">
+<<<<<<< Updated upstream
               <string>Select Inverse</string>
+=======
+              <string>PushButton</string>
+>>>>>>> Stashed changes
              </property>
             </widget>
            </item>

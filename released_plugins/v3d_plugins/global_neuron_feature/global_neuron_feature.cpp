@@ -37,6 +37,7 @@ QStringList GNFPlugin::menulist() const
 {
     return QStringList() 
 	<<tr("compute global features")
+    <<tr("compute global features batch")
     <<tr("compute global features (only the first connected tree)")
 	<<tr("Help");
 }
@@ -62,6 +63,10 @@ void GNFPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
     else if (menu_name == tr("compute global features (only the first connected tree)"))
     {
         nf_first_main(callback, parent);
+    }
+    else if(menu_name ==tr("compute global features batch"))
+    {
+        nf_main_batch(callback,parent);
     }
 	else if (menu_name == tr("Help"))
 	{
