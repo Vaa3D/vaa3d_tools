@@ -17,6 +17,7 @@ void produce_demo1(string dir, string vaa3d_path)
 	ofs<<"TEMPLATE	= lib"<<endl;
 	ofs<<"CONFIG	+= qt plugin warn_off"<<endl;
 	ofs<<"#CONFIG	+= x86_64"<<endl;
+    ofs<<"QT += widgets"<<endl;
 	ofs<<"VAA3DPATH = "<<vaa3d_path<<endl;
 	ofs<<"INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun"<<endl;
 	ofs<<""<<endl;
@@ -228,8 +229,8 @@ void produce_demo1(string dir, string vaa3d_path)
 	ofs<<"#include \"demo1_plugin.h\""<<endl;
 	ofs<<"#include \"demo1_func.h\""<<endl;
 	ofs<<" "<<endl;
-	ofs<<"Q_EXPORT_PLUGIN2(demo1, Demo1Plugin);"<<endl;
-	ofs<<" "<<endl;
+//	ofs<<"Q_EXPORT_PLUGIN2(demo1, Demo1Plugin);"<<endl;
+//	ofs<<" "<<endl;
 	ofs<<"QStringList Demo1Plugin::menulist() const"<<endl;
 	ofs<<"{"<<endl;
 	ofs<<"	return QStringList() "<<endl;
@@ -305,6 +306,7 @@ void produce_demo1(string dir, string vaa3d_path)
 	ofs<<"{"<<endl;
 	ofs<<"	Q_OBJECT"<<endl;
 	ofs<<"	Q_INTERFACES(V3DPluginInterface2_1);"<<endl;
+    ofs<<"  Q_PLUGIN_METADATA(IID\"com.janelia.v3d.V3DPluginInterface/2.1\")"<<endl;
 	ofs<<""<<endl;
 	ofs<<"public:"<<endl;
 	ofs<<"	float getPluginVersion() const {return 1.1f;}"<<endl;

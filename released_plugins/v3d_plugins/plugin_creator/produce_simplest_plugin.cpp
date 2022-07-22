@@ -17,6 +17,7 @@ void produce_simplest_plugin(string dir)
 	ofs<<"TEMPLATE	= lib"<<endl;
 	ofs<<"CONFIG	+= qt plugin warn_off"<<endl;
 	ofs<<"#CONFIG	+= x86_64"<<endl;
+    ofs<<"QT += widgets"<<endl;
 	ofs<<"VAA3D_DIR = /Users/xiaoh10/work/v3d_external"<<endl;
 	ofs<<"INCLUDEPATH	+= $$VAA3D_DIR/v3d_main/basic_c_fun"<<endl;
 	ofs<<""<<endl;
@@ -41,6 +42,7 @@ void produce_simplest_plugin(string dir)
 	ofs<<"{"<<endl;
 	ofs<<"	Q_OBJECT"<<endl;
 	ofs<<"	Q_INTERFACES(V3DPluginInterface2_1);"<<endl;
+    ofs<<"  Q_PLUGIN_METADATA(IID\"com.janelia.v3d.V3DPluginInterface/2.1\")"<<endl;
 	ofs<<""<<endl;
 	ofs<<"public:"<<endl;
 	ofs<<"	float getPluginVersion() const {return 1.1f;}"<<endl;
@@ -75,8 +77,8 @@ void produce_simplest_plugin(string dir)
 	ofs<<"	}"<<endl;
 	ofs<<"};"<<endl;
 	ofs<<""<<endl;
-	ofs<<"Q_EXPORT_PLUGIN2(test, TestPlugin);"<<endl;
-	ofs<<""<<endl;
+//	ofs<<"Q_EXPORT_PLUGIN2(test, TestPlugin);"<<endl;
+//	ofs<<""<<endl;
 	ofs<<"#endif"<<endl;
 	ofs<<""<<endl;
 	ofs.close();

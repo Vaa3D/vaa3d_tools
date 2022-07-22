@@ -17,6 +17,7 @@ void produce_demo2(string dir, string vaa3d_path, string plugin_name, string men
 	ofs<<"TEMPLATE    = lib"<<endl;
 	ofs<<"CONFIG  += debug qt plugin warn_off"<<endl;
 	ofs<<"#CONFIG += x86_64"<<endl;
+    ofs<<"QT += widgets"<<endl;
 	ofs<<""<<endl;
 	ofs<<"VAA3DPATH = /Users/xiaoh10/work/v3d_external"<<endl;
 	ofs<<"INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun "<<endl;
@@ -193,8 +194,8 @@ void produce_demo2(string dir, string vaa3d_path, string plugin_name, string men
 	ofs<<"#include \""<<plugin_name<<"_plugin.h\""<<endl;
 	ofs<<"#include \""<<plugin_name<<"_func.h\""<<endl;
 	ofs<<" "<<endl;
-	ofs<<"Q_EXPORT_PLUGIN2("<<plugin_name<<", LoadImageAndSWCPlugin);"<<endl;
-	ofs<<" "<<endl;
+//	ofs<<"Q_EXPORT_PLUGIN2("<<plugin_name<<", LoadImageAndSWCPlugin);"<<endl;
+//	ofs<<" "<<endl;
 	ofs<<"QStringList LoadImageAndSWCPlugin::menulist() const"<<endl;
 	ofs<<"{"<<endl;
 	ofs<<"	return QStringList() "<<endl;
@@ -250,6 +251,7 @@ void produce_demo2(string dir, string vaa3d_path, string plugin_name, string men
 	ofs<<"{"<<endl;
 	ofs<<"	Q_OBJECT"<<endl;
 	ofs<<"	Q_INTERFACES(V3DPluginInterface2_1);"<<endl;
+    ofs<<"  Q_PLUGIN_METADATA(IID\"com.janelia.v3d.V3DPluginInterface/2.1\")"<<endl;
 	ofs<<""<<endl;
 	ofs<<"public:"<<endl;
 	ofs<<"	float getPluginVersion() const {return 1.1f;}"<<endl;
