@@ -220,7 +220,7 @@ bool standardize::dofunc(const QString & func_name, const V3DPluginArgList & inp
             if (result[i].pn == -1)
             {//remove other trees, only keep the first one
                 cout<< "remove "<<result.size()-i<<" nodes"<<endl;
-                result.erase(result.begin()+i, result.end());
+                result.erase(result.begin()+int(i), result.end());
 
             }
         }
