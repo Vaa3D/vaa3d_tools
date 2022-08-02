@@ -197,7 +197,7 @@ void DataTable::zscore (long indExcludeColumn, int b_discretize)
             cursum += data2d[i][j];
         curmean = cursum / nsample;
         cursum = 0;
-        register double tmpf;
+         double tmpf;
         for (i = 0; i < nsample; i++)
         {
             tmpf = data2d[i][j] - curmean;
@@ -230,7 +230,7 @@ void DataTable::discretize (double threshold, int b_discretize)
         {
             continue;
         }
-        register double tmpf;
+         double tmpf;
         for (i = 0; i < nsample; i++)
         {
             tmpf = data2d[i][j];
