@@ -229,11 +229,11 @@ bool VoxelCluster::findSub_2Dz( int x, int y, int z, int M, int N, int K, int co
             return true;
         }
 
-        for (register int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
+        for ( int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
         {
             if ( i < 0 || i >= M )
                 continue;
-            for (register int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
+            for ( int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
             {
                 if ( j < 0 || j >= N )
                     continue;
@@ -342,11 +342,11 @@ bool VoxelCluster::findSub_2Dx( int x, int y, int z, int M, int N, int K, int co
             return true;
         }
 
-            for (register int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
+            for ( int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
             {
                 if ( j < 0 || j >= N )
                     continue;
-                for (register int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
+                for ( int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
                 {
                     if (k < 0 || k >= K )
                         continue;
@@ -456,11 +456,11 @@ bool VoxelCluster::findSub_2Dy(int x, int y, int z, int M, int N, int K, int com
             return true;
         }
 
-        for (register int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
+        for ( int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
         {
             if ( i < 0 || i >= M )
                 continue;
-                for (register int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
+                for ( int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
                 {
                     if (k < 0 || k >= K )
                         continue;
@@ -582,15 +582,15 @@ bool VoxelCluster::findSub_V2( int x, int y, int z, int M, int N, int K, int com
             return true;
         }
 
-        for (register int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
+        for ( int i = tmpVox.x - 1; i <= tmpVox.x + 1; i++)
         {
             if ( i < 0 || i >= M )
                 continue;
-            for (register int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
+            for ( int j = tmpVox.y -1; j <= tmpVox.y + 1; j++)
             {
                 if ( j < 0 || j >= N )
                     continue;
-                for (register int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
+                for ( int k = tmpVox.z -1; k <= tmpVox.z + 1; k++)
                 {
                     if (k < 0 || k >= K )
                         continue;
@@ -609,15 +609,15 @@ bool VoxelCluster::findSub_V2( int x, int y, int z, int M, int N, int K, int com
 
 bool VoxelCluster::findSub( int x, int y, int z, int M, int N, int K, int comID, VoxelCluster& tmpClt )
 {
-    for (register int i = x - 1; i <= x + 1; i++)
+    for ( int i = x - 1; i <= x + 1; i++)
     {
         if (i < 0 || i >= M)
             continue;
-        for (register int j = y -1; j <= y + 1; j++)
+        for ( int j = y -1; j <= y + 1; j++)
         {
             if (j < 0 || j >= N)
                 continue;
-            for (register int k = z -1; k <= z + 1; k++)
+            for ( int k = z -1; k <= z + 1; k++)
             {
                 if (k < 0 || k >= K)
                     continue;

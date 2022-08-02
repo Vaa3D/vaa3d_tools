@@ -225,11 +225,11 @@ V_NeuronSWC_unit MOSTImage::recenter(V_NeuronSWC_unit &seed, const int &threshol
     // init sum
     long double xsum = 0, ysum = 0, zsum = 0, gsum = 0;
 
-    for (register int i = long(zb); i < long(ze); i++)
+    for ( int i = long(zb); i < long(ze); i++)
     {
-        for (register int j = long(yb); j < long(ye); j++ )
+        for ( int j = long(yb); j < long(ye); j++ )
         {
-            for (register int k = long(xb); k < long(xe); k++)
+            for ( int k = long(xb); k < long(xe); k++)
             {
                 long offset = i*this->getTotalUnitNumberPerPlane() + j*this->getXDim() + k;
                 if (this->getRawData()[offset] > threshold)
@@ -369,13 +369,13 @@ VoxelCluster MOSTImage::voxelScooping_V2 (const V_NeuronSWC_unit &pivot, const f
     int zb = ( (pivot.z-sd) > 0 ) ? (pivot.z-sd) : 0;
     int ze = ( (pivot.z+sd) < this->getZDim() ) ? (pivot.z+sd) : this->getZDim();
 
-    for (register long i = long(zb); i < long(ze); i++)
+    for ( long i = long(zb); i < long(ze); i++)
     {
         long offsetz = i * this->getTotalUnitNumberPerPlane();
-        for ( register long j = long(yb); j < long(ye); j++ )
+        for (  long j = long(yb); j < long(ye); j++ )
         {
             long offsety = j * this->getXDim();
-            for (register long k = long(xb); k < long(xe); k++)
+            for ( long k = long(xb); k < long(xe); k++)
             {
                 long offset = offsetz + offsety + k;
                 if ( (visited[offset] == false) && ( this->getRawData()[offset] > threshold ) )
@@ -403,19 +403,19 @@ VoxelCluster MOSTImage::voxelScooping(VoxelCluster &conClt, const V_NeuronSWC_un
     {
         Voxel vtmp = conClt.voxels[n];
         // 26 connectivity growing
-        for (register int i = vtmp.x-1; i <= vtmp.x+1; i++)
+        for ( int i = vtmp.x-1; i <= vtmp.x+1; i++)
         {
             if ( ( i <= 0 ) || ( i >= this->getXDim() - 1 ) )
             {   // out of image boundary
                 continue;
             }
-            for ( register int j = vtmp.y-1; j <= vtmp.y+1; j++)
+            for (  int j = vtmp.y-1; j <= vtmp.y+1; j++)
             {
                 if ( ( j <= 0 ) || ( j >= this->getYDim() - 1 ) )
                 {   // out of image boundary
                     continue;
                 }
-                for (register int k = vtmp.z-1; k <= vtmp.z+1; k++)
+                for ( int k = vtmp.z-1; k <= vtmp.z+1; k++)
                 {
                     if ( ( k <= 0 ) || ( k >= this->getZDim() - 1 ) )
                     {   // out of image boundary
@@ -472,19 +472,19 @@ bool MOSTImage::regionGrowInSphere_V2(const V_NeuronSWC_unit &pivot, const float
         visited[ offset ] = true;
 
         // 26 connectivity growing
-        for ( register int i = seed.x-1; i <= seed.x+1; i++ )
+        for (  int i = seed.x-1; i <= seed.x+1; i++ )
         {
             if ( ( i <= 0 ) || ( i >= this->getXDim() - 1 ) )
             {   // out of image boundary
                 continue;
             }
-            for ( register int j = seed.y-1; j <= seed.y+1; j++)
+            for (  int j = seed.y-1; j <= seed.y+1; j++)
             {
                 if ( ( j <= 0 ) || ( j >= this->getYDim() - 1 ) )
                 {   // out of image boundary
                     continue;
                 }
-                for ( register int k = seed.z-1; k <= seed.z+1; k++)
+                for (  int k = seed.z-1; k <= seed.z+1; k++)
                 {
                     if ( ( k <= 0 ) || ( k >= this->getZDim() - 1 ) )
                     {   // out of image boundary

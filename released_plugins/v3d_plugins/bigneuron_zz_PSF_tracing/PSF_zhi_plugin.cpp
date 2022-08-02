@@ -412,7 +412,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     printf("Projections is done!\n\n");
 
     if(gpdEigenVals) {delete []gpdEigenVals; gpdEigenVals = 0;}
-    int imsize[3] = {N,M,P};
+    V3DLONG imsize[3] = {N,M,P};
 
     //tidyvaribales
     double prjs;
@@ -913,7 +913,7 @@ bool autotrace_PSF(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     printf("Projections is done!\n\n");
 
     if(gpdEigenVals) {delete []gpdEigenVals; gpdEigenVals = 0;}
-    int imsize[3] = {N,M,P};
+    V3DLONG imsize[3] = {N,M,P};
 
     //tidyvaribales
     double prjs;
