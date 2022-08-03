@@ -6,7 +6,7 @@
 ****************************************************************************/
 
 #include "neuron_match_clique.h"
-#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include "../../../../../v3d_external/v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
 #include <fstream>
 #include <vector>

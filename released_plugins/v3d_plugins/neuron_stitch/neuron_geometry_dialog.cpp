@@ -8,7 +8,7 @@
 
 #include "neuron_geometry_dialog.h"
 #include "neuron_stitch_func.h"
-#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include "../../../../../v3d_external/v3d_main/neuron_editing/neuron_xforms.h"
 #include "marker_match_dialog.h"
 #include <QInputDialog>
 #include <QMessageBox>

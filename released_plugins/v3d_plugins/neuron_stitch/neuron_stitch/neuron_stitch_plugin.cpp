@@ -10,7 +10,7 @@
 #include "neuron_match_clique.h"
 #include "neuron_geometry_dialog.h"
 #include "neuron_stitch/neuron_match_gmhash.h"
-#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include "../../../../../v3d_external/v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
 #include <fstream>
 #include "performance_timer.h"
