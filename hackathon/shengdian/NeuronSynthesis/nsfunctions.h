@@ -20,7 +20,9 @@ struct BranchUnit
     */
     V3DLONG id; V3DLONG parent_id;
     int type,level;
-    double angle;//angle of two child branches, if tip branch, angle=0
+    double angle;//local angle of two child branches, if tip branch, angle=0
+    double angle_remote,angle_io1,angle_io2,angle_io1_remote,angle_io2_remote; //remote angle of two child branches; angle of input-branch and output-branch
+    double radius,lcradius,rcradius;
     double length,pathLength;
     double lclength,lcpathLength,rclength,rcpathLength;
     double lslength,lspathLength,rslength,rspathLength;
@@ -29,8 +31,9 @@ struct BranchUnit
     QHash <int, int>  hashNode;
     BranchUnit() {
         id=0;parent_id=0;
-        angle=0;
+        angle=angle_remote=angle_io2=angle_io1=angle_io1_remote=angle_io2_remote=0.0;
         type=level=0;
+        radius=lcradius=rcradius=0.0;
         length=pathLength=0.0;
         lclength=lcpathLength=rclength=rcpathLength=0.0;
         lslength=lspathLength=rslength=rspathLength=0.0;
@@ -38,6 +41,8 @@ struct BranchUnit
         listNode.clear();hashNode.clear();
     }
     void get_features();
+    void get_radius();
+    void radius_smooth(int half_win=2);
     void normalize_tip(V3DLONG scale_num){this->lstips/=scale_num;this->rstips/=scale_num;}
     void normalize_len(double scale_len){
         if(scale_len)
@@ -88,17 +93,22 @@ struct BranchTree
     }
     bool init(NeuronTree in_nt);
     bool init_branch_sequence(); //from tip-branch to soma-branch
+    bool to_soma_br_seq(V3DLONG inbr_index,BranchSequence & brs);
     bool get_enhacedFeatures();
+    vector< vector<V3DLONG> > get_branch_child_index();
     bool get_branch_child_angle();
+    bool get_branch_angle_io();
     void get_globalFeatures();
     vector<int> getBranchType();
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
 };
-void scale_swc(NeuronTree& nt,float scale_xy=1.0,float scale_z=0.3);
+void radius_scale(NeuronTree& nt,float rs=1.0);
+void scale_swc(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
 NeuronTree branchTree_to_neurontree(const BranchTree& bt);
 BranchTree readBranchTree_file(const QString& filename);
-bool writeBranchMotif_file(const QString& filename, const BranchTree& bt);
+bool writeBranchMotif_file(const QString& filename,BranchTree& bt);
+bool SWC2Motif(const QString& outpath,BranchTree& bt);
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre=5);

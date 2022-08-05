@@ -379,7 +379,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
-    }
+    } 
     else if (func_name == tr("branch_motif"))
     {
         /* designed by shengdian, 2022-06-22
@@ -395,11 +395,12 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         else { printHelp(); return false;}
         //read para
-        float pixelz=(inparas.size()>=1)?atof(inparas[0]):0.3;
-        float pixel_xy=(inparas.size()>=2)?atof(inparas[1]):1.0;
+        float r_scale=(inparas.size()>=1)?atof(inparas[0]):1.0;
+//        float pixelz=(inparas.size()>=2)?atof(inparas[1]):1.0;
         //read swc
         NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
-        scale_swc(nt,pixel_xy,pixelz);
+//        scale_swc(nt,shift_pixel,r_scale);
+        radius_scale(nt,r_scale);
         //convert to branch-tree
         BranchTree bt;
         bt.initialized=bt.init(nt);
@@ -408,9 +409,41 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         //write branch motif to file
         string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
         if(bt.get_enhacedFeatures()){
-            if(bt.get_branch_child_angle())
+            if(bt.get_branch_child_angle()&&bt.get_branch_angle_io())
                 writeBranchMotif_file(QString::fromStdString(out_f),bt);
         }
+    }
+    else if (func_name == tr("swc2motif"))
+    {
+        /* designed by shengdian, 2022-07-22
+         * ---for converting neuron tree into branching motif
+         * --Usage--
+         * input: swc or eswc file
+         * output: outdir/<list of motif.eswc>
+        */
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else { printHelp(); return false;}
+        //read para
+//        float pixelz=(inparas.size()>=1)?atof(inparas[0]):0.3;
+//        float pixel_xy=(inparas.size()>=2)?atof(inparas[1]):1.0;
+        //read swc
+        NeuronTree nt = readSWC_file(inswc_file);
+//        scale_swc(nt,pixel_xy,pixelz);
+        //convert to branch-tree
+        BranchTree bt;
+        bt.initialized=bt.init(nt);
+        bt.init_branch_sequence();
+        //save to path
+        //write branch motif to file
+        QString outpath=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
+        QDir path(outpath);
+        if(!path.exists()) {
+            cout<<"make a new dir for saving motifs "<<endl;
+            path.mkpath(outpath);
+        }
+//        string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
+        SWC2Motif(outpath,bt);
     }
     else if (func_name == tr("SWC_to_branches"))
     {

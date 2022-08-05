@@ -146,36 +146,140 @@ NeuronTree resample(NeuronTree input, double step)
         result.hashNeuron.insert(result.listNeuron[i].n, i);
     return result;
 }
-
-vector<int> getNodeType(NeuronTree nt)
+double seg_median(std::vector<double> input)
 {
-    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1
-    PS: not have to be a single tree
+    double mout=0;
+    //冒泡排序将数组排序
+    for(int i=0;i<input.size()-1;i++){
+        for(int j=0;j<input.size()-1-i;j++){
+            if(input[j]>input[j+1]){
+                double t=input[j+1];
+                input[j+1]=input[j];
+                input[j]=t;
+            }
+        }
+    }
+    if(input.size()%2==0){
+        int b=input.size()/2;
+        mout=(input[b]+input[b-1])/2.0;
+    }
+    else
+        mout=input[(input.size()-1)/2];
+    return mout;
+}
+bool getNodeOrder(NeuronTree nt,vector<int> & norder)
+{
+    /*soma order=0
+     * Workflow
+     * 1. get node type;
+     * 2. from one node to soma,count how many branch nodes will be scanned.
+     * 3.out
+     * PS: neuron tree must have only one soma node
     */
-    /*1. get tip, branch and soma nodes;    */
-    V3DLONG siz=nt.listNeuron.size();
-    vector<int> ntype(siz,0);
-    if(!siz) {return ntype;}
-    /*1. get the index of nt:     * swc_n -> index */
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) { return false;}
+
     QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
+    V3DLONG somaid=get_soma(nt);
+    if(somaid<0){cout<<"no soma"<<endl;return false;}
+    cout<<"Soma index="<<somaid<<endl;
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
-        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
-            ntype[i]=2; //soma node
+        if(ntype.at(i)>2&&somaid!=i)
+            return false;
     }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        if(somaid==i)
+            continue;
+        NeuronSWC s_iter=s;
+        long pIndex=hashNeuron.value(s_iter.pn);
+        int ptype=ntype[pIndex];
+        /*for all the nodes except soma_node*/
+        while(ptype<3)
+        {
+            if(ptype==2)
+                norder[i]+=1;
+            s_iter=nt.listNeuron[pIndex];
+            pIndex=hashNeuron.value(s_iter.pn);
+            ptype=ntype[pIndex];
+        }
+        norder[i]+=1;
+    }
+    return true;
+}
+std::vector<int> getNodeType(NeuronTree nt)
+{
+    /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1
+    PS: not have to be a single tree */
+    V3DLONG siz=nt.listNeuron.size();
+    std::vector<int> ntype(siz,0);    if(!siz) {return ntype;}
+//    cout<<"size="<<ntype.size()<<endl;
+    V3DLONG somaid=get_soma(nt);
+    if(somaid>=0)
+        ntype[somaid]=2;
+    else
+        cout<<"no soma node"<<endl;
+    /*1. get the index of nt:     * swc_n -> index */
+    QHash <V3DLONG, V3DLONG>  hashNeuron;
+    for (V3DLONG i=0;i<siz;i++)
+        hashNeuron.insert(nt.listNeuron[i].n,i);
     // 2. get node type: index -> node_type
     for (V3DLONG i=0;i<siz;i++)
     {
         NeuronSWC s = nt.listNeuron[i];
-        if(s.pn&&hashNeuron.contains(s.pn))
+        if(s.pn>=0&&hashNeuron.contains(s.pn))
         {
             V3DLONG spn_id=hashNeuron.value(s.pn);
             ntype[spn_id]+=1;
         }
     }
+
+//    cout<<"size="<<ntype.size()<<endl;
     return ntype;
 }
+/*swc processing*/
+V3DLONG get_soma(NeuronTree & nt,bool connect){
+    V3DLONG niz=nt.listNeuron.size();
+    V3DLONG somaid=-1;
+    if(connect){
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.pn<0&&s.type!=1){
+                cout<<"---------------Attempt to process multiple -1 nodes-----------------------"<<endl;
+                //find the node with same coordinates
+                for(V3DLONG j=0;j<niz;j++){
+                    NeuronSWC sj=nt.listNeuron.at(j);
+                    if(i!=j&&s.x==sj.x&&s.y==sj.y&&s.z==sj.z)
+                    {
+                        nt.listNeuron[i].pn=sj.n;
+                    }
+                }
+            }
+        }
+    }
+    for(V3DLONG i=0;i<niz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(s.pn<0){
+            if(s.type==1){
+                if(somaid>0)
+                {
+                    cout<<"---------------Error: multiple soma nodes!!!-----------------------"<<endl;
+                    return -1;
+                }else
+                    somaid=i;
+            }
+            else{
+                cout<<"-------------- multiple -1 nodes!!!-----------------------"<<endl;
+                return -1;
+            }
+        }
+    }
+    return somaid;
+}
+
 vector<int> getNodeTips(NeuronTree nt)
 {
     /*for each nodes, get its subtree, get the node type of subtree, count the type*/
@@ -226,20 +330,22 @@ vector<int> getNodeOrder(NeuronTree nt)
      * 3.out
     */
     V3DLONG siz=nt.listNeuron.size();
-    vector<int> ntype(siz,0);
     vector<int> norder(siz,0);
-    ntype=getNodeType(nt);
     if(!siz)
         return norder;
     /*1. get the index of nt:
                                         * swc_n -> index */
-    QHash <int, int>  hashNeuron;hashNeuron.clear();
-    V3DLONG somaid=1;
+
+    QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
+    V3DLONG somaid=get_soma(nt);
+    if(somaid<0){cout<<"no soma"<<endl;return norder;}
+    cout<<"Soma index="<<somaid<<endl;
+    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
-        if(nt.listNeuron[i].type==1&&nt.listNeuron[i].pn<0)
-            somaid=i;
+        if(ntype.at(i)>2&&somaid!=i)
+            return norder;
     }
     for (V3DLONG i=0;i<siz;i++)
     {
