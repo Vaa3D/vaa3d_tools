@@ -1,0 +1,448 @@
+{
+    "intensity_normalization": {
+        "name": "Intensity Normalization",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
+        "parameters": {
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 30,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 200,
+                    "increment": 0.005
+                }
+            ]
+        }
+    },
+    "intensity_normalization_with_bound": {
+        "name": "Intensity Normalization with bound",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
+        "parameters": {
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 30,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": -10,
+                    "max": 200,
+                    "increment": 0.005
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 20,
+                    "max": 1000,
+                    "increment": 20
+                },
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 50,
+                    "max": 8000,
+                    "increment": 50
+                }
+            ]
+        }
+    },
+    "intensity_normalization_min_max_with_bound": {
+        "name": "Intensity Normalization using min-max with bound",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "intensity_normalization",
+        "parameters": {
+            "scaling_param": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "int",
+                    "min": 50,
+                    "max": 10000,
+                    "increment": 50
+                }
+            ]
+        }
+    },
+    "edge_preserving_smoothing": {
+        "name": "Edge Preserving Smoothing",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "edge_preserving_smoothing_3d",
+        "parameters": null
+    },
+    "filament_filter_slice_by_slice": {
+        "name": "Filament Filter Slice by Slice",
+        "python::module": "aicssegmentation.core.vessel",
+        "python::function": "vesselnessSliceBySlice",
+        "parameters": {
+            "sigmas": [
+                {
+                    "widget_type": "slider",
+                    "data_type": "float",
+                    "min": 0.5,
+                    "max": 5,
+                    "increment": 0.5
+                }
+            ],
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "size_filter": {
+        "name": "Size Filter",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "size_filter",
+        "parameters": {
+            "min_size": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 500,
+                "increment": 1
+            },
+            "method": {
+                "widget_type": "drop-down",
+                "data_type": "str",
+                "options": [
+                    "3D",
+                    "slice_by_slice"
+                ]
+            }
+        }
+    },
+    "filament_filter_3D": {
+        "name": "Filament Filter 3D",
+        "python::module": "aicssegmentation.core.vessel",
+        "python::function": "vesselness3D",
+        "parameters": {
+            "sigmas": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 5,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.005,
+                "max": 0.5,
+                "increment": 0.005
+            }
+        }
+    },
+    "gaussian_smoothing_slice_by_slice": {
+        "name": "Gaussian Smoothing Slice by Slice",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_slice_by_slice",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0.5,
+                "max": 10,
+                "increment": 0.5
+            }
+        }
+    },
+    "spot_filter_3D": {
+        "name": "Spot Filter 3D",
+        "python::module": "aicssegmentation.core.seg_dot",
+        "python::function": "dot_3d",
+        "parameters": {
+            "log_sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 0.5,
+                "increment": 0.001
+            }
+        }
+    },
+    "gaussian_smoothing_3D": {
+        "name": "Gaussian Smoothing 3D",
+        "python::module": "aicssegmentation.core.pre_processing_utils",
+        "python::function": "image_smoothing_gaussian_3d",
+        "parameters": {
+            "sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.5
+            }
+        }
+    },
+    "spot_filter_slice_by_slice": {
+        "name": "Spot Filter Slice by Slice",
+        "python::module": "aicssegmentation.core.seg_dot",
+        "python::function": "dot_slice_by_slice",
+        "parameters": {
+            "log_sigma": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 10,
+                "increment": 0.05
+            },
+            "cutoff": {
+                "widget_type": "slider",
+                "data_type": "float",
+                "min": 0,
+                "max": 1,
+                "increment": 0.001
+            }
+        }
+    },
+    "hole_filling": {
+        "name": "Hole Filling",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "hole_filling",
+        "parameters": {
+            "hole_min": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 50,
+                "increment": 1
+            },
+            "hole_max": {
+                "widget_type": "slider",
+                "data_type": "int",
+                "min": 0,
+                "max": 10000,
+                "increment": 1
+            },
+            "fill_2d": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "find_local_maxima": {
+        "name": "Find Local Maxima",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "peak_local_max_wrapper",
+        "parameters": null
+    },
+    "watershed_for_cutting": {
+        "name": "Watershed for cutting",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "watershed_wrapper",
+        "parameters": null
+    },
+    "watershed_for_segmentation": {
+        "name": "Watershed for segmentation",
+        "python::module": "skimage.segmentation",
+        "python::function": "watershed",
+        "parameters": {
+            "watershed_line": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "prune_z_slices": {
+        "name": "Prune Z-Slices",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "prune_z_slices",
+        "parameters": null
+    },
+    "topology_preserving_thinning": {
+        "name": "Topology Preserving Thinning",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "topology_preserving_thinning",
+        "parameters": {
+            "min_thickness": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 10,
+                "increment": 0.2
+            },
+            "thin": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 50,
+                "increment": 1
+            }
+        }
+    },
+    "masked_object_treshold_high_level": {
+        "name": "Masked Object Threshold - Part 2: high level",
+        "python::module": "aicssegmentation.core.MO_threshold",
+        "python::function": "MO_high_level",
+        "parameters": {
+            "extra_criteria": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            },
+            "local_adjust": {
+                "data_type": "float",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2,
+                "increment": 0.02
+            }
+        }
+    },
+    "masked_object_treshold_low_level": {
+        "name": "Masked Object Threshold - Part 1: low level",
+        "python::module": "aicssegmentation.core.MO_threshold",
+        "python::function": "MO_low_level",
+        "parameters": {
+            "global_thresh_method": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "triangle",
+                    "median",
+                    "ave_tri_med"
+                ]
+            },
+            "object_minArea": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 2000,
+                "increment": 50
+            },
+            "dilate": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "invert_image": {
+        "name": "Invert Image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "invert_mask",
+        "parameters": null
+    },
+    "mask_image": {
+        "name": "Mask Image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "mask_image",
+        "parameters": {
+            "value": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 255,
+                "increment": 1
+            }
+        }
+    },
+    "merge_segmentation": {
+        "name": "Merge Segmentation",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "segmentation_union",
+        "parameters": null
+    },
+    "segmentation_xor": {
+        "name": "Segmentation XOR",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "segmentation_xor",
+        "parameters": null
+    },
+    "generate_seeding_image": {
+        "name": "Generate seeding image",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "get_seed_for_objects",
+        "parameters": {
+            "area_min": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 1000,
+                "increment": 100
+            },
+            "area_max": {
+                "data_type": "int",
+                "widget_type": "slider",
+                "min": 0,
+                "max": 50000,
+                "increment": 100
+            },
+            "bg_seed": {
+                "widget_type": "drop-down",
+                "data_type": "bool",
+                "options": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    "remove_index_object": {
+        "name": "Remove Index Object",
+        "python::module": "aicssegmentation.core.utils",
+        "python::function": "remove_index_object",
+        "parameters": null
+    },
+    "extract_boundary_of_objects": {
+        "name": "Extract Boundary of Objects",
+        "python::module": "skimage.segmentation",
+        "python::function": "find_boundaries",
+        "parameters": {
+            "connectivity": {
+                "data_type": "int",
+                "widget_type": "drop-down",
+                "options": [
+                    1,
+                    2,
+                    3
+                ]
+            },
+            "mode": {
+                "data_type": "str",
+                "widget_type": "drop-down",
+                "options": [
+                    "thick",
+                    "inner",
+                    "outer"
+                ]
+            }
+        }
+    }
+}

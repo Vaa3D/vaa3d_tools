@@ -1,0 +1,88 @@
+{
+    "1": {        
+        "category": "preprocessing",        
+        "function": "intensity_normalization",
+        "parameter_values": {
+            "scaling_param": [
+                3,
+                19
+            ]
+        },
+        "parent": 0
+    },
+    "2": {        
+        "category": "preprocessing",        
+        "function": "gaussian_smoothing_slice_by_slice",
+        "parameter_values": {
+            "sigma": 1
+        },
+        "parent": 1
+    },
+    "3": {        
+        "category": "core",        
+        "function": "filament_filter_slice_by_slice",
+        "parameter_values": {
+            "sigmas": [
+                1
+            ],
+            "cutoff": 0.15
+        },
+        "parent": 2
+    },
+    "4": {        
+        "category": "core",        
+        "function": "spot_filter_slice_by_slice",
+        "parameter_values": {
+            "log_sigma": 5,
+            "cutoff": 0.09
+        },
+        "parent": 2
+    },
+    "5": {        
+        "category": "core",        
+        "function": "spot_filter_slice_by_slice",
+        "parameter_values": {
+            "log_sigma": 2.5,
+            "cutoff": 0.07
+        },
+        "parent": 2
+    },
+    "6": {        
+        "category": "core",        
+        "function": "spot_filter_slice_by_slice",
+        "parameter_values": {
+            "log_sigma": 1,
+            "cutoff": 0.01
+        },
+        "parent": 2
+    },
+    "7": {        
+        "category": "core",        
+        "function": "merge_segmentation",
+        "parent": [
+            3,
+            4,
+            5,
+            6
+        ]
+    },
+    "8": {        
+        "category": "postprocessing",        
+        "function": "hole_filling",
+        "parameter_values": {
+            "hole_min": 0,
+            "hole_max": 1600,
+            "fill_2d": true
+        },
+        "parent": 7
+    },
+    "9": {        
+        "category": "postprocessing",        
+        "function": "size_filter",
+        "parent": 8,
+        "parameter_values": {
+            "min_size": 15,
+            "method": "3D"
+        }
+    }
+}

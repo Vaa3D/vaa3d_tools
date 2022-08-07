@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
     //correction_tile_via_ave_region_peak();
 
 
-    //stitch_one_plane();
-    stitch_all_planes_24tiles();
+    stitch_one_plane();
+    //stitch_all_planes_24tiles();
     //stitch_2img_down_cover_up();
 
     //shift_global_optimization();
@@ -1926,6 +1926,7 @@ void stitch_one_plane()
     tms[23].set(5458, 7193);
 
 /*
+ * // Mat result = Mat::zeros(3104, 3876, CV_16UC1);
     tms[0].set(0, 0);
     tms[1].set(1802, -1);
     tms[2].set(15, 1443);

@@ -12,6 +12,7 @@
 #include "color_xyz.h"
 #include <iostream>
 #include "my_fun.h"
+#include "histeq.h"
 using namespace std;
 class UnsortedPlugin : public QObject, public V3DPluginInterface2_1
 {

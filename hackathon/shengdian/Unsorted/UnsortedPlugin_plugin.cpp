@@ -29,6 +29,7 @@ QStringList UnsortedPlugin::funclist() const
           <<tr("Crop_terafly_block")
          <<tr("RadiusContour")
         <<tr("getTipBlock")
+       <<tr("retype")
        <<tr("getTipComponent")
       <<tr("renderingSWC")
      <<tr("SomaRefinement")
@@ -38,6 +39,7 @@ QStringList UnsortedPlugin::funclist() const
     <<tr("multi_stems")
     <<tr("get_soma_apo")
     <<tr("swc_combine")
+    <<tr("hist_equal")
     <<tr("mask_img_from_swc")
     <<tr("help");
 }
@@ -89,6 +91,48 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         else
             cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
+    }
+    else if (func_name == tr("preprocess"))
+    {
+        /*preprocess:
+         * i)to a swc/eswc file;
+         * ii)to a path with neuron reconstructions
+        step 1: processing of multiple -1 nodes
+        For each node, if its parent index is
+            1) -1; check if parent node is a duplicated node.
+                        if yes, delete parent node and set to duplicated node (should not -1 node)
+            2) >=0; check existence.
+                        if not, record it
+             out: #origin-nodes(p=-1), #after-processing-nodes(p=-1), #nodes(parent-index not existed)
+        step 2: conneted tree:
+        > if #after-processing-nodes(p=-1) =1 & #nodes(parent-index not existed) =1, this should be only one connected tree; sort
+                *what: each node is connected, which means i can index to every node from one node.
+                *should be only one connected tree, if more than one, get the permission to
+                        * a) keep the biggest one; or
+                        * b) highlight the small one (color=write);
+         * 2. soma/root node: should be only one root
+         *
+        */
+        QString inswc= infiles[0];
+        NeuronTree nt=readSWC_file(inswc);
+        V3DLONG niz=nt.listNeuron.size();
+        int somaid=0;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.type==1&&s.pn<0)
+            {somaid=i;break;}
+        }
+        int stems=0;
+        for(V3DLONG i=0;i<niz;i++){
+            NeuronSWC s=nt.listNeuron.at(i);
+            if(s.pn>0&&somaid==nt.hashNeuron.value(s.pn))
+            {
+                stems++;
+            }
+        }
+        QString outswc=(outfiles.size()>=1)?outfiles[0]:inswc+"_multi_stem.swc";
+        if(stems>1)
+            writeSWC_file(outswc,nt);
     }
     else if (func_name==tr("swc_combine"))
     {
@@ -175,6 +219,44 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         maskImg(callback,inimg1d,save_path_img,in_sz,nt,maskRadius,erosion_kernel_size);
         if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    }
+    else if (func_name==tr("hist_equal"))
+    {
+        if(input.size() < 1 || output.size() != 1)
+            return false;
+
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        unsigned char lowerbound=(inparas.size()>=1)?atoi(inparas[0]):30;
+        unsigned char higherbound=(inparas.size()>=2)?atoi(inparas[1]):255;
+        //read img
+
+        unsigned char * inimg1d = 0;
+        V3DLONG in_sz[4];
+        int datatype;
+        if(!simple_loadimage_wrapper(callback,inimg_file, inimg1d, in_sz, datatype)) return false;
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        hist_eq_range_uint8(inimg1d,pagesz,lowerbound,higherbound);
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)inimg1d, in_sz, 1);
+        if(inimg1d) {delete []inimg1d; inimg1d=0;}
+    }
+    else if (func_name==tr("retype"))
+    {
+        /*scan all the swc files in a folder
+         *rendering into differenct colors
+        */
+        //for all the swc files
+        QString swcpath = infiles[0];
+        QString outpath=outfiles[0];
+        int toType=(inparas.size()>=1)?atoi(inparas[0]):3;
+        NeuronTree nt = readSWC_file(swcpath);
+        V3DLONG siz=nt.listNeuron.size();
+        for(V3DLONG i=0;i<siz;i++){
+            nt.listNeuron[i].type=toType;
+            if(nt.listNeuron.at(i).pn<0)
+                nt.listNeuron[i].type=1;
+        }
+        writeSWC_file(outpath,nt);
     }
     else if (func_name==tr("renderingSWC"))
     {

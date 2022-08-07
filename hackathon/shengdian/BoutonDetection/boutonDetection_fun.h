@@ -270,6 +270,7 @@ struct AxonalBouton
     }
 };
 /*preprocess*/
+void neuron_checking_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 QList<NeuronTree> nt_2_trees(NeuronTree& nt);
 NeuronTree preprocess_simple(NeuronTree nt);//for swc in an image block
