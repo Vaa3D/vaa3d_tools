@@ -64,7 +64,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         string inswc_file=infiles[0];
         QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
         NeuronTree result= b.refine_bifurcation_by_gd(braindir,callback,eswcfile);
-        //QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
+//        QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
         writeSWC_file(eswcfile,result);
     }
     else if (func_name == tr("help"))
@@ -91,7 +91,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
  }else if(func_name==tr("feature_extraction_rate")){
         string inimg_file= infiles[1];
         string inswc_file=infiles[0];
-//        QString inputfolder=QString::fromStdString(infiles[0]);
+//        QString inputfolder=QString::fromStdString(infiles[0]);y
         NeuronTree nt=readSWC_file(infiles[0]);
         float feature_extraction_rate;
         feature_extraction_rate=get_feature_extraction_rate(inimg_file,nt,callback);
