@@ -3192,7 +3192,7 @@ NeuronTree SwcTree::refine_bifurcation_by_gd(QString braindir, V3DPluginCallback
         {
             branchs[branchindex].length_to_soma = branchs[branchindex].parent->length_to_soma + branchs[branchindex].parent->length;
         }
-        if(children_b[branchindex].size()==2 && branchs[branchindex].length_to_soma>150 && branchs[branchindex].level>3 && branchs[branchindex].flag_near_dendrite==0 && branchs[branchindex].length>min_length){
+        if(children_b[branchindex].size()==2 && branchs[branchindex].length_to_soma>150 && branchs[branchindex].level>3 && branchs[branchindex].flag_near_dendrite==0 && branchs[branchindex].allpoints.size()>min_length){
            if(branchs[children_b[branchindex][0]].length>min_length && branchs[children_b[branchindex][1]].length>min_length){
                qDebug()<<"----------------branch point refinement processing-----------------"<<endl;
 
@@ -3396,20 +3396,19 @@ NeuronTree SwcTree::refine_bifurcation_by_gd(QString braindir, V3DPluginCallback
            }
 
         }
-
-        for(int i=0; i<cur_b.allpoints.size(); ++i)
-        {
-            NeuronSWC p;
-            p.n = i;
-            p.parent = (p.n==0) ? -1 : i - 1;
-            p.x = cur_b.allpoints[i].x;
-            p.y = cur_b.allpoints[i].y;
-            p.z = cur_b.allpoints[i].z;
-            p.r=1;
-            p.type = type;
-//            cur_b.allpoints[i] = p;
-            points.push_back(p);
-        }
+            for(int i=0; i<cur_b.allpoints.size(); ++i)
+            {
+                NeuronSWC p;
+                p.n = i;
+                p.parent = (p.n==0) ? -1 : i - 1;
+                p.x = cur_b.allpoints[i].x;
+                p.y = cur_b.allpoints[i].y;
+                p.z = cur_b.allpoints[i].z;
+                p.r=1;
+                p.type = type;
+    //            cur_b.allpoints[i] = p;
+                points.push_back(p);
+            }
 //        pointslist.push_back(cur_b.allpoints);
         qDebug()<<"points size: "<<points.size();
         pointslist.push_back(points);
@@ -3582,7 +3581,7 @@ void  blend(NeuronTree &nt1,NeuronTree &nt2,QString file_out){
     cout<<"1"<<endl;
     branch_order(a,b,branch_map);
     cout<<"2"<<endl;
-    vector<vector<NeuronSWC>> pointslist;
+    vector<vector<NeuronSWC> > pointslist;
     map<int,int> branchindex_to_pointslistindex;
     while(!queue_a.empty())
     {
