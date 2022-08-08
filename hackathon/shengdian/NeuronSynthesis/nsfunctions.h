@@ -107,6 +107,8 @@ void radius_scale(NeuronTree& nt,float rs=1.0);
 void scale_swc(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
 NeuronTree branchTree_to_neurontree(const BranchTree& bt);
 BranchTree readBranchTree_file(const QString& filename);
+bool soma_motif_fea(const QString& filename,BranchTree& bt);
+bool SWC2SomaMotif(const QString& filename,BranchTree& bt);
 bool writeBranchMotif_file(const QString& filename,BranchTree& bt);
 bool SWC2Motif(const QString& outpath,BranchTree& bt);
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced=false);

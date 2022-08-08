@@ -379,7 +379,36 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
             writeESWC_file(QString::fromStdString(out_swc_file),nt_out);
         else
             writeSWC_file(QString::fromStdString(out_swc_file),nt_out);
-    } 
+    }
+    else if (func_name == tr("soma_motif"))
+    {
+        /* designed by shengdian, 2022-08-08
+         * ---for generation of soma motif
+            * motif_csv ( # angle with the nearest stem)
+                * id, type, length, pathlength, radius, angle, angle_remote
+         * --Usage--
+         * input: swc or eswc file
+         * output: <motif>.csv and soma_motif.swc
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else { printHelp(); return false;}
+        //read swc
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        //convert to branch-tree
+        BranchTree bt;
+        bt.initialized=bt.init(nt);
+        bt.init_branch_sequence();
+        //save to file
+        //write branch motif to file
+        string out_motif=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
+        string out_swc=(outfiles.size()>=2)?outfiles[1]:(inswc_file + ".eswc");
+
+        if(bt.get_enhacedFeatures()){
+            soma_motif_fea(QString::fromStdString(out_motif),bt);
+            SWC2SomaMotif(QString::fromStdString(out_swc),bt);
+        }
+    }
     else if (func_name == tr("branch_motif"))
     {
         /* designed by shengdian, 2022-06-22
