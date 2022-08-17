@@ -64,7 +64,7 @@ void APP2_ported::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 bool APP2_ported::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("tracing_func"))
+    if (func_name == tr("tracing_func"))
 	{
         bool bmenu = false;
         input_PARA PARA;

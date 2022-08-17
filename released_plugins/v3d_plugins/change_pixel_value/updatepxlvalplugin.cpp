@@ -107,11 +107,11 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
     V3DLONG in_sz[4];
 
     int datatype;
-    if(simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
-    {
-        cerr<<"load image "<<inimg_file<<" error!"<<endl;
-        return false;
-    }
+simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype);
+//    {
+//        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+//        return false;
+//    }
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
