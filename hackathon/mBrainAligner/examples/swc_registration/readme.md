@@ -10,33 +10,48 @@ Please modify the path of each file in ".bat ", input the original image and res
 
 <the path to input file>
 -C <input_CCF_marker>  input _RPM_tar.marker file full name.
+
 -M <input_Manual_marker>	input _RPM_sub.marker file full name.
+
 -o <input_original_swc>	input original swc file full name.
+
 -T <input_tar_auto_marker>  input ori_local_registered_tar.marker file full name.
+
 -S <input_brain_auto_marker>     input ori_local_registered_sub.marker file full name.
+
 -d <input_FFD_grid>  input _FFD_grid.swc file full name. If FFD is included in the brain registration, add it.
+
 <the size to original brain image>
 -X <original image size_x>   input original brain image size_x.
+
 -Y <original image size_y>   input original brain image size_y.
+
 -Z <original image size_z>   input original brain image size_z.
+
 <the size to resample or stripmove brain image>
 -x <resample image size_x>   input resample brain image size_x.
+
 -y <resample image size_y>   input resample brain image size_y.
+
 -z <resample image size_z>   input resample brain image size_z.
+
 <the size to template brain image,default [568 320 456], is "average_template_25_u8_xpad.v3draw", an Allen CCF brain>
 -a <average_template image size_x>   input average_template brain image size_x.
+
 -b <average_template image size_y>   input average_template brain image size_y.
+
 -c <average_template image size_z>   input average_template brain image size_z.
+
 -p <pading_x>       input template brain xpad, if you don't want to keep it, default 20.
+
 <the path to output swc file>
 -r <out_resample_swc>    output resample_swc file full name.
+
 -f <out_affine_swc>     output affine_swc file full name.
+
 -s <out_stps_swc>     output stps_swc file full name, this is the end result.
 
 #### Step 2: Double-click on "run_swc_warp.bat" to run.
-
-
-
 
 
 ```
