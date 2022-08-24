@@ -5,7 +5,7 @@ Registration of neuron reconstructions is important for comparative studies acro
 
 ### SWC registration pipeline--windows version
 
-#### Step 1: Modify the file path and the brain size in "run_swc_warp.bat". (The following table describes the parameters)
+#### Step 1: Modify the file path and the brain size in "example/run_swc_warp.bat". (The following table describes the parameters)
 
 Please modify the path of each file in ".bat ", input the original image and resample image size, and modify the template brain size if necessary (default [568,320,456]). The meanings of each parameter are as follows.
 
@@ -60,23 +60,43 @@ Please modify the path of each file in ".bat ", input the original image and res
 #### Step 2: Double-click on "run_swc_warp.bat" to run.
 
 ### SWC registration pipeline--linux version  
-  
+#### Step 1: Modify the file path and the brain size in "example/run_swc_warp_linux.sh".   
+#### Step 2: Ctrl+Alt+t to open terminal
+
+    cd "(your file path)/binary/linux_bin/"
+    tar xvJf lib.tar.xz
+    sudo gedit /etc/ld.so.conf
+    add the "(your file path)/binary/linux_bin/lib/"  to the last line of '/etc/ld.so.conf' and save.
+    sudo ldconfig
+    sudo chmod 777 -R  swc_registration
+    cd "(your file path)/examples/"
+
+Then run
+    sh run_swc_warp_linux.sh  
 
 ```
 pipeline-registration
-.
-├── sample_data
-│   ├── raw_RPM_tar.marker
-│   ├── raw_RPM_sub.marker
-|	├── original_data.swc
-│   ├── raw_FFD_grid.swc
-│   ├── ori_local_registered_sub.marker
-|	├── ori_local_registered_tar.marker
-│   
-├── result
-|	
-├── swc_registration.exe
-|	
-└── run_swc_warp.bat
+
+├────examples
+│   ├──── sample_data
+│   |  ├── raw_RPM_tar.marker
+│   |  ├── raw_RPM_sub.marker
+|	  |  ├── original_data.swc
+│   |  ├── raw_FFD_grid.swc
+│   |  ├── ori_local_registered_sub.marker
+|	  |  └── ori_local_registered_tar.marker
+|   ├──── result
+│   ├────run_swc_warp.bat
+│   └────run_swc_warp_linux.sh
+└────binary
+    ├──── linux_bin
+    |  ├── lib.tar.xz
+    |  └── swc_registration
+    └───── win64_bin
+       ├── Qt5Core.dll
+       ├── Qt5Gui.dll
+       ├── Qt5Widgets.dll
+       └── swc_registration.exe     
+
 ```
 
