@@ -61,7 +61,9 @@ Please modify the path of each file in ".bat ", input the original image and res
 
 ### SWC registration pipeline--linux version  
 #### Step 1: Modify the file path and the brain size in "example/run_swc_warp_linux.sh".   
-#### Step 2: Ctrl+Alt+t to open terminal
+#### Step 2: 
+
+Ctrl+Alt+t to open terminal
 
     cd "(your file path)/binary/linux_bin/"
     tar xvJf lib.tar.xz
@@ -74,20 +76,19 @@ Please modify the path of each file in ".bat ", input the original image and res
 Then run
     sh run_swc_warp_linux.sh  
 
+### pipeline-registration
 ```
-pipeline-registration
-
 ├────examples
 │   ├──── sample_data
+│   |  ├── original_data.swc
+│   |  ├── raw_FFD_grid.swc
 │   |  ├── raw_RPM_tar.marker
 │   |  ├── raw_RPM_sub.marker
-|	  |  ├── original_data.swc
-│   |  ├── raw_FFD_grid.swc
 │   |  ├── ori_local_registered_sub.marker
-|	  |  └── ori_local_registered_tar.marker
+│   |  └── ori_local_registered_tar.marker
 |   ├──── result
-│   ├────run_swc_warp.bat
-│   └────run_swc_warp_linux.sh
+│   ├──── run_swc_warp.bat
+│   └──── run_swc_warp_linux.sh
 └────binary
     ├──── linux_bin
     |  ├── lib.tar.xz
@@ -97,6 +98,5 @@ pipeline-registration
        ├── Qt5Gui.dll
        ├── Qt5Widgets.dll
        └── swc_registration.exe     
-
 ```
 
