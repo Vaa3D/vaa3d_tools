@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "getopt.h"
 #include "stdafx.h"
-#include <io.h>
-#include <direct.h>
+//#include <io.h>
+//#include <direct.h>
 #include <cstdio>
 #include <cstring>
 #include <stdlib.h>
@@ -251,7 +251,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("ERROR: sub marker file is invalid.\n");
-		getchar();
 		return false;
 	}
 	if (qs_filename_CCF_marker.endsWith(".marker"))
@@ -262,7 +261,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("ERROR: tar marker file is invalid.\n");
-		getchar();
 		return false;
 	}
 
@@ -318,15 +316,16 @@ int main(int argc, char *argv[])
 
 	//warp
 	printf("----------Warp------------\n");
-	long long *sz_img_sub = 0, *sz_img_tar = 0;
+	long long sz_img_sub[4], sz_img_tar[4];
 	NeuronTree nt_sub;
 	vector<Coord3D_PCM> vec_ctlpt_affine_tar(8, Coord3D_PCM()), vec_ctlpt_affine_sub(8, Coord3D_PCM());
+	int pad_x, pad_y, pad_z;
 	QList<ImageMarker> ql_marker_tar, ql_marker_sub;
 
 	printf("1. Read input subject files. \n");
 	printf("1-1. Read subject marker file. \n");
 	
-	sz_img_sub = new V3DLONG[5]; sz_img_tar = new V3DLONG[5];
+	//sz_img_sub = new V3DLONG[5]; sz_img_tar = new V3DLONG[5];
 	sz_img_sub[0] = stol(x_average.toStdString()); sz_img_tar[0] = sz_img_sub[0];
 	sz_img_sub[1] = stol(y_average.toStdString()); sz_img_tar[1] = sz_img_sub[1];
 	sz_img_sub[2] = stol(z_average.toStdString()); sz_img_tar[2] = sz_img_sub[2];
@@ -346,7 +345,6 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("ERROR: at least one marker file is invalid.\n");
-		getchar();
 		return false;
 	}
 	//re-formate to vector
@@ -367,7 +365,6 @@ int main(int argc, char *argv[])
 		if (!qf.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
 			printf("ERROR: failed in loading affine grid swc files [%s].\n", qPrintable(qs_filename_ssd_grid));
-			getchar();
 			return false;
 		}
 		vector<QString> vec_lines;
@@ -380,10 +377,9 @@ int main(int argc, char *argv[])
 			//printf("%s", curline);
 			vec_lines.push_back(QString(curline));
 		}
-		if (vec_lines.size() != 16)
+		if (vec_lines.size() != 16 && vec_lines.size() != 17)
 		{
 			printf("ERROR: some thing wrong in affine grid swc file, should be 16 coordinates.\n");
-			getchar();
 			return false;
 		}
 		//parse target and subject points
@@ -404,12 +400,19 @@ int main(int argc, char *argv[])
 				vec_ctlpt_affine_tar[i].x, vec_ctlpt_affine_tar[i].y, vec_ctlpt_affine_tar[i].z,
 				vec_ctlpt_affine_sub[i].x, vec_ctlpt_affine_sub[i].y, vec_ctlpt_affine_sub[i].z);
 		}
+		qsl = vec_lines[16].trimmed().split(" ");
+		pad_x = qsl[0].toInt(); pad_y = qsl[1].toInt(); pad_z = qsl[2].toInt();
+		for (unsigned int i = 0; i < 4; i++)
+		{
+			vec_ctlpt_affine_sub[i + 4].x = vec_ctlpt_affine_sub[i + 4].x + 2 * pad_x;
+			vec_ctlpt_affine_tar[i + 4].x = vec_ctlpt_affine_tar[i + 4].x + 2 * pad_x;
+			vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
+			vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
+			vec_ctlpt_affine_sub[2 * i + 1].z = vec_ctlpt_affine_sub[2 * i + 1].z + 2 * pad_z;
+			vec_ctlpt_affine_tar[2 * i + 1].z = vec_ctlpt_affine_tar[2 * i + 1].z + 2 * pad_z;
+		}
 	}
-	//else
-	//{
-	//	printf("\t>>ERROR: No affine grid swc provided!\n");
-	//	return false;
-	//}
+
 
 	printf("2-2. FFD warp. \n");
 	nt_sub.copy(nt_affine_sub);
@@ -417,8 +420,7 @@ int main(int argc, char *argv[])
 	if (!qs_filename_ssd_grid.isNull())
 	{
 		printf("3. warp image based on affine grid. \n");
-		long sz_img_tar[4] = { vec_ctlpt_affine_tar[4].x + 1, vec_ctlpt_affine_tar[2].y + 1, vec_ctlpt_affine_tar[1].z + 1, 1 };
-
+		//long sz_img_tar[4] = { vec_ctlpt_affine_tar[4].x + 1, vec_ctlpt_affine_tar[2].y + 1, vec_ctlpt_affine_tar[1].z + 1, 1 };
 		printf("3-1. resize subject swc to the same size as target image. \n");
 		if (!qs_filename_stps_swc.isNull())
 		{
@@ -441,20 +443,19 @@ int main(int argc, char *argv[])
 			if (!q_affine_compute_affinmatrix_3D(vec_ctlpt_affine_sub, vec_ctlpt_affine_tar, x4x4_transmatrix))//	B=T*A
 			{
 				printf("ERROR: q_affine_compute_affinmatrix_3D() return false!\n");
-				getchar();
 				return 0;
 			}
 			Matrix x_ori(4, 1), x_trans(4, 1);
 			for (long long i = 0; i < nt_affine_sub.listNeuron.size(); i++)
 			{
-				x_ori(1, 1) = nt_affine_sub.listNeuron[i].x;
-				x_ori(2, 1) = nt_affine_sub.listNeuron[i].y;
-				x_ori(3, 1) = nt_affine_sub.listNeuron[i].z;
+				x_ori(1, 1) = nt_affine_sub.listNeuron[i].x + pad_x;
+				x_ori(2, 1) = nt_affine_sub.listNeuron[i].y + pad_y;
+				x_ori(3, 1) = nt_affine_sub.listNeuron[i].z + pad_z;
 				x_ori(4, 1) = 1.0;
 				x_trans = x4x4_transmatrix*x_ori;
-				nt_affine_sub.listNeuron[i].x = x_trans(1, 1) / x_trans(4, 1);
-				nt_affine_sub.listNeuron[i].y = x_trans(2, 1) / x_trans(4, 1);
-				nt_affine_sub.listNeuron[i].z = x_trans(3, 1) / x_trans(4, 1);
+				nt_affine_sub.listNeuron[i].x = x_trans(1, 1) / x_trans(4, 1) - pad_x;
+				nt_affine_sub.listNeuron[i].y = x_trans(2, 1) / x_trans(4, 1) - pad_y;
+				nt_affine_sub.listNeuron[i].z = x_trans(3, 1) / x_trans(4, 1) - pad_z;
 			}
 			nt_sub.copy(nt_affine_sub);
 		}
@@ -474,9 +475,9 @@ int main(int argc, char *argv[])
 		printf("Generate newton initial point offset vector\n");
 		vector<Coord3D_PCM> vec_offset;
 		{
-			long long l_centerpos_x = long long((sz_img_tar[0] + 1) / 2.0);
-			long long l_centerpos_y = long long((sz_img_tar[1] + 1) / 2.0);
-			long long l_centerpos_z = long long((sz_img_tar[2] + 1) / 2.0);
+			long long l_centerpos_x = (long long)((sz_img_tar[0] + 1) / 2.0);
+			long long l_centerpos_y = (long long)((sz_img_tar[1] + 1) / 2.0);
+			long long l_centerpos_z = (long long)((sz_img_tar[2] + 1) / 2.0);
 			long long l_centerpos_max = max(max(l_centerpos_x, l_centerpos_y), l_centerpos_z) + 1;
 			vector<vector<Coord3D_PCM>> vec2d_offset(l_centerpos_max, vector<Coord3D_PCM>());
 			Coord3D_PCM offset;
@@ -515,7 +516,6 @@ int main(int argc, char *argv[])
 				if (!q_stps_cd(vec_tar, vec_sub, 0.2, x4x4_affine, xnx4_c, xnxn_K))
 				{
 					printf("ERROR: q_stps_cd() return false.\n");
-					getchar();
 					return false;
 				}
 			}
@@ -734,7 +734,6 @@ int main(int argc, char *argv[])
 			if (!q_compute_ptwarped_from_stps_3D(spt_sub, vec_sub, x4x4_affine, xnx4_c, spt_sub2tar))
 			{
 				printf("ERROR: q_compute_ptwarped_from_tpspara_3D() return false.\n");
-				getchar();
 				return false;
 			}
 			nt_sub.listNeuron[i].x = spt_sub2tar.x;
@@ -746,13 +745,10 @@ int main(int argc, char *argv[])
 	}
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("4. free memory. \n");
-	if (sz_img_tar) 			{ delete[]sz_img_tar;			sz_img_tar = 0; }
-	if (sz_img_sub) 			{ delete[]sz_img_sub;			sz_img_sub = 0; }
 
 	printf("Program exit success.\n");
 
 	//½áÊø
-	getchar();
 	return 0;
 }
 
@@ -781,6 +777,5 @@ void printHelp()
 	printf("\t  -s   <filename_out_stps_swc>        output result swc file full name.\n");
 	printf("\n");
 	printf("\t [-h]	print this message.\n");
-	getchar();
 	return;
 }
