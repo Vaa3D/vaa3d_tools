@@ -1,10 +1,29 @@
-#ifndef NSFUNCTIONS_H
-#define NSFUNCTIONS_H
+#ifndef NEURO_MORPHO_LIB_H
+#define NEURO_MORPHO_LIB_H
 #include "basic_surf_objs.h"
 #include <vector>
 #include <iostream>
-#include"Utility_function.h"
 using namespace std;
+
+template<typename T>
+double dis(T node1, T node2){
+    ///for computing of distance between two nodes
+    double a = (node1.x - node2.x)*(node1.x - node2.x) + (node1.y - node2.y)*(node1.y - node2.y) + (node1.z - node2.z)*(node1.z - node2.z);
+    return sqrt(a);
+}
+template<typename T>
+double angle_3d(T n1, T n2, T n3, T n4){
+    ///for computing of angle between two 3d-vector
+    T v1,v2;
+    v1.x=n1.x-n2.x; v1.y=n1.y-n2.y; v1.z=n1.z-n2.z;
+    v2.x=n3.x-n4.x; v2.y=n3.y-n4.y; v2.z=n3.z-n4.z;
+    double v1_len=sqrt(v1.x*v1.x+v1.y*v1.y+v1.z*v1.z);
+    double v2_len=sqrt(v2.x*v2.x+v2.y*v2.y+v2.z*v2.z);
+    double angle_3d=(v1.x*v2.x+v1.y*v2.y+v1.z*v2.z)/(v1_len*v2_len);
+    //angle_3d=(angle_3d>0)?angle_3d:(-1.0)*angle_3d;
+    return (angle_3d);
+}
+
 struct BranchUnit
 {
     /*tail node: tip or branch nodes
@@ -20,19 +39,26 @@ struct BranchUnit
     */
     V3DLONG id; V3DLONG parent_id;
     int type,level;
-    double angle;//local angle of two child branches, if tip branch, angle=0
-    double angle_remote,angle_io1,angle_io2,angle_io1_remote,angle_io2_remote; //remote angle of two child branches; angle of input-branch and output-branch
+    //For a branching point, local or remote angle of two child branches, if tip branch, angle=0
+    double angle,angle_remote;
+     /*For a branching point, angle of input-branch and output-branch
+      * io1: input-branch with left-branch
+      * io2: input-branch with right-branch
+    */
+    double angle_io1,angle_io1_remote,angle_io2,angle_io2_remote;
+    /*in-branch-radius, left-branch-radius and right-branch-rdius*/
     double radius,lcradius,rcradius;
+    /*in-branch-length, left-branch-length and right-branch-length*/
     double length,pathLength;
     double lclength,lcpathLength,rclength,rcpathLength;
     double lslength,lspathLength,rslength,rspathLength;
-    double width,height,depth;
+    /*left-branch-tips and right-branch-tips*/
     uint lstips,rstips;
+     /*list of nodes of a branch: index=0 is the head (branching) node*/
     QList <NeuronSWC> listNode;
     QHash <int, int>  hashNode;
     BranchUnit() {
         id=0;parent_id=0;
-        width=height=depth=0.0;
         angle=angle_remote=angle_io2=angle_io1=angle_io1_remote=angle_io2_remote=0.0;
         type=level=0;
         radius=lcradius=rcradius=0.0;
@@ -69,6 +95,7 @@ struct BranchUnit
 };
 struct BranchSequence
 {
+    // branch sequence contains a list of branches from soma-stem to tip-branch
     QList<V3DLONG> listbr; //index of listBranch, not BranchUnit id
     int seqSize,seqLength,seqPathLength,seqType;
     BranchSequence() {
@@ -99,28 +126,33 @@ struct BranchTree
     bool get_enhacedFeatures();
     vector< vector<V3DLONG> > get_branch_child_index();
     bool get_branch_child_angle();
-    bool get_volsize();
     bool get_branch_angle_io();
     void get_globalFeatures();
     vector<int> getBranchType();
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
 };
-void radius_scale(NeuronTree& nt,float rs=1.0);
-void scale_swc(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
-NeuronTree branchTree_to_neurontree(const BranchTree& bt);
+void scale_nt_radius(NeuronTree& nt,float rs=1.0);
+void scale_nt_coor(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
+//NeuronTree branchTree_to_neurontree(const BranchTree& bt);
 BranchTree readBranchTree_file(const QString& filename);
-bool soma_motif_fea(const QString& filename,BranchTree& bt);
-bool SWC2SomaMotif(const QString& filename,BranchTree& bt);
-bool writeBranchMotif_file(const QString& filename,BranchTree& bt);
-bool SWC2Motif(const QString& outpath,BranchTree& bt);
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
-NeuronTree tip_branch_pruning(NeuronTree nt, int in_thre=5);
-NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
+
 NeuronTree to_topology_tree(NeuronTree nt);
+bool getNodeOrder(NeuronTree nt,vector<int> & norder);
+std::vector<int> getNodeType(NeuronTree nt);
 NeuronTree reindexNT(NeuronTree nt);
-NeuronTree three_bifurcation_processing(NeuronTree nt);
-NeuronTree redundancy_bifurcation_pruning(NeuronTree nt,bool not_remove_just_label=false);
-bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC=0);
-#endif // NSFUNCTIONS_H
+double getNT_len(NeuronTree nt,float *res);
+NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
+NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
+bool loop_checking(NeuronTree nt);
+bool three_bifurcation_processing(NeuronTree& in_nt);
+V3DLONG get_soma(NeuronTree& nt,bool connect=false);
+NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
+NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
+NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
+
+
+double seg_median(std::vector<double> input);
+#endif // NEURO_MORPHO_LIB_H

@@ -438,7 +438,7 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         //write branch motif to file
         string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
         if(bt.get_enhacedFeatures()){
-            if(bt.get_branch_child_angle()&&bt.get_branch_angle_io())
+            if(bt.get_branch_child_angle()&&bt.get_branch_angle_io()&&bt.get_volsize())
                 writeBranchMotif_file(QString::fromStdString(out_f),bt);
         }
     }

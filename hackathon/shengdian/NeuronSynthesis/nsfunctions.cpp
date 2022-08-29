@@ -231,7 +231,59 @@ bool BranchTree::get_branch_child_angle()
     }
     return true;
 }
+bool BranchTree::get_volsize()
+{
+    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0);
+    btype=this->getBranchType();
 
+    vector< vector<V3DLONG> > child_index_list=this->get_branch_child_index();
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if(btype.at(i)!=2)
+            continue;
+        if(child_index_list.at(i).size()!=2) {
+            cout<<this->listBranch.at(i).id<<" child branch size: "<<child_index_list.at(i).size()<<endl;
+            return false;
+        }
+        QList<BranchUnit> stems;stems.clear();
+         BranchUnit bu = this->listBranch.at(i);
+         stems.append(bu);
+        //left branch
+        V3DLONG lc=child_index_list.at(i).at(0);
+        BranchUnit lc_bu = this->listBranch.at(lc);
+        stems.append(lc_bu);
+        //right branch
+        V3DLONG rc=child_index_list.at(i).at(1);
+        BranchUnit rc_bu = this->listBranch.at(rc);
+        stems.append(rc_bu);
+
+        double w_min=999999999;
+        double w_max=0;
+        double h_min=999999999;
+        double h_max=0;
+        double d_min=999999999;
+        double d_max=0;
+        for(int i=0;i<stems.size();i++)
+        {
+            BranchUnit bu= stems.at(i);
+            for(V3DLONG b=0;b<bu.listNode.size();b++){
+                NeuronSWC br_node = bu.listNode.at(b);
+                w_min=(br_node.x<w_min)?br_node.x:w_min;
+                h_min=(br_node.y<h_min)?br_node.y:h_min;
+                d_min=(br_node.z<d_min)?br_node.z:d_min;
+                w_max=(br_node.x>w_max)?br_node.x:w_max;
+                h_max=(br_node.y>h_max)?br_node.y:h_max;
+                d_max=(br_node.z>d_max)?br_node.z:d_max;
+            }
+        }
+        this->listBranch[i].width=w_max-w_min;
+        this->listBranch[i].height=h_max-h_min;
+        this->listBranch[i].depth=d_max-d_min;
+    }
+    return true;
+}
 bool BranchTree::get_enhacedFeatures()
 {
      /*1. get branch type
@@ -666,6 +718,29 @@ bool soma_motif_fea(const QString& filename,BranchTree& bt)
         bu.angle_remote=-1;
         stems.append(bu);
     }
+    double width,height,depth;
+    double w_min=999999999;
+    double w_max=0;
+    double h_min=999999999;
+    double h_max=0;
+    double d_min=999999999;
+    double d_max=0;
+    for(int i=0;i<stems.size();i++)
+    {
+        BranchUnit bu= stems.at(i);
+        for(V3DLONG b=0;b<bu.listNode.size();b++){
+            NeuronSWC br_node = bu.listNode.at(b);
+            w_min=(br_node.x<w_min)?br_node.x:w_min;
+            h_min=(br_node.y<h_min)?br_node.y:h_min;
+            d_min=(br_node.z<d_min)?br_node.z:d_min;
+            w_max=(br_node.x>w_max)?br_node.x:w_max;
+            h_max=(br_node.y>h_max)?br_node.y:h_max;
+            d_max=(br_node.z>d_max)?br_node.z:d_max;
+        }
+    }
+    width=w_max-w_min;
+    height=h_max-h_min;
+    depth=d_max-d_min;
     for(int i=0;i<stems.size();i++)
     {
         BranchUnit bui = stems.at(i);
@@ -689,7 +764,7 @@ bool soma_motif_fea(const QString& filename,BranchTree& bt)
     if(tofile.exists())
         cout<<"File overwrite to "<<filename.toStdString()<<endl;
 //    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
-    QString brfHead="id,type,length,pathlength,radius,angle,angle_remote\n";
+    QString brfHead="id,type,length,pathlength,radius,angle,angle_remote,width,height,depth\n";
     if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         //title
@@ -707,7 +782,10 @@ bool soma_motif_fea(const QString& filename,BranchTree& bt)
             brf+=(","+QString::number(bu.pathLength));
             brf+=(","+QString::number(bu.radius));
             brf+=(","+QString::number(bu.angle));
-            brf+=(","+QString::number(bu.angle_remote)+"\n");
+            brf+=(","+QString::number(bu.angle_remote));
+            brf+=(","+QString::number(width));
+            brf+=(","+QString::number(height));
+            brf+=(","+QString::number(depth)+"\n");
             tofile.write(brf.toAscii());
         }
         tofile.close();
@@ -788,7 +866,7 @@ bool writeBranchMotif_file(const QString& filename,BranchTree& bt)
         cout<<"File overwrite to "<<filename.toStdString()<<endl;
 //    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
     QString brfHead="id,parent_id,x,y,z,type,level,dist2soma,path_dist2soma,angle,angle_remote,angle_io1,angle_io1_remote,angle_io2,angle_io2_remote,radius,lcradius,rcradius,";
-    brfHead+="length,pathlength,lclength,lcpathlength,rclength,rcpathlength,lslength,lspathlength,rslength,rspathlength,lstips,rstips\n";
+    brfHead+="length,pathlength,lclength,lcpathlength,rclength,rcpathlength,width,height,depth,lslength,lspathlength,rslength,rspathlength,lstips,rstips\n";
     if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         //title
@@ -825,6 +903,9 @@ bool writeBranchMotif_file(const QString& filename,BranchTree& bt)
             brf+=(","+QString::number(bu.lcpathLength));
             brf+=(","+QString::number(bu.rclength));
             brf+=(","+QString::number(bu.rcpathLength));
+            brf+=(","+QString::number(bu.width));
+            brf+=(","+QString::number(bu.height));
+            brf+=(","+QString::number(bu.depth));
             brf+=(","+QString::number(bu.lslength));
             brf+=(","+QString::number(bu.lspathLength));
             brf+=(","+QString::number(bu.rslength));
@@ -850,6 +931,10 @@ bool SWC2Motif(const QString& outpath,BranchTree& bt)
         BranchUnit lc_bu = bt.listBranch.at(lc);
         V3DLONG rc=child_index.at(i).at(1);
         BranchUnit rc_bu = bt.listBranch.at(rc);
+        if(lc_bu.rstips+lc_bu.lstips<rc_bu.rstips+rc_bu.lstips){
+            lc_bu = bt.listBranch.at(rc);
+            rc_bu = bt.listBranch.at(lc);
+        }
         QString motif_file=outpath+"/"+QString::number(bu.id)+"_motif.eswc";
         QFile tofile(motif_file);
         if(tofile.open(QIODevice::WriteOnly | QIODevice::Text)){
@@ -877,12 +962,13 @@ bool SWC2Motif(const QString& outpath,BranchTree& bt)
                 br_node_str+=(" "+QString::number(br_node.parent)+"\n");
                 tofile.write(br_node_str.toAscii());
             }
-            //2 write child unit one
+            //2 write child unit one:left
             V3DLONG branch_id=br_id;
             for(V3DLONG b=1;b<lc_bu.listNode.size();b++){
                 NeuronSWC br_node = lc_bu.listNode.at(b);
                 br_id++;
                 br_node.n=br_id;
+//                br_node.type=5;
                 if(b==1)
                     br_node.parent=branch_id;
                 else
@@ -900,6 +986,7 @@ bool SWC2Motif(const QString& outpath,BranchTree& bt)
             for(V3DLONG b=1;b<rc_bu.listNode.size();b++){
                 NeuronSWC br_node = rc_bu.listNode.at(b);
                 br_id++;
+                br_node.type=5;
                 br_node.n=br_id;
                 if(b==1)
                     br_node.parent=branch_id;

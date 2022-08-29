@@ -1440,6 +1440,9 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     }
     float shift_pixels=(inparas.size()>=1)?atof(inparas[0]):0.0;
     float scale_para=(inparas.size()>=2)?atof(inparas[1]):1.0;
+    float radius_para=(inparas.size()>=3)?atof(inparas[2]):1.0;
+    int ccfswc=(inparas.size()>=4)?atoi(inparas[3]):0;
+
 
     NeuronTree nt = readSWC_file(in_raw_swc_file);
     NeuronTree nt_registered = readSWC_file(in_registered_swc_file);
@@ -1452,8 +1455,21 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     }
     QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(in_raw_swc_file + "_ccfprofiled.eswc");
     scale_registered_swc(nt_registered,shift_pixels,scale_para);
-    merge_registered_swc_onto_raw(nt,nt_registered);
-    writeESWC_file(out_nt_filename,nt);
+    if(ccfswc)
+    {
+        merge_raw_swc_onto_reg(nt,nt_registered,radius_para);
+        writeESWC_file(out_nt_filename,nt_registered);
+    }
+    else{
+        merge_registered_swc_onto_raw(nt,nt_registered);
+        writeESWC_file(out_nt_filename,nt);
+    }
+}
+void merge_raw_swc_onto_reg(NeuronTree nt_raw,NeuronTree& nt_registered, float rscale){
+    V3DLONG siz=nt_raw.listNeuron.size();
+    for(V3DLONG i=0;i<siz;i++){
+        nt_registered.listNeuron[i].r=rscale*nt_raw.listNeuron.at(i).r;
+    }
 }
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered){
     V3DLONG siz=nt_raw.listNeuron.size();

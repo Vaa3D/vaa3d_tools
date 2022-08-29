@@ -504,16 +504,16 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
             continue;
         long start_x,start_y,start_z,end_x,end_y,end_z;
         start_x = s.x - cropx/2; if(start_x<0) start_x = 0;
-        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0]-1;
+        end_x = s.x + cropx/2; if(end_x > in_zz[0]) end_x = in_zz[0];
         start_y =s.y - cropy/2;if(start_y<0) start_y = 0;
-        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1]-1;
+        end_y = s.y + cropy/2;if(end_y > in_zz[1]) end_y = in_zz[1];
         start_z = s.z - cropz/2;if(start_z<0) start_z = 0;
-        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2]-1;
+        end_z = s.z + cropz/2;if(end_z > in_zz[2]) end_z = in_zz[2];
         cout<<"crop size x="<<start_x<<";y="<<start_y<<";z="<<start_z<<endl;
         V3DLONG *in_sz = new V3DLONG[4];
-        in_sz[0] = end_x -start_x+1;
-        in_sz[1] = end_y -start_y+1;
-        in_sz[2] = end_z -start_z+1;
+        in_sz[0] = end_x -start_x;
+        in_sz[1] = end_y -start_y;
+        in_sz[2] = end_z -start_z;
         in_sz[3]=in_zz[3];
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
@@ -521,7 +521,7 @@ void getTeraflyBlock(V3DPluginCallback2 &callback, string imgPath, QList<CellAPO
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return;}
 
-        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+        im_cropped = callback.getSubVolumeTeraFly(imgPath,start_x,end_x,start_y,end_y,start_z,end_z);
         if(im_cropped==NULL){
             continue;
         }
