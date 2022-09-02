@@ -5,6 +5,7 @@
 #include <iostream>
 #include"Utility_function.h"
 using namespace std;
+
 struct BranchUnit
 {
     /*tail node: tip or branch nodes
@@ -106,6 +107,7 @@ struct BranchTree
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
 };
+NeuronSWC getBranchNearNode(BranchUnit bu, bool head2tail=true,double min_dist=5.0);
 void radius_scale(NeuronTree& nt,float rs=1.0);
 void scale_swc(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
 NeuronTree branchTree_to_neurontree(const BranchTree& bt);

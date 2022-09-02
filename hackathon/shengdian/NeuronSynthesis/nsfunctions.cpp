@@ -101,7 +101,8 @@ bool BranchTree::get_branch_angle_io()
         }
         BranchUnit bu = this->listBranch.at(i);
         NeuronSWC bu_snode=bu.listNode.at(bu.listNode.size()-1);
-        NeuronSWC bu_enode=bu.listNode.at(bu.listNode.size()-2);
+//        NeuronSWC bu_enode=bu.listNode.at(bu.listNode.size()-2);
+        NeuronSWC bu_enode=getBranchNearNode(bu,false);
         NeuronSWC bu_renode=bu.listNode.at(0);
         //left branch
         V3DLONG c1=child_index_list.at(i).at(0);
@@ -116,12 +117,14 @@ bool BranchTree::get_branch_angle_io()
         BranchUnit lc_bu = this->listBranch.at(lc);
         V3DLONG lci=lc_bu.listNode.size()-1;
         NeuronSWC lc_bu_snode=lc_bu.listNode.at(0);
-        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+//        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+        NeuronSWC lc_bu_enode=getBranchNearNode(lc_bu,true);
         NeuronSWC lc_bu_renode=lc_bu.listNode.at(lci);
         BranchUnit rc_bu = this->listBranch.at(c2);
         V3DLONG rci=rc_bu.listNode.size()-1;
         NeuronSWC rc_bu_snode=rc_bu.listNode.at(0);
-        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+//        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+        NeuronSWC rc_bu_enode=getBranchNearNode(rc_bu,true);
         NeuronSWC rc_bu_renode=rc_bu.listNode.at(rci);
 
         this->listBranch[i].angle_io1=angle_3d(bu_snode,bu_enode,lc_bu_snode,lc_bu_enode);
@@ -130,6 +133,56 @@ bool BranchTree::get_branch_angle_io()
         this->listBranch[i].angle_io2_remote=angle_3d(bu_snode,bu_renode,rc_bu_snode,rc_bu_renode);
     }
     return true;
+}
+NeuronSWC getBranchNearNode(BranchUnit bu, bool head2tail,double min_dist){
+    NeuronSWC outnode=bu.listNode.at(0);
+    V3DLONG busiz=bu.listNode.size();
+    if(!head2tail){outnode=bu.listNode.at(busiz-1);}
+
+    double ndist=0.0;
+    int nindex=0;
+    if(head2tail){
+        nindex=busiz-1;
+        for(V3DLONG i=0;i<busiz-1;i++){
+            ndist+=dis(bu.listNode.at(i),bu.listNode.at(i+1));
+            if(ndist>=min_dist)
+            {
+                nindex=i;
+                break;
+            }
+        }
+    }
+    else{
+        for(V3DLONG i=busiz-1;i>0;i--){
+            ndist+=dis(bu.listNode.at(i),bu.listNode.at(i-1));
+            if(ndist>=min_dist)
+            {
+                nindex=i;
+                break;
+            }
+        }
+    }
+    outnode.x=outnode.y=outnode.z=0.0;
+    if(head2tail){
+        for(V3DLONG i=0;i<=nindex;i++)
+        {
+            outnode.x+=bu.listNode.at(i).x;
+            outnode.y+=bu.listNode.at(i).y;
+            outnode.z+=bu.listNode.at(i).z;
+        }
+    }
+    else{
+        for(V3DLONG i=busiz-1;i>=nindex;i--)
+        {
+            outnode.x+=bu.listNode.at(i).x;
+            outnode.y+=bu.listNode.at(i).y;
+            outnode.z+=bu.listNode.at(i).z;
+        }
+    }
+    outnode.x/=(nindex+1);
+    outnode.y/=(nindex+1);
+    outnode.z/=(nindex+1);
+    return outnode;
 }
 vector< vector<V3DLONG> > BranchTree::get_branch_child_index(){
 //    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
@@ -183,7 +236,8 @@ bool BranchTree::get_branch_child_angle()
         V3DLONG lc=child_index_list.at(i).at(0);
         BranchUnit lc_bu = this->listBranch.at(lc);
         NeuronSWC lc_bu_snode=lc_bu.listNode.at(0);
-        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+//        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+         NeuronSWC lc_bu_enode=getBranchNearNode(lc_bu,true);
         NeuronSWC lc_bu_renode=lc_bu.listNode.at(lc_bu.listNode.size()-1);
 
 //        NeuronSWC lc_bu_snode=lc_bu.listNode.at(lc_bu.listNode.size()-1);
@@ -214,7 +268,8 @@ bool BranchTree::get_branch_child_angle()
         V3DLONG rc=child_index_list.at(i).at(1);
         BranchUnit rc_bu = this->listBranch.at(rc);
         NeuronSWC rc_bu_snode=rc_bu.listNode.at(0);
-        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+//        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+        NeuronSWC rc_bu_enode=getBranchNearNode(rc_bu,true);
         NeuronSWC rc_bu_renode=rc_bu.listNode.at(rc_bu.listNode.size()-1);
 //        if(dis(lc_bu_snode,rc_bu_snode)){
 //            rc_bu_snode=rc_bu.listNode.at(rc_bu.listNode.size()-1);
@@ -741,30 +796,47 @@ bool soma_motif_fea(const QString& filename,BranchTree& bt)
     width=w_max-w_min;
     height=h_max-h_min;
     depth=d_max-d_min;
+
+   QList< QList<double> > local_angles,remote_angles;
+
     for(int i=0;i<stems.size();i++)
     {
         BranchUnit bui = stems.at(i);
+        QList<double> local_angle,remote_angle;
         NeuronSWC snode=bui.listNode.at(0);
-        NeuronSWC enode=bui.listNode.at(1);
+//        NeuronSWC enode=bui.listNode.at(1);
+        NeuronSWC enode=getBranchNearNode(bui);
         NeuronSWC renode=bui.listNode.at(bui.listNode.size()-1);
         for(int j=0;j<stems.size();j++){
-            if(i==j)
+            if(i==j){
+                local_angle.append(1);
+                remote_angle.append(1);
                 continue;
+            }
             BranchUnit buj = stems.at(j);
             NeuronSWC snode2=buj.listNode.at(0);
-            NeuronSWC enode2=buj.listNode.at(1);
+//            NeuronSWC enode2=buj.listNode.at(1);
+            NeuronSWC enode2=getBranchNearNode(buj);
             NeuronSWC renode2=buj.listNode.at(buj.listNode.size()-1);
             double angle_local=angle_3d(snode,enode,snode2,enode2);;
             double angle_remote=angle_3d(snode,renode,snode2,renode2);
-            stems[i].angle=(angle_local>stems[i].angle)?angle_local:stems[i].angle;
-            stems[i].angle_remote=(angle_remote>stems[i].angle_remote)?angle_remote:stems[i].angle_remote;
+            local_angle.append(angle_local);
+            remote_angle.append(angle_remote);
+//            stems[i].angle+=angle_local;
+//            stems[i].angle_remote+=angle_remote;
+//            stems[i].angle=(angle_local>stems[i].angle)?angle_local:stems[i].angle;
+//            stems[i].angle_remote=(angle_remote>stems[i].angle_remote)?angle_remote:stems[i].angle_remote;
         }
+//        stems[i].angle/=(double)(stems.size()-1);
+//        stems[i].angle_remote/=(double)(stems.size()-1);
+        local_angles.append(local_angle);
+        remote_angles.append(remote_angle);
     }
     QFile tofile(filename);
     if(tofile.exists())
         cout<<"File overwrite to "<<filename.toStdString()<<endl;
 //    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
-    QString brfHead="id,type,length,pathlength,radius,angle,angle_remote,width,height,depth\n";
+    QString brfHead="id,type,length,pathlength,radius,width,height,depth\n";
     if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         //title
@@ -776,16 +848,21 @@ bool soma_motif_fea(const QString& filename,BranchTree& bt)
             BranchUnit bu = stems.at(i);
             if(bu.parent_id>0)
                 continue;
+            QList<double> local_angle=local_angles.at(i);
+            QList<double> remote_angle=remote_angles.at(i);
             QString brf=QString::number(bu.id);
             brf+=(","+QString::number(bu.type));
             brf+=(","+QString::number(bu.length));
             brf+=(","+QString::number(bu.pathLength));
             brf+=(","+QString::number(bu.radius));
-            brf+=(","+QString::number(bu.angle));
-            brf+=(","+QString::number(bu.angle_remote));
             brf+=(","+QString::number(width));
             brf+=(","+QString::number(height));
-            brf+=(","+QString::number(depth)+"\n");
+            brf+=(","+QString::number(depth));
+            for(int j=0;j<stems.size();j++)
+                brf+=(","+QString::number(local_angle.at(j)));
+            for(int j=0;j<stems.size();j++)
+                brf+=(","+QString::number(remote_angle.at(j)));
+            brf+=("\n");
             tofile.write(brf.toAscii());
         }
         tofile.close();
