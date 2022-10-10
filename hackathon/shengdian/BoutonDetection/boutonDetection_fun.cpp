@@ -81,13 +81,61 @@ void boutonDetection_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgLis
      QString out_name=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_bouton.eswc");
      writeESWC_file(out_name,nt_bouton);
 }
-//preprocess
+void neuron_checking_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    /*1. soma checking and only one connected tree checking
+     * 2. type consistence checking
+     * 3. multiple bifurcation checking
+    */
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    NeuronTree nt = readSWC_file(inswc_file);
+    if(!nt.listNeuron.size()) {cout<<"empty file";return;}
+
+
+
+
+
+    //write to a path, csv file
+//    QFile tofile(filename);
+////    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
+//    QString brfHead="name,\n";
+//    if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
+//    {
+//        QString brf=QString::number(bu.id);
+//        brf+=(","+QString::number(bu.rstips)+"\n");
+//        tofile.write(brf.toAscii());
+//        tofile.close();
+//    }
+}
+
 void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output){
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
+    /*preprocess:
+     * i)to a swc/eswc file;
+     * ii)to a path with neuron reconstructions
+    step 1: processing of multiple -1 nodes
+    For each node, if its parent index is
+        1) -1; check if parent node is a duplicated node.
+                    if yes, delete parent node and set to duplicated node (should not -1 node)
+        2) >=0; check existence.
+                    if not, record it
+         out: #origin-nodes(p=-1), #after-processing-nodes(p=-1), #nodes(parent-index not existed)
+    step 2: conneted tree:
+    > if #after-processing-nodes(p=-1) =1 & #nodes(parent-index not existed) =1, this should be only one connected tree; sort
+            *what: each node is connected, which means i can index to every node from one node.
+            *should be only one connected tree, if more than one, get the permission to
+                    * a) keep the biggest one; or
+                    * b) highlight the small one (color=write);
+     * 2. soma/root node: should be only one root
+     *
+    */
     QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
     NeuronTree nt = readSWC_file(inswc_file);
@@ -131,7 +179,7 @@ void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
         }
     }else{
         NeuronTree nt_out=preprocess_simple(nt);
-        ntrees=nt_2_trees(nt_out);
+//        ntrees=nt_2_trees(nt_out);
         if(nt_out.listNeuron.size()>0)
             writeESWC_file(out_swc_file,reindexNT(nt_out));
         else
@@ -1392,6 +1440,9 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     }
     float shift_pixels=(inparas.size()>=1)?atof(inparas[0]):0.0;
     float scale_para=(inparas.size()>=2)?atof(inparas[1]):1.0;
+    float radius_para=(inparas.size()>=3)?atof(inparas[2]):1.0;
+    int ccfswc=(inparas.size()>=4)?atoi(inparas[3]):0;
+
 
     NeuronTree nt = readSWC_file(in_raw_swc_file);
     NeuronTree nt_registered = readSWC_file(in_registered_swc_file);
@@ -1404,8 +1455,21 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     }
     QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(in_raw_swc_file + "_ccfprofiled.eswc");
     scale_registered_swc(nt_registered,shift_pixels,scale_para);
-    merge_registered_swc_onto_raw(nt,nt_registered);
-    writeESWC_file(out_nt_filename,nt);
+    if(ccfswc)
+    {
+        merge_raw_swc_onto_reg(nt,nt_registered,radius_para);
+        writeESWC_file(out_nt_filename,nt_registered);
+    }
+    else{
+        merge_registered_swc_onto_raw(nt,nt_registered);
+        writeESWC_file(out_nt_filename,nt);
+    }
+}
+void merge_raw_swc_onto_reg(NeuronTree nt_raw,NeuronTree& nt_registered, float rscale){
+    V3DLONG siz=nt_raw.listNeuron.size();
+    for(V3DLONG i=0;i<siz;i++){
+        nt_registered.listNeuron[i].r=rscale*nt_raw.listNeuron.at(i).r;
+    }
 }
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered){
     V3DLONG siz=nt_raw.listNeuron.size();
@@ -2476,7 +2540,7 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
         int x_shift=(inparas.size()>=3)?atoi(inparas[2]):0;
         int xyz_scale=(inparas.size()>=4)?atoi(inparas[3]):1;
         int to_swc=(inparas.size()>=5)?atoi(inparas[4]):0;
-        int clear_fea_val=(inparas.size()>=6)?atoi(inparas[5]):0;
+        int clear_fea_val=(inparas.size()>=6)?atoi(inparas[5]):1;
 
         boutonswc_to_ccf(nt,radius_scale);
         QString ccfname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_ccf.eswc");

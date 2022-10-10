@@ -131,7 +131,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;QT_DLL;QT_GUI_LIB;QT_CORE_LIB;QT_HAVE_MMX;QT_HAVE_3DNOW;QT_HAVE_SSE;QT_HAVE_MMXEXT;QT_HAVE_SSE2;QT_THREAD_SUPPORT;QT_WIDGETS_LIB;UNICODE;QT_NO_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>..\..\v3d_main\jba\c++;..\..\v3d_main\common_lib\tiff4\include;.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;..\..\LBFGSpp-master\3rdparty\eigen;..\..\LBFGSpp-master\include;D:\Qt5.9\5.9\msvc2013_64\include\QtCore;D:\Qt5.9\5.9\msvc2013_64\include\QtGui;D:\Qt5.9\5.9\msvc2013_64\include;..\..\v3d_main\basic_c_fun;..\..\v3d_main\common_lib\include;..\..\v3d_main\jba\newmat11;D:\Qt5.9\5.9\msvc2013_64\include\ActiveQt;D:\Qt5.9\5.9\msvc2013_64\include\QtANGLE;D:\Qt5.9\5.9\msvc2013_64\mkspecs\win32-msvc2013;D:\Qt5.9\5.9\msvc2013_64\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\3rdparty\v3d_main\jba\c++;..\..\3rdparty\v3d_main\common_lib\tiff4\include;.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;..\..\3rdparty\LBFGSpp-master\3rdparty\eigen;..\..\3rdparty\LBFGSpp-master\include;D:\Qt5.9\5.9\msvc2013_64\include\QtCore;D:\Qt5.9\5.9\msvc2013_64\include\QtGui;D:\Qt5.9\5.9\msvc2013_64\include;..\..\3rdparty\v3d_main\basic_c_fun;..\..\3rdparty\v3d_main\common_lib\include;..\..\3rdparty\v3d_main\jba\newmat11;D:\Qt5.9\5.9\msvc2013_64\mkspecs\win32-msvc2013;D:\QT5.9\5.9\msvc2013_64\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -140,18 +140,18 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\..\v3d_main\common_lib\winlib64\libtiff.lib;..\..\v3d_main\common_lib\winlib64\libnewmat.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Gui.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Core.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\3rdparty\v3d_main\common_lib\winlib64\libtiff.lib;..\..\3rdparty\v3d_main\common_lib\winlib64\libnewmat.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Gui.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Core.lib;D:\Qt5.9\5.9\msvc2013_64\lib\Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\basic_surf_objs.h" />
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\mg_image_lib.h" />
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\mg_utilities.h" />
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\stackutil.h" />
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\v3d_message.h" />
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\basic_surf_objs.h" />
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_image_lib.h" />
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_utilities.h" />
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\stackutil.h" />
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="getopt.h" />
     <ClInclude Include="q_convolve_kernel.h" />
     <ClInclude Include="q_imgwarp_tps_quicksmallmemory.h" />
@@ -162,14 +162,13 @@
     <ClInclude Include="q_warp_common.h" />
     <ClInclude Include="q_warp_stps.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\basic_surf_objs.cpp" />
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\mg_image_lib.cpp" />
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\mg_utilities.cpp" />
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\stackutil.cpp" />
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\v3d_message.cpp" />
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\basic_surf_objs.cpp" />
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_image_lib.cpp" />
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_utilities.cpp" />
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\stackutil.cpp" />
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\v3d_message.cpp" />
     <ClCompile Include="getopt.c" />
     <ClCompile Include="q_convolve.cpp" />
     <ClCompile Include="q_convolve_kernel.cpp" />

@@ -5,6 +5,7 @@
 #ifndef Q_CONVOLVE_KERNEL_H_
 #define Q_CONVOLVE_KERNEL_H_
 
+#include <stdio.h>
 #include <vector>
 using namespace std;
 

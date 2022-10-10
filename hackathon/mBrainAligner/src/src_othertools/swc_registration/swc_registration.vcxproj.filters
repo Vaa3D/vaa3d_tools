@@ -21,16 +21,7 @@
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\basic_surf_objs.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="getopt.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\mg_utilities.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="q_convolve_kernel.h">
@@ -57,13 +48,19 @@
     <ClInclude Include="q_warp_stps.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\stackutil.h">
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\basic_surf_objs.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\v3d_message.h">
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_image_lib.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\v3d_main\basic_c_fun\mg_image_lib.h">
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_utilities.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\stackutil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdparty\v3d_main\basic_c_fun\v3d_message.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,16 +71,7 @@
     <ClCompile Include="swc_registration.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\basic_surf_objs.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="getopt.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\mg_utilities.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\mg_image_lib.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="q_convolve.cpp">
@@ -110,10 +98,19 @@
     <ClCompile Include="q_warp_stps.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\stackutil.cpp">
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\basic_surf_objs.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\v3d_main\basic_c_fun\v3d_message.cpp">
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_image_lib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\mg_utilities.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\stackutil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rdparty\v3d_main\basic_c_fun\v3d_message.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

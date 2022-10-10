@@ -270,6 +270,7 @@ struct AxonalBouton
     }
 };
 /*preprocess*/
+void neuron_checking_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 QList<NeuronTree> nt_2_trees(NeuronTree& nt);
 NeuronTree preprocess_simple(NeuronTree nt);//for swc in an image block
@@ -333,6 +334,7 @@ void maskImg(unsigned char *&inimg1d,unsigned char * & im_transfer,long in_sz[],
 
 void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);// for processing registered swc
 void scale_registered_swc(NeuronTree& nt,float xshift_pixels=20.0,float scale_xyz=25.0);
+void merge_raw_swc_onto_reg(NeuronTree nt_raw,NeuronTree& nt_registered, float rscale=1.0);
 void merge_registered_swc_onto_raw(NeuronTree& nt_raw,NeuronTree nt_registered);
 
 /*radius estimation*/

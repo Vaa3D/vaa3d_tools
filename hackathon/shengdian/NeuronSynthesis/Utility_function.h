@@ -58,10 +58,12 @@ typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
 void resample_path(Segment * seg, double step);
 NeuronTree resample(NeuronTree input, double step);
+double seg_median(std::vector<double> input);
 //
 vector<int> getNodeType(NeuronTree nt);
 vector<int> getNodeTips(NeuronTree nt);
 vector<int> getNodeOrder(NeuronTree nt);
+V3DLONG get_soma(NeuronTree & nt,bool connect=false);
 NeuronTree getSubtree(NeuronTree nt,V3DLONG nodeid);
 //NeuronTree reindexNT(NeuronTree nt);
 NeuronTree pruning_subtree(NeuronTree nt, int pruning_thre=100);
