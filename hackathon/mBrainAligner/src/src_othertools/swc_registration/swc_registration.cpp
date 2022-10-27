@@ -404,12 +404,15 @@ int main(int argc, char *argv[])
 		pad_x = qsl[0].toInt(); pad_y = qsl[1].toInt(); pad_z = qsl[2].toInt();
 		for (unsigned int i = 0; i < 4; i++)
 		{
-			vec_ctlpt_affine_sub[i + 4].x = vec_ctlpt_affine_sub[i + 4].x + 2 * pad_x;
 			vec_ctlpt_affine_tar[i + 4].x = vec_ctlpt_affine_tar[i + 4].x + 2 * pad_x;
-			vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
 			vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
-			vec_ctlpt_affine_sub[2 * i + 1].z = vec_ctlpt_affine_sub[2 * i + 1].z + 2 * pad_z;
 			vec_ctlpt_affine_tar[2 * i + 1].z = vec_ctlpt_affine_tar[2 * i + 1].z + 2 * pad_z;
+		}
+		for (unsigned int i = 0; i < 8; i++)
+		{
+			vec_ctlpt_affine_sub[i].x += pad_x;
+			vec_ctlpt_affine_sub[i].y += pad_y;
+			vec_ctlpt_affine_sub[i].z += pad_z;
 		}
 	}
 
@@ -722,7 +725,7 @@ int main(int argc, char *argv[])
 		{
 			printf("ERROR: q_stps_cd() return false.\n");
 		}
-		printf("4.3  STPS swc warp.   \n");
+
 		for (long long i = 0; i < nt_sub.listNeuron.size(); i++)
 		{
 			printf("STPS swc: [%d/%d]\n", nt_sub.listNeuron.size(), i);
