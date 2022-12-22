@@ -42,8 +42,7 @@ void BranchTree::get_globalFeatures(){
     /*get: length*/
     if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return;}
     V3DLONG siz=this->listBranch.size();
-    vector<int> btype(siz,0);
-    btype=this->getBranchType();
+    vector<int> btype(siz,0); btype=this->getBranchType();
 
     this->total_length=this->total_path_length=0.0;
     this->tip_branches=this->soma_branches=this->max_branch_level=0;
@@ -60,6 +59,24 @@ void BranchTree::get_globalFeatures(){
             this->soma_branches+=1;
         this->max_branch_level=(bu.level>this->max_branch_level)?bu.level:this->max_branch_level;
     }
+    //get volume related
+    double wl,wr,hl,hr,dl,dr;
+    wl=hl=dl=MAXVALUE;
+    wr=hr=dr=MINVALUE;
+    for (V3DLONG i=0;i<this->nt.listNeuron.size();i++)
+    {
+        NeuronSWC node=this->nt.listNeuron.at(i);
+        wl=(node.x<=wl) ? node.x:wl;
+        wr=(node.x>wr)? node.x:wr;
+        hl=(node.y<=hl) ? node.y:hl;
+        hr=(node.y>hr)? node.y:hr;
+        dl=(node.z<=dl) ? node.z:dl;
+        dr=(node.z>dr)? node.z:dr;
+    }
+    this->width=wr-wl;
+    this->height=hr-hl;
+    this->depth=dr-dl;
+    this->volume=this->width*this->height*this->depth;
 }
 vector< vector<V3DLONG> > BranchTree::get_branch_child_index(){
 //    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
@@ -295,28 +312,25 @@ bool BranchTree::init_branch_sequence()
     return true;
 }
 bool BranchTree::init(NeuronTree in_nt){
-    nt.deepCopy(in_nt);
+    this->nt.deepCopy(in_nt);
     //neuron tree to branches
-    V3DLONG siz=nt.listNeuron.size();
-    if(!siz)
-        return false;
-    //get node type
-    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
-    vector<int> norder(siz,0);  getNodeOrder(nt,norder);
-    V3DLONG soma_index=1;
-    for (V3DLONG i=0;i<siz;i++){
-        if(nt.listNeuron[i].pn<0&&nt.listNeuron[i].type==1)
-        {
-            soma_index=i;break;
-        }
-    }
+    V3DLONG siz=in_nt.listNeuron.size();
+    if(!siz) {return false;}
+    V3DLONG somaid=get_soma(in_nt,false);
+    if(somaid<0){return false;}
+    cout<<"soma index="<<somaid<<endl;
+    vector<int> ntype(siz,0);
+    if(!getNodeType(in_nt,ntype,somaid)){return false;}
+    vector<int> norder(siz,0);
+    if(!getNodeOrder(in_nt,norder,somaid)){return false;}
+    cout<<"start init branch tree"<<endl;
     QList<V3DLONG> br_parent_list;br_parent_list.clear();
     QList<V3DLONG> br_tail_list;br_tail_list.clear();
 //    cout<<"stems size="<<ntype.at(soma_index)-2<<endl;
     for(V3DLONG i=0;i<siz;i++)
     {
         //from tip / branch node to branch / soma node.
-        NeuronSWC s = nt.listNeuron[i];
+        NeuronSWC s = in_nt.listNeuron[i];
         if(s.pn<0)
             continue;
         if(ntype[i]==0||ntype[i]==2)
@@ -326,31 +340,31 @@ bool BranchTree::init(NeuronTree in_nt){
             BranchUnit bru;
             bru.level=norder[i];
             bru.id=this->listBranch.size()+1;
-            V3DLONG sp_id=nt.hashNeuron.value(s.pn);
+            V3DLONG sp_id=in_nt.hashNeuron.value(s.pn);
             int ptype=ntype[sp_id];
             if(ptype==2)
             {
                 //this branch doesn't have internode.
-                NeuronSWC sp=nt.listNeuron[sp_id];
+                NeuronSWC sp=in_nt.listNeuron[sp_id];
                 bu_nodes.append(sp);
             }
             else
             {
                 while(true)
                 {
-                    NeuronSWC sp=nt.listNeuron[sp_id];
+                    NeuronSWC sp=in_nt.listNeuron[sp_id];
                     bu_nodes.append(sp);
-                    sp_id=nt.hashNeuron.value(sp.pn);
-                    if(soma_index==sp_id)
+                    sp_id=in_nt.hashNeuron.value(sp.pn);
+                    if(somaid==sp_id)
                     {
-                        NeuronSWC sp=nt.listNeuron[sp_id];
+                        NeuronSWC sp=in_nt.listNeuron[sp_id];
                         bu_nodes.append(sp);
                         bru.parent_id=-1;
                         break;
                     }
                     if(ntype[sp_id]==2)
                     {
-                        NeuronSWC sp=nt.listNeuron[sp_id];
+                        NeuronSWC sp=in_nt.listNeuron[sp_id];
                         bu_nodes.append(sp);
                         break;
                     }
@@ -774,7 +788,7 @@ void scale_nt_radius(NeuronTree& nt,float rs)
         nt.listNeuron[i].r*=rs;
     }
 }
-bool getNodeOrder(NeuronTree nt,vector<int> & norder)
+bool getNodeOrder(NeuronTree nt,vector<int> & norder,V3DLONG somaid)
 {
     /*soma order=0
      * Workflow
@@ -783,13 +797,15 @@ bool getNodeOrder(NeuronTree nt,vector<int> & norder)
      * 3.out
      * PS: neuron tree must have only one soma node
     */
-    V3DLONG siz=nt.listNeuron.size(); if(!siz) { return false;}
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz){return false;}
+    if(somaid<0) {somaid=get_soma(nt);}
+    if(somaid<0) {return false;}
 
     QHash <V3DLONG, V3DLONG>  hashNeuron; hashNeuron.clear();
-    V3DLONG somaid=get_soma(nt);
-    if(somaid<0){cout<<"no soma"<<endl;return false;}
-    cout<<"Soma index="<<somaid<<endl;
-    vector<int> ntype(siz,0);    ntype=getNodeType(nt);
+
+    vector<int> ntype(siz,0);
+    if(!getNodeType(nt,ntype,somaid)){return false;}
     for (V3DLONG i=0;i<siz;i++)
     {
         hashNeuron.insert(nt.listNeuron[i].n,i);
@@ -817,18 +833,15 @@ bool getNodeOrder(NeuronTree nt,vector<int> & norder)
     }
     return true;
 }
-std::vector<int> getNodeType(NeuronTree nt)
+bool getNodeType(NeuronTree nt,vector<int> & ntype,V3DLONG somaid)
 {
     /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1
     PS: not have to be a single tree */
     V3DLONG siz=nt.listNeuron.size();
-    std::vector<int> ntype(siz,0);    if(!siz) {return ntype;}
-//    cout<<"size="<<ntype.size()<<endl;
-    V3DLONG somaid=get_soma(nt);
-    if(somaid>=0)
-        ntype[somaid]=2;
-    else
-        cout<<"no soma node"<<endl;
+    if(!siz){return false;}
+    if(somaid<0){somaid=get_soma(nt);}
+    if(somaid<0){return false;}
+    ntype[somaid]=2;
     /*1. get the index of nt:     * swc_n -> index */
     QHash <V3DLONG, V3DLONG>  hashNeuron;
     for (V3DLONG i=0;i<siz;i++)
@@ -843,9 +856,7 @@ std::vector<int> getNodeType(NeuronTree nt)
             ntype[spn_id]+=1;
         }
     }
-
-//    cout<<"size="<<ntype.size()<<endl;
-    return ntype;
+    return true;
 }
 NeuronTree reindexNT(NeuronTree nt)
 {
@@ -905,6 +916,7 @@ V3DLONG get_soma(NeuronTree & nt,bool connect){
             }
         }
     }
+//   cout<<"checking start"<<endl;
     for(V3DLONG i=0;i<niz;i++){
         NeuronSWC s=nt.listNeuron.at(i);
         if(s.pn<0){
@@ -926,7 +938,7 @@ V3DLONG get_soma(NeuronTree & nt,bool connect){
 }
 bool loop_checking(NeuronTree nt){
     V3DLONG siz=nt.listNeuron.size();
-    if(!siz) {return false;}
+    if(!siz) {return true;}
     QHash <V3DLONG, V3DLONG>  hashNeuron;
     for (V3DLONG i=0;i<siz;i++)
         hashNeuron.insert(nt.listNeuron.at(i).n,i);
@@ -962,13 +974,32 @@ bool loop_checking(NeuronTree nt){
             }
         }
     }
-    if(loop_count>0){
+    if(loop_count){
         cout<<"Total loop="<<loop_count<<endl;
+        return true;
+    }
+    cout<<"no loop"<<endl;
+    return false;
+}
+bool multi_bifurcations_checking(NeuronTree nt,V3DLONG somaid){
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
+    if(somaid<0)
+        somaid=get_soma(nt,true);
+    if(somaid<0){return true;}
+    vector<int> ntype(siz,0);
+    if(!getNodeType(nt,ntype,somaid)){return true;}
+    //s1
+    QList<V3DLONG> bifur_idlist; bifur_idlist.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        if(somaid!=i&&ntype.at(i)>2)
+            bifur_idlist.append(i);
+    if(bifur_idlist.size()){
+        cout<<"# of multiple bifurcations ="<<bifur_idlist.size()<<endl;
         return true;
     }
     return false;
 }
-bool three_bifurcation_processing(NeuronTree& in_nt)
+bool three_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid)
 {
     //s1. detect three bifurcation points
     //s2. move one of the branch to the parent of bifurcation node
@@ -976,10 +1007,11 @@ bool three_bifurcation_processing(NeuronTree& in_nt)
 
     V3DLONG siz=in_nt.listNeuron.size();
     if(!siz) {return false;}
-
-    V3DLONG somaid=get_soma(in_nt,true);
-    if(somaid<0){cout<<"Soma error"<<endl; return false;}
-    std::vector<int> ntype(siz,0);    ntype=getNodeType(in_nt);
+    if(somaid<0)
+        somaid=get_soma(in_nt,true);
+    if(somaid<0){return true;}
+    vector<int> ntype(siz,0);
+    if(!getNodeType(in_nt,ntype,somaid)){return true;}
 
     //s1
     QList<V3DLONG> bifur_idlist; bifur_idlist.clear();
@@ -1024,12 +1056,13 @@ bool three_bifurcation_processing(NeuronTree& in_nt)
         if(!processed){cout<<"process fail"<<endl; return false;}
     }
     //check
-    ntype=getNodeType(in_nt);
+    ntype.clear();
+    getNodeType(in_nt,ntype,somaid);
     for (V3DLONG i=0;i<siz;i++)
         if(somaid!=i&&ntype.at(i)>2){
             cout<<ntype.at(i)<<" childs,";
             cout<<"bifurcation id="<<i<<endl;
-            return /*false*/three_bifurcation_processing(in_nt);
+            return /*false*/three_bifurcation_processing(in_nt,somaid);
         }
     return true;
 }
@@ -1046,7 +1079,7 @@ NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre)
     for (V3DLONG i=0;i<siz;i++)
         hashNeuron.insert(nt.listNeuron[i].n,i);
 
-    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    std::vector<int> ntype(siz,0);  getNodeType(nt,ntype);
     std::vector<int> nkept(siz,1);
 
     for (V3DLONG i=0;i<siz;i++)
@@ -1194,7 +1227,7 @@ NeuronTree internode_pruning(NeuronTree nt,float pruning_dist,bool profiled){
         NeuronSWC s = nt.listNeuron.at(i);
         hashNeuron.insert(s.n,i);
     }
-    vector<int> ntype=getNodeType(nt);
+    vector<int> ntype(siz,0);getNodeType(nt,ntype);
     vector<int> nprocessed(siz,0);
 
     for(V3DLONG i=0;i<siz;i++)
@@ -1308,7 +1341,7 @@ NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre){
     for (V3DLONG i=0;i<siz;i++)
         hashNeuron.insert(nt.listNeuron[i].n,i);
 
-    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    std::vector<int> ntype(siz,0); getNodeType(nt,ntype);
     std::vector<int> nkept(siz,1);
 
     for (V3DLONG i=0;i<siz;i++)
@@ -1399,7 +1432,7 @@ NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size)
 
     // 2. get node type: index -> node_type
     /*soma: ntype>=3, branch: ntype=2; tip: ntype=0; internodes: ntype=1*/
-    std::vector<int> ntype(siz,0); ntype=getNodeType(nt);
+    std::vector<int> ntype(siz,0); getNodeType(nt,ntype);
     //get child id: n -> child_n; only for internodes
     QHash <V3DLONG, V3DLONG>  hashChild;hashChild.clear();
     for(V3DLONG i=0;i<siz;i++)
@@ -1517,4 +1550,32 @@ double seg_median(std::vector<double> input)
     else
         mout=input[(input.size()-1)/2];
     return mout;
+}
+double vector_max(std::vector<double> input){
+    double vmax=MINVALUE;
+    for(V3DLONG i=0;i<input.size();i++)
+        vmax=(vmax<input.at(i))?input.at(i):vmax;
+    return vmax;
+}
+double vector_mean(std::vector<double> input){
+    double sum =0.0;
+    for(V3DLONG i=0;i<input.size();i++)
+        sum+=input.at(i);
+    return sum / input.size();
+}
+double vector_std(std::vector<double> input){
+
+    double mean= vector_mean(input);
+    double accum  = 0.0;
+    for(V3DLONG i=0;i<input.size();i++)
+        accum  += (input.at(i)-mean)*(input.at(i)-mean);
+
+    double stdev = sqrt(accum/(input.size()-1));
+    return stdev;
+}
+double vector_min(std::vector<double> input){
+    double vmin=MAXVALUE;
+    for(V3DLONG i=0;i<input.size();i++)
+        vmin=(vmin>input.at(i))?input.at(i):vmin;
+    return vmin;
 }

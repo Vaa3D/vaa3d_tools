@@ -2,8 +2,16 @@
 #define NEURO_MORPHO_LIB_H
 #include "basic_surf_objs.h"
 #include <vector>
+#include <algorithm>
+#include <numeric>
+#include <math.h>
 #include <iostream>
+
 using namespace std;
+
+#define PI 3.1415926
+#define MINVALUE -9999999
+#define MAXVALUE 9999999
 
 template<typename T>
 double dis(T node1, T node2){
@@ -108,6 +116,7 @@ struct BranchTree
     bool initialized; //a flag for indicating that branchtree is being initialized.
     //global features, add at 2021-06-29
     double total_length, total_path_length; //total_length is branch-line-length; total_path_length is actual length of neuron tree
+    double width,height,depth,volume;
     V3DLONG tip_branches,total_branches,soma_branches,max_branch_level;
 
     QList<BranchUnit> listBranch;
@@ -118,16 +127,17 @@ struct BranchTree
         listBranch.clear();hashBranch.clear();
         initialized=false;
         total_length=total_path_length=0.0;
+        width=height=depth=volume=0.0;
         tip_branches=soma_branches=total_branches=max_branch_level=0;
     }
     bool init(NeuronTree in_nt);
     bool init_branch_sequence(); //from tip-branch to soma-branch
     bool to_soma_br_seq(V3DLONG inbr_index,BranchSequence & brs);
-    bool get_enhacedFeatures();
+    bool get_enhacedFeatures();// child branch features
     vector< vector<V3DLONG> > get_branch_child_index();
     bool get_branch_child_angle();
     bool get_branch_angle_io();
-    void get_globalFeatures();
+    void get_globalFeatures(); //nt length,branches,tip_branches
     vector<int> getBranchType();
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
@@ -140,19 +150,22 @@ bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enh
 bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 
 NeuronTree to_topology_tree(NeuronTree nt);
-bool getNodeOrder(NeuronTree nt,vector<int> & norder);
-std::vector<int> getNodeType(NeuronTree nt);
+bool getNodeOrder(NeuronTree nt,vector<int> & norder,V3DLONG somaid=-1);
+bool getNodeType(NeuronTree nt,vector<int> & ntype,V3DLONG somaid=-1);
 NeuronTree reindexNT(NeuronTree nt);
 double getNT_len(NeuronTree nt,float *res);
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
 bool loop_checking(NeuronTree nt);
-bool three_bifurcation_processing(NeuronTree& in_nt);
+bool multi_bifurcations_checking(NeuronTree nt,V3DLONG somaid=-1);
+bool three_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
-
-
 double seg_median(std::vector<double> input);
+double vector_max(std::vector<double> input);
+double vector_mean(std::vector<double> input);
+double vector_std(std::vector<double> input);
+double vector_min(std::vector<double> input);
 #endif // NEURO_MORPHO_LIB_H
