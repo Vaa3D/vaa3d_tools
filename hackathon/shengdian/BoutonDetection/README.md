@@ -15,7 +15,7 @@ This plugin can detect axonal boutons based on axonal arbors.
   + bouton swc file
     + raw-node-radius (pixel size)
     + level (branch order)
-    + type (99)
+    + type (5)
     + bouton features will be saved at SWC feature value list:
      * 1-3)CCF coordinates[x,y,z]
      * 4)bouton_flag {0: not a bouton; 1: bouton; 2: tip-bouton; 3: terminaux-bouton}

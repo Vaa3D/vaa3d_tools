@@ -8,6 +8,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "plugin_dofunc.h"
 
 class NMorphoPlugin : public QObject, public V3DPluginInterface2_1
 {

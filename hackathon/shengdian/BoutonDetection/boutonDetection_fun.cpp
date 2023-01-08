@@ -2234,7 +2234,7 @@ void boutonType_label(NeuronTree& nt,bool ccf_domain){
         * if there only exist one bouton at the tip, this is Terminaux bouton.
     */
     int btype_index=3;
-    float max_terminaux_bouton_branch_len=5.0;
+    float max_terminaux_bouton_branch_len=20.0;
 
     V3DLONG siz=nt.listNeuron.size();
     if(siz==0){return;}

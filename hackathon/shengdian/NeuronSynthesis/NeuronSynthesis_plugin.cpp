@@ -593,7 +593,32 @@ bool NeuronSynthesis::dofunc(const QString & func_name, const V3DPluginArgList &
         string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(in_br_file + ".swc");
         writeSWC_file(QString::fromStdString(out_swc_file),nt);
     }
-	else if (func_name == tr("help"))
+    else if (func_name == tr("ccf_flip"))
+    {
+        /* designed by shengdian, 2022-09-10
+         *  flip swc into same half brain
+         * ---
+         * ccf Zsize= 11400
+         * coord_z = (11400- coord_z) if (coord_z > 11400 /2) else coord_z
+         * --Usage--
+         * input: swc or eswc file
+         * output: processed swc file
+        */
+        string inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+        else {  printHelp(); return false;}
+        //read para list
+        float zsize=(inparas.size()>=1)?atof(inparas[0]):11400.0;
+
+        string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_flip.eswc");
+        NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+            if(nt.listNeuron[i].z>(zsize/2))
+                nt.listNeuron[i].z=zsize-nt.listNeuron[i].z;
+        //save to file
+        writeESWC_file(QString::fromStdString(out_swc_file),nt);
+    }
+    else if (func_name == tr("help"))
 	{
         printHelp();
 	}

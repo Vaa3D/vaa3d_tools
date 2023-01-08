@@ -43,9 +43,9 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("lm_feas"))
 	{
-		v3d_msg("To be implemented.");
+        return lm_statistic_features(callback,input,output);
 	}
 	else if (func_name == tr("help"))
 	{
