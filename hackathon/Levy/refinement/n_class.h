@@ -129,8 +129,11 @@ struct Branch{
     vector<NeuronSWC> allpoints;
     int type=2;
     int flag_near_dendrite=0;
+    double average_radius;
+    double branch_std;
     Branch* parent;
     Branch* child_a;
+    Branch* child_b;
     double x0=1000000;   // xyz_min scale
     double y0=1000000;
     double z0=1000000;
@@ -232,6 +235,7 @@ struct SwcTree{
     NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
     NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
     void MIP_terafly(NeuronTree &nt1,NeuronTree &nt2,QString braindir,QString imgdir,V3DPluginCallback2 &callback);
+    void calculate_tapping_ratio(QString tapping_ratio_txt1,QString tapping_ratio_txt2,QString tapping_ratio_txt3,V3DPluginCallback2 &callback);
 };
 
 class Swc_Compare{
@@ -280,6 +284,7 @@ bool sortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, NeuronSWC s)
 
 bool sortSWC(NeuronTree& nt, NeuronSWC s);
 double dis(NeuronSWC p1, NeuronSWC p2);
+double dis1(NeuronSWC p1, NeuronSWC p2);
 NeuronSWC blend_point(NeuronSWC p1, NeuronSWC p2,double alpha);
 void branch_order(SwcTree a, SwcTree b, map<int,int> &branch_map);
 double average_dist(vector<NeuronSWC> points_a,vector<NeuronSWC> points_b);
@@ -289,4 +294,7 @@ void refine_analysis_swc(QString infolder_1,QString infolder_2,QString refine_an
 void MIP_terafly2(NeuronTree &nt1,NeuronTree &nt2,QString braindir,QString imgdir,V3DPluginCallback2 &callback);
 void Branch_terafly2(vector<Branch> tmp,vector<Branch> tmp1,QString braindir,QString imgdir, double x_min, double y_min, double z_min, double windows,double windows_z,V3DPluginCallback2 &callback);
 void SortNT(NeuronTree &nt2_crop,int offset,int x_min,int y_min, int z_min);
+void bouton_distribution(QString infolder_1,QString bouton_distribution_file,V3DPluginCallback2 &callback);
+void terminuax_bouton_count(QString infolder_1,QString bouton_distribution_file,V3DPluginCallback2 &callback);
+void bouton_seg_distribution(QString infolder_1,QString outfolder,V3DPluginCallback2 &callback);
 #endif // N_CLASS_H
