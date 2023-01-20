@@ -19,7 +19,9 @@ QStringList NMorphoPlugin::menulist() const
 QStringList NMorphoPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("lm_feas")
+       <<tr("branch_feas")
+      <<tr("qc")
 		<<tr("help");
 }
 
@@ -47,6 +49,18 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	{
         return lm_statistic_features(callback,input,output);
 	}
+    else if (func_name == tr("branch_feas"))
+    {
+        return branch_features(callback,input,output);
+    }
+    else if (func_name == tr("qc"))
+    {
+        return nt_qc(callback,input,output);
+    }
+    else if (func_name == tr("swc_parallization"))
+    {
+        return swc_parallization(callback,input,output);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

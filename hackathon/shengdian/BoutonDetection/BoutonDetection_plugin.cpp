@@ -251,6 +251,7 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
     }
     else if (func_name == tr("Preprocess"))
     {
+        // this function is moved to NeuroMorphoLib/qc and no longer useful at the future
         preprocess_dofunc(callback,input,output);
     }
     else if (func_name == tr("Neuron_checking"))
@@ -320,9 +321,16 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         NeuronTree nt = readSWC_file(inswc_file);
         if(!nt.listNeuron.size()) return false;
         int level_2_type=(inparas.size()>=1)?atoi(inparas[0]):0;
+        int retype=(inparas.size()>=2)?atoi(inparas[1]):3;
         if(level_2_type>0)
             for(V3DLONG i=0;i<nt.listNeuron.size();i++)
                 nt.listNeuron[i].type=nt.listNeuron.at(i).level;
+        if(retype){
+            V3DLONG somaid=get_soma(nt,false);
+            for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+                if(somaid!=i)
+                    nt.listNeuron[i].type=retype;
+        }
         QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out.swc");
         writeSWC_file(out_swc_file,nt);
     }

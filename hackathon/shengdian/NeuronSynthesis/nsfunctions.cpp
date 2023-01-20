@@ -322,9 +322,9 @@ bool BranchTree::get_volsize()
         double h_max=0;
         double d_min=999999999;
         double d_max=0;
-        for(int i=0;i<stems.size();i++)
+        for(int j=0;j<stems.size();j++)
         {
-            BranchUnit bu= stems.at(i);
+            BranchUnit bu= stems.at(j);
             for(V3DLONG b=0;b<bu.listNode.size();b++){
                 NeuronSWC br_node = bu.listNode.at(b);
                 w_min=(br_node.x<w_min)?br_node.x:w_min;

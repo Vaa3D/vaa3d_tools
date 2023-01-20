@@ -9,7 +9,8 @@ HEADERS	+= NeuroMorphoLib_plugin.h \
     neuro_morpho_lib.h \
     plugin_dofunc.h \
     ../../../v3d_main/basic_c_fun/basic_surf_objs.h \
-    ../../../v3d_main/basic_c_fun/color_xyz.h
+    ../../../v3d_main/basic_c_fun/color_xyz.h \
+    json/json.h
 SOURCES	+= NeuroMorphoLib_plugin.cpp \
     neuro_morpho_lib.cpp \
     plugin_dofunc.cpp \

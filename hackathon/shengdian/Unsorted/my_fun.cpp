@@ -28,6 +28,79 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
 
     return myList;
 }
+
+void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,long block_size)
+{
+    cout<<"get intensity profile from terafly datasets"<<endl;
+    QList<NeuronSWC>& listNeuron =  nt.listNeuron;
+    //load terafly img
+    V3DLONG siz = listNeuron.size(); vector<V3DLONG> scanned(siz,0);
+
+    V3DLONG *in_zz = 0;
+    if(!callback.getDimTeraFly(imgPath,in_zz)){cout<<"can't load terafly img"<<endl;return;}
+    int min_dist_to_block_edge=1;
+    for(V3DLONG i=0;i<siz;i++)
+    {
+        //for all the node, if is axonal node and level=1,this is a virgin node that needs to be processed.
+        NeuronSWC ss = listNeuron[i];
+        if(scanned.at(i)==0)
+        {
+            //get a block
+            long start_x,start_y,start_z,end_x,end_y,end_z;
+
+            start_x = ss.x - block_size; if(start_x<0) start_x = 0;
+            end_x = ss.x + block_size; if(end_x >= in_zz[0]) end_x = in_zz[0]-1;
+            start_y =ss.y - block_size;if(start_y<0) start_y = 0;
+            end_y = ss.y + block_size;if(end_y >= in_zz[1]) end_y = in_zz[1]-1;
+            start_z = ss.z - block_size;if(start_z<0) start_z = 0;
+            end_z = ss.z + block_size;if(end_z >= in_zz[2]) end_z = in_zz[2]-1;
+
+            V3DLONG *in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x+1;
+            in_sz[1] = end_y - start_y+1;
+            in_sz[2] = end_z - start_z+1;
+            in_sz[3]=in_zz[3];
+            V3DLONG sz01 = in_sz[0] * in_sz[1];
+            V3DLONG sz0 = in_sz[0];
+
+            unsigned char * inimg1d_raw = 0;
+            V3DLONG pagesz= in_sz[0] * in_sz[1]*in_sz[2]*in_sz[3];
+            try {inimg1d_raw = new unsigned char [pagesz];}
+            catch(...)  {cout<<"cannot allocate memory for cropping."<<endl; return;}
+            inimg1d_raw = callback.getSubVolumeTeraFly(imgPath,start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+            if(inimg1d_raw==NULL){cout<<"Crop fail"<<endl;continue; }
+
+            double imgave_raw,imgstd_raw; imgave_raw=imgstd_raw=10;
+            //for all the node inside this block
+            for(V3DLONG j=0;j<siz;j++){
+                NeuronSWC sj = listNeuron[j];
+                if(scanned.at(j)==0&&
+                        (sj.x-start_x)>=min_dist_to_block_edge&&(end_x-sj.x)>=min_dist_to_block_edge&&
+                        (sj.y-start_y)>=min_dist_to_block_edge&&(end_y-sj.y)>=min_dist_to_block_edge&&
+                        (sj.z-start_z)>=min_dist_to_block_edge&&(end_z-sj.z)>=min_dist_to_block_edge)
+                {
+                    V3DLONG thisx,thisy,thisz;
+                    thisx=sj.x-start_x;        thisy=sj.y-start_y;        thisz=sj.z-start_z;
+                    if(thisz * sz01 + thisy* sz0 + thisx>pagesz){
+                        cout<<"point out of image size, index="<<sj.n<<endl;
+                        return;
+                    }
+                    listNeuron[j].level=inimg1d_raw[thisz * sz01 + thisy* sz0 + thisx];
+                    NeuronSWC sj_shifted=sj;
+                    sj_shifted.x-=start_x; sj_shifted.y-=start_y; sj_shifted.z-=start_z;
+                    //                        listNeuron[j].r=radiusEstimation(inimg1d,in_sz,sj_shifted,upfactor,bkg_thresh);
+                    //                        listNeuron[j].timestamp=bkg_thresh;
+                    scanned[j]=1;
+                }
+            }
+
+            if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
+        }
+    }
+    //release pointer
+    if(in_zz) {delete []in_zz; in_zz=0;}
+}
+
 void getTipComponent(QString inswc_file, QString outpath, int cropx, int cropy, int cropz)
 {
     QDir path(outpath);

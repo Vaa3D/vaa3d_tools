@@ -92,6 +92,32 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
             cout<<"apo size is zero"<<endl;
         cout<<"done"<<endl;
     }
+    if (func_name==tr("get_swc_intensity"))
+    {
+        if(infiles.size() != 2)
+        {
+            cerr<<"Invalid input"<<endl;
+            cout<<"Input file size="<<infiles.size()<<endl;
+            return false;
+        }
+        /*crop img from terafly
+         *Input img is highest resolution img path
+         *Input apo with dst marker in it
+         *Input para for crop size of x, y and z
+         *output path is the save path for img block
+        */
+        string inimg_file = infiles[0];
+        string inswc_file = infiles[1];
+        NeuronTree nt_raw = readSWC_file(QString::fromStdString(inswc_file));
+        if(!nt_raw.listNeuron.size()) return false;
+
+        //save to file: intensity_radius_profiled_file, bouton_apo_file, bouton_eswc_file
+        string out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_profiled.eswc");
+
+        int half_crop_size=128;
+        swc_profile_terafly_fun(callback,inimg_file,nt_raw,half_crop_size);
+        writeESWC_file(QString::fromStdString(out_swc_file),nt_raw);
+    }
     else if (func_name == tr("preprocess"))
     {
         /*preprocess:
@@ -255,6 +281,36 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
             nt.listNeuron[i].type=toType;
             if(nt.listNeuron.at(i).pn<0)
                 nt.listNeuron[i].type=1;
+        }
+        writeSWC_file(outpath,nt);
+    }
+    else if (func_name==tr("record"))
+    {
+        /*scan all the swc files in a folder
+         *rendering into differenct colors
+        */
+        //for all the swc files
+        QString swcpath = infiles[0];
+        QString outpath=outfiles[0];
+        float xc=(inparas.size()>=1)?atof(inparas[0]):0.0;
+        float yc=(inparas.size()>=2)?atof(inparas[1]):0.0;
+        float zc=(inparas.size()>=3)?atof(inparas[2]):0.0;
+
+        NeuronTree nt = readSWC_file(swcpath);
+        V3DLONG siz=nt.listNeuron.size();
+        V3DLONG somaid=-1;
+         for(V3DLONG i=0;i<siz;i++)
+             if(nt.listNeuron.at(i).type==1&&nt.listNeuron.at(i).pn<0)
+                 somaid=i;
+         if(somaid<0)
+             return false;
+         float xsize=nt.listNeuron.at(somaid).x;
+         float ysize=nt.listNeuron.at(somaid).y;
+         float zsize=nt.listNeuron.at(somaid).z;
+        for(V3DLONG i=0;i<siz;i++){
+            nt.listNeuron[i].x+=(xc-xsize);
+            nt.listNeuron[i].y+=(yc-ysize);
+            nt.listNeuron[i].z+=(zc-zsize);
         }
         writeSWC_file(outpath,nt);
     }

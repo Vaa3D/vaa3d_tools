@@ -11,6 +11,7 @@
 #include <v3d_interface.h>
 using namespace std;
 QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code);
+void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,long block_size);
 void getSWCIntensityInTerafly(V3DPluginCallback2 &callback, string imgPath, QString inswc_file);
 void getTipComponent(QString inswc_file, QString outpath, int cropx, int cropy, int cropz);
 //void getSomaFeature(V3DPluginCallback2 &callback, string imgPath, QString inapo_file);

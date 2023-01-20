@@ -165,7 +165,7 @@ void preprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & i
             */
             NeuronTree nt_4,nt_3, nt_out;
 
-            if(!three_bifurcation_processing(nt)){ cout<<"Error in bifurcation processing"<<endl;return;}
+//            if(!three_bifurcation_processing(nt)){ cout<<"Error in bifurcation processing"<<endl;return;}
             NeuronTree nt_2=tip_branch_pruning(nt,tip_br_thre); //remove tip-branches which length are below 4 pixels
             nt_3=internode_pruning(nt_2,internode_thre);
             nt_2.listNeuron.clear(); nt_2.hashNeuron.clear();
@@ -1441,7 +1441,7 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     float shift_pixels=(inparas.size()>=1)?atof(inparas[0]):0.0;
     float scale_para=(inparas.size()>=2)?atof(inparas[1]):1.0;
     float radius_para=(inparas.size()>=3)?atof(inparas[2]):1.0;
-    int ccfswc=(inparas.size()>=4)?atoi(inparas[3]):0;
+//    int ccfswc=(inparas.size()>=4)?atoi(inparas[3]):0;
 
 
     NeuronTree nt = readSWC_file(in_raw_swc_file);
@@ -1454,8 +1454,9 @@ void ccf_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
         return;
     }
     QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(in_raw_swc_file + "_ccfprofiled.eswc");
-    scale_registered_swc(nt_registered,shift_pixels,scale_para);
-    if(ccfswc)
+    if(shift_pixels&&scale_para!=1)
+        scale_registered_swc(nt_registered,shift_pixels,scale_para);
+    if(radius_para!=1)
     {
         merge_raw_swc_onto_reg(nt,nt_registered,radius_para);
         writeESWC_file(out_nt_filename,nt_registered);
@@ -3136,10 +3137,10 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
         tmpstr.append("_x_").append(QString("%1").arg(s.x));
         tmpstr.append("_y_").append(QString("%1").arg(s.y));
         tmpstr.append("_z_").append(QString("%1").arg(s.z));
-        QString default_name = "Img"+tmpstr+".v3draw";
+        QString default_img_name = "Img"+tmpstr+".v3draw";
         QDir path(save_path);
         if(!path.exists()) { path.mkpath(save_path);}
-        QString save_path_img =save_path+"/"+default_name;
+        QString save_path_img =save_path+"/"+default_img_name;
         cout<<"save cropped image path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),im_cropped,in_sz,1);
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
@@ -3163,9 +3164,20 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
                 }
             }
             //save to file
-            default_name="swc"+QString::number(i)+tmpstr+".eswc";
-            QString save_path_swc =save_path+"/"+default_name;
+            QString default_swc_name="swc"+tmpstr+".eswc";
+            QString save_path_swc =save_path+"/"+default_swc_name;
             writeESWC_file(save_path_swc,out);
+            QString default_ano_name=QString::number(i)+tmpstr+".ano";
+            QString save_path_ano =save_path+"/"+default_ano_name;
+            QFile anofile(save_path_ano);
+            if(anofile.open(QIODevice::WriteOnly | QIODevice::Text))
+            {
+                QString imgline="RAWIMG="; imgline+=(default_img_name+"\n");
+                anofile.write(imgline.toAscii());
+                QString swcline="SWCFILE="; swcline+=(default_swc_name+"\n");
+                anofile.write(swcline.toAscii());
+                anofile.close();
+            }
         }
     }
 }

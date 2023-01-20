@@ -37,6 +37,7 @@ void BranchUnit::get_features(){
         //radius
     this->radius_smooth();
     this->get_radius();
+
 }
 void BranchTree::get_globalFeatures(){
     /*get: length*/
@@ -77,6 +78,7 @@ void BranchTree::get_globalFeatures(){
     this->height=hr-hl;
     this->depth=dr-dl;
     this->volume=this->width*this->height*this->depth;
+    this->get_volsize();
 }
 vector< vector<V3DLONG> > BranchTree::get_branch_child_index(){
 //    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
@@ -101,8 +103,8 @@ bool BranchTree::get_branch_angle_io()
     if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
     V3DLONG siz=this->listBranch.size();
     vector<int> btype=this->getBranchType();
-
     vector< vector<V3DLONG> > child_index_list=this->get_branch_child_index();
+
     for (V3DLONG i=0;i<siz;i++)
     {
         if(btype.at(i)!=2)
@@ -113,7 +115,8 @@ bool BranchTree::get_branch_angle_io()
         }
         BranchUnit bu = this->listBranch.at(i);
         NeuronSWC bu_snode=bu.listNode.at(bu.listNode.size()-1);
-        NeuronSWC bu_enode=bu.listNode.at(bu.listNode.size()-2);
+//        NeuronSWC bu_enode=bu.listNode.at(bu.listNode.size()-2);
+        NeuronSWC bu_enode=getBranchNearNode(bu,false);
         NeuronSWC bu_renode=bu.listNode.at(0);
         //left branch
         V3DLONG c1=child_index_list.at(i).at(0);
@@ -128,12 +131,14 @@ bool BranchTree::get_branch_angle_io()
         BranchUnit lc_bu = this->listBranch.at(lc);
         V3DLONG lci=lc_bu.listNode.size()-1;
         NeuronSWC lc_bu_snode=lc_bu.listNode.at(0);
-        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+//        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+        NeuronSWC lc_bu_enode=getBranchNearNode(lc_bu,true);
         NeuronSWC lc_bu_renode=lc_bu.listNode.at(lci);
         BranchUnit rc_bu = this->listBranch.at(c2);
         V3DLONG rci=rc_bu.listNode.size()-1;
         NeuronSWC rc_bu_snode=rc_bu.listNode.at(0);
-        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+//        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+        NeuronSWC rc_bu_enode=getBranchNearNode(rc_bu,true);
         NeuronSWC rc_bu_renode=rc_bu.listNode.at(rci);
 
         this->listBranch[i].angle_io1=angle_3d(bu_snode,bu_enode,lc_bu_snode,lc_bu_enode);
@@ -143,6 +148,69 @@ bool BranchTree::get_branch_angle_io()
     }
     return true;
 }
+NeuronSWC getBranchNearNode(BranchUnit bu, bool near_head,double min_dist){
+
+    /*near_head: chose the node from the direction of head node*/
+    V3DLONG busiz=bu.listNode.size();
+    int nindex=0;
+    NeuronSWC outnode;
+
+    double ndist=0.0;
+
+    if(near_head){
+        nindex=busiz-1;
+        for(V3DLONG i=0;i<busiz-1;i++){
+            ndist+=dis(bu.listNode.at(i),bu.listNode.at(i+1));
+            if(ndist>=min_dist)
+            {
+                nindex=i+1;
+                break;
+            }
+        }
+    }
+    else{
+        for(V3DLONG i=busiz-1;i>0;i--){
+            ndist+=dis(bu.listNode.at(i),bu.listNode.at(i-1));
+            if(ndist>=min_dist)
+            {
+                nindex=i-1;
+                break;
+            }
+        }
+    }
+    outnode=bu.listNode.at(nindex);
+    return outnode;
+}
+bool BranchTree::get_volsize()
+{
+    if(!this->initialized||this->listBranch.size()==0) {cout<<"Branchtree isn't initialized."<<endl;return false;}
+    V3DLONG siz=this->listBranch.size();
+    vector<int> btype(siz,0); btype=this->getBranchType();
+
+//    vector< vector<V3DLONG> > child_index_list=this->get_branch_child_index();
+    for (V3DLONG i=0;i<siz;i++)
+    {
+         BranchUnit bu = this->listBranch.at(i);
+         double wl,wr,hl,hr,dl,dr;
+         wl=hl=dl=MAXVALUE;
+         wr=hr=dr=MINVALUE;
+        for(int j=0;j<bu.listNode.size();j++)
+        {
+            NeuronSWC node=bu.listNode.at(j);
+            wl=(node.x<=wl) ? node.x:wl;
+            wr=(node.x>wr)? node.x:wr;
+            hl=(node.y<=hl) ? node.y:hl;
+            hr=(node.y>hr)? node.y:hr;
+            dl=(node.z<=dl) ? node.z:dl;
+            dr=(node.z>dr)? node.z:dr;
+        }
+        this->listBranch[i].width=wr-wl;
+        this->listBranch[i].height=hr-hl;
+        this->listBranch[i].depth=dr-dl;
+    }
+    return true;
+}
+
 bool BranchTree::get_branch_child_angle()
 {
     /*angle of two child branches
@@ -166,15 +234,23 @@ bool BranchTree::get_branch_child_angle()
         V3DLONG lc=child_index_list.at(i).at(0);
         BranchUnit lc_bu = this->listBranch.at(lc);
         NeuronSWC lc_bu_snode=lc_bu.listNode.at(0);
-        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+//        NeuronSWC lc_bu_enode=lc_bu.listNode.at(1);
+        NeuronSWC lc_bu_enode=getBranchNearNode(lc_bu,true);
         NeuronSWC lc_bu_renode=lc_bu.listNode.at(lc_bu.listNode.size()-1);
 
         //right branch
         V3DLONG rc=child_index_list.at(i).at(1);
         BranchUnit rc_bu = this->listBranch.at(rc);
         NeuronSWC rc_bu_snode=rc_bu.listNode.at(0);
-        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+//        NeuronSWC rc_bu_enode=rc_bu.listNode.at(1);
+        NeuronSWC rc_bu_enode=getBranchNearNode(rc_bu,true);
         NeuronSWC rc_bu_renode=rc_bu.listNode.at(rc_bu.listNode.size()-1);
+//        if(int(lc_bu_snode.x)==5850&&int(lc_bu_snode.y)==4670&&int(lc_bu_snode.z)==5573){
+//            cout<<"lcx="<<lc_bu_enode.x<<"lcy="<<lc_bu_enode.y<<"lcz="<<lc_bu_enode.z<<endl;
+//            cout<<"rcx="<<rc_bu_snode.x<<"rcy="<<rc_bu_snode.y<<"rcz="<<rc_bu_snode.z<<endl;
+//            cout<<"rcx="<<rc_bu_enode.x<<"rcy="<<rc_bu_enode.y<<"rcz="<<rc_bu_enode.z<<endl;
+//            angle_3d(lc_bu_snode,lc_bu_enode,rc_bu_snode,rc_bu_enode,true);
+//        }
         this->listBranch[i].angle=angle_3d(lc_bu_snode,lc_bu_enode,rc_bu_snode,rc_bu_enode);
         this->listBranch[i].angle_remote=angle_3d(lc_bu_snode,lc_bu_renode,
                                                   rc_bu_snode,rc_bu_renode);
@@ -849,7 +925,7 @@ bool getNodeType(NeuronTree nt,vector<int> & ntype,V3DLONG somaid)
     // 2. get node type: index -> node_type
     for (V3DLONG i=0;i<siz;i++)
     {
-        NeuronSWC s = nt.listNeuron[i];
+        NeuronSWC s = nt.listNeuron.at(i);
         if(s.pn>=0&&hashNeuron.contains(s.pn))
         {
             V3DLONG spn_id=hashNeuron.value(s.pn);
@@ -981,7 +1057,7 @@ bool loop_checking(NeuronTree nt){
     cout<<"no loop"<<endl;
     return false;
 }
-bool multi_bifurcations_checking(NeuronTree nt,V3DLONG somaid){
+bool multi_bifurcations_checking(NeuronTree nt, QList<CellAPO> & out_3bifs,V3DLONG somaid){
     V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
     if(somaid<0)
         somaid=get_soma(nt,true);
@@ -995,11 +1071,93 @@ bool multi_bifurcations_checking(NeuronTree nt,V3DLONG somaid){
             bifur_idlist.append(i);
     if(bifur_idlist.size()){
         cout<<"# of multiple bifurcations ="<<bifur_idlist.size()<<endl;
+        out_3bifs.clear();
+        for(V3DLONG i=0;i<bifur_idlist.size();i++){
+            NeuronSWC bif_node=nt.listNeuron.at(bifur_idlist.at(i));
+            CellAPO bif_marker;
+            bif_marker.n=bif_node.n;
+            bif_marker.x=bif_node.x;
+            bif_marker.y=bif_node.y;
+            bif_marker.z=bif_node.z;
+            bif_marker.color.r=0;
+            bif_marker.color.g=0;
+            out_3bifs.append(bif_marker);
+        }
         return true;
     }
+    cout<<"No multiple bifurcations"<<endl;
     return false;
 }
-bool three_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid)
+bool three_bif_decompose(NeuronTree& in_nt,V3DLONG bif_child_id,V3DLONG somaid)
+{
+    //bif_child_id: first child node of a 3 bifurcation
+    // for the input multiple bifurcations, insert a new parent node and set as bif seg parent
+
+    V3DLONG siz=in_nt.listNeuron.size();
+    if(!siz || bif_child_id >=siz) {return false;}
+    if(somaid<0){somaid=get_soma(in_nt,true);}
+    if(somaid<0){return false;}
+    vector<int> ntype(siz,0);
+    if(!getNodeType(in_nt,ntype,somaid)){return false;}
+
+    //s1: check is there a 3 bifurcation
+    NeuronSWC bifseg_head=in_nt.listNeuron.at(bif_child_id);
+//    cout<<"Node total size="<<siz<<endl;
+    if(bifseg_head.pn<0||bifseg_head.pn==somaid){cout<<"branching at -1 node"<<endl;return false;}
+    if(!in_nt.hashNeuron.contains(bifseg_head.pn)){cout<<"invalid 3 bifurcation"<<endl;return false;}
+    V3DLONG pn_id=in_nt.hashNeuron.value(bifseg_head.pn);
+    NeuronSWC bifnode=in_nt.listNeuron.at(pn_id);
+    if(ntype.at(pn_id)<=2){cout<<"no 3 bifurcation at "<<bifnode.n<<endl;return false;}
+    if(pn_id==somaid){
+        cout<<"set to stem"<<endl;
+        in_nt.listNeuron[bif_child_id].pn=in_nt.listNeuron.at(somaid).n;
+        return true;
+    }
+    if(bifnode.pn<0){cout<<"multiple -1 nodes"<<endl;return false;}
+//    cout<<"start insert"<<endl;
+    NeuronSWC insertnode=bifnode;
+    if(in_nt.hashNeuron.contains(bifnode.pn))
+    {
+        V3DLONG ppn_id=in_nt.hashNeuron.value(bifnode.pn);
+        NeuronSWC bifnode_p=in_nt.listNeuron.at(ppn_id);
+        insertnode.x=float((bifnode.x+bifnode_p.x)/float(2.0));
+        insertnode.y=float((bifnode.y+bifnode_p.y)/float(2.0));
+        insertnode.z=float((bifnode.z+bifnode_p.z)/float(2.0));
+    }
+    else{
+        cout<<"No parent node ???"<<endl;
+        return false;
+    }
+    insertnode.n=in_nt.listNeuron.size();
+    while(true){
+        if(!in_nt.hashNeuron.contains(insertnode.n))
+            break;
+        insertnode.n+=1;
+    }
+    cout<<"New bifurcation node id="<<insertnode.n<<endl;
+    in_nt.listNeuron[pn_id].pn=insertnode.n;
+    in_nt.listNeuron[bif_child_id].pn=insertnode.n;
+    in_nt.listNeuron.append(insertnode);
+    in_nt.hashNeuron.insert(insertnode.n,in_nt.listNeuron.size()-1);
+//    cout<<"Node total size="<<in_nt.listNeuron.size()<<endl;
+    return true;
+}
+vector<V3DLONG> child_node_indexes(NeuronTree in_nt, V3DLONG query_node_index)
+{
+    vector<V3DLONG> out_index;
+    V3DLONG siz=in_nt.listNeuron.size();
+    if(!siz || query_node_index >= siz) {return out_index;}
+    NeuronSWC qnode=in_nt.listNeuron.at(query_node_index);
+    for (V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=in_nt.listNeuron.at(i);
+        if(qnode.n==s.pn && s.n!=qnode.n){
+            out_index.push_back(i);
+        }
+    }
+//    cout<<"child size="<<out_index.size()<<endl;
+    return out_index;
+}
+bool multi_bifurcations_processing(NeuronTree& in_nt,V3DLONG somaid)
 {
     //s1. detect three bifurcation points
     //s2. move one of the branch to the parent of bifurcation node
@@ -1007,63 +1165,51 @@ bool three_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid)
 
     V3DLONG siz=in_nt.listNeuron.size();
     if(!siz) {return false;}
-    if(somaid<0)
-        somaid=get_soma(in_nt,true);
-    if(somaid<0){return true;}
+//    cout<<"Node raw size="<<siz<<endl;
+    if(somaid<0){somaid=get_soma(in_nt);}
+    if(somaid<0){return false;}
     vector<int> ntype(siz,0);
-    if(!getNodeType(in_nt,ntype,somaid)){return true;}
-
+    if(!getNodeType(in_nt,ntype,somaid)){return false;}
+//    cout<<"here"<<endl;
     //s1
     QList<V3DLONG> bifur_idlist; bifur_idlist.clear();
     for (V3DLONG i=0;i<siz;i++)
-        if(somaid!=i&&ntype.at(i)>2)
+    {
+        if((somaid!=i)&&ntype.at(i)>=3)
             bifur_idlist.append(i);
-
-    cout<<"#bifurcation="<<bifur_idlist.size()<<endl;
-    //s2
-    for(int b=0;b<bifur_idlist.size();b++){
-        V3DLONG bifur_id=bifur_idlist.at(b);
-        bool processed=false;
-        for (V3DLONG i=0;i<siz;i++){
-            NeuronSWC s = in_nt.listNeuron.at(i);
-            if(s.pn>0&&in_nt.hashNeuron.contains(s.pn)){
-                 V3DLONG spn_id=in_nt.hashNeuron.value(s.pn);
-                 if(spn_id==bifur_id){
-                     //find the child node
-                     cout<<"Node: "<<s.pn<<",#child="<<ntype.at(spn_id)<<endl;
-                     NeuronSWC sp = in_nt.listNeuron[bifur_id];
-                     while(true){
-                         s=sp;
-                         if(s.pn<0||!in_nt.hashNeuron.contains(s.pn)){
-                             processed=false;
-                             break;
-                         }
-                         spn_id=in_nt.hashNeuron.value(s.pn);
-                         sp = in_nt.listNeuron.at(spn_id);
-                         if(ntype.at(spn_id)==1&&spn_id!=somaid){
-                             in_nt.listNeuron[i].pn=sp.n;
-                             cout<<"set "<<in_nt.listNeuron[i].n<<" parent to "<<sp.n<<endl;
-                             processed=true;
-                             ntype[spn_id]+=1;
-                             break;
-                         }
-                     }
-                 }
-            }
-            if(processed)
-                break;
-        }
-        if(!processed){cout<<"process fail"<<endl; return false;}
     }
-    //check
-    ntype.clear();
-    getNodeType(in_nt,ntype,somaid);
-    for (V3DLONG i=0;i<siz;i++)
-        if(somaid!=i&&ntype.at(i)>2){
-            cout<<ntype.at(i)<<" childs,";
-            cout<<"bifurcation id="<<i<<endl;
-            return /*false*/three_bifurcation_processing(in_nt,somaid);
+    cout<<"#3-bifs="<<bifur_idlist.size()<<endl;
+    //s2
+    if(bifur_idlist.size()){
+        for(int b=0;b<bifur_idlist.size();b++)
+        {
+            V3DLONG bifur_index=bifur_idlist.at(b);
+//            cout<<"3bifs id="<<in_nt.listNeuron.at(bifur_index).n<<endl;
+            vector<V3DLONG> bif_child_index=child_node_indexes(in_nt,bifur_index);
+            if(bif_child_index.size()>=3){
+                for(int c=2;c<bif_child_index.size();c++)
+                {
+                    V3DLONG decomposed_child_index=bif_child_index.at(c);
+//                    cout<<"processed child id ="<<in_nt.listNeuron.at(decomposed_child_index).n<<endl;
+                    if(!three_bif_decompose(in_nt,decomposed_child_index,somaid))
+                        return false;
+                }
+            }
         }
+//        cout<<"Node processed size="<<in_nt.listNeuron.size()<<endl;
+        //check
+        vector<int> new_ntype(in_nt.listNeuron.size(),0);
+        if(!getNodeType(in_nt,new_ntype,somaid)){return false;}
+        for (V3DLONG i=0;i<in_nt.listNeuron.size();i++)
+        {
+            if(somaid!=i&&new_ntype.at(i)>2){
+                cout<<"3bifs id="<<in_nt.listNeuron.at(i).n<<endl;
+//                cout<<new_ntype.at(i)<<" childs,";
+                cout<<"bifurcation id="<<in_nt.listNeuron.at(i).n<<endl;
+                return false;
+            }
+        }
+    }
     return true;
 }
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre)
@@ -1558,19 +1704,32 @@ double vector_max(std::vector<double> input){
     return vmax;
 }
 double vector_mean(std::vector<double> input){
+    if(!input.size())
+        return 0.0;
     double sum =0.0;
     for(V3DLONG i=0;i<input.size();i++)
         sum+=input.at(i);
-    return sum / input.size();
+    if(sum<0)
+    {
+        double absmean=double(-1.0)*sum/double(input.size());
+        cout<<"abs="<<absmean<<endl;
+        cout<<"return "<<double(-1.0)*(absmean)<<endl;
+        return double(-1.0)*(absmean);
+    }
+    else
+        return sum / double(input.size());
 }
 double vector_std(std::vector<double> input){
+    if(input.size()<=1)
+        return 0;
+    double mean= (vector_mean(input));
 
-    double mean= vector_mean(input);
     double accum  = 0.0;
     for(V3DLONG i=0;i<input.size();i++)
         accum  += (input.at(i)-mean)*(input.at(i)-mean);
-
-    double stdev = sqrt(accum/(input.size()-1));
+    if(accum<0)
+        accum*=double(-1);
+    double stdev = sqrt(accum/double(input.size()-1));
     return stdev;
 }
 double vector_min(std::vector<double> input){

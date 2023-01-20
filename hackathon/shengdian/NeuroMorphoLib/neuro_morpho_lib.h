@@ -6,6 +6,7 @@
 #include <numeric>
 #include <math.h>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -17,19 +18,30 @@ template<typename T>
 double dis(T node1, T node2){
     ///for computing of distance between two nodes
     double a = (node1.x - node2.x)*(node1.x - node2.x) + (node1.y - node2.y)*(node1.y - node2.y) + (node1.z - node2.z)*(node1.z - node2.z);
-    return sqrt(a);
+    if(a<=0)
+        return double(0.0);
+    return double(sqrt(a));
 }
 template<typename T>
-double angle_3d(T n1, T n2, T n3, T n4){
+double angle_3d(T n1, T n2, T n3, T n4,bool debug_falg=false){
     ///for computing of angle between two 3d-vector
     T v1,v2;
     v1.x=n1.x-n2.x; v1.y=n1.y-n2.y; v1.z=n1.z-n2.z;
     v2.x=n3.x-n4.x; v2.y=n3.y-n4.y; v2.z=n3.z-n4.z;
     double v1_len=sqrt(v1.x*v1.x+v1.y*v1.y+v1.z*v1.z);
     double v2_len=sqrt(v2.x*v2.x+v2.y*v2.y+v2.z*v2.z);
+    if(v1_len==0||v2_len==0)
+        return double(0.0);
+
     double angle_3d=(v1.x*v2.x+v1.y*v2.y+v1.z*v2.z)/(v1_len*v2_len);
+    if(debug_falg){
+        cout<<"length="<<v1_len<<","<<v2_len<<endl;
+        cout<<"angle="<<angle_3d<<",return="<<double(180)*acos(angle_3d)/PI<<endl;
+    }
+    if(angle_3d>=1)
+        return double(0.0);
     //angle_3d=(angle_3d>0)?angle_3d:(-1.0)*angle_3d;
-    return (angle_3d);
+    return double(180)*acos(angle_3d)/PI;
 }
 
 struct BranchUnit
@@ -53,6 +65,7 @@ struct BranchUnit
       * io1: input-branch with left-branch
       * io2: input-branch with right-branch
     */
+    double width,height,depth;
     double angle_io1,angle_io1_remote,angle_io2,angle_io2_remote;
     /*in-branch-radius, left-branch-radius and right-branch-rdius*/
     double radius,lcradius,rcradius;
@@ -67,12 +80,13 @@ struct BranchUnit
     QHash <int, int>  hashNode;
     BranchUnit() {
         id=0;parent_id=0;
-        angle=angle_remote=angle_io2=angle_io1=angle_io1_remote=angle_io2_remote=0.0;
+        width=height=depth=0.0;
+        angle=angle_remote=angle_io2=angle_io1=angle_io1_remote=angle_io2_remote=double(0.0);
         type=level=0;
-        radius=lcradius=rcradius=0.0;
-        length=pathLength=0.0;
-        lclength=lcpathLength=rclength=rcpathLength=0.0;
-        lslength=lspathLength=rslength=rspathLength=0.0;
+        radius=lcradius=rcradius=double(0.0);
+        length=pathLength=double(0.0);
+        lclength=lcpathLength=rclength=rcpathLength=double(0.0);
+        lslength=lspathLength=rslength=rspathLength=double(0.0);
         lstips=rstips=0;
         listNode.clear();hashNode.clear();
     }
@@ -137,6 +151,7 @@ struct BranchTree
     vector< vector<V3DLONG> > get_branch_child_index();
     bool get_branch_child_angle();
     bool get_branch_angle_io();
+    bool get_volsize();
     void get_globalFeatures(); //nt length,branches,tip_branches
     vector<int> getBranchType();
     bool normalize_branchTree();
@@ -148,7 +163,7 @@ void scale_nt_coor(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
 BranchTree readBranchTree_file(const QString& filename);
 bool writeBranchTree_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
 bool writeBranchSequence_file(const QString& filename, const BranchTree& bt,bool enhanced=false);
-
+NeuronSWC getBranchNearNode(BranchUnit bu, bool near_head=true,double min_dist=5.0);
 NeuronTree to_topology_tree(NeuronTree nt);
 bool getNodeOrder(NeuronTree nt,vector<int> & norder,V3DLONG somaid=-1);
 bool getNodeType(NeuronTree nt,vector<int> & ntype,V3DLONG somaid=-1);
@@ -157,8 +172,11 @@ double getNT_len(NeuronTree nt,float *res);
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
 bool loop_checking(NeuronTree nt);
-bool multi_bifurcations_checking(NeuronTree nt,V3DLONG somaid=-1);
-bool three_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
+bool multi_bifurcations_checking(NeuronTree nt,QList<CellAPO> & out_3bifs,V3DLONG somaid=-1);
+bool three_bif_decompose(NeuronTree& in_nt,V3DLONG bif_child_id,V3DLONG somaid=-1);
+vector<V3DLONG> child_node_indexes(NeuronTree in_nt, V3DLONG query_node_index=1);
+bool multi_bifurcations_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
+//bool multi_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
