@@ -57,6 +57,10 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return nt_qc(callback,input,output);
     }
+    else if (func_name == tr("nt_check"))
+    {
+        return nt_check(callback,input,output);
+    }
     else if (func_name == tr("swc_parallization"))
     {
         return swc_parallization(callback,input,output);

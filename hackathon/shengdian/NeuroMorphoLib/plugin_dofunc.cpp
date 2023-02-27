@@ -28,7 +28,53 @@ bool swc_parallization(V3DPluginCallback2 &callback, const V3DPluginArgList &inp
     if(!siz) {return false;}
     string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".eswc");
 
-    writeESWC_file(QString::fromStdString(out_f),nt_out);
+    writeESWC_file(QString::fromStdString(out_f),nt);
+    return true;
+}
+bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*preprocess:
+     * single tree checking
+     * soma checking
+     * loop checking
+     * multiple bifurcation checking
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    string inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    int out_ok_nt=(inparas.size()>=1)?atoi(inparas[1]):0;
+
+    cout<<"swc file="<<inswc_file<<endl;
+    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".eswc");
+    //single tree checking
+    QList<NeuronTree> ntrees=nt_2_trees(nt);
+    if(ntrees.size()!=1){
+        cout<<"Not single tree, and tree size ="<<ntrees.size()<<endl;
+        writeESWC_file(QString::fromStdString(out_f),nt);
+        return false;
+    }
+    V3DLONG somaid=get_soma(nt,false); if(somaid<0){
+        cout<<"Soma Error"<<endl;
+        writeESWC_file(QString::fromStdString(out_f),nt);
+        return false;
+    }
+    if(loop_checking(nt)){
+        writeESWC_file(QString::fromStdString(out_f),nt);
+        return false;
+    }
+    QList<CellAPO> out_3bifs;
+    bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
+    if(mbif){
+        writeESWC_file(QString::fromStdString(out_f),nt);
+        return false;
+    }
+    if(out_ok_nt)
+        writeESWC_file(QString::fromStdString(out_f),nt);
     return true;
 }
 bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
@@ -232,13 +278,14 @@ bool write_lm_features(const QString &filename, NeuronTree nt){
     for(V3DLONG i=0;i<bsiz;i++)
     {
         BranchUnit bu = bt.listBranch.at(i);
-        BranchSequence brs;
-        bt.to_soma_br_seq(i,brs);
         br_plen[i]=bu.pathLength;
         br_elen[i]=bu.length;
 //        cout<<bu.length<<endl;
         br_order[i]=bu.level;
-        br_contraction[i]=bu.length/bu.pathLength;
+        if(bu.pathLength<=0)
+            br_contraction[i]=1;
+        else
+            br_contraction[i]=bu.length/bu.pathLength;
         if(bu.lstips>0){
             if(bu.lstips+bu.rstips-2>0)
                 bif_partasy[ii]=abs(int(bu.lstips-bu.rstips))/(bu.lstips+bu.rstips-2);
@@ -252,8 +299,8 @@ bool write_lm_features(const QString &filename, NeuronTree nt){
 //                bif_partasy_plen[i]=(bu.lspathLength)/(bu.lspathLength+bu.rspathLength);
 //            }
         }
-        bif_edist2soma[i]=brs.seqLength;
-        bif_pdist2soma[i]=brs.seqPathLength;
+        bif_edist2soma[i]=bu.edist2soma;
+        bif_pdist2soma[i]=bu.pdist2soma;
 
 //        cout<<"x="<<bu.listNode.at(bu.listNode.size()-1).x<<",y="<<bu.listNode.at(bu.listNode.size()-1).y<<",z="<<bu.listNode.at(bu.listNode.size()-1).z<<",angle="<<bu.angle<<endl;
     }
@@ -272,32 +319,32 @@ bool write_lm_features(const QString &filename, NeuronTree nt){
         writedata.append("overall_height,"+QString::number(bt.height)+"\n");
         writedata.append("overall_depth,"+QString::number(bt.depth)+"\n");
         writedata.append("overall_volume,"+QString::number(bt.volume)+"\n");
-        writedata.append("total_branch_straight_line_dist,"+QString::number(bt.total_length)+"\n");
+//        writedata.append("total_branch_straight_line_dist,"+QString::number(bt.total_length)+"\n");
         writedata.append("total_length,"+QString::number(bt.total_path_length)+"\n");
-        writedata.append("branch_length_mean,"+QString::number(vector_mean(br_plen))+"\n");
-        writedata.append("branch_length_std,"+QString::number(vector_std(br_plen))+"\n");
-        writedata.append("branch_length_min,"+QString::number(vector_min(br_plen))+"\n");
-        writedata.append("branch_length_max,"+QString::number(vector_max(br_plen))+"\n");
-        writedata.append("branch_straight_line_dist_mean,"+QString::number(vector_mean(br_elen))+"\n");
-        writedata.append("branch_straight_line_dist_std,"+QString::number(vector_std(br_elen))+"\n");
-        writedata.append("branch_straight_line_dist_min,"+QString::number(vector_min(br_elen))+"\n");
-        writedata.append("branch_straight_line_dist_max,"+QString::number(vector_max(br_elen))+"\n");
-        writedata.append("branch_order_mean,"+QString::number(vector_mean(br_order))+"\n");
-        writedata.append("branch_order_std,"+QString::number(vector_std(br_order))+"\n");
-        writedata.append("branch_order_min,"+QString::number(vector_min(br_order))+"\n");
-        writedata.append("branch_order_max,"+QString::number(vector_max(br_order))+"\n");
-        writedata.append("branch_contraction_mean,"+QString::number(vector_mean(br_contraction))+"\n");
-        writedata.append("branch_contraction_std,"+QString::number(vector_std(br_contraction))+"\n");
-        writedata.append("branch_contraction_min,"+QString::number(vector_min(br_contraction))+"\n");
-        writedata.append("branch_contraction_max,"+QString::number(vector_max(br_contraction))+"\n");
-        writedata.append("bifurcation_straight_line_dist2soma_mean,"+QString::number(vector_mean(bif_edist2soma))+"\n");
-        writedata.append("bifurcation_straight_line_dist2soma_std,"+QString::number(vector_std(bif_edist2soma))+"\n");
-        writedata.append("bifurcation_straight_line_dist2soma_min,"+QString::number(vector_min(bif_edist2soma))+"\n");
-        writedata.append("bifurcation_straight_line_dist2soma_max,"+QString::number(vector_max(bif_edist2soma))+"\n");
-        writedata.append("bifurcation_path_dist2soma_mean,"+QString::number(vector_mean(bif_pdist2soma))+"\n");
-        writedata.append("bifurcation_path_dist2soma_std,"+QString::number(vector_std(bif_pdist2soma))+"\n");
-        writedata.append("bifurcation_path_dist2soma_min,"+QString::number(vector_min(bif_pdist2soma))+"\n");
-        writedata.append("bifurcation_path_dist2soma_max,"+QString::number(vector_max(bif_pdist2soma))+"\n");
+        writedata.append("br_length_mean,"+QString::number(vector_mean(br_plen))+"\n");
+        writedata.append("br_length_std,"+QString::number(vector_std(br_plen))+"\n");
+        writedata.append("br_length_min,"+QString::number(vector_min(br_plen))+"\n");
+        writedata.append("br_length_max,"+QString::number(vector_max(br_plen))+"\n");
+//        writedata.append("branch_straight_line_dist_mean,"+QString::number(vector_mean(br_elen))+"\n");
+//        writedata.append("branch_straight_line_dist_std,"+QString::number(vector_std(br_elen))+"\n");
+//        writedata.append("branch_straight_line_dist_min,"+QString::number(vector_min(br_elen))+"\n");
+//        writedata.append("branch_straight_line_dist_max,"+QString::number(vector_max(br_elen))+"\n");
+        writedata.append("br_order_mean,"+QString::number(vector_mean(br_order))+"\n");
+        writedata.append("br_order_std,"+QString::number(vector_std(br_order))+"\n");
+        writedata.append("br_order_min,"+QString::number(vector_min(br_order))+"\n");
+        writedata.append("br_order_max,"+QString::number(vector_max(br_order))+"\n");
+        writedata.append("br_contraction_mean,"+QString::number(vector_mean(br_contraction))+"\n");
+        writedata.append("br_contraction_std,"+QString::number(vector_std(br_contraction))+"\n");
+        writedata.append("br_contraction_min,"+QString::number(vector_min(br_contraction))+"\n");
+        writedata.append("br_contraction_max,"+QString::number(vector_max(br_contraction))+"\n");
+        writedata.append("bif_EucDist2soma_mean,"+QString::number(vector_mean(bif_edist2soma))+"\n");
+        writedata.append("bif_EucDist2soma_std,"+QString::number(vector_std(bif_edist2soma))+"\n");
+        writedata.append("bif_EucDist2soma_min,"+QString::number(vector_min(bif_edist2soma))+"\n");
+        writedata.append("bif_EucDist2soma_max,"+QString::number(vector_max(bif_edist2soma))+"\n");
+        writedata.append("bif_PathDist2soma_mean,"+QString::number(vector_mean(bif_pdist2soma))+"\n");
+        writedata.append("bif_PathDist2soma_std,"+QString::number(vector_std(bif_pdist2soma))+"\n");
+        writedata.append("bif_PathDist2soma_min,"+QString::number(vector_min(bif_pdist2soma))+"\n");
+        writedata.append("bif_PathDist2soma_max,"+QString::number(vector_max(bif_pdist2soma))+"\n");
 //        writedata.append("bif_partasy_elen_mean,"+QString::number(vector_mean(bif_partasy_elen))+"\n");
 //        writedata.append("bif_partasy_elen_std,"+QString::number(vector_std(bif_partasy_elen))+"\n");
 //        writedata.append("bif_partasy_elen_min,"+QString::number(vector_min(bif_partasy_elen))+"\n");
@@ -306,10 +353,10 @@ bool write_lm_features(const QString &filename, NeuronTree nt){
 //        writedata.append("bif_partasy_plen_std,"+QString::number(vector_std(bif_partasy_plen))+"\n");
 //        writedata.append("bif_partasy_plen_min,"+QString::number(vector_min(bif_partasy_plen))+"\n");
 //        writedata.append("bif_partasy_plen_max,"+QString::number(vector_max(bif_partasy_plen))+"\n");
-        writedata.append("partition_asymmetry_mean,"+QString::number(vector_mean(bif_partasy))+"\n");
-        writedata.append("partition_asymmetry_std,"+QString::number(vector_std(bif_partasy))+"\n");
-        writedata.append("partition_asymmetry_min,"+QString::number(vector_min(bif_partasy))+"\n");
-        writedata.append("partition_asymmetry_max,"+QString::number(vector_max(bif_partasy))+"\n");
+        writedata.append("asymmetry_mean,"+QString::number(vector_mean(bif_partasy))+"\n");
+        writedata.append("asymmetry_std,"+QString::number(vector_std(bif_partasy))+"\n");
+        writedata.append("asymmetry_min,"+QString::number(vector_min(bif_partasy))+"\n");
+        writedata.append("asymmetry_max,"+QString::number(vector_max(bif_partasy))+"\n");
         writedata.append("ampl_local_mean,"+QString::number(vector_mean(bif_ampl_local))+"\n");
         writedata.append("ampl_local_std,"+QString::number(vector_std(bif_ampl_local))+"\n");
         writedata.append("ampl_local_min,"+QString::number(vector_min(bif_ampl_local))+"\n");
@@ -360,9 +407,6 @@ bool write_branch_features(const QString &filename, NeuronTree nt){
         for(V3DLONG i=0;i<bsiz;i++)
         {
             BranchUnit bu = bt.listBranch.at(i);
-//            V3DLONG busiz=bu.listNode.size();
-            BranchSequence brs;
-            bt.to_soma_br_seq(i,brs);
             QString brf=QString::number(bu.id);
             brf+=(","+QString::number(bu.parent_id));
             brf+=(","+QString::number(bu.listNode.at(0).x));
@@ -370,8 +414,8 @@ bool write_branch_features(const QString &filename, NeuronTree nt){
             brf+=(","+QString::number(bu.listNode.at(0).z));
             brf+=(","+QString::number(bu.type));
             brf+=(","+QString::number(bu.level));
-            brf+=(","+QString::number(brs.seqLength));
-            brf+=(","+QString::number(brs.seqPathLength));
+            brf+=(","+QString::number(bu.edist2soma));
+            brf+=(","+QString::number(bu.pdist2soma));
             brf+=(","+QString::number(bu.angle));
             brf+=(","+QString::number(bu.angle_remote));
             brf+=(","+QString::number(bu.angle_io1));
@@ -383,7 +427,10 @@ bool write_branch_features(const QString &filename, NeuronTree nt){
             brf+=(","+QString::number(bu.rcradius));
             brf+=(","+QString::number(bu.length));
             brf+=(","+QString::number(bu.pathLength));
-            brf+=(","+QString::number(double(bu.length/bu.pathLength)));
+            if(bu.pathLength<=0)
+                brf+=(","+QString::number(1.0));
+            else
+                brf+=(","+QString::number(double(bu.length/bu.pathLength)));
             brf+=(","+QString::number(bu.lclength));
             brf+=(","+QString::number(bu.lcpathLength));
             brf+=(","+QString::number(bu.rclength));

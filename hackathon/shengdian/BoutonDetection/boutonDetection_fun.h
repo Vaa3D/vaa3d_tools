@@ -195,7 +195,7 @@ struct AxonalBouton
     void out_to_NeuronSWC(NeuronSWC& s){
         s.x=this->x; s.y=this->y; s.z=this->z;
         s.type=this->nodetype;
-        s.r=this->nodeR;
+//        s.r=this->nodeR;
         s.level=this->broder;
         s.fea_val.clear();
         s.fea_val.append(this->ccfx);

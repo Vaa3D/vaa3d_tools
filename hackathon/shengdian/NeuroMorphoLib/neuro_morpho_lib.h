@@ -71,6 +71,7 @@ struct BranchUnit
     double radius,lcradius,rcradius;
     /*in-branch-length, left-branch-length and right-branch-length*/
     double length,pathLength;
+    double edist2soma,pdist2soma;
     double lclength,lcpathLength,rclength,rcpathLength;
     double lslength,lspathLength,rslength,rspathLength;
     /*left-branch-tips and right-branch-tips*/
@@ -85,6 +86,7 @@ struct BranchUnit
         type=level=0;
         radius=lcradius=rcradius=double(0.0);
         length=pathLength=double(0.0);
+        edist2soma=pdist2soma=0.0;
         lclength=lcpathLength=rclength=rcpathLength=double(0.0);
         lslength=lspathLength=rslength=rspathLength=double(0.0);
         lstips=rstips=0;
@@ -119,9 +121,11 @@ struct BranchSequence
 {
     // branch sequence contains a list of branches from soma-stem to tip-branch
     QList<V3DLONG> listbr; //index of listBranch, not BranchUnit id
-    int seqSize,seqLength,seqPathLength,seqType;
+    double seqLength,seqPathLength; //seqLength: total Euclidean length of branches
+    int seqSize,seqType;
     BranchSequence() {
-        seqSize=seqLength=seqPathLength=seqType=0;
+        seqSize=seqType=0;
+        seqLength=seqPathLength=0.0;
         listbr.clear();
     }
 };
@@ -178,6 +182,7 @@ vector<V3DLONG> child_node_indexes(NeuronTree in_nt, V3DLONG query_node_index=1)
 bool multi_bifurcations_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 //bool multi_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
+QList<NeuronTree> nt_2_trees(NeuronTree nt);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
