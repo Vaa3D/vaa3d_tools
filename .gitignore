@@ -138,7 +138,6 @@ venv.bak/
 .mypy_cache/
 
 # data
-*.swc
 *.npy
 *.mp4
 *.tiff
