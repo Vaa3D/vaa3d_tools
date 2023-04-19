@@ -8,7 +8,7 @@
 #include "refinement.h"
 #include "n_class.h"
 #include <fstream>
-
+#include "nlohmann\json.hpp"
 using namespace std;
 Q_EXPORT_PLUGIN2(refine_swc, TestPlugin);
  
@@ -41,7 +41,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-            "Developed by YourName, 2021-10-19"));
+            "Developed by YiweiLi, 2021-10-19"));
 	}
 }
 
@@ -66,13 +66,35 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         NeuronTree result= b.refine_bifurcation_by_gd(braindir,callback,eswcfile);
 //        QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
         writeSWC_file(eswcfile,result);
-    }
+ }else if(func_name==tr("refine_SIAT")){
+        NeuronTree nt1=readSWC_file(infiles[0]);
+        QString braindir= infiles[1];
+        SwcTree a;
+        int stitch_flag = atoi(inparas[0]);
+        float step = atoi(inparas[1]);
+        if(stitch_flag){
+            a.initialize_SIAT(nt1,step);  // initialize the neuron structure with 300um stitch
+        }else{
+           a.initialize(nt1);  // initialize the neuron structure
+        }
+        int thres = atoi(inparas[2]);
+        int img_size_x = atoi(inparas[3]);
+        int img_size_y = atoi(inparas[4]);
+        int img_size_z = atoi(inparas[5]);
+        float shift_z = atof(inparas[6]);
+        cout<<"initialization finished"<<endl;
+        NeuronTree refinetree = a.refine_swc_by_gd_SIAT(braindir,thres,img_size_x,img_size_y,img_size_z,shift_z,callback);  // do the refinement based on GD
+        cout<<"refinement finished"<<endl;
+        string inswc_file=infiles[0];
+        QString eswcfile = (outfiles.size()>=1) ? outfiles[0] : QString::fromStdString((inswc_file+"_refined.eswc"));
+        writeSWC_file(eswcfile,refinetree);
+ }
     else if (func_name == tr("help"))
     {
         cout<<"usage:"<<endl;
-        cout<<"v3d -x refine_swc -f refine -i [file_swc] [brain_path] -o [txt_file]"<<endl;
-        cout<<"v3d -x refine_swc -f refine_img -i [file_swc] [img_path] -o [txt_file]"<<endl;
-
+        cout<<"v3d -x refine -f refine -i [file_swc] [brain_path] -o [txt_file]"<<endl;
+        cout<<"v3d -x refine_img -f refine_img -i [file_swc] [img_path] -o [txt_file]"<<endl;
+        cout<<"v3d -x refine_SAIT -f refine_SIAT -i [file_swc] [brain_path] -o [txt_file] -p stitch_flag stitch_position thres imgsize_x imgsize_y imgsize_z shift_z"<<endl;
     }else if(func_name==tr("refine_img")) // the main function to do refinement on the cropped images(tif version)
     {
      NeuronTree nt1=readSWC_file(infiles[0]);

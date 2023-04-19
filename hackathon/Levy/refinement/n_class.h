@@ -177,12 +177,15 @@ struct Branch{
     bool get_meanstd(QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
     bool get_meanstd_img(string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double &branchmean, double &branchstd, int mode = 0, int resolution = 3);
     bool splitbranch(NeuronTree& nt, vector<Branch> &segs, double thres);
-
+    bool splitbranch_stitch(NeuronTree &nt, vector<Branch> &segs, double thres);
+    bool refine_by_gd_SIAT(vector<LocationSimple> points, vector<LocationSimple> &outpoints, QString braindir, V3DPluginCallback2 &callback, float shift_z, int img_size_x, int img_size_y, int img_size_z);
     bool refine_by_gd(vector<LocationSimple> points, vector<LocationSimple> &outpoints, QString braindir, V3DPluginCallback2 &callback);
     bool refine_by_gd_img(vector<LocationSimple> points, vector<LocationSimple> &outpoints, string inimg_file, V3DPluginCallback2 &callback);
     bool refine_by_2gd(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
+    bool refine_by_2gd_SIAT(vector<LocationSimple> &outbranch, QString braindir, V3DPluginCallback2 &callback, NeuronTree &nt, double thres, vector<int> &neuron_type, int img_size_x, int img_size_y, int img_size_z, float shift_z);
     bool refine_by_2gd_img(vector<LocationSimple> &outbranch, string inimg_file, V3DPluginCallback2 &callback, NeuronTree &nt, double thres,vector<int> &neuron_type);
     bool refine_branch_by_gd(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd,vector<NeuronSWC> pp0_orig_list,vector<NeuronSWC> pp1_orig_list,vector<NeuronSWC> pp2_orig_list,QString braindir, V3DPluginCallback2 &callback);
+    bool refine_branch_by_gd_SIAT(LocationSimple points, LocationSimple p_childa, LocationSimple p_childb,NeuronTree &nt_gd,vector<NeuronSWC> pp0_orig_list,vector<NeuronSWC> pp1_orig_list,vector<NeuronSWC> pp2_orig_list, QString braindir, V3DPluginCallback2 &callback);
     void mip(NeuronTree &nt1,vector<Branch> &B,QString braindir,V3DPluginCallback2 &callback,QString imgdir,double thres,double dis_thre);
 };
 
@@ -196,6 +199,7 @@ struct SwcTree{
         trunks.clear();
     }
     bool initialize(NeuronTree t);
+    bool initialize_SIAT(NeuronTree t,float step);
     void inline display()
     {
         cout<<"branch<<<<<<<<<<<<<<<<<<<<<<<<<<"<<endl;
@@ -234,6 +238,7 @@ struct SwcTree{
     NeuronTree refine_bifurcation_by_gd(QString braindir, V3DPluginCallback2 &callback,QString eswcfile);
     NeuronTree refine_swc_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
     NeuronTree refine_swc_branch_by_gd_img(string inimg_file, V3DPluginCallback2 &callback);
+    NeuronTree refine_swc_by_gd_SIAT(QString braindir, int thres, int img_size_x, int img_size_y, int img_size_z, float shift_z, V3DPluginCallback2 &callback);
     void MIP_terafly(NeuronTree &nt1,NeuronTree &nt2,QString braindir,QString imgdir,V3DPluginCallback2 &callback);
     void calculate_tapping_ratio(QString tapping_ratio_txt1,QString tapping_ratio_txt2,QString tapping_ratio_txt3,V3DPluginCallback2 &callback);
 };
