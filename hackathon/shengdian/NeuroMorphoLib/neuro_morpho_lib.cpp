@@ -17,10 +17,31 @@ void BranchUnit::radius_smooth(int half_win){
         }
     }
 }
-void BranchUnit::get_features(){
+void BranchUnit::bouton_features(int btype,int interb_dist_index,int spatial_nb_index,int topo_nb_dist_index){
+    V3DLONG bsiz=this->listNode.size();
+    for(V3DLONG i=0;i<bsiz;i++)
+    {
+        if(this->listNode.at(i).fea_val.at(btype))
+        {
+            this->boutons+=1;
+            this->mean_dist2parent_bouton+=this->listNode.at(i).fea_val.at(interb_dist_index);
+            this->mean_spatial_neighbor_boutons+=this->listNode.at(i).fea_val.at(spatial_nb_index);
+            this->mean_MINdist2topo_bouton+=this->listNode.at(i).fea_val.at(topo_nb_dist_index);
+        }
+    }
+    if(this->boutons)
+    {
+        this->mean_dist2parent_bouton/=(double)this->boutons;
+        this->mean_spatial_neighbor_boutons/=(double)this->boutons;
+        this->mean_MINdist2topo_bouton/=(double)this->boutons;
+        this->uniform_bouton_dist=this->pathLength/(double)this->boutons;
+    }
+
+}
+void BranchUnit::get_features(bool bouton_fea){
     //length, path length,radius
 
-    this->length=dis(this->listNode.at(0),this->listNode.at(this->listNode.size()-1));
+    this->length=dis(this->listNode.at(0),this->listNode.at(this->listNode.size()-1),bouton_fea);
 //    cout<<"len="<<this->length<<endl;
     if(this->listNode.size()==2)
         this->pathLength=this->length;
@@ -30,13 +51,14 @@ void BranchUnit::get_features(){
         {
             NeuronSWC snode=this->listNode.at(i);
             NeuronSWC enode=this->listNode.at(i+1);
-            this->pathLength+=dis(snode,enode);
-//            cout<<"plen="<<this->pathLength<<endl;
+            this->pathLength+=dis(snode,enode,bouton_fea);
         }
     }
         //radius
-    this->radius_smooth();
+//    this->radius_smooth();
     this->get_radius();
+    if(bouton_fea)
+        this->bouton_features();
 
 }
 void BranchTree::get_globalFeatures(){
@@ -257,7 +279,7 @@ bool BranchTree::get_branch_child_angle()
     }
     return true;
 }
-bool BranchTree::get_enhacedFeatures()
+bool BranchTree::get_enhacedFeatures(bool bouton_fea)
 {
      /*1. get branch type
       * 2. get child index of branch
@@ -289,10 +311,15 @@ bool BranchTree::get_enhacedFeatures()
     {
         QList<V3DLONG> subtreeBrlist;
         if(btype[i]>0){
+            V3DLONG brpid=this->listBranch.at(i).parent_id;
+            if(bouton_fea&&brpid>0)
+                this->listBranch[i].pboutons=this->listBranch.at(brpid).boutons;
             if(child_index_list.at(i).size()!=2) { cout<<this->listBranch.at(i).id<<" child branch size: "<<child_index_list.at(i).size()<<endl; return false;}
             //left part
             V3DLONG lc_index=child_index_list.at(i).at(0);
             this->listBranch[i].lclength=this->listBranch[lc_index].length;
+            if(bouton_fea)
+                this->listBranch[i].lcboutons=this->listBranch[lc_index].boutons;
             this->listBranch[i].lcradius=this->listBranch[lc_index].radius;
             this->listBranch[i].lcpathLength=this->listBranch[lc_index].pathLength;
             subtreeBrlist.clear();
@@ -306,6 +333,8 @@ bool BranchTree::get_enhacedFeatures()
             }
             //right part
             V3DLONG rc_index=child_index_list.at(i).at(1);
+            if(bouton_fea)
+                this->listBranch[i].rcboutons=this->listBranch[rc_index].boutons;
             this->listBranch[i].rclength=this->listBranch[rc_index].length;
             this->listBranch[i].rcradius=this->listBranch[rc_index].radius;
             this->listBranch[i].rcpathLength=this->listBranch[rc_index].pathLength;
@@ -401,7 +430,7 @@ bool BranchTree::init_branch_sequence()
     cout<<"seq size: "<<this->branchseq.size()<<endl;
     return true;
 }
-bool BranchTree::init(NeuronTree in_nt){
+bool BranchTree::init(NeuronTree in_nt,bool bouton_fea){
     this->nt.deepCopy(in_nt);
     //neuron tree to branches
     V3DLONG siz=in_nt.listNeuron.size();
@@ -475,7 +504,7 @@ bool BranchTree::init(NeuronTree in_nt){
             //record the parent id of this branch
             br_tail_list.append(i);
             br_parent_list.append(sp_id);
-            bru.get_features();
+            bru.get_features(bouton_fea);
             this->listBranch.append(bru);
             this->hashBranch.insert(bru.id,this->listBranch.size()-1);
         }

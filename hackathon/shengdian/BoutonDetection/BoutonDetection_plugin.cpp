@@ -334,6 +334,26 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out.swc");
         writeSWC_file(out_swc_file,nt);
     }
+    else if (func_name == tr("ccfed"))
+    {
+        /*scale registered file to ccf*/
+        QString inswc_file;
+        if(infiles.size()>=1) {inswc_file = infiles[0];}
+//        float r_scale=(inparas.size()>=1)?atof(inparas[0]):1.0;
+        NeuronTree nt = readSWC_file(inswc_file);
+        if(!nt.listNeuron.size()) return false;
+        V3DLONG siz=nt.listNeuron.size();
+//        int shift_pixels=20;
+//        int scale_xyz=25;
+        for(V3DLONG i=0;i<siz;i++){
+            nt.listNeuron[i].x=nt.listNeuron.at(i).fea_val.at(0);
+            nt.listNeuron[i].y=nt.listNeuron.at(i).fea_val.at(1);
+            nt.listNeuron[i].z=nt.listNeuron.at(i).fea_val.at(2);
+//            nt.listNeuron[i].r=r_scale;
+        }
+        QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "_ccfprofiled.eswc");
+        writeESWC_file(out_nt_filename,nt);
+    }
     else if (func_name == tr("swc_scale"))
     {
         /*scale registered file to ccf*/

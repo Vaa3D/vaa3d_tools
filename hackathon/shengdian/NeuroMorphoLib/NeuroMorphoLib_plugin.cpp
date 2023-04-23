@@ -53,6 +53,14 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return branch_features(callback,input,output);
     }
+    else if (func_name == tr("swc2branches"))
+    {
+        return swc2branches(callback,input,output);
+    }
+    else if (func_name == tr("bouton_distribution"))
+    {
+        return bouton_distribution(callback,input,output);
+    }
     else if (func_name == tr("qc"))
     {
         return nt_qc(callback,input,output);

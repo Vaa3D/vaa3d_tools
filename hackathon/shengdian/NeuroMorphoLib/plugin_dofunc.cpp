@@ -146,6 +146,35 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     writeESWC_file(QString::fromStdString(out_f),nt_out);
     return true;
 }
+bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /* branch level features, for each branching point
+     * 1. branch length
+     * 2. distance to soma
+     * 3. type
+     * 4. asymmetry (#tips)
+     * 5. branching angle (remote,local,tilt)
+     * 6. subtree length, tips
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+//    int statistics=(inparas.size()>=1)?atoi(inparas[0]):1;
+    int type=(inparas.size()>=1)?atoi(inparas[0]):0;
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString outpath=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
+    QDir path(outpath);
+    if(!path.exists()) {
+        cout<<"make a new dir for saving branches "<<endl;
+        path.mkpath(outpath);
+    }
+    write_branches(nt,outpath,type);
+    return true;
+}
 bool branch_features(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /* branch level features, for each branching point
      * 1. branch length
@@ -164,6 +193,7 @@ bool branch_features(V3DPluginCallback2 &callback, const V3DPluginArgList &input
 //    int statistics=(inparas.size()>=1)?atoi(inparas[0]):1;
     int nt_check=(inparas.size()>=1)?atoi(inparas[0]):0;
     int process_3_bifs=(inparas.size()>=2)?atoi(inparas[1]):0;
+    int with_bouton=(inparas.size()>=3)?atoi(inparas[2]):0;
 
     cout<<"swc file="<<inswc_file<<endl;
     NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
@@ -188,7 +218,30 @@ bool branch_features(V3DPluginCallback2 &callback, const V3DPluginArgList &input
                 return false;
     }
     string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
-    write_branch_features(QString::fromStdString(out_f),nt);
+    write_branch_features(QString::fromStdString(out_f),nt,bool(with_bouton));
+    return true;
+}
+bool bouton_distribution(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /* branch level
+     * get bouton distribution density
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    string inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+//    int statistics=(inparas.size()>=1)?atoi(inparas[0]):1;
+    int split_times=(inparas.size()>=1)?atoi(inparas[0]):4;
+
+    cout<<"swc file="<<inswc_file<<endl;
+    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    cout<<"size of nodes="<<siz<<endl;
+    V3DLONG somaid=get_soma(nt); if(somaid<0){return false;}
+    string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
+    write_bouton_distribution(QString::fromStdString(out_f),nt,split_times);
     return true;
 }
 bool lm_statistic_features(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
@@ -246,6 +299,26 @@ bool lm_statistic_features(V3DPluginCallback2 &callback, const V3DPluginArgList 
     }
     string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".csv");
     write_lm_features(QString::fromStdString(out_f),nt);
+    return true;
+}
+bool write_branches(NeuronTree nt,const QString& outpath,int type){
+    BranchTree bt; bt.initialized=bt.init(nt);
+    if(!bt.initialized){return false;}
+    if (outpath.isEmpty()||bt.listBranch.size()==0) { return false;}
+    V3DLONG bsiz=bt.listBranch.size();
+    for(V3DLONG i=0;i<bsiz;i++)
+    {
+        BranchUnit bu = bt.listBranch.at(i);
+        if(type&&type!=bu.type)
+            continue;
+        NeuronTree br_nt;
+        for(V3DLONG n=0;n<bu.listNode.size();n++){
+            br_nt.listNeuron.append(bu.listNode.at(n));
+            br_nt.hashNeuron.insert(bu.listNode.at(n).n,br_nt.listNeuron.size()-1);
+        }
+        QString br_f=outpath+"/"+QString::number(i)+"_branch.eswc";
+        writeESWC_file(br_f,br_nt);
+    }
     return true;
 }
 bool write_lm_features(const QString &filename, NeuronTree nt){
@@ -382,14 +455,14 @@ bool write_lm_features(const QString &filename, NeuronTree nt){
     }
     return false;
 }
-bool write_branch_features(const QString &filename, NeuronTree nt){
-    BranchTree bt; bt.initialized=bt.init(nt);
+bool write_branch_features(const QString &filename, NeuronTree nt, bool bouton_fea){
+    BranchTree bt; bt.initialized=bt.init(nt,bouton_fea);
     if(!bt.initialized){return false;}
     if (filename.isEmpty()||bt.listBranch.size()==0) { return false;}
     QFile tofile(filename);
     if(tofile.exists()){cout<<"File overwrite to "<<filename.toStdString()<<endl;}
     bt.get_globalFeatures();
-    bt.get_enhacedFeatures();
+    bt.get_enhacedFeatures(bouton_fea);
     bt.get_branch_angle_io();
     bt.get_branch_child_angle();
     cout<<"feature init finished"<<endl;
@@ -399,7 +472,10 @@ bool write_branch_features(const QString &filename, NeuronTree nt){
 
 //    QString confTitle="#This file is used for recording branch-level motif in a neuron tree (by shengdian).\n";
     QString brfHead="id,parent_id,x,y,z,type,level,dist2soma,path_dist2soma,angle,angle_remote,angle_io1,angle_io1_remote,angle_io2,angle_io2_remote,radius,lcradius,rcradius,";
-    brfHead+="length,pathlength,contraction,lclength,lcpathlength,rclength,rcpathlength,width,height,depth,lslength,lspathlength,rslength,rspathlength,lstips,rstips\n";
+    brfHead+="length,pathlength,contraction,lclength,lcpathlength,rclength,rcpathlength,width,height,depth,lslength,lspathlength,rslength,rspathlength,lstips,rstips";
+    if(bouton_fea)
+        brfHead+=",bnum,pbnum,lcbnum,rcbnum,dist2nb,neigborbs,interb_dist,uniform_bdist";
+    brfHead+="\n";
     if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         tofile.write(brfHead.toAscii());
@@ -443,7 +519,77 @@ bool write_branch_features(const QString &filename, NeuronTree nt){
             brf+=(","+QString::number(bu.rslength));
             brf+=(","+QString::number(bu.rspathLength));
             brf+=(","+QString::number(bu.lstips));
-            brf+=(","+QString::number(bu.rstips)+"\n");
+            brf+=(","+QString::number(bu.rstips));
+            if(bouton_fea){
+                brf+=(","+QString::number(bu.boutons));
+                brf+=(","+QString::number(bu.pboutons));
+                brf+=(","+QString::number(bu.lcboutons));
+                brf+=(","+QString::number(bu.rcboutons));
+                brf+=(","+QString::number(bu.mean_MINdist2topo_bouton));
+                brf+=(","+QString::number(bu.mean_spatial_neighbor_boutons));
+                brf+=(","+QString::number(bu.mean_dist2parent_bouton));
+                brf+=(","+QString::number(bu.uniform_bouton_dist));
+            }
+            brf+="\n";
+            tofile.write(brf.toAscii());
+        }
+        tofile.close();
+        return true;
+    }
+    return false;
+}
+bool write_bouton_distribution(const QString &filename, NeuronTree nt,int split_times){
+    BranchTree bt; bt.initialized=bt.init(nt,true);
+    if(!bt.initialized){return false;}
+    if (filename.isEmpty()||bt.listBranch.size()==0) { return false;}
+    QFile tofile(filename);
+    if(tofile.exists()){cout<<"File overwrite to "<<filename.toStdString()<<endl;}
+    bt.get_globalFeatures();
+    V3DLONG bsiz=bt.listBranch.size();
+    QString brfHead="";
+    for(int s=0;s<split_times;s++)
+        brfHead+=("S"+QString::number(s+1)+",");
+    brfHead+="total,order,dist2soma,contraction,length\n";
+
+    if(tofile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        tofile.write(brfHead.toAscii());
+        //inside for each branch, get bouton-branch
+        for(V3DLONG i=0;i<bsiz;i++)
+        {
+            BranchUnit bu = bt.listBranch.at(i);
+            if(bu.boutons<=0)
+                continue;
+            double bin_len=bu.pathLength/(double)split_times;
+            QList<float> hit_boutons;
+            int sindex=bu.listNode.size()-1;
+            double left_len=0;
+            for(int s=0;s<split_times;s++)
+            {
+                //from tail to head node
+                int hit_bouton=0;
+                double scan_len=left_len;
+
+                for(int n=sindex;n>0;n--){
+                    if(bu.listNode.at(n).type>=5)
+                        hit_bouton++;
+                    scan_len+=dis(bu.listNode.at(n),bu.listNode.at(n-1));
+                    if(scan_len>bin_len){left_len=scan_len-bin_len;sindex=n-1; break;}
+                }
+                if(s==split_times-1&&bu.listNode.at(0).type>=5)
+                    hit_bouton++;
+                hit_boutons.append(float(hit_bouton));
+//                hit_boutons.append(float(hit_bouton)/float(bu.boutons));
+                hit_bouton=0;
+            }
+            QString brf="";
+            for(int s=0;s<split_times;s++)
+                brf+=(QString::number(hit_boutons.at(s))+",");
+            brf+=(QString::number(bu.boutons)+",");
+            brf+=(QString::number(bu.level)+",");
+            brf+=(QString::number(bu.listNode.at(0).fea_val.at(7))+",");
+            brf+=(QString::number(bu.length/bu.pathLength)+",");
+            brf+=(QString::number(bu.pathLength)+"\n");
             tofile.write(brf.toAscii());
         }
         tofile.close();

@@ -15,8 +15,16 @@ using namespace std;
 #define MAXVALUE 9999999
 
 template<typename T>
-double dis(T node1, T node2){
+double dis(T node1, T node2, bool bouton_fea=false){
     ///for computing of distance between two nodes
+    if(bouton_fea){
+        node1.x=node1.fea_val.at(0);
+        node1.y=node1.fea_val.at(1);
+        node1.z=node1.fea_val.at(2);
+        node2.x=node2.fea_val.at(0);
+        node2.y=node2.fea_val.at(1);
+        node2.z=node2.fea_val.at(2);
+    }
     double a = (node1.x - node2.x)*(node1.x - node2.x) + (node1.y - node2.y)*(node1.y - node2.y) + (node1.z - node2.z)*(node1.z - node2.z);
     if(a<=0)
         return double(0.0);
@@ -77,6 +85,10 @@ struct BranchUnit
     /*left-branch-tips and right-branch-tips*/
     uint lstips,rstips;
      /*list of nodes of a branch: index=0 is the head (branching) node*/
+    /*bouton features*/
+    uint boutons,pboutons,lcboutons,rcboutons;
+    double mean_spatial_neighbor_boutons,mean_MINdist2topo_bouton,mean_dist2parent_bouton,uniform_bouton_dist;
+
     QList <NeuronSWC> listNode;
     QHash <int, int>  hashNode;
     BranchUnit() {
@@ -89,10 +101,13 @@ struct BranchUnit
         edist2soma=pdist2soma=0.0;
         lclength=lcpathLength=rclength=rcpathLength=double(0.0);
         lslength=lspathLength=rslength=rspathLength=double(0.0);
+        boutons=pboutons=lcboutons=rcboutons=0;
+        mean_spatial_neighbor_boutons=mean_MINdist2topo_bouton=mean_dist2parent_bouton=uniform_bouton_dist=0.0;
         lstips=rstips=0;
         listNode.clear();hashNode.clear();
     }
-    void get_features();
+    void get_features(bool bouton_fea=false);
+    void bouton_features(int btype=4,int interb_dist_index=5,int spatial_nb_index=6,int topo_nb_dist_index=9);
     void get_radius();
     void radius_smooth(int half_win=2);
     void normalize_tip(V3DLONG scale_num){this->lstips/=scale_num;this->rstips/=scale_num;}
@@ -148,10 +163,10 @@ struct BranchTree
         width=height=depth=volume=0.0;
         tip_branches=soma_branches=total_branches=max_branch_level=0;
     }
-    bool init(NeuronTree in_nt);
+    bool init(NeuronTree in_nt,bool bouton_fea=false);
     bool init_branch_sequence(); //from tip-branch to soma-branch
     bool to_soma_br_seq(V3DLONG inbr_index,BranchSequence & brs);
-    bool get_enhacedFeatures();// child branch features
+    bool get_enhacedFeatures(bool bouton_fea=false);// child branch features
     vector< vector<V3DLONG> > get_branch_child_index();
     bool get_branch_child_angle();
     bool get_branch_angle_io();

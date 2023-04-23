@@ -308,11 +308,16 @@ std::vector<int> peaks_in_seg(std::vector<double> input,int isRadius_fea=0,float
 
 /*feature computation*/
 void bouton_feature_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
+QList<int> boutonType(NeuronTree nt, bool ccf_domain=true);
 void boutonType_label(NeuronTree& nt,bool ccf_domain=true);
 void rendering_different_bouton(NeuronTree& nt, int type_bias=BoutonSWCNodeType);
 void boutonVolDesity_computing(NeuronTree& nt,float vol_r,float xy_res=0.3,bool ccf_domain=true);
-void boutonDesity_computing(NeuronTree& nt,float xy_res=0.3,bool ccf_domain=true);
-void dist_to_soma(NeuronTree& nt,float xy_res=0.3,bool ccf_domain=true,bool bouton_only=true);
+void boutonDesity_label(NeuronTree& nt,float xy_res=0.3,bool ccf_domain=true);
+QList<double> interbouton_dist(NeuronTree nt,bool ccf_domain=true);
+QList<double> topo_neighbor_bouton_dist(NeuronTree nt,bool ccf_domain=true);
+QList<double> seg_contraction(NeuronTree nt,double seg_len=20,bool ccf_domain=true);
+QList<int> neighbor_boutons(NeuronTree nt,float vol_r,bool ccf_domain=true);
+void dist_to_soma_simple(NeuronTree& nt,bool ccf_domain=true);
 /*pruning*/
 void boutonswc_pruning_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 NeuronTree boutonSWC_internode_pruning(NeuronTree nt,float pruning_dist=1.0,bool ccf_domain=false);
