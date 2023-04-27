@@ -13,8 +13,10 @@
 #include "../swc_to_maskimage/filter_dialog.h"
 #include <vector>
 #include <iostream>
-#include <QInputDialog>
+
 #include <fstream>
+
+#include <QInputDialog>
 using namespace std;
 
 const QString title = QObject::tr("Neuron Distantce");
@@ -55,34 +57,55 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	NeuronTree nt1 = readSWC_file(name_nt1);
 	NeuronTree nt2 = readSWC_file(name_nt2);
     QFileInfo file(name_nt1);
-    QString name=file.baseName();
+    //QString name=file.baseName();
     NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres);
 
     qDebug()<<"--------------------";
         ofstream myfile;
         myfile.open (((vector<char*> *)(output.at(0).p))->at(0));
-//        myfile<<"same:"<<tmp_score.dist1<<Qt::endl;
-//        myfile<<"different:"<<tmp_score.dist2<<Qt::endl;
-//        myfile<<"mul:"<<tmp_score.dist3<<Qt::endl;
-//        myfile<<"single:"<<tmp_score.dist4<<Qt::endl;
-//        myfile<<"single2:"<<tmp_score.dist5<<Qt::endl;
-        myfile << "input1 = ";
-        myfile << name_nt1.toStdString().c_str()  ;
-        myfile << "\ninput2 = ";
-        myfile << name_nt2.toStdString().c_str();
-        myfile << "\nentire-structure-average (from neuron 1 to 2) = ";
+        //myfile<<"same:"<<tmp_score.dist1<<endl;
+        //myfile<<"different:"<<tmp_score.dist2<<endl;
+        //myfile<<"mul:"<<tmp_score.dist3<<endl;
+        //myfile<<"single:"<<tmp_score.dist4<<endl;
+        //myfile<<"single2:"<<tmp_score.dist5<<endl;
+//        myfile << "input1 = ";
+//        myfile << name_nt1.toStdString().c_str()  ;
+//        myfile << "\ninput2 = ";
+//        myfile << name_nt2.toStdString().c_str();
+//        myfile << "\nentire-structure-average (from neuron 1 to 2) = ";
+//        myfile << tmp_score.dist_12_allnodes;
+//        myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
+//        myfile << tmp_score.dist_21_allnodes;
+//        myfile << "\naverage of bi-directional entire-structure-averages = ";
+//        myfile << tmp_score.dist_allnodes;
+//        myfile << "\ndifferen-structure-average = ";
+//        myfile << tmp_score.dist_apartnodes;
+//        myfile << "\npercent of different-structure (from neuron 1 to 2) = ";
+//        myfile << tmp_score.percent_12_apartnodes;
+//        myfile << "\npercent of different-structure (from neuron 2 to 1) = ";
+//        myfile << tmp_score.percent_21_apartnodes;
+//        myfile << "\npercent of different-structure (average)= ";
+//        myfile << tmp_score.percent_apartnodes;
+//        myfile << "\n";
+        myfile <<"entire-structure-average (from neuron 1 to 2)";
+        myfile << ",entire-structure-average (from neuron 2 to 1)";
+        myfile << ",average of bi-directional entire-structure-averages";
+        myfile << ",differen-structure-average = ";
+        myfile << ",percent of different-structure (from neuron 1 to 2)";
+        myfile << ",percent of different-structure (from neuron 2 to 1)";
+        myfile << ",percent of different-structure (average)\n";
         myfile << tmp_score.dist_12_allnodes;
-        myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
+        myfile << ",";
         myfile << tmp_score.dist_21_allnodes;
-        myfile << "\naverage of bi-directional entire-structure-averages = ";
+        myfile << ",";
         myfile << tmp_score.dist_allnodes;
-        myfile << "\ndifferen-structure-average = ";
+        myfile << ",";
         myfile << tmp_score.dist_apartnodes;
-        myfile << "\npercent of different-structure (from neuron 1 to 2) = ";
+        myfile << ",";
         myfile << tmp_score.percent_12_apartnodes;
-        myfile << "\npercent of different-structure (from neuron 2 to 1) = ";
+        myfile << ",";
         myfile << tmp_score.percent_21_apartnodes;
-        myfile << "\npercent of different-structure (average)= ";
+        myfile << ",";
         myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();

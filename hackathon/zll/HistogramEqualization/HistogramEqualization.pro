@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../v3d_external
+VAA3DPATH = ../../../../v3d_external_local
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 QT += widgets
 HEADERS	+= HistogramEqualization_plugin.h

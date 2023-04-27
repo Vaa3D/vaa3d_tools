@@ -3,6 +3,7 @@
 #include <QtGui>
 #include "basic_surf_objs.h"
 #include <QLineEdit>
+
 class SelectNeuronDlg : public QDialog
 {
 	Q_OBJECT

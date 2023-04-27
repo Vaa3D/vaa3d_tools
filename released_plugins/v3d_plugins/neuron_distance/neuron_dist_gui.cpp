@@ -1,8 +1,9 @@
 #include "neuron_dist_gui.h"
-
-#include <QGridLayout>
-#include <QLineEdit>
 #include <QPushButton>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+
 
 SelectNeuronDlg::SelectNeuronDlg(QWidget * parent) : QDialog(parent)
 {
