@@ -1,4 +1,4 @@
-Flask==1.1.2
+Flask==2.3.2
 numpy==1.19.1
 pandas==1.0.5
 Flask-Cors==3.0.6
