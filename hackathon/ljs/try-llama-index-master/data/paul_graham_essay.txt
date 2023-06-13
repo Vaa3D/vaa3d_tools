@@ -1,0 +1,50 @@
+Vaa3D 是用于 3D/4D/5D 图像可视化和分析的开源软件。支持（Mac、Linux 和 Windows）系统。用于可视化大规模图像体积和表面对象的工具，支持的图像大小：千兆字节和 64 位数据。
+他是一款开发用于高通量输出处理的新 3D 图像分析算法的平台可以用于高维图像分析（细胞分割、神经元追踪、大脑注册、注释、定量测量和统计等）的强大模块/插件的容器，这使得 Vaa3D 适用于各种生物图像信息学应用。
+
+
+在Windows系统上如何编译Vaa3D Qt6 版本？
+1.在此处下载最新的 qt 在线安装程序,配置Qt环境变量。
+2.下载qt-unified-windows-x86-4.2.0-online.exe并执行。
+3.需要注册个人账号，安装Qt 6.1以上版本，选择MinGW Qt6版本。
+4.在线安装程序会自动安装 Qt Creator，其次需要获取 Vaa3D 源代码，在QtCreator中打开v3d_qt6.pro~/v3d_main/v3d/，然后对vaa3d项目进行编译，点击Build按钮（选择release）。
+如何编译vaa3d插件？
+可以使用插件模版生成器生成模版，再编写代码，进行编译。
+编译vaa3d过程中遇到编译错误怎么办？
+您可以详细的去vaa3d github上查看详细的编译文档，或者提供更详细的错误信息。
+我需要一个高质量的神经元重建流水线？
+可以使用gaussfilter插件进行预处理,再使用app2插件进行重建。
+我想使用单个重建插件？
+app2
+
+sort插件会把swc的序号重新排列，global_neuron_feature插件可以获取神经元的L measure特征，可以讲这两种插件组合成流水线进行使用。
+gaussian_filter插件用来对图像进行高斯滤波，是图像预处理插件。
+median_filter插件用来对图像进行中值滤波，是图像预处理插件。
+min_max_filter插件用来对图像进行最大最小值滤波，是图像预处理插件。
+laplacian_filter插件用来对图像进行拉普拉斯滤波，是图像预处理插件。
+fast_distance_transform插件用来进行快速距离变换，是图像预处理插件。
+simple_adaptive插件用来对图像进行自适应，是图像预处理插件。
+grayscale_image_distance_transform插件用来对图像进行灰度距离变换，是图像预处理插件。
+color_channel插件用来对图像进行颜色通道的分离，是图像预处理插件。
+Cell_Segmentation_GVF插件用来对图像进行分割，是图像预处理插件。
+Simple_Adaptive_Thresholding插件用来将图像转换为二值图像，是图像预处理插件。
+image_enhancement插件用来对图像进行增强，是图像预处理插件。
+
+app1插件用来对神经元进行重建，是神经元重建插件。
+app2插件用来对神经元进行重建，是神经元重建插件。
+simpletracing插件用来对神经元进行重建，是神经元重建插件。
+MOST_tracing插件用来对神经元进行重建，是神经元重建插件。
+simpletracing插件用来对神经元进行重建，是神经元重建插件。
+smart_trace插件用来对神经元进行重建，是神经元重建插件。
+虽然Vaa3D-x插件库中有很多重建插件，但是应用最广泛的还是app2插件。
+
+swc_to_maskimage插件用于对神经元增加一层mask，是神经元后处理插件。
+mean_shift插件用于对神经元对神经元进行点位移，是神经元后处理插件。
+pruning_swc_simple插件用于优化神经元的树突或轴突分支，是神经元后处理插件。
+resample_swc插件用于调整神经元之间的距离，是神经元后处理插件。
+global_neuron_feature插件用于显示神经元信息，是神经元后处理插件。
+neuron_radius插件用于计算神经元的半径，是神经元后处理插件。
+sort_swc插件用于对神经元进行排序使其变成连续的，是神经元后处理插件。
+neuron_distance插件用于计算神经元间的距离，是神经元后处理插件。
+shape_extractor插件用于显示神经元的形态特征，是神经元后处理插件。
+
+
