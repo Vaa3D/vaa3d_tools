@@ -5,7 +5,7 @@ CONFIG	+= qt plugin warn_off
 V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 QT += widgets
-HEADERS	+= resample_swc_plugin.h
+HEADERS	+= resample_swc_plugin.h \
 HEADERS	+= resample_swc_func.h
 HEADERS      += ../sort_neuron_swc/openSWCDialog.h
 

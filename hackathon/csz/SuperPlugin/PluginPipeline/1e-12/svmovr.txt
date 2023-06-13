@@ -1,0 +1,13 @@
+pca5 nopoly
+Time used:  43.90839719772339  seconds
+Accuracy:  0.6659340659340659
+Accuracy: 0.666
+Precision: 0.603
+Recall: 0.511
+
+pca5  poly
+Time used:  420.81167459487915  seconds
+Accuracy:  0.6835164835164835
+Accuracy: 0.684
+Precision: 0.614
+Recall: 0.530
