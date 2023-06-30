@@ -94,6 +94,7 @@ void NeuronQueryMainWindow::init()
     ui->BrainID_Swc_ComboBox->addItem(QDir::toNativeSeparators(QDir::currentPath()));
     ui->BrainID_Swc_ComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
+<<<<<<< Updated upstream
     ui->directoryAnoComboBox->setEditable(true);
     ui->directoryAnoComboBox->addItem(QDir::toNativeSeparators(QDir::currentPath()));
     ui->directoryAnoComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -102,6 +103,8 @@ void NeuronQueryMainWindow::init()
     ui->BrainID_Ano_ComboBox->addItem(QDir::toNativeSeparators(QDir::currentPath()));
     ui->BrainID_Ano_ComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
+=======
+>>>>>>> Stashed changes
     connect(ui->BrainID_Swc_ComboBox->lineEdit(), &QLineEdit::returnPressed,
             this, &NeuronQueryMainWindow::animateFindClick);
 
@@ -116,9 +119,15 @@ void NeuronQueryMainWindow::init()
 
 
     ui->querySwcTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+<<<<<<< Updated upstream
     QStringList swcLabels;
     swcLabels << tr("Filename") << tr("Size");
     ui->querySwcTable->setHorizontalHeaderLabels(swcLabels);
+=======
+    QStringList labels;
+    labels << tr("Filename") << tr("Size");
+    ui->querySwcTable->setHorizontalHeaderLabels(labels);
+>>>>>>> Stashed changes
     ui->querySwcTable->verticalHeader()->hide();
     ui->querySwcTable->setShowGrid(false);
     ui->querySwcTable->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -126,6 +135,7 @@ void NeuronQueryMainWindow::init()
     font.setBold(true);
     ui->querySwcTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->querySwcTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+<<<<<<< Updated upstream
 //    ui->querySwcTable->horizontalHeader()-setSectionResizeMode(QHeaderView::Strech);
 
     ui->queryAnoTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -140,18 +150,26 @@ void NeuronQueryMainWindow::init()
     ui->queryAnoTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->queryAnoTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+=======
+>>>>>>> Stashed changes
 
     connect(ui->querySwcTable, &QTableWidget::customContextMenuRequested,
             this, &NeuronQueryMainWindow::contextMenuSwc);
     connect(ui->querySwcTable, &QTableWidget::cellActivated,
             this, &NeuronQueryMainWindow::openFileOfItem);
 
+<<<<<<< Updated upstream
     connect(ui->queryAnoTable, &QTableWidget::customContextMenuRequested,
             this, &NeuronQueryMainWindow::contextMenuAno);
     connect(ui->queryAnoTable, &QTableWidget::cellActivated,
             this, &NeuronQueryMainWindow::openFileOfItem);
 
+=======
+>>>>>>> Stashed changes
 }
+
+
+
 
 
 void NeuronQueryMainWindow::openFileOfItem(int row, int /* column */)
@@ -214,6 +232,7 @@ void NeuronQueryMainWindow::contextMenuAno(const QPoint &pos)
 
 
 
+<<<<<<< Updated upstream
 void NeuronQueryMainWindow::animateFindClick()
 {
     ui->querySwcButton->animateClick();
@@ -222,6 +241,8 @@ void NeuronQueryMainWindow::animateFindClickAno()
 {
     ui->queryAnoButton->animateClick();
 }
+=======
+>>>>>>> Stashed changes
 
 void NeuronQueryMainWindow::on_querySwcButton_clicked()
 {
@@ -363,6 +384,8 @@ void NeuronQueryMainWindow::on_queryAnoButton_clicked()
         files.sort();
         showAnoTables(files);
     }
+
+
 
 }
 
@@ -606,6 +629,7 @@ void NeuronQueryMainWindow::pop3Dview(const QString &fileName)
     }
 }
 
+<<<<<<< Updated upstream
 void NeuronQueryMainWindow::popTerafly(const QString &fileName)
 {
     qDebug()<<"call terafly";
@@ -625,6 +649,8 @@ void NeuronQueryMainWindow::popTerafly(const QString &fileName)
 
 }
 
+=======
+>>>>>>> Stashed changes
 void NeuronQueryMainWindow::on_querySwcButton_customContextMenuRequested(const QPoint &pos)
 {
 

@@ -72,6 +72,9 @@ private slots:
 =======
     void contextMenu(const QPoint &pos);
     void pop3Dview(const QString &fileName);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 //    void on_ClickToQueryApo_customContextMenuRequested(const QPoint &pos);
