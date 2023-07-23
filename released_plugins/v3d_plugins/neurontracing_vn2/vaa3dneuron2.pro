@@ -11,7 +11,8 @@ INCLUDEPATH     += $$V3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
 QT += widgets
 unix {
-LIBS += -L$$V3DMAINPATH/jba/c++
+#LIBS += -L$$V3DMAINPATH/jba/c++
+LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
 LIBS += -lv3dnewmat
 }
 win32 {

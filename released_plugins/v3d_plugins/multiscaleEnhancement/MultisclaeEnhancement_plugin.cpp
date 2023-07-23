@@ -2739,9 +2739,10 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
     
     omp_set_num_threads(numOfThreads);
     
+    auto tgt = Ws-Ws/10;
     #pragma omp parallel for  // FL add parallelizing
+    for(V3DLONG iy = 0; iy < M; iy = iy+tgt)
     
-	for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
 //	for(V3DLONG iy = 0; iy < 10; iy = iy+Ws-Ws/10)
 
 	{
@@ -2750,9 +2751,9 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 
 		printf("number of threads for iy = %d\n", omp_get_num_threads());
 		
-		#pragma omp parllel for //FL add for parallelizing
+        #pragma omp parallel for //FL add for parallelizing
+        for(V3DLONG ix = 0; ix < N; ix = ix+tgt)
 
-		for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
 //		for(V3DLONG ix = 0; ix < 10; ix = ix+Ws-Ws/10)
 		
 		{	
@@ -3269,9 +3270,9 @@ bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgLis
 
     omp_set_num_threads(numOfThreads);
 
+    auto tgt = Ws-Ws/10;
     #pragma omp parallel for  // FL add parallelizing
-
-    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+    for(V3DLONG iy = 0; iy < M; iy = iy+tgt)
 //	for(V3DLONG iy = 0; iy < 10; iy = iy+Ws-Ws/10)
 
     {
@@ -3280,10 +3281,10 @@ bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgLis
 
         printf("number of threads for iy = %d\n", omp_get_num_threads());
 
-        #pragma omp parllel for //FL add for parallelizing
-
-        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+        #pragma omp parallel for //FL add for parallelizing
+        for(V3DLONG ix = 0; ix < N; ix = ix+tgt)
 //		for(V3DLONG ix = 0; ix < 10; ix = ix+Ws-Ws/10)
+
 
         {
 

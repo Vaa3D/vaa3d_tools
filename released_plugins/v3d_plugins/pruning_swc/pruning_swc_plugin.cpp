@@ -66,7 +66,7 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
         if (buf[0]=='#')
         {
            info = buf;
-           myfile<< info.remove('\n');
+            myfile<< info.remove('\n')<<Qt::endl;
         }
 
     }

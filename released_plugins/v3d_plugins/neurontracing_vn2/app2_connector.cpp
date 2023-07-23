@@ -472,7 +472,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
         }
 
-        saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+        //saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
 
         for (tmpi=0; tmpi<inswc.size(); tmpi++)
         {

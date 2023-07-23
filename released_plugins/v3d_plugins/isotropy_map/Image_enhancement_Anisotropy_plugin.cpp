@@ -199,8 +199,8 @@ QStringList anisotropy_enhancement::menulist() const
 QStringList anisotropy_enhancement::funclist() const
 {
     return QStringList()
-            <<tr("func1")
-           <<tr("func2")
+            <<tr("fixed_window")
+           <<tr("adaptive_window")
           <<tr("help");
 }
 
@@ -220,24 +220,22 @@ void anisotropy_enhancement::domenu(const QString &menu_name, V3DPluginCallback2
     }
 }
 
+void processImage_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int flag);
+
 bool anisotropy_enhancement::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    vector<char*> infiles, inparas, outfiles;
-    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("func1"))
+    if (func_name == tr("fixed_window"))
     {
-        v3d_msg("To be implemented.");
+        processImage_dofunc(callback,input, output, 0);
     }
-    else if (func_name == tr("func2"))
+    else if (func_name == tr("adaptive_window"))
     {
-        v3d_msg("To be implemented.");
+        processImage_dofunc(callback, input, output, 1);
     }
     else if (func_name == tr("help"))
     {
-        v3d_msg("To be implemented.");
+        v3d_msg("vaa3d -x aniso -f adaptive_window -i image -o image -p channel", 0);
     }
     else return false;
 
@@ -370,4 +368,109 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
     callback.updateImageWindow(newwin);
     return;
+}
+
+void processImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, int flag)
+{
+    vector<char*> infiles, outfiles, paras;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    if(input.size() >= 2) paras = (*(vector<char*> *)(input.at(1).p));
+
+
+
+    char* inimg_file = infiles.at(0);
+    char* outimg_file = outfiles.at(0);
+    unsigned char* data1d;
+    V3DLONG in_sz[4]={0};
+    int datatype;
+    simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype);
+    V3DLONG pagesz = in_sz[0] * in_sz[1] * in_sz[2];
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+
+    //input
+    int c = 1;
+    if(paras.size() >= 1) c = atoi(paras.at(0));
+
+    double rs = 0;
+
+    if(flag ==0){
+        rs = 1;
+        if(paras.size() >= 2) rs = atoi(paras.at(1));
+    }
+
+    c = c-1;
+
+    V3DLONG offsetc = (c)*pagesz;
+    v3d_float32* datald_output = 0;
+    datald_output = new v3d_float32[pagesz];
+    for(V3DLONG i = 0; i<pagesz;i++)
+        datald_output[i] = 0;
+
+    double score_max = 0, ave_last=0;
+    double score_each = 0, ave_v=0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        printf("\r Evaluation : %d %% completed ", int(float(iz)/P*100)); fflush(stdout);
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                V3DLONG PixelValue;
+                if (datatype == V3D_UINT8)
+                    PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                else if (datatype == V3D_UINT16)
+                    PixelValue = ((unsigned short*)data1d)[offsetc+offsetk + offsetj + ix];
+                else
+                    PixelValue = ((float*)data1d)[offsetc+offsetk + offsetj + ix];
+                if(flag == 0) //for fixed window
+                {
+                    if (rs > 0 && PixelValue > 0)
+                    {
+                        compute_Anisotropy_sphere(data1d, N, M, P, c, ix, iy, iz, rs, score_each, ave_v);
+                        if(score_each>0)
+                        {
+                            datald_output[offsetk + offsetj + ix] = score_each;
+                        }
+                    }
+                }
+                else
+                {
+                    if(PixelValue > 0)
+                    {
+                        score_max = 0;
+                        ave_last = 0;
+                        for(rs = 2; rs < 31; rs++)
+                        {
+                            compute_Anisotropy_sphere(data1d, N, M, P, c, ix, iy, iz, rs, score_each, ave_v);
+                            if(rs==2) ave_last = ave_v;
+
+                            //if(score_each > score_max && ave_v < ave_last*1.1 && ave_v>ave_last*0.9)
+                            if (score_each > score_max)
+                            {
+                                score_max = score_each;
+                                ave_last = ave_v;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        datald_output[offsetk + offsetj + ix] = score_max;
+                    }
+
+                }
+            }
+        }
+    }
+
+    simple_saveimage_wrapper(callback, outimg_file, (uchar*)datald_output, in_sz, V3D_FLOAT32);
+    delete [] data1d;
+    delete [] datald_output;
 }

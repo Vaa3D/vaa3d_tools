@@ -16,7 +16,7 @@ win32{
 }
 
 unix:!macx {
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
 }
 
 HEADERS	+= Image_enhancement_Anisotropy_plugin.h

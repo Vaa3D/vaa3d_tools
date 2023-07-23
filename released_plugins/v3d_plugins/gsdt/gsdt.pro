@@ -16,7 +16,7 @@ win32{
 }
 
 unix:!macx {
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
 }
 QT += widgets
 HEADERS += $$V3DMAINPATH/basic_c_fun/basic_memory.h \
