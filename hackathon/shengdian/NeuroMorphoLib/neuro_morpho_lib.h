@@ -1,6 +1,7 @@
 #ifndef NEURO_MORPHO_LIB_H
 #define NEURO_MORPHO_LIB_H
 #include "basic_surf_objs.h"
+#include <v3d_interface.h>
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -176,6 +177,7 @@ struct BranchTree
     bool normalize_branchTree();
     QList<V3DLONG> getSubtreeBranches(V3DLONG inbr_index=0);//input is index of listBranch, not branch id
 };
+bool branchTree2NeuronTree(BranchTree inbt, NeuronTree &outnt);
 void scale_nt_radius(NeuronTree& nt,float rs=1.0);
 void scale_nt_coor(NeuronTree& nt,float scale_xy=0.3,float scale_z=1.0);
 //NeuronTree branchTree_to_neurontree(const BranchTree& bt);
@@ -201,9 +203,11 @@ QList<NeuronTree> nt_2_trees(NeuronTree nt);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
+bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC=1);
 double seg_median(std::vector<double> input);
 double vector_max(std::vector<double> input);
 double vector_mean(std::vector<double> input);
 double vector_std(std::vector<double> input);
 double vector_min(std::vector<double> input);
+bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc,QString save_path, int cropx=0, int cropy=0, int cropz=0,int crop_neighbor_voxels=0);
 #endif // NEURO_MORPHO_LIB_H

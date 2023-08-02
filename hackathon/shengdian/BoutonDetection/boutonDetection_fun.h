@@ -329,6 +329,7 @@ bool smooth_radius(NeuronTree& nt,int win=5,bool notbouton=true);
 void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output);
 void boutonswc_to_ccf(NeuronTree& nt,float scale=1.0);
 QList<CellAPO> bouton_to_apo(NeuronTree nt);
+QList<CellAPO> bouton_to_apo_v2(NeuronTree nt);
 QList<ImageMarker> bouton_to_imageMarker(NeuronTree nt,bool ccf=true);
 void featureTable(const QString &filename,NeuronTree nt,float *res);
 void getBoutonMIP(V3DPluginCallback2 &callback, unsigned char *& inimg1d,V3DLONG in_sz[],QString outpath);

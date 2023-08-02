@@ -2889,7 +2889,8 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     {
         //float min_bouton_dist=8.0;
         //nearBouton_pruning(nt,min_bouton_dist);
-        QList<CellAPO> apoboutons=bouton_to_apo(nt);
+        QList<CellAPO> apoboutons=bouton_to_apo_v2(nt);
+//        QList<CellAPO> apoboutons=bouton_to_apo(nt);
         if(apoboutons.size()>0){
             cout<<"convert "<<apoboutons.size()<<" into apo markers"<<endl;
             QString apofilename=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ ".apo");
@@ -2986,8 +2987,8 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     case 4:
     {
         float radius_scale=(inparas.size()>=2)?atof(inparas[1]):1.0;
-        int x_shift=(inparas.size()>=3)?atoi(inparas[2]):0;
-        int xyz_scale=(inparas.size()>=4)?atoi(inparas[3]):1;
+        float x_shift=(inparas.size()>=3)?atof(inparas[2]):0;
+        float xyz_scale=(inparas.size()>=4)?atof(inparas[3]):1;
         int to_swc=(inparas.size()>=5)?atoi(inparas[4]):0;
         int clear_fea_val=(inparas.size()>=6)?atoi(inparas[5]):0;
 
@@ -3000,12 +3001,12 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
             for(V3DLONG i=0;i<siz;i++)
                 nt.listNeuron[i].fea_val.clear();
         }
-        if(xyz_scale>1||x_shift>0){
+        if(true){
             for(V3DLONG i=0;i<siz;i++){
-                nt.listNeuron[i].x-=float(x_shift);
-                nt.listNeuron[i].x*=float(xyz_scale);
-                nt.listNeuron[i].y*=float(xyz_scale);
-                nt.listNeuron[i].z*=float(xyz_scale);
+                nt.listNeuron[i].x-=(x_shift);
+                nt.listNeuron[i].x*=(xyz_scale);
+                nt.listNeuron[i].y*=(xyz_scale);
+                nt.listNeuron[i].z*=(xyz_scale);
             }
         }
         if(to_swc>0)
@@ -3125,6 +3126,28 @@ void boutonswc_to_ccf(NeuronTree& nt,float scale){
         }
     }
 }
+QList<CellAPO> bouton_to_apo_v2(NeuronTree nt){
+    /*this function will generate bouton.apo file: bouton flag, type=5*/
+    V3DLONG siz=nt.listNeuron.size();
+    QList<CellAPO> boutons; boutons.clear();
+    // to apo
+     for(V3DLONG i=0;i<siz;i++){
+         NeuronSWC s=nt.listNeuron.at(i);
+         if(s.type!=5){continue;}
+
+         CellAPO bca;
+         bca.x=s.x+1.0;
+         bca.y=s.y+1.0;
+         bca.z=s.z+1.0;
+         bca.volsize=s.r;
+         bca.n=boutons.size()+1;
+         bca.color.r=150;
+         bca.color.g=10;
+         bca.color.b=150;
+         boutons.append(bca);
+     }
+     return boutons;
+}
 QList<CellAPO> bouton_to_apo(NeuronTree nt){
     /*this function will generate bouton.apo file and bouton.marker file*/
     V3DLONG siz=nt.listNeuron.size();
@@ -3132,8 +3155,10 @@ QList<CellAPO> bouton_to_apo(NeuronTree nt){
     // to apo
      for(V3DLONG i=0;i<siz;i++){
          NeuronSWC s=nt.listNeuron.at(i);
+//         if(s.type!=5){continue;}
          AxonalBouton sb; sb.init_bouton(s);
          if(sb.btype<BoutonType){continue;}
+
          CellAPO bca=sb.out_to_APO();
          bca.n=boutons.size()+1;
          boutons.append(bca);

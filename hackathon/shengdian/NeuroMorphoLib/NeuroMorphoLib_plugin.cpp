@@ -19,10 +19,15 @@ QStringList NMorphoPlugin::menulist() const
 QStringList NMorphoPlugin::funclist() const
 {
 	return QStringList()
-        <<tr("lm_feas")
-       <<tr("branch_feas")
-      <<tr("qc")
-		<<tr("help");
+            <<tr("lm_feas")
+           <<tr("branch_feas")
+         <<tr("swc2branches")
+        <<tr("crop_swc_terafly_image_block")
+        <<tr("bswcTo")
+       <<tr("neuron_split")
+        <<tr("qc")
+       << tr("nt_check")
+       <<tr("help");
 }
 
 void NMorphoPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -57,6 +62,14 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return swc2branches(callback,input,output);
     }
+    else if (func_name == tr("neuron_split"))
+    {
+        return neuron_split(callback,input,output);
+    }
+    else if (func_name == tr("bswcTo"))
+    {
+        return bswcTo(callback,input,output);
+    }
     else if (func_name == tr("bouton_distribution"))
     {
         return bouton_distribution(callback,input,output);
@@ -68,6 +81,14 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("nt_check"))
     {
         return nt_check(callback,input,output);
+    }
+    else if (func_name == tr("swc_ada_sampling"))
+    {
+        return swc_ada_sampling(callback,input,output);
+    }
+    else if (func_name == tr("crop_swc_terafly_image_block"))
+    {
+        return crop_swc_terafly_image_block(callback,input,output);
     }
     else if (func_name == tr("swc_parallization"))
     {
