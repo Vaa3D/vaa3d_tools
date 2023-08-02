@@ -153,21 +153,22 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-    string inswc_file;
+    QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
 
 
     bool connect=(((inparas.size()>=1)?atoi(inparas[0]):0)>0)?true:false;
     int three_bifs_label=(inparas.size()>=2)?atoi(inparas[1]):0;
     int tip_br_thre=/*(inparas.size()>=1)?atoi(inparas[0]):*/6;
-    float internode_thre=/*(inparas.size()>=2)?atof(inparas[1]):*/1.5;
-    int resample_pixels=/*(inparas.size()>=1)?atoi(inparas[0]):*/4;
+    float internode_thre=/*(inparas.size()>=2)?atof(inparas[1]):*/2;
+    int resample_pixels=/*(inparas.size()>=1)?atoi(inparas[0]):*/0;
 
-    cout<<"swc file="<<inswc_file<<endl;
-    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+//    cout<<"swc file="<<inswc_file<<endl;
+    NeuronTree nt = readSWC_file(inswc_file);
     V3DLONG siz=nt.listNeuron.size();
     if(!siz) {return false;}
-    string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".eswc");
+    QString infile_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "."+infile_suffix);
     V3DLONG somaid=get_soma(nt,connect); if(somaid<0){
         cout<<"Soma Error"<<endl;
         return false;
@@ -178,7 +179,7 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
     if(three_bifs_label&&mbif){
         out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".apo");
-        writeAPO_file(QString::fromStdString(out_f),out_3bifs);
+        writeAPO_file((out_f),out_3bifs);
         return false;
     }
     else{
@@ -195,7 +196,7 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     }
     NeuronTree nt_4,nt_3, nt_out;
     NeuronTree nt_2=tip_branch_pruning(nt,tip_br_thre); //remove tip-branches which length are below 4 pixels
-    nt_3=internode_pruning(nt_2,internode_thre);
+    nt_3=internode_pruning_br(nt_2,internode_thre);
     nt_2.listNeuron.clear(); nt_2.hashNeuron.clear();
 
     if(resample_pixels)
@@ -205,8 +206,11 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     nt_3.listNeuron.clear(); nt_3.hashNeuron.clear();
     nt_out=reindexNT(nt_4);
     nt_4.listNeuron.clear(); nt_4.hashNeuron.clear();
-
-    writeESWC_file(QString::fromStdString(out_f),nt_out);
+    if(infile_suffix==QString('swc')||
+            infile_suffix==QString('SWC'))
+        writeSWC_file(out_f,nt_out);
+    else
+        writeESWC_file(out_f,nt_out);
     return true;
 }
 bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){

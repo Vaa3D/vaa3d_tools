@@ -201,7 +201,7 @@ bool multi_bifurcations_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 V3DLONG get_soma(NeuronTree& nt,bool connect=false);
 QList<NeuronTree> nt_2_trees(NeuronTree nt);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
-NeuronTree internode_pruning(NeuronTree nt,float pruning_dist=2.0,bool profiled=false);
+NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist=2.0);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
 bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC=1);
 double seg_median(std::vector<double> input);
