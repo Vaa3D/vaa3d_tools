@@ -11,6 +11,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <numeric>
+#include <stdint.h>
 //#include "stackutil.h"
 
 using namespace std;
@@ -752,10 +753,10 @@ bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPl
                 vector<uint8_t> subvec;
 
                 //getStats(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], minint, maxint, meanint, medianint);
-                if(inlist->size()==1)
-                {
-                    vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
-                }
+//                if(inlist->size()==1)
+//                {
+//                    vector<uint8_t> subvec = {intvec.begin()+c*sz[0]*sz[1]*sz[2],intvec.begin()+(c+1)*sz[0]*sz[1]*sz[2]};
+//                }
                 if(inlist->size()==1)
                 {
                     getVecSWC(inimg1d, sz, c, neuron, subvec);
