@@ -3,7 +3,7 @@
 rem ijview.bat: a batch file for displaying an image file in ImageJ
 rem             using the Bio-Formats Importer plugin
 
-rem Required JARs: loci_tools.jar or bioformats_package.jar, ij.jar
+rem Required JARs: bioformats_package.jar, ij.jar
 
 setlocal
 set BF_DIR=%~dp0
@@ -20,7 +20,7 @@ if "%BF_DEVEL%" == "" (
     echo Required JAR libraries not found. Please download:
     echo   ij.jar
     echo from:
-    echo   http://imagej.nih.gov/ij/upgrade/
+    echo   https://imagej.nih.gov/ij/upgrade/
     echo and place in the same directory as the command line tools.
     goto end
   )
@@ -31,7 +31,7 @@ if "%BF_DEVEL%" == "" (
     echo Required JAR libraries not found. Please download:
     echo   bioformats_package.jar
     echo from:
-    echo   http://www.openmicroscopy.org/site/products/bio-formats/downloads
+    echo   https://www.openmicroscopy.org/bio-formats/downloads
     echo and place in the same directory as the command line tools.
     goto end
   )

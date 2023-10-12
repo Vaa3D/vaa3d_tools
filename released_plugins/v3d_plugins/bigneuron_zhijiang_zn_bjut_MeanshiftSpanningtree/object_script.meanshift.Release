@@ -1,0 +1,10 @@
+release/meanshift_plugin.o
+release/meanshift_func.o
+release/node.o
+release/v3d_message.o
+release/stackutil.o
+release/mg_image_lib.o
+release/mg_utilities.o
+release/basic_memory.o
+release/my_surf_objs.o
+release/moc_meanshift_plugin.o

@@ -1,11 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ijview: a script for displaying an image file in ImageJ
 #         using the Bio-Formats Importer plugin
 
-# Required JARs: loci_tools.jar or bioformats_package.jar, ij.jar
+# Required JARs: bioformats_package.jar, ij.jar
 
-BF_DIR=`dirname "$0"`
+
+RESOLVED_PATH=$(readlink -f "$0" 2>/dev/null \
+  || perl -MCwd -le 'print Cwd::abs_path(shift)' "$0" 2>/dev/null \
+  || echo "$0")
+BF_DIR=$(dirname $RESOLVED_PATH)
 
 source "$BF_DIR/config.sh"
 
@@ -20,7 +24,7 @@ then
     echo "Required JAR libraries not found. Please download:"
     echo "  ij.jar"
     echo "from:"
-    echo "  http://imagej.nih.gov/ij/upgrade/"
+    echo "  https://imagej.nih.gov/ij/upgrade/"
     echo "and place in the same directory as the command line tools."
     echo ""
     exit 3
@@ -28,13 +32,13 @@ then
   if [ -e "$BF_JAR_DIR/bio-formats_plugins.jar" ]
   then
     BF_CP="$BF_CP:$BF_JAR_DIR/bio-formats_plugins.jar"
-  elif [ ! -e "$BF_JAR_DIR/loci_tools.jar" -a ! -e bioformats_package.jar ]
+  elif [ -e "$BF_JAR_DIR/bioformats_package.jar" ]
   then
     # Libraries not found; issue an error
     echo "Required JAR libraries not found. Please download:"
     echo "  bioformats_package.jar"
     echo "from:"
-    echo "  http://www.openmicroscopy.org/site/products/bio-formats/downloads"
+    echo "  https://www.openmicroscopy.org/bio-formats/downloads"
     echo "and place in the same directory as the command line tools."
     echo ""
     exit 4

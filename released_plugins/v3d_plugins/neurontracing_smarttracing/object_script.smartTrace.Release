@@ -1,5 +1,6 @@
 release/smartTrace_plugin.o
 release/nt_selfcorrect_func.o
+release/basic_memory.o
 release/mg_utilities.o
 release/mg_image_lib.o
 release/stackutil.o
