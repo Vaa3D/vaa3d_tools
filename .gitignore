@@ -226,7 +226,3 @@ hackathon/ChenMY/SomaDetection/SomaDetection.vcxproj
 hackathon/ChenMY/SomaDetection/SomaDetection.vcxproj.filters
 hackathon/ChenMY/SomaDetection/SomaDetection.vcxproj.user
 hackathon/ChenMY/SomaDetection/somaDetection_plugin.cpp
-released_plugins/v3d_plugins/bigneuron_siqi_stalker_v3d/lib/ITK_include/vnl/vnl_numeric_traits.h
-released_plugins/v3d_plugins/bigneuron_siqi_stalker_v3d/lib/ITK_include/vnl/vnl_vector.h
-released_plugins/v3d_plugins/crop3D_image_series/cropped3DImageSeries_plugin.cpp
-released_plugins/v3d_plugins/istitch/y_imglib.h
