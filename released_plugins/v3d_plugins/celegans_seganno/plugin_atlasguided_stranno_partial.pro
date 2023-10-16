@@ -11,9 +11,16 @@ INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/jba/newmat11
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 QT += widgets
-unix {
-#	LIBS += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
-        LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+#unix {
+##	LIBS += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
+#        LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+#}
+macx{
+    LIBS += -L$$V3DMAINDIR/common_lib/lib_mac64 -lv3dnewmat
+}
+
+unix:!macx{
+    LIBS += -L$$V3DMAINDIR/common_lib/lib_ubuntu -lv3dnewmat
 }
 
 win32 {

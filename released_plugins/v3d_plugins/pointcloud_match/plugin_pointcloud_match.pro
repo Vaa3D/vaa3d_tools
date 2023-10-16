@@ -15,8 +15,15 @@ win32 {
     }
 }
 
-unix!macx {
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+#unix!macx {
+#    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+#}
+macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dnewmat
+}
+
+unix:!macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
 }
 
 HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h

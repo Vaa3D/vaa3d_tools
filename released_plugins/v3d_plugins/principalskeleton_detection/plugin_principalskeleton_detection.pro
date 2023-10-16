@@ -10,7 +10,7 @@ INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 QT += widgets
 
 macx{
-    LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINDIR/common_lib/lib_mac64 -lv3dnewmat
 #    CONFIG += x86_64
 }
 
@@ -20,7 +20,8 @@ win32{
 }
 
 unix:!macx {
-    LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+#    LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINDIR/common_lib/lib_ubuntu -lv3dnewmat
 }
 
 HEADERS      += $$V3DMAINDIR/basic_c_fun/v3d_message.h

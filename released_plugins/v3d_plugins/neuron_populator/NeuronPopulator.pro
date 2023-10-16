@@ -10,7 +10,8 @@ INCLUDEPATH += $$VAA3DPATH/jba/newmat11
 QT += widgets
 
 macx{
-    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+#    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dnewmat
 }
 
 win32 {
@@ -24,7 +25,9 @@ win32 {
 }
 
 unix:!macx{
-    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+#    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dnewmat
+
 }
 
 

@@ -13,6 +13,7 @@
 #include <QObject>
 #include <QPushButton>
 #include <QGridLayout>
+#include <QEnterEvent>
 //using namespace std;
 
 //Q_EXPORT_PLUGIN2(typeset, TypesetPlugin)

@@ -18,6 +18,7 @@
 #include <QListWidget>
 #include <QSpinBox>
 #include <QLabel>
+#include <QEnterEvent>>
 class TypesetPlugin : public QObject, public V3DPluginInterface2_1
 {
     Q_OBJECT

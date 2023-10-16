@@ -17,7 +17,7 @@ INCLUDEPATH  += $$V3DMAINPATH/jba/c++
 
 macx{
     LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINDIR/common_lib/lib_mac64 -lv3dnewmat
 }
 
 win32 {
@@ -32,7 +32,7 @@ win32 {
 
 unix:!macx {
     LIBS += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+
 }
 QT += widgets
 FORMS         = q_paradialog_littlequickwarp.ui

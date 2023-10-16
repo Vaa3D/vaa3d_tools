@@ -7,8 +7,7 @@ INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$V3DMAINPATH/jba/newmat11
 QT += widgets
 macx{
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
-#    CONFIG += x86_64
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dnewmat
 }
 
 win32{

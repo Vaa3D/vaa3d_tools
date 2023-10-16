@@ -25,11 +25,25 @@ win32{
 LIBS         += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
 }
 
-unix{
-LIBS         += -lpthread
-LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
-LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS         += -lpthread
+    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+#    CONFIG += x86_64
 }
+
+unix:!macx{
+    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
+    LIBS         += -lpthread
+    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+}
+
+
+#unix{
+#LIBS         += -lpthread
+#LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+#LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
+#}
 
 TARGET	= $$qtLibraryTarget(cropped3DImageSeries)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/image_geometry/crop3d_image_series

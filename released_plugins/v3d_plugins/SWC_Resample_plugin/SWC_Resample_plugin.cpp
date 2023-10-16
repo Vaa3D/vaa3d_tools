@@ -8,7 +8,8 @@
 #include <QObject>
 #include "SWC_Resample_plugin.h"
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"  // this resampling implementation should be in trunk
-#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include "../../../../v3d_external/v3d_main/neuron_editing/neuron_xforms.h"
+//#include "../../../../../vaa3dPluginsourcecode/v3d_external/v3d_main/neuron_editing/neuron_xforms.h"
 #include <QLabel>
 #include <QComboBox>
 #include <QGridLayout>

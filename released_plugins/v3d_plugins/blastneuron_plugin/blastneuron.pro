@@ -50,8 +50,13 @@ win32 {
     }
 }
 
-unix {
-    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dnewmat
 }
+
+unix:!macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dnewmat
+}
+
 TARGET	= $$qtLibraryTarget(blastneuron)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/blastneuron/

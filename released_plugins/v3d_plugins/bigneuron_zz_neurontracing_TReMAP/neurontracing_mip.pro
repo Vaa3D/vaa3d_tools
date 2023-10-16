@@ -24,9 +24,15 @@ win32{
     LIBS         += -L$$VAA3DPATH/common_lib/mingw -lv3dtiff
 #    LIBS	 += -L$$VAA3DPATH/common_lib/mingw64 -llibfftw3f-3
 }
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS         += -lpthread
+    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+#    CONFIG += x86_64
+}
 
-unix{
-    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
+unix:!macx{
+    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib_ubuntu -lv3dtiff
     LIBS         += -lpthread
     LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
 }

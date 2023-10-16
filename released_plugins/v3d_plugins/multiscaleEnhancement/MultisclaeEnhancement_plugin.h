@@ -6,7 +6,7 @@
 #ifndef __MULTISCLAEENHANCEMENT_PLUGIN_H__
 #define __MULTISCLAEENHANCEMENT_PLUGIN_H__
 
-#include <QtGui>
+//#include <QtGui>
 #include <v3d_interface.h>
 #include <QGridLayout>
 #include <QLineEdit>
