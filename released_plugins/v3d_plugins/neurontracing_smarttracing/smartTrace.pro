@@ -15,7 +15,7 @@ DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/smartTrace/
 
 macx{
     LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dnewmat
     CONFIG += x86_64
 }
 
@@ -26,7 +26,7 @@ win32{
 unix:!macx {
     #LIBS += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
     LIBS += -L$$V3DMAINPATH/common_lib/lib -ltiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
 }
 
 
