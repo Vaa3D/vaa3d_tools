@@ -12,7 +12,7 @@ INCLUDEPATH += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 QT += widgets
 macx{
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dnewmat
     CONFIG += x86_64
 }
 
@@ -26,7 +26,7 @@ win32 {
 
 unix:!macx {
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -ltiff
-    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_ubuntu -lv3dnewmat
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
 }
