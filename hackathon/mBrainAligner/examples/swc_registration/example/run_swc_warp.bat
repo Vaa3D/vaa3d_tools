@@ -6,6 +6,7 @@
 :: -T <input_tar_auto_marker>  input ori_local_registered_tar.marker file full name.
 :: -S <input_brain_auto_marker>     input ori_local_registered_sub.marker file full name.
 :: -d <input_FFD_grid>  input _FFD_grid.swc file full name. If FFD is included in the brain registration, add it.
+:: -w <Newton's optimization>  swc number -1,0,1,2......,w=0;or w=1.
 :: <the size to resample/stripmove brain image>
 :: -x <resample image size_x>   original image sample reduction x.
 :: -y <resample image size_y>   original image sample reduction y.
@@ -21,6 +22,6 @@
 :: -s <out_stps_swc>     output stps_swc file full name.
 
 
-..\binary\win64_bin\swc_registration.exe -C ./sample_data\raw_RPM_tar.marker -M ./sample_data\raw_RPM_sub.marker -o ./sample_data\original_data1.swc -T ./sample_data\ori_local_registered_tar.marker -S ./sample_data\ori_local_registered_sub.marker -d ./sample_data\raw_FFD_grid.swc -x 64 -y 64 -z 16 -a 528 -b 320 -c 456 -r ./result\resample_data.swc -g ./result\global_data.swc -f ./result\FFD_data.swc -s ./result\local_registered_data.swc
+swc_registration.exe -C ./sample_data\raw_RPM_tar.marker -M ./sample_data\raw_RPM_sub.marker -o ./sample_data\original_data1.swc -T ./sample_data\ori_local_registered_tar.marker -S ./sample_data\ori_local_registered_sub.marker -w 0 -x 64 -y 64 -z 16 -a 528 -b 320 -c 456 -r ./result\resample_data.swc -g ./result\global_data.swc -f ./result\FFD_data.swc -s ./result\local_registered_data.swc
 
 pause
