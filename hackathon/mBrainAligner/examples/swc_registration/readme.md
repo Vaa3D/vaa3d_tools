@@ -23,6 +23,8 @@ Please modify the path of each file in ".bat ", input the original image and res
 
 -d <input_FFD_grid>  input _FFD_grid.swc file full name. If FFD is included in the brain registration, add it.
 
+-w <Newton's optimization>  swc number -1,0,1,2......,w=0;or w=1.
+
 <the size to original brain image>
   
 -X <original image size_x>   input original brain image size_x.
