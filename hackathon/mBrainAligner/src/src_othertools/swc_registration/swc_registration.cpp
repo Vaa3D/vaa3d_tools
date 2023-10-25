@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
 	QString qs_filename_CCF_auto_marker = NULL;
 	QString qs_filename_brain_auto_marker = NULL;
 	QString qs_filename_ssd_grid = NULL; //If ffd is required during brain registration, add it.
-	int forward_stps = 0;
+	
+	QString forwardstps = NULL;
 
 	QString x_downsample = NULL; //original image sample reduction x
 	QString y_downsample = NULL; //original image sample reduction y
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
 	QString qs_filename_stps_swc = NULL; //stps swc data
 
 	int c;
-	static char optstring[] = "hC:M:o:T:S:d:x:y:z:a:b:c:r:g:f:s:";
+	static char optstring[] = "hC:M:o:T:S:d:w:x:y:z:a:b:c:r:g:f:s:";
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstring)) != -1)
 	{
@@ -130,6 +131,14 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			qs_filename_ssd_grid.append(optarg);
+			break;
+		case 'w':
+			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
+			{
+				fprintf(stderr, "Found illegal or NULL parameter for the option -d.\n");
+				return 1;
+			}
+			forwardstps.append(optarg);
 			break;
 		case 'x':
 			if (strcmp(optarg, "(null)") == 0 || optarg[0] == '-')
@@ -221,6 +230,8 @@ int main(int argc, char *argv[])
 	float X_downsample = stringToNum<float>(x_downsample.toStdString());
 	float Y_downsample = stringToNum<float>(y_downsample.toStdString());
 	float Z_downsample = stringToNum<float>(z_downsample.toStdString());
+
+	int forward_stps = stringToNum<int>(forwardstps.toStdString());
 
 	printf("--------DOWNSAMPLE---------\n");
 	
@@ -319,7 +330,7 @@ int main(int argc, char *argv[])
 	long long sz_img_sub[4], sz_img_tar[4];
 	NeuronTree nt_sub;
 	vector<Coord3D_PCM> vec_ctlpt_affine_tar(8, Coord3D_PCM()), vec_ctlpt_affine_sub(8, Coord3D_PCM());
-	int pad_x, pad_y, pad_z;
+	int pad_x = 0, pad_y = 0, pad_z = 0;
 	QList<ImageMarker> ql_marker_tar, ql_marker_sub;
 
 	printf("1. Read input subject files. \n");
@@ -400,20 +411,27 @@ int main(int argc, char *argv[])
 				vec_ctlpt_affine_tar[i].x, vec_ctlpt_affine_tar[i].y, vec_ctlpt_affine_tar[i].z,
 				vec_ctlpt_affine_sub[i].x, vec_ctlpt_affine_sub[i].y, vec_ctlpt_affine_sub[i].z);
 		}
-		qsl = vec_lines[16].trimmed().split(" ");
-		pad_x = qsl[0].toInt(); pad_y = qsl[1].toInt(); pad_z = qsl[2].toInt();
-		for (unsigned int i = 0; i < 4; i++)
+		if (vec_lines.size() == 17)
 		{
-			vec_ctlpt_affine_tar[i + 4].x = vec_ctlpt_affine_tar[i + 4].x + 2 * pad_x;
-			vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
-			vec_ctlpt_affine_tar[2 * i + 1].z = vec_ctlpt_affine_tar[2 * i + 1].z + 2 * pad_z;
-		}
-		for (unsigned int i = 0; i < 8; i++)
-		{
-			vec_ctlpt_affine_sub[i].x += pad_x;
-			vec_ctlpt_affine_sub[i].y += pad_y;
-			vec_ctlpt_affine_sub[i].z += pad_z;
-		}
+			qsl = vec_lines[16].trimmed().split(" ");
+			pad_x = qsl[0].toInt(); pad_y = qsl[1].toInt(); pad_z = qsl[2].toInt();
+			for (unsigned int i = 0; i < 4; i++)
+			{
+				vec_ctlpt_affine_sub[i + 4].x = vec_ctlpt_affine_sub[i + 4].x + 2 * pad_x;
+				vec_ctlpt_affine_tar[i + 4].x = vec_ctlpt_affine_tar[i + 4].x + 2 * pad_x;
+				vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_sub[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
+				vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y = vec_ctlpt_affine_tar[(-2 * i*i*i + 9 * i*i - 4 * i + 6) / 3].y + 2 * pad_y;
+				vec_ctlpt_affine_sub[2 * i + 1].z = vec_ctlpt_affine_sub[2 * i + 1].z + 2 * pad_z;
+				vec_ctlpt_affine_tar[2 * i + 1].z = vec_ctlpt_affine_tar[2 * i + 1].z + 2 * pad_z;
+			}
+			//for (unsigned int i = 0; i < 8; i++)
+			//{
+			//	vec_ctlpt_affine_sub[i].x += pad_x;
+			//	vec_ctlpt_affine_sub[i].y += pad_y;
+			//	vec_ctlpt_affine_sub[i].z += pad_z;
+			//}
+		}		
+
 	}
 
 
@@ -767,10 +785,11 @@ void printHelp()
 	printf("\t  -T   <filename_tar_auto_marker>      input ori_local_registered_tar.marker file full name.\n");
 	printf("\t  -S   <filename_brain_auto_marker>    input ori_local_registered_sub.marker file full name.\n");
 	printf("\t  -d   <filename_ffd_grid>             input _FFD_grid.swc file full name. If FFD is included in the brain registration, add it.\n");
+	printf("\t  -w   <Newton's optimization>    swc number -1,0,1,2......,w=0,or w=1.\n");
 	printf("\t  -x   <downsample ratio x>     input downsample ratio of image x-axis.\n");
 	printf("\t  -y   <downsample ratio y>     input downsample ratio of image y-axis.\n");
 	printf("\t  -z   <downsample ratio z>     input downsample ratio of image z-axis.\n");
-	printf("\t  -a   <average_template image size_x>     input average_template brain image size_x, default 568.\n");
+	printf("\t  -a   <average_template image size_x>     input average_template brain image size_x, default 528.\n");
 	printf("\t  -b   <average_template image size_y>     input average_template brain image size_y, default 320.\n");
 	printf("\t  -c   <average_template image size_z>     input average_template brain image size_z, default 456.\n");
 	printf("Output paras:\n");
