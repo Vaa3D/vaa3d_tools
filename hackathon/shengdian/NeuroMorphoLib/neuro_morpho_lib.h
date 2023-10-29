@@ -198,7 +198,7 @@ bool three_bif_decompose(NeuronTree& in_nt,V3DLONG bif_child_id,V3DLONG somaid=-
 vector<V3DLONG> child_node_indexes(NeuronTree in_nt, V3DLONG query_node_index=1);
 bool multi_bifurcations_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
 //bool multi_bifurcation_processing(NeuronTree& in_nt,V3DLONG somaid=-1);
-V3DLONG get_soma(NeuronTree& nt,bool connect=false);
+V3DLONG get_soma(NeuronTree& nt,bool connect=false,bool soma_typed=true);
 QList<NeuronTree> nt_2_trees(NeuronTree nt);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist=2.0);
@@ -209,5 +209,7 @@ double vector_max(std::vector<double> input);
 double vector_mean(std::vector<double> input);
 double vector_std(std::vector<double> input);
 double vector_min(std::vector<double> input);
+bool get_files_in_dir(const QString& inpath,QStringList & outfiles,QStringList filefilters);
+bool crop_local_swc_func(V3DPluginCallback2 &callback, string inswc,QString save_path, double cropx=1024, double cropy=1024, double cropz=512);
 bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc,QString save_path, int cropx=0, int cropy=0, int cropz=0,int crop_neighbor_voxels=0);
 #endif // NEURO_MORPHO_LIB_H

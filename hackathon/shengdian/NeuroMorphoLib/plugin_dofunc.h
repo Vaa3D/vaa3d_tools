@@ -26,6 +26,8 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
 bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool neuron_split(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool crop_swc_terafly_image_block(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool crop_local_swc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool somalist_in_folder(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool bswcTo(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool swc_ada_sampling(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 //bool ada_sampling(NeuronTree nt, NeuronTree& nt_sampled,float curvature_ratio=1.0,float thickness_ratio=1.0,float intensity_ratio=1.0);

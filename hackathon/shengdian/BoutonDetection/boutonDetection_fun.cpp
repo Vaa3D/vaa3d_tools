@@ -1152,6 +1152,7 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     //read para list
     int interpolated=(inparas.size()>=1)?atoi(inparas[0]):0;
     int bkg_thre_bias=(inparas.size()>=2)?atoi(inparas[1]):15;
+    int radius_smooth=(inparas.size()>=3)?atoi(inparas[2]):0;
 
     //read input swc to neuron-tree
    NeuronTree nt_raw = readSWC_file(QString::fromStdString(inswc_file));
@@ -1177,7 +1178,7 @@ void swc_profile_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
            nt=internode_pruning(nt_p,interpolated,true);
        else
            nt.deepCopy(nt_p);
-       if(true){
+       if(radius_smooth){
            //smooth very large radius
            float radius_thre=8.0;
            for(V3DLONG i=0;i<nt.listNeuron.size();i++){
@@ -1347,6 +1348,7 @@ void swc_profile_terafly_fun(V3DPluginCallback2 &callback,string imgPath, Neuron
             }
             if(inimg1d_raw) {delete []inimg1d_raw; inimg1d_raw=0;}
             if(inimg1d) {delete []inimg1d; inimg1d=0;}
+            if(in_sz) {delete []in_sz; in_sz=0;}
         }
     }
     //release pointer
@@ -3622,11 +3624,19 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
 {
     cout<<"Base on the markers in inapo file, crop image block and swc block"<<endl;
     QList <CellAPO> apolist=readAPO_file(QString::fromStdString(inapo));
-    if(apolist.size()==0)
-        return false;
-
+//    if(apolist.size()==0)
+//        return false;
     //read neuron tree
     NeuronTree nt=readSWC_file(QString::fromStdString(inswc));
+    if(apolist.size()==0){
+        V3DLONG somaid=get_soma(nt,false);
+        CellAPO soma;
+        soma.x=nt.listNeuron.at(somaid).x;
+        soma.y=nt.listNeuron.at(somaid).y;
+        soma.z=nt.listNeuron.at(somaid).z;
+        apolist.append(soma);
+    }
+
     //crop image block
     //read terafly  image
     V3DLONG *in_zz = 0;

@@ -1056,7 +1056,7 @@ double getNT_len(NeuronTree nt,float *res)
     return out_len;
 }
 /*swc processing*/
-V3DLONG get_soma(NeuronTree & nt,bool connect){
+V3DLONG get_soma(NeuronTree & nt,bool connect, bool soma_typed){
     V3DLONG niz=nt.listNeuron.size();
     V3DLONG somaid=-1;
     if(connect){
@@ -1079,17 +1079,28 @@ V3DLONG get_soma(NeuronTree & nt,bool connect){
     for(V3DLONG i=0;i<niz;i++){
         NeuronSWC s=nt.listNeuron.at(i);
         if(s.pn<0){
-            if(s.type==1){
+            if(soma_typed){
+                if(s.type==1){
+                    if(somaid>0)
+                    {
+                        cout<<"---------------Error: multiple soma nodes!!!-----------------------"<<endl;
+                        return -1;
+                    }else
+                        somaid=i;
+                }
+                else{
+                    cout<<"-------------- multiple -1 nodes!!!-----------------------"<<endl;
+                    return -1;
+                }
+            }
+            else{
+                // soma type is not defined
                 if(somaid>0)
                 {
                     cout<<"---------------Error: multiple soma nodes!!!-----------------------"<<endl;
                     return -1;
                 }else
                     somaid=i;
-            }
-            else{
-                cout<<"-------------- multiple -1 nodes!!!-----------------------"<<endl;
-                return -1;
             }
         }
     }
@@ -1517,7 +1528,7 @@ NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist){
     for (V3DLONG i=0;i<siz;i++)
     {
         V3DLONG sid=i;
-        V3DLONG bsid=i;
+        V3DLONG csid=i;
         NeuronSWC s = nt.listNeuron.at(sid);
         if((ntype.at(sid)==0||ntype.at(sid)==2)        // start from tip or bifurcation point
                 &&(s.pn>0&&hashNeuron.contains(s.pn)))
@@ -1538,41 +1549,49 @@ NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist){
                 {
                     //sp is redundancy internode
                     remove_nodes[sp_id]=1;
-                    nt.listNeuron[sid].parent=sp.parent;
+                    nt.listNeuron[sid].parent=sp.pn;
                     //update sp
                     sp_id=hashNeuron.value(sp.pn);
                 }
                 else{
                     //sp is a useful node
                     //update s
-                    bsid=sid;
+                    csid=sid;
                     sid=sp_id;
                     s = nt.listNeuron.at(sid);
-                    if(s.parent<0||!hashNeuron.contains(s.parent))
+                    if(s.pn<0||!hashNeuron.contains(s.pn))
                         break;
                     //update sp
                     sp_id=hashNeuron.value(s.pn);
                 }
             }
-            //check last internode
+//            check last internode
             sp=nt.listNeuron.at(sp_id);
             ssp_dist=dis(s,sp);
-            if(ntype.at(sp_id)>1&&ssp_dist<=pruning_dist)
+            if(ntype.at(sp_id)>1&&
+                    ntype.at(csid)==1&&
+                    remove_nodes[csid]==0&&
+                    ssp_dist<=pruning_dist)
             {
                 remove_nodes[sid]=1; // remove child node
-                nt.listNeuron[bsid].parent=sp.parent;
+                nt.listNeuron[csid].parent=sp.n;
+//                if(ntype.at(sid)>1)
+//                    cout<<nt.listNeuron[csid].n<<","<<nt.listNeuron[sid].n<<","<<sp.n<<endl;
             }
         }
     }
+
     for(V3DLONG i=0;i<siz;i++){
         NeuronSWC s = nt.listNeuron.at(i);
-        if(remove_nodes.at(i))
+        if(remove_nodes.at(i)&&ntype.at(i)==1){
             continue;
+        }
         out.listNeuron.append(s);
         out.hashNeuron.insert(s.n,out.listNeuron.size()-1);
     }
     cout<<"Internodes pruning size="<<(nt.listNeuron.size()-out.listNeuron.size())<<endl;
     return reindexNT(out);
+//    return out;
 }
 
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre){
@@ -2045,6 +2064,83 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
         QString swcline="SWCFILE="; swcline+=(default_swc_name+"\n");
         anofile.write(swcline.toAscii());
         anofile.close();
+    }
+    return true;
+}
+bool crop_local_swc_func(V3DPluginCallback2 &callback, string inswc,QString save_path, double cropx, double cropy, double cropz)
+{
+    cout<<"center from soma, crop nodes-in-fixed-block"<<endl;
+    //read neuron tree
+    NeuronTree nt=readSWC_file(QString::fromStdString(inswc));
+    V3DLONG siz=nt.listNeuron.size();   if(!siz){return false;}
+
+    //get crop center and crop size
+    // get soma
+    V3DLONG somaid=get_soma(nt,false); if(somaid<0){return false;}
+    double xmin,ymin,zmin,xmax,ymax,zmax;
+    xmin=nt.listNeuron.at(somaid).x-cropx/2;
+    ymin=nt.listNeuron.at(somaid).y-cropy/2;
+    zmin=nt.listNeuron.at(somaid).z-cropz/2;
+    xmax=nt.listNeuron.at(somaid).x+cropx/2;
+    ymax=nt.listNeuron.at(somaid).y+cropy/2;
+    zmax=nt.listNeuron.at(somaid).z+cropz/2;
+
+    //get nodes-list in block
+    QList<V3DLONG> nodes_list; nodes_list.clear();
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(s.x>=xmin&&s.y>=ymin&&s.z>=zmin&&
+                s.x<=xmax&&s.y<=ymax&&s.z<=zmax)
+            nodes_list.append(i);
+    }
+    // prune isolated node
+    QList<V3DLONG> out_nodes;
+    for (V3DLONG i=0;i<nodes_list.size();i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(nodes_list.at(i));
+        bool out_flag=true;
+        // travesal to soma
+        V3DLONG pid=nt.hashNeuron.value(s.pn);
+        NeuronSWC sp;
+        while (true) {
+            if(!nodes_list.contains(pid)){
+                out_flag=false;
+                break;
+            }
+            sp=nt.listNeuron.at(pid);
+            if(sp.pn<0)
+                break;
+            //next node
+            s=nt.listNeuron.at(pid);
+            pid=nt.hashNeuron.value(s.pn);
+        }
+        if(out_flag)
+            out_nodes.append(nodes_list.at(i));
+    }
+    //out
+    NeuronTree nt_out;
+    for(V3DLONG n=0;n<out_nodes.size();n++){
+        NeuronSWC s = nt.listNeuron.at(out_nodes.at(n));
+        nt_out.listNeuron.append(s);
+        nt_out.hashNeuron.insert(s.n,nt_out.listNeuron.size()-1);
+    }
+    writeESWC_file(save_path,nt_out);
+    return true;
+}
+bool get_files_in_dir(const QString& inpath,QStringList & outfiles,QStringList filefilters){
+    QDir indir(inpath);
+    if(!indir.exists()){cerr<<"Input error: not an existed input folder"<<endl; return false;}
+    indir.setFilter(QDir::Dirs|QDir::NoSymLinks|QDir::Files);
+    QFileInfoList rawdirs=indir.entryInfoList();
+    for(int i=0;i<rawdirs.size();i++){
+        QFileInfo thisdir=rawdirs.at(i);
+        if(thisdir.fileName()=="."|thisdir.fileName()=="..")
+            continue;
+        if(thisdir.isDir())
+            if(!get_files_in_dir(thisdir.filePath(),outfiles,filefilters))
+                return false;
+        if(thisdir.isFile()&&filefilters.contains(thisdir.suffix())){outfiles.append(thisdir.filePath());}
     }
     return true;
 }

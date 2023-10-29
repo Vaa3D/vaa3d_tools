@@ -360,7 +360,7 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         QString inswc_file;
         if(infiles.size()>=1) {inswc_file = infiles[0];}
         float r_scale=(inparas.size()>=1)?atof(inparas[0]):1.0;
-        int shift_pixels=(inparas.size()>=2)?atoi(inparas[1]):0;
+        int shift_pixels=(inparas.size()>=2)?atoi(inparas[1]):20;
         float scale_xyz=(inparas.size()>=3)?atof(inparas[2]):1.0;
         int toswc=(inparas.size()>=4)?atoi(inparas[3]):0;
         int reset_index=(inparas.size()>=5)?atoi(inparas[4]):0;
@@ -369,7 +369,7 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         if(!nt.listNeuron.size()) return false;
         V3DLONG siz=nt.listNeuron.size();
         for(V3DLONG i=0;i<siz;i++){
-            nt.listNeuron[i].x-=shift_pixels;
+            nt.listNeuron[i].x+=shift_pixels;
             nt.listNeuron[i].x*=scale_xyz;
             nt.listNeuron[i].y*=scale_xyz;
             nt.listNeuron[i].z*=scale_xyz;

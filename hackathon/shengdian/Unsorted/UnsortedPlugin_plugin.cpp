@@ -286,9 +286,6 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     }
     else if (func_name==tr("record"))
     {
-        /*scan all the swc files in a folder
-         *rendering into differenct colors
-        */
         //for all the swc files
         QString swcpath = infiles[0];
         QString outpath=outfiles[0];
@@ -300,7 +297,7 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         V3DLONG siz=nt.listNeuron.size();
         V3DLONG somaid=-1;
          for(V3DLONG i=0;i<siz;i++)
-             if(nt.listNeuron.at(i).type==1&&nt.listNeuron.at(i).pn<0)
+             if(nt.listNeuron.at(i).pn<0)
                  somaid=i;
          if(somaid<0)
              return false;
@@ -309,7 +306,7 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
          float zsize=nt.listNeuron.at(somaid).z;
         for(V3DLONG i=0;i<siz;i++){
             nt.listNeuron[i].x+=(xc-xsize);
-            nt.listNeuron[i].y+=(yc-ysize);
+            nt.listNeuron[i].y=yc+ysize-nt.listNeuron[i].y;
             nt.listNeuron[i].z+=(zc-zsize);
         }
         writeSWC_file(outpath,nt);
@@ -794,7 +791,7 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         mip_sz[2] = 1;
         mip_sz[3] = 1;
 
-        cout<<"size x="<<N<<" , size y= "<<M<<endl;
+//        cout<<"size x="<<N<<" , size y= "<<M<<endl;
         V3DLONG pagesz_mip = mip_sz[0]*mip_sz[1]*mip_sz[2];
         unsigned char *image_mip=0;
         try {image_mip = new unsigned char [pagesz_mip];}
@@ -813,11 +810,11 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
                         max_mip = data1d[N*M*iz + N*iy + ix];
                     }
                 }
-                if(datatype==2&&max_mip>0)
-                {
-                    cout<<"max mip= "<<max_mip<<endl;
-                    image_mip[iy*N + ix]=200;
-                }
+//                if(datatype==2&&max_mip>0)
+//                {
+//                    cout<<"max mip= "<<max_mip<<endl;
+//                    image_mip[iy*N + ix]=200;
+//                }
             }
         }
         simple_saveimage_wrapper(callback, outfiles.at(0), (unsigned char *)image_mip, mip_sz, 1);

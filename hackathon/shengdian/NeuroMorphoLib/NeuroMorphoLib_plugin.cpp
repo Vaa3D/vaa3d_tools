@@ -27,6 +27,8 @@ QStringList NMorphoPlugin::funclist() const
        <<tr("neuron_split")
         <<tr("qc")
        << tr("nt_check")
+       <<tr("crop_local_swc")
+      <<tr("somalist_in_folder")
        <<tr("help");
 }
 
@@ -85,6 +87,14 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("swc_ada_sampling"))
     {
         return swc_ada_sampling(callback,input,output);
+    }
+    else if(func_name==tr("crop_local_swc"))
+    {
+        return crop_local_swc(callback,input,output);
+    }
+    else if (func_name == tr("somalist_in_folder"))
+    {
+        return somalist_in_folder(callback,input,output);
     }
     else if (func_name == tr("crop_swc_terafly_image_block"))
     {

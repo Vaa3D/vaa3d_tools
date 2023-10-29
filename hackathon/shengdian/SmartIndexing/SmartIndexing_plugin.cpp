@@ -56,6 +56,14 @@ bool SmartIndexing::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return terafly_vol_index(callback,input,output);
     }
+    else if (func_name == tr("terafly_vols_index"))
+    {
+        return terafly_vols_index(callback,input,output);
+    }
+    else if (func_name == tr("terafly_mdata"))
+    {
+        return terafly_mdata(callback,input,output);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
