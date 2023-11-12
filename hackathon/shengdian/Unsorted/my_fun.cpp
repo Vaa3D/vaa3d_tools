@@ -474,7 +474,7 @@ void getSomaBlock(V3DPluginCallback2 &callback, string imgPath, QString inapo_fi
         tmpstr.append("-x_").append(QString("%1").arg(s.x));
         tmpstr.append("_y_").append(QString("%1").arg(s.y));
         tmpstr.append("_z_").append(QString("%1").arg(s.z));
-        QString default_name = "ImgSoma_"+tmpstr+".v3draw";
+        QString default_name = "Img_"+tmpstr+"-blockcenter.v3draw";
         QString save_path_img =outpath+"/"+default_name;
         cout<<"save img path:"<<save_path_img.toStdString()<<endl;
         simple_saveimage_wrapper(callback, save_path_img.toStdString().c_str(),im_cropped,in_sz,1);

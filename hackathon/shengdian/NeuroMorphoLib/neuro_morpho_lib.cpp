@@ -1068,9 +1068,7 @@ V3DLONG get_soma(NeuronTree & nt,bool connect, bool soma_typed){
                 for(V3DLONG j=0;j<niz;j++){
                     NeuronSWC sj=nt.listNeuron.at(j);
                     if(i!=j&&s.x==sj.x&&s.y==sj.y&&s.z==sj.z)
-                    {
                         nt.listNeuron[i].pn=sj.n;
-                    }
                 }
             }
         }
@@ -2021,11 +2019,12 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
         return false;
     cout<<"page size="<<pagesz<<endl;
     //save cropped image
+    QString fbname=QFileInfo(QString::fromStdString(inswc)).baseName();
     QString tmpstr = "";
     tmpstr.append("_x_").append(QString("%1").arg(crop_center_x_coord));
     tmpstr.append("_y_").append(QString("%1").arg(crop_center_y_coord));
     tmpstr.append("_z_").append(QString("%1").arg(crop_center_z_coord));
-    QString default_img_name = "Img"+tmpstr+".v3draw";
+    QString default_img_name = fbname+"_Img"+tmpstr+".v3draw";
     QDir path(save_path);
     if(!path.exists()) { path.mkpath(save_path);}
     QString save_path_img =save_path+"/"+default_img_name;
@@ -2051,10 +2050,10 @@ bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc
         }
     }
     //save to file
-    QString default_swc_name="swc"+tmpstr+".eswc";
+    QString default_swc_name=fbname+"_swc"+tmpstr+".eswc";
     QString save_path_swc =save_path+"/"+default_swc_name;
     writeESWC_file(save_path_swc,out);
-    QString default_ano_name="ano"+tmpstr+".ano";
+    QString default_ano_name=fbname+".ano";
     QString save_path_ano =save_path+"/"+default_ano_name;
     QFile anofile(save_path_ano);
     if(anofile.open(QIODevice::WriteOnly | QIODevice::Text))

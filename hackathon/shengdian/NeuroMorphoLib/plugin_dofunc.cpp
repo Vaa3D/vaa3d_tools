@@ -94,6 +94,187 @@ bool ada_sampling(NeuronTree nt, NeuronTree& nt_sampled,
 //        return false;
     return true;
 }
+
+bool soma_connection(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /* soma connection:
+     * 1. 多分叉点为soma点，但soma已经定义了，并在多分叉点的附近。
+     * 2. 多分叉点为soma点，soma未定义
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    double s_connect_dist=(inparas.size()>=1)?atof(inparas[0]):20;
+    int save_new=(inparas.size()>=2)?atoi(inparas[1]):0;
+
+    cout<<"swc file="<<inswc_file.toStdString()<<endl;
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    cout<<"save to "<<file_suffix.toStdString()<<endl;
+    QString out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "."+file_suffix);
+
+    // step1: try to identify soma and make a connection of duplicated nodes
+    V3DLONG somaid=get_soma(nt,true,true);
+    if(somaid<0){
+        cout<<"No soma was defined in type(1). Now try to check is there only one -1."<<endl;
+        somaid=get_soma(nt,false,false);
+    }
+    // step2: check the number of start points
+    vector<int> nchilds(siz,0); // how many child-nodes: index -> node_type
+    QList<V3DLONG> spoints; // used to identify start points.
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(nt.hashNeuron.contains(s.pn))
+        {
+            V3DLONG spn_id=nt.hashNeuron.value(s.pn);
+            nchilds[spn_id]+=1;
+        }
+        else
+            spoints.append(i);
+    }
+    cout<<"# of start points in this neuron tree: "<<spoints.size()<<endl;
+    //check multiple-bifurcation points
+    QList<V3DLONG> bifur_idlist; bifur_idlist.clear();
+    for (V3DLONG i=0;i<siz;i++)
+        if(nchilds.at(i)>2)
+            bifur_idlist.append(i);
+    cout<<"# of multiple bifurcations ="<<bifur_idlist.size()<<endl;
+    if(spoints.size()>1){
+        // in this way, soma-id might not be included in spoints. keep this in mind
+        cout<<"not a single tree"<<endl;
+        // check the distance between those start points
+        double s_dist=0;
+        for(V3DLONG i=0;i<spoints.size();i++)
+        {
+            for(V3DLONG j=0;j<spoints.size();j++)
+            {
+                if(i>=j)
+                    continue;
+                double tmps_dist=dis(nt.listNeuron.at(spoints.at(i)),
+                                     nt.listNeuron.at(spoints.at(j)));
+                if(s_dist<tmps_dist)
+                    s_dist=tmps_dist;
+            }
+        }
+        if(s_dist>s_connect_dist){
+            cout<<"The  max distance ("<<s_dist<<") between start points is large than threshold_dist: "<<s_connect_dist<<endl;
+            return false;
+        }
+        else{
+            cout<<"Try to connect sperated starting points"<<endl;
+            NeuronSWC new_s=nt.listNeuron.at(spoints.at(0));
+            for(V3DLONG i=1;i<spoints.size();i++){
+                new_s.x+=nt.listNeuron.at(spoints.at(i)).x;
+                new_s.y+=nt.listNeuron.at(spoints.at(i)).y;
+                new_s.z+=nt.listNeuron.at(spoints.at(i)).z;
+            }
+            new_s.x/=double(spoints.size());
+            new_s.y/=double(spoints.size());
+            new_s.z/=double(spoints.size());
+            new_s.pn=-1; new_s.type=1;
+            //identify new index
+            NeuronTree nt_new;
+            for (V3DLONG i=0;i<siz;i++){
+                if(!nt.hashNeuron.contains(i)){
+                    new_s.n=siz+i;
+                    break;
+                }
+            }
+            nt_new.listNeuron.append(new_s);
+            nt_new.hashNeuron.insert(new_s.n,0);
+            for (V3DLONG i=0;i<siz;i++){
+                NeuronSWC s = nt.listNeuron.at(i);
+                if(spoints.contains(i))
+                    s.pn=new_s.n;
+                nt_new.listNeuron.append(s);
+                nt_new.hashNeuron.insert(s.n,nt_new.listNeuron.size()-1);
+            }
+            //save
+            NeuronTree nt_renew=reindexNT(nt_new);
+            if(!save_new){
+                if(file_suffix.toLower()==QString("eswc"))
+                    writeESWC_file(out_f,nt_renew);
+                else
+                    writeSWC_file(out_f,nt_renew);
+            }
+        }
+    }else{
+        QList<V3DLONG> refine_bifs; refine_bifs.clear();
+        if(spoints.at(0)==somaid){
+            //normal status
+            if(bifur_idlist.contains(somaid))
+                return true;
+            if(bifur_idlist.size()==1){
+                //check distance between soma and bifurcation point
+                double sb_dist=dis(nt.listNeuron.at(somaid),nt.listNeuron.at(bifur_idlist.at(0)));
+                if(sb_dist<s_connect_dist)
+                    refine_bifs.append(bifur_idlist.at(0));
+            }else if(bifur_idlist.size()>1){
+                for(int b=0;b<bifur_idlist.size();b++){
+                    double sb_dist=dis(nt.listNeuron.at(somaid),nt.listNeuron.at(bifur_idlist.at(b)));
+                    if(sb_dist<s_connect_dist)
+                        refine_bifs.append(bifur_idlist.at(b));
+                }
+            }else
+                return true;
+        }else{
+            cout<<"Wrong definition of soma. please check."<<endl;
+            return false;
+        }
+        //refine soma
+        if(refine_bifs.size()==1){
+            //find the path from 3-bifurcation point to soma point
+            QList<V3DLONG> bspath;
+            bspath.append(refine_bifs.at(0));
+            NeuronSWC s=nt.listNeuron.at(refine_bifs.at(0));
+            V3DLONG spid=refine_bifs.at(0);
+            NeuronSWC sp;
+            while(true){
+                if(!nt.hashNeuron.contains(s.pn)||spid==somaid)
+                    break;
+                spid=nt.hashNeuron.value(s.pn);
+                bspath.append(spid);
+                sp=nt.listNeuron.at(spid);
+                s=sp;
+            }
+            // reverse topo of bspath
+            int reset_type=1;
+            for(V3DLONG i=0;i<siz;i++)
+                if(nt.listNeuron.at(i).pn==nt.listNeuron.at(somaid).n&&!bspath.contains(i))
+                    reset_type=nt.listNeuron.at(i).type;
+            cout<<"Rest topo nodes="<<bspath.size()<<endl;
+            cout<<"Rest topo nodes type="<<reset_type<<endl;
+            for(int i=bspath.size()-1;i>0;i--){
+                V3DLONG si=bspath.at(i);
+                V3DLONG si1=bspath.at(i-1);
+//                cout<<"operate node index="<<nt.listNeuron.at(si).n<<endl;
+                nt.listNeuron[si].pn=nt.listNeuron.at(si1).n;
+                nt.listNeuron[si].type=reset_type;
+            }
+            nt.listNeuron[refine_bifs.at(0)].pn=-1;
+            nt.listNeuron[refine_bifs.at(0)].type=1;
+            // reindex
+            NeuronTree nt_new=reindexNT(nt);
+            if(save_new){
+                if(file_suffix.toLower()==QString("eswc"))
+                    writeESWC_file(out_f,nt_new);
+                else
+                    writeSWC_file(out_f,nt_new);
+            }
+
+        }else{
+            cout<<"Bifurcation can't be refined to soma point"<<endl;
+            return false;
+        }
+    }
+    return true;
+}
+
 bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /*preprocess:
      * single tree checking

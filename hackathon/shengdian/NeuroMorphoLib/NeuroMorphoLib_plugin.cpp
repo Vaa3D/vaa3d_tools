@@ -26,6 +26,7 @@ QStringList NMorphoPlugin::funclist() const
         <<tr("bswcTo")
        <<tr("neuron_split")
         <<tr("qc")
+       <<tr("soma_connection")
        << tr("nt_check")
        <<tr("crop_local_swc")
       <<tr("somalist_in_folder")
@@ -79,6 +80,10 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("qc"))
     {
         return nt_qc(callback,input,output);
+    }
+    else if (func_name == tr("soma_connection"))
+    {
+        return soma_connection(callback,input,output);
     }
     else if (func_name == tr("nt_check"))
     {
