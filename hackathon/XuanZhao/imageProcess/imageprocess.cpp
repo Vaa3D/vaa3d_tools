@@ -619,7 +619,7 @@ void _downSampleData(QString tifPath,int times,V3DPluginCallback2 &callback){
     simple_loadimage_wrapper(callback,tifPath.toStdString().c_str(),pdata,sz,dataType);
     qDebug()<<"sz0: "<<sz[0]<<" sz1: "<<sz[1]<<" sz2: "<<sz[2]<<" sz3: "<<sz[3];
     qDebug()<<"dataType: "<<dataType;
-    resample3dimg_interp(pdata,sz,times,times,times,1);
+//    resample3dimg_interp(pdata,sz,times,times,times,1);
 //    downsample3dimg_1dpt(pdata,sz,times);
     simple_saveimage_wrapper(callback,tifPath.toStdString().c_str(),pdata,sz,1);
     if(pdata){

@@ -28,9 +28,11 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
 	for (V3DLONG i=0;i<lN.size();i++)
     {
         myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " "
-               <<lN.at(i).pn <<" " << lN.at(i).seg_id <<" " << lN.at(i).level;
-        for (int j=0;j<lN.at(i).fea_val.size();j++)
-            myfile <<" " << lN.at(i).fea_val.at(j);
+               <<lN.at(i).pn;
+//        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " "
+//               <<lN.at(i).pn <<" " << lN.at(i).seg_id <<" " << lN.at(i).level;
+//        for (int j=0;j<lN.at(i).fea_val.size();j++)
+//            myfile <<" " << lN.at(i).fea_val.at(j);
         myfile << "\n";
     }
 

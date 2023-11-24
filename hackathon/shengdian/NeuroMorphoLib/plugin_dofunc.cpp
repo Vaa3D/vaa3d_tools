@@ -338,21 +338,23 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
 
-
     bool connect=(((inparas.size()>=1)?atoi(inparas[0]):0)>0)?true:false;
     int three_bifs_label=(inparas.size()>=2)?atoi(inparas[1]):0;
+    bool retype=(((inparas.size()>=3)?atoi(inparas[2]):0)>0)?true:false;
     int tip_br_thre=/*(inparas.size()>=1)?atoi(inparas[0]):*/6;
     float internode_thre=/*(inparas.size()>=2)?atof(inparas[1]):*/1.5;
     int resample_pixels=/*(inparas.size()>=1)?atoi(inparas[0]):*/0;
 
-//    cout<<"swc file="<<inswc_file<<endl;
-    if(connect)
-        cout<<"connect"<<endl;
     NeuronTree nt = readSWC_file(inswc_file);
     V3DLONG siz=nt.listNeuron.size();
     if(!siz) {return false;}
-    QString infile_suffix=QFileInfo(inswc_file).suffix();
-    QString out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + "."+infile_suffix);
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=inswc_file + "."+file_suffix;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+
     V3DLONG somaid=get_soma(nt,connect); if(somaid<0){
         cout<<"Soma Error"<<endl;
         return false;
@@ -382,25 +384,104 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     NeuronTree nt_2=tip_branch_pruning(nt,tip_br_thre); //remove tip-branches which length are below 4 pixels
     nt_3=internode_pruning_br(nt_2,internode_thre);
     nt_2.listNeuron.clear(); nt_2.hashNeuron.clear();
-
     if(resample_pixels)
         nt_4=node_interpolation(nt_3,resample_pixels);
     else
         nt_4.deepCopy(nt_3);
-    nt_3.listNeuron.clear(); nt_3.hashNeuron.clear();
-    nt_out=reindexNT(nt_4);
-    nt_4.listNeuron.clear(); nt_4.hashNeuron.clear();
+    nt_out.deepCopy(nt_4);
 
-    if(!QString::compare(QString("swc"),infile_suffix,Qt::CaseInsensitive))
+    bool undefined_typed_seg=false;
+    bool one_axon=true;
+    bool one_apical=true;
+    if(retype)
     {
-//        cout<<"Out format="<<infile_suffix.toStdString()<<endl;
-        writeSWC_file(out_f,nt_out);
+        retype=false;
+//        type_refine(nt_4,retype,somaid);
+        type_refine(nt_4,retype,undefined_typed_seg,one_axon,one_apical,somaid);
     }
-    else
-        writeESWC_file(out_f,nt_out);
+    cout<<"existed undefined seg type: "<<int(undefined_typed_seg)<<endl;
+    cout<<"one axon start point: "<<int(one_axon)<<endl;
+    cout<<"one apical start point: "<<int(one_apical)<<endl;
+    if(retype){
+        if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+        {
+            writeSWC_file(out_f,reindexNT(nt_4));
+        }
+        else
+            writeESWC_file(out_f,reindexNT(nt_4));
+    }
+    else{
+        if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+        {
+            writeSWC_file(out_f,reindexNT(nt_out));
+        }
+        else
+            writeESWC_file(out_f,reindexNT(nt_out));
+    }
+
     return true;
 }
+bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*preprocess:
+     * refine arbor type
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
 
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=QFileInfo(inswc_file).absoluteFilePath()+ "_out."+file_suffix;
+    cout<<out_f.toStdString()<<endl;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+
+    V3DLONG somaid=get_soma(nt,false); if(somaid<0){
+        cout<<"Soma Error"<<endl;
+        return false;
+    }
+    bool retype=false;
+    bool undefined_typed_seg=false;
+    bool one_axon=true;
+    bool one_apical=true;
+    bool return_true=type_refine(nt,retype,undefined_typed_seg,one_axon,one_apical,somaid);
+
+    cout<<"retype: "<<int(retype)<<endl;
+    cout<<"existed undefined seg type: "<<int(undefined_typed_seg)<<endl;
+    cout<<"one axon start point: "<<int(one_axon)<<endl;
+    cout<<"one apical start point: "<<int(one_apical)<<endl;
+    QDir savepath=QFileInfo(out_f).absoluteDir();
+    QString out_basename=QFileInfo(out_f).baseName();
+    if(return_true)
+        if(retype)
+            out_f=out_basename+"_retyped."+file_suffix;
+        else
+            out_f=out_basename+"_no_retype."+file_suffix;
+    else
+    {
+        out_f=out_basename+"_retyped_fail_undefined_error."+file_suffix;
+        if(!one_axon)
+            out_f=out_basename+"_retyped_fail_not_one_axon."+file_suffix;
+        if(!one_apical)
+            out_f=out_basename+"_retyped_fail_not_one_apical."+file_suffix;
+    }
+    cout<<"save path="<<savepath.path().toStdString()<<endl;
+    cout<<"save name="<<out_f.toStdString()<<endl;
+    if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+    {
+        writeSWC_file(savepath.path()+"/"+out_f,nt);
+    }
+    else
+        writeESWC_file(savepath.path()+"/"+out_f,nt);
+    return true;
+}
 bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /*type: specified branch type*/
     vector<char*> infiles, inparas, outfiles;
@@ -431,7 +512,8 @@ bool neuron_split(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
-    int toeswc=(inparas.size()>=1)?atoi(inparas[0]):1;
+    int soma_typed=(inparas.size()>=1)?atoi(inparas[0]):1;
+    int toeswc=(inparas.size()>=2)?atoi(inparas[1]):1;
 
     QString outpath=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(inswc_file).path());
     QDir path(outpath);
@@ -439,7 +521,7 @@ bool neuron_split(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V
         cout<<"make a new dir for saving different neurite types "<<endl;
         path.mkpath(outpath);
     }
-    split_neuron_type(inswc_file,outpath,toeswc);
+    split_neuron_type(inswc_file,outpath,bool(soma_typed),toeswc);
     return true;
 }
 
@@ -454,9 +536,9 @@ bool crop_swc_terafly_image_block(V3DPluginCallback2 &callback, const V3DPluginA
         inimg_file = infiles[0];
         inswc_file = infiles[1];
         int crop_neighbor_voxels=(inparas.size()>=1)?atoi(inparas[0]):0;
-        int cropx=(inparas.size()>=2)?atoi(inparas[1]):0;
-        int cropy=(inparas.size()>=3)?atoi(inparas[2]):0;
-        int cropz=(inparas.size()>=4)?atoi(inparas[3]):0;
+        int cropx=(inparas.size()>=2)?atoi(inparas[1]):256;
+        int cropy=(inparas.size()>=3)?atoi(inparas[2]):256;
+        int cropz=(inparas.size()>=4)?atoi(inparas[3]):128;
         //get out_image_path and out_swc_path
         QString out_path=(outfiles.size()>=1)?outfiles[0]:(QFileInfo(QString::fromStdString(inswc_file)).path());
         teraImage_swc_crop(callback,inimg_file,inswc_file,out_path,cropx,cropy,cropz,crop_neighbor_voxels);
@@ -473,12 +555,16 @@ bool crop_local_swc(V3DPluginCallback2 &callback, const V3DPluginArgList &input,
     string inswc_file;
     if(infiles.size()>=1) {
         inswc_file = infiles[0];
-        double cropx=(inparas.size()>=1)?atof(inparas[0]):1024;
-        double cropy=(inparas.size()>=2)?atof(inparas[1]):1024;
-        double cropz=(inparas.size()>=3)?atof(inparas[2]):256;
+        double crop_dist=(inparas.size()>=1)?atof(inparas[0]):200; // distance to soma
+        double cropx=(inparas.size()>=2)?atof(inparas[1]):1024; // bounding block size
+        double cropy=(inparas.size()>=3)?atof(inparas[2]):1024;
+        double cropz=(inparas.size()>=4)?atof(inparas[3]):512;
+        int topo_connected=(inparas.size()>=5)?atoi(inparas[4]):1;
+        int soma_typed=(inparas.size()>=6)?atoi(inparas[5]):1;
         //get out_image_path and out_swc_path
-        QString save_path=(outfiles.size()>=1)?outfiles[0]:(QString::fromStdString(inswc_file)+"_local.eswc");
-        crop_local_swc_func(callback,inswc_file,save_path,cropx,cropy,cropz);
+        QString save_path=(outfiles.size()>=1)?outfiles[0]:(QString::fromStdString(inswc_file)+"_local.swc");
+//        if(crop_dist)
+        crop_local_swc_func(callback,inswc_file,save_path,crop_dist,cropx,cropy,cropz,bool(topo_connected),bool(soma_typed));
     }
     return true;
 }
@@ -509,7 +595,8 @@ bool somalist_in_folder(V3DPluginCallback2 &callback, const V3DPluginArgList &in
         }
         NeuronSWC soma_node=nt.listNeuron.at(somaid);
         CellAPO soma;
-        soma.name=QFileInfo(inswc).completeBaseName();
+        soma.name=QFileInfo(inswc).fileName();
+//        soma.name=QFileInfo(inswc).completeBaseName();
         soma.n=i+1;
         soma.x=soma_node.x;
         soma.y=soma_node.y;

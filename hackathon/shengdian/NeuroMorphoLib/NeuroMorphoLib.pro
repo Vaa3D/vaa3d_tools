@@ -10,11 +10,16 @@ HEADERS	+= NeuroMorphoLib_plugin.h \
     plugin_dofunc.h \
     ../../../v3d_main/basic_c_fun/basic_surf_objs.h \
     ../../../v3d_main/basic_c_fun/color_xyz.h \
-    json/json.h
+    json/json.h \
+    image_process_lib.h \
+    ../../SGuo/imPreProcess/bilateral_filter.h \
+    ../../SGuo/imPreProcess/helpFunc.h
 SOURCES	+= NeuroMorphoLib_plugin.cpp \
     neuro_morpho_lib.cpp \
     plugin_dofunc.cpp \
-    ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp
+    ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp \
+    image_process_lib.cpp \
+    ../../SGuo/imPreProcess/helpFunc.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(NeuroMorphoLib)

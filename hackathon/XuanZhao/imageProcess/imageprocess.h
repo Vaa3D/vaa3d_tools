@@ -2,6 +2,7 @@
 #define IMAGEPROCESS_H
 
 #include "v3d_interface.h"
+#include "volimg_proc.h"
 //#include <QThread>
 
 //static int m[10];

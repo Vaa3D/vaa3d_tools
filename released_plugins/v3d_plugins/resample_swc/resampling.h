@@ -86,6 +86,7 @@ NeuronTree resample(NeuronTree input, double step)
 	NeuronTree result;
 	V3DLONG siz = input.listNeuron.size();
 	Tree tree;
+        int root_type=1;
 	for (V3DLONG i=0;i<siz;i++)
 	{
 		NeuronSWC s = input.listNeuron[i];
@@ -93,18 +94,21 @@ NeuronTree resample(NeuronTree input, double step)
 		pt->x = s.x;
 		pt->y = s.y;
 		pt->z = s.z;
-		pt->r = s.r;
-        pt ->type = s.type;
-        pt->seg_id = s.seg_id;
-        pt->level = s.level;
-        pt->fea_val = s.fea_val;
-        pt->p = NULL;
+                pt->r = s.r;
+                pt ->type = s.type;
+                pt->seg_id = s.seg_id;
+                pt->level = s.level;
+                pt->fea_val = s.fea_val;
+                pt->p = NULL;
 		pt->childNum = 0;
 		tree.push_back(pt);
 	}
 	for (V3DLONG i=0;i<siz;i++)
 	{
-		if (input.listNeuron[i].pn<0) continue;
+            if (input.listNeuron[i].pn<0) {
+                root_type=input.listNeuron.at(i).type;
+                continue;
+            }
 		V3DLONG pid = input.hashNeuron.value(input.listNeuron[i].pn);
 		tree[i]->p = tree[pid];
 		tree[pid]->childNum++;
@@ -147,18 +151,19 @@ NeuronTree resample(NeuronTree input, double step)
 		Point* p = tree[i];
 		S.n = i+1;
 		if (p->p==NULL) S.pn = -1;
-		else
-			S.pn = index_map[p->p]+1;
-		if (p->p==p) printf("There is loop in the tree!\n");
-		S.x = p->x;
-		S.y = p->y;
-		S.z = p->z;
-		S.r = p->r;
-        S.type = p->type;
-        S.seg_id = p->seg_id;
-        S.level = p->level;
-        S.fea_val = p->fea_val;
-        result.listNeuron.push_back(S);
+                else
+                    S.pn = index_map[p->p]+1;
+                if (p->p==p) printf("There is loop in the tree!\n");
+                S.x = p->x;
+                S.y = p->y;
+                S.z = p->z;
+                S.r = p->r;
+                S.type = p->type;
+                if(p->p==NULL) S.type=root_type;
+                S.seg_id = p->seg_id;
+                S.level = p->level;
+                S.fea_val = p->fea_val;
+                result.listNeuron.push_back(S);
 	}
 	for (V3DLONG i=0;i<tree.size();i++)
 	{

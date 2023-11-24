@@ -8,7 +8,7 @@
 #include <math.h>
 #include <iostream>
 #include <cmath>
-
+#include "image_process_lib.h"
 using namespace std;
 
 #define PI 3.1415926
@@ -188,10 +188,12 @@ NeuronSWC getBranchNearNode(BranchUnit bu, bool near_head=true,double min_dist=5
 NeuronTree to_topology_tree(NeuronTree nt);
 bool getNodeOrder(NeuronTree nt,vector<int> & norder,V3DLONG somaid=-1);
 bool getNodeType(NeuronTree nt,vector<int> & ntype,V3DLONG somaid=-1);
-NeuronTree reindexNT(NeuronTree nt);
+NeuronTree reindexNT(NeuronTree nt,V3DLONG somaid=-1);
 double getNT_len(NeuronTree nt,float *res);
 NeuronTree tip_branch_pruning(NeuronTree nt, float in_thre=2.0);
 NeuronTree duplicated_tip_branch_pruning(NeuronTree nt,float dist_thre=20);
+bool type_refine(NeuronTree &nt,bool &refined,bool &undefined_typed_seg,bool &one_axon,bool &one_apical,V3DLONG somaid=-1);
+bool one_arbor_check(NeuronTree nt, QList<NeuronSWC> &start_points, int arbor_type=2);
 bool loop_checking(NeuronTree nt);
 bool multi_bifurcations_checking(NeuronTree nt,QList<CellAPO> & out_3bifs,V3DLONG somaid=-1);
 bool three_bif_decompose(NeuronTree& in_nt,V3DLONG bif_child_id,V3DLONG somaid=-1);
@@ -203,13 +205,15 @@ QList<NeuronTree> nt_2_trees(NeuronTree nt);
 NeuronTree node_interpolation(NeuronTree nt,int Min_Interpolation_Pixels=4,bool sort_index=false);
 NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist=2.0);
 NeuronTree smooth_branch_movingAvearage(NeuronTree nt, int smooth_win_size=5);
-bool split_neuron_type(QString inswcpath,QString outpath,int saveESWC=1);
+bool split_neuron_type(QString inswcpath,QString outpath,bool soma_typed=true,int saveESWC=1);
 double seg_median(std::vector<double> input);
 double vector_max(std::vector<double> input);
 double vector_mean(std::vector<double> input);
 double vector_std(std::vector<double> input);
 double vector_min(std::vector<double> input);
 bool get_files_in_dir(const QString& inpath,QStringList & outfiles,QStringList filefilters);
-bool crop_local_swc_func(V3DPluginCallback2 &callback, string inswc,QString save_path, double cropx=1024, double cropy=1024, double cropz=512);
+bool crop_local_swc_func(V3DPluginCallback2 &callback, string inswc,QString save_path,
+                         double crop_dist=0, double cropx=1024, double cropy=1024, double cropz=512,
+                         bool topo_connected=true,bool soma_typed=true);
 bool teraImage_swc_crop(V3DPluginCallback2 &callback, string inimg, string inswc,QString save_path, int cropx=0, int cropy=0, int cropz=0,int crop_neighbor_voxels=0);
 #endif // NEURO_MORPHO_LIB_H
