@@ -1132,7 +1132,7 @@ V3DLONG get_soma(NeuronTree & nt,bool connect, bool soma_typed){
     }
     return somaid;
 }
-QList<NeuronTree> nt_2_trees(NeuronTree nt){
+QList<NeuronTree> nt_2_trees(NeuronTree nt,bool label){
     /*if parent=-1 or parent not exist, this is a root node;
     */
     QList<NeuronTree> nts;
@@ -1143,7 +1143,8 @@ QList<NeuronTree> nt_2_trees(NeuronTree nt){
     QList<V3DLONG> nt_roots;    QVector<V3DLONG> nodes_tree_index(niz,-1);
     for(V3DLONG i=0;i<niz;i++){
         NeuronSWC s=nt.listNeuron.at(i);
-        if(s.pn<0&&!nt.hashNeuron.contains(s.pn)){
+        if(s.pn<0||!nt.hashNeuron.contains(s.pn)){
+            cout<<"root node="<<s.n<<endl;
             nodes_tree_index[i]=nt_roots.size();
             nt_roots.append(i);
         }
@@ -1151,7 +1152,11 @@ QList<NeuronTree> nt_2_trees(NeuronTree nt){
         //2, classification of nodes
     if(nt_roots.size()==1)
         nts.append(nt);
-    else{
+    else
+    {
+        cout<<"trees="<<nt_roots.size()<<endl;
+        if(!label)
+            return nts;
         for(V3DLONG i=0;i<niz;i++){
             NeuronSWC s=nt.listNeuron.at(i);
             if(nt_roots.contains(i)||nodes_tree_index.at(i)>=0)
@@ -1185,6 +1190,136 @@ QList<NeuronTree> nt_2_trees(NeuronTree nt){
         }
     }
     return nts;
+}
+bool large_seg_checking(NeuronTree& nt,double dist_thre){
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
+    bool extraline=false;
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(s.pn<0&&!nt.hashNeuron.contains(s.pn))
+            continue;
+        V3DLONG pid=nt.hashNeuron.value(s.pn);
+        NeuronSWC sp=nt.listNeuron.at(pid);
+        double ssp_dist=dis(s,sp);
+        if(ssp_dist>=dist_thre){
+            cout<<"Unnormal line in swc: "<<s.n<<endl;
+            nt.listNeuron[i].type=7;
+            nt.listNeuron[pid].type=7;
+            extraline=true;
+//            break;
+        }
+    }
+    return extraline;
+}
+bool zero_seg_checking(NeuronTree nt,double dist_thre){
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
+    bool zero_seg=false;
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(s.pn<0&&!nt.hashNeuron.contains(s.pn))
+            continue;
+        V3DLONG pid=nt.hashNeuron.value(s.pn);
+        NeuronSWC sp=nt.listNeuron.at(pid);
+        double ssp_dist=dis(s,sp);
+        if(ssp_dist<=dist_thre){
+            cout<<"zero_seg in swc: "<<s.n<<endl;
+            zero_seg=true;
+            break;
+        }
+    }
+    return zero_seg;
+}
+bool type_checking(NeuronTree nt, QString & error_type,V3DLONG somaid){
+    /*
+     * reg_type: 1(soma),2(axon),3(basal),4(apical)
+    */
+    V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
+    if(somaid<0)
+        somaid=get_soma(nt,false);
+    if(somaid<0){return false;}
+    vector<int> ntype(siz,0);
+    if(!getNodeType(nt,ntype,somaid)){return false;}
+    // soma
+    cout<<"start to checking type"<<endl;
+    V3DLONG soma_typed_nodes=0;
+    V3DLONG other_type_nodes=0;
+    bool type2,type3,type4;
+    type2=type3=type4=false;
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(s.type==1)
+            soma_typed_nodes++;
+        else if(s.type==2)
+            type2=true;
+        else if(s.type==3)
+            type3=true;
+        else if(s.type==4)
+            type4=true;
+        else
+            other_type_nodes++;
+    }
+    if(soma_typed_nodes>1||other_type_nodes>1)
+    {
+        cout<<"TYPE-Error: soma-node or undefined nodes"<<endl;
+        error_type="other";
+        return false;
+    }
+    if(type3){
+        //basal arbor start from one soma node
+        QList<NeuronSWC> basal_start_points;
+        one_arbor_check(nt,basal_start_points,3);
+        if(basal_start_points.size()){
+            for(int i=0;i<basal_start_points.size();i++){
+                NeuronSWC basal_root=basal_start_points.at(i);
+                V3DLONG pid=nt.hashNeuron.value(basal_root.pn);
+                if(somaid!=pid){
+                    cout<<basal_root.n<<",soma="<<somaid<<endl;
+                    cout<<"TYPE-Error: basal dendritic nodes"<<endl;
+                    error_type="basal";
+                    return false;
+                }
+            }
+        }
+    }
+    if(type2){
+        // axon arbor start from one (soma/basal) node
+        QList<NeuronSWC> axon_start_points;
+        bool one_axon=one_arbor_check(nt,axon_start_points,2);
+        if(one_axon&&axon_start_points.size()==1){
+            NeuronSWC axon_root=axon_start_points.at(0);
+            V3DLONG pid=nt.hashNeuron.value(axon_root.pn);
+            if(nt.listNeuron.at(pid).type>3||nt.listNeuron.at(pid).type<1){
+                cout<<"TYPE-Error: axonal start point not legal."<<endl;
+                error_type="axon_start_type";
+                return false;
+            }
+        }else{
+            cout<<"TYPE-Error: not one axon arbor"<<endl;
+            error_type="more_axon";
+            for(int i=0;i<axon_start_points.size();i++)
+                cout<<"Axonal start points: "<<axon_start_points.at(i).n<<endl;
+            return false;
+        }
+    }
+    if(type4){
+        // apical arbor start from one node
+        QList<NeuronSWC> apical_start_points;
+        bool one_apical=one_arbor_check(nt,apical_start_points,4);
+        if(one_apical&&apical_start_points.size()==1){
+            NeuronSWC ap_root=apical_start_points.at(0);
+            V3DLONG pid=nt.hashNeuron.value(ap_root.pn);
+            if(pid!=somaid){
+                cout<<"TYPE-Error: apical-dendrite node is not from soma"<<endl;
+                error_type="apical_start";
+                return false;
+            }
+        }else{
+            cout<<"TYPE-Error: not one apical arbor"<<endl;
+            error_type="more_apical";
+            return false;
+        }
+    }
+    return true;
 }
 bool loop_checking(NeuronTree nt){
     V3DLONG siz=nt.listNeuron.size();
@@ -1619,6 +1754,100 @@ NeuronTree internode_pruning_br(NeuronTree nt,float pruning_dist){
     return reindexNT(out);
 //    return out;
 }
+NeuronTree internode_remove(NeuronTree nt,bool &processed,float pruning_dist,bool bouton){
+    /* pruning with a direction
+     * This version will split neuron into branches, and then travesal all the branches.
+     * pruning_dist<0, will prune all the internodes
+    */
+    V3DLONG siz=nt.listNeuron.size();
+    NeuronTree out;    if(siz<=0){return nt;}
+    vector<int> ntype(siz,0); getNodeType(nt,ntype);
+    vector<uint> remove_nodes(siz,0);
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        V3DLONG sid=i;
+        NeuronSWC s = nt.listNeuron.at(sid);
+        uint traversal_index=0;
+        if((ntype.at(sid)==0||ntype.at(sid)==2)        // start from tip or bifurcation point
+                &&(s.pn>0&&nt.hashNeuron.contains(s.pn)))
+        {
+            V3DLONG sp_id=nt.hashNeuron.value(s.pn);
+            NeuronSWC sp=s;
+            double ssp_dist=0;
+            if(ntype.at(sp_id)>1){
+                // if parent node not an internode, skip this branch
+                sp=nt.listNeuron.at(sp_id);
+                ssp_dist=dis(s,sp);
+                if(ssp_dist<=pruning_dist){
+                    //duplicated branch points
+                    processed=true;
+                    nt.listNeuron[sid].x+=(float)0.1;
+                    nt.listNeuron[sid].y+=(float)0.1;
+                    nt.listNeuron[sid].z+=(float)0.1;
+                    cout<<"duplicated branch nodes"<<endl;
+                }
+                continue;
+            }
+            if(traversal_index==0){
+                //check the coord of parent node
+                sp=nt.listNeuron.at(sp_id);
+                ssp_dist=dis(s,sp);
+                if(ssp_dist<=pruning_dist){
+                    //sp is redundancy internode
+                    remove_nodes[sp_id]=1;
+                    nt.listNeuron[sid].parent=sp.pn;
+                }
+                traversal_index++;
+            }
+            NeuronSWC spp=sp;
+            V3DLONG spp_id=sp_id;
+            double spspp_dist=0;
+            while(true)
+            {
+                if(remove_nodes.at(sp_id))
+                    continue;
+                if(ntype.at(sp_id)>1)
+                    break;
+                sp=nt.listNeuron.at(sp_id);
+                if(sp.pn<0||!nt.hashNeuron.contains(sp.pn))
+                    break;
+                spp_id=nt.hashNeuron.value(sp.pn);
+                spp=nt.listNeuron.at(spp_id);
+                spspp_dist=dis(sp,spp);
+                if(spspp_dist<=pruning_dist)
+                {
+                    //sp is redundancy internode
+                    remove_nodes[sp_id]=1;
+                    nt.listNeuron[sid].parent=sp.pn;
+                    if(bouton&&sp.type==5){
+                        nt.listNeuron[spp_id].type=sp.type;
+                    }
+                    //update sp
+                    sp_id=spp_id;
+                }
+                else{
+                    //sp is a useful node
+                    sid=sp_id;
+                    sp_id=spp_id;
+                }
+            }
+        }
+    }
+
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s = nt.listNeuron.at(i);
+        if(remove_nodes.at(i)&&ntype.at(i)==1){
+            processed=true;
+            continue;
+        }
+        out.listNeuron.append(s);
+        out.hashNeuron.insert(s.n,out.listNeuron.size()-1);
+    }
+    cout<<"Internodes pruning size="<<(nt.listNeuron.size()-out.listNeuron.size())<<endl;
+    return reindexNT(out);
+//    return out;
+}
 bool type_refine(NeuronTree &nt,bool &refined,bool &undefined_typed_seg,bool &one_axon,bool &one_apical,V3DLONG somaid){
 
     V3DLONG siz=nt.listNeuron.size(); if(!siz) {return true;}
@@ -1679,12 +1908,51 @@ bool type_refine(NeuronTree &nt,bool &refined,bool &undefined_typed_seg,bool &on
                 if(pid==somaid||nt.listNeuron.at(pid).pn<0)
                     break;
                 //retype to 2
-                if(nt.listNeuron[pid].type!=2){
+                if(nt.listNeuron[pid].type<2||nt.listNeuron[pid].type>3){
                     refined=true;
                     nt.listNeuron[pid].type=2;
                 }
                 //next node
                 s=nt.listNeuron.at(pid);
+            }
+        }
+    }
+    QList<NeuronSWC> axon_start_points;
+    one_axon=one_arbor_check(nt,axon_start_points,2);
+    if(one_axon&&axon_start_points.size()==1){
+        NeuronSWC axon_root=axon_start_points.at(0);
+        V3DLONG aid=nt.hashNeuron.value(axon_root.n);
+        for (V3DLONG i=0;i<siz;i++){
+            NeuronSWC sraw=nt.listNeuron.at(i);
+            bool belong_to_axon=false;
+            NeuronSWC s=sraw;
+            if(ntype.at(i)==0&&s.type!=2){
+                V3DLONG pid=i;
+                while(true){
+                    if(!nt.hashNeuron.contains(s.pn)||s.pn<0)
+                        break;
+                    pid=nt.hashNeuron.value(s.pn);
+                    if(pid==aid){
+                        belong_to_axon=true;
+                        break;
+                    }
+                    s=nt.listNeuron.at(pid);
+                }
+                if(belong_to_axon){
+                    //retype
+                    refined=true;
+                    nt.listNeuron[i].type=2;
+                    while(true){
+                        if(!nt.hashNeuron.contains(sraw.pn)||sraw.pn<0)
+                            break;
+                        pid=nt.hashNeuron.value(sraw.pn);
+                        if(pid==aid)
+                            break;
+                        if(nt.listNeuron[pid].type!=2)
+                            nt.listNeuron[pid].type=2;
+                        sraw=nt.listNeuron.at(pid);
+                    }
+                }
             }
         }
     }
@@ -1708,6 +1976,43 @@ bool type_refine(NeuronTree &nt,bool &refined,bool &undefined_typed_seg,bool &on
                 }
                 //next node
                 s=nt.listNeuron.at(pid);
+            }
+        }
+    }
+    QList<V3DLONG> basal_arbor_ids;
+    for(V3DLONG i=0;i<siz;i++)
+        if(nt.listNeuron.at(i).type==3)
+            basal_arbor_ids.append(i);
+    //check if apical seg connect to basal-arbor
+    for (V3DLONG i=0;i<siz;i++){
+        NeuronSWC sraw=nt.listNeuron.at(i);
+        bool from_basal=false;
+        NeuronSWC s=sraw;
+        if(ntype.at(i)==0&&s.type==4){
+            V3DLONG pid=i;
+            while(true){
+                if(!nt.hashNeuron.contains(s.pn)||s.pn<0)
+                    break;
+                pid=nt.hashNeuron.value(s.pn);
+                if(basal_arbor_ids.contains(pid)){
+                    from_basal=true;
+                    break;
+                }
+                s=nt.listNeuron.at(pid);
+            }
+            if(from_basal){
+                refined=true;
+                nt.listNeuron[i].type=3;
+                while(true){
+                    if(!nt.hashNeuron.contains(sraw.pn)||sraw.pn<0)
+                        break;
+                    pid=nt.hashNeuron.value(sraw.pn);
+                    if(basal_arbor_ids.contains(pid))
+                        break;
+                    if(nt.listNeuron[pid].type!=3)
+                        nt.listNeuron[pid].type=3;
+                    sraw=nt.listNeuron.at(pid);
+                }
             }
         }
     }
@@ -1735,7 +2040,7 @@ bool type_refine(NeuronTree &nt,bool &refined,bool &undefined_typed_seg,bool &on
         }
     }
     // axon arbor start from one node
-    QList<NeuronSWC> axon_start_points;
+//    QList<NeuronSWC> axon_start_points;
     one_axon=one_arbor_check(nt,axon_start_points,2);
     // apical arbor start from one node
     QList<NeuronSWC> apical_start_points;

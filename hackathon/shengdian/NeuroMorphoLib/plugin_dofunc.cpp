@@ -281,53 +281,166 @@ bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPl
      * soma checking
      * loop checking
      * multiple bifurcation checking
+     * type checking
+     *large segment check
+     * small segement check
     */
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-    string inswc_file;
+    QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
-    int out_ok_nt=(inparas.size()>=1)?atoi(inparas[1]):0;
-
-    cout<<"swc file="<<inswc_file<<endl;
-    NeuronTree nt = readSWC_file(QString::fromStdString(inswc_file));
+    int with_file_flag=(inparas.size()>=1)?atoi(inparas[0]):1;
+    int type_check=(inparas.size()>=2)?atoi(inparas[1]):0;
+    double max_dist=(inparas.size()>=3)?atof(inparas[2]):0;
+    double min_dist=(inparas.size()>=4)?atof(inparas[3]):-1;
+    cout<<"swc file="<<inswc_file.toStdString()<<endl;
+    NeuronTree nt = readSWC_file(inswc_file);
+    NeuronTree ntraw; ntraw.deepCopy(nt);
     V3DLONG siz=nt.listNeuron.size();
     if(!siz) {return false;}
-    string out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".eswc");
+    QString out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".swc");
     //single tree checking
-    QList<NeuronTree> ntrees=nt_2_trees(nt);
+    cout<<"start checking"<<endl;
+    QList<NeuronTree> ntrees=nt_2_trees(nt,false);
     if(ntrees.size()!=1){
         cout<<"Not single tree, and tree size ="<<ntrees.size()<<endl;
-        writeESWC_file(QString::fromStdString(out_f),nt);
+        if(with_file_flag){
+            out_f+="_flag_not_single_tree.swc";
+            writeSWC_file(out_f,nt);
+//            for(int i=0;i<ntrees.size();i++)
+//                writeSWC_file(out_f+QString::number(i)+".swc",ntrees.at(i));
+        }
         return false;
     }
-    V3DLONG somaid=get_soma(nt,false); if(somaid<0){
+    else
+        cout<<"Single tree"<<endl;
+    V3DLONG somaid=get_soma(nt,false);
+    if(somaid<0){
         cout<<"Soma Error"<<endl;
-        writeESWC_file(QString::fromStdString(out_f),nt);
+        if(with_file_flag){
+            out_f+="_flag_soma_error.swc";
+            writeSWC_file(out_f,nt);
+        }
         return false;
     }
+    else
+        cout<<"soma defined: "<<nt.listNeuron.at(somaid).n<<endl;
     if(loop_checking(nt)){
-        writeESWC_file(QString::fromStdString(out_f),nt);
+        if(with_file_flag){
+            out_f+="_flag_exist_loop.swc";
+            writeSWC_file(out_f,nt);
+        }
         return false;
     }
     QList<CellAPO> out_3bifs;
     bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
     if(mbif){
-        writeESWC_file(QString::fromStdString(out_f),nt);
+        if(with_file_flag){
+            out_f+="_flag_exist_multi_bifs.swc";
+            writeSWC_file(out_f,nt);
+        }
         return false;
     }
-    if(out_ok_nt)
-        writeESWC_file(QString::fromStdString(out_f),nt);
+    if(type_check){
+        // type checking
+        QString etype="";
+        bool type_right=type_checking(nt,etype,somaid);
+        if(!type_right){
+            if(with_file_flag){
+                out_f+=("_flag_type_error_"+etype+".swc");
+                writeSWC_file(out_f,nt);
+            }
+            return false;
+        }else{
+            cout<<"No type error "<<endl;
+        }
+    }
+    if(max_dist>0){
+        bool extra_line=large_seg_checking(nt,max_dist);
+        if(extra_line){
+            if(with_file_flag){
+                out_f+=("_flag_strange_connection_error.swc");
+                writeSWC_file(out_f,nt);
+            }
+            return false;
+        }else
+            cout<<"No connection error"<<endl;
+    }
+    if(min_dist>=0){
+        bool seg0=zero_seg_checking(nt,min_dist);
+        if(seg0){
+            if(with_file_flag){
+                out_f+=("_flag_zero_seg.swc");
+                writeSWC_file(out_f,nt);
+            }
+        }
+    }
+
+//    writeSWC_file(out_f,nt);
     return true;
 }
+bool proc_bifur(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*preprocess:
+     * multiple bifurcation checking
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
 
+    int connect=(inparas.size()>=1)?atoi(inparas[0]):0;
+    int soma_typed=(inparas.size()>=2)?atoi(inparas[1]):1;
+    int three_bifs_label=(inparas.size()>=3)?atoi(inparas[2]):0;
+
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=inswc_file + "."+file_suffix;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+
+    V3DLONG somaid=get_soma(nt,bool(connect),bool(soma_typed)); if(somaid<0){
+        cout<<"Soma Error"<<endl;
+        return false;
+    }
+
+    QList<CellAPO> out_3bifs;
+    bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
+    if(three_bifs_label&&mbif){
+        out_f=(outfiles.size()>=1)?outfiles[0]:(inswc_file + ".apo");
+        writeAPO_file((out_f),out_3bifs);
+        return false;
+    }
+    else{
+        if(!mbif){
+            cout<<"no multiple bifurcations"<<endl;
+        }else{
+            cout<<"Now into multiple bifurcation processing"<<endl;
+            cout<<"Node raw size="<<nt.listNeuron.size()<<endl;
+            if(!multi_bifurcations_processing(nt,somaid))
+                return false;
+            cout<<"Node processed size="<<nt.listNeuron.size()<<endl;
+            if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+                writeSWC_file(out_f,nt);
+            else
+                writeESWC_file(out_f,nt);
+        }
+    }
+    return true;
+}
 bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /*preprocess:
      * soma checking
      * loop checking
      * multiple bifurcation checking
-     *pruning small tip branch
+     * pruning small tip branch
      * pruning internal node
      * resample node
     */
@@ -338,9 +451,9 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
     QString inswc_file;
     if(infiles.size()>=1) {inswc_file = infiles[0];}
 
-    bool connect=(((inparas.size()>=1)?atoi(inparas[0]):0)>0)?true:false;
+    int connect=(inparas.size()>=1)?atoi(inparas[0]):0;
     int three_bifs_label=(inparas.size()>=2)?atoi(inparas[1]):0;
-    bool retype=(((inparas.size()>=3)?atoi(inparas[2]):0)>0)?true:false;
+    bool retype=bool((inparas.size()>=3)?atoi(inparas[2]):0);
     int tip_br_thre=/*(inparas.size()>=1)?atoi(inparas[0]):*/6;
     float internode_thre=/*(inparas.size()>=2)?atof(inparas[1]):*/1.5;
     int resample_pixels=/*(inparas.size()>=1)?atoi(inparas[0]):*/0;
@@ -355,7 +468,7 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
         file_suffix=QFileInfo(out_f).suffix();
     }
 
-    V3DLONG somaid=get_soma(nt,connect); if(somaid<0){
+    V3DLONG somaid=get_soma(nt,bool(connect)); if(somaid<0){
         cout<<"Soma Error"<<endl;
         return false;
     }
@@ -390,9 +503,7 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
         nt_4.deepCopy(nt_3);
     nt_out.deepCopy(nt_4);
 
-    bool undefined_typed_seg=false;
-    bool one_axon=true;
-    bool one_apical=true;
+    bool undefined_typed_seg=false; bool one_axon=true; bool one_apical=true;
     if(retype)
     {
         retype=false;
@@ -414,11 +525,96 @@ bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPlugi
         if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
         {
             writeSWC_file(out_f,reindexNT(nt_out));
+//            writeSWC_file(out_f,reindexNT(nt));
         }
         else
             writeESWC_file(out_f,reindexNT(nt_out));
     }
+    return true;
+}
+bool simple_type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*preprocess:
+     * refine arbor type
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
 
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=QFileInfo(inswc_file).absoluteFilePath()+ "_out."+file_suffix;
+    cout<<out_f.toStdString()<<endl;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+
+    V3DLONG somaid=get_soma(nt,false); if(somaid<0){
+        cout<<"Soma Error"<<endl;
+        return false;
+    }
+    bool refined=false;
+    vector<int> ntype(siz,0);
+    if(!getNodeType(nt,ntype,somaid)){return true;}
+
+    for(V3DLONG i=0;i<siz;i++){
+        NeuronSWC s=nt.listNeuron.at(i);
+        if(s.pn<0||!nt.hashNeuron.contains(s.pn)||s.type==1)
+            continue;
+        V3DLONG pid=nt.hashNeuron.value(s.pn);
+        if(pid==somaid)
+            continue;
+//        NeuronSWC sp=nt.listNeuron.at(pid);
+        if(nt.listNeuron.at(pid).type==1){
+            while(true){
+                refined=true;
+                nt.listNeuron[pid].type=s.type;
+                s=nt.listNeuron.at(pid);
+                if(s.pn<0||!nt.hashNeuron.contains(s.pn))
+                    break;
+                pid=nt.hashNeuron.value(s.pn);
+                if(pid==somaid)
+                    break;
+            }
+        }
+    }
+    for(V3DLONG i=0;i<siz;i++){
+        if(nt.listNeuron.at(i).type!=2)
+            continue;
+        // to soma
+        NeuronSWC s=nt.listNeuron.at(i);
+        V3DLONG pid=i;
+        while(true){
+            if(!nt.hashNeuron.contains(s.pn)||s.pn<0)
+                break;
+            pid=nt.hashNeuron.value(s.pn);
+            if(pid==somaid||nt.listNeuron.at(pid).pn<0)
+                break;
+            if(ntype.at(pid)>=2&&refined)
+                break;
+            //retype to 2
+            if(nt.listNeuron[pid].type!=2){
+                refined=true;
+                nt.listNeuron[pid].type=2;
+            }
+            //next node
+            s=nt.listNeuron.at(pid);
+        }
+        if(refined)
+            break;
+    }
+    cout<<"save name="<<out_f.toStdString()<<endl;
+    if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+    {
+        writeSWC_file(out_f,nt);
+    }
+    else
+        writeESWC_file(out_f,nt);
     return true;
 }
 bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
@@ -482,6 +678,65 @@ bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &inpu
         writeESWC_file(savepath.path()+"/"+out_f,nt);
     return true;
 }
+bool large_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    double max_dist=(inparas.size()>=1)?atof(inparas[0]):30;
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=QFileInfo(inswc_file).absoluteFilePath()+ "_out."+file_suffix;
+    cout<<out_f.toStdString()<<endl;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+    bool large_seg=large_seg_checking(nt,max_dist);
+    if(large_seg){
+        if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+        {
+            writeSWC_file(out_f,nt);
+        }
+        else
+            writeESWC_file(out_f,nt);
+    }
+    return true;
+}
+bool zero_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    double min_dist=(inparas.size()>=1)?atof(inparas[0]):0;
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=QFileInfo(inswc_file).absoluteFilePath()+ "_out."+file_suffix;
+    cout<<out_f.toStdString()<<endl;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+    bool seg0=zero_seg_checking(nt,min_dist);
+    if(seg0){
+        if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+        {
+            writeSWC_file(out_f,nt);
+        }
+        else
+            writeESWC_file(out_f,nt);
+    }
+    return true;
+}
 bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /*type: specified branch type*/
     vector<char*> infiles, inparas, outfiles;
@@ -503,7 +758,47 @@ bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V
     write_branches(nt,outpath,type);
     return true;
 }
-
+bool remove_zero_seg(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file;
+    if(infiles.size()>=1) {inswc_file = infiles[0];}
+    double min_dist=(inparas.size()>=1)?atof(inparas[0]):0;
+    int bouton_data=(inparas.size()>=2)?atoi(inparas[1]):0;
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f=QFileInfo(inswc_file).absoluteFilePath()+ "_out."+file_suffix;
+    cout<<out_f.toStdString()<<endl;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+    bool processed=false;
+    NeuronTree nt_out=internode_remove(nt,processed,min_dist,bool(bouton_data));
+    if(bouton_data){
+        V3DLONG b0=0; V3DLONG b1=0;
+        for (V3DLONG i=0;i<siz;i++)
+            if(nt.listNeuron.at(i).type==5)
+                b0++;
+        for (V3DLONG i=0;i<nt_out.listNeuron.size();i++)
+            if(nt_out.listNeuron.at(i).type==5)
+                b1++;
+        cout<<"Bouton Before="<<b0<<",After="<<b1<<endl;
+    }
+    if(processed&&nt_out.listNeuron.size()){
+        if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+        {
+            writeSWC_file(out_f,nt_out);
+        }
+        else
+            writeESWC_file(out_f,nt_out);
+    }
+    return true;
+}
 bool neuron_split(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
 
     vector<char*> infiles, inparas, outfiles;
@@ -770,6 +1065,7 @@ bool branch_features(V3DPluginCallback2 &callback, const V3DPluginArgList &input
 }
 bool bouton_distribution(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /* branch level
+     * use featured bouton eswc data
      * get bouton distribution density
     */
     vector<char*> infiles, inparas, outfiles;
@@ -1121,10 +1417,11 @@ bool write_bouton_distribution(const QString &filename, NeuronTree nt,int split_
                 int hit_bouton=0;
                 double scan_len=left_len;
 
-                for(int n=sindex;n>0;n--){
+                for(int n=sindex;n>0;n--)
+                {
                     if(bu.listNode.at(n).type>=5)
                         hit_bouton++;
-                    scan_len+=dis(bu.listNode.at(n),bu.listNode.at(n-1));
+                    scan_len+=dis(bu.listNode.at(n),bu.listNode.at(n-1),true);
                     if(scan_len>bin_len){left_len=scan_len-bin_len;sindex=n-1; break;}
                 }
                 if(s==split_times-1&&bu.listNode.at(0).type>=5)

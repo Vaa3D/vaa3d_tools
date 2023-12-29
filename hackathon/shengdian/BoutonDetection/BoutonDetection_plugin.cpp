@@ -322,6 +322,7 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
         if(!nt.listNeuron.size()) return false;
         int level_2_type=(inparas.size()>=1)?atoi(inparas[0]):0;
         int retype=(inparas.size()>=2)?atoi(inparas[1]):0;
+        int retype_apical=(inparas.size()>=3)?atoi(inparas[2]):0;
         if(level_2_type>0)
             for(V3DLONG i=0;i<nt.listNeuron.size();i++)
                 nt.listNeuron[i].type=nt.listNeuron.at(i).level;
@@ -331,8 +332,13 @@ bool BoutonDetectionPlugin::dofunc(const QString & func_name, const V3DPluginArg
                 if(somaid!=i)
                     nt.listNeuron[i].type=retype;
         }
+        if(retype_apical){
+            for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+                if(nt.listNeuron.at(i).type==4)
+                    nt.listNeuron[i].type=3;
+        }
         QString out_swc_file=(outfiles.size()>=1)?outfiles[0]:(inswc_file+"_out.swc");
-        writeSWC_file(out_swc_file,nt);
+        writeSWC_file(out_swc_file,reindexNT(nt));
     }
     else if (func_name == tr("ccfed"))
     {

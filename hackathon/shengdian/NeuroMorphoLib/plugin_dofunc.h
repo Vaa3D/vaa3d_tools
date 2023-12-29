@@ -24,8 +24,13 @@ bool write_bouton_distribution(const QString &filename, NeuronTree nt,int split_
 bool soma_connection(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool large_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool simple_type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool proc_bifur(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool swc2branches(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool remove_zero_seg(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool zero_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool neuron_split(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool crop_swc_terafly_image_block(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool crop_local_swc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);

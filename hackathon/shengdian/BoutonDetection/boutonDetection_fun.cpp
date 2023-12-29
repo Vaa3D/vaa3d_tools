@@ -1593,7 +1593,7 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
             if(MIN_PROCESSED_SEG_LEN>=curseg.row.size())
                 bouton_radius_thre=MAX(AXON_BACKBONE_RADIUS,radius_mean*radius_delta); //bouton in small branch
         }
-        bouton_radius_thre=MIN(MAX(bouton_radius_thre,3),10); //bouton radius >=1
+        bouton_radius_thre=MIN(MAX(bouton_radius_thre,1),10); //bouton radius >=1
 
         std::vector<int> outflag_radius=peaks_in_seg(seg_radius,1,0*radius_std);
 
@@ -1606,7 +1606,7 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
         double level_std=seg_levels_feas[1];
         double bouton_intensity_thre=level_mean*
                 ((MAX_PROCESSED_SEG_LEN<curseg.row.size())?(intensity_delta+2):intensity_delta);
-        bouton_intensity_thre=MIN(MAX(bouton_intensity_thre,80),250);
+        bouton_intensity_thre=MIN(MAX(bouton_intensity_thre,60),250);
         std::vector<int> outflag_level=peaks_in_seg(seg_levels,0,0.05*level_std);
 //        4.3 processed
         if(MIN_PROCESSED_SEG_LEN>curseg.row.size()){
@@ -1615,7 +1615,8 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
                     outflag_radius[io]>0&&
                         curseg.row[io].r>(1.5)
 //                        &&curseg.row[io].level>level_mean
-                        ){
+                        )
+                {
                     AxonalBouton ab;
                     ab.x=curseg.row.at(io).x;
                     ab.y=curseg.row.at(io).y;
@@ -1634,8 +1635,9 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
                 }
             }
         }
-        /*else*/if(true){
-            for(int io=0;io<curseg.row.size();io++){
+        else{
+            for(int io=0;io<curseg.row.size();io++)
+            {
                 AxonalBouton ab;
                 ab.x=curseg.row.at(io).x;
                 ab.y=curseg.row.at(io).y;
@@ -1644,18 +1646,20 @@ QList <AxonalBouton> boutonFilter_fun(NeuronTree nt,double radius_delta,double i
                 if(outflag_level[io]>0&&
                         outflag_radius[io]>0&&
                         curseg.row[io].r>bouton_radius_thre&&
-                        curseg.row[io].level>bouton_intensity_thre){
+                        curseg.row[io].level>bouton_intensity_thre)
+                {
                     ab.nodetype=BoutonSWCNodeType;
                     ab.btype=BoutonType;
+
+                    ab.br_r_mean=radius_mean;
+                    ab.br_r_std=radius_std;
+                    ab.intensity=curseg.row[io].level;
+                    ab.br_intensity_mean=level_mean;
+                    ab.br_intensity_std=level_std;
+                    ab.ccfR=curseg.row[io].r;
+                    ab.broder=curseg.row[io].level;
+                    bouton_sites.append(ab);
                 }
-                ab.br_r_mean=radius_mean;
-                ab.br_r_std=radius_std;
-                ab.intensity=curseg.row[io].level;
-                ab.br_intensity_mean=level_mean;
-                ab.br_intensity_std=level_std;
-                ab.ccfR=curseg.row[io].r;
-                ab.broder=curseg.row[io].level;
-                bouton_sites.append(ab);
             }
         }
     }
@@ -3032,11 +3036,17 @@ void bouton_file_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
     case 6:
     {
         float pruning_thre=(inparas.size()>=2)?atof(inparas[1]):0;
+        int to_swc=(inparas.size()>=3)?atof(inparas[2]):0;
         QString outname=(outfiles.size()>=1)?outfiles[0]:(inswc_file+ "_pruned.eswc");
         cout<<"function id:"<<pruning_thre<<endl;
         NeuronTree nt_out=boutonSWC_internode_pruning(nt,pruning_thre);
         if(nt_out.listNeuron.size())
-            writeESWC_file(outname,nt_out);
+        {
+            if(to_swc)
+                writeSWC_file(outname,nt_out);
+            else
+                writeESWC_file(outname,nt_out);
+        }
     }
         break;
     case 7:
@@ -3124,7 +3134,7 @@ void boutonswc_to_ccf(NeuronTree& nt,float scale){
             nt.listNeuron[i].y=nt.listNeuron[i].fea_val[1];
             nt.listNeuron[i].z=nt.listNeuron[i].fea_val[2];
 //            nt.listNeuron[i].type+=nt.listNeuron[i].fea_val[3];
-            nt.listNeuron[i].r=nt.listNeuron[i].fea_val[4]/scale;
+            nt.listNeuron[i].r=1/*nt.listNeuron[i].fea_val[4]/scale*/;
         }
     }
 }

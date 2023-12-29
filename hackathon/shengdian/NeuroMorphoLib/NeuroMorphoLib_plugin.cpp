@@ -81,6 +81,10 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return nt_qc(callback,input,output);
     }
+    else if (func_name == tr("proc_bifur"))
+    {
+        return proc_bifur(callback,input,output);
+    }
     else if (func_name == tr("type_refine"))
     {
         return type_refine_func(callback,input,output);
@@ -92,6 +96,10 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("nt_check"))
     {
         return nt_check(callback,input,output);
+    }
+    else if (func_name == tr("remove_zero_seg"))
+    {
+        return remove_zero_seg(callback,input,output);
     }
     else if (func_name == tr("swc_ada_sampling"))
     {
@@ -112,6 +120,20 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("swc_parallization"))
     {
         return swc_parallization(callback,input,output);
+    }
+    else if (func_name == tr("simple_type_refine"))
+    {
+        return simple_type_refine_func(callback,input,output);
+    }
+    else if (func_name == tr("large_seg_check"))
+    {
+        // distance between node and its parent node
+        return large_seg_check(callback,input,output);
+    }
+    else if (func_name == tr("zero_seg_check"))
+    {
+        // distance between node and its parent node
+        return zero_seg_check(callback,input,output);
     }
 	else if (func_name == tr("help"))
 	{
