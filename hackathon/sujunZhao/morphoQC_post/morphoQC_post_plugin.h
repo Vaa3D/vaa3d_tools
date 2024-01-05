@@ -9,6 +9,9 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <morphoqc_func.h>
+#include <soma_confirmation.h>
+#include <topo_validation.h>
+#include <type_check.h>
 
 class TestPlugin : public QObject, public V3DPluginInterface2_1
 {

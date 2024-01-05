@@ -21,8 +21,10 @@ QStringList TestPlugin::menulist() const
 QStringList TestPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("soma_examination")
+        <<tr("topo_check")
+        <<tr("type_check")
+        <<tr("tip_pruning")
 		<<tr("help");
 }
 
@@ -51,15 +53,40 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
     if (func_name == tr("soma_examination"))
+    {
+        Soma_check(callback,input,output);
+    }
+    else if (func_name == tr("soma_pos_correction")){
+        Soma_pos_correct(callback, input, output);
+    }
+    else if (func_name == tr("soma_correction"))
 	{
-
         Soma_correction(callback,input,output);
 	}
     else if (func_name == tr("tip_markdown"))
 	{
         Find_tip(callback,input);
-
 	}
+    else if (func_name == tr("topo_check"))
+    {
+        Topo_check(callback,input,output);
+    }
+    else if (func_name == tr("type_check"))
+    {
+        Type_check(callback,input,output);
+    }
+    else if (func_name == tr("retype"))
+    {
+        Type_correction(callback, input, output);
+    }
+    else if (func_name == tr("tip_pruning"))
+    {
+        Tip_pruning(callback, input, output);
+    }
+//    else if (func_name == tr("post_QC"))
+//    {
+
+//    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
