@@ -258,17 +258,18 @@ void Topo_check(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3
             rootlist = node_markdown[0];
             multiF_list = node_markdown[1];
 
-            QHash< QString, QList<int> > dup_nodes;
-            dup_nodes = duplicated_pts_check(nt);
+//            QHash< QString, QList<int> > dup_nodes;
+//            dup_nodes = duplicated_pts_check(nt);
 
-            if((rootlist.size()>1)||(dup_nodes.size()>0)||(multiF_list.size()>0)){
-                QList<int> dup_node_list;
-                if(dup_nodes.size()>0){
-                    QHash< QString, QList<int> >::const_iterator k;
-                    for(k=dup_nodes.constBegin();k!=dup_nodes.constEnd();++k){
-                        dup_node_list.append(k.value()[0]);
-                    }
-                }
+            //if((rootlist.size()>1)||(dup_nodes.size()>0)||(multiF_list.size()>0)){
+            if((rootlist.size()>1)||(multiF_list.size()>0))
+//                QList<int> dup_node_list;
+//                if(dup_nodes.size()>0){
+//                    QHash< QString, QList<int> >::const_iterator k;
+//                    for(k=dup_nodes.constBegin();k!=dup_nodes.constEnd();++k){
+//                        dup_node_list.append(k.value()[0]);
+//                    }
+//                }
                 if(rootlist.size()<2){
                     rootlist.clear();
                 }
@@ -278,8 +279,10 @@ void Topo_check(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3
                 furcation_color<<0<<255<<255;
                 dup_color<<255<<0<<255;
                 QList<QList<int> > point_marked, color_marked;
-                point_marked<<rootlist<<multiF_list<<dup_node_list;
-                color_marked<<root_color<<furcation_color<<dup_color;
+                //point_marked<<rootlist<<multiF_list<<dup_node_list;
+                point_marked<<rootlist<<multiF_list;
+                //color_marked<<root_color<<furcation_color<<dup_color;
+                color_marked<<root_color<<furcation_color;
                 apo_generate(point_marked, swc_file, color_marked);
 
                 QFileInfo swcInfo(swc_file);

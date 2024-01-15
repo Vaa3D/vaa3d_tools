@@ -68,7 +68,7 @@ QList<int> mark_type_error(QString in_name, int apical_soma_threshold,vector<cha
             }
         }
     }
-    if((count_apical_B>1)&&(flag_apical_found)){
+    if((count_apical_B>=1)&&(flag_apical_found)){
         flag_apical=true;
     }
     cout<<"apical:"<<flag_apical_found<<" "<<count_apical_B<<endl;

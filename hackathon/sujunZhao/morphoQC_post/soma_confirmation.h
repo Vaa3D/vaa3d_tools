@@ -12,6 +12,7 @@
 #include <iterator>
 #include <QHash>
 #include <morphoqc_func.h>
+#include "sort_swc.h"
 
 struct block{
     QString name;

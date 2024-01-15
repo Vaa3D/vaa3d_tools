@@ -441,10 +441,9 @@ void Soma_check(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3
     }
 }
 
-bool search_for_soma(NeuronTree nt, QList<int> soma_candidates){
-    int N = soma_candidates.size();
+int search_for_soma(NeuronTree nt, QList<int> soma_candidates){
 
-    QList<int> nlist,check_idlist,recordlist;
+    QList<int> nlist,recordlist;
     QVector<QVector<V3DLONG> > children;
     children = QVector< QVector<V3DLONG> >(nt.listNeuron.size(), QVector<V3DLONG>() );
     for (V3DLONG i=0;i<nt.listNeuron.size();i++)
@@ -456,27 +455,38 @@ bool search_for_soma(NeuronTree nt, QList<int> soma_candidates){
         int pid = nlist.lastIndexOf(nt.listNeuron.at(i).pn);
         if (pid<0) continue;
         children[pid].push_back(i);
-        if(soma_candidates.contains(i)){
-            check_idlist.append(i);
-        }
     }
 
     int max_degree=0;
-    for (int i=0; i<check_idlist.size(); i++){
-        if(children[i].size()>max_degree){
+    for (int i=0; i<soma_candidates.size(); i++){
+        if(children[soma_candidates[i]].size()>max_degree){
             recordlist.clear();
-            recordlist.append(check_idlist.at(i));
-            max_degree=children[i].size();
+            recordlist.append(soma_candidates.at(i));
+            max_degree=children[soma_candidates[i]].size();
         }
-        else if(children[i].size()==max_degree){
-            recordlist.append(i);
+        else if(children[soma_candidates[i]].size()==max_degree){
+            recordlist.append(soma_candidates[i]);
         }
     }
     if(recordlist.size()==1){
         return recordlist.at(0);
     }
     else{
-
+        double d = 0;
+        for (int i=0; i<recordlist.size()-1; i++){
+            for (int j=i+1; j<recordlist.size(); j++){
+                double current_d = computeDist(nt.listNeuron.at(recordlist[i]),nt.listNeuron.at(recordlist[j]));
+                if(current_d > d){
+                    d = current_d;
+                }
+            }
+        }
+        if (d<30){
+            return recordlist.at(0);
+        }
+        else{
+            return -1;
+        }
     }
 }
 
@@ -508,7 +518,7 @@ NeuronSWC soma_correction_with_somaInfo(QString swc_file,QString soma_file){
             }
         }
         if (matched_soma_id == -1){
-            v3d_msg(QString("Soma info is not in the APO file.\n"
+            v3d_msg(QString("Soma info is not in the given soma file.\n"
                             "Process terminated.\n"
                             "Please double check %1").arg(soma_file));
         }
@@ -527,41 +537,108 @@ bool Soma_correction(V3DPluginCallback2 &callback, const V3DPluginArgList & inpu
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
     QString in_name = infiles.at(0);
     QFileInfo fileinfo(in_name);
 
     if (fileinfo.isFile()){
     // -------------------Case1. Assigned soma information is given-------------------------
-        bool soma_found=FALSE;
-        if (inparas.size()>0){
-            QString soma_file = inparas.at(0);
+        NeuronTree nt = readSWC_file(in_name);
+        QList<int> plist;
+        for(int j=0; j<nt.listNeuron.size(); j++){
+            plist.append(j);
+        }
+        QString para_file = inparas.at(0);
+        QString out_file;
+        if(outfiles.size() == 0){
+            out_file = in_name + "_somaCorrected.swc";
+        }
+        else{
+            out_file = outfiles.at(0);
+        }
+
+        QDir dir(para_file);
+        if (!dir.exists()){
+            QString soma_file = para_file;
             NeuronSWC soma_extracted = soma_correction_with_somaInfo(in_name,soma_file);
             if(soma_extracted.comment=="found"){
-                soma_found=TRUE;
-                NeuronTree nt = readSWC_file(in_name);
                 NeuronTree new_swc_nt = remove_nodes_soma(nt, 10.0,soma_extracted);
+                writeSWC_file(out_file,new_swc_nt);
             }
         }
-        // -------------------Case2. Search soma -------------------------
-        else{
+        // -------------------Case2. Search for soma -------------------------
+        else {
             QList<int> soma_list = soma_extract(in_name,FALSE);
             if(soma_list.size()!=1){
+                // find a new one around the point
+                int soma_id_found = search_for_soma(nt, soma_list);
+                if(soma_id_found == -1){
+                    v3d_msg(QString("Multiple soma found.\n"
+                                    "Correction failed.\n"
+                                    "Please manually check %1").arg(in_name));
+                }
+                else{
+                    QString image_file = para_file;
+                    NeuronSWC soma = nt.listNeuron.at(soma_id_found);
+                    V3DLONG *in_zz = 0;
+                    if(!callback.getDimTeraFly(image_file.toStdString(),in_zz)){cout<<"can't load terafly img"<<endl;}
+                    long start_x,start_y,start_z,end_x,end_y,end_z,half_block_size;
+                    half_block_size = 50;
+                    start_x = soma.x - half_block_size; if(start_x<0) start_x = 0;
+                    end_x = soma.x + half_block_size; if(end_x >= in_zz[0]) end_x = in_zz[0]-1;
+                    start_y =soma.y - half_block_size;if(start_y<0) start_y = 0;
+                    end_y = soma.y + half_block_size;if(end_y >= in_zz[1]) end_y = in_zz[1]-1;
+                    start_z = soma.z - half_block_size;if(start_z<0) start_z = 0;
+                    end_z = soma.z + half_block_size;if(end_z >= in_zz[2]) end_z = in_zz[2]-1;
+                    unsigned char * cropped_img_soma = 0;
+                    cropped_img_soma = callback.getSubVolumeTeraFly(image_file.toStdString(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
 
-            }
-            else{
+                    V3DLONG mysz[4];
+                    mysz[0] = end_x - start_x+1;
+                    mysz[1] = end_y - start_y+1;
+                    mysz[2] = end_z - start_z+1;
+                    mysz[3]=in_zz[3];
 
+                    int ms_windowradius = 20;
+                    NeuronSWC new_soma,shifted_soma;
+                    shifted_soma.x = soma.x-start_x;shifted_soma.y = soma.y-start_y; shifted_soma.z = soma.z-start_z;
+                    double bkg_thre = 30;
+                    new_soma = calc_mean_shift_center(cropped_img_soma,shifted_soma,mysz, bkg_thre, ms_windowradius);
+                    QList<NeuronSWC> new_nt, new_nt_sorted;
+                    for(int i=0; i<nt.listNeuron.size(); i++){
+                        if(soma_list.contains(i)){
+                            if (i == soma_id_found){
+                                new_nt.append(new_soma);
+                            }
+                            else{
+                                NeuronSWC tmp = nt.listNeuron[i];
+                                int tmp_type = nt.listNeuron[i].type;
+                                int current_id = i;
+                                while(tmp_type!=1){
+                                    current_id = plist.lastIndexOf(nt.listNeuron.at(current_id).pn);
+                                    tmp_type = nt.listNeuron[current_id].type;
+                                }
+                                tmp.type = tmp_type;
+                                new_nt.append(tmp);
+                            }
+                        }
+                        else{
+                            new_nt.append(nt.listNeuron.at(i));
+                        }
+                    }
+                    SortSWC(new_nt,new_nt_sorted,VOID,VOID);
+                    export_list2file(new_nt_sorted, out_file, in_name);
+                 }
             }
         }
 
     }
-    else{
-        QDir dir(in_name);
-        QStringList nameFilters;
-        nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
-        QStringList swclist = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
-
-
-    }
+//    else{
+//        QDir dir(in_name);
+//        QStringList nameFilters;
+//        nameFilters << "*.eswc"<<"*.swc"<<"*.ESWC"<<"*.SWC";
+//        QStringList swclist = dir.entryList(nameFilters,QDir::Files|QDir::Readable, QDir::Name);
+//    }
 }
 
