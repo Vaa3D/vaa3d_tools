@@ -192,6 +192,24 @@ bool UnsortedPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
         writeESWC_file(QString::fromStdString(out_swc_file),outswc);
         return true;
     }
+    else if (func_name==tr("ion_retype"))
+    {
+        QString in_raw_swc_file;
+        if(infiles.size()>=1) {
+            in_raw_swc_file = infiles[0];
+        }
+
+        NeuronTree nt = readSWC_file(in_raw_swc_file);
+        QString out_nt_filename=(outfiles.size()>=1)?outfiles[0]:(in_raw_swc_file + "_out.swc");
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+//            if(nt.listNeuron.at(i).type==1&&)
+            if(nt.listNeuron.at(i).type==0||nt.listNeuron.at(i).type>4)
+                nt.listNeuron[i].type=2;
+        }
+        writeSWC_file(out_nt_filename,nt);
+        return true;
+    }
     else if (func_name==tr("Seg_Connection_Turn_over"))
     {
         /*this fun will combine swc files in one dir*/

@@ -22,7 +22,7 @@
 #include "neuronbranchtree.h"
 #include "../../SGuo/imPreProcess/helpFunc.h"
 #include "../../SGuo/imPreProcess/bilateral_filter.h"
-
+#include "../../xiaoxiaol/consensus_skeleton_2/kd-tree.h"
 using namespace std;
 
 #define BoutonType 1
@@ -281,13 +281,13 @@ void postprocess_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & 
 void refinement_dofunc(V3DPluginCallback2 & callback, const V3DPluginArgList & input,V3DPluginArgList & output,bool in_terafly=true);
 void refinement_terafly_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,long half_block_size=128,int nodeRefine_radius=2);
 void refinement_Image_fun(V3DPluginCallback2 &callback,string imgPath, NeuronTree& nt,int method_code=0,int refine_radius=8,int nodeRefine_radius=2);
-NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40, int windowradius=3);
-
+//NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double bkg_thre=40, int windowradius=3);
+NeuronSWC calc_mean_shift_center(unsigned char * & inimg1d,NeuronSWC snode, NeuronSWC spar, V3DLONG sz_image[], int refine_radius);
 //NeuronSWC calc_mean_shift_center_v4(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius,int windowradius_limit);
 //NeuronSWC calc_mean_shift_center_v5(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius,int windowradius_limit);
 NeuronSWC calc_mean_shift_center_v4(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius=3,int windowradius_limit=15);
 NeuronSWC calc_mean_shift_center_v5(unsigned char * & inimg1d,NeuronSWC snode,V3DLONG sz_image[], double &bkg_thre,int &windowradius_pid,int windowradius=3,int windowradius_limit=15);
-
+double kd_get_nearest_dist(ANNkd_tree* kd, float x, float y, float z);
 NeuronSWC nodeRefine(unsigned char * & inimg1d,NeuronSWC s,V3DLONG * sz,int neighbor_size=2);
 double getAngleofNodeVector(NeuronSWC n0,NeuronSWC n1,NeuronSWC n2);
 NeuronSWC lineRefine(unsigned char * & inimg1d,V3DLONG * sz,NeuronSWC snode,NeuronSWC spnode, int sqhere_radius=5,int searching_line_radius=2);

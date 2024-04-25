@@ -89,6 +89,10 @@ bool NMorphoPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
         return type_refine_func(callback,input,output);
     }
+    else if (func_name == tr("retype_apical"))
+    {
+        return retype_apical_func(callback,input,output);
+    }
     else if (func_name == tr("soma_connection"))
     {
         return soma_connection(callback,input,output);

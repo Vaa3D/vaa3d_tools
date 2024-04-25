@@ -24,6 +24,7 @@ bool write_bouton_distribution(const QString &filename, NeuronTree nt,int split_
 bool soma_connection(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
+bool retype_apical_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool large_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool simple_type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);
 bool nt_qc(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output);

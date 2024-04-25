@@ -334,15 +334,15 @@ bool nt_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPl
         }
         return false;
     }
-    QList<CellAPO> out_3bifs;
-    bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
-    if(mbif){
-        if(with_file_flag){
-            out_f+="_flag_exist_multi_bifs.swc";
-            writeSWC_file(out_f,nt);
-        }
-        return false;
-    }
+//    QList<CellAPO> out_3bifs;
+//    bool mbif=multi_bifurcations_checking(nt,out_3bifs,somaid);
+//    if(mbif){
+//        if(with_file_flag){
+//            out_f+="_flag_exist_multi_bifs.swc";
+//            writeSWC_file(out_f,nt);
+//        }
+//        return false;
+//    }
     if(type_check){
         // type checking
         QString etype="";
@@ -617,6 +617,86 @@ bool simple_type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgLis
         writeESWC_file(out_f,nt);
     return true;
 }
+bool retype_apical_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*preprocess:
+     * refine apical type
+    */
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString inswc_file,inapo_file;
+    if(infiles.size()>=1) {
+        inswc_file = infiles[0];
+    }
+    NeuronTree nt = readSWC_file(inswc_file);
+    V3DLONG siz=nt.listNeuron.size();
+    if(!siz) {return false;}
+    V3DLONG somaid=get_soma(nt,false); if(somaid<0){
+        cout<<"Soma Error"<<endl;
+        return false;
+    }
+    vector<int> ntype(siz,0);
+    if(!getNodeType(nt,ntype,somaid)){return false;}
+    for (V3DLONG i=0;i<siz;i++)
+        if(nt.listNeuron.at(i).type==4)
+            nt.listNeuron[i].type=3;
+    //get apical root point
+    if(infiles.size()>=2) {
+        inapo_file = infiles[1];
+        QList <CellAPO> apolist=readAPO_file(inapo_file);
+        if(apolist.size()==1){
+            float ax=apolist.at(0).x-1;
+            float ay=apolist.at(0).y-1;
+            float az=apolist.at(0).z-1;
+            for (V3DLONG i=0;i<siz;i++){
+                NeuronSWC s=nt.listNeuron.at(i);
+                if(ntype.at(i)==0&&s.type>=3){
+                    //start from dendritic tip nodes
+                    QList<V3DLONG> seglist; seglist.clear();
+                    bool need2retype=false;
+                    seglist.append(i);
+                    V3DLONG pid=i;
+                    while(true){
+                        if(!nt.hashNeuron.contains(s.pn)||s.pn<0)
+                            break;
+                        pid=nt.hashNeuron.value(s.pn);
+                        if(pid==somaid||nt.listNeuron.at(pid).pn<0)
+                            break;
+                        if((nt.listNeuron[pid].x-ax)*(nt.listNeuron[pid].x-ax)+
+                                (nt.listNeuron[pid].y-ay)*(nt.listNeuron[pid].y-ay)+
+                                (nt.listNeuron[pid].z-az)*(nt.listNeuron[pid].z-az)<0.5)
+                        {
+                            need2retype=true;
+                        }
+                        seglist.append(pid);
+                        //next node
+                        s=nt.listNeuron.at(pid);
+                    }
+                    if(need2retype)
+                        for(V3DLONG j=0;j<seglist.size();j++)
+                            nt.listNeuron[seglist.at(j)].type=4;
+                }
+            }
+        }
+    }
+
+    QString file_suffix=QFileInfo(inswc_file).suffix();
+    QString out_f;
+    if(outfiles.size()>=1){
+        out_f=outfiles[0];
+        file_suffix=QFileInfo(out_f).suffix();
+    }
+    else
+        return false;
+    if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
+    {
+        writeSWC_file(out_f,nt);
+    }
+    else
+        writeESWC_file(out_f,nt);
+    return true;
+}
 bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
     /*preprocess:
      * refine arbor type
@@ -655,27 +735,27 @@ bool type_refine_func(V3DPluginCallback2 &callback, const V3DPluginArgList &inpu
     cout<<"one apical start point: "<<int(one_apical)<<endl;
     QDir savepath=QFileInfo(out_f).absoluteDir();
     QString out_basename=QFileInfo(out_f).baseName();
-    if(return_true)
-        if(retype)
-            out_f=out_basename+"_retyped."+file_suffix;
-        else
-            out_f=out_basename+"_no_retype."+file_suffix;
-    else
-    {
-        out_f=out_basename+"_retyped_fail_undefined_error."+file_suffix;
-        if(!one_axon)
-            out_f=out_basename+"_retyped_fail_not_one_axon."+file_suffix;
-        if(!one_apical)
-            out_f=out_basename+"_retyped_fail_not_one_apical."+file_suffix;
-    }
+//    if(return_true)
+//        if(retype)
+//            out_f=out_basename+"_retyped."+file_suffix;
+//        else
+//            out_f=out_basename+"_no_retype."+file_suffix;
+//    else
+//    {
+//        out_f=out_basename+"_retyped_fail_undefined_error."+file_suffix;
+//        if(!one_axon)
+//            out_f=out_basename+"_retyped_fail_not_one_axon."+file_suffix;
+//        if(!one_apical)
+//            out_f=out_basename+"_retyped_fail_not_one_apical."+file_suffix;
+//    }
     cout<<"save path="<<savepath.path().toStdString()<<endl;
     cout<<"save name="<<out_f.toStdString()<<endl;
     if(!QString::compare(QString("swc"),file_suffix,Qt::CaseInsensitive))
     {
-        writeSWC_file(savepath.path()+"/"+out_f,nt);
+        writeSWC_file(out_f,nt);
     }
     else
-        writeESWC_file(savepath.path()+"/"+out_f,nt);
+        writeESWC_file(out_f,nt);
     return true;
 }
 bool large_seg_check(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
@@ -865,6 +945,7 @@ bool crop_local_swc(V3DPluginCallback2 &callback, const V3DPluginArgList &input,
 }
 
 bool somalist_in_folder(V3DPluginCallback2 &callback, const V3DPluginArgList &input, V3DPluginArgList &output){
+    /*for all the SWC file in a folder, extract soma and saved into an apo file.*/
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
