@@ -1,5 +1,5 @@
 tables==3.4.0
-numpy==1.13.3
+numpy==1.22.0
 keras_contrib==2.0.8
 tensorflow_gpu==1.4.0
 Keras==2.1.2
